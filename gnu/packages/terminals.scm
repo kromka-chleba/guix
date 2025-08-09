@@ -1071,28 +1071,19 @@ usable with any list--including files, command history, processes and more.")
 (define-public python-pyte
   (package
     (name "python-pyte")
-    (version "0.8.1")
+    (version "0.8.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyte" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/selectel/pyte")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1c4pn2qijk6q8q25klfq365gbvlkrh8c0lz5lrr7b7kmh6vx3gxr"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-failing-test
-           ;; TODO: Reenable when the `captured` files required by this test
-           ;; are included in the archive.
-           (lambda _
-             (delete-file "tests/test_input_output.py")
-             #t)))))
-    (propagated-inputs
-     (list python-wcwidth))
-    (native-inputs
-     (list python-pytest-runner python-pytest))
+        (base32 "1cdhnl6rp4kcbs3s766519k80pf5ma18mgv6cyidf4nbgysjavmv"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-wcwidth))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://pyte.readthedocs.io/")
     (synopsis "Simple VTXXX-compatible terminal emulator")
     (description "@code{pyte} is an in-memory VTxxx-compatible terminal
@@ -1136,13 +1127,13 @@ than a terminal.")
 (define-public python-curtsies
   (package
     (name "python-curtsies")
-    (version "0.4.2")
+    (version "0.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "curtsies" version))
        (sha256
-        (base32 "03kn093lr84qg8fmqrn1jb0zak6a1ir9q106lm8jijfpbchk7gkf"))))
+        (base32 "09c8c4vssm2zkq017xj99vhcrisfva4nkz92w8dly4jjz7xhyahh"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pyte

@@ -2,7 +2,7 @@
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2017 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
-;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2015, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015, 2016, 2017, 2018, 2019, 2021, 2022, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2018-2021, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -400,20 +400,23 @@ conferencing.")
 (define-public qxmpp
   (package
     (name "qxmpp")
-    (version "1.4.0")
+    ;; kaidan requires a precise version
+    (version "1.10.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/qxmpp-project/qxmpp")
+             (url "https://invent.kde.org/libraries/qxmpp")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1knpq1jkwk0lxdwczbmzf7qrjvlxba9yr40nbq9s5nqkcx6q1c3i"))))
-    (build-system cmake-build-system)
+        (base32 "0qinrbr63b1baqv1a7cph8bma6kj1ib8s8ywq6d9497lc1yl2kgi"))))
+    (build-system qt-build-system)
     (arguments
-     `(#:configure-flags (list "-DBUILD_EXAMPLES=false"
-                               "-DWITH_GSTREAMER=true")
+     `(#:qtbase ,qtbase
+       #:configure-flags (list "-DBUILD_EXAMPLES=false"
+                               "-DWITH_GSTREAMER=true"
+                               "-DBUILD_OMEMO=ON") ;needed by kaidan
        #:test-exclude
         (string-join ;; These tests use the network.
          (list "tst_qxmppiceconnection"
@@ -423,8 +426,12 @@ conferencing.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list gstreamer qtbase-5))
-    (home-page "https://github.com/qxmpp-project/qxmpp")
+     (list
+       gstreamer
+       libomemo-c
+       qca-qt6
+       qt5compat))
+    (home-page "https://invent.kde.org/libraries/qxmpp")
     (synopsis "XMPP client and server library")
     (description
      "QXmpp is a XMPP client and server library written in C++ and uses the Qt
@@ -1473,7 +1480,7 @@ default.")
 (define-public kaidan
   (package
     (name "kaidan")
-    (version "0.9.0")
+    (version "0.12.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/unstable/kaidan/" version
@@ -1483,28 +1490,38 @@ default.")
                #~(begin
                    (delete-file-recursively "3rdparty")))
               (sha256
-               (base32 "1waqv0fdkhvp3cqy2a2g6i2wc9s0zbvgzknymrwxy99mnx9ymw9g"))))
+               (base32 "0q8py100nmvyhm8pfnvpxmghbg445x2vgpw3c519bcrr4w7y6yl0"))))
     (build-system qt-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_TESTS=true")))
+     (list
+       #:qtbase qtbase
+       #:configure-flags #~(list "-DBUILD_TESTS=true")
+       #:test-exclude "PublicGroupChatTest"
+       #:phases
+         #~(modify-phases %standard-phases
+           (add-before 'check 'set-home
+             (lambda _
+               ;; Tests need write permission in $HOME.
+               (setenv "HOME" "/tmp"))))))
     (native-inputs (list extra-cmake-modules
-                         perl
-                         pkg-config
-                         python-wrapper))
-    (inputs (list kirigami-5
-                  knotifications-5
-                  qtbase-5
-                  qtdeclarative-5
-                  qtgraphicaleffects
-                  qtlocation-5
-                  qtquickcontrols2-5
-                  qtsvg-5
-                  qtmultimedia-5
-                  qtxmlpatterns-5
+                         pkg-config))
+    (inputs (list icu4c
+                  kcrash
+                  kdsingleapplication
+                  kio
+                  kirigami
+                  kirigami-addons
+                  knotifications
+                  kquickimageeditor
+                  prison
                   qqc2-desktop-style
+                  qtlocation
+                  qtmultimedia
+                  qtpositioning
+                  qtsvg
+                  qttools
                   qxmpp
-                  sonnet
-                  zxing-cpp-1.2a))
+                  sonnet))
     (home-page "https://www.kaidan.im/")
     (synopsis "Qt-based XMPP/Jabber Client")
     (description "Kaidan is a chat client.  It uses the open communication

@@ -2775,16 +2775,18 @@ across test runs.")
 (define-public python-pytest-sugar
   (package
     (name "python-pytest-sugar")
-    (version "0.9.3")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-sugar" version))
        (sha256
-        (base32 "1i0hv3h49zvl62jbiyjag84carbrp3zprqzxffdr291nxavvac0n"))))
-    (build-system python-build-system)
+        (base32 "02kc4y0ry4y9lp63kjq9p7yvbjijfxn1fcn6wx6c1c7mb0rfh8k4"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-packaging python-pytest python-termcolor))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://pivotfinland.com/pytest-sugar/")
     (synopsis "Plugin for pytest that changes the default look and feel")
     (description

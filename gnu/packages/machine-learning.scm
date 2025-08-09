@@ -882,8 +882,11 @@ without dependencies, with
                 "15xlax3z31lsn62vlg94hkm75nm40q4679amnfg13jm8m2bnhy5m"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags (list "--enable-blast"
-                               "CFLAGS=-fcommon")))
+     (list
+      #:configure-flags
+      #~(list "--enable-blast"
+              (string-append "CFLAGS=-fcommon -g -O2"
+                             " -Wno-error=implicit-function-declaration"))))
     (inputs
      (list perl))
     (home-page "https://micans.org/mcl/")
@@ -2288,50 +2291,6 @@ with your favorite libraries.")
 number of threads used in the threadpool-backed of common native libraries used
 for scientific computing and data science (e.g. BLAS and OpenMP).")
     (license license:bsd-3)))
-
-(define-public python-imbalanced-learn
-  (package
-    (name "python-imbalanced-learn")
-    (version "0.12.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "imbalanced-learn" version))
-       (sha256
-        (base32 "1hgncab4g4xry7yl6wwsj1wmfnxbsajx6qmycvr28wdhvk75c358"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags '(list "-k"
-                     ;; Although we cannot satify the Tensorflow and Keras requirements
-                     ;; (python-keras >= 2.4.3 and tensorflow >= 2.4.3), all tests
-                     ;; besides these pass.
-                     "not balanced_batch_generator and not BalancedBatchGenerator")
-      #:phases '(modify-phases %standard-phases
-                  (add-after 'unpack 'unbreak-tests
-                    (lambda _
-                      ;; Some tests require a home directory
-                      (setenv "HOME"
-                              (getcwd)))))))
-    (propagated-inputs (list python-joblib python-numpy python-scikit-learn
-                             python-scipy python-threadpoolctl))
-    (native-inputs (list python-black
-                         python-flake8
-                         python-keras
-                         python-mypy
-                         python-pandas
-                         python-pytest
-                         python-pytest-cov
-                         python-setuptools
-                         python-wheel
-                         tensorflow))
-    (home-page "https://github.com/scikit-learn-contrib/imbalanced-learn")
-    (synopsis "Toolbox for imbalanced dataset in machine learning")
-    (description
-     "This is a Python package offering a number of re-sampling
-techniques commonly used in datasets showing strong between-class imbalance.
-It is compatible with @code{scikit-learn}.")
-    (license license:expat)))
 
 (define-public python-hdbscan
   (package
@@ -4146,213 +4105,6 @@ visualizations, and interfaces that can be used by any method designed to
 explain the predictions of machine learning models (or really the output of
 any function).  It currently contains the interface and IO code from the Shap
 project, and it will potentially also do the same for the Lime project.")
-    (license license:expat)))
-
-(define-public python-keras-applications
-  (package
-    (name "python-keras-applications")
-    (version "1.0.8")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Keras_Applications" version))
-       (sha256
-        (base32
-         "1rcz31ca4axa6kzhjx4lwqxbg4wvlljkj8qj9a7p9sfd5fhzjyam"))))
-    (build-system python-build-system)
-    ;; The tests require Keras, but this package is needed to build Keras.
-    (arguments '(#:tests? #f))
-    (propagated-inputs
-     (list python-h5py python-numpy))
-    (native-inputs
-     (list python-pytest python-pytest-cov
-           python-pytest-xdist))
-    (home-page "https://github.com/keras-team/keras-applications")
-    (synopsis "Reference implementations of popular deep learning models")
-    (description
-     "This package provides reference implementations of popular deep learning
-models for use with the Keras deep learning framework.")
-    (license license:expat)))
-
-(define-public python-keras-preprocessing
-  (package
-    (name "python-keras-preprocessing")
-    (version "1.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Keras_Preprocessing" version))
-       (sha256
-        (base32
-         "1r98nm4k1svsqjyaqkfk23i31bl1kcfcyp7094yyj3c43phfp3as"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-numpy python-six))
-    (native-inputs
-     (list python-pandas
-           python-pillow
-           python-pytest
-           python-pytest-cov
-           python-pytest-xdist
-           tensorflow))
-    (home-page "https://github.com/keras-team/keras-preprocessing/")
-    (synopsis "Data preprocessing and augmentation for deep learning models")
-    (description
-     "Keras Preprocessing is the data preprocessing and data augmentation
-module of the Keras deep learning library.  It provides utilities for working
-with image data, text data, and sequence data.")
-    (license license:expat)))
-
-(define-public python-keras
-  (package
-    (name "python-keras")
-    (version "2.3.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Keras" version))
-       (sha256
-        (base32
-         "1k68xd8n2y9ldijggjc8nn4d6d1axw0p98gfb0fmm8h641vl679j"))
-       (modules '((guix build utils)))
-       (snippet
-        '(substitute* '("keras/callbacks/callbacks.py"
-                        "keras/engine/training_utils.py"
-                        "keras/engine/training.py"
-                        "keras/engine/training_generator.py"
-                        "keras/utils/generic_utils.py")
-           (("from collections import Iterable")
-            "from collections.abc import Iterable")
-           (("collections.Container")
-            "collections.abc.Container")
-           (("collections.Mapping")
-            "collections.abc.Mapping")
-           (("collections.Sequence")
-            "collections.abc.Sequence")))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'tf-compatibility
-           (lambda _
-             (substitute* "keras/backend/tensorflow_backend.py"
-               (("^get_graph = .*")
-                "get_graph = tf.get_default_graph")
-               (("tf.compat.v1.nn.fused_batch_norm")
-                "tf.nn.fused_batch_norm")
-               ;; categorical_crossentropy does not support axis
-               (("from_logits=from_logits, axis=axis")
-                "from_logits=from_logits")
-               ;; dropout accepts a level number, not a named rate argument.
-               (("dropout\\(x, rate=level,")
-                "dropout(x, level,")
-               (("return x.shape.rank")
-                "return len(x.shape)"))))
-         (add-after 'unpack 'hdf5-compatibility
-           (lambda _
-             ;; The truth value of an array with more than one element is ambiguous.
-             (substitute* "tests/keras/utils/io_utils_test.py"
-               ((" *assert .* == \\[b'(asd|efg).*") ""))
-             (substitute* "tests/test_model_saving.py"
-               (("h5py.File\\('does not matter',")
-                "h5py.File('does not matter', 'w',"))
-             (substitute* "keras/utils/io_utils.py"
-               (("h5py.File\\('in-memory-h5py', driver='core', backing_store=False\\)")
-                "h5py.File('in-memory-h5py', 'w', driver='core', backing_store=False)")
-               (("h5file.fid.get_file_image")
-                "h5file.id.get_file_image"))
-             (substitute* "keras/engine/saving.py"
-               (("\\.decode\\('utf-?8'\\)") ""))))
-         (add-after 'unpack 'delete-unavailable-backends
-           (lambda _
-             (delete-file "keras/backend/theano_backend.py")
-             (delete-file "keras/backend/cntk_backend.py")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; These tests attempt to download data files from the internet.
-               (delete-file "tests/integration_tests/test_datasets.py")
-               (delete-file "tests/integration_tests/imagenet_utils_test.py")
-               (invoke "python" "-m" "pytest" "tests"
-                       "-p" "no:pep8"
-                       ;; FIXME: python-build-system lacks PARALLEL-TESTS?
-                       "-n" (number->string (parallel-job-count))
-                       ;; This one uses the theano backend that we don't have.
-                       "--ignore=tests/test_api.py"
-                       "--ignore=tests/keras/backend/backend_test.py"
-                       ;; Our Tensorflow version does not have the coder ops library.
-                       "--ignore=tests/keras/callbacks/callbacks_test.py"
-                       ;; ...nor do we have tensorboard
-                       "--ignore=tests/keras/callbacks/tensorboard_test.py"
-                       "-k"
-                       (string-append
-                        ;; See https://github.com/keras-team/keras/pull/7033
-                        "not test_TimeDistributed_learning_phase "
-                        ;; XXX fails because no closure is provided
-                        "and not test_func_dump_and_load_backwards_compat "
-                        ;; XXX real bug?  These are all tests that fail due to
-                        ;; shape mismatch, e.g. "got logits shape [12,3] and
-                        ;; labels shape [9]"
-                        "and not test_model_with_crossentropy_losses_channels_first "
-                        "and not test_masking_correctness_output_size_not_equal_to_first_state_size "
-                        "and not test_convolutional_recurrent "
-                        "and not test_axis "
-
-                        ;; XXX fails because of 3/15 values have unexpected differences.
-                        "and not test_masking_correctness_output_not_equal_to_first_state "
-                        ;; XXX fails because of a difference of about 0.1
-                        "and not test_sample_weighted "
-                        ;; XXX fails because of a difference of about 0.3
-                        "and not test_scalar_weighted "
-                        ;; XXX fails because of a difference of about 0.2
-                        "and not test_unweighted "
-
-                        ;; XXX I cannot reproduce this in an interactive
-                        ;; Python session, because l2_norm works just fine.
-                        "and not test_weighted " ;TestCosineSimilarity
-                        "and not test_config "   ;TestCosineSimilarity
-
-                        ;; The following test fails only in the build
-                        ;; container; skip it.
-                        "and not test_selu "
-                        ;; The following test was found flaky and removed in
-                        ;; recent versions.
-                        "and not test_stateful_metrics"))))))))
-    (propagated-inputs
-     (list python-h5py
-           python-keras-applications
-           python-keras-preprocessing
-           python-numpy
-           python-pydot
-           python-pyyaml
-           python-scipy
-           python-six
-           tensorflow
-           graphviz))
-    (native-inputs
-     (list python-flaky
-           python-markdown
-           python-pandas
-           python-pytest
-           python-pytest-cov
-           python-pytest-timeout
-           python-pytest-xdist
-           python-pyux
-           python-sphinx
-           python-requests))
-    (home-page "https://keras.io/")
-    (synopsis "High-level deep learning framework")
-    (description "Keras is a high-level neural networks API, written in Python
-and capable of running on top of TensorFlow.  It was developed with a focus on
-enabling fast experimentation.  Use Keras if you need a deep learning library
-that:
-@itemize
-@item Allows for easy and fast prototyping (through user friendliness,
-  modularity, and extensibility).
-@item Supports both convolutional networks and recurrent networks, as well as
-  combinations of the two.
-@item Runs seamlessly on CPU and GPU.
-@end itemize\n")
     (license license:expat)))
 
 (define-public gloo
@@ -6626,20 +6378,25 @@ and Numpy.")
   (package
     (name "python-pyro-api")
     (version "0.1.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pyro-api" version))
-              (sha256
-               (base32
-                "086r2h6x9i5d9ayl1x65lx6p84rlydzsn8xingxc588ab3ch1fd1"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pyro-ppl/pyro-api")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17x7niagx43cajqq67dxmssr7q94db6axyg154y7vqdxzp25hf7g"))))
+    (build-system pyproject-build-system)
     (arguments '(#:tests? #false)) ;requires pyro
     (native-inputs
      (list python-flake8
            python-ipython
            python-pytest
+           python-setuptools
            python-sphinx
-           python-sphinx-rtd-theme))
+           python-sphinx-rtd-theme
+           python-wheel))
     (home-page "https://github.com/pyro-ppl/pyro-api")
     (synopsis "Generic API for dispatch to Pyro backends")
     (description "This package provides a generic API for dispatch to Pyro backends.")
@@ -6843,7 +6600,7 @@ linear algebra routines needed for structured matrices (or operators).")
                    (lambda (x) (install-file x src))
                    (find-files "." "\\.h$"))))))))
       (inputs (list kaldi openfst openblas))
-      (home-page "https://alphacephei.com/vosk")
+      (home-page "https://alphacephei.com/vosk/")
       (synopsis "Speech recognition toolkit based on @code{kaldi}")
       (description "This package provides a speech recognition toolkit based
 on @code{kaldi}.  It supports more than 20 languages and dialects - English,
@@ -6864,10 +6621,12 @@ simple speech recognition.")
   (package
     (inherit vosk-api)
     (name "python-vosk")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-cffi python-requests python-tqdm python-srt python-websockets))
     (inputs (list vosk-api))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (arguments
      (list
       #:tests? #f  ;; TODO There are tests but not run through Makefile.

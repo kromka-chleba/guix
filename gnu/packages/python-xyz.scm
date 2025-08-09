@@ -1010,6 +1010,36 @@ new type and helper functions to integrate it nicely with the Python
 stdlib.")
     (license license:expat)))
 
+(define-public python-session-info2
+  (package
+    (name "python-session-info2")
+    (version "0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "session_info2" version))
+       (sha256
+        (base32 "0xs1mcdz0hf626m3421ryv4f7b5rixz2hm8x88czx2i9196x69g9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--deselect=tests/test_synthetic.py::test_gpu"
+              ;; Tests require Jupyter Client.
+              "--ignore=tests/test_subprocess.py")))
+    (native-inputs
+     (list python-hatch-docstring-description
+           python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-pytest-asyncio))
+    (home-page "https://session-info2.readthedocs.io/")
+    (synopsis "Print versions of imported packages")
+    (description
+     "This package implements a functionality to print versions of imported
+Python packages.")
+    (license license:mpl2.0)))
+
 (define-public python-shxparser
   (package
     (name "python-shxparser")
@@ -5348,29 +5378,6 @@ for additional processing.")
      "Fastprogress is a progress bar for Jupyter Notebook and console.")
     (license license:asl2.0)))
 
-(define-public python-case
-  (package
-    (name "python-case")
-    (version "1.5.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "case" version))
-       (sha256
-        (base32
-         "1cagg06vfph864s6l5jb0zqliwxh647bki8j6lf4a4qrv40jnhs8"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-mock python-nose python-six))
-    (native-inputs
-     (list python-coverage))
-    (home-page "https://github.com/celery/case")
-    (synopsis "Unittest utilities and convenience methods")
-    (description
-     "The @code{case} package provides utilities on top of unittest, including
-some helpful Python 2 compatibility convenience methods.")
-    (license license:bsd-3)))
-
 (define-public python-verboselogs
   (package
     (name "python-verboselogs")
@@ -8592,13 +8599,13 @@ via commands such as @command{rst2man}, as well as supporting Python code.")
 (define-public python-docx
   (package
     (name "python-docx")
-    (version "1.1.2")
+    (version "1.2.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "python_docx" version))
               (sha256
                (base32
-                "1z9ffsvksaaxr90ijzq4k3adzb6p5ipy2j3rrbfjl05rjlpg5w8c"))))
+                "1ki0cbw3hbiz51ww3fi3vi770lk5r0c62889r819r756v2vxgjbv"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list behave
@@ -11230,17 +11237,11 @@ To address this and enable easy cycling over arbitrary @code{kwargs}, the
        (file-name (git-file-name name version))
        (sha256
         (base32 "0x7nkphr6g5ql5fvgss8l56rgiyjgh6fm8zzs73i94ci9wzlm63w"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-numpy))
     (native-inputs
-     (list python-nose))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "nosetests" "--all-modules" "-v" "colorspacious"))))))
+     (list python-nose python-setuptools python-wheel))
     (home-page "https://github.com/njsmith/colorspacious")
     (synopsis "Python library for colorspace conversions")
     (description "@code{colorspacious} is a Python library that lets you
@@ -11486,16 +11487,20 @@ toolkits.")
       #:tests? #f                       ;we're only generating documentation
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'avoid-external-deps
+            (lambda _
+              ;; XXX: Avoid theme-switcher to avoid sphinx error
+              ;; TemplateNotFound('theme-switcher.html')
+              ;; XXX: Avoid version-switcher because it depends on an
+              ;; external file, and we pack only one version anyway.
+              (substitute* "doc/conf.py"
+                (("\
+\"navbar_end\": \\[\"theme-switcher\", \"version-switcher\", ")
+                 "\"navbar_end\": ["))))
           (replace 'build
             (lambda _
               (setenv "HOME" "/tmp")
               (chdir "doc")
-              (substitute* "conf.py"
-                ;; The sphinx_panels extension causes a "TypeError: first
-                ;; argument must be callable" to be raised when generating the
-                ;; info target; remove it (see:
-                ;; https://github.com/executablebooks/sphinx-panels/issues/74).
-                ((".*'sphinx_panels',.*") ""))
               (invoke "make" "html" "info"
                       ;; Don't abort on warnings; build in parallel.
                       (format #f "SPHINXOPTS=-j~a" (parallel-job-count)))))
@@ -11518,25 +11523,30 @@ toolkits.")
            inkscape/pinned
            python-colorspacious
            python-ipython
+           python-ipykernel
            python-ipywidgets
            python-mpl-sphinx-theme
            python-numpydoc
            python-scipy
            python-sphinx
            python-sphinx-copybutton
+           python-sphinx-design
            python-sphinx-gallery
            python-sphinxcontrib-svg2pdfconverter
            texinfo
-           texlive-amsfonts
-           texlive-amsmath
-           texlive-babel
-           texlive-etoolbox
-           texlive-expdlist
-           texlive-fontspec
-           texlive-times
-           texlive-type1cm
-           texlive-underscore
-           texlive-unicode-math))
+           texlive-dvipng-bin
+           (texlive-local-tree
+            (list texlive-amsfonts
+                  texlive-amsmath
+                  texlive-babel
+                  texlive-cm-super
+                  texlive-etoolbox
+                  texlive-expdlist
+                  texlive-fontspec
+                  texlive-times
+                  texlive-type1cm
+                  texlive-underscore
+                  texlive-unicode-math))))
     (synopsis "Documentation for the @code{python-matplotlib} package")))
 
 (define-public python-matplotlib-inline
@@ -15724,31 +15734,29 @@ SVG, EPS, PNG and terminal output.")
 (define-public python-seaborn
   (package
     (name "python-seaborn")
-    (version "0.13.1")
+    (version "0.13.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "seaborn" version))
               (sha256
                (base32
-                "0ycibcs6kvd3xi4zsxna81claqifyb9dn6z6jwc5x7lqqplnbbdz"))))
+                "1xzzxrbxsmmk39647vcx7avzdbzxw9vz8pc8yklnakcgk100mrlk"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; 2358 passed, 16 skipped, 6 xfailed, 17 warnings
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count)) )))
+    (native-inputs
+     (list python-flit-core
+           python-pytest
+           python-pytest-xdist))
     (propagated-inputs
      (list python-matplotlib
            python-numpy
            python-pandas
            python-scipy
            python-statsmodels))
-    (native-inputs
-     (list python-flake8
-           python-flit-core
-           python-ipykernel
-           python-nbconvert
-           python-numpydoc
-           python-mypy
-           python-pytest
-           python-pytest-cov
-           python-pytest-xdist
-           python-pyyaml))
     (home-page "https://seaborn.pydata.org/")
     (synopsis "Statistical data visualization")
     (description
@@ -21492,7 +21500,6 @@ applications.")
            #~(list "--ignore" "t/unit/transport/test_azurestoragequeues.py")))
     (native-inputs
      (list python-botocore
-           python-case
            python-pyro4
            python-pytest
            python-pytest-sugar
@@ -21530,8 +21537,7 @@ RabbitMQ messaging server is the most popular implementation.")
                                       '("billiard/popen_spawn_win32.py"
                                         "billiard/_win.py")))))))
     (native-inputs
-     (list python-case python-psutil python-pytest python-setuptools
-           python-wheel))
+     (list python-psutil python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/celery/billiard")
     (synopsis "Python multiprocessing fork with improvements and bugfixes")
     (description
@@ -21569,8 +21575,7 @@ Python 2.4 and 2.5, and will draw its fixes/improvements from python-trunk.")
                          (("tzdata.*")
                           "tzdata\n")))))))
     (native-inputs
-     (list python-case
-           python-dnspython
+     (list python-dnspython
            python-flaky
            python-google-cloud-storage
            python-iniconfig
@@ -30184,14 +30189,14 @@ codecs for use in data storage and communication applications.")
 (define-public python-zarr
   (package
     (name "python-zarr")
-    (version "2.18.4")
+    (version "2.18.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "zarr" version))
        (sha256
         (base32
-         "1fr41j8mxhbj7psn00416qs3nm12djhhmybgpqdax0q6vpg0wy9p"))))
+         "1xbjjpjskykbdskck5p1f0grh6wq36437ll0n5kazi6s2ipzdf5j"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -30228,11 +30233,6 @@ codecs for use in data storage and communication applications.")
     (native-inputs
      (list python-pytest
            python-pytest-xdist
-           python-pytest-doctestplus
-           python-sphinx
-           python-sphinx-copybutton
-           python-sphinx-design
-           python-sphinx-issues
            python-setuptools
            python-wheel))
     (home-page "https://github.com/zarr-developers/zarr-python")
@@ -35271,23 +35271,23 @@ handling those variations.")
 (define-public python-qdarkstyle
   (package
     (name "python-qdarkstyle")
-    (version "2.8.1")
+    (version "3.2.3")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "QDarkStyle" version))
         (sha256
          (base32
-          "0883vzg35fzpyl1aiijzpfcdfvpq5vi325w0m7xkx7nxplh02fym"))))
-    (build-system python-build-system)
-    (arguments
-     `(;; Fails unable to detect valid Qt bindings even when
-       ;; added as native-inputs.
-       #:tests? #f))
+          "1bpi0asa7sd5ch6x6b60n5yias04nsx6kcwji40228g9lrs7y2qc"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest
+                         python-qtsass
+                         python-setuptools
+                         python-watchdog
+                         python-wheel))
     (propagated-inputs
-     (list python-helpdev python-qtpy))
-    (home-page
-     "https://github.com/ColinDuquesnoy/QDarkStyleSheet")
+     (list python-qtpy python-pyqt-6))
+    (home-page "https://github.com/ColinDuquesnoy/QDarkStyleSheet")
     (synopsis
      "Complete dark stylesheet for Python and Qt applications")
     (description "QDarkStyle is the most complete dark stylesheet for Python and

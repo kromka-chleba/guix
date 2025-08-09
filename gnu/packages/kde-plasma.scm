@@ -72,6 +72,7 @@
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages markup)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages messaging)
   #:use-module (gnu packages multiprecision)
@@ -271,6 +272,7 @@ Breeze is the default theme for the KDE Plasma desktop.")
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
+           #:test-exclude "flatpaktest"
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'remove-qmlmodule-required
@@ -282,13 +284,12 @@ Breeze is the default theme for the KDE Plasma desktop.")
                  (lambda _
                    (setenv "LDFLAGS" (string-append "-Wl,-rpath=" #$output
                                                     "/lib/plasma-discover"))))
-               (replace 'check
+               (add-before 'check 'check-setup
                  (lambda* (#:key tests? #:allow-other-keys)
                    (when tests?
                      (setenv "XDG_DATA_DIRS"
                              (string-append (getcwd)
-                                            ":" (getenv "XDG_DATA_DIRS")))
-                     (invoke "ctest" "-E" "knsbackendtest")))))))
+                                            ":" (getenv "XDG_DATA_DIRS")))))))))
     (native-inputs (list extra-cmake-modules pkg-config))
     (inputs (list appstream-qt6
                   attica
@@ -314,14 +315,17 @@ Breeze is the default theme for the KDE Plasma desktop.")
                   kdeclarative
                   kcmutils
                   kidletime
+                  libostree ; required by flatpak
+                  markdown
                   packagekit-qt6
                   purpose
+                  qcoro-qt6
                   qt5compat
                   qtdeclarative
                   qtsvg
+                  qtwebview
                   qcoro-qt6))
     ;; -- The following features have been disabled:
-    ;; * Ostree, Library to manage ostree repository. Required to build the rpm-ostree backend
     ;; * RpmOstree, rpm-ostree binary to manage the system. Required to build the rpm-ostree backend
     ;;
     ;; -- The following OPTIONAL packages have not been found:
@@ -1955,7 +1959,8 @@ on QtMultimedia and @command{yt-dlp}.")
                   kstatusnotifieritem
                   qtdeclarative))
     (propagated-inputs (list plasma-workspace))
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:tests? #f        ; no tests
+                     #:qtbase qtbase))
     (home-page "https://invent.kde.org/plasma/plasma-browser-integration")
     (synopsis "Integrate browsers into the Plasma Desktop")
     (description
@@ -3125,7 +3130,8 @@ of a Plasma shell.")
                   plasma-workspace
                   qtdeclarative
                   qtwebengine))
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))      ; no tests
     (synopsis "Control center to configure Plasma Desktop")
     (description "This package provides configuration UI for Plasma Desktop.")
     (home-page "https://invent.kde.org/plasma/systemsettings")

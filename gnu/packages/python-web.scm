@@ -835,7 +835,7 @@ of a fake DNS resolver.")
 (define-public python-huggingface-hub
   (package
     (name "python-huggingface-hub")
-    (version "0.23.2")
+    (version "0.31.4")
     (source
      (origin
        (method git-fetch)
@@ -844,7 +844,7 @@ of a fake DNS resolver.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hygxqcixkc1d9sr47j2km6z0p17aj4k1dzm4cvpddrvhrgqayq5"))))
+        (base32 "1rjkrmvvyzxlbnbndrg4v9qq39grn46c26zrdjgpf114gci5pwap"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -881,7 +881,13 @@ of a fake DNS resolver.")
              "-k" (string-append
                    "not test_push_to_hub"
                    " and not test_from_pretrained_model_id_only"
-                   " and not test_from_pretrained_model_id_and_revision"))
+                   " and not test_from_pretrained_model_id_and_revision"
+                   ;; These all require internet access
+                   " and not test_auth"
+                   " and not test_oauth"
+                   " and not test_utils_sha"
+                   " and not test_inference_providers"
+                   " and not test_xet"))
       #:phases
       '(modify-phases %standard-phases
          (add-before 'check 'pre-check
@@ -908,6 +914,7 @@ of a fake DNS resolver.")
            python-pytest-asyncio
            python-pytest-cov
            python-pytest-env
+           python-pytest-mock
            python-pytest-rerunfailures
            python-pytest-vcr
            python-pytest-xdist
@@ -918,7 +925,7 @@ of a fake DNS resolver.")
            python-typing-extensions
            python-urllib3
            python-wheel))
-    (home-page "https://github.com/huggingface/huggingface_hub")
+    (home-page "https://huggingface.co/docs/huggingface_hub/")
     (synopsis "Client library for accessing the huggingface.co hub")
     (description
      "This package provides a client library to download and publish models,
@@ -969,14 +976,14 @@ adds functionality on top of @code{wadlib}.")
 (define-public python-launchpadlib
   (package
     (name "python-launchpadlib")
-    (version "1.10.16")
+    (version "2.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "launchpadlib" version))
        (sha256
-        (base32 "106aixwchwyb100wlf4cnj1vgsi2d7x40ps8xv8az27r6qwv3x0d"))))
-    (build-system python-build-system)
+        (base32 "0br4j76l83lvyrhm8psml9cqmdsn65rx48w1q1a0s1bmpf85ihml"))))
+    (build-system pyproject-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
                         (add-before 'check 'set-home
@@ -984,12 +991,10 @@ adds functionality on top of @code{wadlib}.")
                             ;; Tests require a writable home.
                             (setenv "HOME" "/tmp"))))))
     (propagated-inputs
-     (list python-httplib2
-           python-keyring
-           python-lazr-restfulclient
-           python-lazr-uri))
-    (native-inputs (list python-mock python-testresources python-wadllib))
-    (home-page "https://help.launchpad.net/API/launchpadlib")
+     (list python-httplib2 python-lazr-restfulclient python-lazr-uri))
+    (native-inputs (list python-pytest python-testresources python-wadllib
+                         python-setuptools python-wheel))
+    (home-page "https://documentation.ubuntu.com/launchpad")
     (synopsis "Python client library for Launchpad's web service")
     (description "@code{launchpadlib} is a Python library that allows
 scripting Launchpad via its the web service API.")
@@ -1617,17 +1622,30 @@ It features a minimal TLS 1.3 implementation, a QUIC stack and an HTTP/3 stack."
 (define-public python-aiorpcx
   (package
     (name "python-aiorpcx")
-    (version "0.22.1")
+    (version "0.25.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "aiorpcX" version))
+       (method git-fetch)
+       ;; PyPI misses the util.py file used for tests.
+       (uri (git-reference
+              (url "https://github.com/kyuupichan/aiorpcX")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0lx54bcinp44fmr8q4bbffsqbkg8kdcwykf9i5jj0bj3sfzgf9k0"))))
-    (build-system python-build-system)
+         "0sn4xxlpy0kb5b25bqrjzh2m6bskdyydc6cq8bigb7g5dacksn4q"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; This test opens a remote connection.
+      #~(list "-k" "not test_create_connection_resolve_good")))
+    (native-inputs (list python-pytest
+                         python-pytest-asyncio
+                         python-setuptools
+                         python-wheel))
     (propagated-inputs
-     (list python-attrs))
+     (list python-attrs python-websockets))
     (home-page "https://github.com/kyuupichan/aiorpcX")
     (synopsis "Generic asyncio RPC implementation")
     (description
@@ -1848,28 +1866,38 @@ routes using HTTP Digest Authentication.")
     (license license:bsd-2)))
 
 (define-public python-css-html-js-minify
-  (package
-    (name "python-css-html-js-minify")
-    (version "2.5.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "css-html-js-minify" version ".zip"))
-              (sha256
-               (base32
-                "0v3l2dqdk2y4r6ax259gs4ij1zzm9yxg6491s6254vs9w3vi37sa"))))
-    (build-system python-build-system)
-    ;; XXX: The git repository has no tags, and the PyPI releases do not
-    ;; contain tests.
-    (arguments '(#:tests? #f))
-    (native-inputs (list unzip))
-    (home-page "https://github.com/juancarlospaco/css-html-js-minify")
-    (synopsis "CSS/HTML/JS minifier")
-    (description
-     "This package provides a single-file minifier for CSS, HTML, and JavaScript.")
-    ;; XXX: The README just says "GNU GPL and GNU LGPL and MIT".  From
-    ;; <https://github.com/juancarlospaco/css-html-js-minify/issues/9> it
-    ;; looks like the user can choose a license.
-    (license (list license:gpl3+ license:lgpl3+ license:expat))))
+  (let ((commit "8f72452960e41bc5476e50d96481f633eff72750")
+        (revision "0"))
+    (package
+      (name "python-css-html-js-minify")
+      (version (git-version "2.5.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/juancarlospaco/css-html-js-minify")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1lkx03720zk6q16w3d9r3l5kryikd1cmzwrcjzsjxwrq4zfh6vdf"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'relax-requirements
+              (lambda _
+                (substitute* "setup.cfg"
+                  (("^tests_require.*") "")))))))
+      (native-inputs (list python-setuptools python-wheel unzip))
+      (home-page "https://github.com/juancarlospaco/css-html-js-minify")
+      (synopsis "CSS/HTML/JS minifier")
+      (description
+       "This package provides a single-file minifier for CSS, HTML, and JavaScript.")
+      ;; XXX: The README just says "GNU GPL and GNU LGPL and MIT".  From
+      ;; <https://github.com/juancarlospaco/css-html-js-minify/issues/9> it
+      ;; looks like the user can choose a license.
+      (license (list license:gpl3+ license:lgpl3+ license:expat)))))
 
 (define-public python-aws-sam-translator
   (package

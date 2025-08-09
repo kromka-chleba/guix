@@ -9694,6 +9694,7 @@ It contains the code shared by all Kiwix ports.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:qtbase qtbase
       #:tests? #f ; no tests
       #:modules '((guix build qt-build-system)
                   ((guix build gnu-build-system) #:prefix gnu:)
@@ -9715,17 +9716,17 @@ It contains the code shared by all Kiwix ports.")
            libmicrohttpd
            libzim
            pugixml
-           qtbase-5
-           qtdeclarative-5
-           qtwebchannel-5
-           qtwebengine-5
-           qtwayland-5
+           qtbase
+           qtdeclarative
+           qtwebchannel
+           qtwebengine
+           qtwayland
            xapian
            zlib
            `(,zstd "lib")))
     (native-inputs
      (list pkg-config
-           qtbase-5))
+           qtbase))
     (home-page "https://wiki.kiwix.org/wiki/Software")
     (synopsis "Viewer and manager of ZIM files")
     (description "Kiwix Desktop allows you to enjoy a lot of different content
@@ -9857,43 +9858,6 @@ provided by a TLS reverse proxy (e.g. tlstunnel, hitch or stunnel).")
 "@code{go--webring} provides a simple webring implementation as used by
 the Fediring.")
       (license (list license:cc0 license:bsd-2)))))
-
-(define-public archivebox
-  (package
-    (name "archivebox")
-    (version "0.6.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri name version))
-              (sha256
-               (base32
-                "1mnq82ynq01l7vx957bbx4bvgwdh59qsnx6pdydaqszbakp74yyc"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list curl
-           node-lts))
-    (inputs
-     (list python
-           youtube-dl
-           wget
-           git
-           python-w3lib
-           python-ipython
-           python-croniter
-           python-crontab
-           python-dateparser
-           python-django-extensions
-           python-django-3.1.14
-           python-mypy-extensions))
-    (native-inputs
-     (list python-wheel))
-    (synopsis "Self-hosted Web archiving")
-    (description "ArchiveBox is a powerful, self-hosted Web archiving
-solution to collect, save, and view sites you want to preserve offline.
-You can feed it URLs one at a time, or schedule regular imports.  It saves
-snapshots of the URLs you feed it in several formats.")
-    (home-page "https://archivebox.io/")
-    (license license:expat)))
 
 (define-public awslogs
   (package

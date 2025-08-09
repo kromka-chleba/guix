@@ -137,7 +137,7 @@ a system that allows you to easily communicate between processes, and separate
 your project into different processes.")
     (license license:bsd-3)))
 
-(define-public python-django-4.2
+(define-public python-django
   (package
     (name "python-django")
     (version "4.2.16")
@@ -228,24 +228,6 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
     (properties `((cpe-name . "django")
                   ;; This CVE seems fixed since 4.2.1.
                   (lint-hidden-cve . ("CVE-2023-31047"))))))
-
-;; archivebox requires django>=3.1.3,<3.2
-(define-public python-django-3.1.14
-  (package
-    (inherit python-django-4.2)
-    (version "3.1.14")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "Django" version))
-              (sha256
-               (base32
-                "0ix3v2wlnplv78zxjrlw8z3hiap2d5mxvk0ny2fc65526shsb93j"))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-django-4.2)
-       ;; Django 4.0 deprecated pytz in favor of Pythons built-in zoneinfo.
-       (append python-pytz)))))
-
-(define-public python-django python-django-4.2)
 
 (define-public python-django-cache-url
   (package

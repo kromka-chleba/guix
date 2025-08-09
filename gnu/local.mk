@@ -1183,6 +1183,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/cursynth-wave-rand.patch			\
   %D%/packages/patches/cvs-CVE-2017-12836.patch		\
   %D%/packages/patches/d-feet-drop-unused-meson-argument.patch	\
+  %D%/packages/patches/daemontools-gcc14.patch                  \
   %D%/packages/patches/dante-non-darwin.patch			\
   %D%/packages/patches/date-ignore-zonenow.patch	\
   %D%/packages/patches/date-output-pkg-config-files.patch	\
@@ -1749,6 +1750,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libcroco-CVE-2020-12825.patch		\
   %D%/packages/patches/libcyaml-libyaml-compat.patch		\
   %D%/packages/patches/libexpected-use-provided-catch2.patch	\
+  %D%/packages/patches/libgcrypt-arm32-register-pressure.patch	\
   %D%/packages/patches/libgda-CVE-2021-39359.patch		\
   %D%/packages/patches/libgda-disable-data-proxy-test.patch     \
   %D%/packages/patches/libgda-fix-build.patch			\
@@ -2036,6 +2038,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/pango-skip-libthai-test.patch		\
   %D%/packages/patches/password-store-tree-compat.patch		\
   %D%/packages/patches/pciutils-hurd64.patch			\
+  %D%/packages/patches/pcsxr-find-harfbuzz.patch			\
+  %D%/packages/patches/pcsxr-fix-definitions.patch			\
   %D%/packages/patches/pdl-2.019-glut-bitmap-fonts.patch	\
   %D%/packages/patches/pdl-2.100-reproducibility.patch	\
   %D%/packages/patches/petri-foo-0.1.87-fix-recent-file-not-exist.patch			\

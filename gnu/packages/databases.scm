@@ -309,41 +309,37 @@ ElasticSearch server")
 (define-public firebird
   (package
     (name "firebird")
-    (version "3.0.12")
+    (version "3.0.13")
     (source
-     (let ((revision "33787-0"))
-       (origin
-         (method url-fetch)
-         (uri (string-append "https://github.com/FirebirdSQL/"
-                             "firebird/releases/download/v"
-                             version "/"
-                             "Firebird-" version "." revision ".tar.bz2"))
-         (sha256
-          (base32 "07w109k237slwyhgyxma9r5my0dkvksc7ykpw0a4h7gpv06vzcl5"))
-         (patches (search-patches "firebird-riscv64-support-pt1.patch"
-                                  "firebird-riscv64-support-pt2.patch"))
-         (modules '((guix build utils)))
-         (snippet
-          `(begin
-             (for-each
-              delete-file-recursively
-              (list "extern/btyacc/test" ; TODO: package and remove entirely
-                    "extern/editline"
-                    "extern/icu"
-                    "extern/libtommath"
-                    "extern/zlib"
-                    "src/include/firebird/impl/boost"
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/FirebirdSQL/firebird")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h697y53vk7yvlifr35vjl3vkv8m5ny7j05r70qnqcvjy0axqbdn"))
+       (patches (search-patches "firebird-riscv64-support-pt1.patch"
+                                "firebird-riscv64-support-pt2.patch"))
+       (modules '((guix build utils)))
+       (snippet
+        `(begin
+           (for-each
+            delete-file-recursively
+            (list "extern/btyacc/test" ; TODO: package and remove entirely
+                  "extern/editline"
+                  "extern/icu"
+                  "extern/libtommath"
+                  "extern/zlib"
+                  "src/include/firebird/impl/boost"
 
-                    ;; Missing licence.
-                    "builds/install/arch-specific/solaris"
-                    "extern/SfIO"
-                    "src/msgs/templates.sql"
+                  ;; Missing licence.
+                  "builds/install/arch-specific/solaris"
+                  "extern/SfIO"
+                  "src/msgs/templates.sql"
 
-                    ;; Generated files missing sources.
-                    "doc/Firebird-3-QuickStart.pdf"
-                    (string-append "doc/Firebird-" ,version
-                                   "-ReleaseNotes.pdf")
-                    "doc/README.SecureRemotePassword.html")))))))
+                  ;; Generated files missing sources.
+                  "doc/README.SecureRemotePassword.html"))))))
     (build-system gnu-build-system)
     (outputs (list "debug" "out"))
     (arguments
@@ -445,13 +441,11 @@ ElasticSearch server")
                            (list "include/firebird/impl"
                                  "lib/firebird/plugins/udr")))))))))
     (native-inputs
-     (if (target-riscv64?)
-       (list autoconf automake libtool)
-       '()))
+     (list autoconf automake libtool))
     (inputs
      (list boost
            editline
-           icu4c-71
+           icu4c-77
            libtommath
            ncurses
            zlib))
@@ -1316,17 +1310,16 @@ as a drop-in replacement of MySQL.")
 (define-public mariadb-connector-c
   (package
     (name "mariadb-connector-c")
-    (version "3.1.13")
+    (version "3.4.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://downloads.mariadb.org/f/connector-c-" version
-             "/mariadb-connector-c-" version "-src.tar.gz"
-             "/from/https%3A//mirrors.ukfast.co.uk/sites/mariadb/?serve"))
+             "https://downloads.mariadb.org/rest-api/connector-c/"
+             version "/mariadb-connector-c-" version "-src.tar.gz"))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0xb8fiissblxb319y5ifqqp86zblwis789ipb753pcb4zpnsaw82"))))
+        (base32 "18y1x985pnvvirmwfka81ygsvl7isc52mj9c9hvc69fb2qw1jzmi"))))
     (inputs
      (list openssl))
     (build-system cmake-build-system)
@@ -1996,7 +1989,7 @@ including field and record folding.")
 (define-public rocksdb
   (package
     (name "rocksdb")
-    (version "6.26.1")
+    (version "10.4.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2005,7 +1998,7 @@ including field and record folding.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0mylma106w93kxhj89g9y1ccdq7m9m94wrmv5nyr17yc1zsk87sg"))
+                "1cgr33qv639fyx067sg8nsy8mnfac9xgmmw2qwi2bcmir777ma4q"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -3701,15 +3694,66 @@ with Python's asyncio framework.")
 (define-public python-asyncmy
   (package
     (name "python-asyncmy")
-    (version "0.2.5")
+    (version "0.2.10")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "asyncmy" version))
-        (sha256
-          (base32 "0i18zxy6xvzv6dk791xifn2sw2q4zvqwpzrzy8qx51d3mp8z6gng"))))
-    (build-system python-build-system)
-    (native-inputs (list python-cython))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/long2ice/asyncmy")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10sqihiwx7vsdaavgl418hhk7d5rl6d1i60y5bjr76mdfny18q55"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Most tests fail, probably because
+      ;; of pytest-asyncio version mismatch.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'cleanup
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (for-each delete-file
+                        (find-files (site-packages inputs outputs)
+                                    "\\.(c|pyx)$"))))
+
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys #:rest rest)
+              (when tests?
+                ;; XXX: Else pytest picks up the wrong __init__.py
+                (delete-file-recursively "asyncmy")
+                ;; The tests rely on a MySQL or MariaDB test server
+                ;; being available.
+                (let ((datadir "/tmp/mysql")
+                      (socket "/tmp/mysql/mysqld.sock")
+                      (username "root")
+                      (password "123456")) ;default in conftest.py
+                  (invoke "mysqld" "--initialize-insecure"
+                          (string-append "--datadir=" datadir))
+                  (spawn "mysqld"
+                         (list
+                          "mysqld"
+                          ;; Respect '--datadir'.
+                          "--no-defaults"
+                          (string-append "--datadir=" datadir)
+                          (string-append "--socket=" socket)))
+                  (sleep 1)
+                  (invoke "mysql"
+                          (string-append "--socket=" socket)
+                          "-u" "root"
+                          "-e" (string-append
+                                "ALTER USER 'root'@'localhost' IDENTIFIED BY '"
+                                password "';"))
+                  (apply (assoc-ref %standard-phases 'check)
+                         `(#:tests? ,tests? ,@rest)))))))))
+    (native-inputs
+     (list mysql
+           python-cython
+           python-poetry-core
+           python-pytest
+           python-pytest-asyncio
+           python-setuptools))
     (home-page "https://github.com/long2ice/asyncmy")
     (synopsis "Fast MySQL driver for Python")
     (description "@code{asyncmy} is a fast @code{asyncio} MySQL driver, which
@@ -5171,7 +5215,7 @@ with integrated support for finding required rows quickly.")
 (define-public apache-arrow
   (package
     (name "apache-arrow")
-    (version "20.0.0")
+    (version "21.0.0")
     (source
      (origin
        (method git-fetch)
@@ -5181,7 +5225,7 @@ with integrated support for finding required rows quickly.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1n96m8fbpg8azbwm6hx3adbc2sa070k1zh0lj18yqlw2nqmdslr4"))))
+         "0lxywrjfwhiznsldpv5bd6g357za5ng64jvy943kp0ndckh5l4g9"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -5425,132 +5469,6 @@ language-bindings for structure manipulation.  It also provides IPC and common
 algorithm implementations.")
     (license license:asl2.0)))
 
-(define-public apache-arrow-0.16
-  (package
-    (name "apache-arrow")
-    (version "0.16.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/apache/arrow")
-             (commit (string-append "apache-arrow-" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "15bplqy5708bxy1mynzjkd3d2g8v2wd36z8l0ap8yyyq54l3gdvy"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'enter-source-directory
-           (lambda _
-             (chdir "cpp")
-             (substitute* "src/parquet/CMakeLists.txt"
-               (("    parquet_constants.cpp") "")
-               (("set\\(THRIFT_OUTPUT_FILES \\$\\{THRIFT_OUTPUT_FILES\\}.*") "")
-               ((".*\"\\$\\{THRIFT_OUTPUT_DIR\\}/parquet_constants.cpp\"\\).*") ""))))
-         (add-after 'unpack 'set-env
-           (lambda _
-             (setenv "BOOST_ROOT" (assoc-ref %build-inputs "boost"))
-             (setenv "BROTLI_HOME" (assoc-ref %build-inputs "brotli"))
-             (setenv "FLATBUFFERS_HOME" (assoc-ref %build-inputs "flatbuffers"))
-             (setenv "RAPIDJSON_HOME" (assoc-ref %build-inputs "rapidjson")))))
-       #:build-type "Release"
-       #:configure-flags
-       (list "-DARROW_PYTHON=ON"
-             "-DARROW_GLOG=ON"
-             "-DARROW_SSE42=OFF"
-             "-DARROW_BOOST_USE_SHARED=ON"
-             ;; Parquet options
-             "-DARROW_PARQUET=ON"
-
-             ;; The maintainers disallow using system versions of
-             ;; jemalloc:
-             ;; https://issues.apache.org/jira/browse/ARROW-3507. This
-             ;; is unfortunate because jemalloc increases performance:
-             ;; https://arrow.apache.org/blog/2018/07/20/jemalloc/.
-             "-DARROW_JEMALLOC=OFF"
-
-             ;; The CMake option ARROW_DEPENDENCY_SOURCE is a global
-             ;; option that instructs the build system how to resolve
-             ;; each dependency. SYSTEM = Finding the dependency in
-             ;; system paths using CMake's built-in find_package
-             ;; function, or using pkg-config for packages that do not
-             ;; have this feature
-             "-DARROW_DEPENDENCY_SOURCE=SYSTEM"
-
-             ;; Split output into its component packages.
-             (string-append "-DCMAKE_INSTALL_PREFIX="
-                            (assoc-ref %outputs "out"))
-             (string-append "-DCMAKE_INSTALL_RPATH="
-                            (assoc-ref %outputs "out")
-                            "/lib")
-             (string-append "-DCMAKE_INSTALL_BINDIR="
-                            (assoc-ref %outputs "out")
-                            "/bin")
-             (string-append "-DCMAKE_INSTALL_INCLUDEDIR="
-                            (assoc-ref %outputs "include")
-                            "/share/include")
-
-
-             "-DARROW_WITH_SNAPPY=ON"
-             "-DARROW_WITH_ZLIB=ON"
-             "-DARROW_WITH_ZSTD=ON"
-             "-DARROW_WITH_LZ4=ON"
-             "-DARROW_COMPUTE=ON"
-             "-DARROW_CSV=ON"
-             "-DARROW_DATASET=ON"
-             "-DARROW_FILESYSTEM=ON"
-             "-DARROW_HDFS=ON"
-             "-DARROW_JSON=ON"
-             ;; Arrow Python C++ integration library (required for
-             ;; building pyarrow). This library must be built against
-             ;; the same Python version for which you are building
-             ;; pyarrow. NumPy must also be installed. Enabling this
-             ;; option also enables ARROW_COMPUTE, ARROW_CSV,
-             ;; ARROW_DATASET, ARROW_FILESYSTEM, ARROW_HDFS, and
-             ;; ARROW_JSON.
-             "-DARROW_PYTHON=ON"
-
-             ;; Building the tests forces on all the
-             ;; optional features and the use of static
-             ;; libraries.
-             "-DARROW_BUILD_TESTS=OFF"
-             "-DBENCHMARK_ENABLE_GTEST_TESTS=OFF"
-             ;;"-DBENCHMARK_ENABLE_TESTING=OFF"
-             "-DARROW_BUILD_STATIC=OFF")))
-    (inputs
-     `(("boost" ,boost)
-       ("brotli" ,brotli)
-       ("double-conversion" ,double-conversion)
-       ("snappy" ,snappy)
-       ("gflags" ,gflags)
-       ("glog" ,glog)
-       ("apache-thrift" ,apache-thrift "lib")
-       ("protobuf" ,protobuf)
-       ("rapidjson" ,rapidjson)
-       ("zlib" ,zlib)
-       ("bzip2" ,bzip2)
-       ("lz4" ,lz4)
-       ("zstd" ,zstd "lib")
-       ("re2" ,re2)
-       ("grpc" ,grpc)
-       ("python-3" ,python)
-       ("python-numpy" ,python-numpy)))
-    (native-inputs
-     (list pkg-config apache-thrift))
-    (outputs '("out" "include"))
-    (home-page "https://arrow.apache.org/")
-    (synopsis "Columnar in-memory analytics")
-    (description "Apache Arrow is a columnar in-memory analytics layer
-designed to accelerate big data.  It houses a set of canonical in-memory
-representations of flat and hierarchical data along with multiple
-language-bindings for structure manipulation.  It also provides IPC and common
-algorithm implementations.")
-    (license license:asl2.0)))
-
 (define-public python-pyarrow
   (package
     (inherit apache-arrow)
@@ -5607,64 +5525,6 @@ __version_tuple__ = version_tuple = (~a)~%" version version-tuple))))))
      (list cmake ;needs 3.25
            pkg-config
            python-cython-3
-           python-pytest
-           python-pytest-runner
-           python-setuptools-scm))
-    (outputs '("out"))
-    (home-page "https://arrow.apache.org/docs/python/")
-    (synopsis "Python bindings for Apache Arrow")
-    (description
-     "This library provides a Pythonic API wrapper for the reference Arrow C++
-implementation, along with tools for interoperability with pandas, NumPy, and
-other traditional Python scientific computing packages.")
-    (license license:asl2.0)))
-
-(define-public python-pyarrow-0.16
-  (package
-    (inherit apache-arrow-0.16)
-    (name "python-pyarrow")
-    (build-system python-build-system)
-    (arguments
-     '(#:tests? #f          ; XXX There are no tests in the "python" directory
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'build) ; XXX the build is performed again during the install phase
-         (add-after 'unpack 'enter-source-directory
-           (lambda _ (chdir "python")))
-         (add-after 'unpack 'make-git-checkout-writable
-           (lambda _
-             (for-each make-file-writable (find-files "."))))
-         (add-before 'install 'patch-cmake-variables
-           (lambda* (#:key inputs #:allow-other-keys)
-             ;; Replace cmake locations with hardcoded guix links for the
-             ;; underlying C++ library and headers.  This is a pretty awful
-             ;; hack.
-             (substitute* "cmake_modules/FindParquet.cmake"
-               (("# Licensed to the Apache Software Foundation" m)
-                (string-append "set(PARQUET_INCLUDE_DIR \""
-                               (assoc-ref inputs "apache-arrow:include")
-                               "/share/include\")\n" m))
-               (("find_package_handle_standard_args" m)
-                (string-append "set(PARQUET_LIB_DIR \""
-                               (assoc-ref inputs "apache-arrow:lib")
-                               "/lib\")\n" m)))))
-         (add-before 'install 'patch-parquet-library
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("parquet_shared") "parquet"))))
-         (add-before 'install 'set-PYARROW_WITH_PARQUET
-           (lambda _
-             (setenv "PYARROW_WITH_PARQUET" "1"))))))
-    (propagated-inputs
-     `(("apache-arrow:lib" ,apache-arrow-0.16)
-       ("apache-arrow:include" ,apache-arrow-0.16 "include")
-       ("python-numpy" ,python-numpy)
-       ("python-pandas" ,python-pandas)
-       ("python-six" ,python-six)))
-    (native-inputs
-     (list cmake-minimal
-           pkg-config
-           python-cython
            python-pytest
            python-pytest-runner
            python-setuptools-scm))

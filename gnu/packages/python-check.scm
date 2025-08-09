@@ -77,6 +77,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -363,6 +364,26 @@ all the files it generates a report.")
     (description "Beartype aims to be a very fast runtime type checking tool
 written in pure Python.")
     (license license:expat)))
+
+(define-deprecated/public python-case #f
+  (package
+    (name "python-case")
+    (version "1.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "case" version))
+       (sha256
+        (base32 "1cagg06vfph864s6l5jb0zqliwxh647bki8j6lf4a4qrv40jnhs8"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-mock python-nose python-six))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/celery/case")
+    (synopsis "Unittest utilities and convenience methods")
+    (description
+     "The @code{case} package provides utilities on top of unittest, including
+some helpful Python 2 compatibility convenience methods.")
+    (license license:bsd-3)))
 
 (define-public python-codacy-coverage
   (package
@@ -2495,16 +2516,17 @@ requests to be replied to with user provided responses.")
     (version "3.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest_isort" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/stephrdev/pytest-isort")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0v0qa5l22y3v0nfkpvghbinzyj2rh4f54k871lrp992lbvf02y06"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f)) ; No tests in PyPi tarball.
-    (propagated-inputs
-     (list python-isort python-pytest))
-    (home-page "https://github.com/moccu/pytest-isort/")
+        (base32 "07hj2z2jsshk0m60j0w10q3yzis69714k7qbw2f0cprc5li9b06n"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-isort python-pytest))
+    (native-inputs (list python-poetry-core))
+    (home-page "https://github.com/stephrdev/pytest-isort")
     (synopsis "Pytest plugin to check import ordering using isort")
     (description
      "This package provides a pytest plugin to check import ordering using
@@ -3867,7 +3889,9 @@ data in a standard way.")
        (uri (pypi-uri "test-utils" version))
        (sha256
         (base32 "0cs0gyihnkj8ya4yg3ld3ly73mpxrkn2gq9acamclhqvhxsv7zd6"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://github.com/Kami/python-test-utils/")
     (synopsis "Utilities for functional and integration tests")
     (description

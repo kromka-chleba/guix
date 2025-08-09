@@ -1929,43 +1929,6 @@ limited size and a few external dependencies.  It is configurable via
     ;;             LICENSE       LICENSE.dwm   LICENSE.tinywl
     (license (list license:gpl3+ license:expat license:cc0))))
 
-(define-public nitrogen
-  (package
-    (name "nitrogen")
-    (version "1.6.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://github.com/l3ib/nitrogen/"
-                                  "releases/download/" version "/"
-                                  name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0zc3fl1mbhq0iyndy4ysmy8vv5c7xwf54rbgamzfhfvsgdq160pl"))))
-    (build-system gnu-build-system)
-    (inputs
-     (list gtk+-2 gtkmm-2 glib glibmm))
-    (native-inputs
-     (list pkg-config))
-    (home-page "http://projects.l3ib.org/nitrogen/")
-    (synopsis "Background browser and setter for X windows")
-    (description
-     "This package is a background browser and setter for X windows.  It's
-features are:
-
-@itemize
-@item Multihead and Xinerama aware
-@item Recall mode to used via startup script
-@item Uses freedesktop.org standard for thumbnails
-@item Can set GNOME background
-@item Command lie set modes for script use
-@item Inotify monitoring of browse directory
-@item Lazy loading of thumbnails - conserves memory
-@item \"Automatic\" set mode - determines best mode to set an image based on
-its size
-@item Display preview images in a tiled icon layout
-@end itemize")
-    (license license:gpl2+)))
-
 (define-public polybar
   (package
     (name "polybar")
@@ -2327,7 +2290,7 @@ corners, shadows, inactive window dimming, etc.")
 (define-public swaylock
   (package
     (name "swaylock")
-    (version "1.8.0")
+    (version "1.8.3")
     (source
      (origin
        (method git-fetch)
@@ -2336,7 +2299,7 @@ corners, shadows, inactive window dimming, etc.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1n4m5nk2jj4f0p11760zdd51ncsb469d06hm0f5487v01p3igq6p"))))
+        (base32 "01zwlfpf3s8wd8gl2sjfch1z66mqx9n2plgbdang7plqc3r01474"))))
     (build-system meson-build-system)
     (inputs (append (if (%current-target-system)
                         (list wayland-protocols)

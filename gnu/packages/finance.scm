@@ -562,10 +562,80 @@ It's not clear at the moment whether one day it will be possible to
 do so.")
     (license license:agpl3+)))
 
+(define-public python-electrum-ecc
+  (package
+    (name "python-electrum-ecc")
+    (version "0.0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "electrum_ecc" version))
+       (sha256
+        (base32 "1lmp5zmhabaxp6jha3xlsmqviivrxxhsy20x6z42ayqgd9cvhczp"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Delete the vendored dependency.
+           (delete-file-recursively "libsecp256k1")))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'prepare-env
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       ;; Do not attempt to compile vendored libsecp256k1.
+                       (setenv "ELECTRUM_ECC_DONT_COMPILE" "1")
+                       ;; Make the package find our libsecp256k1.
+                       (substitute* "src/electrum_ecc/ecc_fast.py"
+                         (("library_paths = \\[\\]")
+                          (string-append
+                           "library_paths = ['"
+                           (search-input-file inputs "/lib/libsecp256k1.so")
+                           "']"))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list libsecp256k1))
+    (home-page "https://github.com/spesmilo/electrum-ecc")
+    (synopsis "Pure python ctypes wrapper for libsecp256k1")
+    (description "This package provides a pure Python ctypes wrapper for
+@code{libsecp256k1}.")
+    (license license:expat)))
+
+(define-public electrum-aionostr
+  (package
+    (name "electrum-aionostr")
+    (version "0.0.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "electrum_aionostr" version))
+       (sha256
+        (base32 "10fgidah8ca59j3gssg9b434j49c1dd9cs3224nanjsxwl0ivsqf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Test below fails to match an exit code, pointing to this in Click:
+      ;; https://github.com/pallets/click/pull/1489
+      ;; This was fixed in Click 8.2.0.
+      #:test-flags #~(list "-k" "not test_command_line_interface")))
+    (inputs (list python-aiohttp
+                  python-aiohttp-socks
+                  python-aiorpcx
+                  python-cryptography
+                  python-electrum-ecc))
+    (native-inputs (list python-click
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/spesmilo/electrum-aionostr")
+    (synopsis "Asyncio nostr client")
+    (description "This package is a fork of @code{aionostr} that does not
+require Coincurve.")
+    (license license:bsd-3)))
+
 (define-public electrum
   (package
     (name "electrum")
-    (version "4.4.6")
+    (version "4.6.1")
     (source
      (origin
        (method url-fetch)
@@ -573,42 +643,51 @@ do so.")
                            version "/Electrum-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1f0hb8xmqv1j9pf82xpyvxnn2dzmi93rhf0sh0iqakja2pbl4707"))
+        (base32 "1h7z019sp99csrj1djmhlm9y7vyyzl7wvar7z9x4jx59lmmvs1xs"))
        (modules '((guix build utils)))
        (snippet
         '(begin
            ;; Delete the bundled dependencies.
            (delete-file-recursively "packages")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Either pycryptodomex or cryptography must be available.
+      ;; This package uses python-cryptography, but this test checks for
+      ;; cryptodomex anyway.  Skip it since it's not useful.
+      #:test-flags #~(list "-k" "not test_pycryptodomex_is_available")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-deps
+            (lambda _
+              (substitute* "contrib/requirements/requirements.txt"
+                ;; These packages have tight version requirements because
+                ;; the developer does not want to introduce Hatchling in
+                ;; the build environment.  They do work at runtime.
+                (("attrs.*") "attrs")
+                (("dnspython.*") "dnspython"))))
+          (add-before 'check 'set-home
+            (lambda _ ; 3 tests run mkdir
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (inputs
-     (list libsecp256k1
+     (list electrum-aionostr
            python-aiohttp
            python-aiohttp-socks
            python-aiorpcx
            python-attrs
-           python-bitstring
-           python-btchip-python
            python-certifi
            python-cryptography
            python-dnspython
+           python-electrum-ecc
            python-hidapi
-           python-ledgerblue
+           python-jsonpatch
            python-protobuf
-           python-pyqt
+           python-pyaes
+           python-pyqt-6
            python-qdarkstyle
            python-qrcode
            zbar))
-    (arguments
-     `(#:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'use-libsecp256k1-input
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "electrum/ecc_fast.py"
-               (("library_paths = \\[\\]")
-                (string-append "library_paths = ['"
-                               (assoc-ref inputs "libsecp256k1")
-                               "/lib/libsecp256k1.so']"))))))))
     (home-page "https://electrum.org/")
     (synopsis "Bitcoin wallet")
     (description

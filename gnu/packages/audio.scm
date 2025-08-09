@@ -3527,18 +3527,18 @@ player-like clients.")
     (version "0.10.0")
     (source (origin
              (method url-fetch)
-             (uri (string-append "http://das.nasophon.de/download/pyliblo-"
+             (uri (string-append "https://das.nasophon.de/download/pyliblo-"
                                  version ".tar.gz"))
              (sha256
               (base32
                "13vry6xhxm7adnbyj28w1kpwrh0kf7nw83cz1yq74wl21faz2rzw"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments `(#:tests? #f)) ;no tests
     (native-inputs
-     (list python-cython))
+     (list python-cython python-setuptools python-wheel))
     (inputs
      (list liblo))
-    (home-page "http://das.nasophon.de/pyliblo/")
+    (home-page "https://das.nasophon.de/pyliblo/")
     (synopsis "Python bindings for liblo")
     (description
      "Pyliblo is a Python wrapper for the liblo Open Sound Control (OSC)
@@ -3575,14 +3575,14 @@ included are the command line utilities @code{send_osc} and @code{dump_osc}.")
 (define-public python-soundfile
   (package
     (name "python-soundfile")
-    (version "0.13.0")
+    (version "0.13.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "soundfile" version))
        (sha256
         (base32
-         "0mc3g5l9fzj57m62zrwwz0w86cbihpna3mikgh8kpmz7ppc9jcz8"))))
+         "0nqf7z2wrb70vppjv5729565h0p3azgl6nqa10bp6a9h3smqvimj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4848,21 +4848,18 @@ encode and decode wavpack files.")
       (license license:gpl3+))))
 
 (define-public libmixed
-  ;; Release is much outdated.
-  (let ((commit "9b2668e0d85175b0e92864cfbf1b9e58f77c92e0")
-        (revision "1"))
     (package
       (name "libmixed")
-      (version (git-version "2.0" revision commit))
+      (version "2.4.0")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/Shirakumo/libmixed")
-               (commit commit)))
+               (commit version)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ql2h0hh4jl96sc9i6mk1d6qq261bvsfapinvzr9gx3lpzycpfb7"))))
+          (base32 "0g9z8mzrdp1j4w4dv6z2xkgknip6m6384n953y20wdvhs71gia1v"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -4890,7 +4887,7 @@ in audio/video/games.  It can serve as a base architecture for complex DSP
 systems.")
       (license (list license:bsd-2 ; libsamplerate
                      license:gpl2 ; spiralfft
-                     license:zlib)))))
+                     license:zlib))))
 
 (define-public libmodplug
   (package
@@ -6482,11 +6479,10 @@ as is the case with audio plugins.")
                  (lambda _
                    (chmod (string-append #$output "/share/carla/carla") #o555)))
                (add-after 'install 'wrap-executables
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (wrap-script (string-append #$output "/bin/carla")
-                                #:guile (search-input-file inputs "bin/guile")
-                                `("GUIX_PYTHONPATH" ":" prefix
-                                  (,(getenv "GUIX_PYTHONPATH")))))))))
+                 (lambda _
+                   (wrap-program (string-append #$output "/bin/carla")
+                     `("GUIX_PYTHONPATH" ":" prefix
+                       (,(getenv "GUIX_PYTHONPATH")))))))))
     (inputs
      (list alsa-lib
            ffmpeg
@@ -6505,10 +6501,7 @@ as is the case with audio plugins.")
            ;; (ModuleNotFoundError: No module named 'PyQt5')
            python-wrapper
            qtbase-5
-           zlib
-
-           ;; For WRAP-SCRIPT above.
-           guile-2.2))
+           zlib))
     (native-inputs
      (list pkg-config))
     (home-page "https://kx.studio/Applications:Carla")

@@ -3571,59 +3571,58 @@ assembler, and debugger for the Intel 8085 microprocessor.
 
 (define-public pcsxr
   ;; No release since 2017.
-  (let ((commit "6484236cb0281e8040ff6c8078c87899a3407534"))
+  (let ((commit "666604321bf2d3dd5e5f58b534cfce41e72ad7d1")
+        (revision "1"))
     (package
       (name "pcsxr")
-      ;; Version is tagged here: https://github.com/frealgagu/PCSX-Reloaded
-      (version "1.9.95")
+      ;; From CMakeLists.txt.
+      (version (git-version "1.9.94" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/pcsxr/PCSX-Reloaded")
+               (url "https://github.com/MaddTheSane/PCSX-Reloaded")
                (commit commit)))
+         (patches (search-patches "pcsxr-find-harfbuzz.patch"
+                                  "pcsxr-fix-definitions.patch"))
          (sha256
-          (base32
-           "138mayp7zi9v4l3lm5f6xxkds619w1fgg769zm8s45c84jbz7dza"))
+          (base32 "0lcypcawnipm02m3wnjsrm9r10llabncx78ramk7iw03a646dngj"))
          (file-name (git-file-name name commit))))
       (build-system cmake-build-system)
       (arguments
-       `(#:tests? #f                    ;no "test" target
-         #:configure-flags
-         (list "-DSND_BACKEND=pulse"
-               "-DENABLE_CCDDA='ON'"
-               "-DUSE_LIBARCHIVE='ON'"
-               "-DUSE_LIBCDIO='ON'")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'cd-subdir
-             (lambda _ (chdir "pcsxr") #t))
-           (add-before 'configure 'fix-cdio-lookup
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "cmake/FindCdio.cmake"
-                 (("/usr/include/cdio")
-                  (search-input-directory inputs "/include/cdio")))))
-           (add-after 'install 'wrap-program
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (wrap-program (string-append (assoc-ref outputs "out")
-                                            "/bin/pcsxr")
-                 ;; For GtkFileChooserDialog.
-                 `("GSETTINGS_SCHEMA_DIR" =
-                   (,(string-append (assoc-ref inputs "gtk+")
-                                    "/share/glib-2.0/schemas")))))))))
-      (native-inputs
-       (list pkg-config intltool
-             `(,glib "bin")))
-      (inputs
-       (list bash-minimal
-             libcdio
-             sdl2
-             gtk+
-             ffmpeg-4
-             libxv
-             libarchive
-             pulseaudio))
-      (home-page "https://archive.codeplex.com/?p=pcsxr")
+       (list
+        #:tests? #f ;no "test" target
+        #:configure-flags
+        #~(list "-DSND_BACKEND=pulse"
+                "-DENABLE_CCDDA='ON'"
+                "-DUSE_LIBARCHIVE='ON'"
+                "-DUSE_LIBCDIO='ON'"
+                "-DCMAKE_C_FLAGS=-Wno-incompatible-pointer-types")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'configure 'fix-cdio-lookup
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "cmake/FindCdio.cmake"
+                  (("/usr/include/cdio")
+                   (search-input-directory inputs "/include/cdio")))))
+            (add-after 'install 'wrap-program
+              (lambda* (#:key inputs #:allow-other-keys)
+                (wrap-program (string-append #$output "/bin/pcsxr")
+                  ;; For GtkFileChooserDialog.
+                  `("GSETTINGS_SCHEMA_DIR" =
+                    (,(string-append (assoc-ref inputs "gtk+")
+                                     "/share/glib-2.0/schemas")))))))))
+      (native-inputs (list pkg-config intltool
+                           `(,glib "bin")))
+      (inputs (list bash-minimal
+                    libcdio
+                    sdl2
+                    gtk+
+                    ffmpeg-4
+                    libxv
+                    libarchive
+                    pulseaudio))
+      (home-page "https://github.com/MaddTheSane/PCSX-Reloaded")
       (synopsis "PlayStation emulator")
       (description
        "A PlayStation emulator based on PCSX-df Project with bugfixes and

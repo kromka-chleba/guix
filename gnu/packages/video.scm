@@ -72,6 +72,7 @@
 ;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2025 Formbi <formbi@protonmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.ccom>
+;;; Copyright © 2025 VnPower <vnpower@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3016,6 +3017,31 @@ To load this plugin, specify the following option when starting mpv:
 @file{$HOME/.config/mpv/scripts}.")
     (license license:expat)))
 
+(define-public mpvpaper
+  (package
+    (name "mpvpaper")
+    (version "1.8")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/GhostNaN/mpvpaper")
+                    (commit version)))
+              (sha256
+               (base32 "0pzc6f5r85qd0dgp6aa6pp8ba2m7ghzd3pc4xnqnarh2bx55jf95"))
+              (file-name (git-file-name name version))))
+    (build-system meson-build-system)
+     (inputs
+      (list mpv libdisplay-info wlroots))
+     (native-inputs
+      (list pkg-config cmake-minimal))
+     (home-page "https://github.com/GhostNaN/mpvpaper")
+     (synopsis
+      "Video wallpaper program for wlroots-based wayland compositors")
+     (description "The mpvpaper package provides a wallpaper program for
+wlroots-based wayland compositors, allowing you to play videos as your
+wallpaper using mpv.")
+     (license license:gpl3)))
+
 (define-public libvpx
   (package
     (name "libvpx")
@@ -5924,7 +5950,7 @@ It counts more than 100 plugins.")
 (define-public motion
   (package
     (name "motion")
-    (version "4.5.1")
+    (version "4.7.0")
     (home-page "https://motion-project.github.io/")
     (source (origin
               (method git-fetch)
@@ -5933,7 +5959,7 @@ It counts more than 100 plugins.")
                     (commit (string-append "release-" version))))
               (sha256
                (base32
-                "09j919bba75d05rkqpib5rcmn1ff5nvn4ss8yy4fi6iz0lnacffx"))
+                "1pwsl1v0aqh5k5608siy0614lyf5bscy9a47ha8i5vqsbqxy4s3c"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs

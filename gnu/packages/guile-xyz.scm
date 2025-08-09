@@ -4884,36 +4884,6 @@ return accumulators.  It is implemented by wrapping the sample
 implementation in a thin Guile compatibility layer.")
       (license license:gpl3+))))
 
-(define-public guile-srfi-159
-  (let ((commit "1bd98abda2ae4ef8f36761a167903e55c6bda7bb")
-        (revision "0"))
-    (package
-      (name "guile-srfi-159")
-      (version (git-version "0" revision commit))
-      (home-page "https://bitbucket.org/bjoli/guile-srfi-159")
-      (source (origin
-                (method hg-fetch)
-                (uri (hg-reference (changeset commit)
-                                   (url home-page)))
-                (sha256
-                 (base32
-                  "1zw6cmcy7xdbfiz3nz9arqnn7l2daidaps6ixkcrc9b6k51fdv3p"))
-                (file-name (git-file-name name version))))
-      (build-system guile-build-system)
-      (arguments
-       ;; The *-impl.scm files are actually included from module files; they
-       ;; should not be compiled separately, but they must be installed.
-       '(#:not-compiled-file-regexp "-impl\\.scm$"))
-      (inputs
-       (list guile-2.2))
-      (synopsis "Formatting combinators for Guile")
-      (description
-       "The @code{(srfi-159)} module and its sub-modules implement the
-formatting combinators specified by
-@uref{https://srfi.schemers.org/srfi-159/srfi-159.html, SRFI-159}.  These are
-more expressive and flexible than the traditional @code{format} procedure.")
-      (license license:bsd-3))))
-
 (define-public guile-srfi-180
   (let ((commit "9188bf9724c6d320ef804579d222e855b007b193")
         (revision "0"))
@@ -6339,22 +6309,20 @@ Relay Chat} (IRC).")
 (define-public guile-websocket
   (package
     (name "guile-websocket")
-    (version "0.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://files.dthompson.us/guile-websocket/"
-                                  "guile-websocket-" version ".tar.gz"))
-              (sha256
-               (base32
-                "143ng1x5xwy218wd1svj718ikqnrglwsywyzpd3ap9jnivw66g7f"))))
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://files.dthompson.us/releases/"
+                           "guile-websocket/guile-websocket-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "0mbxbwc5flrafh77sl0cbfclpk3vys0hh3fqmdl9v3nqyl0cbsij"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:make-flags
-       '("GUILE_AUTO_COMPILE=0")))
-    (native-inputs
-     (list autoconf automake pkg-config))
-    (inputs
-     (list guile-3.0 guile-gnutls))
+     '(#:make-flags '("GUILE_AUTO_COMPILE=0")))
+    (native-inputs (list autoconf automake pkg-config))
+    (inputs (list guile-3.0 guile-gnutls))
     (synopsis "Websocket server/client for Guile")
     (description "Guile-websocket provides an implementation of the
 WebSocket protocol as defined by RFC 6455.")
@@ -6978,25 +6946,24 @@ or @code{LuaBind} but for Scheme.")
     (name "guile-cbor")
     (version "0.1.0")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://inqlab.net/git/guile-cbor.git")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256 (base32 "0bdqg3ifayf7m2j09lqrgdfprbdaa67azf09bcq9b4k71inxfnxl"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/pukkamustard/guile-cbor/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bdqg3ifayf7m2j09lqrgdfprbdaa67azf09bcq9b4k71inxfnxl"))))
     (build-system gnu-build-system)
-    (arguments `())
-    (native-inputs
-     (list autoconf automake pkg-config texinfo))
+    (native-inputs (list autoconf automake pkg-config texinfo))
     (inputs (list guile-3.0))
     (synopsis "Guile implementation of CBOR")
     (description
-     "The Concise Binary Object Representation (CBOR), as specified by RFC 8949, is
-a binary data serialization format.  CBOR is similar to JSON but serializes to
-binary which is smaller and faster to generate and parse.  This package provides
-a Guile implementation of CBOR.")
-    (home-page "https://inqlab.net/git/guile-cbor.git")
+     "The Concise Binary Object Representation (CBOR), as specified by RFC
+8949, is a binary data serialization format.  CBOR is similar to JSON but
+serializes to binary which is smaller and faster to generate and parse.  This
+package provides a Guile implementation of CBOR.")
+    (home-page "https://codeberg.org/pukkamustard/guile-cbor/")
     (license license:gpl3+)))
 
 (define-public guile-qr-code
@@ -7618,25 +7585,22 @@ ftypes.")
 (define-public guile-goblins
   (package
     (name "guile-goblins")
-    (version "0.15.1")
+    (version "0.16.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://files.spritely.institute/releases"
-                           "/guile-goblins/guile-goblins-"
-                           version ".tar.gz"))
+                           "/guile-goblins/guile-goblins-" version ".tar.gz"))
        (sha256
-        (base32
-         "05qqryhhs9rci01j08nbchmif1h9889bwqqv830ywygl1bld50ys"))))
+        (base32 "0w3lxhj95vcp6w38z5ygpjf5lw8j523j2znkmg22p1jyqx7kl7c8"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:make-flags
-           #~(list "GUILE_AUTO_COMPILE=0")))
-    (native-inputs
-     (list pkg-config texinfo))
+     (list
+      #:make-flags
+      #~(list "GUILE_AUTO_COMPILE=0")))
+    (native-inputs (list pkg-config texinfo))
     (inputs (list guile-3.0))
-    (propagated-inputs
-     (list guile-fibers guile-gnutls guile-websocket))
+    (propagated-inputs (list guile-fibers guile-gnutls guile-websocket))
     (home-page "https://spritely.institute/goblins")
     (synopsis "Distributed programming environment for Guile")
     (description

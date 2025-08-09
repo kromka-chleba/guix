@@ -14171,7 +14171,7 @@ interface.")
 (define-public emacs-orderless
   (package
     (name "emacs-orderless")
-    (version "1.4")
+    (version "1.5")
     (source
      (origin
        (method git-fetch)
@@ -14179,11 +14179,12 @@ interface.")
              (url "https://github.com/oantolin/orderless")
              (commit version)))
        (sha256
-        (base32 "1la91fk322n600h4wnavx7a6rdc44mz4v4gg1fb3cpwjsw746sl8"))
+        (base32 "0cgklam29vsfrl70n3cqv1dxbsnpzjylfxabfs9v1yz02q27nggv"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'install 'makeinfo
@@ -14194,7 +14195,8 @@ interface.")
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/oantolin/orderless")
-    (synopsis "Emacs completion style that matches multiple regexps in any order")
+    (synopsis
+     "Emacs completion style that matches multiple regexps in any order")
     (description "This package provides an orderless completion style that
 divides the pattern into space-separated components, and matches candidates
 that match all of the components in any order.  Each component can match in
@@ -14590,7 +14592,7 @@ expansion and overwriting the marked region with a new snippet completion.")
 (define-public emacs-marginalia
   (package
     (name "emacs-marginalia")
-    (version "2.0")
+    (version "2.2")
     (source
      (origin
        (method git-fetch)
@@ -14599,21 +14601,20 @@ expansion and overwriting the marked region with a new snippet completion.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00dzckksfzvwjdy3v1g71nvkxnnpw2bmh8bmhf56qn3nzfj2yr89"))))
+        (base32 "1grn94v5pidb9wk2vgxx5n3fmhcgx9i14lrwm5clvsvncysy7zhg"))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:tests? #f                       ;no tests
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
+          (add-before 'install 'makeinfo
             (lambda _
               (invoke "emacs"
                       "--batch"
                       "--eval=(require 'ox-texinfo)"
                       "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "marginalia.info"
-                            (string-append #$output "/share/info")))))))
+                      "--eval=(org-texinfo-export-to-info)"))))))
     (native-inputs (list texinfo))
     (propagated-inputs
      (list emacs-compat))
@@ -20659,7 +20660,7 @@ using a convenient notation.")
   (let ((commit "c3f4583b0767e7f8c38c83ed29af40af8ba3bdfa")) ;version bump
     (package
       (name "emacs-beframe")
-      (version "1.3.0")
+      (version "1.4.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -20672,17 +20673,16 @@ using a convenient notation.")
       (build-system emacs-build-system)
       (arguments
        (list
+        #:tests? #f                     ;no tests
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'install 'makeinfo
+            (add-before 'install 'makeinfo
               (lambda _
                 (invoke "emacs"
                         "--batch"
                         "--eval=(require 'ox-texinfo)"
                         "--eval=(find-file \"README.org\")"
-                        "--eval=(org-texinfo-export-to-info)")
-                (install-file "beframe.info"
-                              (string-append #$output "/share/info")))))))
+                        "--eval=(org-texinfo-export-to-info)"))))))
       (native-inputs
        (list texinfo))
       (home-page "https://protesilaos.com/emacs/beframe")
@@ -32489,17 +32489,32 @@ buffer displays recursive dir sizes.")
 (define-public emacs-dired-preview
   (package
     (name "emacs-dired-preview")
-    (version "0.4.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/protesilaos/dired-preview")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "016g2scl3ifngy67s5dalnywxxj1xdf1mibpqda2zgynx0czvv7l"))))
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/protesilaos/dired-preview")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0p6v1dx33f7ypi026pp4jjzh81n5vl4gy63cwhql0sbwsbxsz8y9"))))
     (build-system emacs-build-system)
+    (arguments
+     (list
+      #:test-command
+      #~(list "ert-runner" "-L" "tests" "tests/dired-preview-test.el")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'makeinfo
+            (lambda _
+              (invoke "emacs"
+                      "--batch"
+                      "--eval=(require 'ox-texinfo)"
+                      "--eval=(find-file \"README.org\")"
+                      "--eval=(org-texinfo-export-to-info)"))))))
+    (native-inputs (list emacs-ert-runner texinfo))
     (home-page "https://protesilaos.com/emacs/dired-preview")
     (synopsis "Automatically preview file at point in Dired")
     (description
@@ -38539,7 +38554,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
 (define-public emacs-fj
   (package
     (name "emacs-fj")
-    (version "0.17")
+    (version "0.21")
     (source
      (origin
        (method git-fetch)
@@ -38548,7 +38563,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0857h9pkzdmf2cgd3ss4q405n219gfdsfryp6w4mr0mp87dpgz84"))))
+        (base32 "0pvk69i6nz1gf36labj6cdskw8qsx44hx2z78s2fcvr8z4a345rl"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))

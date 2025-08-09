@@ -285,7 +285,7 @@ contents, and discovering ways to shrink the size of Docker/OCI image.")
 (define-public libslirp
   (package
     (name "libslirp")
-    (version "4.7.0")
+    (version "4.9.1")
     (source
      (origin
        (method git-fetch)
@@ -293,7 +293,7 @@ contents, and discovering ways to shrink the size of Docker/OCI image.")
              (url "https://gitlab.freedesktop.org/slirp/libslirp")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0dny8187a8qh6akaa37aa9b5pjxx88f02wh6achp4mygff0ipxba"))
+        (base32 "1jlqda5k5wm0ql0fymkr3dbf1d71gxcj7896r8mz8s1i264gg8rh"))
        (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (propagated-inputs
@@ -311,7 +311,7 @@ containers or various tools.")
 (define-public slirp4netns
   (package
     (name "slirp4netns")
-    (version "1.3.2")
+    (version "1.3.3")
     (source
      (origin
        (method git-fetch)
@@ -319,7 +319,7 @@ containers or various tools.")
              (url "https://github.com/rootless-containers/slirp4netns")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "13lw48b89583smblp2d4kxb1j23k2qx3i2j5zi91sxwnnn4ndks2"))
+        (base32 "165z1ccsb8w901965rlzcrbln17l1jdg9k7vsiamlx0q06v24b96"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

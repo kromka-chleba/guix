@@ -524,6 +524,10 @@ several possible methods.")
         (base32
          "0lwniinfr3rb10n0c203a09vz06vxnnj637yqn8ipdlml89gj7kr"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--ignore=tests/test_benchmark.py")))
     (propagated-inputs
      (list python-brotli
            python-brotlicffi
@@ -537,15 +541,12 @@ several possible methods.")
            python-pyzstd
            python-texttable))
     (native-inputs
-     (list python-coverage
-           python-setuptools
-           python-coveralls
+     (list python-setuptools
            python-libarchive-c
            python-py-cpuinfo
            python-pyannotate
            python-pytest
            python-pytest-benchmark
-           python-pytest-cov
            python-pytest-remotedata
            python-pytest-timeout
            python-setuptools-scm
@@ -932,27 +933,16 @@ provided.")
         '(begin
            ;; Remove a bundled copy of the zstd sources.
            (delete-file-recursively "zstd")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
+      ;; XXX: This is ugly. TODO python-team:
+      ;; Migrate pyproject to (json) instead of (guix build json).
       #:configure-flags
-      #~(list "--dynamic-link-zstd")
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'build
-            ;; The python-build-system's phase doesn't honour configure-flags.
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (apply invoke "python" "./setup.py" "build"
-                     configure-flags)))
-          (replace 'check
-            ;; The python-build-system's phase doesn't honour configure-flags.
-            (lambda* (#:key tests? test-target configure-flags
-                      #:allow-other-keys)
-              (when tests?
-                (apply invoke "python" "./setup.py" test-target
-                       configure-flags)))))))
+      #~`(@ . (("--build-option" . "--dynamic-link-zstd")))))
     (inputs (list `(,zstd "lib")))
-    (home-page "https://github.com/animalize/pyzstd")
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/Rogdham/pyzstd")
     (synopsis "Zstandard bindings for Python")
     (description "This package provides Python bindings to the Zstandard (zstd)
 compression library.  The API is similar to Python's bz2/lzma/zlib module.")
