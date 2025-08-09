@@ -1266,15 +1266,7 @@ other git-like projects such as @code{libgit2}.")
             (list "-DUSE_NTLMCLIENT=OFF" ;TODO: package this
                   "-DREGEX_BACKEND=pcre2"
                   "-DUSE_HTTP_PARSER=system"
-                  "-DUSE_SSH=ON" ; cmake fails to find libssh if this is missing
-                  ,@(if (%current-target-system)
-                        `((string-append
-                           "-DPKG_CONFIG_EXECUTABLE="
-                           (search-input-file
-                            %build-inputs
-                            (string-append "/bin/" ,(%current-target-system)
-                                           "-pkg-config"))))
-                        '())))
+                  "-DUSE_SSH=ON")) ; cmake fails to find libssh if this is missing
        #:phases
        (modify-phases %standard-phases
          ,@(if (or (target-arm32?) (target-hurd?))
@@ -1365,15 +1357,7 @@ write native speed custom Git applications in any language with bindings.")
         `(list "-DUSE_NTLMCLIENT=OFF" ;TODO: package this
                "-DREGEX_BACKEND=pcre2"
                "-DUSE_HTTP_PARSER=system"
-               "-DUSE_SSH=ON" ; cmake fails to find libssh if this is missing
-               ,@(if (%current-target-system)
-                     `((string-append
-                        "-DPKG_CONFIG_EXECUTABLE="
-                        (search-input-file
-                         %build-inputs
-                         (string-append "/bin/" ,(%current-target-system)
-                                        "-pkg-config"))))
-                     '())))))))
+               "-DUSE_SSH=ON")))))) ; cmake fails to find libssh if this is missing
 
 (define-public libgit2-1.6
   (package
