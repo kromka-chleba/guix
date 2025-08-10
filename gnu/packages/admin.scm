@@ -1941,7 +1941,13 @@ maintenance releases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01bqs71s2gixsir1cpnk6sm4k9dpdkrgp1r8cpbac50d6hwlxln3"))))
+        (base32 "01bqs71s2gixsir1cpnk6sm4k9dpdkrgp1r8cpbac50d6hwlxln3"))
+       (modules '((guix build utils)))
+       (snippet #~(substitute* '("hooks/dhcpcd-run-hooks.8.in"
+                                 "hooks/dhcpcd-run-hooks.in")
+                    ;; Hardcode out-of-store sysconfdir for user hooks.
+                    (("@SYSCONFDIR@(/dhcpcd.e(nter|xit)-hook)" _ hook)
+                     (string-append "/etc" hook))))))
     (inputs (list bash-minimal coreutils-minimal eudev sed))
     (build-system gnu-build-system)
     (arguments
