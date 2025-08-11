@@ -108,9 +108,12 @@
               (commit2 (find-commit repository "second")))
           (authenticate-commits repository (list commit1 commit2)
                                 #:default-authorizations
-                                (list (openpgp-public-key-fingerprint
-                                       (read-openpgp-packet
-                                        %ed25519-public-key-file)))
+                                (list
+                                 (make-fingerprint
+                                  'openpgp
+                                  (openpgp-public-key-fingerprint
+                                   (read-openpgp-packet
+                                    %ed25519-public-key-file))))
                                 #:keyring-reference "master"))))))
 
 (unless (gpg+git-available?) (test-skip 1))

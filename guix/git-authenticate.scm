@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019-2022, 2025 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025, 2026 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,19 +22,28 @@
   #:autoload   (gcrypt hash) (sha256)
   #:use-module (guix base16)
   #:autoload   (guix base64) (base64-encode)
+  #:use-module (guix combinators)
   #:use-module ((guix git)
                 #:select (commit-difference
                           commit-descendant?
                           false-if-git-not-found))
   #:use-module (guix i18n)
-  #:use-module ((guix diagnostics) #:select (formatted-message))
+  #:use-module ((guix diagnostics) #:select (formatted-message
+                                             leave))
   #:use-module (guix openpgp)
+  #:autoload (ssh key) (get-public-key-fingerprint
+                        key?
+                        public-key->string
+                        string->public-key
+                        verify)
   #:use-module ((guix utils)
                 #:select (cache-directory with-atomic-file-output))
   #:use-module ((guix build utils)
                 #:select (mkdir-p))
   #:use-module (guix progress)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-35)
   #:use-module (srfi srfi-71)
@@ -42,7 +51,9 @@
   #:use-module (rnrs io ports)
   #:use-module (ice-9 match)
   #:autoload   (ice-9 pretty-print) (pretty-print)
-  #:export (read-authorizations
+  #:use-module (ice-9 rdelim)
+  #:export (make-fingerprint
+            read-authorizations
             commit-signing-key
             commit-authorized-keys
             authenticate-commit
@@ -74,6 +85,24 @@
 ;;;
 ;;; Code:
 
+(define-record-type <keyring>
+  (make-keyring openpgp sshsig)
+  keyring?
+  (openpgp keyring-openpgp)   ;<openpgp-keyring>
+  (sshsig keyring-sshsig))    ;list of SSH keys (verifying (@ (ssh key) key?))
+
+;; Note: to get an SSH fingerprint: ssh-keygen -l -f ~/.ssh/id_rsa.pub
+;; This data type a hash of the key.
+(define-record-type <fingerprint>
+  (make-fingerprint key-type data)
+  fingerprint?
+  (key-type fingerprint-key-type)       ;'openpgp | 'sshsig
+  (data fingerprint-data))     ;bytevector (OpenPGP) or SSH string fingerprint
+
+(define (fingerprint=? a b)
+  (and (eq? (fingerprint-key-type a) (fingerprint-key-type b))
+       (equal? (fingerprint-data a) (fingerprint-data b))))
+
 (define-condition-type &git-authentication-error &error
   git-authentication-error?
   (commit  git-authentication-error-commit))
@@ -94,72 +123,149 @@
   missing-key-error?
   (signature missing-key-error-signature))
 
-
-(define* (commit-signing-key repo commit-id keyring
-                             #:key (disallowed-hash-algorithms '(sha1)))
+(define* (openpgp-commit-signing-key commit-id keyring signature signed-data
+                                     #:key (disallowed-hash-algorithms '(sha1)))
   "Return the OpenPGP key that signed COMMIT-ID (an OID).  Raise an exception
 if the commit is unsigned, has an invalid signature, has a signature using one
 of the hash algorithms in DISALLOWED-HASH-ALGORITHMS, or if its signing key is
 not in KEYRING."
-  (let ((signature signed-data (catch 'git-error
-                                      (lambda ()
-                                        (commit-extract-signature repo
-                                                                  commit-id))
-                                      (lambda _
-                                        (values #f #f)))))
+  (let ((signature (string->openpgp-packet signature)))
+    (when (memq (openpgp-signature-hash-algorithm signature)
+                `(,@disallowed-hash-algorithms md5))
+      (raise (make-compound-condition
+              (condition (&unsigned-commit-error (commit commit-id)))
+              (formatted-message (G_ "commit ~a has a ~a signature, \
+which is not permitted")
+                                 (oid->string commit-id)
+                                 (openpgp-signature-hash-algorithm
+                                  signature)))))
+
+    (with-fluids ((%default-port-encoding "UTF-8"))
+      (let (((values status data)
+             (verify-openpgp-signature signature keyring
+                                       (open-input-string signed-data))))
+        (match status
+          ('bad-signature
+           ;; There's a signature but it's invalid.
+           (raise (make-compound-condition
+                   (condition
+                    (&signature-verification-error
+                     (commit commit-id)
+                     (signature signature)
+                     (keyring keyring)))
+                   (formatted-message (G_ "signature verification failed \
+for commit ~a")
+                                      (oid->string commit-id)))))
+          ('missing-key
+           (raise (make-compound-condition
+                   (condition (&missing-key-error (commit commit-id)
+                                                  (signature signature)))
+                   (formatted-message (G_ "could not authenticate \
+commit ~a: key ~a is missing")
+                                      (oid->string commit-id)
+                                      (openpgp-format-fingerprint data)))))
+          ('good-signature data))))))
+
+(define (ssh-public-key=? a b)
+  (string=? (public-key->string a)
+            (public-key->string b)))
+
+(define (sshsig-commit-signing-key commit-id keyring signature signed-data)
+  "Return the SSHSIG key that signed COMMIT-ID (an OID).  Raise an exception
+if the commit is unsigned, has an invalid signature, or if its signing key is
+not in KEYRING."
+  (catch 'guile-ssh-error
+         (lambda ()
+           ;; XXX: We don't perform similar hash algorithm verification
+           ;; here for now, because we don't have a public API for that
+           ;; in libssh for now.  However, we are mostly fine because
+           ;; md5 and sha1 are already disabled by OpenSSH and libssh.
+           ;; See libssh commit 7a2a743a39fab3c044343b036560008f3e00e955
+           ;; for the expected error message.
+           (match (verify signed-data signature #:namespace "git")
+             (#f
+              ;; There's a signature but it's invalid.
+              (raise (make-compound-condition
+                      (condition
+                       (&signature-verification-error
+                        (commit commit-id)
+                        (signature signature)
+                        (keyring keyring)))
+                      (formatted-message (G_ "SSH signature verification \
+failed for commit ~a")
+                                         (oid->string commit-id)))))
+             ((? (lambda (key)
+                   (any (cute ssh-public-key=? key <>) keyring))
+                 public-key)
+              public-key)
+             (_
+              ;; There's a signature but it's invalid.
+              (raise (make-compound-condition
+                      (condition
+                       (&signature-verification-error
+                        (commit commit-id)
+                        (signature signature)
+                        (keyring keyring)))
+                      (formatted-message (G_ "signature verification failed \
+                  for commit ~a")
+                                         (oid->string commit-id)))))))
+         (lambda (key . args)
+           (format #t "~a: ~a~%" key args)
+           #f)))
+
+(define* (commit-signing-key repo commit-id keyring
+                             #:key (disallowed-hash-algorithms '(sha1)))
+  "Return the key that signed COMMIT-ID (an OID).  Raise an exception if the
+commit is unsigned, has an invalid signature, has a signature using one of the
+hash algorithms in DISALLOWED-HASH-ALGORITHMS, or if its signing key is not in
+KEYRING."
+  (let (((values signature signed-data)
+         (catch 'git-error
+                (lambda ()
+                  (commit-extract-signature repo commit-id))
+                (lambda _
+                  (values #f #f)))))
     (unless signature
       (raise (make-compound-condition
               (condition (&unsigned-commit-error (commit commit-id)))
               (formatted-message (G_ "commit ~a lacks a signature")
                                  (oid->string commit-id)))))
 
-    (let ((signature (string->openpgp-packet signature)))
-      (when (memq (openpgp-signature-hash-algorithm signature)
-                  `(,@disallowed-hash-algorithms md5))
-        (raise (make-compound-condition
-                (condition (&unsigned-commit-error (commit commit-id)))
-                (formatted-message (G_ "commit ~a has a ~a signature, \
-which is not permitted")
-                                   (oid->string commit-id)
-                                   (openpgp-signature-hash-algorithm
-                                    signature)))))
+    (match signature
+      ((? (cut string-prefix? "-----BEGIN PGP SIGNATURE-----" <>))
+       (openpgp-commit-signing-key commit-id (keyring-openpgp keyring)
+                                   signature signed-data
+                                   #:disallowed-hash-algorithms
+                                   disallowed-hash-algorithms))
+      ((? (cut string-prefix? "-----BEGIN SSH SIGNATURE-----" <>))
+       (sshsig-commit-signing-key commit-id (keyring-sshsig keyring)
+                                  signature signed-data)))))
 
-      (with-fluids ((%default-port-encoding "UTF-8"))
-       (let ((status data
-                     (verify-openpgp-signature
-                      signature keyring (open-input-string signed-data))))
-          (match status
-            ('bad-signature
-             ;; There's a signature but it's invalid.
-             (raise (make-compound-condition
-                     (condition
-                      (&signature-verification-error (commit commit-id)
-                                                     (signature signature)
-                                                     (keyring keyring)))
-                     (formatted-message (G_ "signature verification failed \
-for commit ~a")
-                                        (oid->string commit-id)))))
-            ('missing-key
-             (raise (make-compound-condition
-                     (condition (&missing-key-error (commit commit-id)
-                                                    (signature signature)))
-                     (formatted-message (G_ "could not authenticate \
-commit ~a: key ~a is missing")
-                                        (oid->string commit-id)
-                                        (openpgp-format-fingerprint data)))))
-            ('good-signature data)))))))
+(define (openpgp-fingerprint->bytevector fingerprint)
+  "Return the bytevector representation of FINGERPRINT, a string containing a
+base16-encoded OpenPGP fingerprint."
+  (base16-string->bytevector
+   (string-downcase (string-filter char-set:graphic fingerprint))))
 
 (define (read-authorizations port)
   "Read authorizations in the '.guix-authorizations' format from PORT, and
 return a list of authorized fingerprints."
   (match (read port)
-    (('authorizations ('version 0)
-                      (((? string? fingerprints) _ ...) ...)
+    (('authorizations ('version (or 0 1))
+                      (((? string? fingerprints) . rests) ...)
                       _ ...)
-     (map (lambda (fingerprint)
-            (base16-string->bytevector
-             (string-downcase (string-filter char-set:graphic fingerprint))))
-          fingerprints))))
+     (map
+       (lambda (fingerprint rest)
+         (match (or (assoc-ref rest 'format) (list 'openpgp))
+           (('openpgp)
+            (make-fingerprint 'openpgp
+                              (openpgp-fingerprint->bytevector fingerprint)))
+           (('sshsig)
+            (make-fingerprint 'sshsig fingerprint))
+           (_
+            (leave (G_ "read_authorizations: Only 'openpgp and 'sshsig key \
+types are supported.")))))
+       fingerprints rests))))
 
 (define* (commit-authorized-keys repository commit
                                  #:optional (default-authorizations '()))
@@ -207,7 +313,7 @@ to remove '.guix-authorizations' file")
   (match (commit-parents commit)
     (() default-authorizations)
     (parents
-     (apply lset-intersection bytevector=?
+     (apply lset-intersection fingerprint=?
             (map commit-authorizations parents)))))
 
 (define* (authenticate-commit repository commit keyring
@@ -231,55 +337,95 @@ not specify anything, fall back to DEFAULT-AUTHORIZATIONS."
                         #:disallowed-hash-algorithms
                         (if recent-commit? '(sha1) '())))
 
-  (unless (member (openpgp-public-key-fingerprint signing-key)
-                  (commit-authorized-keys repository commit
-                                          default-authorizations))
-    (raise (make-compound-condition
-            (condition
-             (&unauthorized-commit-error (commit id)
-                                         (signing-key signing-key)))
-            (formatted-message (G_ "commit ~a not signed by an authorized \
+  (let* ((authorized-keys (commit-authorized-keys
+                           repository commit default-authorizations))
+         ((values authorized? key->string)
+          (match signing-key
+            ((? openpgp-public-key?)
+             (let* ((data (openpgp-public-key-fingerprint signing-key))
+                    (fingerprint (make-fingerprint 'openpgp data)))
+               (values (member fingerprint authorized-keys)
+                       (compose openpgp-format-fingerprint
+                                openpgp-public-key-fingerprint))))
+            ((? key?)
+             (let ((fingerprint (get-public-key-fingerprint signing-key)))
+               (values
+                (any (lambda (cand)
+                       (and (not (bytevector? cand))  ; XXX: version 0
+                            (eq? (fingerprint-key-type cand) 'sshsig)
+                            (string= (fingerprint-data cand) fingerprint)))
+                     authorized-keys)
+                public-key->string))))))
+    (unless authorized?
+      (raise (make-compound-condition
+              (condition
+               (&unauthorized-commit-error (commit id)
+                                           (signing-key signing-key)))
+              (formatted-message (G_ "commit ~a not signed by an authorized \
 key: ~a")
-                               (oid->string id)
-                               (openpgp-format-fingerprint
-                                (openpgp-public-key-fingerprint
-                                 signing-key))))))
+                                 (oid->string id)
+                                 (key->string signing-key))))))
 
   signing-key)
 
-(define (load-keyring-from-blob repository entry keyring)
+(define (load-keyring-from-port port entry keyring)
   "Augment KEYRING with the keyring available in ENTRY (a tree entry), which
 may or may not be ASCII-armored."
-  (let* ((oid  (tree-entry-id entry))
-         (blob (blob-lookup repository oid))
-         (port (open-bytevector-input-port (blob-content blob))))
-    (get-openpgp-keyring (if (port-ascii-armored? port)
-                             (match (read-radix-64 port)
-                               ((? bytevector? radix)
-                                (open-bytevector-input-port radix))
-                               (_
-                                (raise
-                                 (formatted-message (G_ "malformed \
+  (get-openpgp-keyring (if (port-ascii-armored? port)
+                           (match (read-radix-64 port)
+                             ((? bytevector? radix)
+                              (open-bytevector-input-port radix))
+                             (_
+                              (raise
+                               (formatted-message (G_ "malformed \
 ASCII-armored key in ~a (blob ~a)")
-                                                    (tree-entry-name entry)
-                                                    (oid->string oid)))))
-                             port)
-                         keyring)))
+                                                  (tree-entry-name entry)
+                                                  (oid->string
+                                                   (tree-entry-id entry))))))
+                           port)
+                       keyring))
 
 (define (load-keyring-from-reference repository reference)
   "Load the '.key' files from the tree at REFERENCE in REPOSITORY and return
-an OpenPGP keyring."
+a <keyring>."
   (let* ((reference (branch-lookup repository reference BRANCH-ALL))
          (target    (reference-target reference))
          (commit    (commit-lookup repository target))
-         (tree      (commit-tree commit)))
-    (fold (lambda (name keyring)
-            (if (string-suffix? ".key" name)
-                (let ((entry (tree-entry-bypath tree name)))
-                  (load-keyring-from-blob repository entry keyring))
-                keyring))
-          %empty-keyring
-          (tree-list tree))))
+         (tree      (commit-tree commit))
+         ((values openpgp-keyring sshsig-keyring)
+          (fold2
+           (lambda (name openpgp-keyring sshsig-keyring)
+             (if (string-suffix? ".key" name)
+                 (let* ((entry (tree-entry-bypath tree name))
+                        (oid (tree-entry-id entry))
+                        (blob (blob-lookup repository oid))
+                        (port (open-bytevector-input-port
+                               (blob-content blob)))
+                        (line (read-line port))
+                        ;; XXX: Re-generate port.
+                        (port (open-bytevector-input-port
+                               (blob-content blob))))
+                   (match line
+                     ("-----BEGIN PGP PUBLIC KEY BLOCK-----"
+                      (values (load-keyring-from-port port entry openpgp-keyring)
+                              sshsig-keyring))
+                     ((? cut string-prefix? "ssh-" <>)
+                      (match (string-split (get-string-all port) #\ )
+                        ((type data . rest)
+                         (let* ((type (string-drop type (string-length "ssh-")))
+                                (type (string->symbol type)))
+                           (values openpgp-keyring
+                                   (cons* (string->public-key data type)
+                                          sshsig-keyring))))))
+                     (_
+                      (raise (formatted-message (G_ "could not read invalid \
+key ~a")
+                                                name)))))
+                 (values openpgp-keyring sshsig-keyring)))
+           %empty-keyring
+           (list)
+           (tree-list tree))))
+    (make-keyring openpgp-keyring sshsig-keyring)))
 
 (define* (authenticate-commits repository commits
                                #:key
@@ -400,9 +546,8 @@ The OpenPGP keyring is loaded from KEYRING-REFERENCE in REPOSITORY, where
 KEYRING-REFERENCE is the name of a branch.  The list of authenticated commits
 is cached in the authentication cache under CACHE-KEY.
 
-HISTORICAL-AUTHORIZATIONS must be a list of OpenPGP fingerprints (bytevectors)
-denoting the authorized keys for commits whose parent lack the
-'.guix-authorizations' file."
+HISTORICAL-AUTHORIZATIONS must be a list of <fingerprints> denoting the
+authorized keys for commits whose parent lack the '.guix-authorizations' file."
   (define start-commit
     (commit-lookup repository start))
   (define end-commit
