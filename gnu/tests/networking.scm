@@ -781,9 +781,17 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
 ;;; DHCPCD Daemon
 ;;;
 
+(define %static-ip-addr "192.168.0.1/16")
+
 (define %dhcpcd-os
   (let ((base-os
           (simple-operating-system
+            (simple-service
+              'dhcpcd-hooks etc-service-type
+              `(("dhcpcd.exit-hook"
+                 ,(plain-file "dhcpcd.exit-hook"
+                              (format #f "ip address add ~a dev ens3"
+                                      %static-ip-addr)))))
             (service dhcpcd-service-type
                      (dhcpcd-configuration
                        (command-arguments '("--debug" "--logfile" "/dev/console"))
@@ -828,6 +836,20 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
                      (error "failed to obtain a DHCP lease"))))
               marionette))
 
+          (define (address-count content)
+            (marionette-eval
+              `(begin
+                 (use-modules (ice-9 popen) (ice-9 rdelim))
+
+                 (let* ((port  (open-input-pipe "ip -4 address show dev ens3"))
+                        (lines (string-split (read-string port) #\newline)))
+                   (close-port port)
+                   (length
+                     (filter (lambda (line)
+                               (string-contains line ,content))
+                             lines))))
+              marionette))
+
           (test-runner-current (system-test-runner #$output))
           (test-begin "dhcpcd")
 
@@ -841,6 +863,11 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
 
                 (wait-for-service 'networking))
              marionette))
+
+          ;; Without (sleep 1), the hook loses the race after wait-for-
+          ;; service above to this test.
+          (test-equal "aquired IPv4 address via /etc/dhcpcd.exit-hook"
+            1 (and (sleep 1) (address-count #$%static-ip-addr)))
 
           (test-assert "IPC socket exists"
             (marionette-eval
@@ -858,18 +885,7 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
             1
             (and
               (wait-for-lease)
-              (marionette-eval
-                '(begin
-                   (use-modules (ice-9 popen) (ice-9 rdelim))
-
-                   (let* ((port  (open-input-pipe "ip -4 address show dev ens3"))
-                          (lines (string-split (read-string port) #\newline)))
-                     (close-port port)
-                     (length
-                       (filter (lambda (line)
-                                 (string-contains line "scope global dynamic"))
-                               lines))))
-                marionette)))
+              (address-count "scope global dynamic")))
 
           (test-end))))
   (gexp->derivation "dhcpcd-test" test))

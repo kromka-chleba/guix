@@ -22007,6 +22007,11 @@ configured, automatically.
 @item @code{command-arguments} (default: @code{("-q" "-q")}) (type: list)
 List of additional command-line options.
 
+@item @code{hook-packages} (default: @code{()}) (type: list-of-packages)
+The @file{sbin} directory of each package is included in PATH (for
+@command{dhcpcd-run-hooks}).  If the list is empty, the @file{sbin} of
+@file{/run/current-system/profile} is included instead.
+
 @item @code{host-name} (default: @code{""}) (type: maybe-string)
 Host name to send via DHCP, defaults to the current system host name.
 
@@ -22018,8 +22023,7 @@ more information, refer to
 @code{dhcpcd.conf(5)}.
 
 @item @code{persistent?} (default: @code{#t}) (type: boolean)
-When true, automatically de-configure the interface when
-@command{dhcpcd} exits.
+When false, de-configure the interface when @command{dhcpcd} exits.
 
 @item @code{option} (default: @code{("rapid_commit" "domain_name_servers" "domain_name" "domain_search" "host_name" "classless_static_routes" "interface_mtu")}) (type: list-of-strings)
 List of options to request from the server.

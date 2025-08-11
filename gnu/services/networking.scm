@@ -579,6 +579,12 @@ discovers available Ethernet interfaces, that can be configured, automatically."
     (list '("-q" "-q"))
     "List of additional command-line options."
     empty-serializer)
+  (hook-packages
+   (list-of-packages '())
+   "The @file{sbin} directory of each package is included in PATH (for
+@command{dhcpcd-run-hooks}).  If the list is empty, the @file{sbin} of
+@file{/run/current-system/profile} is included instead."
+   empty-serializer)
 
   ;; The following defaults replicate the default dhcpcd configuration file.
   ;;
@@ -593,7 +599,7 @@ Unique Identifier as a DHCPv4 client identifier as well.  For more information, 
 to @uref{https://www.rfc-editor.org/rfc/rfc4361, RFC 4361} and @code{dhcpcd.conf(5)}.")
   (persistent?
     (boolean #t)
-    "When true, automatically de-configure the interface when @command{dhcpcd} exits.")
+    "When false, de-configure the interface when @command{dhcpcd} exits.")
   (option
     (list-of-strings
       '("rapid_commit"
@@ -668,7 +674,8 @@ will depend on."
 
 (define (dhcpcd-shepherd-service config)
   (match-record config <dhcpcd-configuration>
-                (command-arguments interfaces shepherd-provision shepherd-requirement)
+                (command-arguments hook-packages interfaces
+                 shepherd-provision shepherd-requirement)
     (let ((config-file (dhcpcd-config-file config)))
       (list (shepherd-service
              (documentation "dhcpcd daemon.")
@@ -678,7 +685,16 @@ will depend on."
              (start
               #~(make-forkexec-constructor
                  (list (string-append #$dhcpcd "/sbin/dhcpcd")
-                       #$@command-arguments "-B" "-f" #$config-file #$@interfaces)))
+                       #$@command-arguments "-B" "-f" #$config-file
+                       #$@interfaces)
+                 #:environment-variables
+                 (let* ((packages '#$hook-packages)
+                        (paths (map (lambda (package)
+                                      (string-append package "/sbin"))
+                                    (if (null? packages)
+                                        '("/run/current-system/profile")
+                                        packages))))
+                   (list (string-append "PATH=" (string-join paths ":"))))))
              (stop #~(make-kill-destructor)))))))
 
 (define dhcpcd-service-type
