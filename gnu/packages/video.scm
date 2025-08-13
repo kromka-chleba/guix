@@ -159,6 +159,7 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnunet)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages graphics)
@@ -3516,6 +3517,7 @@ playlists.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/Kethsar/ytarchive"
       #:embed-files #~(list "children" "nodes" "text")
@@ -4176,7 +4178,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "31.1.1")
+    (version "31.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4186,7 +4188,7 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0dddcvwlh3skd2hd8cmgy74r6l6pmcya9a6hrl9x402y7ywxd50m"))
+                "1wiaiva2wh9781mcwmlkf3xfg805q0s8gz4q7n1vnmk27750i6j1"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)

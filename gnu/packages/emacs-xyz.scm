@@ -17694,6 +17694,34 @@ of its name.")
 names, e.g., @samp{#0000ff} is displayed in white with a blue background.")
     (license license:gpl3+)))
 
+(define-public emacs-colorful-mode
+  (package
+    (name "emacs-colorful-mode")
+    (version "1.2.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/DevelopmentCool2449/colorful-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cm5bpw2x15h6pf5vxcp2f7jf1rkpnq7qq8idlv9n9p5nnxwik1d"))))
+    (build-system emacs-build-system)
+    ;; No automated tests.  The test directory contains sample files for
+    ;; visual inspection.
+    (arguments (list #:tests? #f))
+    (propagated-inputs (list emacs-compat))
+    (home-page "https://github.com/DevelopmentCool2449/colorful-mode")
+    (synopsis "Highlight color strings in buffers")
+    (description
+     "@code{colorful-mode} is a minor mode to highlight any color
+format, such as hex codes or HTML color names, in buffers in real time.  It is
+inspired by @code{rainbow-mode} but uses overlays instead of text properties
+to support a different feature set.  It also supports conversion of color
+strings between formats.")
+    (license license:gpl3+)))
+
 (define-public emacs-indent-bars
   (package
     (name "emacs-indent-bars")
@@ -37598,6 +37626,65 @@ between \"frame-width\" and \"frame-height\", between \"public\",
 \"protected\" and \"private\" and between \"variable1\", \"variable2\" through
 \"variableN\".")
     (license license:gpl2+)))
+
+(define-public emacs-recomplete
+  (let ((commit "0e4a2bad35886e31742117eee3d610e13586ac5e")
+        (revision "0"))
+    (package
+      (name "emacs-recomplete")
+      (version (git-version "0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://codeberg.org/ideasman42/emacs-recomplete")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1dasj12k9664s77cxnkbrszy2vkfwd6iz6mrj9xzsq7mjgg5gk58"))))
+      (build-system emacs-build-system)
+      (arguments (list #:test-command #~(list "make" "test")))
+      (home-page "https://codeberg.org/ideasman42/emacs-recomplete")
+      (synopsis "Immediate completion, without prompting")
+      (description
+       "@code{recomplete} is a completion library for quickly completing or
+correcting words in cases where the first candidate is the likely choice.
+Unlike most completion, it immediately performs the completion action, calling
+again to cycle over options.  Completion candidates are displayed in the echo
+area.")
+      (license license:gpl3+))))
+
+(define-public emacs-cycle-at-point
+  (package
+    (name "emacs-cycle-at-point")
+    (version "0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/ideasman42/emacs-cycle-at-point")
+             (commit "83d94733fd8ed64f2ba40f4e1df7ecbfe8260e51")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17h93idzdg5y30q46y5njsvixwlq3isnynym6b6gp3sy50xqgjgs"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      ;; `make test' assumes recomplete repository is in a sibling directory.
+      #:test-command
+      #~(list "emacs" "-Q" "--batch"
+              "-l" "tests/cycle-at-point-tests"
+              "-f" "ert-run-tests-batch-and-exit")))
+    (propagated-inputs (list emacs-recomplete))
+    (home-page "https://codeberg.org/ideasman42/emacs-cycle-at-point")
+    (synopsis "Immediately cycle text at the cursor, without prompting")
+    (description
+     "@code{cycle-at-point} provides commands to cycle text at the cursor.
+Repeatedly invoke the command to cycle over available options.  Completion
+candidates are displayed in the echo area.  Users can define their own
+completion lists.  Common use cases include true and false literals,
+arithmetic operators, and months of the year.")
+    (license license:gpl3+)))
 
 (define-public emacs-ediprolog
   (package

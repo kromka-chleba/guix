@@ -777,7 +777,7 @@ blockchain.")
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.18.4.0")
+    (version "0.18.4.1")
     (source
      (origin
        (method git-fetch)
@@ -795,7 +795,7 @@ blockchain.")
             delete-file-recursively
             '("external/miniupnp" "external/rapidjson"))))
        (sha256
-        (base32 "0dfb9yxpfijdjgl67dgmhgn4xd42rnwfn4nnp0dfakq34imv2cjh"))))
+        (base32 "0k4z01l8dvnazh650yarwn6ja1wrxcqq4g7302xw0dhw7h1qvy1j"))))
     (build-system cmake-build-system)
     (native-inputs
      (list doxygen
@@ -882,7 +882,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.18.4.0")
+    (version "0.18.4.1")
     (source
      (origin
        (method git-fetch)
@@ -898,7 +898,7 @@ the Monero command line client and daemon.")
            ;; See the 'extract-monero-sources' phase.
            (delete-file-recursively "monero")))
        (sha256
-        (base32 "0gzq3cq54mr85f86yibsska19lri2w2ak98pb4z237dffgjqkaj5"))))
+        (base32 "1r2cfzh4lc94mb7fqa8f41613msnsyy5kz6mzcr4npjpm8bxqs8k"))))
     (build-system qt-build-system)
     (native-inputs
      `(,@(package-native-inputs monero)
@@ -1771,35 +1771,38 @@ trezord as a regular user instead of needing to it run as root.")
         (license license:lgpl3+))))
 
 (define-public trezord
-  (package
-    (name "trezord")
-    (version "2.0.33")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/trezor/trezord-go")
-             (commit (string-append "v" version))))
-       (sha256
-        (base32 "0nnfh9qkb8ljajkxwrn3nn85zrsw10hp7c5i4zh60qgfyl0djppw"))
-       (file-name (git-file-name name version))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:go go-1.18
-      #:install-source? #f
-      #:import-path "github.com/trezor/trezord-go"))
-    (native-inputs
-     (list go-github-com-gorilla-csrf
-           go-github-com-gorilla-handlers
-           go-github-com-gorilla-mux
-           go-gopkg-in-natefinch-lumberjack-v2))
-    (home-page "https://trezor.io")
-    (synopsis "Trezor Communication Daemon aka Trezor Bridge (written in Go)")
-    (description
-     "This allows a Trezor hardware wallet to communicate to the Trezor
+  ;; XXX: The latest commit provides support for Go 1.24+, move back to the
+  ;; tag when it is released.
+  (let ((commit "a58468e4f70619d4ca7dd6404bdf9bdcff8011f0")
+        (revision "0"))
+    (package
+      (name "trezord")
+      (version (git-version "2.0.33" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/trezor/trezord-go")
+               (commit commit)))
+         (sha256
+          (base32 "15bqxg98wp4w8yc697rf228298dcxfmlvf7pzq370g852w8hm6q8"))
+         (file-name (git-file-name name version))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:install-source? #f
+        #:import-path "github.com/trezor/trezord-go"))
+      (native-inputs
+       (list go-github-com-gorilla-csrf
+             go-github-com-gorilla-handlers
+             go-github-com-gorilla-mux
+             go-gopkg-in-natefinch-lumberjack-v2))
+      (home-page "https://trezor.io")
+      (synopsis "Trezor Communication Daemon aka Trezor Bridge (written in Go)")
+      (description
+       "This allows a Trezor hardware wallet to communicate to the Trezor
 wallet.")
-    (license license:lgpl3+)))
+      (license license:lgpl3+))))
 
 (define-public libofx
   (package
@@ -2595,7 +2598,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.6")
+    (version "4.9")
     (source
      (origin
        (method git-fetch)
@@ -2604,7 +2607,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "1qal9ilpyxds6nk2fgzfypk3y1qxh06f6lly3alawz385gf68fkv"))
+       (sha256 (base32 "0898a823mi38z6dwdm6crb2l98rv79sznmqwa0ss96xggvk12nlw"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively
@@ -2615,6 +2618,8 @@ mining.")
                       "external/src/rapidjson"
                       "external/src/robin-hood-hashing")))))
     (build-system cmake-build-system)
+    (native-inputs
+     (list xz))
     (inputs
      (list cppzmq curl libuv rapidjson robin-hood-hashing zeromq))
     (arguments
@@ -2629,8 +2634,9 @@ mining.")
                      (chdir "tests")
                      (invoke "cmake" "-DWITH_LTO=OFF" "../../source/tests")
                      (invoke "make" "-j" (number->string (parallel-job-count)))
-                     (invoke "gzip" "-d" "sidechain_dump.dat.gz")
-                     (invoke "gzip" "-d" "sidechain_dump_mini.dat.gz")
+                     (invoke "xz" "-d" "sidechain_dump.dat.xz")
+                     (invoke "xz" "-d" "sidechain_dump_mini.dat.xz")
+                     (invoke "xz" "-d" "sidechain_dump_nano.dat.xz")
                      (invoke "./p2pool_tests")
                      (chdir ".."))))
                (replace 'install

@@ -81,6 +81,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-crypto)
@@ -474,6 +475,7 @@ is corrupted you'll lose the affected file(s) but not the whole back-up.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/google/fscrypt"
       #:install-source? #f
       #:test-flags
@@ -604,7 +606,7 @@ significantly increases the risk of irreversible data loss!")
 (define-public gocryptfs
   (package
     (name "gocryptfs")
-    (version "2.5.1")
+    (version "2.5.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -613,10 +615,11 @@ significantly increases the risk of irreversible data loss!")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ai30h56qvp31a3rl72biwx8w9blmi7va7d1bflmxbp41zhl6dn9"))))
+                "1glzq6syid1ws3wc9fk16z3vmphvgaf8dwr8hrg4s02bqqqhlcll"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/rfjakob/gocryptfs"
       #:build-flags
@@ -2206,8 +2209,8 @@ memory-efficient.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/oniony/TMSU"
-      #:unpack-path "github.com/oniony/TMSU"
       #:install-source? #f
       #:phases
       #~(modify-phases %standard-phases

@@ -47,6 +47,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-web)
@@ -113,6 +114,7 @@
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/xalanq/cf-tool"
       #:phases
@@ -127,7 +129,7 @@
            go-github-com-fatih-color
            go-github-com-k0kubun-go-ansi
            go-github-com-mitchellh-go-homedir
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-puerkitobio-goquery
            go-github-com-sergi-go-diff
            go-github-com-shirou-gopsutil
@@ -536,7 +538,7 @@ specialized device.")
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "OpenBoard.pro"
                 (("/usr/include/quazip5")
-                 (search-input-directory inputs "/include/QuaZip-Qt5-1.4/quazip"))
+                 (search-input-directory inputs "/include/QuaZip-Qt5-1.5/quazip"))
                 (("-lquazip5")
                  "-lquazip1-qt5")
                 (("/usr/include/poppler")
@@ -1126,6 +1128,7 @@ machine, and more.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/exercism/cli/exercism"
       #:unpack-path "github.com/exercism/cli"

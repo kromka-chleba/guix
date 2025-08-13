@@ -1534,6 +1534,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/go-fix-script-tests.patch			\
   %D%/packages/patches/go-gopkg-in-yaml-v3-32bit.patch		\
   %D%/packages/patches/go-github-com-golang-snappy-32bit-test.patch \
+  %D%/packages/patches/go-github-com-jbenet-go-context-fix-import-error.patch	\
   %D%/packages/patches/go-github-com-skip2-go-qrcode-fix-tests.patch \
   %D%/packages/patches/go-github-com-warpfork-go-wish-fix-tests.patch \
   %D%/packages/patches/go-github-com-wraparound-wrap-free-fonts.patch \
@@ -1676,6 +1677,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/json-c-0.12-CVE-2020-12762.patch		\
   %D%/packages/patches/julia-SOURCE_DATE_EPOCH-mtime.patch	\
   %D%/packages/patches/julia-Use-MPFR-4.2.patch	                \
+  %D%/packages/patches/komikku-python-3.11-compat.patch	                \
+  %D%/packages/patches/komikku-future-servers-compat.patch	                \
   %D%/packages/patches/libcall-ui-make-it-installable.patch	\
   %D%/packages/patches/libcamera-ipa_manager-disable-signature-verification.patch	\
   %D%/packages/patches/libconfuse-CVE-2022-40320.patch		\
@@ -1860,7 +1863,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/mandoc-support-zstd-compression.patch	\
   %D%/packages/patches/make-impure-dirs.patch			\
   %D%/packages/patches/makem-replace-git.patch			\
-  %D%/packages/patches/mariadb-rocksdb-atomic-linking.patch	\
   %D%/packages/patches/marisa-fix-MARISA_WORD_SIZE.patch	\
   %D%/packages/patches/mathjax-disable-webpack.patch			\
   %D%/packages/patches/mathjax-no-a11y.patch			\
@@ -2043,6 +2045,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/pdl-2.019-glut-bitmap-fonts.patch	\
   %D%/packages/patches/pdl-2.100-reproducibility.patch	\
   %D%/packages/patches/petri-foo-0.1.87-fix-recent-file-not-exist.patch			\
+  %D%/packages/patches/pharo-vm-cmake.patch                     \
   %D%/packages/patches/plasma-framework-fix-KF5PlasmaMacros.cmake.patch \
   %D%/packages/patches/plasp-fix-normalization.patch \
   %D%/packages/patches/plasp-include-iostream.patch \
@@ -2204,6 +2207,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-versioneer-guix-support.patch	\
   %D%/packages/patches/python-werkzeug-tests.patch		\
   %D%/packages/patches/python-xmp-toolkit-add-missing-error-codes.patch	\
+  %D%/packages/patches/qdigidoc-bundle-config-files.patch       \
+  %D%/packages/patches/qdigidoc-bundle-tsl-files.patch          \
   %D%/packages/patches/qemu-build-info-manual.patch		\
   %D%/packages/patches/qemu-disable-bios-tables-test.patch	\
   %D%/packages/patches/qemu-disable-migration-test.patch	\
@@ -2452,7 +2457,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/vcmi-disable-privacy-breach.patch	\
   %D%/packages/patches/vinagre-newer-freerdp.patch             \
   %D%/packages/patches/vinagre-newer-rdp-parameters.patch      \
-  %D%/packages/patches/virtuoso-ose-remove-pre-built-jar-files.patch	\
   %D%/packages/patches/vsearch-unbundle-cityhash.patch		\
   %D%/packages/patches/vte-CVE-2012-2738-pt1.patch			\
   %D%/packages/patches/vte-CVE-2012-2738-pt2.patch			\

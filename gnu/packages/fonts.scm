@@ -112,6 +112,47 @@
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages xorg))
 
+(define-public font-0xpropo
+  (package
+    (name "font-0xpropo")
+    (version "1.100")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/0xType/0xPropo")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q4w04gh5q5imcvars0l8wczf2mh6ldnk705bbms1vnmnv8b291w"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/0xType/0xPropo")
+    (synopsis "Proportional variant of font-0xproto")
+    (description
+     "This package provides a proportional variant of @code{font-0xproto}.")
+    (license license:silofl1.1)))
+
+(define-public font-0xproto
+  (package
+    (name "font-0xproto")
+    (version "2.500")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/0xType/0xProto")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kmxgdvh7j91dy5s4l8q3fil0289mxg2f3ixcl06ywrrs2zw8fy8"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/0xType/0xProto")
+    (synopsis "Programming font")
+    (description
+     "This package provides a programming font focused on
+source code legibility.")
+    (license license:silofl1.1)))
+
 (define-public font-adwaita
   (package
     (name "font-adwaita")
@@ -2530,7 +2571,7 @@ programming.  Iosevka is completely generated from its source code.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bb7js8lxa4f5kcjjvn587m4hd92qkydr5dbcjmimq2r8mimn75j"))))
+        (base32 "05rafzzj6am41wn0mlgkw9s6s4wj5vxsds9hqz4wa4cnz45yw5nl"))))
     (build-system font-build-system)
     (home-page "https://github.com/protesilaos/aporetic")
     (synopsis "Customised build of the Iosevka typeface")
@@ -4569,6 +4610,26 @@ enough to remain readable even at high resolutions.")
        "ET Book is a Bembo-like font for the computer designed by Dmitry Krasny,
 Bonnie Scranton, and Edward Tufte.")
       (license license:expat))))
+
+(define-public font-commit-mono
+  (package
+    (name "font-commit-mono")
+    (version "1.143")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/eigilnikolajsen/commit-mono/"
+                           "releases/download/"
+                           "v" version
+                           "/CommitMono-" version ".zip"))
+       (sha256
+        (base32 "1l4yqjif6ijdpjsncana6swlh1mz0vbzaxkgk4580m3mgimg5lgp"))))
+    (build-system font-build-system)
+    (home-page "https://commitmono.com/")
+    (synopsis "Commit Mono programming font")
+    (description
+     "Commit Mono is an anonymous and neutral programming typeface.")
+    (license license:silofl1.1)))
 
 (define-public font-cica
   (package

@@ -403,7 +403,6 @@ one.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.22
       #:install-source? #f
       #:import-path "miniflux.app/v2"
       #:build-flags
@@ -5712,7 +5711,7 @@ you'd expect.")
 (define-public go-github-com-mikefarah-yq-v4
   (package
     (name "go-github-com-mikefarah-yq-v4")
-    (version "4.44.3")
+    (version "4.45.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5721,7 +5720,7 @@ you'd expect.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0s7c8r6y5jv6wda2v3k47hawfdr9j3rwk717l6byvh5qsbbml0vd"))))
+                "1adrbxqsmpsvz2jfjkvarvnvblj5zdznr3sxpakv85vvs3njdjx9"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -5835,7 +5834,6 @@ processor.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.22
       #:embed-files #~(list ".*.xml")
       #:install-source? #f
       #:import-path "github.com/noahgorstein/jqp"))
@@ -8874,7 +8872,7 @@ compressed JSON header blocks.
 (define-public nghttp3
   (package
     (name "nghttp3")
-    (version "1.10.1")
+    (version "1.11.0")
     (source
      (origin
        (method url-fetch)
@@ -8883,7 +8881,7 @@ compressed JSON header blocks.
                            "nghttp3-" version ".tar.gz"))
        (sha256
         (base32
-         "18lik57yb3zc5g17s18ymd268p037wly0hgvw6n9h48l09jqqv68"))))
+         "04ds0h2ppajx9brafd9rx4k9jsqm6cb0qjkj2lvpps1d5bd0pliw"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))

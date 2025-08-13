@@ -2860,14 +2860,14 @@ The API also works with MaxMind’s free GeoLite2 databases.")
 (define-public routino
   (package
     (name "routino")
-    (version "3.4.1")
+    (version "3.4.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.routino.org/download/routino-"
                                   version ".tgz"))
               (sha256
                (base32
-                "0aw5idqz7nv458llgwp5wcgikf34xcblpq46mq7msxfib0m8vahb"))))
+                "0m0yq665sdsiikbl0win564d841wb87prsfni8wajz6969yhdfjf"))))
     (build-system gnu-build-system)
     (native-inputs (list perl))
     (inputs (list bzip2 xz zlib))
@@ -2925,7 +2925,7 @@ data.")
 (define-public qmapshack
   (package
     (name "qmapshack")
-    (version "1.17.1")
+    (version "1.18.0")
     (source
      (origin
        (method git-fetch)
@@ -2934,36 +2934,34 @@ data.")
              (commit (string-append "V_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ckadklk67dp1pvkacfkr8379g2pwk73q85jfzm8viclcqmfvb62"))))
+        (base32 "04r2m7qwzqwgnwhi15999n0w7fmddjcmdv8mxm8c0flrjw8zmkpq"))))
     (build-system qt-build-system)
     (native-inputs
-     (list pkg-config qttools-5))
+     (list pkg-config))
     (inputs
-     (list curl
-           gdal
+     (list gdal
            libjpeg-turbo
            proj
-           qtbase-5
-           qtdeclarative-5
-           qtlocation-5
-           qtwebchannel-5
-           qtwebengine-5
-           quazip-5
-           routino
-           sqlite ; See wrap phase
-           zlib))
+           qt5compat
+           qtpositioning
+           qttools
+           qtwebengine
+           quazip
+           routino))
     (arguments
-     `(#:tests? #f
+     (list
+       #:qtbase qtbase
+       #:tests? #f ;no tests
        #:phases
-       (modify-phases %standard-phases
+       #~(modify-phases %standard-phases
          (add-after 'unpack 'fix-cmake-modules
-           (lambda* (#:key inputs #:allow-other-keys)
+           (lambda _
              (substitute* "CMakeLists.txt"
-               (("find_package\\(Qt5PrintSupport        REQUIRED\\)" all)
-                (string-append all "\nfind_package(Qt5Positioning REQUIRED)")))
+               (("find_package\\(Qt6PrintSupport        REQUIRED\\)" all)
+                (string-append all "\nfind_package(Qt6Positioning REQUIRED)")))
              (substitute* "cmake/Modules/FindROUTINO.cmake"
                (("/usr/local")
-                (assoc-ref inputs "routino"))))))))
+                #$(this-package-input "routino"))))))))
     (synopsis "GPS mapping application")
     (description
      "QMapShack can be used to plan your next outdoor trip or to visualize and

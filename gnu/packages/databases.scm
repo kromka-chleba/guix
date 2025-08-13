@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2012-2016, 2018, 2022 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2012, 2013, 2014, 2015, 2016 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013, 2017 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2014, 2016 David Thompson <davet@gnu.org>
 ;;; Copyright © 2014, 2015, 2016, 2018 Mark H Weaver <mhw@netris.org>
@@ -115,6 +115,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
@@ -147,6 +148,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pretty-print)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -481,6 +483,113 @@ database later.")
            license:mpl1.1            ; examples/interfaces/0{6,8}*.cpp
            license:public-domain)))) ; including files without explicit licence
 
+(define-public go-github-com-cockroachdb-pebble
+  ;; TODO: As inherited package can't be placed in separate module, keeping
+  ;; this Golang source library here.
+  (package
+    (name "go-github-com-cockroachdb-pebble")
+    (version "1.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cockroachdb/pebble")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15px3m8fid7fwh0xfyia75aak6a5sx5q3r01n79fr6mnyiaix18a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:build-flags #~(list "-tags" "external_libzstd")
+      #:test-flags #~(list "-tags" "external_libzstd"
+                           ;; Skip tests requiring git in PATH.
+                           "-skip" "TestLint")
+      ;; XXX: Maybe run more tests if possible.
+      #:test-subdirs #~(list "internal/...")
+      #:import-path "github.com/cockroachdb/pebble"))
+    (native-inputs
+     (list go-github-com-stretchr-testify
+           go-golang-org-x-perf
+           pkg-config))
+    (inputs
+     (list (list zstd "lib")))
+    (propagated-inputs
+     (list go-github-com-cespare-xxhash-v2
+           go-github-com-cockroachdb-datadriven
+           go-github-com-cockroachdb-errors
+           go-github-com-cockroachdb-fifo
+           go-github-com-cockroachdb-redact
+           go-github-com-cockroachdb-tokenbucket
+           go-github-com-datadog-zstd
+           go-github-com-ghemawat-stream
+           go-github-com-golang-snappy
+           go-github-com-guptarohit-asciigraph
+           go-github-com-hdrhistogram-hdrhistogram-go
+           go-github-com-klauspost-compress
+           go-github-com-kr-pretty
+           go-github-com-pkg-errors
+           go-github-com-pmezard-go-difflib
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-client-model
+           go-github-com-spf13-cobra
+           go-golang-org-x-exp
+           go-golang-org-x-perf
+           go-golang-org-x-sync
+           go-golang-org-x-sys))
+    (home-page "https://github.com/cockroachdb/pebble")
+    (synopsis "RocksDB/LevelDB inspired key-value database in Golang")
+    (description
+     "Pebble is a LevelDB/RocksDB inspired key-value store focused on
+performance and internal usage by CockroachDB. Pebble inherits the RocksDB
+file formats and a few extensions such as range deletion tombstones,
+table-level bloom filters, and updates to the MANIFEST format.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-cockroachdb-pebble-v2
+  (package
+    (inherit go-github-com-cockroachdb-pebble)
+    (name "go-github-com-cockroachdb-pebble-v2")
+    (version "2.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cockroachdb/pebble")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jglnsabg7y0y5agazvvmsa0r0ddn0j3c204cdpv7qsvi90pnr0d"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-cockroachdb-pebble)
+       ((#:tests? _ #t) #f) ; TODO: Find out why some tests fails to build
+       ((#:import-path _) "github.com/cockroachdb/pebble/v2")))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-cockroachdb-pebble)
+       (append go-github-com-cockroachdb-crlib
+               go-github-com-cockroachdb-swiss)))))
+
+(define-public pebble
+  (package/inherit go-github-com-cockroachdb-pebble
+    (name "pebble")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-cockroachdb-pebble)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "github.com/cockroachdb/pebble/cmd/pebble")
+       ((#:unpack-path _ "") "github.com/cockroachdb/pebble")))
+    (native-inputs
+     (append (package-propagated-inputs go-github-com-cockroachdb-pebble)
+             (package-native-inputs go-github-com-cockroachdb-pebble)))
+    (propagated-inputs '())
+    (description
+     (string-append (package-description
+                     go-github-com-cockroachdb-pebble)
+                    "\nThis package provides command line interface (CLI)."))))
+
 (define-public dicedb
   (package
     (name "dicedb")
@@ -498,7 +607,6 @@ database later.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/dicedb/dice"
       #:build-flags
@@ -1132,14 +1240,6 @@ Language.")
        #:parallel-tests? ,(target-x86-64?)
        #:phases
        (modify-phases %standard-phases
-         ;; TODO: Move this patch to the source field.
-         ,@(if (target-riscv64?)
-             `((add-after 'unpack 'patch-source
-                 (lambda* (#:key inputs native-inputs #:allow-other-keys)
-                   (invoke "patch" "-p1" "--force" "--input"
-                           (assoc-ref (or native-inputs inputs)
-                                      "patch-file")))))
-             '())
          (add-after 'unpack 'adjust-output-references
            (lambda _
              ;; The build system invariably prepends $CMAKE_INSTALL_PREFIX
@@ -1280,12 +1380,8 @@ Language.")
                 (("-lssl -lcrypto" all)
                  (string-append "-L" openssl " " all)))))))))
     (native-inputs
-     `(,@(if (target-riscv64?)
-           `(("patch" ,patch)
-             ("patch-file" ,(search-patch "mariadb-rocksdb-atomic-linking.patch")))
-           `())
-        ("bison" ,bison)
-        ("perl" ,perl)))
+     `(("bison" ,bison)
+       ("perl" ,perl)))
     (inputs
      (list fmt
            jemalloc
@@ -4067,30 +4163,19 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
 (define-public virtuoso-ose
   (package
     (name "virtuoso-ose")
-    (version "7.2.11")
+    (version "7.2.15")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/virtuoso/virtuoso/" version "/"
                            "virtuoso-opensource-" version ".tar.gz"))
        (sha256
-        (base32 "0mk25gr1pafmps4nsydjprwswbzwch8b583nlwh7x2031sz7ald1"))
-       (patches (search-patches "virtuoso-ose-remove-pre-built-jar-files.patch"))
+        (base32 "1nz6kddwxz5k79g3skj7y45f0l20m8fh8haw42j313xm177xpdp0"))
        (modules '((guix build utils)))
        ;; This snippet removes pre-built Java archives.
        (snippet
         #~(for-each delete-file-recursively
-                    (list "binsrc/hibernate"
-                          "binsrc/jena"
-                          "binsrc/jena2"
-                          "binsrc/jena3"
-                          "binsrc/jena4"
-                          "binsrc/rdf4j"
-                          "binsrc/sesame"
-                          "binsrc/sesame2"
-                          "binsrc/sesame3"
-                          "binsrc/sesame4"
-                          "libsrc/JDBCDriverType4")))))
+                    (find-files "." "\\.jar$")))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4103,9 +4188,6 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
               "--enable-static=no")
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'bootstrap
-            (lambda _
-              (invoke "sh" "autogen.sh")))
           (add-after 'unpack 'avoid-embedding-kernel-and-timestamps
             ;; For a reproducible build, avoid embedding the kernel version and
             ;; timestamps.
@@ -4124,15 +4206,9 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
                         "appsrc/ODS-FeedManager/make_vad.sh"
                         "appsrc/ODS-Bookmark/make_vad.sh"
                         "appsrc/ODS-Addressbook/make_vad.sh"
-                        "binsrc/dbpedia/make_vad.sh"
                         "binsrc/samples/demo/make_vad.sh"
                         "binsrc/samples/demo/mkdoc.sh"
-                        "binsrc/samples/sparql_demo/make_vad.sh"
-                        "binsrc/bpel/make_vad.sh"
-                        "binsrc/fct/make_vad.sh"
-                        "binsrc/rdf_mappers/make_vad.sh"
-                        "binsrc/isparql/make_vad.sh"
-                        "binsrc/conductor/mkvad.sh")
+                        "binsrc/rdf_mappers/make_vad.sh")
                 (("^UNAME_SYSTEM=.*") "UNAME_SYSTEM=unknown\n")
                 (("^UNAME_RELEASE=.*") "UNAME_RELEASE=unknown\n")
                 (("^PACKDATE=.*") "PACKDATE=2012-04-18\n")
@@ -4147,7 +4223,7 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
                '("libvirtuoso-t.a"
                  "libvirtuoso-t.la")))))))
     (native-inputs
-     (list autoconf automake bison flex gperf libtool))
+     (list autoconf automake bison flex gperf libtool python))
     (inputs
      (list openssl net-tools readline which zlib))
     (home-page "https://vos.openlinksw.com/owiki/wiki/VOS/")
@@ -6043,7 +6119,7 @@ relational databases are in general.")
            go-github-com-lib-pq
            go-github-com-mattn-go-runewidth
            go-github-com-mattn-go-sqlite3
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-pkg-errors
            go-github-com-sourcegraph-jsonrpc2
            go-golang-org-x-crypto

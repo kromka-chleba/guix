@@ -415,7 +415,7 @@ source code editors and IDEs.")
     (native-inputs
      (list go-github-com-docopt-docopt-go
            go-github-com-go-ini-ini
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-stretchr-testify
            go-md2man))
     (home-page "https://github.com/mrtazz/checkmake")
@@ -1216,7 +1216,7 @@ similar to unit tests.")
 (define-public gotestsum
   (package
     (name "gotestsum")
-    (version "1.12.0")
+    (version "1.12.2")
     (source
      (origin
        (method git-fetch)
@@ -1225,7 +1225,7 @@ similar to unit tests.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fx92jh6ay4rk1ljbgp9b2m4fafqwy0a19q7lhdabgb1j8dvgxvs"))))
+        (base32 "02q251j5kf2874vnvmbfc0ncnwssq459s8mf9f50cymqkpqbx0lp"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1235,6 +1235,9 @@ similar to unit tests.")
               (string-join
                (list "TestE2E_IgnoresWarnings"
                      "TestE2E_MaxFails_EndTestRun"
+                     "TestE2E_RerunFails/first_run_has_errors,_abort_rerun"
+                     "TestE2E_RerunFails/reruns_continues_to_fail"
+                     "TestE2E_RerunFails/reruns_until_success"
                      "TestScanTestOutput_TestTimeoutPanicRace/panic-race-2")
                "|"))
       ;; Run just unit test, integration tests from "testjson" require: run
@@ -3563,7 +3566,7 @@ allowing you to declaratively define \"match\" rules.")
     ;; Upstream is informed to provide man/info for the project, see
     ;; <https://github.com/toml-lang/toml-test/issues/163>.
     (name "toml-test")
-    (version "1.5.0")
+    (version "1.6.0")
     (source
      (origin
        (method git-fetch)
@@ -3572,7 +3575,7 @@ allowing you to declaratively define \"match\" rules.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "188xcsxgn20pjnddfn3mvx7wak030xdgkhxkhjiijfap37gbv6df"))))
+        (base32 "1b6lfamh673a4x509cacr6qr1xvf82562cpqn9ygrgnd81469qcc"))))
     (build-system go-build-system)
     (arguments
      (list

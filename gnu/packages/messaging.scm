@@ -96,6 +96,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
@@ -151,6 +152,7 @@
   #:use-module (gnu packages telephony)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
+  #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vulkan)
@@ -1144,14 +1146,14 @@ control of your private keys, no previous conversation is compromised.")
 (define-public znc
   (package
     (name "znc")
-    (version "1.10.0")
+    (version "1.10.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://znc.in/releases/archive/znc-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "06bb6c2nciwbknfschxd2fjkpigd6i0zgwl6jiz5lm7gcadssrdy"))))
+                "0038qjkc1cxqz16nx9b37gjqzmnavv2kxdbjb4c0c9mz3n2pcvjf"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f
@@ -3230,42 +3232,31 @@ designed for experienced users.")
 (define-public python-zulip
   (package
     (name "python-zulip")
-    (version "0.7.1")
+    (version "0.9.0")
     (source
      (origin
-       ;; There is no source on Pypi.
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/zulip/python-zulip-api")
-              (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (pypi-uri "zulip" version))
        (sha256
-        (base32
-         "0da1ki1v252avy27j6d7snnc0gyq0xa9fypm3qdmxhw2w79d6q36"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; TODO: This is fixed upstream in later versions
-           (substitute* "zulip/tests/test_default_arguments.py"
-             (("optional arguments:") "options:"))))))
-    (build-system python-build-system)
+        (base32 "0hq8kl5cvbqsmb5zqq5wi61cnv0zzlcqg69yn59wqgwybng1853s"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'cd-to-zulip-dir
-           (lambda _ (chdir "zulip")))
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (let ((test-zulip "../tools/test-zulip"))
-               (when tests?
-                 (add-installed-pythonpath inputs outputs)
-                 (patch-shebang test-zulip)
-                 (invoke test-zulip))))))))
-    (propagated-inputs
-     (list python-matrix-client python-pyopenssl python-requests
-           python-six))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: It tries to load from ~/zuliprc and fails:
+          ;; zulip.ConfigNotFoundError: api_key or email not specified and
+          ;; file /homeless-shelter/zuliprc does not exist.
+          (delete 'sanity-check))))
     (native-inputs
-     (list python-cython python-distro python-pytest))
+     (list python-matrix-nio
+           python-pytest
+           python-setuptools-next))
+    (propagated-inputs
+     (list python-click
+           python-distro
+           python-requests
+           python-typing-extensions))
     (home-page "https://github.com/zulip/python-zulip-api")
     (synopsis "Zulip's API Python bindings")
     (description
@@ -3275,7 +3266,7 @@ designed for experienced users.")
 (define-public zulip-term
   (package
     (name "zulip-term")
-    (version "0.5.2")
+    (version "0.7.0")
     (source
      (origin
        ;; Pypi package doesn't ship tests.
@@ -3285,26 +3276,39 @@ designed for experienced users.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1xhhy3v4wck74a83avil0rnmsi2grrh03cww19n5mv80p2q1cjmf"))
-       (modules '((guix build utils)))
-       (snippet '(substitute* "setup.py"
-                   (("\\=\\=1\\.7") ">=1.7")    ; pytest-mock
-                   (("\\=\\=2\\.5") ">=2.5")    ; pytest-cov
-                   (("4\\.5\\.2") "4.4.2")))))  ; lxml
+        (base32 "0p7q9r1bwak3kx4ig96pn3x53ggp9y70xczvqj6225bmi99r92v6"))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:test-flags '("--ignore=tests/cli/test_run.py")))
+     (list
+      ;; tests: 2357 passed, 3 skipped, 1 deselected, 19 xfailed, 2162
+      #:test-flags
+      ;; All CLI tests fail
+      #~(list "--ignore=tests/cli/test_run.py"
+              ;; IndexError: list index out of range
+              "-k" "not test_keypress_CYCLE_COMPOSE_FOCUS[tab-edit_box-message_to_stream_name_box]")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("urwid~=2.1.2") "urwid")))))))
     (inputs
      (list python-beautifulsoup4
            python-lxml
-           python-mypy-extensions
+           python-pygments
+           python-pyperclip
+           python-dateutil
+           python-pytz
+           python-typing-extensions
+           python-tzlocal
            python-urwid
            python-urwid-readline
            python-zulip))
     (native-inputs
-     (list python-distro python-pytest python-pytest-cov
-           python-pytest-mock))
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-mock
+           python-setuptools-next))
     (home-page "https://github.com/zulip/zulip-terminal")
     (synopsis "Zulip's official terminal client")
     (description "This package contains Zulip's official terminal client.")
@@ -3374,6 +3378,7 @@ designed for experienced users.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       ;; It helps to resolve <golang.org/x/net/publicsuffix/table.go:63:12>:
       ;; pattern data/children: cannot embed irregular file data/children
       #:embed-files #~(list "children" "nodes" "text")

@@ -3446,9 +3446,9 @@ models in the STL and OFF file formats.")
       (license license:gpl2+))))
 
 (define-public pythonscad
-  (let ((commit "e2641ca1a208a9a54a034a8818a9774ad4d5867c")
+  (let ((commit "e1d49035b8dd4cac187a03f04dd9de9d61972cbf")
         (version "0.0.0")
-        (revision "0"))
+        (revision "1"))
     (package
       (inherit openscad)
       (name "pythonscad")
@@ -3464,7 +3464,7 @@ models in the STL and OFF file formats.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "1i6yajamdrha2kpgyhn7jn6dv35qmgq0zsqv8cdzdqg5142v66ay"))
+          (base32 "1q0ib5iz4l2vpi8208fghgwcfb0n7a0ypm1ch860dl0zd1p4zljz"))
          (modules '((guix build utils)))
          (snippet #~(begin
                       ;; Delete all unbundled libraries to replace them with
@@ -3477,13 +3477,23 @@ models in the STL and OFF file formats.")
          (file-name (git-file-name name version))))
       (arguments
        (substitute-keyword-arguments (package-arguments openscad)
-         ((#:configure-flags flags
-           '())
-          #~(append #$flags
-                    (list "-DENABLE_LIBFIVE=ON" "-DUSE_BUILTIN_LIBFIVE=OFF"
-                          (string-append "-DPYTHON_VERSION="
-                                         #$(version-major+minor
-                                            (package-version python))))))
+         ((#:configure-flags flags)
+          #~(begin
+              (use-modules (srfi srfi-1))
+              (append 
+               (remove (lambda (flag)
+                         (or (string-prefix? "-DOPENSCAD_VERSION=" flag)
+                             (string-prefix? "-DOPENSCAD_COMMIT=" flag)))
+                       #$flags)
+               (list "-DENABLE_LIBFIVE=ON"
+                     "-DUSE_BUILTIN_LIBFIVE=OFF"
+                     (string-append "-DOPENSCAD_VERSION="
+                                    #$version)
+                     (string-append "-DOPENSCAD_COMMIT="
+                                    #$commit)
+                     (string-append "-DPYTHON_VERSION="
+                                    #$(version-major+minor
+                                       (package-version python)))))))
          ((#:phases phases)
           #~(modify-phases #$phases
               (replace 'patch-source
