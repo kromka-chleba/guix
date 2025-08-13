@@ -943,13 +943,13 @@ too slow and you'll get wound up in the scroll and crushed.")
 (define-public shellcheck
   (package
     (name "shellcheck")
-    (version "0.10.0")
+    (version "0.11.0")
     (source
      (origin
        (method url-fetch)
        (uri (hackage-uri "ShellCheck" version))
        (sha256
-        (base32 "08bdjcdl457xz2vh8y2w29bcwh1k7sfzyvszln3498vm5m1xn22d"))
+        (base32 "003lhhmaqbzvddw2im4ki5vz6v4imd8f5cp470gk122p36f2x9w1"))
        (file-name (string-append name "-" version ".tar.gz"))))
     (build-system haskell-build-system)
     (arguments
