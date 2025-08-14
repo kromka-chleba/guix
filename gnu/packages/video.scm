@@ -96,6 +96,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
   #:use-module (guix packages)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -2943,23 +2944,30 @@ Jellyfin.  It has support for various media files without transcoding.")
 (define-public gallery-dl
   (package
     (name "gallery-dl")
-    (version "1.28.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/mikf/gallery-dl"
-                                  "/releases/download/v" version "/gallery_dl-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0j4hxp1lbcxgg34ilzhcpxvswgnvvrlk66pn3w9ksv5g8jdz7rpi"))))
-    (build-system python-build-system)
+    (version "1.30.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mikf/gallery-dl")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15sgvk81s61v4yzzv1s5ksr4z77qhmv7ynyn34zrx5x41g72hgpz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: A lot of those require network.
+      #:test-flags #~(list "--ignore=test/test_results.py")))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (inputs (list python-requests ffmpeg))
     (home-page "https://github.com/mikf/gallery-dl")
     (synopsis "Command-line program to download images from several sites")
-    (description "Gallery-dl is a command-line program that downloads image
-galleries and collections from several image hosting sites.  While this package
-can use youtube-dl or yt-dlp packages to download videos, the focus is more on
-images and image hosting sites.")
+    (description
+     "Gallery-dl is a command-line program that downloads image galleries and
+collections from several image hosting sites.  While this package can use
+yt-dlp packages to download videos, the focus is more on images and image
+hosting sites.")
     (license license:gpl2)))
 
 (define-public mpv-mpris
@@ -3172,88 +3180,7 @@ to download videos from Austria's national television broadcaster.")
 video streaming services of the Finnish national broadcasting company Yle.")
     (license license:gpl3+)))
 
-(define-public youtube-dl
-  (package
-    (name "youtube-dl")
-    (version "2021.12.17")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://youtube-dl.org/downloads/latest/"
-                                  "youtube-dl-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1prm84ci1n1kjzhikhrsbxbgziw6br822psjnijm2ibqnz49jfwz"))
-              (snippet
-               '(begin
-                  ;; Delete the pre-generated files, except for the man page
-                  ;; which requires 'pandoc' to build.
-                  (for-each delete-file '("youtube-dl"
-                                          ;;pandoc is needed to generate
-                                          ;;"youtube-dl.1"
-                                          "youtube-dl.bash-completion"
-                                          "youtube-dl.fish"
-                                          "youtube-dl.zsh"))))))
-    (build-system python-build-system)
-    (arguments
-     ;; The problem here is that the directory for the man page and completion
-     ;; files is relative, and for some reason, setup.py uses the
-     ;; auto-detected sys.prefix instead of the user-defined "--prefix=FOO".
-     ;; So, we need pass the prefix directly.  In addition, make sure the Bash
-     ;; completion file is called 'youtube-dl' rather than
-     ;; 'youtube-dl.bash-completion'.
-     `(#:tests? #f ; Many tests fail. The test suite can be run with pytest.
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'default-to-the-ffmpeg-input
-                    (lambda _
-                      ;; See <https://issues.guix.gnu.org/43418#5>.
-                      ;; ffmpeg is big but required to request free formats
-                      ;; from, e.g., YouTube so pull it in unconditionally.
-                      ;; Continue respecting the --ffmpeg-location argument.
-                      (substitute* "youtube_dl/postprocessor/ffmpeg.py"
-                        (("\\.get\\('ffmpeg_location'\\)" match)
-                         (format #f "~a or '~a'" match (which "ffmpeg"))))))
-                  (add-before 'build 'build-generated-files
-                    (lambda _
-                      ;; Avoid the make targets that require pandoc.
-                      (invoke "make"
-                              "PYTHON=python"
-                              "youtube-dl"
-                              ;;"youtube-dl.1"   ; needs pandoc
-                              "youtube-dl.bash-completion"
-                              "youtube-dl.zsh"
-                              "youtube-dl.fish")))
-                  (add-before 'install 'fix-the-data-directories
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((prefix (assoc-ref outputs "out")))
-                        (mkdir "bash-completion")
-                        (rename-file "youtube-dl.bash-completion"
-                                     "bash-completion/youtube-dl")
-                        (substitute* "setup.py"
-                          (("youtube-dl\\.bash-completion")
-                           "bash-completion/youtube-dl")
-                          (("'etc/")
-                           (string-append "'" prefix "/etc/"))
-                          (("'share/")
-                           (string-append "'" prefix "/share/"))))))
-                  (add-after 'install 'install-completion
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "out"))
-                             (zsh (string-append out
-                                                 "/share/zsh/site-functions")))
-                        (mkdir-p zsh)
-                        (copy-file "youtube-dl.zsh"
-                                   (string-append zsh "/_youtube-dl"))))))))
-    (native-inputs
-     (list zip))
-    (inputs
-     (list ffmpeg))
-    (synopsis "Download videos from YouTube.com and other sites")
-    (description
-     "Youtube-dl is a small command-line program to download videos from
-YouTube.com and many more sites.")
-    (home-page "https://yt-dl.org")
-    (properties '((release-monitoring-url . "https://yt-dl.org/downloads/")))
-    (license license:public-domain)))
+(define-deprecated/public-alias youtube-dl yt-dlp)
 
 (define-public yt-dlp
   (package
@@ -3407,8 +3334,7 @@ audio, images) from the Web.  It can use either mpv or vlc for playback.")
            perl-term-readline-gnu
            perl-unicode-linebreak
            xdg-utils
-           ;; Some videos play without youtube-dl, but others silently fail to.
-           youtube-dl))
+           yt-dlp))
     (arguments
      `(#:modules ((guix build perl-build-system)
                   (guix build utils)
@@ -3421,9 +3347,9 @@ audio, images) from the Web.  It can use either mpv or vlc for playback.")
          (add-after 'unpack 'refer-to-inputs
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "lib/WWW/YoutubeViewer.pm"
-               (("'youtube-dl'")
-                (format #f "'~a/bin/youtube-dl'"
-                        (assoc-ref inputs "youtube-dl"))))
+               (("'yt-dlp'")
+                (format #f "'~a'"
+                        (search-input-file inputs "bin/yt-dlp"))))
              (substitute* '("bin/gtk2-youtube-viewer"
                             "bin/gtk3-youtube-viewer")
                (("'xdg-open'")
@@ -5100,44 +5026,6 @@ specifications.")
 Content System specification.")
     (license license:lgpl2.1+)))
 
-(define-public mps-youtube
-  (package
-    (name "mps-youtube")
-    (version "0.2.8")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/mps-youtube/mps-youtube")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1w1jhw9rg3dx7vp97cwrk5fymipkcy2wrbl1jaa38ivcjhqg596y"))))
-    (build-system python-build-system)
-    (arguments
-     ;; Tests need to be disabled until #556 upstream is fixed. It reads as if the
-     ;; test suite results differ depending on the country and also introduce
-     ;; non-determinism in the tests.
-     ;; https://github.com/mps-youtube/mps-youtube/issues/556
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases
-                  ;; Loading this as a library will create cache directories,
-                  ;; etc; which fails in the build container.
-                  (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-pafy python-pygobject)) ; For mpris2 support
-    (home-page "https://github.com/mps-youtube/mps-youtube")
-    (synopsis "Terminal based YouTube player and downloader")
-    (description
-     "@code{mps-youtube} is based on mps, a terminal based program to
-search, stream and download music.  This implementation uses YouTube as
-a source of content and can play and download video as well as audio.
-It can use either mpv or mplayer for playback, and for conversion of
-formats ffmpeg or libav is used.  Users should install one of the
-supported players in addition to this package.")
-    (license license:gpl3+)))
-
 (define-public handbrake
   (package
     (name "handbrake")
@@ -6758,6 +6646,92 @@ With Peek, you simply place the Peek window over the area you want to record
 and press \"Record\".  Peek is optimized for generating animated GIFs, but you
 can also directly record to WebM or MP4 if you prefer.")
     (license license:gpl3+)))
+
+(define-public python-yewtube
+  (package
+    (name "python-yewtube")
+    (version "2.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mps-youtube/yewtube")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bvn1zcycsq2gnvs10hn82ic8zp9q4s9gmmi6flahg3wavpnspzr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "mps_youtube/__init__.py"
+                (("from pip\\._vendor import pkg_resources.*")
+                 "")
+                (("__version__ =.*")
+                 (format #f "__version__ = ~s~%"
+                         #$(package-version this-package))))
+              (substitute* "requirements.txt"
+                (("httpx.*")
+                 "httpx\n"))))
+          (add-before 'check 'configure-tests
+            (lambda _
+              (setenv "HOME" (getcwd))))
+          ;; XXX: This can happen when some side-effects happens at
+          ;; initialization. See https://codeberg.org/guix/guix/issues/1089
+          (add-before 'sanity-check 'patch-script
+            (lambda _
+              (substitute* (string-append #$output "/bin/.yt-real")
+                (("import mps_youtube as mod")
+                 "from mps_youtube.main import main")
+                (("sys\\.exit \\(mod\\.main\\.main \\(\\)\\)")
+                 "sys.exit(main())"))))
+          (replace 'sanity-check
+            (lambda _
+              (invoke (string-append #$output "/bin/yt") "-h"))))))
+    (native-inputs
+     (list python-dbus
+           python-pygobject
+           python-pytest
+           python-setuptools-next
+           python-wheel))
+    (propagated-inputs
+     (list python-pylast
+           python-pyperclip
+           python-requests
+           python-youtube-search
+           yt-dlp))
+    (home-page "https://github.com/mps-youtube/yewtube")
+    (synopsis "Terminal based YouTube player and downloader")
+    (description
+     "This package provides a terminal based @code{YouTube} player and
+downloader.  It does not require a Youtube API key.")
+    (license license:gpl3+)))
+
+(define-deprecated/public-alias mps-youtube python-yewtube)
+
+(define-public python-youtube-search
+  (package
+    (name "python-youtube-search")
+    (version "1.6.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "youtube-search-python" version))
+       (sha256
+        (base32 "1xgw6nqypnj3ymjkfyzc1vvwar73qvp08prnp15ypmzcd7bx2s25"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-httpx))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/alexmercerind/youtube-search-python")
+    (synopsis "Search for YouTube videos, channels & playlists")
+    (description
+     "This package provides tools to search for @code{YouTube} videos,
+channels and playlists; as well as getting video metadata from links.  This
+package does not rely on the @code{YouTube} Data API v3.")
+    (license license:expat)))
 
 (define-public wf-recorder
   (package

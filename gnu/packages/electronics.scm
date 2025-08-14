@@ -85,6 +85,40 @@
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xml))
 
+(define-public camv-rnd
+  (package
+    (name "camv-rnd")
+    (version "1.1.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/camv-rnd/"
+                           "releases/camv-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1dp1vj5rpxlddx40paa9i727c92is3bz6z6pa0y6dy2nsjcm86fs"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/route-rnd/")
+    (synopsis "Viewer for electronic boards in CAM file formats")
+    (description
+     "@code{Camv-rnd} is a viewer for @acronym{PCB, Printed Circuit Board}
+supporting gerber, excellon and g-code.  It is part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
+
 (define-public comedilib
   (package
     (name "comedilib")
@@ -917,6 +951,75 @@ to enforce it.")
 hierarchical and parametric design.  It can generate VHDL, Verilog or Spice
 netlists from the drawn schematic, allowing the simulation of the circuit.")
     (home-page "https://xschem.sourceforge.io/stefan/index.html")
+    (license license:gpl2+)))
+
+(define-public route-rnd
+  (package
+    (name "route-rnd")
+    (version "0.9.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/route-rnd/"
+                           "releases/route-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0fy3b48s72lpicyap3y6jr9fyvb2ri42jb0gqxk6s927a278bfhc"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/route-rnd/")
+    (synopsis "Automatic routing for electronics boards")
+    (description
+     "@code{Route-rnd} is a generic external autorouter for @acronym{PCB,
+Printed Circuit Board} using tEDAx file format, part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
+
+(define-public sch-rnd
+  (package
+    (name "sch-rnd")
+    (version "1.0.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/sch-rnd/"
+                           "releases/sch-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "07a1ik0rpsa5cscg9l7i5rnipx76543s7cdnkg802747rral7yj5"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/sch-rnd/")
+    (synopsis "Scriptable editor of schematics for electronics boards")
+    (description
+     "@code{Sch-rnd} is a standalone and workflow agnostic schematics capture
+tool for @acronym{PCB, Printed Circuit Board}, part of the RiNgDove EDA
+suite.")
     (license license:gpl2+)))
 
 (define-public sigrok-cli

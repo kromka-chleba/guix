@@ -10780,27 +10780,37 @@ objects.")
      "This is a Python library for color math and conversions.")
     (license license:bsd-3)))
 
+(define-public python-colormath2
+  (package
+    (inherit python-colormath)
+    (name "python-colormath2")
+    (version "3.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "colormath2" version))
+       (sha256
+        (base32 "1yigkhvjgbl9nrlijn4iwcs6k7i5y58drix1331cd1hb9wzn35z7"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-networkx python-numpy))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/bkmgit/python-colormath2")))
+
 (define-public python-spectra
   (package
     (name "python-spectra")
-    (version "0.0.11")
+    (version "0.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "spectra" version))
        (sha256
-        (base32
-         "1f322x914bhkg6r5gv1vmnir3iy0k5kih0fd2gp3rdkw32jn5cwf"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _ (invoke "nosetests" "-v"))))))
+        (base32 "0gva48a1rn5yxj6dgy76dnndqaf09k5q2l9r41h2a66b84rf6c3a"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-colormath))
+     (list python-colormath2))
     (native-inputs
-     (list python-nose))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/jsvine/spectra")
     (synopsis "Color scales and color conversion")
     (description
@@ -27975,21 +27985,20 @@ belong to tagged versions.")
        (method url-fetch)
        (uri (pypi-uri "setuptools-git" version))
        (sha256
-        (base32
-         "0i84qjwp5m0l9qagdjww2frdh63r37km1c48mrvbmaqsl1ni6r7z"))))
-    (build-system python-build-system)
+        (base32 "0i84qjwp5m0l9qagdjww2frdh63r37km1c48mrvbmaqsl1ni6r7z"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; This is needed for tests.
-         (add-after 'unpack 'configure-git
-           (lambda _
-             (setenv "HOME" "/tmp")
-             (invoke "git" "config" "--global" "user.email" "guix")
-             (invoke "git" "config" "--global" "user.name" "guix")
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; This is needed for tests.
+          (add-after 'unpack 'configure-git
+            (lambda _
+              (setenv "HOME" "/tmp")
+              (invoke "git" "config" "--global" "user.email" "guix")
+              (invoke "git" "config" "--global" "user.name" "guix"))))))
     (native-inputs
-     `(("git" ,git-minimal)))
+     (list git-minimal python-setuptools python-wheel))
     (home-page "https://github.com/msabramo/setuptools-git")
     (synopsis "Setuptools revision control system plugin for Git")
     (description
@@ -30245,13 +30254,13 @@ N-dimensional arrays for Python.")
 (define-public python-dill
   (package
     (name "python-dill")
-    (version "0.3.9")
+    (version "0.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "dill" version))
        (sha256
-        (base32 "0b2inivjahjlph54a70x6wi3pax4qsgclhlw0blbz37nvmyjdal1"))))
+        (base32 "1w5w5hlijw7ahqji45ssyvdip5pv074h4nw97bsj8ws7vz9g2cq6"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -30280,14 +30289,14 @@ the saved state of the original interpreter session.")
 (define-public python-multiprocess
   (package
     (name "python-multiprocess")
-    (version "0.70.17")
+    (version "0.70.18")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "multiprocess" version))
        (sha256
         (base32
-         "0ypm9yj1ng1s96hk2iwll190dkpc2j5zras8kay9x00n6hdg3qja"))))
+         "03bdxiincqq3g66vl3sf5ygagjz5sbrpr83djlipprmkwql72ngr"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -30319,7 +30328,7 @@ preload_resources\
                   (format #t "test suite not run~%")))))))
     (propagated-inputs
      (list python-dill))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools-next))
     (home-page "https://pypi.org/project/multiprocess/")
     (synopsis "Multiprocessing and multithreading in Python")
     (description
@@ -31299,26 +31308,22 @@ by Igor Pavlov.")
 (define-public python-ifaddr
   (package
     (name "python-ifaddr")
-    (version "0.1.7")
+    (version "0.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ifaddr" version))
        (sha256
-        (base32
-         "150sxdlicwrphmhnv03ykxplyd2jdrxz0mikgnivavgilrn8m7hz"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _ (invoke "nosetests"))))))
+        (base32 "1m5fqjqf53m31qrl8fxp2sbwf4mvk5mbjpw2jm2x8rgpmg5by36c"))
+       (snippet #~(delete-file "ifaddr/_win32.py"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-nose))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/pydron/ifaddr")
     (synopsis "Network interface and IP address enumeration library")
-    (description "This package provides a network interface and IP address
-enumeration library in Python.")
+    (description
+     "This package provides a network interface and IP address enumeration
+library in Python.")
     (license license:expat)))
 
 (define-public python-zeroconf
@@ -32123,56 +32128,33 @@ layer and then tune the behaviour with any of the lower layers including the
 native API of @code{python-argparse}.")
       (license license:lgpl3+)))
 
-(define-public python-ppft
-  (package
-    (name "python-ppft")
-    (version "1.6.6.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ppft" version))
-       (sha256
-        (base32
-         "1z1invkhszc5d2mvgr221v7cszzifcc77mz0pv3wjp6x5q2768cy"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ; there are none
-    (propagated-inputs
-     (list python-six))
-    (home-page "https://pypi.org/project/ppft/")
-    (synopsis "Fork of Parallel Python")
-    (description
-     "This package is a fork of Parallel Python.  The Parallel Python
-module (@code{pp}) provides an easy and efficient way to create
-parallel-enabled applications for @dfn{symmetric multiprocessing} (SMP)
-computers and clusters.  It features cross-platform portability and dynamic
-load balancing.")
-    (license license:bsd-3)))
-
 (define-public python-pox
   (package
     (name "python-pox")
-    (version "0.2.7")
+    (version "0.3.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pox" version))
        (sha256
         (base32
-         "0y17ckc2p6i6709s279sjdj4q459mpcc38ymg9zv9y6vl6jf3bq6"))))
-    (build-system python-build-system)
+         "01gnsgz6wfmpmb57qr4cgpkampiy6l7c1kxa0hlacn81c0wyvvl4"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (mkdir-p "/tmp/guix")
-             (setenv "SHELL" "bash")
-             (setenv "USERNAME" "guix")
-             (setenv "HOME" "/tmp/guix") ; must end on USERNAME...
-             (invoke "py.test" "-vv")
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+              (when tests?
+                (mkdir-p "/tmp/guix")
+                (setenv "SHELL" "bash")
+                (setenv "USERNAME" "guix")
+                (setenv "HOME" "/tmp/guix") ; must end on USERNAME...
+                (invoke "python" "./pox/tests/__main__.py")))))))
     (native-inputs
-     (list python-pytest which))
+     (list python-setuptools-next
+           which)) ;pox/tests/test_shutils.py
     (home-page "https://pypi.org/project/pox/")
     (synopsis "Python utilities for file system exploration and automated builds")
     (description
@@ -32183,39 +32165,6 @@ remote host.  Pox provides Python equivalents of several shell commands such
 as @command{which} and @command{find}.  These commands allow automated
 discovery of what has been installed on an operating system, and where the
 essential tools are located.")
-    (license license:bsd-3)))
-
-(define-public python-pathos
-  (package
-    (name "python-pathos")
-    (version "0.2.5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pathos" version))
-       (sha256
-        (base32
-         "0in8hxdz7k081ijn6q94gr39ycy7363sx4zysmbwyvd7snqjrbi1"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "python" "./tests/__main__.py"))))))
-    (propagated-inputs
-     (list python-dill python-multiprocess python-pox python-ppft))
-    (native-inputs
-     (list python-pytest))
-    (home-page "https://pypi.org/project/pathos/")
-    (synopsis
-     "Parallel graph management and execution in heterogeneous computing")
-    (description
-     "Python-pathos is a framework for heterogeneous computing.  It provides a
-consistent high-level interface for configuring and launching parallel
-computations across heterogeneous resources.  Python-pathos provides configurable
-launchers for parallel and distributed computing, where each launcher contains
-the syntactic logic to configure and launch jobs in an execution environment.")
     (license license:bsd-3)))
 
 (define-public python-flit
@@ -32829,30 +32778,6 @@ sequences.")
 prevent debuggers and other applications from inspecting the memory within
 your process.")
     (license license:expat)))
-
-(define-public python-owslib
-  (package
-    (name "python-owslib")
-    (version "0.19.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "OWSLib" version))
-       (sha256
-        (base32 "0v8vg0naa9rywvd31cpq65ljbdclpsrx09788v4xj7lg10np8nk0"))))
-    (build-system python-build-system)
-    (arguments
-     ;; TODO: package dependencies required for tests.
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases
-                  (delete 'sanity-check))))
-    (synopsis "Interface for Open Geospatial Consortium web service")
-    (description
-     "OWSLib is a Python package for client programming with Open Geospatial
-Consortium (OGC) web service (hence OWS) interface standards, and their related
-content models.")
-    (home-page "https://geopython.github.io/OWSLib/")
-    (license license:bsd-3)))
 
 (define-public python-xattr
   (package

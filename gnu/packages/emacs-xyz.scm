@@ -8490,29 +8490,23 @@ column by drawing a thin line down the length of the editing window.")
     (license license:gpl3+)))
 
 (define-public emacs-greader
-  (let ((commit "d58c1ee051afe384e23455b7c8b72ee1eae4850f")) ;version bump
+  (let ((commit "07266f027f9e3d4b690142f525b5bbde2cb4b19e")) ;version bump
     (package
       (name "emacs-greader")
-      (version "0.12.5")
+      (version "0.12.7")
       (source
        (origin
          (uri (git-reference
-               (url "https://gitlab.com/michelangelo-rodriguez/greader")
-               (commit commit)))
+                (url "https://gitlab.com/michelangelo-rodriguez/greader")
+                (commit commit)))
          (method git-fetch)
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1wh9xbz4az4b90m2r2ffmrvwlv2ig75bxycmkqghaz4hhx2gkvaz"))))
+          (base32 "1qg9a3msnh95rj4jmih2j48r8dsisiqd8nlrj1qf3mfl4xr1kb7c"))))
       (build-system emacs-build-system)
       (arguments
-       (list
-        #:phases #~(modify-phases %standard-phases
-                     (add-after 'unpack 'add-requires
-                       (lambda _
-                         (substitute* "greader-dict.el"
-                           ((";;; Code:")
-                            ";;; Code:\n(require 'greader)\n")))))))
-      (inputs (list espeak-ng))
+       (list #:tests? #f))              ;no tests
+      (inputs (list emacs-compat espeak-ng))
       (home-page "https://gitlab.com/michelangelo-rodriguez/greader")
       (synopsis
        "Gnamù Reader, or Greader, sends buffer contents to a speech engine")
@@ -8521,7 +8515,7 @@ column by drawing a thin line down the length of the editing window.")
 Text To Speech} engine, such as Espeak-NG or Speech Dispatcher.
 
 The mode supports timer reading, automatic scrolling of buffers in modes like
-Info mode, and repeating reading of regions or the whole buffer. It also
+Info mode, and repeating reading of regions or the whole buffer.  It also
 includes a feature to facilitate the compilation of Espeak-NG
 pronunciations.")
       (license license:gpl3+))))
@@ -32788,32 +32782,30 @@ statistics with the help of @code{tokei}.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "0zkl9jkjbx0lmp9ylv4rqg1zwqibk053s4rp7s1h0i18nzk7vn8j"))))
+          (base32 "0zkl9jkjbx0lmp9ylv4rqg1zwqibk053s4rp7s1h0i18nzk7vn8j"))))
       (build-system emacs-build-system)
-      (inputs
-       (list youtube-dl))
       (arguments
-       `(#:tests? #f  ; Error : standard input is not a tty
-         #:test-command (list "make" "simulate")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'configure
-             (lambda* (#:key inputs #:allow-other-keys)
-               (let ((youtube-dl (assoc-ref inputs "youtube-dl")))
-                 ;; .el is read-only in git.
-                 (chmod "youtube-dl.el" #o644)
-                 ;; Specify the absolute file names of the various
-                 ;; programs so that everything works out-of-the-box.
-                 (emacs-substitute-variables
-                     "youtube-dl.el"
-                   ("youtube-dl-program"
-                    (string-append youtube-dl "/bin/youtube-dl")))))))))
+       (list
+        #:tests? #f  ; Error : standard input is not a tty
+        #:test-command #~(list "make" "simulate")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'configure
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; .el is read-only in git.
+                (chmod "youtube-dl.el" #o644)
+                ;; Specify the absolute file names of the various
+                ;; programs so that everything works out-of-the-box.
+                (emacs-substitute-variables
+                    "youtube-dl.el"
+                  ("youtube-dl-program"
+                   (search-input-file inputs "bin/yt-dlp"))))))))
+      (inputs (list yt-dlp))
       (home-page "https://github.com/skeeto/youtube-dl-emacs/")
       (synopsis "Emacs youtube-dl download manager")
       (description "This package manages a video download queue for
-@command{youtube-dl}, which serves as the back end.  It manages a single
-@command{youtube-dl} subprocess, downloading one video at a time.  New videos
+@command{yt-dlp}, which serves as the back end.  It manages a single
+@command{yt-dlp} subprocess, downloading one video at a time.  New videos
 can be queued at any time.")
       (license license:unlicense))))
 
@@ -32834,27 +32826,28 @@ can be queued at any time.")
           (base32 "0y62lkgsg19j05dpd6sp6zify8vq8xvpc8caqiy4rwi7p4ahacsf"))))
       (build-system emacs-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'configure
-             (lambda* (#:key inputs #:allow-other-keys)
-               ;; .el is read-only in git.
-               (make-file-writable "ytdl.el")
-               ;; Specify the absolute file names of the various programs so
-               ;; that everything works out-of-the-box.
-               (emacs-substitute-variables "ytdl.el"
-                 ("ytdl-command"
-                  (search-input-file inputs "/bin/youtube-dl"))))))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'configure
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; .el is read-only in git.
+                (make-file-writable "ytdl.el")
+                ;; Specify the absolute file names of the various programs so
+                ;; that everything works out-of-the-box.
+                (emacs-substitute-variables "ytdl.el"
+                  ("ytdl-command"
+                   (search-input-file inputs "/bin/yt-dlp"))))))))
       (inputs
-       (list youtube-dl))
+       (list yt-dlp))
       (propagated-inputs
        (list emacs-async emacs-dash))
       (home-page "https://gitlab.com/tuedachu/ytdl")
       (synopsis "Emacs interface for youtube-dl")
       (description
-       "This package manages a video download queue for @command{youtube-dl},
+       "This package manages a video download queue for @command{yt-dlp},
 which serves as the back end.  New videos can be queued at any time.  All
-youtube-dl backends are supported.  It is possible to create download profiles
+yt-dlp backends are supported.  It is possible to create download profiles
 depending on the downloaded URL.")
       (license license:gpl3+))))
 

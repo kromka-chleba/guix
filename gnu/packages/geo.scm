@@ -96,6 +96,7 @@
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages fribidi)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
@@ -1292,6 +1293,61 @@ just as easily download and work with other infrastructure types,
 amenities/points of interest, building footprints, elevation data,
 street bearings/orientations, and speed/travel time.")
     (license license:expat)))
+
+(define-public python-owslib
+  (package
+    (name "python-owslib")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/geopython/OWSLib")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14pb96h0nl4c6hs58i2z7mx0fpd4g886ajflbrs69hwiqj2x8a3f"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; XXX: Those tests require network access.
+         "-k" (string-join
+               (list "not test_ows_interfaces_wcs"
+                     "test_system_readonly"
+                     "test_sampling_features_readonly"
+                     "test_datastreams_readonly"
+                     "test_observations_readonly"
+                     "test_system_history")
+               " and not ")
+         ;; XXX: Not collected properly.
+         "--ignore-glob=tests/doctests/*")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'cleanup-build-directory
+            (lambda _
+              (delete-file-recursively "build"))))))
+    (native-inputs
+     (list python-dateutil
+           python-pyproj
+           python-pyyaml
+           python-pytest
+           python-pytest-cov
+           python-pytest-httpserver
+           python-pytz
+           python-requests
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-lxml))
+    (synopsis "Interface for Open Geospatial Consortium web service")
+    (description
+     "OWSLib is a Python package for client programming with Open Geospatial
+Consortium (OGC) web service (hence OWS) interface standards, and their related
+content models.")
+    (home-page "https://geopython.github.io/OWSLib/")
+    (license license:bsd-3)))
 
 (define-public mapnik
   ;; There hasn't been a release since early 2021, and it fails to build with
@@ -3907,107 +3963,114 @@ time.  Interactively visualize vector, raster and volume data.")
     (license license:gpl2+)))
 
 (define-public navit
-  (package
-    (name "navit")
-    (version "0.5.6")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/navit-gps/navit")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "1jhlif0sc5m8wqb5j985g1xba2ki7b7mm14pkvzdghjd0q0gf15s"))
-              (file-name (git-file-name name version))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      ;; There are no tests
-      #:tests? #f
-      ;; With -DSAMPLE_MAP=TRUE (the default), it tries to download a
-      ;; map during the build process.
-      #:configure-flags #~(list "-DSAMPLE_MAP=FALSE")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after
-              'unpack 'patch-navit-config
-            (lambda _
-              ;; For now this package only supports SDL, so if we keep
-              ;; the configuration as-is, Navit doesn't start.
-              (substitute*
-                  "navit/navit_shipped.xml"
-                (("<graphics type=\"gtk_drawing_area\"/>")
-                 "<graphics type=\"sdl\"/>"))
-              ;; Users are expected to be able to add XML files inside
-              ;; $NAVIT_SHAREDIR, however that directory is in the store.
-              (substitute*
-                  "navit/navit_shipped.xml"
-                (("<xi:include href=\"\\$NAVIT_SHAREDIR/maps/\\*\\.xml\"/>")
-                 "<xi:include href=\"$NAVIT_USER_DATADIR/maps/*.xml\"/>"))
-              ;; Navit also works without GPS but in that case there is
-              ;; no automatic zooming, so we need zoom buttons to be able
-              ;; to manually zoom in or out.
-              (substitute*
-                  "navit/navit_shipped.xml"
-                (((string-append
-                   "<osd enabled=\"no\" type=\"button\" x=\"-96\" y=\"-96\" "
-                   "command=\"zoom_in()"))
-                 (string-append
-                  "<osd enabled=\"yes\" type=\"button\" x=\"-96\" y=\"-96\" "
-                  "command=\"zoom_in()"))
-                (((string-append
-                   "<osd enabled=\"no\" type=\"button\" x=\"0\" y=\"-96\" "
-                   "command=\"zoom_out()"))
-                 (string-append
-                  "<osd enabled=\"yes\" type=\"button\" x=\"0\" y=\"-96\" "
-                  "command=\"zoom_out()\" src=\"zoom_out.png\"/>")))))
-          (add-before
-              'build 'set-cache
-            ;; During the build, svg icons are converted in different
-            ;; formats, and this needs XDG_CACHE_HOME to work.
-            (lambda _
-              (setenv "XDG_CACHE_HOME" "/tmp/xdg-cache"))))))
-    (inputs (list dbus-glib
-                  espeak
-                  freeglut
-                  freeimage
-                  freetype
-                  glib
-                  gettext-minimal
-                  gpsd
-                  gdk-pixbuf
-                  imlib2
-                  python
-                  sdl
-                  sdl-image))
-    (native-inputs (list fontconfig
-                         (librsvg-for-system)
-                         pkg-config))
-    (home-page "https://www.navit-project.org")
-    (synopsis "Car navigation system with routing engine that uses vector maps data")
-    (description "Navit is a car navigation system with a routing engine.
+  ;; XXX: The latest commit provides compatibility with GCC 14, switch to tag
+  ;; when a fresh release is available.
+  (let ((commit "2418e3f42af0641c734f93f3d6d20d3025ad2182")
+        (revision "0"))
+    (package
+      (name "navit")
+      (version (git-version "0.5.6" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/navit-gps/navit")
+                       (commit commit)))
+                (sha256
+                 (base32
+                  "0s7rhg1xyj56g19fh84znj6fzdiglgf010appjydivn5gkyzb9kq"))
+                (file-name (git-file-name name version))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; There are no tests
+        #:tests? #f
+        ;; With -DSAMPLE_MAP=TRUE (the default), it tries to download a
+        ;; map during the build process.
+        #:configure-flags #~(list "-DSAMPLE_MAP=FALSE")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after
+                'unpack 'patch-navit-config
+              (lambda _
+                ;; For now this package only supports SDL, so if we keep
+                ;; the configuration as-is, Navit doesn't start.
+                (substitute*
+                    "navit/navit_shipped.xml"
+                  (("<graphics type=\"gtk_drawing_area\"/>")
+                   "<graphics type=\"sdl\"/>"))
+                ;; Users are expected to be able to add XML files inside
+                ;; $NAVIT_SHAREDIR, however that directory is in the store.
+                (substitute*
+                    "navit/navit_shipped.xml"
+                  (("<xi:include href=\"\\$NAVIT_SHAREDIR/maps/\\*\\.xml\"/>")
+                   "<xi:include href=\"$NAVIT_USER_DATADIR/maps/*.xml\"/>"))
+                ;; Navit also works without GPS but in that case there is
+                ;; no automatic zooming, so we need zoom buttons to be able
+                ;; to manually zoom in or out.
+                (substitute*
+                    "navit/navit_shipped.xml"
+                  (((string-append
+                     "<osd enabled=\"no\" type=\"button\" x=\"-96\" y=\"-96\" "
+                     "command=\"zoom_in()"))
+                   (string-append
+                    "<osd enabled=\"yes\" type=\"button\" x=\"-96\" y=\"-96\" "
+                    "command=\"zoom_in()"))
+                  (((string-append
+                     "<osd enabled=\"no\" type=\"button\" x=\"0\" y=\"-96\" "
+                     "command=\"zoom_out()"))
+                   (string-append
+                    "<osd enabled=\"yes\" type=\"button\" x=\"0\" y=\"-96\" "
+                    "command=\"zoom_out()\" src=\"zoom_out.png\"/>")))))
+            (add-before
+                'build 'set-cache
+              ;; During the build, svg icons are converted in different
+              ;; formats, and this needs XDG_CACHE_HOME to work.
+              (lambda _
+                (setenv "XDG_CACHE_HOME" "/tmp/xdg-cache"))))))
+      (inputs (list dbus-glib
+                    espeak
+                    freeglut
+                    freeimage
+                    freetype
+                    fribidi
+                    glib
+                    gettext-minimal
+                    gpsd
+                    gdk-pixbuf
+                    imlib2
+                    python
+                    sdl
+                    sdl-image))
+      (native-inputs (list fontconfig
+                           (librsvg-for-system)
+                           libxslt
+                           pkg-config
+                           protobuf-c))
+      (home-page "https://www.navit-project.org")
+      (synopsis "Car navigation system with routing engine that uses vector maps data")
+      (description
+       "Navit is a car navigation system with a routing engine.
 
-It is meant to work with touchscreen devices, but it also works
-without a touchscreen.  It also supports text to speech.
+It is meant to work with touchscreen devices, but it also works without a
+touchscreen.  It also supports text to speech.
 
-It can be configured extensively through its own configuration file
-format.  For instance we can configure the graphical interface, and
-which map data is to be displayed at which zoom level.
+It can be configured extensively through its own configuration file format.
+For instance we can configure the graphical interface, and which map data is
+to be displayed at which zoom level.
 
 It supports different routing profiles: bike, car, car_avoid_toll,
 car_pedantic, car_shortest, horse, pedestrian, truck.
 
-It can use gpsd or NMEA GPS directly to get position data.  It also
-works without GPS: in this case users can also enter position data
-directly.
+It can use gpsd or NMEA GPS directly to get position data.  It also works
+without GPS: in this case users can also enter position data directly.
 
-It can also be used to log GPS data to files using the GPX or NMEA
-formats, or to replay NMEA data.
+It can also be used to log GPS data to files using the GPX or NMEA formats, or
+to replay NMEA data.
 
-For maps, it can uses its own \"binfile\" map format, or Garmin map
-file format, and data from OpenStreetMap, Garmin maps, Marco Polo
-Grosser Reiseplaner, Routeplaner Europa 2007, Map + Route.")
-    (license license:gpl2)))
+For maps, it can uses its own \"binfile\" map format, or Garmin map file
+format, and data from OpenStreetMap, Garmin maps, Marco Polo Grosser
+Reiseplaner, Routeplaner Europa 2007, Map + Route.")
+      (license license:gpl2))))
 
 (define-public laszip
   (package
