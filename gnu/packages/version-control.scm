@@ -172,6 +172,7 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages qt)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages sync)
@@ -4609,7 +4610,7 @@ TkDiff is included for browsing and merging your changes.")
 (define-public qgit
   (package
     (name "qgit")
-    (version "2.11")
+    (version "2.12")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4618,12 +4619,20 @@ TkDiff is included for browsing and merging your changes.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11948zzszi28js3pbxlss8r85jlb6fizxm8f5ljqk67m5qxk2v0f"))))
+                "16gy1xyn4xa3bjziphcdixbf6qv3bcs81z2k9j6biwpzs1ingkdb"))
+              ;; TODO: Remove this patch in the next update since it is fixed
+              ;; in the next commit.
+              (patches
+               (search-patches "qgit-2.12-fix-search-style.patch"))))
     (build-system qt-build-system)
     (arguments
-     (list #:tests? #f)) ;no tests
+     (list #:qtbase qtbase
+           #:tests? #f)) ;no tests
     (propagated-inputs
      (list git))
+    (inputs
+     (list qt5compat
+           qtwayland))
     (home-page "https://github.com/tibirna/qgit")
     (synopsis "Graphical front-end for git")
     (description
@@ -4847,7 +4856,7 @@ developer workflow, and project and release management.")
 (define-public hut
   (package
     (name "hut")
-    (version "0.6.0")
+    (version "0.7.0")
     (source
      (origin
        (method git-fetch)
@@ -4856,16 +4865,7 @@ developer workflow, and project and release management.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14cia976i2jdzyzw4wk9fhkh6zqgmb09ryf31ys24smmfcdfxyf1"))
-       (modules '((guix build utils)))
-       (snippet
-        #~(begin
-            ;; XXX: Module name has been changed upstream, it's already
-            ;; adjusted on master, consider to remove in the next refresh
-            ;; cycle.
-            (substitute* (find-files "." "\\.go$")
-              (("git.sr.ht/~emersion/go-scfg")
-               "codeberg.org/emersion/go-scfg"))))))
+        (base32 "0scw4nvm3qpg7l6anhljkixn3g36k03ikg6pl0hs76a3wkf89km5"))))
     (build-system go-build-system)
     (arguments
      (list

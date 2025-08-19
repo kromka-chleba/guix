@@ -6,6 +6,8 @@
 # a good understanding of that area of the codebase and therefore are
 # usually suited as a reviewer.
 
+gnu/packages/machine-learning\.scm                 @guix/ai
+
 gnu/packages/audio\.scm                            @guix/audio
 gnu/packages/fluidplug\.scm                        @guix/audio
 gnu/packages/xiph\.scm                             @guix/audio
@@ -116,6 +118,8 @@ guix/build/gnu-build-system\.scm                   @guix/core-packages
 guix/build/utils\.scm                              @guix/core-packages
 guix/build-system/gnu\.scm                         @guix/core-packages
 
+gnu/packages/debian\.scm                           @guix/debian
+
 \.texi$                                            @guix/documentation
 doc/build\.scm                                     @guix/documentation
 gnu/system/examples/bare-bones\.tmpl               @guix/documentation
@@ -184,6 +188,12 @@ guix/scripts/import/hackage\.scm                   @guix/haskell
 tests/guix-home\.sh                                @guix/home
 tests/home-import\.scm                             @guix/home
 tests/home-services\.scm                           @guix/home
+
+gnu/packages/mpi\.scm                              @guix/hpc
+gnu/packages/rocm\.scm                             @guix/hpc
+gnu/packages/sycl\.scm                             @guix/hpc
+gnu/packages/tbb\.scm                              @guix/hpc
+gnu/packages/vulkan\.scm                           @guix/hpc
 
 gnu/system/hurd\.scm                               @guix/hurd
 gnu/system/images/hurd\.scm                        @guix/hurd

@@ -17,7 +17,7 @@
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2022, 2023, 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2022-2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Kiran Shila <me@kiranshila.com>
 ;;; Copyright © 2022 Wiktor Zelazny <wzelazny@vurv.cz>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
@@ -76,6 +76,7 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages c)
+  #:use-module (gnu packages calendar)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -218,6 +219,40 @@ representations and sentence classification.")
     (description
      "This package provides Autograd-compatible approximations to the gamma
 family of functions.")
+    (license license:expat)))
+
+(define-public python-faster-whisper
+  (package
+    (name "python-faster-whisper")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/SYSTRAN/faster-whisper")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g9cdvphifn4rqhh7p4z1d3pp6bhcx0jmcahjigvcgry0qsijgfn"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Currently tests requires model download, which we'd rather avoid
+    ;; in Guix unless we're sure about the FOSS weights. To test in source :
+    ;; guix shell -D python-faster-whisper -- pytest
+    (arguments (list #:tests? #f))
+    (propagated-inputs (list (list onnxruntime "python")
+                             python-av
+                             python-ctranslate2
+                             python-huggingface-hub
+                             python-tokenizers
+                             python-tqdm))
+    (native-inputs (list python-numpy
+                         python-pytest
+                         python-setuptools-next))
+    (home-page "https://github.com/SYSTRAN/faster-whisper")
+    (synopsis "Whisper transcription reimplementation")
+    (description
+     "This package provides a reimplementation of OpenAI's Whisper model using
+CTranslate2, which is a inference engine for transformer models.")
     (license license:expat)))
 
 (define-public python-fasttext
@@ -1501,37 +1536,25 @@ unsupervised text tokenizer.")
 (define-public python-sentence-transformers
   (package
     (name "python-sentence-transformers")
-    (version "3.0.1")
+    (version "5.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "sentence_transformers" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/UKPLab/sentence-transformers/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1xmzbyrlp6wa7adf42n67c544db17nz95b10ri603lf4gi9jqgca"))))
+        (base32
+         "1jkj77q25b21nxrdszvlw127jnx1m7x8czldiq2mfyj76yjk0ymj"))))
     (build-system pyproject-build-system)
     (arguments
-     (list
-      #:test-flags
-      '(list
-        ;; Missing fixture / train or test data.
-        ;; Requires internet access.
-        "--ignore=tests/test_sentence_transformer.py"
-        "--ignore=tests/test_train_stsb.py"
-        "--ignore=tests/test_compute_embeddings.py"
-        "--ignore=tests/test_cross_encoder.py"
-        "--ignore=tests/test_model_card_data.py"
-        "--ignore=tests/test_multi_process.py"
-        "--ignore=tests/test_pretrained_stsb.py"
-        "-k" (string-append
-              "not test_LabelAccuracyEvaluator"
-              " and not test_ParaphraseMiningEvaluator"
-              " and not test_cmnrl_same_grad"
-              " and not test_paraphrase_mining"
-              " and not test_simple_encode"))))
+     (list #:tests? #f))        ;network access is required
     (propagated-inputs (list python-huggingface-hub
                              python-numpy
                              python-pillow
                              python-pytorch
+                             python-typing-extensions
                              python-scikit-learn
                              python-scipy
                              python-tqdm
@@ -1841,6 +1864,139 @@ Not all possible optimizations can be directly implemented on ONNX graphs---
 some will need additional backend-specific information---but many can, and the
 aim is to provide all such passes along with ONNX so that they can be re-used
 with a single function call.")
+    (license license:expat)))
+
+(define-public onnxruntime
+  (package
+    (name "onnxruntime")
+    (version "1.22.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/microsoft/onnxruntime")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z2s79l4wdilssw9lmj319ypyyqi2y0dx0fpwr2yhq8bax3ci50n"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils)
+                  ((guix build pyproject-build-system) #:prefix py:))
+      #:imported-modules (append %cmake-build-system-modules
+                                 %pyproject-build-system-modules)
+      #:configure-flags
+      #~(list "-Donnxruntime_BUILD_UNIT_TESTS=OFF"
+              "-Donnxruntime_BUILD_SHARED_LIB=ON"
+              "-Donnxruntime_ENABLE_LTO=ON"
+              "-Donnxruntime_ENABLE_PYTHON=ON"
+              "-Donnxruntime_USE_FULL_PROTOBUF=OFF"
+              ;; XXX: Fixes build with gcc@14.
+              "-DCMAKE_CXX_FLAGS=-Wl,-z,noexecstack")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "cmake")))
+          (add-after 'unpack 'relax-dependencies
+            (lambda _
+              (with-output-to-file "cmake/external/eigen.cmake"
+                (lambda _
+                  (display "find_package(Eigen3 REQUIRED)\n")))
+              (substitute* "cmake/external/abseil-cpp.cmake"
+                (("20240722")
+                 (car (string-split #$(package-version
+                                       (this-package-input "abseil-cpp"))
+                                    #\.))))))
+          (add-after 'install 'build-python
+            (lambda _
+              (invoke "python3" "../setup.py" "bdist_wheel")))
+          (add-after 'build-python 'install-python
+            (lambda* (#:key inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'install)
+               #:inputs inputs
+               #:outputs `(("out" . ,#$output:python)))))
+          (add-after 'install-python 'add-install-to-pythonpath
+            (lambda* (#:key inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
+               #:inputs inputs
+               #:outputs `(("out" . ,#$output:python)))))
+          (delete 'check)
+          (add-after 'add-install-to-pythonpath 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (with-directory-excursion "../onnxruntime/test/python"
+                ((assoc-ref py:%standard-phases 'check)
+                 #:tests? tests?
+                 #:test-flags
+                 `(;; XXX: NotImplementedError
+                   "--ignore-glob=quantization/*"
+                   ;; XXX: These tests require transformer models or have
+                   ;; import issues.
+                   "--ignore=transformers/test_generation.py"
+                   "--ignore=transformers/test_gpt2_benchmark.py"
+                   "--ignore=transformers/test_gpt2_to_onnx.py"
+                   "--ignore=transformers/test_optimizer_huggingface_bert.py"
+                   "--ignore=transformers/test_parity_huggingface_gpt_attention.py"
+                   "--ignore=transformers/test_shape_infer_helper.py"
+                   ;; XXX: onnxscript ModuleNotFound
+                   "--ignore=transformers/test_gelu_fusions.py"
+                   "--ignore=transformers/test_gemma3_vision.py"
+                   ;; XXX: Other failing tests.
+                   "-k" ,(string-append
+                          "not test_gelu_is_fused_by_default"
+                          " and not test_inverse"))))))
+          (add-after 'check 'python-sanity-check
+            (lambda* (#:key tests? inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'sanity-check)
+               #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
+                          ,@inputs)
+               #:outputs `(("out" . ,#$output:python))))))))
+    (outputs (list "out" "python"))
+    (inputs
+     (list abseil-cpp
+           boost
+           cpuinfo
+           dlpack
+           c++-gsl
+           date
+           eigen-for-onnxruntime
+           flatbuffers-23.5
+           googletest
+           nlohmann-json
+           onnx
+           protobuf
+           pybind11
+           re2-next
+           safeint
+           zlib))
+    (native-inputs
+     (list pkg-config
+           python-einops
+           python-wrapper
+           python-numpy
+           python-parameterized
+           python-psutil
+           python-pytest
+           python-pytorch
+           python-sentencepiece
+           python-setuptools-next))
+    (propagated-inputs
+     (list python-coloredlogs
+           python-flatbuffers
+           python-protobuf
+           python-sympy))
+    (home-page "https://github.com/microsoft/onnxruntime")
+    (synopsis "Cross-platform, high performance scoring engine for ML models")
+    (description
+     "ONNX Runtime is a performance-focused complete scoring engine
+for Open Neural Network Exchange (ONNX) models, with an open
+extensible architecture to continually address the latest developments
+in AI and Deep Learning. ONNX Runtime stays up to date with the ONNX
+standard with complete implementation of all ONNX operators, and
+supports all ONNX releases (1.2+) with both future and backwards
+compatibility.")
     (license license:expat)))
 
 (define-public rxcpp
@@ -6669,22 +6825,25 @@ simple speech recognition.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/ideasman42/nerd-dictation")
-               (commit commit)))
+                (url "https://github.com/ideasman42/nerd-dictation")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
           (base32 "0frdpswv6w3cwj3c7wd5w8gj3s1hvpdwd48qhfhfxf7imahz9bqf"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
       (arguments
-       '(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'chdir
-             (lambda _ (chdir "package/python"))))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "package/python"))))))
+      (native-inputs (list python-setuptools python-wheel))
       (propagated-inputs (list python-vosk))
       (home-page "https://github.com/ideasman42/nerd-dictation")
       (synopsis "Offline speech-to-text for desktop Linux")
-      (description "\
-This package provides simple access speech to text for using in
+      (description
+       "This package provides simple access speech to text for using in
 Linux without being tied to a desktop environment, using the @code{vosk-api}.
 The user configuration lets you manipulate text using Python string
 operations.  It has zero overhead, as this relies on manual activation and

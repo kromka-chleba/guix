@@ -107,7 +107,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -2663,20 +2663,13 @@ API, but uses asyncio to parallelise downloading the files.")
        (method url-fetch)
        (uri (pypi-uri "html2text" version))
        (sha256
-        (base32
-         "1fvv4z6dblii2wk1x82981ag8yhxbim1v2ksgywxsndh2s7335p2"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "test/"))))))
-    (native-inputs
-     (list python-pytest))
+        (base32 "1fvv4z6dblii2wk1x82981ag8yhxbim1v2ksgywxsndh2s7335p2"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/Alir3z4/html2text")
     (synopsis "Convert HTML into plain text")
-    (description "html2text takes HTML and converts it into plain ASCII text
+    (description
+     "html2text takes HTML and converts it into plain ASCII text
 which is also valid markdown.  html2text was originally written by Aaron
 Swartz.")
     (license license:gpl3+)))
@@ -8382,17 +8375,19 @@ association.")
 (define-public python-livereload
   (package
     (name "python-livereload")
-    (version "2.6.3")
+    (version "2.7.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "livereload" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lepture/python-livereload")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0scqjnhg3ap81v36ghp0pik774dnfdkwqsx5j1jfbzarbs32yvvp"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-six python-tornado))
+        (base32 "19wkdd1grw6mcd4qi8iaw4jdr207h3m24951vgy69j7g904lynjq"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-django python-setuptools python-wheel))
+    (propagated-inputs (list python-tornado))
     (home-page "https://github.com/lepture/python-livereload")
     (synopsis "Python LiveReload")
     (description
@@ -9327,11 +9322,12 @@ using a pure Python implementation.")
        (uri (pypi-uri "pyjsparser" version))
        (sha256
         (base32 "0ycmf9fsvwliqmm1n6sfz7x71y7i2kbfgn39d8lsbiccfxmxlq5y"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/PiotrDabkowski/pyjsparser")
     (synopsis "Fast JavaScript parser")
-    (description "This package provides a fast JavaScript parser (based on
-esprima.js)")
+    (description
+     "This package provides a fast JavaScript parser (based on esprima.js)")
     (license license:expat)))
 
 (define-public python-js2py

@@ -55,7 +55,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages django)
   #:use-module (gnu packages jupyter)
@@ -1249,25 +1249,16 @@ Python program.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0fg8jflcf4c929gd4zbcrk73d08waaqjfjmdjrgnv54mzl35pjxl"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest")))))))
+        (base32 "0fg8jflcf4c929gd4zbcrk73d08waaqjfjmdjrgnv54mzl35pjxl"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-numpy python-pytest))
+     (list python-numpy python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/kaste/mockito-python")
     (synopsis "Mocking library for Python")
     (description "This package provides a Python implementation of the Java
 library of the same name.  It eases monkey patching, for example to stub out
 side effects when unit testing.")
     (license license:expat)))
-
 
 (define-public python-mypy
   (package
@@ -1979,18 +1970,21 @@ of the project to ensure it renders properly.")
     (version "1.0.2")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        (pypi-uri "pytest_click" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Stranger6667/pytest-click")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1rcv4m850rl7djzdgzz2zhjd8g5ih8w6l0sj2f9hsynymlsq82xl"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-click python-pytest))
+        (base32 "197nvlqlyfrqpy5lrkmfh1ywpr6j9zipxl9d7syg2a2n7jz3a8rj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-click python-pytest))
     (home-page "https://github.com/Stranger6667/pytest-click")
-    (synopsis "Py.test plugin for Click")
-    (description "This package provides a plugin to test Python click
-interfaces with pytest.")
+    (synopsis "Pytest plugin for Click")
+    (description
+     "This package provides a plugin to test Python click interfaces with
+pytest.")
     (license license:expat)))
 
 (define-public python-pytest-console-scripts

@@ -92,7 +92,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -3964,35 +3964,30 @@ with relational data.")
 (define-public aerich
   (package
     (name "aerich")
-    (version "0.7.2")
+    (version "0.8.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/tortoise/aerich")
-             (commit (string-append "v" version))))
+              (url "https://github.com/tortoise/aerich")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0pcy945bg890p12s7cyw0mg7hxwsxyy570j600sbf7kwj2d3lilg"))))
+        (base32 "1cln1ik7519n6k4lnh06w956lp8xjb0khkkpsmaj8wqlm0jbvdbi"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list poetry
-           python-bandit
-           python-cryptography
-           python-isort
-           python-pydantic
+     (list python-cryptography
            python-pytest
+           python-poetry-core
            python-pytest-asyncio
-           python-pytest-mock
-           python-pytest-xdist))
+           python-pytest-mock))
     (propagated-inputs
-     (list python-asyncmy
+     (list python-asyncclick
+           python-asyncmy
            python-asyncpg
-           python-click
-           python-ddlparse
            python-dictdiffer
-           python-tomlkit
+           python-pydantic
+           python-tomli-w
            python-tortoise-orm))
     (home-page "https://github.com/tortoise/aerich")
     (synopsis "Database migrations tool for Tortoise @acronym{ORM, Object Relational
@@ -4118,47 +4113,41 @@ etc., and an SQL engine for performing simple SQL queries.")
   (package
     (name "python-lmdb")
     (version "1.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "lmdb" version))
-              (sha256
-               (base32
-                "1di1gj2agbxwqqwrpk4w58dpfah0kl10ha20s63dlqdd1bgzydj1"))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Delete bundled lmdb source files.
-               '(begin
-                  (for-each delete-file (list "lib/lmdb.h"
-                                              "lib/mdb.c"
-                                              "lib/midl.c"
-                                              "lib/midl.h"))
-                  #t))))
-    (build-system python-build-system)
-    (inputs
-     (list lmdb))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lmdb" version))
+       (sha256
+        (base32 "1di1gj2agbxwqqwrpk4w58dpfah0kl10ha20s63dlqdd1bgzydj1"))
+       (snippet
+        ;; Delete bundled lmdb source files.
+        #~(for-each delete-file
+                    '("lib/lmdb.h" "lib/mdb.c" "lib/midl.c" "lib/midl.h")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'use-system-lmdb
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((lmdb (assoc-ref inputs "lmdb")))
-               (setenv "LMDB_PURE" "set") ; don't apply env-copy-txn.patch
-               (setenv "LMDB_FORCE_SYSTEM" "set")
-               (setenv "LMDB_INCLUDEDIR" (string-append lmdb "/include"))
-               (setenv "LMDB_LIBDIR" (string-append lmdb "/lib"))
-               #t))))
-       ;; Tests fail with: ‘lmdb.tool: Please specify environment (--env)’.
-       #:tests? #f))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'use-system-lmdb
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((lmdb (assoc-ref inputs "lmdb")))
+                (setenv "LMDB_PURE" "set") ;don't apply env-copy-txn.patch
+                (setenv "LMDB_FORCE_SYSTEM" "set")
+                (setenv "LMDB_INCLUDEDIR"
+                        (string-append lmdb "/include"))
+                (setenv "LMDB_LIBDIR"
+                        (string-append lmdb "/lib"))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list lmdb))
     (home-page "https://github.com/dw/py-lmdb")
     (synopsis "Python binding for the ‘Lightning’ database (LMDB)")
     (description
      "python-lmdb or py-lmdb is a Python binding for the @dfn{Lightning
 Memory-Mapped Database} (LMDB), a high-performance key-value store.")
-    (license
-     (list license:openldap2.8
-           ;; ‘lib/win32/inttypes.h’ and ‘lib/win32-stdint/stdint.h’ are BSD-3,
-           ;; but not actually needed on platforms currently supported by Guix.
-           license:bsd-3))))
+    (license (list license:openldap2.8
+                   ;; ‘lib/win32/inttypes.h’ and ‘lib/win32-stdint/stdint.h’ are BSD-3,
+                   ;; but not actually needed on platforms currently supported by Guix.
+                   license:bsd-3))))
 
 (define-public virtuoso-ose
   (package
@@ -4399,34 +4388,28 @@ You might also want to install the following optional dependencies:
     (name "python-alchemy-mock")
     (version "0.4.3")
     (home-page "https://github.com/miki725/alchemy-mock")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "alchemy-mock" version))
-              (sha256
-               (base32
-                "0ylxygl3bcdapzz529n8wgk7vx9gjwb3ism564ypkpd7dbsw653r"))
-             (snippet
-              #~(begin (use-modules (guix build utils))
-                       (substitute* "alchemy_mock/comparison.py"
-                         (("collections\\.Mapping") "collections.abc.Mapping"))))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/miki725/alchemy-mock")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "053gj8d8ca5kpp7v61wd7lcm9mqp9xqz3d8pp9spdbcjsaqz9nk9"))
+       (snippet #~(begin
+                    (use-modules (guix build utils))
+                    (substitute* "alchemy_mock/comparison.py"
+                      (("collections\\.Mapping")
+                       "collections.abc.Mapping"))))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      ;; Create pytest.ini that adds doctest options to
-                      ;; prevent test failure.  Taken from tox.ini.
-                      (call-with-output-file "pytest.ini"
-                        (lambda (port)
-                          (format port "[pytest]
-doctest_optionflags=IGNORE_EXCEPTION_DETAIL
-")))
-                      (invoke "pytest" "-vv" "--doctest-modules"
-                              "alchemy_mock/"))))))
-    (native-inputs
-     (list python-mock python-pytest))
-    (propagated-inputs
-     (list python-six python-sqlalchemy))
+     (list
+      #:test-flags
+      #~(list "--doctest-modules" "alchemy_mock")))
+    (native-inputs (list python-mock python-pytest python-setuptools
+                         python-wheel))
+    (propagated-inputs (list python-sqlalchemy))
     (synopsis "Mock helpers for SQLAlchemy")
     (description
      "This package provides mock helpers for SQLAlchemy that makes it easy
@@ -4858,13 +4841,13 @@ files or Python scripts that define a list of migration steps.")
 (define-public python-mysqlclient
   (package
     (name "python-mysqlclient")
-    (version "2.2.4")
+    (version "2.2.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mysqlclient" version))
        (sha256
-        (base32 "0hdznfz9095d2qhl7awbp39s7wpqbxn37xzan487qzaf8srrzg1k"))))
+        (base32 "0i9q2vj6rb4w2iggk0mcp9jla2rm91sx7jcrgv7grm8njjsj5bi4"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags

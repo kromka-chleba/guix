@@ -50,6 +50,7 @@
 ;;; Copyright © 2024 mio <stigma@disroot.org>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2024 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
@@ -3473,16 +3474,28 @@ provided by Pipewire.")
 (define-public python-pyaudio
   (package
     (name "python-pyaudio")
-    (version "0.2.12")
+    (version "0.2.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "PyAudio" version))
        (sha256
-        (base32 "17pvc27pn2xbisbq7nibhidyw8h2kyms7g2xbyx7nlxwfbdzbpam"))))
-    (build-system python-build-system)
-    (inputs
-     (list portaudio))
+        (base32 "11rgpnahh2kr3x4plr0r7kpccmbplm35cj669wglv6dlg4wgzpvq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Most tests require access to devices.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (setenv "PYTHONPATH" (string-append (getcwd) "/tests"))
+                (apply invoke "python" test-flags)))))))
+    (native-inputs
+     (list python-numpy python-setuptools python-wheel))
+    (inputs (list portaudio))
     (home-page "https://people.csail.mit.edu/hubert/pyaudio/")
     (synopsis "Bindings for PortAudio v19")
     (description "This package provides bindings for PortAudio v19, the
@@ -3672,6 +3685,52 @@ one-dimensional sample-rate conversion library.")
     (description "This package provides a python API to read and write MIDI
 files.")
     (license license:expat)))
+
+(define-public python-wavefile
+  (package
+    (name "python-wavefile")
+    (version "1.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "wavefile" version))
+       (sha256
+        (base32 "120r003xy0cv6a4d4cjxv140im007klgkvzfgc57m70rcbnggi7p"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Assertion fail to compare files.
+                    (list "not test_allFormats"
+                          "test_commonFormats"
+                          "test_majorFormats"
+                          "test_subtypeFormats")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-libsndfile-path
+            (lambda _
+              (substitute* "wavefile/libsndfile.py"
+                (("'libsndfile")
+                 (string-append "'" #$(this-package-input "libsndfile")
+                                "/lib/libsndfile"))))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools-next))
+    (inputs
+     (list libsndfile
+           portaudio))
+    (propagated-inputs
+     (list python-numpy
+           python-pyaudio))
+    (home-page "https://github.com/vokimon/python-wavefile")
+    (synopsis "Pythonic audio file reader and writer")
+    (description
+     "This package provides pythonic libsndfile wrapper to read and write audio
+files.")
+    (license license:gpl3+)))
 
 (define-public audio-to-midi
   (package

@@ -1572,6 +1572,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/guile-fibers-libevent-timeout.patch	\
   %D%/packages/patches/guile-fix-invalid-unicode-handling.patch \
   %D%/packages/patches/guile-gdbm-ffi-support-gdbm-1.14.patch	\
+  %D%/packages/patches/guile-gi-fix-marshall-tests.patch	\
   %D%/packages/patches/guile-hurd-posix-spawn.patch		\
   %D%/packages/patches/guile-lzlib-gcc-14.patch			\
   %D%/packages/patches/guile-lzlib-hurd64.patch			\
@@ -2080,6 +2081,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-sphinx-prompt-docutils-0.19.patch	\
   %D%/packages/patches/python-zeroc-ice-3.6.5-python-3.11-support.patch	\
   %D%/packages/patches/qcodeeditor-qt6.patch			\
+  %D%/packages/patches/qgit-2.12-fix-search-style.patch		\
   %D%/packages/patches/qtdeclarative-5-disable-qmlcache.patch	\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
   %D%/packages/patches/qtlocation-5.15.8-mapboxgl-gcc13.patch	\
@@ -2293,6 +2295,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/rw-igraph-0.10.patch			\
   %D%/packages/patches/rxvt-unicode-fix-cursor-position.patch	\
   %D%/packages/patches/s7-flint-3.patch                      	\
+  %D%/packages/patches/safeint-disable-tests.patch		\
   %D%/packages/patches/sage-safeguard-sage-getargspec-cython.patch \
   %D%/packages/patches/sajson-for-gemmi-numbers-as-strings.patch	\
   %D%/packages/patches/sajson-build-with-gcc10.patch		\
@@ -2535,7 +2538,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/zig-0.14-use-system-paths.patch		\
   %D%/packages/patches/zsh-egrep-failing-test.patch		\
   %D%/packages/patches/zuo-bin-sh.patch			\
-  %D%/packages/patches/zxing-cpp-1.2.0-gcc-14.patch
+  %D%/packages/patches/zxing-cpp-1.2.0-gcc-14.patch	\
+  %D%/packages/patches/zynaddsubfx-3.0.6-include-cstdint.patch
 
 MISC_DISTRO_FILES =				\
   %D%/packages/ld-wrapper.in

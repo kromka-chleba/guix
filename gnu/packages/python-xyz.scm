@@ -166,6 +166,7 @@
 ;;; Copyright © 2025, Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Luis Felipe López Acevedo <sirgazil@zoho.com>
+;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -189,7 +190,6 @@
   #:use-module (gnu packages aidc)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages attr)
-  #:use-module (gnu packages audio)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
@@ -197,7 +197,7 @@
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages bioinformatics)
   #:use-module (gnu packages build-tools)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -262,7 +262,6 @@
   #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages protobuf)
-  #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
@@ -381,6 +380,55 @@ SNS, Gotify, etc.")
 These aspects include CPU, network fabrics, etc.  In addition, it offers
 APIs to detect, query, and compare them.")
     (license license:expat)))
+
+(define-public python-asyncclick
+  (package
+    (name "python-asyncclick")
+    (version "8.2.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "asyncclick" version))
+       (sha256
+        (base32 "0q26q8r1x5j9nz72xcb80vjx5maha6yswdmw2li4mwqyzdxnnkq1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 1397 passed, 29 skipped, 72 deselected, 4 xfailed
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; See: <https://github.com/python-trio/asyncclick/issues/42>.
+                    (list "not test_confirm_repeat[asyncio]"
+                          "test_confirm_repeat[trio]"
+                          "test_file_prompt_default_format[asyncio-file_kwargs0]"
+                          "test_file_prompt_default_format[asyncio-file_kwargs1]"
+                          "test_file_prompt_default_format[asyncio-file_kwargs2]"
+                          "test_file_prompt_default_format[trio-file_kwargs0]"
+                          "test_file_prompt_default_format[trio-file_kwargs1]"
+                          "test_file_prompt_default_format[trio-file_kwargs2]"
+                          "test_prompts[asyncio]"
+                          "test_prompts[trio]"
+                          ;; Requires less
+                          "test_echo_via_pager")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-conftest
+            ;; See: <https://github.com/python-trio/asyncclick/pull/39>.
+            (lambda _
+              (substitute* "tests/conftest.py"
+                (("from click") "from asyncclick")))))))
+    (native-inputs
+     (list python-anyio
+           python-flit-core-next
+           python-pytest
+           python-trio))
+    (home-page "https://github.com/python-trio/asyncclick")
+    (synopsis "Python composable command line utility, trio-compatible version ")
+    (description
+     "AsyncClick is a fork of Click that works well with anyio, Trio, or
+asyncio.")
+    (license license:bsd-3)))
 
 (define-public python-asyncstdlib
   (package
@@ -927,6 +975,34 @@ of Ordered Set.")
 your terminal.")
     (license license:expat)))
 
+(define-public python-puccinialin
+  (package
+    (name "python-puccinialin")
+    (version "0.1.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "puccinialin" version))
+       (sha256
+        (base32 "00nnqcvvyn10zxkhgzcfn8czwvdzm0vh5z16plb0dxspccd69dmv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests in PyPI or Git
+    (native-inputs
+     (list python-hatchling))
+    (propagated-inputs
+     (list python-httpx
+           python-platformdirs
+           python-tqdm))
+    (home-page "https://github.com/konstin/puccinialin")
+    (synopsis "Helper for bootstrapping Rust-based build back-ends for Python")
+    (description
+     "This tool helps to install Rust into a temporary directory, allowing
+support of Rust-based Python builds.  Cargo and rustc are installed into a
+cache directory, to avoid modifying the host's environment, and further
+activated using a set of environment variables.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public python-pyxdameraulevenshtein
   (package
     (name "python-pyxdameraulevenshtein")
@@ -1335,7 +1411,7 @@ similar XML files, in the same way the @command{diff} utility does it.")
           (add-before 'check 'pre-check
             (lambda* (#:key inputs #:allow-other-keys)
               (setenv "LD_LIBRARY_PATH"
-                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1.2.37"))))))))
+                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1.3.7"))))))))
     (inputs (list openssl libltdl libxslt libxml2))
     (propagated-inputs (list python-lxml xmlsec-openssl))
     (native-inputs (list pkg-config
@@ -5849,36 +5925,6 @@ videos in a notebook.")
      "The @code{simplaudio} package provides cross-platform, dependency-free
 audio playback capability for Python 3 on OSX, Windows, and Linux.")
     (license license:expat))) ; MIT license
-
-(define-public python-wavefile
-  (package
-    (name "python-wavefile")
-    (version "1.6.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "wavefile" version))
-              (sha256
-               (base32
-                "04mdcxq7n1vnwb9y65j0cwpy91ik5rh9vki1f45xqnh4ygz91n75"))))
-    (build-system python-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-libsndfile-path
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (substitute* "wavefile/libsndfile.py"
-                     (("'libsndfile")
-                      (string-append "'" (assoc-ref inputs "libsndfile")
-                                     "/lib/libsndfile"))))))))
-    (inputs
-     (list libsndfile portaudio))
-    (propagated-inputs (list python-numpy python-pyaudio))
-    (home-page "https://github.com/vokimon/python-wavefile")
-    (synopsis "Pythonic audio file reader and writer")
-    (description
-     "This package provides pythonic libsndfile wrapper to read and write audio
-files.")
-    (license license:gpl3+)))
 
 (define-public python-jsonalias
   (package
@@ -32316,17 +32362,20 @@ memoization.")
     (version "0.8")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "cson" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/avakar/pycson")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "00cyvigg4npbph39ghkg77xbxisa6plf75vii24igxfizik0337f"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-speg))
+        (base32 "0d2zbmak0hzsl1w71dgc8x4q4vdfbpk46vwyi9vvvqv7gdqj59fn"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-speg))
     (home-page "https://github.com/avakar/pycson")
     (synopsis "Parser for Coffeescript Object Notation (CSON)")
-    (description "This package is a parser for Coffeescript Object
-Notation (CSON).")
+    (description
+     "This package is a parser for Coffeescript Object Notation (CSON).")
     (license license:expat)))
 
 (define-public python-aionotify
@@ -37335,18 +37384,30 @@ It implements advanced Python dictionaries with dot notation access.")
     (name "python-aspectlib")
     (version "1.5.2")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "aspectlib" version))
-        (sha256
-          (base32 "1am4ycf292zbmgz791z393v63w7qrynf8q5p9db2wwf2qj1fqxfj"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ionelmc/python-aspectlib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mfhflg33684gkp6ckkywshn4xa3vqaia521kcagaxgr3xm6c9pv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list ;; XXX: Require more dependencies.
+         "--ignore=tests/test_integrations.py"
+         "--ignore=tests/test_integrations_py3.py"
+         ;; XXX: Unimportant warning errors.
+         "-k" (string-append "not test_story_empty_play_proxy_class"
+                             " and not test_story_half_play_proxy_class"))))
+    (native-inputs (list python-pytest python-setuptools python-tornado python-wheel))
     (propagated-inputs (list python-fields))
     (home-page "https://github.com/ionelmc/python-aspectlib")
-    (synopsis
-      "Python monkey-patching and decorators")
+    (synopsis "Python monkey-patching and decorators")
     (description
-      "This package provides an aspect-oriented programming, monkey-patch
+     "This package provides an aspect-oriented programming, monkey-patch
 and decorators library.  It is useful when changing behavior in existing
 code is desired.  It includes tools for debugging and testing:
 simple mock/record and a complete capture/replay framework.")

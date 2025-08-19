@@ -1001,28 +1001,35 @@ the Monero GUI client.")
     (license license:bsd-3)))
 
 (define-public python-bech32
-  (package
-    (name "python-bech32")
-    (version "1.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "bech32" version))
-              (sha256
-               (base32
-                "16fq5cfy5id9hp123ylhpl55pf38xwk0hv7sziqpig838qhvhvbx"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/fiatjaf/bech32")
-    (synopsis "Reference implementation for Bech32 and Segwit addresses")
-    (description "This package provides a python reference implementation for
+  ;; XXX: No tags upstream.
+  (let ((commit "231e4d88b15f3dc8faf7d339f365b84f6ab5cbcc")
+        (revision "0"))
+    (package
+      (name "python-bech32")
+      (version (git-version "1.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/fiatjaf/bech32")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0wq6q0yrw3x42d81v445xy4nh2qlrn7swsydgpv81dkay11kajrz"))))
+      (build-system pyproject-build-system)
+      (native-inputs (list python-setuptools python-wheel))
+      (home-page "https://github.com/fiatjaf/bech32")
+      (synopsis "Reference implementation for Bech32 and Segwit addresses")
+      (description "This package provides a python reference implementation for
 Bech32 and segwit addresses.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public python-trezor-agent
   ;; It is called 'libagent' in pypi; i.e. this is the library as opposed to
   ;; the toplevel app called trezor-agent.
   (package
     (name "python-trezor-agent")
-    (version "0.14.7")
+    (version "0.15.0")
     (source
      (origin
        (method git-fetch)
@@ -1031,22 +1038,21 @@ Bech32 and segwit addresses.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04dds5bbw73nk36zm8d02qw6qr92nrlcf8r1cq8ba96mzi34jbk0"))))
-    (build-system python-build-system)
+        (base32 "09y55ys3x5krszh58yhl5gpdri0zrlhfld6psrmiyxfbp344asin"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-requires-backports-shutil-which
-           ;; Remove requires on backport of shutil_which, as python 3.4+ has
-           ;; a built-in implementation supported in python-trezor-agent.
-           (lambda _
-             (substitute* "setup.py"
-               (("'backports.shutil_which>=3.5.1',") ""))))
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-v")))))))
+     (list
+      #:test-flags
+      ;; XXX: Requires $HOME to be /run/user.
+      #~(list "-k" "not test_get_agent_sock_path")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-requires-backports-shutil-which
+            ;; Remove requires on backport of shutil_which, as python 3.4+ has
+            ;; a built-in implementation supported in python-trezor-agent.
+            (lambda _
+              (substitute* "setup.py"
+                (("'backports.shutil_which>=3.5.1',") "")))))))
     (propagated-inputs
      (list python-bech32
            python-configargparse
@@ -1064,7 +1070,9 @@ Bech32 and segwit addresses.")
     (native-inputs ; Only needed for running the tests
      (list gnupg
            python-mock
-           python-pytest))
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/romanz/trezor-agent")
     (synopsis "Use hardware wallets as SSH and GPG agent")
     (description
@@ -1340,7 +1348,7 @@ the KeepKey Hardware Wallet.")
        (uri (origin-uri (package-source python-trezor-agent)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04dds5bbw73nk36zm8d02qw6qr92nrlcf8r1cq8ba96mzi34jbk0"))
+        (base32 "09y55ys3x5krszh58yhl5gpdri0zrlhfld6psrmiyxfbp344asin"))
        (modules
         '((guix build utils)
           (ice-9 ftw)
@@ -1360,45 +1368,40 @@ the KeepKey Hardware Wallet.")
                      (scandir "./agents/trezor/"
                               (negate (cut member <> '("." "..") string=))))
            (delete-file-recursively "./agents")
-           ;; Without deleting ./contrib the sanity-check phase fails. Reported
-           ;; upstream as https://github.com/romanz/trezor-agent/issues/429.
-           (delete-file-recursively "./contrib")
            ;; Without deleting ./libagent setuptools complains as follows:
            ;; "error: Multiple top-level packages discovered in a flat-layout: ['contrib', 'libagent']."
            (delete-file-recursively "./libagent")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("'trezor\\[hidapi]>=0.12.0,<0.13'")
-                "'trezor[hidapi]>=0.13'"))))
-         (add-after 'wrap 'fixup-agent-py
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out")))
-               ;; The wrap phase also wraps trezor_agent.py (besides the
-               ;; public facing executable called trezor-agent). We need to
-               ;; undo that wrapping. The reason this is needed is that the
-               ;; python easy install generates a toplevel script (?) that
-               ;; messes with argv[0] and then re-opens the python
-               ;; module. This fails when the wrapped file is actually a shell
-               ;; script, not a python file.
-               (delete-file (string-append out "/bin/.trezor_agent.py-real"))
-               ;; Overwrite the wrapped one with the real thing.
-               (install-file "./trezor_agent.py"
-                             (string-append out "/bin"))))))))
-    (build-system python-build-system)
+     (list
+      #:tests? #f ; No tests there.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'wrap 'fixup-agent-py
+            (lambda _
+              ;; The wrap phase also wraps trezor_agent.py (besides the public
+              ;; facing executable called trezor-agent). We need to undo that
+              ;; wrapping. The reason this is needed is that the python easy
+              ;; install generates a toplevel script (?) that messes with
+              ;; argv[0] and then re-opens the python module. This fails when
+              ;; the wrapped file is actually a shell script, not a python file.
+              (delete-file
+               (string-append #$output "/bin/.trezor_agent.py-real"))
+              ;; Overwrite the wrapped one with the real thing.
+              (install-file "./trezor_agent.py"
+                            (string-append #$output "/bin")))))))
     (inputs
      (list python-trezor python-trezor-agent))
     (native-inputs ; Only needed for running the tests
      (list python-attrs
            python-bech32
-           python-simple-rlp))
+           python-simple-rlp
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/romanz/trezor-agent")
     (synopsis "Using Trezor as hardware SSH/GPG agent")
-    (description "This package allows using Trezor as a hardware SSH/GPG
-agent.")
+    (description
+     "This package allows using Trezor as a hardware SSH/GPG agent.")
     (license license:lgpl3)))
 
 (define-public keepkey-agent

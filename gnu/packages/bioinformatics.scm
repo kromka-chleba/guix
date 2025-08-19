@@ -137,6 +137,7 @@
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages node)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages package-management)
@@ -21337,32 +21338,35 @@ repeated areas between contigs.")
 (define-public vembrane
   (package
     (name "vembrane")
-    (version "0.13.2")
+    (version "1.0.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/vembrane/vembrane")
-                    (commit (string-append "v" version))))
+                     (url "https://github.com/vembrane/vembrane")
+                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gdih56gpqd8ks3sd4ah844kac09hi3g073k9gvazb32ah50900w"))))
+                "127wmwj0162nfaql68jwxlkz7rbnjya70xrj4j8zwvcnxcj7x5v3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "pyproject.toml"
-               (("pysam = \"\\^0.19\"") "pysam = \"^0.20\"")
-               (("numpy = \\{ version = \"\\^1.23\"")
-                "numpy = { version = \"^1\"")))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-poetry-core
+            (lambda _
+              ;; Patch to use the core poetry API.
+              (substitute* "pyproject.toml"
+                (("poetry.masonry.api") "poetry.core.masonry.api")))))))
     (inputs
-     (list python-asttokens python-intervaltree python-numpy
-           python-pysam python-pyyaml))
+     (list python-asttokens
+           python-intervaltree
+           python-numpy
+           python-pysam
+           python-pyyaml))
     (native-inputs
-     (list poetry python-pytest))
+     (list python-poetry-core
+           python-pytest))
     (home-page "https://github.com/vembrane/vembrane")
     (synopsis "Filter VCF/BCF files with Python expressions")
     (description "Vembrane simultaneously filters variants based on
@@ -24051,24 +24055,35 @@ parser for Python.")
 
 (define-public nanosv
   (package
-   (name "nanosv")
-   (version "1.2.4")
-   (source (origin
-            (method url-fetch)
-            (uri (pypi-uri "NanoSV" version))
-            (sha256
-             (base32
-              "1wl2daj0bwrl8fx5xi8j8hfs3mp3vg3qycy66538n032v1qkc6xg"))))
-   (build-system python-build-system)
-   (inputs
-    (list python-configparser python-pysam python-pyvcf3))
-   (home-page "https://github.com/mroosmalen/nanosv")
-   (synopsis "Structural variation detection tool for Oxford Nanopore data")
-   (description "NanoSV is a software package that can be used to identify
+    (name "nanosv")
+    (version "1.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "NanoSV" version))
+       (sha256
+        (base32 "1wl2daj0bwrl8fx5xi8j8hfs3mp3vg3qycy66538n032v1qkc6xg"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f   ; No tests upstream, even in git.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("'pyvcf'")
+                 "'pyvcf3'")))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (inputs (list python-configparser python-pysam python-pyvcf3))
+    (home-page "https://github.com/mroosmalen/nanosv")
+    (synopsis "Structural variation detection tool for Oxford Nanopore data")
+    (description
+     "NanoSV is a software package that can be used to identify
 structural genomic variations in long-read sequencing data, such as data
 produced by Oxford Nanopore Technologies’ MinION, GridION or PromethION
 instruments, or Pacific Biosciences RSII or Sequel sequencers.")
-   (license license:expat)))
+    (license license:expat)))
 
 (define-public python-strawc
   (package

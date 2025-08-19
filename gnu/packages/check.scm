@@ -83,7 +83,7 @@
   #:use-module (gnu packages crates-check)
   #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -2237,26 +2237,24 @@ side-effects (such as setting environment variables).")
 (define-public python-scripttest
   (package
     (name "python-scripttest")
-    (version "1.3")
+    (version "2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "scripttest" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pypa/scripttest")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0f4w84k8ck82syys7yg9maz93mqzc8p5ymis941x034v44jzq74m"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest))
-    (arguments
-     ;; Tests not shipped with PyPI archive, and require TLS CA cert.
-     (list #:tests? #f))
-    (home-page (string-append "https://web.archive.org/web/20161029233413/"
-                              "http://pythonpaste.org/scripttest/"))
+        (base32 "07cyrh4yp8497radz8cx7la2p8yr78r77xm62hh77hcs1migznaf"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/pypa/scripttest")
     (synopsis "Python library to test command-line scripts")
-    (description "Scripttest is a Python helper library for testing
-interactive command-line applications.  With it you can run a script in a
-subprocess and see the output as well as any file modifications.")
+    (description
+     "Scripttest is a Python helper library for testing interactive
+command-line applications.  With it you can run a script in a subprocess and
+see the output as well as any file modifications.")
     (license license:expat)))
 
 (define-public python-testtools-bootstrap
@@ -2907,32 +2905,23 @@ failures.")
   (package
     (name "python-pytest-freezegun")
     (version "0.4.2")
-    (source (origin
-              ;; The test suite is not included in the PyPI archive.
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/ktosiek/pytest-freezegun")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "10c4pbh03b4s1q8cjd75lr0fvyf9id0zmdk29566qqsmaz28npas"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ktosiek/pytest-freezegun")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10c4pbh03b4s1q8cjd75lr0fvyf9id0zmdk29566qqsmaz28npas"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-freezegun python-pytest))
-    (native-inputs (list unzip))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/ktosiek/pytest-freezegun")
     (synopsis "Pytest plugin to freeze time in test fixtures")
-    (description "The @code{pytest-freezegun} plugin wraps tests and fixtures
-with @code{freeze_time}, which controls (i.e., freeze) the time seen
-by the test.")
+    (description
+     "The @code{pytest-freezegun} plugin wraps tests and fixtures with
+@code{freeze_time}, which controls (i.e., freeze) the time seen by the test.")
     (license license:expat)))
 
 (define-public python-pytest-mypy
@@ -3214,26 +3203,6 @@ all on a minimally sized program.  It's highly configurable and handle
 pragmas to control it from within your code.  Additionally, it is
 possible to write plugins to add your own checks.")
     (license license:gpl2+)))
-
-(define-public python-pytest-capturelog
-  (package
-    (name "python-pytest-capturelog")
-    (version "0.7")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-capturelog" version ".tar.gz"))
-       (sha256
-        (base32
-         "038049nyjl7di59ycnxvc9nydivc5m8np3hqq84j2iirkccdbs5n"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (home-page "https://bitbucket.org/memedough/pytest-capturelog/overview")
-    (synopsis "Pytest plugin to catch log messages")
-    (description
-     "Python-pytest-catchlog is a pytest plugin to catch log messages.")
-    (license license:expat)))
 
 (define-public python-nosexcover
   (package

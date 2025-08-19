@@ -3471,7 +3471,9 @@ instrument or MIDI file player.")
                     version "/zynaddsubfx-" version ".tar.bz2"))
               (sha256
                (base32
-                "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))))
+                "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))
+              (patches
+               (search-patches "zynaddsubfx-3.0.6-include-cstdint.patch"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -3499,7 +3501,7 @@ instrument or MIDI file player.")
     (native-inputs
      (list pkg-config
            ruby))
-    (home-page "https://zynaddsubfx.sf.net/")
+    (home-page "https://zynaddsubfx.sourceforge.io/")
     (synopsis "Software synthesizer")
     (description
      "ZynAddSubFX is a feature heavy realtime software synthesizer.  It offers
@@ -4205,17 +4207,22 @@ of tags.")
   (package
     (name "python-musicbrainzngs")
     (version "0.7.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "musicbrainzngs" version))
-              (sha256
-               (base32
-                "09z6k07pxncfgfc8clfmmxl2xqbd7h8x8bjzwr95hc0bzl00275b"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alastair/python-musicbrainzngs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05rv5wmasamwxkbs8v9lbp2js6y5hhqz6c58c2afz2b202yp932m"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://python-musicbrainzngs.readthedocs.org/")
     (synopsis "Python bindings for MusicBrainz NGS webservice")
-    (description "Musicbrainzngs implements Python bindings of the MusicBrainz
-web service.  This library can be used to retrieve music metadata from the
+    (description
+     "Musicbrainzngs implements Python bindings of the MusicBrainz web
+service.  This library can be used to retrieve music metadata from the
 MusicBrainz database.")
     ;; 'musicbrainzngs/compat.py' is ISC licensed.
     (license (list license:bsd-2 license:isc))))

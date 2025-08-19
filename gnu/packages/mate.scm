@@ -27,13 +27,13 @@
 
 (define-module (gnu packages mate)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages)
+  #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix build-system trivial)
   #:use-module (guix download)
   #:use-module (guix gexp)
+  #:use-module (guix packages)
   #:use-module (guix utils)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix build-system glib-or-gtk)
-  #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages attr)
   #:use-module (gnu packages autotools)
@@ -61,12 +61,12 @@
   #:use-module (gnu packages javascript)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages linux)
-  #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages messaging)
+  #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages nss)
-  #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages photo)
+  #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages polkit)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
@@ -74,8 +74,8 @@
   #:use-module (gnu packages tex)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xdisorg)
-  #:use-module (gnu packages xml)
   #:use-module (gnu packages xdisorg)
+  #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg))
 
 (define-public mate-common
@@ -167,37 +167,42 @@ actions.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://mate/" (version-major+minor version) "/"
-                           name "-" version ".tar.xz"))
+       (uri (string-append "mirror://mate/"
+                           (version-major+minor version)
+                           "/"
+                           name
+                           "-"
+                           version
+                           ".tar.xz"))
        (sha256
-        (base32
-         "000vr9cnbl2qlysf2gyg1lsjirqdzmwrnh6d3hyrsfc0r2vh4wna"))))
+        (base32 "000vr9cnbl2qlysf2gyg1lsjirqdzmwrnh6d3hyrsfc0r2vh4wna"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'autoconf
-           (lambda _
-             (setenv "SHELL" (which "sh"))
-             (setenv "CONFIG_SHELL" (which "sh"))
-             (invoke "sh" "autogen.sh"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'autoconf
+            (lambda _
+              (setenv "SHELL" (which "sh"))
+              (setenv "CONFIG_SHELL" (which "sh"))
+              (invoke "sh" "autogen.sh"))))))
     (native-inputs
      ;; autoconf-wrapper is required due to the non-standard
      ;; 'autoconf phase.
-     `(("autoconf" ,autoconf-wrapper)
-       ("automake" ,automake)
-       ("intltool" ,intltool)
-       ("icon-naming-utils" ,icon-naming-utils)
-       ("libtool" ,libtool)
-       ("mate-common" ,mate-common)
-       ("pkg-config" ,pkg-config)
-       ("which" ,which)))
+     (list autoconf-wrapper
+           automake
+           intltool
+           icon-naming-utils
+           libtool
+           mate-common
+           pkg-config
+           which))
     (home-page "https://mate-desktop.org/")
     (synopsis "MATE desktop environment icon theme faenza")
     (description
-     "Icon theme using Faenza and Faience icon themes and some
-customized icons for MATE.  Furthermore it includes some icons
-from Mint-X-F and Faenza-Fresh icon packs.")
+     "Icon theme using Faenza and Faience icon themes and some customized
+icons for MATE.  Furthermore it includes some icons from Mint-X-F and
+Faenza-Fresh icon packs.")
     (license license:gpl2+)))
 
 (define-public mate-themes
@@ -262,39 +267,48 @@ desktop and the mate-about program.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://mate/" (version-major+minor version) "/"
-                           "libmateweather-" version ".tar.xz"))
+       (uri (string-append "mirror://mate/"
+                           (version-major+minor version)
+                           "/"
+                           name
+                           "-"
+                           version
+                           ".tar.xz"))
        (sha256
         (base32 "1dfj68q3x9camd7h94pcwv8a5969cv5d4p979gcbk4xknpg76hsm"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags
-       (list (string-append "--with-zoneinfo-dir=/var/empty"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'fix-tzdata-location
-          (lambda* (#:key inputs #:allow-other-keys)
-            (setenv "TZDIR" (search-input-directory inputs "/share/zoneinfo"))
-            (substitute* "data/check-timezones.sh"
-              (("/usr/share/zoneinfo/zone.tab")
-               (search-input-file inputs "/share/zoneinfo/zone.tab"))
-              ;; XXX: Ignore this test for now, which requires tzdata-2023c.
-              (("exit 1") "exit 0")))))))
+     (list
+      #:configure-flags #~(list "--with-zoneinfo-dir=/var/empty")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'fix-tzdata-location
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TZDIR"
+                      (search-input-directory inputs "/share/zoneinfo"))
+              (substitute* "data/check-timezones.sh"
+                (("/usr/share/zoneinfo/zone.tab")
+                 (search-input-file inputs "/share/zoneinfo/zone.tab"))
+                ;; XXX: Ignore this test for now, which requires tzdata-2023c.
+                (("exit 1")
+                 "exit 0")))))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("intltool" ,intltool)
-       ("dconf" ,dconf)
-       ("glib:bin" ,glib "bin")))
+     (list dconf
+           (list glib "bin")
+           intltool
+           pkg-config))
     (inputs
-     (list gtk+ tzdata-for-tests))
+     (list gtk+
+           tzdata-for-tests))
     (propagated-inputs
-      ;; both of these are requires.private in mateweather.pc
-     (list libsoup-minimal-2 libxml2))
+     ;; both of these are requires.private in mateweather.pc
+     (list libsoup-minimal-2
+           libxml2))
     (home-page "https://mate-desktop.org/")
     (synopsis "MATE library for weather information from the Internet")
     (description
-     "This library provides access to weather information from the internet for
-the MATE desktop environment.")
+     "This library provides access to weather information from the internet
+for the MATE desktop environment.")
     (license license:lgpl2.1+)))
 
 (define-public mate-terminal
@@ -807,24 +821,24 @@ hypertext navigation, and table-of-contents bookmarks.")
          "0ylm46wgg7linppid6pdfaixhdb8zgyrxl3lxz17x0am2k718c0y"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     `(#:configure-flags '("--disable-update-mimedb")
-       #:tests? #f ; tests fail even with display set
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'pre-check
-           (lambda _
-             ;; Tests require a running X server.
-             (system "Xvfb :1 &")
-             (setenv "DISPLAY" ":1")
-             ;; For the missing /etc/machine-id.
-             (setenv "DBUS_FATAL_WARNINGS" "0")
-             #t)))))
+     (list
+      #:tests? #f ; tests fail even with display set
+      #:configure-flags #~(list "--disable-update-mimedb")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; Tests require a running X server.
+              (system "Xvfb :1 &")
+              (setenv "DISPLAY" ":1")
+              ;; For the missing /etc/machine-id.
+              (setenv "DBUS_FATAL_WARNINGS" "0"))))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("intltool" ,intltool)
-       ("glib:bin" ,glib "bin")
-       ("xorg-server" ,xorg-server)
-       ("gobject-introspection" ,gobject-introspection)))
+     (list pkg-config
+           intltool
+           (list glib "bin")
+           xorg-server
+           gobject-introspection))
     (inputs
      (list exempi
            gtk+
@@ -837,8 +851,8 @@ hypertext navigation, and table-of-contents bookmarks.")
            startup-notification))
     (native-search-paths
      (list (search-path-specification
-            (variable "CAJA_EXTENSIONDIR")
-            (files (list "lib/caja/extensions-2.0/**")))))
+             (variable "CAJA_EXTENSIONDIR")
+             (files (list "lib/caja/extensions-2.0/**")))))
     (home-page "https://mate-desktop.org/")
     (synopsis "File manager for the MATE desktop")
     (description
@@ -914,6 +928,44 @@ applications associated with them.  Caja is also responsible for handling the
 icons on the MATE desktop.  It works on local and remote file systems.")
     (license license:gpl2+)))
 
+(define-public python-caja
+  (package
+    (name "python-caja")
+    (version "1.28.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://mate/"
+                           (version-major+minor version)
+                           "/"
+                           name
+                           "-"
+                           version
+                           ".tar.xz"))
+       (sha256
+        (base32 "1ml0yrkbly1mz5gmz1wynn3zff5900szncc4rk83xqyzvcww4mmh"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "--with-cajadir="
+                             #$output
+                             "/lib/caja/extensions-2.0/"))))
+    (native-inputs
+     (list pkg-config
+           gettext-minimal
+           python-wrapper))
+    (inputs
+     (list caja
+           gtk+
+           python-pygobject))
+    (home-page "https://mate-desktop.org/")
+    (synopsis "Python bindings for Caja components")
+    (description
+     "This package provides Python bindings to Caja, a file manager for the
+MATE desktop.")
+    (license license:gpl2+)))
+
 (define-public mate-control-center
   (package
     (name "mate-control-center")
@@ -927,22 +979,22 @@ icons on the MATE desktop.  It works on local and remote file systems.")
         (base32 "1g0lg4x3idilaxhwq1s90pajkvv9i012kzrnk0pxqj2jzl2cgwpb"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-before 'configure 'use-elogind-as-systemd
-                    (lambda _
-                      (substitute* "configure"
-                        (("systemd") "libelogind"))))
-                  (add-before 'build 'fix-polkit-action
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      ;; Make sure the polkit file refers to the right
-                      ;; executable.
-                      (let ((out (assoc-ref outputs "out")))
-                        (substitute*
-                            '("capplets/display/org.mate.randr.policy.in"
-                              "capplets/display/org.mate.randr.policy")
-                          (("/usr/sbin")
-                           (string-append out "/sbin")))
-                        #t))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'use-elogind-as-systemd
+            (lambda _
+              (substitute* "configure"
+                (("systemd") "libelogind"))))
+          (add-before 'build 'fix-polkit-action
+            (lambda _
+              ;; Make sure the polkit file refers to the right
+              ;; executable.
+              (substitute*
+                  '("capplets/display/org.mate.randr.policy.in"
+                    "capplets/display/org.mate.randr.policy")
+                (("/usr/sbin")
+                 (string-append #$output "/sbin"))))))))
     (native-inputs
      (list pkg-config
            intltool
