@@ -1114,10 +1114,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-3.5-libsanitizer-ustat-fix.patch	\
   %D%/packages/patches/clang-3.8-libc-search-path.patch		\
   %D%/packages/patches/clang-6.0-libc-search-path.patch		\
-  %D%/packages/patches/clang-7.0-libc-search-path.patch		\
-  %D%/packages/patches/clang-8.0-libc-search-path.patch		\
-  %D%/packages/patches/clang-9.0-libc-search-path.patch		\
-  %D%/packages/patches/clang-10.0-libc-search-path.patch	\
   %D%/packages/patches/clang-11.0-libc-search-path.patch	\
   %D%/packages/patches/clang-12.0-libc-search-path.patch	\
   %D%/packages/patches/clang-13.0-libc-search-path.patch	\
@@ -1137,7 +1133,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-runtime-14-glibc-2.36-compat.patch	\
   %D%/packages/patches/clang-runtime-9-glibc-2.36-compat.patch		\
   %D%/packages/patches/clang-runtime-9-libsanitizer-mode-field.patch	\
-  %D%/packages/patches/clang-runtime-3.5-libsanitizer-mode-field.patch	\
   %D%/packages/patches/clang-runtime-3.7-fix-build-with-python3.patch	\
   %D%/packages/patches/clang-runtime-3.9-libsanitizer-mode-field.patch	\
   %D%/packages/patches/clang-runtime-3.8-libsanitizer-mode-field.patch	\
@@ -1834,14 +1829,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lirc-localstatedir.patch			\
   %D%/packages/patches/lirc-reproducible-build.patch		\
   %D%/packages/patches/llvm-3.5-fix-clang-build-with-gcc5.patch	\
-  %D%/packages/patches/llvm-3.6-fix-build-with-gcc-10.patch	\
   %D%/packages/patches/llvm-3.x.1-fix-build-with-gcc.patch	\
-  %D%/packages/patches/llvm-8-fix-build-with-gcc-10.patch	\
-  %D%/packages/patches/llvm-8-missing-include.patch		\
-  %D%/packages/patches/llvm-9-fix-bitcast-miscompilation.patch	\
-  %D%/packages/patches/llvm-9-fix-lpad-miscompilation.patch	\
-  %D%/packages/patches/llvm-9-fix-scev-miscompilation.patch	\
-  %D%/packages/patches/llvm-10-missing-include.patch            \
   %D%/packages/patches/llvm-13-gcc-14.patch			\
   %D%/packages/patches/lm-sensors-hwmon-attrs.patch		\
   %D%/packages/patches/lsh-fix-x11-forwarding.patch		\

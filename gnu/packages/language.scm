@@ -343,7 +343,7 @@ method, one of the most popular choices for Traditional Chinese users.")
 (define-public liblouis
   (package
     (name "liblouis")
-    (version "3.31.0")
+    (version "3.34.0")
     (source
      (origin
        (method git-fetch)
@@ -353,7 +353,7 @@ method, one of the most popular choices for Traditional Chinese users.")
          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02bga2l4jiyrgfqdl27wszz5yd6h80n2dmq3p6nb2br83jywisfh"))))
+        (base32 "1p6ihaxnbwqi8vk471h7v71lkrknk6ahxggm3p7v7l6hal7n6smq"))))
     (build-system gnu-build-system)
     (outputs '("out" "bin" "doc" "python"))
     (arguments
@@ -391,14 +391,13 @@ support for hyphenation.  New languages can easily be added through tables that
 support a rule- or dictionary based approach.  Tools for testing and debugging
 tables are also included.  Liblouis also supports math braille, Nemeth and
 Marburg.")
-    (home-page "http://liblouis.org/")
+    (home-page "https://liblouis.io/")
     (license (list license:lgpl2.1+     ; library
                    license:gpl3+))))    ; tools
 
 (define-public liblouisutdml
-  ;; Use the latest commit, which includes test suite fixes not yet released.
-  (let ((commit "00ca7838e30ebd5ed6f635236aa235e2c8f089c1")
-        (revision "0"))
+  (let ((commit "68f702d43cda279f960d8ffa2415ac639d301295")
+        (revision "1"))
     (package
       (name "liblouisutdml")
       (version (git-version "2.12.0" revision commit))
@@ -411,12 +410,13 @@ Marburg.")
            (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1pr3wys48bzblr6kav24gr8slsp409f81iqxw19922k24y5y31l7"))))
+          (base32 "0r0k91fcsp4kwlgrmb497r2dh0c3yz45wbd1ds1kh0m28v78q5i3"))))
       (build-system gnu-build-system)
       (outputs '("out" "bin" "doc"))
       (arguments
        (list #:configure-flags
-             #~(list "--disable-static")))
+             #~(list "--disable-static"
+                     "CFLAGS=-Wno-error=incompatible-pointer-types")))
       (native-inputs
        (list autoconf
              automake
@@ -435,7 +435,7 @@ Marburg.")
 transcription services for xml, html and text documents.  It translates into
 appropriate braille codes and formats according to its style sheet and the
 specifications in the document.")
-      (home-page "http://liblouis.org/")
+      (home-page "https://liblouis.io/")
       (license (list license:lgpl3+       ; library
                      license:gpl3+)))))    ; tools
 

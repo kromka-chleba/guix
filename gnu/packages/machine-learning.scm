@@ -1815,7 +1815,7 @@ operators and standard data types.")
               (patches (search-patches "onnx-optimizer-system-library.patch"))
               (modules '((guix build utils)))
               (snippet '(delete-file-recursively "third_party"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      ;; reuse build system tweaks
      (substitute-keyword-arguments (package-arguments onnx)
@@ -1842,8 +1842,9 @@ operators and standard data types.")
                              " and not test_fuse_transpose")))))))))
     (native-inputs
      (append
-      (list cmake-minimal python-pytest python-pytest-runner
-            python-coverage)
+      (list cmake-minimal
+            python-pytest
+            python-setuptools-next)
       (filter
        (lambda (pkg)
          (member (or (%current-target-system)

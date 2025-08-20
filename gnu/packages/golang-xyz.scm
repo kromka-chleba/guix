@@ -66,6 +66,7 @@
 ;;; Copyright © 2025 David Thompson <davet@gnu.org>
 ;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
+;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1852,6 +1853,31 @@ Distance}.")
     (synopsis "Very minimal actor model library")
     (description "Phony is a very minimal actor model library for Go,
 inspired by the causal messaging system in the Pony programming language.")
+    (license license:expat)))
+
+(define-public go-github-com-armon-circbuf
+  (package
+    (name "go-github-com-armon-circbuf")
+    (version "0.0.0-20190214190532-5111143e8da2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/armon/circbuf")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nhzs8wza5sxqjh0920jypy9irq6cspd55g8a9vgyjjfrqb5njs0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/armon/circbuf"))
+    (home-page "https://github.com/armon/circbuf")
+    (synopsis "Circular buffer for Golang")
+    (description
+     "This package provides a circular buffer object.  The buffer can be
+written to infinitely, but has a fixed size, so only the last @code{size}
+bytes are ever retained.")
     (license license:expat)))
 
 (define-public go-github-com-armon-go-radix
@@ -6986,6 +7012,35 @@ quoting, commenting, and escaping.")
      "@code{gg} is a library for rendering 2D graphics in pure Go.")
     (license license:expat)))
 
+(define-public go-github-com-freddierice-go-losetup
+  (package
+    (name "go-github-com-freddierice-go-losetup")
+    (version "2.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/freddierice/go-losetup")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qhc81r3cxhx16c7pkgwpkhkz1xn47xjcgfwydvlgh9f04cyydpq"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/freddierice/go-losetup"))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/freddierice/go-losetup")
+    (synopsis "Loop devices for Golang")
+    (description
+     ;; XXX: Project's REAME lacks details.
+     "This package implements @code{/dev/loop} device in Go.")
+    (license license:expat)))
+
 (define-public go-github-com-fsnotify-fsnotify
   (package
     (name "go-github-com-fsnotify-fsnotify")
@@ -8843,6 +8898,32 @@ provides a buffered io.Writer that is flushed at a timed interval.")
      "This package provides an implementation for the goverter feature
 @code{wrapErrorsUsing}.")
     (license license:expat)))
+
+(define-public go-github-com-gowebpki-jcs
+  (package
+    (name "go-github-com-gowebpki-jcs")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/gowebpki/jcs")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cgclrxdkxrbch0791m4ijs9a4g4zn355k8griavaadjy87l3qq8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gowebpki/jcs"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/gowebpki/jcs")
+    (synopsis "JSON Canonicalization")
+    (description
+     "Package jcs transforms UTF-8 JSON data into a canonicalized version
+according @@url{https://rfc-editor.org/rfc/rfc8785.html, RFC 8785}.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-guptarohit-asciigraph
   (package
@@ -11361,6 +11442,32 @@ resources located relative to the executable file.")
      "This package provides a simple way to create a system service.")
     (license license:zlib)))
 
+(define-public go-github-com-karpeleslab-reflink
+  (package
+    (name "go-github-com-karpeleslab-reflink")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/KarpelesLab/reflink")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16x01ff1w4xcdl41iicsrsxpk4ba6xf1g1hlq3qx1f098k4s3nci"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/KarpelesLab/reflink"))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/KarpelesLab/reflink")
+    (synopsis "Reflink file copy in Golang")
+    (description
+     "This package implements a functionality to perform efficient file copies
+using reflink operations on compatible filesystems such as btrfs and xfs.")
+    (license license:expat)))
+
 (define-public go-github-com-karrick-godirwalk
   (package
     (name "go-github-com-karrick-godirwalk")
@@ -12319,6 +12426,69 @@ the first isn't available.
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-lestrrat-go-backoff-v2
+  (package
+    (name "go-github-com-lestrrat-go-backoff-v2")
+    (version "2.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lestrrat-go/backoff")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s939szsdv0ggp69rig8dkl74s5dvwzm5cw80h0b3dvkqhikim5d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/backoff"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-benchmarks
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/bench")))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-lestrrat-go-option))
+    (home-page "https://github.com/lestrrat-go/backoff")
+    (synopsis "Idiomatic backoff for Golang")
+    (description
+     "This library is an implementation of
+@url{https://en.wikipedia.org/wiki/Exponential_backoff, backoff algorithm} for
+retrying operations.  It respects @code{context.Context} natively, and the
+critical notifications are done through channel operations, allowing you to
+write code that is both more explicit and flexibile.")
+    (license license:expat)))
+
+(define-public go-github-com-lestrrat-go-blackmagic
+  (package
+    (name "go-github-com-lestrrat-go-blackmagic")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lestrrat-go/blackmagic")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vyij1wnsh85vqi70sq0kgwrnx4zrn4yx8nk5lqd630g1akqwr8y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/blackmagic"))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/blackmagic")
+    (synopsis "Reflect-based black magic for Golang")
+    (description
+     ;; XXX: REAMDE lacks of any description at all, code not documented
+     ;; either.
+     "This package implements a reflect-based black magic for Go.")
+    (license license:expat)))
+
 (define-public go-github-com-lestrrat-go-envload
   (package
     (name "go-github-com-lestrrat-go-envload")
@@ -12346,6 +12516,94 @@ applications requiring reloading of configuration from environment variables
 or during the tests temporarily change the value of an environment variable in
 Golang.")
     (license license:expat)))
+
+(define-public go-github-com-lestrrat-go-iter
+  (package
+    (name "go-github-com-lestrrat-go-iter")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lestrrat-go/iter")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p5fhw5g3kh7c6hvw2mc1r4ckxb3ax262x8b736yyhpv2ynl8jyz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/lestrrat-go/iter"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/iter")
+    (synopsis "Iterator for arbitrary array and map types for Golang")
+    (description
+     "This package provides a set of utilities to safely iterate over
+arbitrary array and maps types.")
+    (license license:expat)))
+
+(define-public go-github-com-lestrrat-go-option
+  (package
+    (name "go-github-com-lestrrat-go-option")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lestrrat-go/option")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p9744hpdxsnimha5i0gyn7hxn2fy3dxqhlpqvj5s3pc5xv3s14h"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/lestrrat-go/option/cmd/genoptions
+            (delete-file-recursively "cmd/genoptions")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/option"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-lestrrat-go-blackmagic))
+    (home-page "https://github.com/lestrrat-go/option")
+    (synopsis "Base option type for Go")
+    (description
+     "This package provides a Golang implementation of the Base object for the
+\"Optional Parameters Pattern\".")
+    (license license:expat)))
+
+(define-public go-github-com-lestrrat-go-option-v2
+  (package
+    (inherit go-github-com-lestrrat-go-option)
+    (name "go-github-com-lestrrat-go-option-v2")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/option")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07w19iwqna9zml1x3zsrnm8dzq07kbwd3isf31293rm5i73rkmwq"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/lestrrat-go/option/cmd/genoptions
+            (delete-file-recursively "cmd/genoptions")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/option/v2"))))
 
 (define-public go-github-com-lestrrat-go-strftime
   (package
@@ -19179,6 +19437,29 @@ distributable command line applications in an expressive way.")
     (description
      "@code{bytebufferpool} implements a pool of byte buffers with
 anti-fragmentation protection.")
+    (license license:expat)))
+
+(define-public go-github-com-valyala-fastjson
+  (package
+    (name "go-github-com-valyala-fastjson")
+    (version "1.6.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/valyala/fastjson")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ly15rbdy9qmml39d8mazjvid3f13nhvj4v2zdlp13pn4gczdp3k"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/valyala/fastjson"))
+    (home-page "https://github.com/valyala/fastjson")
+    (synopsis "JSON parser and validator for Golang")
+    (description
+     "Package fastjson provides fast JSON parsing comparing to std @code{encoding/json}.")
     (license license:expat)))
 
 (define-public go-github-com-valyala-fasttemplate
