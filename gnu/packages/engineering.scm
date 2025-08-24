@@ -939,7 +939,7 @@ and others.")
 (define-public qucsator-rf
   (package
     (name "qucsator-rf")
-    (version "1.0.6")                   ;required by qucs-s, keep in sync
+    (version "1.0.7")                   ;required by qucs-s, keep in sync
     (source
      (origin
        (method git-fetch)
@@ -949,7 +949,7 @@ and others.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0fx0kzj6hn0094jnvn6b1zqwjnkmd79xdr0zdyz5lmsyixlmxmvk"))))
+         "1qyih418r0jcrpk1ja4p7v9v5iqvri8iszg7s3vaf1d2agwblzb4"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2285,22 +2285,20 @@ bootloader in Espressif ESP8266 & ESP32 series chips.")
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f                      ; tests require git and network access
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'mklibdir
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (mkdir-p (string-append (assoc-ref outputs "out") "/lib"))
-             #t)))
-       #:configure-flags
-       (list "--with-openssl"
-             "--with-rpath"
-             "--with-syscapstone"
-             "--with-sysmagic"
-             "--with-syszip"
-             "--with-sysxxhash")
-       #:make-flags
-       (list "CC=gcc")))
+     (list
+      #:tests? #f                      ; tests require git and network access
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'mklibdir
+            (lambda _ (mkdir-p (string-append #$output "/lib")))))
+      #:configure-flags
+      #~(list "--with-openssl"
+              "--with-rpath"
+              "--with-syscapstone"
+              "--with-sysmagic"
+              "--with-syszip"
+              "--with-sysxxhash")
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))))
     ;; TODO: Add gmp and libzip and make the build system actually find them.
     (inputs
      (list capstone libuv openssl zip))
@@ -2636,111 +2634,6 @@ parallel computing platforms.  It also supports serial execution.")
      `(("trilinos" ,trilinos-parallel-xyce)
        ,@(alist-delete "trilinos"
                        (package-inputs xyce-serial))))))
-
-(define-public freehdl
-  (package
-    (name "freehdl")
-    (version "0.0.8")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://downloads.sourceforge.net/qucs/freehdl-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "117dqs0d4pcgbzvr3jn5ppra7n7x2m6c161ywh6laa934pw7h2bz"))
-              (patches
-               (list (origin
-                       ;; Fix build with GCC 7.  Patch taken from Arch Linux:
-                       ;; https://github.com/archlinux/svntogit-community/tree/packages/freehdl/trunk
-                       (method url-fetch)
-                       (uri (string-append "https://raw.githubusercontent.com"
-                                           "/archlinux/svntogit-community"
-                                           "/3bb90d64dfe6883e26083cd1fa96226d0d59175a"
-                                           "/trunk/build-fix.patch"))
-                       (file-name "freehdl-c++-namespace.patch")
-                       (sha256
-                        (base32
-                         "09df3c70rx81rnhlhry1wpdhji274nx9jb74rfprk06l4739zm08")))))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'patch-pkg-config
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl/freehdl-config"
-               (("pkg-config")
-                (search-input-file inputs "/bin/pkg-config"))
-               (("cat")
-                (search-input-file inputs "/bin/cat")))))
-         (add-after 'patch-pkg-config 'setenv
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CXX" (search-input-file inputs "/bin/g++"))
-             (setenv "SYSTEM_LIBTOOL"
-                     (search-input-file inputs "/bin/libtool"))))
-         (add-after 'setenv 'patch-gvhdl
-           (lambda _
-             (substitute* "v2cc/gvhdl.in"
-               (("--mode=link") "--mode=link --tag=CXX")
-               (("-lm") "-lm FREEHDL/lib/freehdl/libieee.la"))))
-         (add-after 'patch-gvhdl 'patch-freehdl-gennodes
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl/freehdl-gennodes.in"
-               (("guile")
-                (search-input-file inputs "/bin/guile"))
-               (("\\(debug") ";(debug")
-               (("\\(@ ") "(apply-emit")
-               (("\\(@@ ") "(apply-mini-format"))))
-         (add-after 'configure 'patch-freehdl-pc
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl.pc"
-               (("=g\\+\\+")
-                (string-append "=" (assoc-ref inputs "gcc-toolchain")
-                               "/bin/g++"))
-               (("=libtool")
-                (string-append "=" (assoc-ref inputs "libtool")
-                               "/bin/libtool")))))
-         (add-after 'install 'make-wrapper
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               ;; 'gvhdl' invokes the C compiler directly, so hard-code its
-               ;; file name.
-               (wrap-program (string-append out "/bin/gvhdl")
-                 `("CPLUS_INCLUDE_PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/include")))
-                 `("LIBRARY_PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/lib")))
-                 `("PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/bin")
-                    ,(string-append (assoc-ref inputs "coreutils")
-                                    "/bin"))))
-               (wrap-program (string-append out "/bin/freehdl-config")
-                 `("PKG_CONFIG_PATH" ":" prefix
-                   (,(string-append out "/lib/pkgconfig"))))))))))
-    (inputs
-     (list bash-minimal
-           coreutils
-
-           ;; Lazily resolve the gcc-toolchain to avoid a circular dependency.
-           (module-ref (resolve-interface '(gnu packages commencement))
-                       'gcc-toolchain)
-
-           guile-2.2
-           perl
-           pkg-config
-           libtool))
-    (native-inputs
-     `(("pkg-config-native" ,pkg-config)
-       ("libtool-native" ,libtool)))
-    (home-page "http://www.freehdl.seul.org/")
-    (synopsis "VHDL simulator")
-    (description
-     "FreeHDL is a compiler/simulator suite for the hardware description language VHDL.
-  VHDL'93 as well as VHDL'87 standards are supported.")
-    (license (list license:gpl2+
-                   license:lgpl2.0+)))) ; freehdl's libraries
 
 (define-public librepcb
   (package

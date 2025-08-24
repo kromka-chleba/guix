@@ -117,13 +117,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-database)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-graphics)
-  #:use-module (gnu packages crates-gtk)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
@@ -3677,68 +3670,38 @@ for dealing with different structured file formats.")
               (sha256
                (base32
                 "0ym2yg94sc7ralh1kwqqrhz3wcc51079z90mbx0qrls7wfh36hi2"))))
-    (build-system cargo-build-system)
+    (build-system gnu-build-system)
     (outputs '("out" "doc" "debug"))
     (arguments
      (list
-      #:install-source? #f
+      #:configure-flags
+      #~(list "--disable-static"
+              #$@(if (%current-target-system)
+                     #~(;; g-ir-scanner can't import its modules
+                        ;; and vala currently can't be cross-compiled.
+                        "--enable-introspection=no"
+                        "--enable-vala=no"
+                        ;; These two are necessary for cross-compiling.
+                        (string-append
+                         "--build=" #$(nix-system->gnu-triplet
+                                       (%current-system)))
+                        (string-append
+                         "--host=" #$(%current-target-system)))
+                     #~("--enable-vala")))
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PKG_CONFIG=" #$(pkg-config-for-target))
+              #$@(if (%current-target-system)
+                     #~((string-append "RUST_TARGET="
+                                       #$(platform-rust-target
+                                          (lookup-platform-by-target
+                                           (%current-target-system)))))
+                     #~()))
+      #:imported-modules %cargo-build-system-modules
       #:modules
-      '((guix build cargo-build-system)
-        (guix build utils)
-        ((guix build gnu-build-system) #:prefix gnu:))
-      #:cargo-inputs
-      `(("rust-anyhow" ,rust-anyhow-1)
-        ("rust-cairo-rs" ,rust-cairo-rs-0.19)
-        ("rust-cast" ,rust-cast-0.3)
-        ("rust-chrono" ,rust-chrono-0.4)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-clap-complete" ,rust-clap-complete-4)
-        ("rust-cssparser" ,rust-cssparser-0.31)
-        ("rust-cstr" ,rust-cstr-0.2)
-        ("rust-data-url" ,rust-data-url-0.3)
-        ("rust-encoding-rs" ,rust-encoding-rs-0.8)
-        ("rust-float-cmp" ,rust-float-cmp-0.9)
-        ("rust-gdk-pixbuf" ,rust-gdk-pixbuf-0.19)
-        ("rust-gio" ,rust-gio-0.19)
-        ("rust-glib" ,rust-glib-0.19)
-        ("rust-image" ,rust-image-0.24)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-language-tags" ,rust-language-tags-0.3)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-locale-config" ,rust-locale-config-0.3)
-        ("rust-markup5ever" ,rust-markup5ever-0.11)
-        ("rust-nalgebra" ,rust-nalgebra-0.32)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-pango" ,rust-pango-0.19)
-        ("rust-pangocairo" ,rust-pangocairo-0.19)
-        ("rust-rayon" ,rust-rayon-1)
-        ("rust-rctree" ,rust-rctree-0.6)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-rgb" ,rust-rgb-0.8)
-        ("rust-selectors" ,rust-selectors-0.25)
-        ("rust-string-cache" ,rust-string-cache-0.8)
-        ("rust-system-deps" ,rust-system-deps-6)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-tinyvec" ,rust-tinyvec-1)
-        ("rust-url" ,rust-url-2)
-        ("rust-xml5ever" ,rust-xml5ever-0.17)
-        ("rust-yeslogic-fontconfig-sys" ,rust-yeslogic-fontconfig-sys-5))
-      #:cargo-development-inputs
-      `(("rust-anyhow" ,rust-anyhow-1)
-        ("rust-assert-cmd" ,rust-assert-cmd-2)
-        ("rust-chrono" ,rust-chrono-0.4)
-        ("rust-criterion" ,rust-criterion-0.5)
-        ("rust-float-cmp" ,rust-float-cmp-0.9)
-        ("rust-lopdf" ,rust-lopdf-0.32)
-        ("rust-matches" ,rust-matches-0.1)
-        ("rust-png" ,rust-png-0.17)
-        ("rust-predicates" ,rust-predicates-3)
-        ("rust-proptest" ,rust-proptest-1)
-        ("rust-quick-error" ,rust-quick-error-2)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-tempfile" ,rust-tempfile-3)
-        ("rust-url" ,rust-url-2))
+      '(((guix build cargo-build-system) #:prefix cargo:)
+        (guix build gnu-build-system)
+        (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-gdk-pixbuf-thumbnailer
@@ -3752,15 +3715,6 @@ for dealing with different structured file formats.")
                                 "/bin/gdk-pixbuf-thumbnailer")))))
           (add-after 'unpack 'prepare-for-build
             (lambda _
-              ;; In lieu of #:make-flags
-              (setenv "CC" #$(cc-for-target))
-              (setenv "PKG_CONFIG" #$(pkg-config-for-target))
-              #$@(if (%current-target-system)
-                     #~((setenv "RUST_TARGET"
-                                #$(platform-rust-target
-                                    (lookup-platform-by-target
-                                      (%current-target-system)))))
-                     #~())
               ;; Something about the build environment resists building
               ;; successfully with the '--locked' flag.
               (substitute* '("Makefile.am" "Makefile.in")
@@ -3789,40 +3743,37 @@ for dealing with different structured file formats.")
                  (string-append "gdk_pixbuf_cache_file="
                                 #$output "/"
                                 #$%gdk-pixbuf-loaders-cache-file "\n")))))
-          (add-after 'configure 'gnu-configure
-            (lambda* (#:key outputs #:allow-other-keys #:rest args)
-              (apply (assoc-ref gnu:%standard-phases 'configure)
-                     #:configure-flags
-                     (list "--disable-static"
-                           #$@(if (%current-target-system)
-                                #~(;; g-ir-scanner can't import its modules
-                                   ;; and vala currently can't be cross-compiled.
-                                   "--enable-introspection=no"
-                                   "--enable-vala=no"
-                                   ;; These two are necessary for cross-compiling.
-                                   (string-append
-                                     "--build=" #$(nix-system->gnu-triplet
-                                                    (%current-system)))
-                                   (string-append
-                                     "--host=" #$(%current-target-system)))
-                                #~("--enable-vala")))
-                     args)))
-          (add-after 'configure 'dont-vendor-self
-            (lambda* (#:key vendor-dir #:allow-other-keys)
-              ;; Don't keep the whole tarball in the vendor directory
-              (delete-file-recursively
-               (string-append vendor-dir "/" #$name "-" #$version ".tar.xz"))))
-          (replace 'build
-            (assoc-ref gnu:%standard-phases 'build))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys #:rest args)
-              (when tests?
-                ((assoc-ref gnu:%standard-phases 'check)
-                 #:test-target "check"))))
-          (replace 'install
-            (assoc-ref gnu:%standard-phases 'install)))))
-    (native-inputs (list gdk-pixbuf `(,glib "bin") gobject-introspection pkg-config vala))
-    (inputs (list freetype gobject-introspection harfbuzz libxml2 pango))
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums)))))))
+    (native-inputs
+     (append
+      (list gdk-pixbuf
+            `(,glib "bin")
+            gobject-introspection
+            pkg-config
+            rust
+            `(,rust "cargo")
+            vala)
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs
+     (cons* freetype
+            gobject-introspection
+            harfbuzz
+            libxml2
+            pango
+            (cargo-inputs 'librsvg)))
     (propagated-inputs (list cairo gdk-pixbuf glib))
     (synopsis "SVG rendering library")
     (description "Librsvg is a library to render SVG images to Cairo surfaces.
@@ -8247,7 +8198,6 @@ to display dialog boxes from the commandline and shell scripts.")
            libxkbfile
            libxrandr
            libxtst
-           linux-libre-headers-6.1      ; for dma_buf_export_sync_file
            pipewire
            startup-notification
            sysprof
@@ -10601,61 +10551,16 @@ specified duration and save it as a GIF encoded animated image file.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0zavax35n048spx097ymiq31s8b879qwbg8xmcxcx73r6m823mic"))))
-    (build-system cargo-build-system)
+    (build-system meson-build-system)
     (arguments
      (list
-      #:install-source? #f
-      #:vendor-dir "vendor"
-      #:cargo-inputs
-      (list rust-aes-gcm-0.10
-            rust-anyhow-1
-            rust-async-std-1
-            rust-aperture-0.3
-            rust-ashpd-0.6
-            rust-data-encoding-2
-            rust-diesel-2
-            rust-diesel-migrations-2
-            rust-futures-channel-0.3
-            rust-futures-executor-0.3
-            rust-futures-util-0.3
-            rust-gettext-rs-0.7
-            rust-gtk4-0.7
-            rust-hex-0.4
-            rust-image-0.24
-            rust-libadwaita-0.5
-            rust-oo7-0.2
-            rust-percent-encoding-2
-            rust-prost-0.12
-            rust-qrencode-0.14
-            rust-quick-xml-0.30
-            rust-rand-0.8
-            rust-reqwest-0.11
-            rust-ring-0.17
-            rust-rust-argon2-2
-            rust-scrypt-0.11
-            rust-search-provider-0.6
-            rust-serde-1
-            rust-serde-json-1
-            rust-svg-metadata-0.4
-            rust-tokio-1
-            rust-tracing-0.1
-            rust-tracing-subscriber-0.3
-            rust-url-2
-            rust-uuid-1
-            rust-zbar-rust-0.0.23   ; any 0.0.*
-            rust-zeroize-1)
       #:imported-modules `(,@%meson-build-system-modules
-                           ,@%glib-or-gtk-build-system-modules
                            ,@%cargo-build-system-modules)
-      #:modules `((guix build cargo-build-system)
-                  ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
-                  ((guix build meson-build-system) #:prefix meson:)
+      #:modules `(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build meson-build-system)
                   (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'generate-gdk-pixbuf-loaders-cache-file
-            (assoc-ref glib-or-gtk:%standard-phases
-                       'generate-gdk-pixbuf-loaders-cache-file))
           (add-after 'unpack 'prepare-for-build
             (lambda _
               (substitute* "meson.build"
@@ -10667,51 +10572,43 @@ specified duration and save it as a GIF encoded animated image file.")
               (substitute* "src/meson.build"
                 (("'test'") "'test', cargo_options"))
               (delete-file "Cargo.lock")))
-          ;; Add meson-configure phase here and not before 'configure because
-          ;; the meson 'configure phase changes to a different directory and
+          ;; The meson 'configure phase changes to a different directory and
           ;; we need it created before unpacking the crates.
-          (add-before 'unpack-rust-crates 'meson-configure
+          (add-after 'configure 'prepare-cargo-build-system
             (lambda args
-              (apply (assoc-ref meson:%standard-phases 'configure)
-                     #:build-type "debugoptimized"
-                     #:configure-flags '()
-                     args)))
-          (replace 'build
-            (assoc-ref meson:%standard-phases 'build))
-          (replace 'check
-            (lambda args
-              (apply (assoc-ref meson:%standard-phases 'check)
-                     #:test-options '()
-                     args)))
-          (replace 'install
-            (assoc-ref meson:%standard-phases 'install))
-          (add-after 'install 'glib-or-gtk-compile-schemas
-            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-compile-schemas))
-          (add-after 'install 'glib-or-gtk-wrap
-            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
-          (add-after 'glib-or-gtk-wrap 'wrap-extra-paths
-            (lambda _
-              (let ((gst-plugins-path (getenv "GST_PLUGIN_SYSTEM_PATH")))
-                (wrap-program (string-append #$output "/bin/authenticator")
-                 `("GST_PLUGIN_SYSTEM_PATH" ":" suffix (,gst-plugins-path))))))
-          (add-after 'strip 'shrink-runpath
-            (assoc-ref meson:%standard-phases 'shrink-runpath)))))
-    (native-inputs (list gettext-minimal
-                         `(,glib "bin") ; for glib-compile-schemas
-                         meson
-                         ninja
-                         pkg-config))
-    (inputs (list bash-minimal
-                  glib
-                  gstreamer
-                  gst-plugins-base
-                  gst-plugins-bad
-                  gtk
-                  libadwaita
-                  openssl
-                  pipewire      ; Needed but not listed
-                  sqlite
-                  zbar))
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:vendor-dir "vendor"
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums)))))))
+    (native-inputs
+     (append
+      (list gettext-minimal
+            `(,glib "bin") ; for glib-compile-schemas
+            pkg-config
+            rust
+            `(,rust "cargo"))
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs (cons* bash-minimal
+                   glib
+                   gstreamer
+                   gst-plugins-base
+                   gst-plugins-bad
+                   gtk
+                   libadwaita
+                   openssl
+                   pipewire             ; Needed but not listed
+                   sqlite
+                   zbar
+                   (cargo-inputs 'gnome-authenticator)))
     (home-page "https://apps.gnome.org/Authenticator")
     (synopsis "Generate two-factor codes")
     (description "Simple application for generating Two-Factor Authentication

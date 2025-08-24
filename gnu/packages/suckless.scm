@@ -37,7 +37,6 @@
 (define-module (gnu packages suckless)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cups)
@@ -1247,10 +1246,10 @@ pipe and compress.")
          (sha256
           (base32 "1c6ahxw0qz0703my28k2z0kgi0am5bp5d02l4rgyphgvjk1jfv8h"))))
       (arguments
-       `(#:cargo-inputs
-         (("rust-chrono" ,rust-chrono-0.4))
+       `(#:install-source? #f
          #:tests? #f)) ; There are no tests.
       (build-system cargo-build-system)
+      (inputs (cargo-inputs 'snafu))
       (home-page "https://github.com/jsbmg/snafu")
       (synopsis "Status text for DWM window manager")
       (description "@code{snafu} provides status text for DWM's builtin bar.  It

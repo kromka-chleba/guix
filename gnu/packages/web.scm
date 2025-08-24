@@ -134,11 +134,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-gtk)
-  #:use-module (gnu packages crates-tls)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
@@ -521,37 +516,18 @@ replacing them with data URIs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "082xh0zmmy9abz7y3zjybbwffq7d0j1jl78ggzbwwanvam65v0dp"))))
+        (base32 "082xh0zmmy9abz7y3zjybbwffq7d0j1jl78ggzbwwanvam65v0dp"))
+       (modules '((guix build utils)))
+       ;; Don't default to vendored openssl.
+       (snippet '(substitute* "Cargo.toml"
+                   ((".*\"vendored-openssl\".*") "")))))
     (build-system cargo-build-system)
     (arguments
-     `(#:install-source? #f
-       #:cargo-inputs
-       (("rust-atty" ,rust-atty-0.2)
-        ("rust-base64" ,rust-base64-0.22)
-        ("rust-chrono" ,rust-chrono-0.4)
-        ("rust-clap" ,rust-clap-3)
-        ("rust-cssparser" ,rust-cssparser-0.34)
-        ("rust-encoding-rs" ,rust-encoding-rs-0.8)
-        ("rust-html5ever" ,rust-html5ever-0.27)
-        ("rust-markup5ever-rcdom" ,rust-markup5ever-rcdom-0.3)
-        ("rust-openssl" ,rust-openssl-0.10)
-        ("rust-percent-encoding" ,rust-percent-encoding-2)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-reqwest" ,rust-reqwest-0.12)
-        ("rust-sha2" ,rust-sha2-0.10)
-        ("rust-url" ,rust-url-2))
-       #:cargo-development-inputs
-       (("rust-assert-cmd" ,rust-assert-cmd-2))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'dont-default-to-vendored-openssl
-           (lambda _
-             (substitute* "Cargo.toml"
-               ((".*\"vendored-openssl\".*") "")))))))
+     `(#:install-source? #f))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list openssl))
+     (cons openssl (cargo-inputs 'monolith)))
     (home-page "https://github.com/Y2Z/monolith")
     (synopsis "Command line tool for saving web pages as a single HTML file")
     (description
@@ -1341,6 +1317,42 @@ libraries for working with JNLP applets.")
     ;; The program is mainly GPL2+, with some individual files under LGPL2.1+
     ;; or dual licenses.
     (license license:gpl2+)))
+
+(define-public iocaine
+  (package
+    (name "iocaine")
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "iocaine" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1pd42hn5lqm3xw6id652w7sswix3l6bslcld7svqyq47gscsm3vn"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'override-jemalloc
+            (lambda* (#:key inputs #:allow-other-keys) ;Copied from uv
+              (let ((jemalloc (assoc-ref inputs "jemalloc")))
+                ;; This flag is needed when not using the bundled jemalloc.
+                ;; https://github.com/tikv/jemallocator/issues/19
+                (setenv
+                 "CARGO_FEATURE_UNPREFIXED_MALLOC_ON_SUPPORTED_PLATFORMS" "1")
+                (setenv "JEMALLOC_OVERRIDE"
+                        (string-append jemalloc "/lib/libjemalloc.so"))))))))
+    (inputs (cons* jemalloc (cargo-inputs 'iocaine)))
+    (home-page "https://iocaine.madhouse-project.org/")
+    (synopsis "Serves poisonous data to large language model scrapers")
+    (description
+     "Iocaine is an HTTP server that generates a stable endless maze of
+Markov-babble-filled web pages.  Placed behind a heavily rate-limited reverse
+proxy, it becomes a ``tar pit'' for trapping aggressive web scrapers commonly
+used to train large language models, and poisoning the collected data.")
+    (license license:expat)))
 
 (define-public jansson
   (package
@@ -7618,27 +7630,17 @@ file links.")
               (invoke "make" (string-append "PREFIX=" #$output)
                       "copy-data"))))
       #:parallel-tests? #f  ; As per the Makefile
-      #:install-source? #f
-      #:cargo-inputs
-      `(("rust-ansi-parser" ,rust-ansi-parser-0.6)
-        ("rust-dirs" ,rust-dirs-3)
-        ("rust-gdk" ,rust-gdk-0.13)
-        ("rust-gtk" ,rust-gtk-0.8)
-        ("rust-linkify" ,rust-linkify-0.7)
-        ("rust-native-tls" ,rust-native-tls-0.2)
-        ("rust-open" ,rust-open-2)
-        ("rust-percent-encoding" ,rust-percent-encoding-2)
-        ("rust-textwrap" ,rust-textwrap-0.14)
-        ("rust-url" ,rust-url-2))))
+      #:install-source? #f))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list at-spi2-core
-           cairo
-           gdk-pixbuf
-           gtk+
-           openssl-3.0
-           pango))
+     (cons* at-spi2-core
+            cairo
+            gdk-pixbuf
+            gtk+
+            openssl-3.0
+            pango
+            (cargo-inputs 'castor)))
     (home-page "https://git.sr.ht/~julienxx/castor")
     (synopsis "Graphical client for plain-text protocols")
     (description

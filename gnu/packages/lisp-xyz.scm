@@ -13613,6 +13613,42 @@ on UNIX like platforms.")
 (define-public ecl-daemon
   (sbcl-package->ecl-package sbcl-daemon))
 
+(define-public sbcl-damn-fast-priority-queue
+  (let ((commit "f4c03741d05c757aed245b41a5c3f8c7096cc1d2")
+        (revision "0"))
+    (package
+     (name "sbcl-damn-fast-priority-queue")
+     (version (git-version "0.0.2" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/phoe/damn-fast-priority-queue")
+             (commit commit)))
+       (file-name (git-file-name "damn-fast-priority-queue" version))
+       (sha256
+        (base32 "0ch4yma51r2lnsjpr45mxga7sf03l3c76l6ijffm1rq2g9ywaksa"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria))
+     (arguments
+      `(#:asd-systems '("damn-fast-priority-queue"
+                        "damn-fast-stable-priority-queue")))
+     (synopsis "Fast priority queue")
+     (description
+      "A heap-based priority queue whose first and foremost priority is speed.")
+     (home-page "https://github.com/phoe/damn-fast-priority-queue")
+     (license license:expat))))
+
+(define-public cl-damn-fast-priority-queue
+  (sbcl-package->cl-source-package sbcl-damn-fast-priority-queue))
+
+(define-public ecl-damn-fast-priority-queue
+  (sbcl-package->ecl-package sbcl-damn-fast-priority-queue))
+
+(define-public clasp-damn-fast-priority-queue
+  (sbcl-package->clasp-package sbcl-damn-fast-priority-queue))
+
 (define-public sbcl-data-format-validation
   (let ((commit "95d44766e829582598f9dcdc5c23719c462d5bfb")
         (revision "1"))
@@ -21203,6 +21239,39 @@ LispWorks library that are used in software such as ContextL.")
 (define-public clasp-lw-compat
   (sbcl-package->clasp-package sbcl-lw-compat))
 
+(define-public sbcl-lwcells
+  (let ((commit "e7446ac146a31b630e74c9bce7dab34b50cc333d")
+        (revision "0"))
+    (package
+     (name "sbcl-lwcells")
+     (version (git-version "0.0.1" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kchanqvq/lwcells")
+             (commit commit)))
+       (file-name (git-file-name "lwcells" version))
+       (sha256
+        (base32 "1p8a5j52isp14w6pxy6c6fsrwwvnyb9r6yvd8bxh7sjh6mnvp3nc"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria
+            sbcl-named-closure
+            sbcl-damn-fast-priority-queue))
+     (synopsis "Light-weight cells for dataflow programming")
+     (description
+      "A dataflow extension to Common Lisp that maintains a consistent state of
+cells according to functions specifying their relation.")
+     (home-page "https://github.com/kchanqvq/lwcells")
+     (license license:gpl3+))))
+
+(define-public cl-lwcells
+  (sbcl-package->cl-source-package sbcl-lwcells))
+
+(define-public ecl-lwcells
+  (sbcl-package->ecl-package sbcl-lwcells))
+
 (define-public sbcl-lzlib
   (let ((commit "22767ca12d1c1bd59a7ae1f9c5ef7d2e937206bb")
         (revision "2"))
@@ -23014,6 +23083,40 @@ JSON handling.  Load the parser backend you prefer!
 
 (define-public ecl-nactivitypub
   (sbcl-package->ecl-package sbcl-nactivitypub))
+
+(define-public sbcl-named-closure
+  (let ((commit "d57305582137a24d6c8f8375fba496c653bb5699")
+        (revision "0"))
+    (package
+     (name "sbcl-named-closure")
+     (version (git-version "0.0.1" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kchanqvq/named-closure")
+             (commit commit)))
+       (file-name (git-file-name "named-closure" version))
+       (sha256
+        (base32 "17lpslk7amh9pghjpjdnd1aj50r1kdc4iyai2h2xas7wampg5xf5"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria
+            sbcl-serapeum
+            sbcl-iterate
+            sbcl-trivial-cltl2))
+     (synopsis "Introspectable, readably-printable and redefinable closures")
+     (description
+      "A CLOS class that defines callable objects whose behavior is similar to
+closures but adds conveniences such as introspectability.")
+     (home-page "https://github.com/kchanqvq/named-closure")
+     (license license:expat))))
+
+(define-public cl-named-closure
+  (sbcl-package->cl-source-package sbcl-named-closure))
+
+(define-public ecl-named-closure
+  (sbcl-package->ecl-package sbcl-named-closure))
 
 (define-public sbcl-named-readtables
   (let ((commit "d5ff162ce02035ec7de1acc9721385f325e928c0")

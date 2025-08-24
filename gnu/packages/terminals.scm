@@ -82,10 +82,6 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-apple)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-graphics)
-  #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dlang)
@@ -1533,7 +1529,7 @@ basic input/output.")
 (define-public alacritty
   (package
     (name "alacritty")
-    (version "0.15.0")
+    (version "0.15.1")
     (source
      (origin
        ;; XXX: The crate at "crates.io" contains only the alacritty subproject
@@ -1545,7 +1541,7 @@ basic input/output.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nh5w037rwf00z9b21803184j561s44js9ilfq9pcqbgbg95y308"))))
+        (base32 "1nsmz4vkzandhi1qc863hr9gqlbikb9n6yrdspdv6562swq128gz"))))
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
@@ -1553,52 +1549,6 @@ basic input/output.")
        '("--"
          ;; Changes in clap regularly break this test.
          "--skip=cli::tests::completions")
-       #:cargo-inputs
-       ,(list rust-ahash-0.8
-              rust-base64-0.22
-              rust-bitflags-2
-              rust-clap-4
-              rust-copypasta-0.10
-              rust-crossfont-0.8
-              rust-dirs-5
-              rust-embed-resource-2
-              rust-gl-generator-0.14
-              rust-glutin-0.32
-              rust-home-0.5
-              rust-libc-0.2
-              rust-log-0.4
-              rust-miow-0.6
-              rust-notify-6
-              rust-objc2-0.5
-              rust-objc2-app-kit-0.2
-              rust-objc2-foundation-0.2
-              rust-parking-lot-0.12
-              rust-piper-0.2
-              rust-polling-3
-              rust-png-0.17
-              rust-proc-macro2-1
-              rust-quote-1
-              rust-regex-automata-0.4
-              rust-rustix-openpty-0.1
-              rust-serde-1
-              rust-serde-json-1
-              rust-serde-yaml-0.9
-              rust-signal-hook-0.3
-              rust-syn-2
-              rust-tempfile-3
-              rust-toml-0.8
-              rust-toml-edit-0.22
-              rust-unicode-width-0.1
-              rust-vte-0.13
-              rust-windows-sys-0.52
-              rust-winit-0.30
-              rust-xdg-2)
-       #:cargo-development-inputs
-       ,(list rust-clap-complete-4
-              rust-log-0.4
-              rust-serde-1
-              rust-serde-json-1
-              rust-toml-0.8)
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-xdg-open
@@ -1688,27 +1638,28 @@ basic input/output.")
            python
            scdoc))
     (inputs
-     (list expat
-           fontconfig
-           freetype
-           libx11
-           libxcb
-           libxcursor
-           libxext
-           libxft
-           libxi
-           libxinerama
-           libxkbcommon
-           libxmu
-           libxpresent
-           libxrandr
-           libxscrnsaver
-           libxt
-           libxtst
-           libxxf86vm
-           mesa
-           xdg-utils
-           wayland))
+     (cons* expat
+            fontconfig
+            freetype
+            libx11
+            libxcb
+            libxcursor
+            libxext
+            libxft
+            libxi
+            libxinerama
+            libxkbcommon
+            libxmu
+            libxpresent
+            libxrandr
+            libxscrnsaver
+            libxt
+            libxtst
+            libxxf86vm
+            mesa
+            xdg-utils
+            wayland
+            (cargo-inputs 'alacritty)))
     (native-search-paths
      ;; FIXME: This should only be located in 'ncurses'.  Nonetheless it is
      ;; provided for usability reasons.  See <https://bugs.gnu.org/22138>.

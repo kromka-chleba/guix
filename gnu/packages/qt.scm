@@ -78,7 +78,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
@@ -128,6 +127,7 @@
   #:use-module (gnu packages kde)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages rust-sources)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sqlite)
@@ -1309,7 +1309,12 @@ HostData=lib/qt5"
                 "0i4cgcvhngq716009r4yjn1ma67vpr4cj2ks13yxba4iy1966yjp"))))
     (propagated-inputs (list))
     (native-inputs (list perl))
-    (inputs (list mesa qtbase vulkan-headers zlib libxkbcommon))
+    (inputs (list libxkbcommon
+                  mesa
+                  qtbase
+                  qtdeclarative
+                  vulkan-headers
+                  zlib))
     (build-system cmake-build-system)
     (arguments
      (list

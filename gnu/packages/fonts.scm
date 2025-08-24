@@ -66,6 +66,7 @@
 ;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2025 Liam Hupfer <liam@hpfr.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1178,6 +1179,29 @@ additional characters (mostly accented ones).  This package provides the
 OpenType variant of these fonts.")
     (license license:gfl1.0)))
 
+(define-public font-new-computer-modern
+  (package
+    (name "font-new-computer-modern")
+    (version "7.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://download.gnu.org.ua/release/newcm/"
+                           "newcm-" version ".txz"))
+       (file-name (string-append name "-" version ".tar.xz"))
+       (sha256
+        (base32 "0j7d5brjpaakhs826wpjpmbn5kijf0k4pklafi6ijp922092jivx"))))
+    (build-system font-build-system)
+    (home-page "https://ctan.org/pkg/newcomputermodern")
+    (synopsis "OpenType fonts based on Computer Modern including non-Latin")
+    (description
+     "NewComputerModern is a new assembly of Computer Modern fonts including
+extensions in many directions for both Latin based languages, non-Latin based
+languages and Mathematics, all compatible in style to CM fonts.  In addition
+to the Regular weight of Computer Modern, it provides a Book weight for
+heavier printing.")
+    (license license:gfl1.0)))
+
 (define-public font-amiri
   (package
     (name "font-amiri")
@@ -1341,6 +1365,31 @@ utilities to ease adding new glyphs to the font.")
     (home-page "http://unifoundry.com/unifont/index.html")
     (properties '((upstream-name . "unifont")))
     (license license:gpl2+)))
+
+(define-public font-last-resort
+  (package
+    (name "font-last-resort")
+    (version "16.000")
+    (source
+     (origin
+       (method url-fetch)
+       ;; PGTK Emacs does not seem to render the high-efficiency TTF.  Prefer
+       ;; the larger but more compatible standard TTF.
+       (uri (string-append "https://github.com/unicode-org/last-resort-font"
+                           "/releases/download/" version
+                           "/LastResort-Regular.ttf"))
+       (sha256
+        (base32 "0rlisa9hzm7kfy3b8w2460mkiwrh2hlyp223bafkqzpkxkfsbcpp"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/unicode-org/last-resort-font")
+    (synopsis "Fallback font for Unicode code points")
+    (description
+     "Last Resort is a special-purpose font intended as a user-friendly
+alternative to tofu symbols.  It includes glyphs designed to allow users to
+recognize which Unicode block a character belongs to so they can identify what
+type of font to install to properly display text.  Undefined code points and
+noncharacters are also represented.")
+    (license license:silofl1.1)))
 
 (define-public font-google-noto
   (package
@@ -1513,24 +1562,57 @@ fonts.")
 (define-public font-google-roboto
   (package
     (name "font-google-roboto")
-    (version "2.136")
+    (version "3.011")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://github.com/google/roboto/releases/download/"
-                           "v" version "/roboto-hinted.zip"))
+       (uri (string-append
+             "https://github.com/googlefonts/roboto-3-classic/releases/download/v"
+             version "/Roboto_v" version ".zip"))
        (file-name (string-append name "-" version ".zip"))
        (sha256
-        (base32
-         "0spscx08fad7i8qs7icns96iwcapniq8lwwqqvbf7bamvs8qfln4"))))
+        (base32 "03km9r4cgbbjparmzvlkr59a3r6j5cwmnf4s17qr7wkdf0qyx7wq"))))
     (build-system font-build-system)
-    (home-page "https://github.com/google/roboto")
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Install only needed fonts.
+          (add-before 'install 'chdir
+            (lambda _
+              (chdir "../hinted/static"))))))
+    (home-page "https://github.com/googlefonts/roboto-3-classic")
     (synopsis "The Roboto family of fonts")
     (description
      "Roboto is Google’s signature family of fonts, the default font on Android
-and Chrome OS, and the recommended font for the
-visual language \"Material Design\".")
-    (license license:asl2.0)))
+and Chrome OS, and the recommended font for the visual language \"Material
+Design\".")
+    (license license:silofl1.1)))
+
+(define-public font-google-roboto-mono
+  (package
+    (name "font-google-roboto-mono")
+    (version "3.001")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googlefonts/RobotoMono")
+             (commit "8f651634e746da6df6c2c0be73255721d24f2372")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00ddmr7yvb9isakfvgv6g74m80fmg81dmh1hrrdyswapaa7858a5"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/googlefonts/RobotoMono")
+    (synopsis "Monospaced Roboto font")
+    (description
+     "Roboto Mono is a monospaced addition to the Roboto type family.
+Like the other members of the Roboto family, the fonts are optimized for
+readability on screens across a wide variety of devices and reading
+environments.  While the monospaced version is related to its variable width
+cousin, it doesn't hesitate to change forms to better fit the constraints of a
+monospaced environment.")
+    (license license:silofl1.1)))
 
 (define-public font-borg-sans-mono
   (package
@@ -1740,6 +1822,7 @@ Powerline support.")
        (sha256
         (base32 "0mir6yi5i0h1kk6fr8dsqmv4m8cwrbldadpy7rnlyvkd26wdqpiy"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/adobe-fonts/source-code-pro")
     (synopsis
      "Monospaced font family for user interface and coding environments")
@@ -4333,6 +4416,7 @@ Spleen also has support for Powerline symbols out of the box.")
        (sha256
         (base32 "02wy9n49nzyvhc55jjmpxrv7hh6ncxv31liniqjgjn7vp68fj40n"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://www.stixfonts.org/")
     (synopsis
      "OpenType Unicode fonts for scientific, technical, and mathematical texts")
@@ -4650,4 +4734,26 @@ Bonnie Scranton, and Edward Tufte.")
 Hack + DejaVu Sans Mono is used for ASCII, and Rounded Mgen+ for the other.
 In addition, Nerd Fonts, Noto Emoji, Icons for Devs, and some adjustment forked
 from the Ricty generator are converted and adjusted.")
+    (license license:silofl1.1)))
+
+(define-public font-undefined-medium
+  (package
+    (name "font-undefined-medium")
+    (version "1.3")
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/andirueckel/undefined-medium"
+                           "/archive/v" version ".zip"))
+       (sha256
+        (base32 "1y11y78807nhfwvvx4ac36q6m5y20jarlrazrp029wks2wwdgrx8"))))
+    (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
+    (home-page "https://undefined-medium.com")
+    (synopsis "Pixel grid-based monospace typeface")
+    (description
+     "This package provides undefined medium, a pixel grid-based monospace
+typeface.  It is inspired by many 5×7 pixel grid typefaces, especially Gilles
+Boccon-Gibod’s MonteCarlo.  Unlike traditional bitmap fonts, it is distributed
+in typical scalable font formats.")
     (license license:silofl1.1)))

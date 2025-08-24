@@ -917,12 +917,12 @@ importer."
   (team 'rust
         #:name "Rust"
         #:scope (list (make-regexp* "^gnu/packages/(crates|rust)(-.+|)\\.scm$")
-                      "gnu/packages/c2rust.scm"
                       "gnu/packages/sequoia.scm"
                       "guix/build/cargo-build-system.scm"
                       "guix/build/cargo-utils.scm"
                       "guix/build-system/cargo.scm"
                       "guix/import/crate.scm"
+                      "guix/import/crate/cargo-lock.scm"
                       "guix/scripts/import/crate.scm"
                       "tests/crate.scm")))
 
@@ -974,11 +974,13 @@ packages (e.g. Astronomy, Chemistry, Math, Physics etc.)"
                       "gnu/packages/openldap.scm"
                       "gnu/packages/openstack.scm"
                       "gnu/packages/prometheus.scm"
+                      "gnu/packages/rdesktop.scm"
                       "gnu/packages/selinux.scm"
                       "gnu/packages/storage.scm"
                       "gnu/packages/task-runners.scm"
                       "gnu/packages/terraform.scm"
-                      "gnu/packages/virtualization.scm")))
+                      "gnu/packages/virtualization.scm"
+                      "gnu/packages/vnc.scm")))
 
 (define-team telephony
   (team 'telephony

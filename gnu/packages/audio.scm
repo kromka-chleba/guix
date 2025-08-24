@@ -89,8 +89,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-audio)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages documentation)
@@ -1579,14 +1577,13 @@ plugins are provided.")
     (build-system cargo-build-system)
     (arguments
      (list
-      #:cargo-inputs `(("rust-biquad" ,rust-biquad-0.4)
-                       ("rust-lv2" ,rust-lv2-0.6))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'install
             (lambda* (#:key outputs #:allow-other-keys)
               (setenv "LIBDIR" (string-append (assoc-ref outputs "out") "/lib"))
               (invoke "make" "install"))))))
+    (inputs (cargo-inputs 'bankstown-lv2))
     (home-page "https://github.com/chadmed/bankstown")
     (synopsis "Barebones, fast LV2 bass enhancement plugin.")
     (description

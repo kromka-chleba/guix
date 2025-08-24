@@ -2610,14 +2610,20 @@ input and output.")
          "1s650nwnabx66w584m1cyw82icyym6hv5kzfsbp38cinkr5klh9j"))))
     (build-system ruby-build-system)
     (arguments
-     '(#:tests? #f ;; TODO: NameError: uninitialized constant Config
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'set-LIB
-           (lambda _
-             ;; This is used in the Rakefile, and setting it avoids an issue
-             ;; with running the tests.
-             (setenv "LIB" "options"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (substitute* "spec/options_spec.rb"
+                  (("require .* \"/spec_helper\"")
+                   "require \"spec_helper\"\n"))
+                (substitute* "spec/spec_helper.rb"
+                  (("require 'spec'")
+                   "require 'rspec'\n"))
+                (invoke "rspec" "spec")))))))
+    (native-inputs (list ruby-rspec))
     (synopsis "Ruby library to parse options from *args cleanly")
     (description
      "The @code{options} library helps with parsing keyword options in Ruby
@@ -7763,14 +7769,14 @@ decoding of JSON is implemented as a C extension to Ruby.")
 (define-public ruby-ox
   (package
     (name "ruby-ox")
-    (version "2.6.0")
+    (version "2.14.21")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "ox" version))
        (sha256
         (base32
-         "0fmk62b1h2i79dfzjj8wmf8qid1rv5nhwfc17l489ywnga91xl83"))))
+         "1fd0pjv8svyq8g49zaqfksq9zhxv1rwvsqslvxhimaywggwpmirc"))))
     (build-system ruby-build-system)
     (arguments
      '(#:tests? #f)) ; no tests
@@ -10351,6 +10357,10 @@ engine.")
     (arguments
      (substitute-keyword-arguments (package-arguments ruby-sqlite3)
        ((#:tests? #t #t) #f)
+       ((#:gem-flags _ #f)
+        ''("--"
+           "--enable-system-libraries"
+           "--with-cflags=-Wno-error=incompatible-pointer-types -Wno-error=int-conversion"))
        ((#:phases phases #~%standard-phases)
         #~(modify-phases #$phases
             (delete 'relax-requirements)
@@ -14611,8 +14621,8 @@ long-running operation if it hasn't finished in a fixed amount of time.")
          "0nagbf9pwy1vg09k6j4xqhbjjzrg5dwzvkn4ffvlj76fsn6vv61f"))))
     (build-system ruby-build-system)
     (arguments
-     ;; No tests.
-     '(#:tests? #f))
+     '(#:tests? #f
+       #:gem-flags '("--" "--with-cflags=-Wno-error=implicit-function-declaration")))
     (propagated-inputs
      (list ruby-daemons ruby-eventmachine ruby-rack))
     (synopsis "Thin and fast web server for Ruby")
@@ -15565,13 +15575,13 @@ expressiveness of the language with the parsing expressions.")
 (define-public ruby-cbor
   (package
     (name "ruby-cbor")
-    (version "0.5.9.6")
+    (version "0.5.10.1")
     (source
       (origin
         (method url-fetch)
         (uri (rubygems-uri "cbor" version))
         (sha256
-          (base32 "0511idr8xps9625nh3kxr68sdy6l3xy2kcz7r57g47fxb1v18jj3"))))
+          (base32 "1w3d5dhx4vjd707ihkcmq7fy78p5fgawcjdqw2byxnfw32gzgkbr"))))
     (build-system ruby-build-system)
     (arguments
      `(#:test-target "spec"))
@@ -16353,16 +16363,17 @@ Resource Description Framework} vocabularies.")
 (define-public ruby-rdiscount
   (package
     (name "ruby-rdiscount")
-    (version "2.2.7")
-    (source (origin
-              (method git-fetch)        ;for the full test suite
-              (uri (git-reference
-                    (url "https://github.com/davidfstr/rdiscount")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1lpfxq3gv0dgmnki9jgfnc8n9k4x9vyq9miqdxv6g4kp90qyfifc"))))
+    (version "2.2.7.3")
+    (source
+     (origin
+       (method git-fetch)               ;for the full test suite
+       (uri (git-reference
+              (url "https://github.com/davidfstr/rdiscount")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1lnf598sngcy6b701h33h5l9rn2abl80x0jpynz7jxb4imhd5r80"))))
     (build-system ruby-build-system)
     (native-inputs (list perl))
     (synopsis "Discount Markdown Processor for Ruby")
@@ -16975,13 +16986,13 @@ generation functionality.")
 (define-public ruby-grpc
   (package
     (name "ruby-grpc")
-    (version "1.62.0")
+    (version "1.74.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "grpc" version))
               (sha256
                (base32
-                "03z8yq0z228g6xxxq6s2mmslpv6psrdmi30dpmhysr4px16d897n"))))
+                "12qy6yga90hs2pdzkxwm80d38dbmjdxmf2szqwb40ky1jr4klfp7"))))
     (build-system ruby-build-system)
     (arguments
      `(#:tests? #f))  ;; has no tests

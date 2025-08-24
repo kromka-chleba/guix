@@ -2108,7 +2108,8 @@ guix pull
 @cindex upgrading the Guix daemon, on a foreign distro
 @cindex @command{guix pull} for the root user, on a foreign distro
 
-On a foreign distro, you can upgrade the build daemon by running:
+If you installed Guix on a foreign distro with @file{guix-install.sh},
+you can upgrade the build daemon by running:
 
 @example
 sudo -i guix pull
@@ -2120,6 +2121,67 @@ tool):
 
 @example
 systemctl restart guix-daemon.service
+@end example
+
+While this works for @file{guix-install.sh}, it will most likely not
+work if you installed Guix through the package manager of another
+distribution (for instance with sudo apt install guix, pacman -S guix,
+etc) because on many distributions @file{guix-daemon.service} will only
+run the Guix daemon provided by the distribution.
+
+Waiting for your distribution to provide security fixes sometimes work,
+but fixing security issues in the Guix package takes times for
+distributions because Guix doesn't backport the security fixes to the
+releases used by the distributions. On some distribution versions, the
+Guix package is never fixed.
+
+However since Guix updates also comes with a new daemon, so you can
+simply configure your distribution to use the guix-daemon provided by
+Guix instead. The following will assume that your distribution uses
+systemd.
+
+You first need to override @file{guix-daemon.service} with the following
+command:
+
+@example
+sudo install -m 644 \
+     /lib/systemd/system/guix-daemon.service \
+     /etc/systemd/system/guix-daemon.service
+@end example
+
+You will then need to edit @file{/etc/systemd/system/guix-daemon.service}. To do
+that open this file with a text editor that has root permissions:
+
+@example
+sudo $EDITOR /etc/systemd/system/guix-daemon.service
+@end example
+
+Then try to find a line with @emph{ExecStart=}, it should look a bit
+like that:
+@example
+...
+[Service]
+ExecStart=/usr/bin/guix-daemon --build-users-group=_guixbuild
+...
+@end example
+
+Then change @emph{/usr/bin/guix-daemon} into
+@emph{/var/guix/profiles/per-user/root/current-guix/bin/guix-daemon} and
+save the changes.
+
+Once done you need to tell systemd that @emph{guix-daemon.service} was
+overriden:
+
+@example
+sudo systemctl daemon-reload
+@end example
+
+Once done you can then update the Guix daemon in the same way than if
+you installed Guix with @file{guix-install.sh}:
+
+@example
+sudo -i guix pull
+sudo systemctl restart guix-daemon.service
 @end example
 
 On Guix System, upgrading the daemon is achieved by reconfiguring the
@@ -9492,28 +9554,37 @@ This variable is exported by @code{(guix build-system cargo)}.  It
 supports builds of packages using Cargo, the build tool of the
 @uref{https://www.rust-lang.org, Rust programming language}.
 
-It adds @code{rustc} and @code{cargo} to the set of inputs.
+@quotation Deprecation warning
+Parameters @code{#:cargo-inputs} and @code{#:cargo-development-inputs},
+previously used for specifying source inputs, are deprecated.  Their support
+will be removed after Dec. 31, 2026.
+@end quotation
+
+It adds @code{rust} and @code{rust:cargo} to the set of inputs.
 A different Rust package can be specified with the @code{#:rust} parameter.
 
-Regular cargo dependencies should be added to the package definition similarly
-to other packages; those needed only at build time to native-inputs, others to
-inputs.  If you need to add source-only crates then you should add them to via
-the @code{#:cargo-inputs} parameter as a list of name and spec pairs, where the
-spec can be a package or a source definition.  Note that the spec must
-evaluate to a path to a gzipped tarball which includes a @code{Cargo.toml}
-file at its root, or it will be ignored.  Similarly, cargo dev-dependencies
-should be added to the package definition via the
-@code{#:cargo-development-inputs} parameter.
+In its @code{unpack-rust-crates}, @code{configure} and
+@code{patch-cargo-checksums} phases, this build system will make any source
+inputs available to Cargo.  It will also remove an included @code{Cargo.lock}
+file to be recreated by @command{cargo} during the @code{build} phase.  The
+@code{package} phase will run @command{cargo package} to create a source crate
+for future use.  The @code{install} phase installs the binaries defined by the
+crate.  Unless @code{install-source? #f} is defined it will also install a
+source crate repository of itself and unpacked sources, to ease in future
+hacking on Rust packages.
 
-In its @code{configure} phase, this build system will make any source inputs
-specified in the @code{#:cargo-inputs} and @code{#:cargo-development-inputs}
-parameters available to cargo.  It will also remove an included
-@code{Cargo.lock} file to be recreated by @code{cargo} during the
-@code{build} phase.  The @code{package} phase will run @code{cargo package}
-to create a source crate for future use.  The @code{install} phase installs
-the binaries defined by the crate.  Unless @code{install-source? #f} is
-defined it will also install a source crate repository of itself and unpacked
-sources, to ease in future hacking on rust packages.
+This build system supports
+@url{https://doc.rust-lang.org/cargo/reference/workspaces.html, Cargo
+workspaces}.  Parameter @code{#:cargo-package-crates} (default: @code{''()})
+allows specifying names of library crates to package in the @code{package}
+phase.  Specified crates are packaged from left to right, in case there's
+dependency among them.  For example, specifying @code{''("pcre2-sys" "pcre2")}
+will package @code{"pcre2-sys"} first and then @code{"pcre2"}.  Parameter
+@code{#:cargo-install-paths} (default: @code{''()}) allows specifying paths of
+binary crates to install in the @code{install} phase, @code{''("crates/atuin")},
+for example.
+
+@xref{Rust Crates}, for packaging guidelines.
 @end defvar
 
 @defvar chicken-build-system
@@ -14869,22 +14940,17 @@ guix import crate constant-time-eq@@0.1.0
 Additional options include:
 
 @table @code
-@item --recursive
-@itemx -r
-Traverse the dependency graph of the given upstream package recursively
-and generate package expressions for all those packages that are not yet
-in Guix.
-@item --recursive-dev-dependencies
-If @option{--recursive-dev-dependencies} is specified, also the recursively
-imported packages contain their development dependencies, which are recursively
-imported as well.
 @item --allow-yanked
 If no non-yanked version of a crate is available, use the latest yanked
 version instead instead of aborting.
-@item --mark-missing
-If a crate dependency is not (yet) packaged, make the corresponding
-input in @code{#:cargo-inputs} or @code{#:cargo-development-inputs} into
-a comment.
+@item --lockfile=@var{file}
+@itemx -f @var{file}
+When @option{--lockfile} is specified, the importer will ignore other options
+and won't output package expressions, instead importing source expressions
+from @var{file}, a @file{Cargo.lock} file.
+
+@xref{Packaging Rust Crates,,, guix-cookbook, GNU Guix Cookbook}, for packaging
+workflow utilizing it.
 @end table
 
 @item elm
@@ -48898,10 +48964,10 @@ This service is part of @code{%base-services} (@pxref{Base Services}).
 Available @code{system-log-configuration} fields are:
 
 @table @asis
-@item @code{provision} (default: @code{'(system-log syslogd)}) (type: list-of-symbols)
+@item @code{provision} (default: @code{(system-log syslogd)}) (type: list-of-symbols)
 The name(s) of the system log service.
 
-@item @code{requirement} (default: @code{'(root-file-system)}) (type: list-of-symbols)
+@item @code{requirement} (default: @code{(root-file-system)}) (type: list-of-symbols)
 Dependencies of the system log service.
 
 @item @code{kernel-log-file} (type: gexp-or-string-or-false)
@@ -48925,9 +48991,10 @@ implementations.
 Number of logging messages kept in memory for the purposes of making
 them available to @command{herd status system-log}.
 
-@item @code{max-silent-time} (type: gexp-or-integer)
+@item @code{max-silent-time} (type: gexp-or-integer-or-false)
 Time after which a mark is written to log files if nothing was logged
-during that time frame.
+during that time frame.  When set to @code{#f}, this feature is
+disabled.
 
 @end table
 

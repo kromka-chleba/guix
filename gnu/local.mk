@@ -184,7 +184,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/busybox.scm			\
   %D%/packages/bqn.scm				\
   %D%/packages/c.scm				\
-  %D%/packages/c2rust.scm			\
   %D%/packages/calcurse.scm			\
   %D%/packages/ccache.scm			\
   %D%/packages/cdrom.scm			\
@@ -217,20 +216,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/cpp.scm 				\
   %D%/packages/cppi.scm				\
   %D%/packages/cran.scm				\
-  %D%/packages/crates-apple.scm		\
-  %D%/packages/crates-audio.scm		\
-  %D%/packages/crates-check.scm			\
-  %D%/packages/crates-compression.scm		\
-  %D%/packages/crates-crypto.scm		\
-  %D%/packages/crates-database.scm		\
-  %D%/packages/crates-io.scm			\
-  %D%/packages/crates-graphics.scm		\
-  %D%/packages/crates-gtk.scm			\
-  %D%/packages/crates-shell.scm		\
-  %D%/packages/crates-tls.scm			\
-  %D%/packages/crates-vcs.scm			\
-  %D%/packages/crates-web.scm			\
-  %D%/packages/crates-windows.scm		\
   %D%/packages/cross-base.scm			\
   %D%/packages/cross-toolchain.scm		\
   %D%/packages/crypto.scm			\
@@ -628,6 +613,8 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/rush.scm				\
   %D%/packages/rust.scm				\
   %D%/packages/rust-apps.scm			\
+  %D%/packages/rust-crates.scm			\
+  %D%/packages/rust-sources.scm			\
   %D%/packages/samba.scm			\
   %D%/packages/sagemath.scm			\
   %D%/packages/sawfish.scm			\
@@ -1086,7 +1073,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
   %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
   %D%/packages/patches/busybox-no-cbq.patch			\
-  %D%/packages/patches/c2rust-ast-exporter-local-search.patch	\
   %D%/packages/patches/cadical-add-shared-library.patch		\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/calibre-remove-test-sqlite.patch		\
@@ -1157,6 +1143,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/corefx-mono-5.4.0-patches.patch		\
   %D%/packages/patches/corefx-mono-pre-5.8.0-patches.patch	\
   %D%/packages/patches/coreutils-gnulib-tests.patch		\
+  %D%/packages/patches/corrosion-honor-CARGO_BUILD_TARGET.patch	\
   %D%/packages/patches/cppcheck-fix-basedir-test.patch	\
   %D%/packages/patches/cppdap-add-CPPDAP_USE_EXTERNAL_GTEST_PACKAGE.patch\
   %D%/packages/patches/cpulimit-with-glib-2.32.patch		\
@@ -1237,7 +1224,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-deferred-fix-number-of-arguments.patch	\
   %D%/packages/patches/emacs-elpy-dup-test-name.patch		\
   %D%/packages/patches/emacs-disable-jit-compilation.patch			\
-  %D%/packages/patches/emacs-eglot-x-fix-apply-text-edits.patch			\
   %D%/packages/patches/emacs-exec-path.patch			\
   %D%/packages/patches/emacs-fix-scheme-indent-function.patch	\
   %D%/packages/patches/emacs-gnus-alias-reference-signature.patch	\
@@ -1955,6 +1941,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/nvi-db4.patch				\
   %D%/packages/patches/nyacc-binary-literals.patch		\
   %D%/packages/patches/obs-modules-location.patch		\
+  %D%/packages/patches/ocaml-ctypes-test-oo.patch		\
   %D%/packages/patches/ocaml-multiple-definitions.patch		\
   %D%/packages/patches/ogre-next-add-riscv64-support.patch		\
   %D%/packages/patches/ocaml-4.07-dynamically-allocate-signal-stack.patch	\
@@ -2119,6 +2106,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/plink-endian-detection.patch		\
   %D%/packages/patches/plib-CVE-2011-4620.patch		\
   %D%/packages/patches/plib-CVE-2012-4552.patch		\
+  %D%/packages/patches/ploticus-pointer-types.patch		\
   %D%/packages/patches/plotutils-spline-test.patch		\
   %D%/packages/patches/polkit-disable-systemd.patch		\
   %D%/packages/patches/portaudio-audacity-compat.patch		\
@@ -2269,17 +2257,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/rust-1.78-unwinding-fix.patch		\
   %D%/packages/patches/rust-1.81-fix-riscv64-bootstrap.patch	\
   %D%/packages/patches/rust-ring-0.17-ring-core.patch		\
-  %D%/packages/patches/rust-ndarray-remove-blas-src-dep.patch	\
-  %D%/packages/patches/rust-ndarray-0.13-remove-blas-src.patch	\
-  %D%/packages/patches/rust-ndarray-0.14-remove-blas-src.patch	\
-  %D%/packages/patches/rust-nettle-disable-vendor.patch		 \
-  %D%/packages/patches/rust-onenote-parser-for-clamav-deps.patch	\
-  %D%/packages/patches/rust-onenote-parser-for-clamav-parse-in-memory-buffer.patch	\
-  %D%/packages/patches/rust-onenote-parser-for-clamav-property-type.patch	\
-  %D%/packages/patches/rust-poem-1-fewer-deps.patch		\
-  %D%/packages/patches/rust-rspec-1-remove-clippy.patch	\
-  %D%/packages/patches/rust-trash-2-update-windows.patch	\
-  %D%/packages/patches/rust-wl-clipboard-rs-newer-wl.patch      \
   %D%/packages/patches/rw-igraph-0.10.patch			\
   %D%/packages/patches/rxvt-unicode-fix-cursor-position.patch	\
   %D%/packages/patches/s7-flint-3.patch                      	\
@@ -2331,6 +2308,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/softhsm-fix-openssl3-tests.patch		\
   %D%/packages/patches/spectre-meltdown-checker-externalize-fwdb.patch \
   %D%/packages/patches/sphinxbase-fix-doxygen.patch		\
+  %D%/packages/patches/spice-vdagent-monitor-size-calculation.patch     \
   %D%/packages/patches/guile-srfi-125-fix-r7rs-rename-clause.patch \
   %D%/packages/patches/sssd-system-directories.patch		\
   %D%/packages/patches/steghide-fixes.patch			\

@@ -127,10 +127,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-compression)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
@@ -160,6 +156,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lisp-check)
   #:use-module (gnu packages lisp-xyz)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages logging)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages man)
@@ -444,7 +441,6 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
            udis86
            wayland
            wayland-protocols
-           linux-libre-headers-6.14
            xcb-util-errors
            xcb-util-wm
            xorg-server-xwayland))
@@ -1402,7 +1398,7 @@ drags, snap-to-border support, and virtual desktops.")
 /share/vim/vimfiles/pack/guix/start/fluxbox/syntax"))))
           (add-after 'install 'install-xsession
             (lambda _
-              (let ((apps (string-append #$output "/share/applications")))
+              (let ((apps (string-append #$output "/share/xsessions")))
                 (mkdir-p apps)
                 (make-desktop-entry-file
                  (string-append apps "/fluxbox.desktop")
@@ -1929,6 +1925,80 @@ limited size and a few external dependencies.  It is configurable via
     ;;             LICENSE       LICENSE.dwm   LICENSE.tinywl
     (license (list license:gpl3+ license:expat license:cc0))))
 
+(define-public niri
+  (package
+   (name "niri")
+   (version "25.05.1")
+   (source (origin
+             (method git-fetch)
+             (uri (git-reference
+                   (url "https://github.com/YaLTeR/niri")
+                   (commit (string-append "v" version))))
+             (file-name (git-file-name name version))
+             (sha256
+              (base32
+               "0l0nj2zfmdyr058yc84579jxj6m4lilgcy63dna6bp6mv7xl569h"))))
+   (build-system cargo-build-system)
+   (arguments
+    (list #:install-source? #f
+          #:phases
+          #~(modify-phases %standard-phases
+              (add-after 'unpack 'use-guix-vendored-dependencies
+                (lambda _
+                  (substitute* "Cargo.toml"
+                    (("# version =.*")
+                     "version = \"*\"")
+                    (("git.*optional")
+                     "version = \"*\", optional")
+                    (("^git = .*")
+                     ""))))
+              (add-after 'unpack 'set-environment
+                (lambda _
+                  (setenv "RUSTFLAGS"
+                          (string-join
+                           '("-C" "link-arg=-lEGL"
+                             "-C" "link-arg=-lwayland-client")
+                           " "))
+                  (setenv "NIRI_BUILD_VERSION_STRING"
+                          #$(package-version this-package))
+                  ;; For tests.
+                  (setenv "XDG_RUNTIME_DIR" "/tmp")))
+              (add-after 'install 'install-extras
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (substitute* "resources/niri.desktop"
+                    (("niri-session")
+                     (format #f "~a --dbus-daemon=~a ~a/bin/niri --session"
+                             (search-input-file inputs "bin/dbus-run-session")
+                             (search-input-file inputs "bin/dbus-daemon")
+                             #$output)))
+                  (install-file
+                   "resources/niri.desktop"
+                   (in-vicinity #$output "share/wayland-sessions"))
+                  (install-file
+                   "resources/niri-portals.conf"
+                   (in-vicinity #$output "share/xdg-desktop-portal")))))))
+   (native-inputs
+    (list pkg-config))
+   (inputs
+    (cons* clang
+           dbus
+           libdisplay-info
+           libinput-minimal
+           libseat
+           libxkbcommon
+           mesa
+           pango
+           pipewire
+           wayland
+           (cargo-inputs 'niri)))
+   (home-page "https://github.com/YaLTeR/niri")
+   (synopsis "Scrollable-tiling Wayland compositor")
+   (description
+    "Niri is a scrollable-tiling Wayland compositor which arranges windows in a
+scrollable format.  It is considered stable for daily use and performs most
+functions expected of a Wayland compositor.")
+   (license license:gpl3+)))
+
 (define-public polybar
   (package
     (name "polybar")
@@ -2395,7 +2465,7 @@ works on Wayland compositors supporting the wlr-layer-shell protocol.")
 (define-public swww
   (package
     (name "swww")
-    (version "0.8.2")
+    (version "0.10.3")
     (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -2404,37 +2474,11 @@ works on Wayland compositors supporting the wlr-layer-shell protocol.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ps10dv6a8a0hiw7p8kg64mf81pvavskmyn5xpbfw6hrc991vdlz"))
-                (modules '((guix build utils)))
-                (snippet
-                 '(begin (substitute* "utils/Cargo.toml"
-                           (("\"=([[:digit:]]+(\\.[[:digit:]]+)*)" _ version)
-                            (string-append "\"^" version)))))))
+                  "1i02m8ccc40vm9yg2037yzampvv79wwhfjjd5wnvkbxxgmk9fyhr"))))
     (build-system cargo-build-system)
     (arguments
      (list
       #:install-source? #f
-      #:cargo-inputs
-      `(("rust-log" ,rust-log-0.4)
-        ("rust-simplelog" ,rust-simplelog-0.12)
-        ("rust-wayland-client" ,rust-wayland-client-0.31)
-        ("rust-smithay-client-toolkit" ,rust-smithay-client-toolkit-0.18)
-        ("rust-nix" ,rust-nix-0.27)
-        ("rust-keyframe" ,rust-keyframe-1)
-        ("rust-rkyv" ,rust-rkyv-0.7)
-        ("rust-rayon" ,rust-rayon-1)
-        ("rust-spin-sleep" ,rust-spin-sleep-1)
-        ("rust-sd-notify" ,rust-sd-notify-0.4)
-        ("rust-image" ,rust-image-0.24)
-        ("rust-fast-image-resize" ,rust-fast-image-resize-2)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-lazy-static" ,rust-lazy-static-1)
-        ("rust-lzzzz" ,rust-lzzzz-1))
-      #:cargo-development-inputs
-      `(("rust-rand" ,rust-rand-0.8)
-        ("rust-assert-cmd" ,rust-assert-cmd-2)
-        ("rust-criterion" ,rust-criterion-0.5))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'build-documentation
@@ -2462,17 +2506,9 @@ works on Wayland compositors supporting the wlr-layer-shell protocol.")
                 (install-file "completions/swww.bash" bash-completions-dir)
                 (install-file "completions/_swww" zsh-completions-dir)
                 (install-file "completions/swww.fish" fish-completions-dir)
-                (install-file "completions/swww.elv" elvish-completions-dir))))
-          (add-after 'install 'wrap-binaries
-           (lambda* (#:key outputs inputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out"))
-                   (lz4 (assoc-ref inputs "lz4")))
-               (wrap-program (string-append out "/bin/swww")
-                 `("PATH" prefix (,(string-append lz4 "/bin"))))
-               (wrap-program (string-append out "/bin/swww-daemon")
-                 `("PATH" prefix (,(string-append lz4 "/bin"))))))))))
-    (native-inputs (list scdoc))
-    (inputs (list bash-minimal lz4))
+                (install-file "completions/swww.elv" elvish-completions-dir)))))))
+    (native-inputs (list pkg-config scdoc))
+    (inputs (cons* lz4 wayland wayland-protocols (cargo-inputs 'swww)))
     (home-page "https://github.com/LGFae/swww")
     (synopsis
      "Efficient animated wallpaper daemon for wayland controlled at runtime")
@@ -2722,16 +2758,16 @@ compositors that support the layer-shell protocol.")
 (define-public kanshi
   (package
     (name "kanshi")
-    (version "1.7.0")
+    (version "1.8.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://git.sr.ht/~emersion/kanshi")
+             (url "https://gitlab.freedesktop.org/emersion/kanshi")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0g5glpkcn54ypfym4lpfdjai479yfazcai1rg86bn72nkcbpwfql"))))
+        (base32 "1aw43fdrrgywghy59ahfxwq0613ydkpl2j6p042c0iwqv1b6fhgp"))))
     (build-system meson-build-system)
     (inputs (list libscfg libvarlink wayland))
     (native-inputs (append (if (%current-target-system)

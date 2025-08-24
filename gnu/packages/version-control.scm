@@ -111,10 +111,6 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cook)
-  #:use-module (gnu packages crates-compression)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-vcs)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
@@ -173,6 +169,7 @@
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages sync)
@@ -188,7 +185,7 @@
 (define-public breezy
   (package
     (name "breezy")
-    (version "3.3.9")
+    (version "3.3.11")
     (source
      (origin
        (method url-fetch)
@@ -200,29 +197,31 @@
        (snippet '(for-each delete-file (find-files "." "\\pyx.c$")))
        (sha256
         (base32
-         "1n6mqd1iy50537kb4lsr52289yyr1agmkxpchxlhb9682zr8nn62"))))
-    (build-system cargo-build-system)
+         "0fxv7ca6qbrj6bvrbfgjrd9ldppa8zq8hc461rikh85c5xg9rjqi"))))
+    (build-system python-build-system)
     (arguments
      (list
-      #:cargo-inputs (list rust-lazy-static-1
-                           rust-pyo3-0.22
-                           rust-regex-1)
-      #:install-source? #f
       #:modules
-      '((guix build cargo-build-system)
-        ((guix build python-build-system) #:prefix py:)
+      '(((guix build cargo-build-system) #:prefix cargo:)
+        (guix build python-build-system)
         (guix build utils))
       #:imported-modules
       `(,@%cargo-build-system-modules
         ,@%python-build-system-modules)
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'ensure-no-mtimes-pre-1980
-            (assoc-ref py:%standard-phases 'ensure-no-mtimes-pre-1980))
-          (add-after 'ensure-no-mtimes-pre-1980 'enable-bytecode-determinism
-            (assoc-ref py:%standard-phases 'enable-bytecode-determinism))
-          (add-after 'enable-bytecode-determinism 'ensure-no-cythonized-files
-            (assoc-ref py:%standard-phases 'ensure-no-cythonized-files))
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums))))
           (add-after 'unpack 'patch-test-shebangs
             (lambda _
               (substitute* (append (find-files "breezy/bzr/tests")
@@ -236,24 +235,7 @@
                 ;; AttributeError: module 'datetime' has no attribute 'UTC'
                 ;; This only works for python >= 3.11
                 (("datetime.UTC") "datetime.timezone.utc"))))
-          (replace 'build
-            (assoc-ref py:%standard-phases 'build))
-          (delete 'check)             ;moved after the install phase
-          (replace 'install
-            (assoc-ref py:%standard-phases 'install))
-          (add-after 'install 'add-install-to-pythonpath
-            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
-          (add-after 'add-install-to-pythonpath 'add-install-to-path
-            (assoc-ref py:%standard-phases 'add-install-to-path))
-          (add-after 'add-install-to-path 'install-completion
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out  (assoc-ref outputs "out"))
-                     (bash (string-append out "/share/bash-completion"
-                                          "/completions")))
-                (install-file "contrib/bash/brz" bash))))
-          (add-after 'add-install-to-path 'wrap
-            (assoc-ref py:%standard-phases 'wrap))
-          (add-after 'wrap 'check
+          (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (setenv "BZR_EDITOR" "nano")
@@ -271,35 +253,40 @@
                         ;; Unknown Failure
                         "-x" "breezy.tests.test_plugins.TestLoadPluginAt.test_compiled_loaded"
                         "-x" "breezy.tests.test_plugins.TestPlugins.test_plugin_get_path_pyc_only"
-                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal"))))
-          (add-before 'strip 'rename-pth-file
-            (assoc-ref py:%standard-phases 'rename-pth-file)))))
-    (native-inputs (list gettext-minimal
-                         python-wrapper
-                         python-cython
-                         python-setuptools
-                         python-setuptools-gettext
-                         python-setuptools-rust
-                         python-tomli
-                         python-wheel
-                         ;; tests
-                         nano
-                         python-testtools
-                         python-packaging
-                         python-subunit))
-    (inputs (list python-configobj
-                  python-dulwich
-                  python-fastbencode
-                  python-fastimport
-                  python-launchpadlib
-                  python-merge3
-                  python-paramiko
-                  python-gpg
-                  python-patiencediff
-                  python-pygithub
-                  python-pyyaml
-                  python-tzlocal
-                  python-urllib3))
+                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal")))))))
+    (native-inputs
+     (append
+      (list gettext-minimal
+            python-cython
+            python-setuptools
+            python-setuptools-gettext
+            python-setuptools-rust
+            python-tomli
+            python-wheel
+            rust
+            `(,rust "cargo")
+            ;; tests
+            nano
+            python-testtools
+            python-packaging
+            python-subunit)
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs (cons* python-configobj
+                   python-dulwich
+                   python-fastbencode
+                   python-fastimport
+                   python-launchpadlib
+                   python-merge3
+                   python-paramiko
+                   python-gpg
+                   python-patiencediff
+                   python-pygithub
+                   python-pyyaml
+                   python-tzlocal
+                   python-urllib3
+                   (cargo-inputs 'breezy)))
     (home-page "https://www.breezy-vcs.org/")
     (synopsis "Decentralized revision control system")
     (description
@@ -325,14 +312,14 @@ Python 3.3 and later, rather than on Python 2.")
 (define-public git-minimal
   (package
     (name "git-minimal")
-    (version "2.50.1")
+    (version "2.51.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1i4gbin7ah9azaz68j10q9qkdq2bcyv2vm0lvppg3n6bvqv6qgky"))))
+                "0qhbk6wd5iy4pz6skp121kgcc5q64rkybfl7rpaqirf23hjw59v0"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1156,7 +1143,7 @@ provides an integration with GitHub and GitLab.")
 (define-public got
   (package
     (name "got")
-    (version "0.116")
+    (version "0.117")
     (source (origin
               (method url-fetch)
               (uri
@@ -1165,7 +1152,7 @@ provides an integration with GitHub and GitLab.")
                 version ".tar.gz"))
               (sha256
                (base32
-                "1zsdisaqv1q612a7jws9qd8n1gm9ilz5mnprkpgvdhc27gblm9p8"))))
+                "0hf16g18z3nfn2rqpgj1wmyxalwfbvj4fgkmfjj9nx7mypbgylwd"))))
     (inputs
      (list libevent
            `(,util-linux "lib")
@@ -2202,7 +2189,7 @@ lot easier.")
 (define-public stgit-2
   (package
     (name "stgit")
-    (version "2.4.12")
+    (version "2.5.3")
     (source
      (origin
        (method git-fetch)
@@ -2211,36 +2198,10 @@ lot easier.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kp3gwmxcjvphg1s0san0vyis8dsdaf02xsflc2b7kkg8m0r0mi3"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin (substitute* (find-files "." "^Cargo\\.toml$")
-                  (("\"~([[:digit:]]+(\\.[[:digit:]]+)*)" _ version)
-                   (string-append "\"^" version)))))))
+        (base32 "0pxhl7fnycs4bx46x9m8v33lsf5hwp0fhqyihlr4sf7ms4b7adsc"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs (("rust-anstyle" ,rust-anstyle-1)
-                       ("rust-anyhow" ,rust-anyhow-1)
-                       ("rust-bstr" ,rust-bstr-1)
-                       ("rust-bzip2-rs" ,rust-bzip2-rs-0.1)
-                       ("rust-clap" ,rust-clap-4)
-                       ("rust-ctrlc" ,rust-ctrlc-3)
-                       ("rust-curl" ,rust-curl-0.4)
-                       ("rust-encoding_rs" ,rust-encoding-rs-0.8)
-                       ("rust-flate2" ,rust-flate2-1)
-                       ("rust-gix" ,rust-gix-0.66)
-                       ("rust-indexmap" ,rust-indexmap-2)
-                       ("rust-is-terminal" ,rust-is-terminal-0.4)
-                       ("rust-jiff" ,rust-jiff-0.1)
-                       ("rust-serde" ,rust-serde-1)
-                       ("rust-serde-json" ,rust-serde-json-1)
-                       ("rust-strsim" ,rust-strsim-0.10)
-                       ("rust-tar" ,rust-tar-0.4)
-                       ("rust-tempfile" ,rust-tempfile-3)
-                       ("rust-termcolor" ,rust-termcolor-1)
-                       ("rust-thiserror" ,rust-thiserror-1)
-                       ("rust-winnow" ,rust-winnow-0.6))
-       #:install-source? #f
+     `(#:install-source? #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'build 'build-extras
@@ -2268,7 +2229,7 @@ lot easier.")
            perl
            texinfo
            xmlto))
-    (inputs (list openssl zlib curl))
+    (inputs (cons* openssl zlib curl (cargo-inputs 'stgit-2)))
     (home-page "https://stacked-git.github.io/")
     (synopsis "Stacked Git (StGit) manages Git commits as a stack of patches")
     (description "StGit uses a patch stack workflow.  Each individual patch
@@ -2293,6 +2254,7 @@ Features include:
   (package
     (inherit stgit-2)
     (name "emacs-stgit")
+    (version "0.17.1")                  ;from stgit.el
     (build-system emacs-build-system)
     (arguments
      (list
@@ -2300,13 +2262,20 @@ Features include:
       #:lisp-directory "contrib"
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-version-executables
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "stgit.el"
+                ("stgit-stg-program" (search-input-file inputs "/bin/stg")))
+              (emacs-substitute-variables "stgit.el"
+                ("stgit-git-program" (search-input-file inputs "/bin/git")))))
           (add-before 'install-license-files 'leave-lisp-directory
             (lambda _
               (chdir ".."))))))
+    (inputs (list stgit-2 git))
     (synopsis "Emacs major mode for StGit interaction")
     (description "This package a interactive tool to interact with git
 branches using StGit.")
-    (license license:gpl3+)))
+    (license license:gpl2+)))
 
 (define-public stgit
   (package
@@ -3815,72 +3784,11 @@ a built-in wiki, built-in file browsing, built-in tickets system, etc.")
        (uri (crate-uri "pijul" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "1lk261rrk4xy60d4akfn8mrrqxls28kf9mzrjcrxdzbdysml66n5"))
-        (snippet
-         #~(begin (use-modules (guix build utils))
-                  (substitute* "Cargo.toml"
-                    (("\"= ?([[:digit:]]+(\\.[[:digit:]]+)*)" _ version)
-                     (string-append "\"^" version)))))))
+        (base32 "1lk261rrk4xy60d4akfn8mrrqxls28kf9mzrjcrxdzbdysml66n5"))))
     (build-system cargo-build-system)
     (arguments
      (list
        #:install-source? #f
-       #:cargo-inputs
-       (list rust-anyhow-1
-             rust-async-trait-0.1
-             rust-atty-0.2
-             rust-byteorder-1
-             rust-bytes-1
-             rust-canonical-path-2
-             rust-chrono-0.4
-             rust-clap-4
-             rust-clap-complete-4
-             rust-ctrlc-3
-             rust-data-encoding-2
-             rust-dateparser-0.1
-             rust-dirs-next-2
-             rust-edit-0.1
-             rust-env-logger-0.8
-             rust-futures-0.3
-             rust-futures-util-0.3
-             rust-git2-0.13
-             rust-human-panic-1
-             rust-hyper-0.14
-             rust-ignore-0.4
-             rust-keyring-2
-             rust-lazy-static-1
-             rust-libpijul-1
-             rust-log-0.4
-             rust-open-3
-             rust-pager-0.16
-             rust-path-slash-0.1
-             rust-pijul-config-0.0.1
-             rust-pijul-identity-0.0.1
-             rust-pijul-interaction-0.0.1
-             rust-pijul-remote-1
-             rust-pijul-repository-0.0.1
-             rust-ptree-0.4
-             rust-rand-0.8
-             rust-regex-1
-             rust-reqwest-0.11
-             rust-sanakirja-1
-             rust-serde-1
-             rust-serde-derive-1
-             rust-serde-json-1
-             rust-tempfile-3
-             rust-termcolor-1
-             rust-thiserror-1
-             rust-thrussh-0.33
-             rust-thrussh-config-0.5
-             rust-thrussh-keys-0.21
-             rust-tokio-1
-             rust-toml-0.5
-             rust-url-2
-             rust-validator-0.15
-             rust-whoami-1)
-       #:cargo-development-inputs
-       (list rust-exitcode-1
-             rust-expectrl-0.7)
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'install 'install-extras
@@ -3919,7 +3827,7 @@ a built-in wiki, built-in file browsing, built-in tickets system, etc.")
                  (list this-package)
                  '())
              (list pkg-config)))
-    (inputs (list libsodium openssl))
+    (inputs (cons* libsodium openssl (cargo-inputs 'pijul)))
     (home-page "https://nest.pijul.com/pijul/pijul")
     (synopsis "Distributed version control system")
     (description "This package provides pijul, a sound and fast distributed

@@ -91,8 +91,8 @@
   #:use-module (gnu packages web))
 
 (define-public abc
-  (let ((commit "d2714035145bd237097c509c23fc9e24b0fa933b")
-        (revision "5"))
+  (let ((commit "e29dcd9f3275874c8d31a2f781487efac1dabb7b")
+        (revision "6"))
     (package
       (name "abc")
       (version (git-version "0.0" revision commit))
@@ -104,7 +104,7 @@
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "10qjw6mbzwg2lgsscw759xrghqq2mvv0xcalpymngnjhpg9qznqk"))))
+                  "18g4i1kdsxvp25p5z3wja4jkxppgrp6ybxal9y2p2d2qvlafiw5z"))))
       (build-system gnu-build-system)
       (inputs
        (list readline))
@@ -129,7 +129,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.55")
+    (version "0.56")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -138,7 +138,7 @@ formal verification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15a7nyk8iqpadp326icnr7rn5pwq44b9lvajqc35hcsvixz4gxsa"))))
+                "0wy42qd0dl58icw3nklgns5zrr1inj8br40vwcpwiz1pkfg3gl0j"))))
     (home-page "https://github.com/YosysHQ/abc/")
     (description "ABC is a program for sequential logic synthesis and
 formal verification.  This is the Yosyshq fork of ABC.")
@@ -187,7 +187,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.55")
+    (version "0.56")
     (source
      (origin
        (method git-fetch)
@@ -195,7 +195,7 @@ For synthesis, the compiler generates netlists in the desired format.")
              (url "https://github.com/YosysHQ/yosys")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1c5zvbk0jpz564l1jw7pxba93iq967ci0qpam7ahq0mhi14jinl8"))
+        (base32 "1q74hm1z0m08r9amz982a9ylcwz2mbg3hqarprwj775wkrbv81h7"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -247,6 +247,12 @@ For synthesis, the compiler generates netlists in the desired format.")
               ;; work.
               (symlink (search-input-file inputs "/bin/abc")
                        (string-append #$output "/bin/yosys-abc"))))
+          (add-after 'install 'keep-pmgen-py
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; pmgen.py is required by some yosys plugins.
+              (install-file (search-input-file inputs
+                                               "/passes/pmgen/pmgen.py")
+                            (string-append #$output "/bin"))))
           (add-after 'install 'wrap
             (lambda* (#:key inputs #:allow-other-keys)
               (wrap-program (string-append #$output "/bin/yosys-witness")
@@ -650,7 +656,7 @@ automated testing of HDL code.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.17.0")
+    (version "1.17.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -659,7 +665,7 @@ automated testing of HDL code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1grbz8gm2rc9qz14ik0fgxd5qv1kix4aiha3zv60h9wbvssw592v"))))
+                "0k5l5z5x4k7rfcrnxskbqk0icpr13ax6r2f0dkpscadavbmv0qz6"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t

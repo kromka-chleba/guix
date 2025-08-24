@@ -2044,26 +2044,6 @@ your template is working as expected and takes care of cleaning up after
 running the tests.")
     (license license:expat)))
 
-(define-public python-pytest-cram
-  (package
-    (name "python-pytest-cram")
-    (version "0.2.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytest-cram" version))
-              (sha256
-               (base32
-                "0405ymmrsv6ii2qhq35nxfjkb402sdb6d13xnk53jql3ybgmiqq0"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-cram python-pytest))
-    (home-page "https://github.com/tbekolay/pytest-cram")
-    (synopsis "Run cram tests with pytest")
-    (description "Cram tests command line applications; Pytest tests Python
-applications.  @code{pytest-cram} tests Python command line applications by
-letting you write your Python API tests with pytest, and your command line
-tests in cram.")
-    (license license:expat)))
-
 (define-public python-pytest-csv
   (package
     (name "python-pytest-csv")
@@ -3415,31 +3395,21 @@ friendly library for concurrency and async I/O in Python.")
       (name "python-pytest-vcr")
       (version (git-version "1.0.2" revision commit))
       (source
-        (origin
-          (method git-fetch)
-          (uri (git-reference
-                 (url "https://github.com/ktosiek/pytest-vcr")
-                 (commit commit)))
-          (file-name (git-file-name name version))
-          (sha256
-           (base32
-            "1yk988zi0la6zpcm3fff0mxf942di2jiymrfqas19nyngj5ygaqs"))))
-      (build-system python-build-system)
-      (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest" "tests/"))))))
-      (native-inputs
-       (list python-urllib3))
-      (propagated-inputs
-       (list python-pytest python-vcrpy))
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ktosiek/pytest-vcr")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1yk988zi0la6zpcm3fff0mxf942di2jiymrfqas19nyngj5ygaqs"))))
+      (build-system pyproject-build-system)
+      (native-inputs (list python-urllib3 python-setuptools python-wheel))
+      (propagated-inputs (list python-pytest python-vcrpy))
       (home-page "https://github.com/ktosiek/pytest-vcr")
       (synopsis "Plugin for managing VCR.py cassettes")
       (description
-       "Plugin for managing VCR.py cassettes.")
+       "This package is a pytest plugin for managing VCR.py cassettes.")
       (license license:expat))))
 
 (define-public python-pytest-virtualenv

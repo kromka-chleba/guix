@@ -15547,6 +15547,24 @@ levels per backend and logger.")
 information for all OCI projects.")
     (license license:asl2.0)))
 
+;; For runc@1.3.0, remove when a fresh version is released.
+(define-public go-github-com-opencontainers-cgroups-0.0.1
+  (hidden-package
+   (package
+     (inherit go-github-com-opencontainers-cgroups)
+     (name "go-github-com-opencontainers-cgroups")
+     (version "0.0.1")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+           (url "https://github.com/opencontainers/cgroups")
+           (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "173izkgmh33chamkn099gkvz914k726hbv8xhf0xl1rcrv335sa5")))))))
+
 (define-public go-github-com-opencontainers-go-digest
   (package
     (name "go-github-com-opencontainers-go-digest")
@@ -15603,6 +15621,30 @@ digests with little effort.")
      "The OCI Image Format project creates and maintains the software shipping
 container image format spec (OCI Image Format).")
     (license license:asl2.0)))
+
+;; For umoci@1.5.0, remove when a fresh version is released.
+(define-public go-github-com-opencontainers-image-spec-1.0.2
+  (hidden-package
+   (package
+     (inherit go-github-com-opencontainers-image-spec)
+     (name "go-github-com-opencontainers-image-spec")
+     (version "1.0.2")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+           (url "https://github.com/opencontainers/image-spec")
+           (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1wcw1z39wjx338406ga86a41f5ird0yc4ab3c70nfhkpkvjjzhkm"))))
+     (arguments
+      (list #:skip-build? #t
+            #:tests? #f
+            #:import-path "github.com/opencontainers/image-spec"))
+     (propagated-inputs
+      (list go-github-com-pkg-errors)))))
 
 (define-public go-github-com-opencontainers-runc
   (package

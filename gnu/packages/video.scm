@@ -73,6 +73,7 @@
 ;;; Copyright © 2025 Formbi <formbi@protonmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.ccom>
 ;;; Copyright © 2025 VnPower <vnpower@loang.net>
+;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -135,9 +136,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages dbm)
@@ -1929,45 +1927,6 @@ audio/video codec library.")
        ((#:configure-flags flags ''())
         #~(cons "--enable-avresample" #$flags))))))
 
-(define-public ffmpeg-3.4
-  (package
-    (inherit ffmpeg-4)
-    (version "3.4.13")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
-                                 version ".tar.xz"))
-             (sha256
-              (base32
-               "0np0yalqdrm7rn7iykgfzz3ly4vbgigrajg48c1l6n7qrzqvfszv"))
-             (patches (search-patches "ffmpeg-4-binutils-2.41.patch"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments ffmpeg-4)
-       ((#:modules modules %default-gnu-modules)
-        `((srfi srfi-1)
-          ,@modules))
-       ((#:configure-flags flags)
-        #~(fold delete #$flags
-                '("--enable-libdav1d"
-                  "--enable-libaom"
-                  "--enable-librav1e"
-                  "--enable-libsrt"
-                  "--enable-libsvtav1")))
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            #$@(if (target-x86-32?)
-                   #~((delete 'relax-gcc-14-strictness))
-                   #~())
-            (add-after 'configure 'relax-gcc-14-strictness
-              (lambda _
-                (substitute* "ffbuild/config.mak"
-                  (("CFLAGS *=" all)
-                   (string-append all
-                                  " -Wno-error=incompatible-pointer-types"
-                                  " -Wno-error=int-conversion")))))))))
-    (inputs (modify-inputs (package-inputs ffmpeg-4)
-              (delete "dav1d" "libaom" "rav1e" "srt")))))
-
 (define-public ffmpeg-for-stepmania
   (hidden-package
    (package
@@ -3185,7 +3144,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.07.21")
+    (version "2025.08.20")
     (source
      (origin
        (method git-fetch)
@@ -3194,60 +3153,57 @@ video streaming services of the Finnish national broadcasting company Yle.")
              (commit version)))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
-       (snippet '(substitute* "pyproject.toml"
-                   (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
+       (snippet #~(substitute* "pyproject.toml"
+                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "051y9pb2imdrpi065d9l2xfmd68l22ahbz90z81yqv7kv84j9mal"))))
+        (base32 "17g32lgax04yrhlvgaphdkkhv0xkxdimw57m6a1d3yhsnrbjiqhm"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? ,(not (%current-target-system))
-       #:test-flags '("--ignore=test/test_websockets.py")
-       #:phases
-       (modify-phases %standard-phases
-         ;; See <https://issues.guix.gnu.org/43418#5>.
-         ;; ffmpeg is big but required to request free formats from, e.g.,
-         ;; YouTube so pull it in unconditionally.  Continue respecting the
-         ;; --ffmpeg-location argument.
-         (add-after 'unpack 'default-to-the-ffmpeg-input
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "yt_dlp/postprocessor/ffmpeg.py"
-               (("location = self.get_param(.*)$")
-                (string-append
+     (list
+      #:tests? (not (%current-target-system))
+      #:test-flags #~'("--ignore=test/test_websockets.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; See <https://issues.guix.gnu.org/43418#5>.
+          ;; ffmpeg is big but required to request free formats from, e.g.,
+          ;; YouTube so pull it in unconditionally.  Continue respecting the
+          ;; --ffmpeg-location argument.
+          (add-after 'unpack 'default-to-the-ffmpeg-input
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "yt_dlp/postprocessor/ffmpeg.py"
+                (("location = self.get_param(.*)$")
+                 (string-append
                   "location = '"
                   (dirname (search-input-file inputs "bin/ffmpeg"))
                   "'\n")))))
-         (add-before 'build 'build-generated-files
-           (lambda* (#:key inputs #:allow-other-keys)
-             (if (assoc-ref inputs "pandoc")
-               (invoke "make"
-                       "PYTHON=python"
-                       "yt-dlp"
-                       "yt-dlp.1"
-                       "completions")
-               (invoke "make"
-                       "PYTHON=python"
-                       "yt-dlp"
-                       "completions"))))
-         (replace 'check
-           (lambda* (#:key tests? test-flags #:allow-other-keys)
-             (when tests?
-               (apply invoke "pytest"
-                      "-k"
-                      (string-append
-                       "not download"
-                       ;; TestHTTPRequestHandler tests are disabled due to
-                       ;; https://github.com/yt-dlp/yt-dlp/issues/13927
-                       " and not "
-                       "test_incompleteread"
-                       " and not "
-                       "test_partial_read_then_full_read")
-                      test-flags)))))))
+          (add-before 'build 'build-generated-files
+            (lambda* (#:key inputs #:allow-other-keys)
+              (if (search-input-file inputs "bin/pandoc")
+                  (invoke "make"
+                          "PYTHON=python"
+                          "yt-dlp"
+                          "yt-dlp.1"
+                          "completions")
+                  (invoke "make"
+                          "PYTHON=python"
+                          "yt-dlp"
+                          "completions"))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "pytest"
+                       "-k"
+                       (string-append
+                        "not download"
+                        " and not "
+                        "test_partial_read_then_full_read")
+                       test-flags)))))))
     (inputs (list ffmpeg python-brotli
                   python-certifi
                   python-mutagen
                   python-pycryptodomex
                   python-requests-next ; TODO Remove this special package
-                  python-urllib3-1.26  ; TODO Remove this one too
+                  python-urllib3
                   python-websockets))
     (native-inputs
      (append
@@ -6492,68 +6448,6 @@ result in several formats:
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
-       #:cargo-inputs
-       (("rust-aom-sys" ,rust-aom-sys-0.3)
-        ("rust-arbitrary" ,rust-arbitrary-1)
-        ("rust-arg-enum-proc-macro" ,rust-arg-enum-proc-macro-0.3)
-        ("rust-arrayvec" ,rust-arrayvec-0.7)
-        ("rust-av-metrics" ,rust-av-metrics-0.9)
-        ("rust-av1-grain" ,rust-av1-grain-0.2)
-        ("rust-backtrace" ,rust-backtrace-0.3)
-        ("rust-bitstream-io" ,rust-bitstream-io-2)
-        ("rust-built" ,rust-built-0.7)
-        ("rust-byteorder" ,rust-byteorder-1)
-        ("rust-cc" ,rust-cc-1)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-clap-complete" ,rust-clap-complete-4)
-        ("rust-console" ,rust-console-0.15)
-        ("rust-crossbeam" ,rust-crossbeam-0.8)
-        ("rust-fern" ,rust-fern-0.6)
-        ("rust-image" ,rust-image-0.24)
-        ("rust-interpolate-name" ,rust-interpolate-name-0.2)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-ivf" ,rust-ivf-0.1)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-libdav1d-sys" ,rust-libdav1d-sys-0.6)
-        ("rust-libfuzzer-sys" ,rust-libfuzzer-sys-0.4)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-maybe-rayon" ,rust-maybe-rayon-0.1)
-        ("rust-nasm-rs" ,rust-nasm-rs-0.2)
-        ("rust-new-debug-unreachable" ,rust-new-debug-unreachable-1)
-        ("rust-nom" ,rust-nom-7)
-        ("rust-noop-proc-macro" ,rust-noop-proc-macro-0.3)
-        ("rust-num-derive" ,rust-num-derive-0.4)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-once-cell" ,rust-once-cell-1)
-        ("rust-paste" ,rust-paste-1)
-        ("rust-profiling" ,rust-profiling-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rand-chacha" ,rust-rand-chacha-0.3)
-        ("rust-scan-fmt" ,rust-scan-fmt-0.2)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-big-array" ,rust-serde-big-array-0.5)
-        ("rust-signal-hook" ,rust-signal-hook-0.3)
-        ("rust-simd-helpers" ,rust-simd-helpers-0.1)
-        ("rust-system-deps" ,rust-system-deps-6)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-toml" ,rust-toml-0.8)
-        ("rust-tracing" ,rust-tracing-0.1)
-        ("rust-tracing-chrome" ,rust-tracing-chrome-0.7)
-        ("rust-tracing-subscriber" ,rust-tracing-subscriber-0.3)
-        ("rust-v-frame" ,rust-v-frame-0.3)
-        ("rust-wasm-bindgen" ,rust-wasm-bindgen-0.2)
-        ("rust-y4m" ,rust-y4m-0.8))
-       #:cargo-development-inputs
-       (("rust-assert-cmd" ,rust-assert-cmd-2)
-        ("rust-criterion" ,rust-criterion-0.5)
-        ("rust-interpolate-name" ,rust-interpolate-name-0.2)
-        ("rust-nom" ,rust-nom-7)
-        ("rust-pretty-assertions" ,rust-pretty-assertions-1)
-        ("rust-quickcheck" ,rust-quickcheck-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rand-chacha" ,rust-rand-chacha-0.3)
-        ("rust-semver" ,rust-semver-1))
        #:phases
        (modify-phases %standard-phases
          (replace 'build
@@ -6602,7 +6496,7 @@ result in several formats:
                  '())
              (list pkg-config rust-cargo-c)))
     (inputs
-     (list libgit2-1.8 zlib))
+     (cons* libgit2-1.9 zlib (cargo-inputs 'rav1e)))
     (home-page "https://github.com/xiph/rav1e/")
     (synopsis "Fast and safe AV1 encoder")
     (description "@code{rav1e} is an AV1 video encoder.  It is designed to

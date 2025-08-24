@@ -31,6 +31,7 @@
 ;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Andy Tai <atai@atai.org>
 ;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -82,11 +83,6 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages cran)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-tls)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dejagnu)
@@ -140,6 +136,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages swig)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
@@ -277,6 +274,7 @@ CTranslate2, which is a inference engine for transformer models.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 7636 passed, 3859 skipped, 2 deselected, 69 xfailed, 2 xpassed
       #:test-flags
       '(list "-k"
              (string-append
@@ -288,23 +286,14 @@ CTranslate2, which is a inference engine for transformer models.")
     (propagated-inputs (list python-makefun python-multipledispatch
                              python-numpy python-opt-einsum
                              python-typing-extensions))
-    (native-inputs (list python-black
-                         python-flake8
-                         python-isort
-                         python-nbsphinx
-                         python-pandas
+    (native-inputs (list python-pandas
                          python-pillow
                          python-pyro-api
                          python-pytest
-                         python-pytest-xdist
                          python-requests
                          python-scipy
-                         python-setuptools
-                         python-sphinx
-                         python-sphinx-gallery
-                         python-sphinx-rtd-theme
-                         python-torchvision
-                         python-wheel))
+                         python-setuptools-next
+                         python-torchvision))
     (home-page "https://github.com/pyro-ppl/funsor")
     (synopsis "Tensor-like library for functions and distributions")
     (description
@@ -1386,34 +1375,6 @@ and not test_wmt22_references")
 and reproducible BLEU, chrF, and TER scores for natural language processing.")
     (license license:asl2.0)))
 
-(define-public rust-safetensors
-  (package
-    (name "rust-safetensors")
-    (version "0.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "safetensors" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "1fbx56wikqcvqb4y0ym0cys68lj0v3cpanhsy5i13fkz5jr7dvcc"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:cargo-inputs
-       (("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1))
-       #:cargo-development-inputs
-       (("rust-criterion" ,rust-criterion-0.5)
-        ("rust-memmap2" ,rust-memmap2-0.9)
-        ("rust-proptest" ,rust-proptest-1))))
-    (home-page "https://github.com/huggingface/safetensors")
-    (synopsis "Simple and safe way to store and distribute tensors")
-    (description
-     "This package provides a fast (zero-copy) and safe (dedicated) format for
-storing tensors safely, named safetensors.  They aim to be safer than their
-@code{PyTorch} counterparts.")
-    (license license:asl2.0)))
-
 (define-public python-safetensors
   (package
     (name "python-safetensors")
@@ -1438,31 +1399,15 @@ storing tensors safely, named safetensors.  They aim to be safer than their
                (unless (member file '("." ".."))
                  (rename-file (string-append "bindings/python/" file)
                               file)))
-             (scandir "bindings/python"))))))
+             (scandir "bindings/python"))
+            (substitute* "Cargo.toml"
+              (("^path = .*") ""))))))
     (build-system cargo-build-system)
     (arguments
      (list
-      #:modules '((guix build cargo-build-system)
-                  (guix build utils)
-                  (ice-9 regex)
-                  (ice-9 textual-ports)
-                  (srfi srfi-26))
+      #:install-source? #f
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack-rust-crates 'inject-safetensors
-            (lambda _
-              (substitute* "Cargo.toml"
-                (("\\[dependencies\\]")
-                 (format #f "[dependencies]~%safetensors = ~s"
-                         #$(package-version rust-safetensors))))
-              (call-with-input-file "Cargo.toml"
-                (lambda (port)
-                  (let* ((content (get-string-all port))
-                         (top-match (string-match
-                                     "\\[dependencies.safetensors"
-                                     content)))
-                    (call-with-output-file "Cargo.toml"
-                      (cut display (match:prefix top-match) <>)))))))
           (add-before 'check 'install-rust-library
             (lambda _
               (copy-file "target/release/libsafetensors_rust.so"
@@ -1492,14 +1437,9 @@ storing tensors safely, named safetensors.  They aim to be safer than their
                 (copy-file "PKG-INFO" (string-append info "/METADATA"))
                 (copy-recursively
                  "py_src/safetensors"
-                 (string-append lib "safetensors"))))))
-      #:cargo-inputs
-      `(("rust-pyo3" ,rust-pyo3-0.21)
-        ("rust-memmap2" ,rust-memmap2-0.9)
-        ("rust-safetensors" ,rust-safetensors)
-        ("rust-serde-json" ,rust-serde-json-1))))
+                 (string-append lib "safetensors"))))))))
     (inputs
-     (list rust-safetensors))
+     (cargo-inputs 'python-safetensors))
     (native-inputs
      (list python-h5py
            python-minimal
@@ -1509,9 +1449,9 @@ storing tensors safely, named safetensors.  They aim to be safer than their
            python-pytorch))
     (home-page "https://huggingface.co/docs/safetensors")
     (synopsis "Simple and safe way to store and distribute tensors")
-    (description "This package provides a fast (zero-copy) and safe
-(dedicated) format for storing tensors safely.  This package builds upon
-@code{rust-safetensors} and provides Python bindings.")
+    (description
+     "This package provides a fast (zero-copy) and safe (dedicated) format for
+storing tensors safely.")
     (license license:asl2.0)))
 
 (define-public python-sentencepiece
@@ -2713,7 +2653,7 @@ Covariance Matrix Adaptation Evolution Strategy (CMA-ES) for Python.")
 (define-public python-autograd
   (package
     (name "python-autograd")
-    (version "1.7.0")
+    (version "1.8.0")
     (source
      (origin
        (method git-fetch)
@@ -2721,12 +2661,14 @@ Covariance Matrix Adaptation Evolution Strategy (CMA-ES) for Python.")
              (url "https://github.com/HIPS/autograd")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1fpnmm3mzw355iq7w751j4mjfcr0yh324cxidba1l22652gg8r8m"))
+        (base32 "054pkhzz0h9p1jzva8774wb9dj7rvax4rcpr8ava971kbimdr2lk"))
        (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-hatchling
-           python-pytest))
+           python-pytest
+           python-pytest-cov
+           python-pytest-xdist))
     (propagated-inputs
      (list python-future
            python-numpy))
@@ -4266,8 +4208,8 @@ project, and it will potentially also do the same for the Lime project.")
 
 (define-public gloo
   (let ((version "0.0.0")                         ; no proper version tag
-        (commit "81925d1c674c34f0dc34dd9a0f2151c1b6f701eb")
-        (revision "2"))
+        (commit "c7b7b022c124d9643957d9bd55f57ac59fce8fa2")
+        (revision "3"))
     (package
       (name "gloo")
       (version (git-version version revision commit))
@@ -4280,7 +4222,7 @@ project, and it will potentially also do the same for the Lime project.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "16zs8ndbiv9nppn8bv6lfanzyyssz7g5pawxiqcnafwq3nvxpj9m"))))
+           "0xsp2m2if3g85l0c3cx9l0j3kz36j3kbmz9mai6kchdhrs13r7d5"))))
       (build-system cmake-build-system)
       (native-inputs
        (list googletest))
@@ -4514,7 +4456,8 @@ on quantized 8-bit tensors.")
                     (srfi srfi-26)))
          (snippet
           '(begin
-             (delete-file-recursively "bench/models")
+             (when (directory-exists? "bench/models")
+               (delete-file-recursively "bench/models"))
              ;; Remove autogenerated files, which contain the string
              ;; "Auto-generated file"
              (for-each
@@ -4528,30 +4471,26 @@ on quantized 8-bit tensors.")
                                 (get-string-all port)
                                 "Auto-generated file")))
                        (delete-file path))))
-                 (scandir dir (negate (cut member <> '("." ".." "simd"))))))
+                 (or (scandir dir (negate (cut member <> '("." ".." "simd"))))
+                     '())))
               (cons*
-               "test" "bench" "src/enums" "src/xnnpack"
-               "gen" "cmake/gen"
-               (filter
-                identity
-                (map
-                 (lambda (dir)
-                   (let ((path
-                          (string-append "src/" dir "/gen")))
-                     (and (file-exists? path) path)))
-                 (scandir "src" (negate (cut member <> '("." ".."))))))))))))
+               "test" "bench" "src/enums" "src/xnnpack" "gen" "cmake/gen"
+               (filter file-exists?
+                       (map (cut string-append "src/" <> "/gen")
+                            (scandir "src")))))))))
       (build-system cmake-build-system)
       (arguments
        (list
         #:build-type "Release" ;; Debugging symbols require a lot of disk space
-        #:configure-flags ''("-DXNNPACK_USE_SYSTEM_LIBS=YES"
-                             "-DBUILD_SHARED_LIBS=ON"
-                             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-                             "-DXNNPACK_LIBRARY_TYPE=shared"
-                             "-DXNNPACK_BUILD_BENCHMARKS=FALSE"
-                             ;; Tests fail to build with -DXNNPACK_LIBRARY_TYPE=shared:
-                             ;; https://github.com/google/XNNPACK/issues/6285
-                             "-DXNNPACK_BUILD_TESTS=OFF")
+        #:configure-flags
+        #~(list "-DXNNPACK_USE_SYSTEM_LIBS=YES"
+                "-DBUILD_SHARED_LIBS=ON"
+                "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+                "-DXNNPACK_LIBRARY_TYPE=shared"
+                "-DXNNPACK_BUILD_BENCHMARKS=FALSE"
+                ;; Tests fail to build with -DXNNPACK_LIBRARY_TYPE=shared:
+                ;; https://github.com/google/XNNPACK/issues/6285
+                "-DXNNPACK_BUILD_TESTS=OFF")
         #:tests? #f
         #:modules '((ice-9 ftw)
                     (guix build cmake-build-system)
@@ -4577,14 +4516,18 @@ on quantized 8-bit tensors.")
                               (string-suffix? ".sh" name))
                      (let ((file (string-append "scripts/" name)))
                        (substitute* file
-                         ;; Turn the commands into targets and remove trailing
-                         ;; '&' characters
-                         (("(.*(\\.sh|\\.py|-o |--output)[^&]*)&?[[:space:]]*$" _ command)
+                         ;; Turn the commands into targets. Avoid comments and
+                         ;; lines starting with - (rest of multilines).
+                         (("\
+^[[:space:]]*([^ #-].*/.*(\\.sh|\\.py|-o |--output)[^&]*).*$"
+                           _ command)
                           (begin
                             (set! counter (+ counter 1))
-                            (string-append "target" (number->string counter)
+                            (string-append "\ntarget" (number->string counter)
                                            ":" target-deps
-                                           "\n\t" command "\n")))
+                                           "\n\t" command)))
+                         ;; Remove trailing '&' characters.
+                         (("&?[[:space:]]*$") "\n")
                          (("[[:space:]]*wait[[:space:]]*") "")
                          ;; The commands after this line depend on the
                          ;; previous commands in the file.
@@ -4610,12 +4553,15 @@ on quantized 8-bit tensors.")
                 (invoke "python3" "tools/generate-lut-norm-test.py"
                         "--spec" "test/u8-lut32norm.yaml"
                         "--output" "test/u8-lut32norm.cc")
-                (invoke "python3" "tools/generate-gemm-test.py"
-                        "--spec" "test/qd8-f16-qb4w-gemm-minmax.yaml"
-                        "--output-test" "test/qd8-f16-qb4w-gemm-minmax.cc")
-                (invoke "python3" "tools/generate-gemm-test.py"
-                        "--spec" "test/qd8-f32-qb4w-gemm-minmax.yaml"
-                        "--output-test" "test/qd8-f32-qb4w-gemm-minmax.cc"))))))
+                ;; Check existence to avoid doubling the phase for r-torch.
+                (when (file-exists? "test/qd8-f16-qb4w-gemm-minmax.yaml")
+                  (invoke "python3" "tools/generate-gemm-test.py"
+                          "--spec" "test/qd8-f16-qb4w-gemm-minmax.yaml"
+                          "--output-test" "test/qd8-f16-qb4w-gemm-minmax.cc"))
+                (when (file-exists? "test/qd8-f32-qb4w-gemm-minmax.yaml")
+                  (invoke "python3" "tools/generate-gemm-test.py"
+                          "--spec" "test/qd8-f32-qb4w-gemm-minmax.yaml"
+                          "--output-test" "test/qd8-f32-qb4w-gemm-minmax.cc")))))))
       (inputs
        (list clog
              cpuinfo
@@ -4716,7 +4662,7 @@ TensorFlow.js, PyTorch, and MediaPipe.")
 (define-public fbgemm
   (package
     (name "fbgemm")
-    (version "1.0.0")
+    (version "1.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4725,7 +4671,7 @@ TensorFlow.js, PyTorch, and MediaPipe.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1a5g5f32377fad99xsfggqkwvl7vh5gc1wj77swa06x06lc1qwyw"))
+                "0fjs7179iq5hy6nl4nyswnmk90fz87zsg14p7i5bk2vbd2vrq8a3"))
               (patches (search-patches "fbgemm-use-system-libraries.patch"))))
     (build-system cmake-build-system)
     (arguments
@@ -4935,7 +4881,7 @@ PyTorch.")
         (base32
          "0hdpkhcjry22fjx2zg2r48v7f4ljrclzj0li2pgk76kvyblfbyvm"))))))
 
-(define %python-pytorch-version "2.7.0")
+(define %python-pytorch-version "2.8.0")
 
 (define %python-pytorch-src
   (origin
@@ -4946,7 +4892,7 @@ PyTorch.")
     (file-name (git-file-name "python-pytorch" %python-pytorch-version))
     (sha256
      (base32
-      "19prdpzx34n8y2q6wx9dn9vyms6zidjvfgh58d28rfcf5z7z5ra5"))
+      "0am8mx0mq3hqsk1g99a04a4fdf865g93568qr1f247pl11r2jldl"))
     (patches (search-patches "python-pytorch-system-libraries.patch"
                              "python-pytorch-runpath.patch"
                              "python-pytorch-without-kineto.patch"
@@ -4990,8 +4936,9 @@ PyTorch.")
            (for-each
             delete-file
             (find-files dir "\\.cu$")))
-         '("aten/src/ATen/native/transformers/cuda/flash_attn/kernels"
-           "aten/src/ATen/native/transformers/cuda/mem_eff_attention/kernels"))))))
+         '("aten/src/ATen/native/transformers/cuda/flash_attn"
+           "aten/src/ATen/native/transformers/cuda/mem_eff_attention"
+           "aten/src/ATen/native/transformers/hip/flash_attn"))))))
 
 (define-public qnnpack-pytorch
   (package
@@ -5073,7 +5020,7 @@ PyTorch.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'cmake-patches
-            (lambda _
+            (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "cmake/Dependencies.cmake"
                 (("#POCKETFFT_INCLUDE_DIR")
                  (string-append
@@ -5081,6 +5028,9 @@ PyTorch.")
                 (("#FP16_INCLUDE_DIR")
                  (string-append
                   #$(this-package-input "fp16") "/include"))
+                (("#CONCURRENTQUEUE_INCLUDE_DIR")
+                 (dirname (search-input-file inputs
+                                           "include/concurrentqueue/concurrentqueue.h")))
                 ;; Disable opentelemetry
                 ((".*(add_library|target_include_directories).*opentelemetry.*")
                  ""))
@@ -5113,6 +5063,12 @@ PyTorch.")
                '("caffe2/serialize/crc.cc"
                  "caffe2/serialize/inline_container.cc"
                  "torch/csrc/inductor/aoti_package/model_package_loader.cpp"))
+
+              ;; Fix moodycamel/concurrentqueue includes for system package
+              (substitute* '("c10/util/Semaphore.h"
+                             "c10/test/util/Semaphore_test.cpp")
+                (("<moodycamel/concurrentqueue\\.h>") "<concurrentqueue.h>")
+                (("<moodycamel/lightweightsemaphore\\.h>") "<lightweightsemaphore.h>"))
 
               (substitute* "aten/src/ATen/native/vulkan/api/Allocator.h"
                 (("<include/vk_mem_alloc.h>")
@@ -5152,14 +5108,14 @@ PyTorch.")
                           (package-transitive-supported-systems qnnpack)))
                   (setenv "USE_QNNPACK" "0"))
               (substitute* '("requirements.txt" "setup.py")
-                (("sympy==1\\.13\\.1")
+                (("sympy>=1\\.13\\.3")
                  "sympy>=1.13.1"))))
           (add-after 'use-system-libraries 'skip-nccl-call
             (lambda _
               ;; Comment-out `checkout_nccl()` invokation in build_pytorch().
               (substitute* "tools/build_pytorch_libs.py"
                 (("^[[:blank:]]*checkout_nccl\\(\\)" all)
-                 (string-append "# " all "  # Guix: use system NCCL\n")))))
+                 (string-append "# " all "\n        pass")))))
           ;; PyTorch is still built with AVX2 and AVX-512 support selected at
           ;; runtime, but these dependencies require it (nnpack only for
           ;; x86_64).
@@ -5280,6 +5236,7 @@ PyTorch.")
       (list asmjit
             brotli ; for cpp-httplib
             clog
+            concurrentqueue
             cpp-httplib
             eigen
             flatbuffers
@@ -5301,6 +5258,7 @@ PyTorch.")
             pybind11
             ;; qnnpack
             qnnpack-pytorch
+            rdma-core
             sleef
             tensorpipe
             vulkan-headers
@@ -5521,7 +5479,8 @@ Note: currently this package does not provide GPU support.")
              python-tqdm
              python-xxhash))
       (native-inputs
-       (list python-flit-core-next
+       (list openssl
+             python-flit-core-next
              python-pytest
              python-pytest-cov))
       (home-page "https://pyg.org")
@@ -5590,7 +5549,7 @@ Actions for the Lightning suite of libraries.")
 (define-public python-captum
   (package
     (name "python-captum")
-    (version "0.7.0")
+    (version "0.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5599,35 +5558,32 @@ Actions for the Lightning suite of libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0bgfwnlsi50hbmknn7qljiy93fi6ggwz3k7yk9kj7s37mhzaylym"))))
+                "066sal7hzpk9gsb6pk61sa9x01ckjbjb2mc8c69nc7aghqqrpqjs"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-k" (string-append
-                   ;; These two tests (out of more than 1000 tests) fail because of
-                   ;; accuracy problems.
-                   "not test_softmax_classification_batch_multi_target"
-                   " and not test_softmax_classification_batch_zero_baseline"
-                   ;; This test fails with PyTorch 2.7.0 due to stricter
-                   ;; torch.load weights_only behavior.
-                   " and not test_exp_sets_with_diffent_lengths"))))
+      #~(list "-k" (string-append
+                    ;; These two tests (out of more than 1000 tests) fail
+                    ;; because of accuracy problems.
+                    "not test_softmax_classification_batch_multi_target"
+                    " and not test_softmax_classification_batch_zero_baseline"
+                    ;; This test fails with PyTorch 2.7.0 due to stricter
+                    ;; torch.load weights_only behavior.
+                    " and not test_exp_sets_with_diffent_lengths")
+              "tests")))
+    (native-inputs
+     (list python-flask
+           python-pytest
+           python-flask-compress
+           python-parameterized
+           python-scikit-learn
+           python-setuptools))
     (propagated-inputs
-     (list python-matplotlib python-numpy python-pytorch python-tqdm))
-    (native-inputs (list jupyter
-                         python-annoy
-                         python-black
-                         python-flake8
-                         python-flask
-                         python-flask-compress
-                         python-ipython
-                         python-ipywidgets
-                         python-mypy
-                         python-parameterized
-                         python-pytest
-                         python-pytest-cov
-                         python-scikit-learn
-                         python-setuptools))
+     (list python-matplotlib
+           python-numpy
+           python-pytorch
+           python-tqdm))
     (home-page "https://captum.ai")
     (synopsis "Model interpretability for PyTorch")
     (description "Captum is a model interpretability and understanding library
@@ -5845,7 +5801,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
 (define-public python-torchvision
   (package
     (name "python-torchvision")
-    (version "0.22.0")
+    (version "0.23.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5855,7 +5811,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hz6v8796vq8kinafzyq2v2wir5s3hykfn0rnlwx7qcsz62i3ggv"))
+                "1d09xwblldgzmzfdlrsyx6mgv939z4yi1hqanm9yx63cs2mr7w85"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5950,158 +5906,6 @@ definite approximations of Optimal Transport (Wasserstein) distances.
 @end itemize")
     (license license:expat)))
 
-(define-public rust-esaxx-rs-0.1
-  (package
-    (name "rust-esaxx-rs")
-    (version "0.1.10")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "esaxx-rs" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "1rm6vm5yr7s3n5ly7k9x9j6ra5p2l2ld151gnaya8x03qcwf05yq"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:cargo-inputs (("rust-cc" ,rust-cc-1))))
-    (home-page "https://github.com/Narsil/esaxx-rs")
-    (synopsis "Wrapper for sentencepiece's esaxxx library")
-    (description
-     "This package provides a wrapper around sentencepiece's esaxxx library.")
-    (license license:asl2.0)))
-
-(define-public rust-spm-precompiled-0.1
-  (package
-    (name "rust-spm-precompiled")
-    (version "0.1.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "spm_precompiled" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "09pkdk2abr8xf4pb9kq3rk80dgziq6vzfk7aywv3diik82f6jlaq"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:cargo-inputs
-       (("rust-base64" ,rust-base64-0.13)
-        ("rust-nom" ,rust-nom-7)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1))))
-    (home-page "https://github.com/huggingface/spm_precompiled")
-    (synopsis "Emulate sentencepiece's DoubleArray")
-    (description
-     "This crate aims to emulate
-@url{https://github.com/google/sentencepiece,sentencepiece}
-Dart::@code{DoubleArray} struct and it's Normalizer.  This crate is highly
-specialized and not intended for general use.")
-    (license license:asl2.0)))
-
-(define-public rust-hf-hub-0.3
-  (package
-    (name "rust-hf-hub")
-    (version "0.3.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "hf-hub" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "0cnpivy9fn62lm1fw85kmg3ryvrx8drq63c96vq94gabawshcy1b"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:tests? #f  ; require network connection
-       #:cargo-inputs
-       (("rust-dirs" ,rust-dirs-5)
-        ("rust-futures" ,rust-futures-0.3)
-        ("rust-indicatif" ,rust-indicatif-0.17)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-native-tls" ,rust-native-tls-0.2)
-        ("rust-num-cpus" ,rust-num-cpus-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-reqwest" ,rust-reqwest-0.11)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-tokio" ,rust-tokio-1)
-        ("rust-ureq" ,rust-ureq-2))
-       #:cargo-development-inputs
-       (("rust-hex-literal" ,rust-hex-literal-0.4)
-        ("rust-sha2" ,rust-sha2-0.10)
-        ("rust-tokio-test" ,rust-tokio-test-0.4))))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list openssl))
-    (home-page "https://github.com/huggingface/hf-hub")
-    (synopsis "Interact with HuggingFace in Rust")
-    (description
-     "This crates aims ease the interaction with
-@url{https://huggingface.co/,huggingface}.  It aims to be compatible with
-@url{https://github.com/huggingface/huggingface_hub/,huggingface_hub}
-python package, but only implements a smaller subset of functions.")
-    (license license:asl2.0)))
-
-(define-public rust-tokenizers
-  (package
-    (name "rust-tokenizers")
-    (version "0.19.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "tokenizers" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "1zg6ffpllygijb5bh227m9p4lrhf0pjkysky68kddwrsvp8zl075"))
-       (modules '((guix build utils)))
-       (snippet
-        #~(substitute* "Cargo.toml"
-            (("0.1.12") ; rust-monostate requires a rust-syn-2 update
-             "0.1.11")
-            (("version = \"6.4\"")  ; rust-onig
-             "version = \"6.1.1\"")))))
-    (build-system cargo-build-system)
-    (arguments
-     (list
-      #:tests? #f  ; tests are relying on missing data.
-      #:cargo-inputs
-      `(("rust-aho-corasick" ,rust-aho-corasick-1)
-        ("rust-derive-builder" ,rust-derive-builder-0.20)
-        ("rust-esaxx-rs" ,rust-esaxx-rs-0.1)
-        ("rust-fancy-regex" ,rust-fancy-regex-0.13)
-        ("rust-getrandom" ,rust-getrandom-0.2)
-        ("rust-hf-hub" ,rust-hf-hub-0.3)
-        ("rust-indicatif" ,rust-indicatif-0.17)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-lazy-static" ,rust-lazy-static-1)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-macro-rules-attribute" ,rust-macro-rules-attribute-0.2)
-        ("rust-monostate" ,rust-monostate-0.1)
-        ("rust-onig" ,rust-onig-6)
-        ("rust-paste" ,rust-paste-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rayon" ,rust-rayon-1)
-        ("rust-rayon-cond" ,rust-rayon-cond-0.3)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-regex-syntax" ,rust-regex-syntax-0.8)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-spm-precompiled" ,rust-spm-precompiled-0.1)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-unicode-normalization-alignments" ,rust-unicode-normalization-alignments-0.1)
-        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
-        ("rust-unicode-categories" ,rust-unicode-categories-0.1))
-      #:cargo-development-inputs
-      `(("rust-assert-approx-eq" ,rust-assert-approx-eq-1)
-        ("rust-criterion" ,rust-criterion-0.5)
-        ("rust-tempfile" ,rust-tempfile-3))))
-    (home-page "https://github.com/huggingface/tokenizers")
-    (synopsis "Implementation of various popular tokenizers")
-    (description
-     "This package provides a Rust implementation of today's most used
-tokenizers, with a focus on performances and versatility.")
-    (license license:asl2.0)))
-
 (define-public python-tokenizers
   (package
     (name "python-tokenizers")
@@ -6124,49 +5928,22 @@ tokenizers, with a focus on performances and versatility.")
                         (unless (member file '("." ".."))
                           (rename-file (string-append "bindings/python/" file) file)))
                       (scandir "bindings/python"))
-            (delete-file-recursively ".cargo")))))
+            (delete-file-recursively ".cargo")
+            (substitute* "Cargo.toml"
+              (("^path = .*")
+               (format #f "version = ~s~%" #$version)))))))
     (build-system cargo-build-system)
     (arguments
      (list
+      #:install-source? #f
       #:cargo-test-flags ''("--no-default-features")
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
       #:modules '((guix build cargo-build-system)
                   ((guix build pyproject-build-system) #:prefix py:)
-                  (guix build utils)
-                  (ice-9 regex)
-                  (ice-9 textual-ports))
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack-rust-crates 'inject-tokenizers
-            (lambda _
-              (substitute* "Cargo.toml"
-                (("\\[dependencies\\]")
-                 (format #f "
-[dev-dependencies]
-tempfile = ~s
-pyo3 = { version = ~s, features = [\"auto-initialize\"] }
-
-[dependencies]
-tokenizers = ~s"
-                         #$(package-version rust-tempfile-3)
-                         #$(package-version rust-pyo3-0.21)
-                         #$(package-version rust-tokenizers))))
-              (let ((file-path "Cargo.toml"))
-                (call-with-input-file file-path
-                  (lambda (port)
-                    (let* ((content (get-string-all port))
-                           (top-match (string-match
-                                       "\\[dependencies.tokenizers" content)))
-                      (call-with-output-file file-path
-                        (lambda (out)
-                          (format out "~a" (match:prefix top-match))))))))))
-          (add-after 'patch-cargo-checksums 'loosen-requirements
-            (lambda _
-              (substitute* "Cargo.toml"
-                (("version = \"6.4\"")
-                 (format #f "version = ~s"
-                         #$(package-version rust-onig-6))))))
           (add-after 'check 'python-check
             (lambda _
               (copy-file "target/release/libtokenizers.so"
@@ -6189,28 +5966,16 @@ tokenizers = ~s"
                 (copy-file "PKG-INFO" (string-append info "/METADATA"))
                 (copy-recursively
                  "py_src/tokenizers"
-                 (string-append lib "tokenizers"))))))
-      #:cargo-inputs
-      `(("rust-rayon" ,rust-rayon-1)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-env-logger" ,rust-env-logger-0.11)
-        ("rust-pyo3" ,rust-pyo3-0.21)
-        ("rust-numpy" ,rust-numpy-0.21)
-        ("rust-ndarray" ,rust-ndarray-0.15)
-        ("rust-onig" ,rust-onig-6)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-tokenizers" ,rust-tokenizers))
-      #:cargo-development-inputs
-      `(("rust-tempfile" ,rust-tempfile-3))))
+                 (string-append lib "tokenizers"))))))))
     (native-inputs
-     (list python-minimal python-pytest))
+     (list pkg-config python-minimal python-pytest))
+    (inputs
+     (cons oniguruma (cargo-inputs 'python-tokenizers)))
     (home-page "https://huggingface.co/docs/tokenizers")
     (synopsis "Implementation of various popular tokenizers")
     (description
-     "This package provides bindings to a Rust implementation of the most used
-tokenizers, @code{rust-tokenizers}.")
+     "This package provides an implementation of today’s most used tokenizers,
+with a focus on performance and versatility.")
     (license license:asl2.0)))
 
 (define-public python-transformers

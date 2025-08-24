@@ -1114,7 +1114,7 @@ machine, and more.")
 (define-public exercism
   (package
     (name "exercism")
-    (version "3.5.5")
+    (version "3.5.7")
     (source
      (origin
        (method git-fetch)
@@ -1123,7 +1123,7 @@ machine, and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a53caqrxv0rhg79md97vnzcbr9gnz3mzjkk7xyafc3h456b4gsz"))
+        (base32 "1w1md548janc16svdqij6bya5r6rayl13760jmsx28ws8yv2wjqf"))
        (patches (search-patches "exercism-disable-self-update.patch"))))
     (build-system go-build-system)
     (arguments
@@ -1136,6 +1136,13 @@ machine, and more.")
       #:test-subdirs #~(list "../../...")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-xdg-open
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* "browser/open.go"
+                  (("xdg-open")
+                   (string-append #$(this-package-input "xdg-utils")
+                                  "/bin/xdg-open"))))))
           (add-after 'install 'install-completions
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((exercism (string-append #$output "/bin/exercism"))
@@ -1168,6 +1175,8 @@ machine, and more.")
            go-github-com-stretchr-testify
            go-golang-org-x-net
            go-golang-org-x-text))
+    (inputs
+     (list xdg-utils))
     (home-page "https://exercism.org/")
     (synopsis "Mentored learning for programming languages")
     (description

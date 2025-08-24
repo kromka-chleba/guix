@@ -59,7 +59,6 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gl)
@@ -205,8 +204,7 @@
 ;;; but since in Guix only the latest packaged Rust is officially supported,
 ;;; it is a tradeoff worth making.
 ;;; 0: https://firefox-source-docs.mozilla.org/writing-rust-code/update-policy.html
-;; 136.0.1 wants 1.84, but it's not available in Guix yet.
-(define rust-librewolf rust-1.82)
+(define rust-librewolf rust)
 
 ;; Update this id with every update to its release date.
 ;; It's used for cache validation and therefore can lead to strange bugs.

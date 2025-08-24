@@ -87,9 +87,6 @@
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages cpio)
   #:use-module (gnu packages cran)
-  #:use-module (gnu packages crates-compression)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
@@ -2280,33 +2277,6 @@ Format (GFF) with Biopython integration.")
              ;; These test require a 84 GB file.
              "--skip=http_two"
              "--skip=http_cloud_urls_md_3")
-      #:cargo-inputs
-      (list rust-anyinput-0.1
-            rust-bytecount-0.6
-            rust-byteorder-1
-            rust-bytes-1
-            rust-cloud-file-0.2
-            rust-derive-builder-0.20
-            rust-dpc-pariter-0.4
-            rust-fetch-data-0.2
-            rust-futures-util-0.3
-            rust-itertools-0.13
-            rust-ndarray-0.16
-            rust-ndarray-npy-0.9
-            rust-num-traits-0.2
-            rust-numpy-0.22
-            rust-pyo3-0.22
-            rust-pyo3-build-config-0.22
-            rust-rayon-1
-            rust-statrs-0.17
-            rust-thiserror-1
-            rust-tokio-1)
-      #:cargo-development-inputs
-      (list rust-anyhow-1
-            rust-ndarray-rand-0.15
-            rust-rusoto-credential-0.48
-            rust-temp-testdir-0.2
-            rust-thousands-0.2)
       #:imported-modules
       (append %cargo-build-system-modules
               %pyproject-build-system-modules)
@@ -2418,7 +2388,7 @@ version = ~s
                          python-pytest-doctestplus
                          python-recommonmark
                          python-sphinx))
-    (inputs (list python-wrapper))
+    (inputs (cons python-wrapper (cargo-inputs 'python-bed-reader)))
     (propagated-inputs (list python-numpy python-pandas python-scipy))
     (home-page "https://fastlmm.github.io/")
     (synopsis "Read and write the PLINK BED format, simply and efficiently")
@@ -4697,19 +4667,9 @@ compressed files.")
                 "find_package(bioparser 3.0.13 CONFIG)")
                (("find_package\\(biosoup 0.10.0 QUIET\\)")
                 "find_package(biosoup 0.10.0 CONFIG)")
-               (("GTest_FOUND") "TRUE")))))
-       #:cargo-inputs
-       (("rust-anyhow" ,rust-anyhow-1)
-        ("rust-bio" ,rust-bio-0.33)
-        ("rust-chrono" ,rust-chrono-0.4)
-        ("rust-docopt" ,rust-docopt-1)
-        ("rust-flate2" ,rust-flate2-1)
-        ("rust-indicatif" ,rust-indicatif-0.15)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-seq-io" ,rust-seq-io-0.3))))
+               (("GTest_FOUND") "TRUE")))))))
     (inputs
-     (list bioparser biosoup))
+     (cons* bioparser biosoup (cargo-inputs 'circtools)))
     (native-inputs
      (list cmake-minimal pkg-config googletest))
     (home-page "https://github.com/Kevinzjy/circtools")
@@ -7133,18 +7093,17 @@ accurately delineate genomic rearrangements throughout the genome.")
 (define-public transanno
   (package
     (name "transanno")
-    (version "0.3.0")
+    (version "0.4.5")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/informationsea/transanno")
-             ;; Corresponds to tag v0.3.0
-             (commit "df49050c92644ea12d9d5c6fae2186ca436dbca3")))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1jpn7s3cnd9ybk4lmfbhj2arhf6cmrv7jp74n7n87m3a3irkaif1"))
+         "0x62v8qhnpw8579kcqpr9k5ldv2y3awjp7a32f1j8qky0i1jgxp1"))
        (snippet
         '(with-output-to-file "liftover-rs/build.rs"
            (lambda _
@@ -7167,28 +7126,9 @@ accurately delineate genomic rearrangements throughout the genome.")
                                 "/bin/bash")))
               (invoke "bash" "prepare-test-files.sh")))
           (add-before 'install 'chdir
-            (lambda _ (chdir "transanno"))))
-      #:cargo-inputs
-      `(("rust-anyhow" ,rust-anyhow-1)
-        ("rust-autocompress" ,rust-autocompress-0.2)
-        ("rust-bio" ,rust-bio-0.41)
-        ("rust-clap" ,rust-clap-2)
-        ("rust-csv" ,rust-csv-1)
-        ("rust-flate2" ,rust-flate2-1)
-        ("rust-indexmap" ,rust-indexmap-1)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-nom" ,rust-nom-5)
-        ("rust-once-cell" ,rust-once-cell-1)
-        ("rust-pretty-env-logger" ,rust-pretty-env-logger-0.3)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1))
-      #:cargo-development-inputs
-      `(("rust-clap" ,rust-clap-2)
-        ("rust-lazy-static" ,rust-lazy-static-1))))
+            (lambda _ (chdir "transanno"))))))
     (native-inputs (list bash pkg-config))
-    (inputs (list xz))
+    (inputs (cons* xz `(,zstd "lib") (cargo-inputs 'transanno)))
     (home-page "https://github.com/informationsea/transanno")
     (synopsis "LiftOver tool for new genome assemblies")
     (description "This package provides an accurate VCF/GFF3/GTF LiftOver tool
@@ -24519,41 +24459,52 @@ assembly (small or mammalian size) and single-cell assembly.")
     (license license:gpl3)))
 
 (define-public mudskipper
-  (package
-    (name "mudskipper")
-    (version "0.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (crate-uri "mudskipper" version))
-              (file-name (string-append name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1y7fnlz6irmxdmv6bxzm95w4ws4vzldlrh8npvgxmdnrz9pgb1dv"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:tests? #false    ;fail because the "mudskipper" crate cannot be found
-       #:cargo-inputs
-       (("rust-bio" ,rust-bio-0.39)
-        ("rust-bio-types" ,rust-bio-types-0.12)
-        ("rust-clap" ,rust-clap-2)
-        ("rust-coitrees" ,rust-coitrees-0.2)
-        ("rust-env-logger" ,rust-env-logger-0.9)
-        ("rust-fnv" ,rust-fnv-1)
-        ("rust-indicatif" ,rust-indicatif-0.16)
-        ("rust-libradicl" ,rust-libradicl-0.4)
-        ("rust-linecount" ,rust-linecount-0.1)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-num-cpus" ,rust-num-cpus-1)
-        ("rust-rust-htslib" ,rust-rust-htslib-0.38))))
-    (native-inputs
-     (list cmake-minimal pkg-config))
-    (inputs
-     (list zlib xz))
-    (home-page "https://github.com/OceanGenomics/mudskipper")
-    (synopsis "Convert genomic alignments to transcriptomic BAM/RAD files")
-    (description "Mudskipper is a tool for projecting genomic alignments to
+  (let ((commit "effd3fac03bc09d313e84fa680f18fdc6f3a16a0")
+        (revision "1"))
+    (package
+      (name "mudskipper")
+      (version (git-version "0.1.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/OceanGenomics/mudskipper")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "17jm39sbrwgjlynxsn4g7lvq5hx6rwyjg86p10v4mc74fmdn5xd5"))))
+      (build-system cargo-build-system)
+      (arguments
+       (list #:install-source? #f
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'skip-doctesting-code-blocks
+                   ;; See also https://github.com/rust-lang/rust/issues/63193.
+                   (lambda _
+                     (substitute* "src/query_bam_records.rs"
+                       (((string-append
+                          "(pub )?fn ("
+                          (string-join
+                           '("get_next_query_records"
+                             "get_next_query_records_skip"
+                             "get_primary_record_of_sa_tag"
+                             "get_records_from_sa_tag"
+                             "group_records"
+                             "group_records_skip"
+                             "new")
+                           "|")
+                          ")")
+                         all)
+                        (string-append "#[cfg(not(doctest))]\n" all))))))))
+      (native-inputs
+       (list pkg-config))
+      (inputs
+       (cons* zlib xz (cargo-inputs 'mudskipper)))
+      (home-page "https://github.com/OceanGenomics/mudskipper")
+      (synopsis "Convert genomic alignments to transcriptomic BAM/RAD files")
+      (description "Mudskipper is a tool for projecting genomic alignments to
 transcriptomic coordinates.")
-    (license license:bsd-3)))
+      (license license:bsd-3))))
 
 (define-public r-ascat
   (package
@@ -25378,13 +25329,6 @@ CSIv1, CSIv2 and FAI files.")
       #:install-source? #false
       #:features '(list "extension-module")
       #:cargo-test-flags '(list "--features=extension-module")
-      #:cargo-inputs
-      `(("rust-csv" ,rust-csv-1)
-        ("rust-itertools" ,rust-itertools-0.10)
-        ("rust-pyo3" ,rust-pyo3-0.16)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rayon" ,rust-rayon-1)
-        ("rust-serde" ,rust-serde-1))
       #:imported-modules
       (append %cargo-build-system-modules
               %pyproject-build-system-modules)
@@ -25450,7 +25394,7 @@ exclude =
                         ;; These tests need access to the internet
                         "-k" "not test_enrichr and not test_prerank")))))))
     (inputs
-     (list python-wrapper))
+     (cons python-wrapper (cargo-inputs 'python-gseapy)))
     (native-inputs
      (list python-pytest python-wheel))
     (propagated-inputs

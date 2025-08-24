@@ -202,9 +202,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dbm)
@@ -273,6 +270,7 @@
   #:use-module (gnu packages rdf)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages scanner)
   #:use-module (gnu packages search)
@@ -1200,15 +1198,6 @@ three consecutive points in a polyline or polygon
               (when tests?
                 (with-directory-excursion #$output
                   (invoke "pytest" "-vv"))))))
-      #:cargo-inputs
-      `(("rust-ndarray" ,rust-ndarray-0.16)
-        ("rust-numpy" ,rust-numpy-0.22)
-        ("rust-num-derive" ,rust-num-derive-0.4)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-rayon-1" ,rust-rayon-1))
-      #:cargo-development-inputs
-      `(("rust-float-eq" ,rust-float-eq-1)
-        ("rust-pyo3" ,rust-pyo3-0.22))
       #:install-source? #false))
     (native-inputs
      (list maturin
@@ -1218,6 +1207,7 @@ three consecutive points in a polyline or polygon
     (propagated-inputs
      (list python-numpy
            python-packaging))
+    (inputs (cargo-inputs 'python-streamtracer))
     (home-page "https://github.com/sunpy/streamtracer")
     (synopsis "Rapid streamline tracing in Python")
     (description
@@ -5250,30 +5240,9 @@ help formatter.")
             (assoc-ref py:%standard-phases 'build))
           (add-after 'build-python-module 'install-python-module
             (assoc-ref py:%standard-phases 'install)))
-      #:cargo-inputs
-      `(("rust-ahash" ,rust-ahash-0.8)
-        ("rust-arrayvec" ,rust-arrayvec-0.7)
-        ("rust-associative-cache" ,rust-associative-cache-1)
-        ("rust-beef" ,rust-beef-0.5)
-        ("rust-bytecount" ,rust-bytecount-0.6)
-        ("rust-chrono" ,rust-chrono-0.4)
-        ("rust-compact-str" ,rust-compact-str-0.7)
-        ("rust-encoding-rs" ,rust-encoding-rs-0.8)
-        ("rust-itoa" ,rust-itoa-1)
-        ("rust-itoap" ,rust-itoap-1)
-        ("rust-once-cell" ,rust-once-cell-1)
-        ("rust-pyo3-ffi" ,rust-pyo3-ffi-0.19)
-        ("rust-ryu" ,rust-ryu-1)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-simdutf8" ,rust-simdutf8-0.1)
-        ("rust-smallvec" ,rust-smallvec-1)
-        ("rust-cc" ,rust-cc-1)
-        ("rust-pyo3-build-config" ,rust-pyo3-build-config-0.19)
-        ("rust-version-check" ,rust-version-check-0.9))
       #:install-source? #false))
     (inputs
-     (list maturin))
+     (cons maturin (cargo-inputs 'python-orjson)))
     (native-inputs
      (list python-wrapper))
     (home-page "https://github.com/ijl/orjson")
@@ -9707,33 +9676,12 @@ errors when data is invalid.")
             (assoc-ref py:%standard-phases 'build))
           (add-after 'build-python-module 'install-python-module
             (assoc-ref py:%standard-phases 'install)))
-      #:cargo-inputs
-      `(("rust-ahash" ,rust-ahash-0.8)
-        ("rust-base64" ,rust-base64-0.21)
-        ("rust-enum-dispatch" ,rust-enum-dispatch-0.3)
-        ("rust-idna" ,rust-idna-0.5)
-        ("rust-jiter" ,rust-jiter-0.7)
-        ("rust-num-bigint" ,rust-num-bigint-0.4)
-        ("rust-python3-dll-a" ,rust-python3-dll-a-0.2)
-        ("rust-pyo3" ,rust-pyo3-0.20)
-        ("rust-pyo3-build-config" ,rust-pyo3-build-config-0.20)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-strum" ,rust-strum-0.25)
-        ("rust-strum-macros" ,rust-strum-macros-0.25)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-smallvec" ,rust-smallvec-1)
-        ("rust-speedate" ,rust-speedate-0.15)
-        ("rust-url" ,rust-url-2)
-        ("rust-uuid" ,rust-uuid-1)
-        ("rust-version-check" ,rust-version-check-0.9))
-      #:cargo-development-inputs
-      `(("rust-pyo3" ,rust-pyo3-0.20))
       #:install-source? #false))
     (native-inputs
      (list maturin python-typing-extensions python-wrapper))
     (propagated-inputs
      (list python-typing-extensions))
+    (inputs (cargo-inputs 'python-pydantic-core))
     (home-page "https://github.com/pydantic/pydantic-core")
     (synopsis "Core validation logic for pydantic")
     (description "This package provides the core functionality for pydantic
@@ -12735,12 +12683,6 @@ numpy arrays to TIFF, BigTIFF, and ImageJ hyperstack compatible files.")
     (arguments
      (list
       #:install-source? #false
-      #:cargo-inputs
-      (list rust-pyo3-0.22
-            rust-fancy-regex-0.13
-            rust-regex-1
-            rust-rustc-hash-1
-            rust-bstr-1)
       #:imported-modules
       (append %pyproject-build-system-modules
               %cargo-build-system-modules)
@@ -12764,6 +12706,7 @@ numpy arrays to TIFF, BigTIFF, and ImageJ hyperstack compatible files.")
           (replace 'install
             (assoc-ref py:%standard-phases 'install)))))
     (propagated-inputs (list python-regex python-requests))
+    (inputs (cargo-inputs 'python-tiktoken))
     (native-inputs
      (list python-setuptools
            python-setuptools-rust
@@ -23716,22 +23659,6 @@ members = [
       '(list "--manifest-path=native/Cargo.toml"
              "--release"
              "--no-default-features")
-      #:cargo-inputs
-      (list rust-chic-1
-            rust-memchr-2
-            rust-paste-1
-            rust-peg-0.8
-            rust-pyo3-0.22
-            rust-quote-1
-            rust-regex-1
-            rust-syn-2
-            rust-thiserror-1)
-      #:cargo-development-inputs
-      (list rust-criterion-0.5
-            rust-difference-2
-            rust-itertools-0.13
-            rust-rayon-1
-            rust-trybuild-1)
       #:imported-modules `(,@%pyproject-build-system-modules
                            ,@%cargo-build-system-modules)
       #:modules `((guix build cargo-build-system)
@@ -23742,11 +23669,6 @@ members = [
           (add-after 'unpack 'prepare-source
             (lambda _
               (delete-file "native/Cargo.lock")))
-          (add-after 'configure 'dont-vendor-self
-            (lambda* (#:key vendor-dir #:allow-other-keys)
-              ;; Don't keep the whole tarball in the vendor directory
-              (delete-file-recursively
-                (string-append vendor-dir "/libcst-" #$version ".tar.zst"))))
           (replace 'build
             (assoc-ref py:%standard-phases 'build))
           (add-after 'install 'wrap
@@ -23776,7 +23698,7 @@ members = [
            python-setuptools-rust
            python-setuptools-scm
            python-wheel))
-    (inputs (list maturin))
+    (inputs (cons maturin (cargo-inputs 'python-libcst)))
     (propagated-inputs
      (list python-pyyaml))
     (home-page "https://github.com/Instagram/LibCST")
@@ -28044,7 +27966,7 @@ belong to tagged versions.")
               (invoke "git" "config" "--global" "user.email" "guix")
               (invoke "git" "config" "--global" "user.name" "guix"))))))
     (native-inputs
-     (list git-minimal python-setuptools python-wheel))
+     (list git-minimal/pinned python-setuptools python-wheel))
     (home-page "https://github.com/msabramo/setuptools-git")
     (synopsis "Setuptools revision control system plugin for Git")
     (description
@@ -32592,7 +32514,7 @@ but portable.")
 (define-public python-watchfiles
   (package
     (name "python-watchfiles")
-    (version "1.0.4")
+    (version "1.0.5")
     (source
      (origin
        ;; There are no tests in the PyPI tarball.
@@ -32602,44 +32524,51 @@ but portable.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kaxq0drjwlvcsg4in25w1bhjjgm1zlz06rr2macyi6s5x96g46h"))))
-    (build-system cargo-build-system)
+        (base32 "1b5rdj795xcbwg76bd8hs3skhgifd7a8zw2vj76nac2dhjlqg93b"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:install-source? #f
+      ;; Missing file in source.
+      #:test-flags ''("-k" "not test_docs_examples")
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
-      #:modules '((guix build cargo-build-system)
-                  ((guix build pyproject-build-system) #:prefix py:)
+      #:modules '(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build pyproject-build-system)
                   (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'build
-            (assoc-ref py:%standard-phases 'build))
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums))))
           (add-after 'build 'install-rust-library
             (lambda _
               (copy-file "target/release/lib_rust_notify.so"
-                         "watchfiles/_rust_notify.so")))
-          (replace 'check
-            (lambda* (#:key tests? test-flags #:allow-other-keys)
-              (if tests?
-                  ;; Missing file in source.
-                  (invoke "pytest" "-vv" "-k" "not test_docs_examples")
-                  (format #t "test suite not run~%"))))
-          (replace 'install
-            (assoc-ref py:%standard-phases 'install)))
-      #:cargo-inputs
-      (list rust-crossbeam-channel-0.5 rust-notify-7 rust-pyo3-0.23)))
+                         "watchfiles/_rust_notify.so"))))))
     (native-inputs
-     (list maturin
-           python-anyio
-           python-coverage
-           python-dirty-equals
-           python-pytest
-           python-pytest-cov
-           python-pytest-mock
-           python-pytest-timeout
-           python-wrapper))
+     (append
+      (list maturin
+            python-anyio
+            python-coverage
+            python-dirty-equals
+            python-pytest
+            python-pytest-cov
+            python-pytest-mock
+            python-pytest-timeout
+            rust
+            `(,rust "cargo"))
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs (cargo-inputs 'python-watchfiles))
     (home-page "https://github.com/samuelcolvin/watchfiles")
     (synopsis "Simple, modern file watching and code reload in Python")
     (description
@@ -39143,26 +39072,28 @@ to void* values.")
   (package
     (name "python-catalogue")
     (version "2.0.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "catalogue" version))
-              (sha256
-               (base32
-                "0srdxiil2xys8q1gpc1nvzhvis3a33d8a7amk2i1rlpbg6p36pak"))))
-    (build-system python-build-system)
-    (native-inputs (list python-pytest))
-    (inputs (list python python-zipp python-typing-extensions python-mypy))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/explosion/catalogue")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f7dqd8swycnspwfka79whr0v630v52hdmkmd1x7l920h33pg467"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/explosion/catalogue")
     (synopsis "Lightweight function registries for your library")
     (description
-     "\"catalogue\" is a tiny, zero-dependencies library that
-makes it easy to add function (or object) registries to your code.  Function
-registries are helpful when you have objects that need to be both easily
-serializable and fully customizable.  Instead of passing a function into your
-object, you pass in an identifier name, which the object can use to lookup the
-function from the registry.  This makes the object easy to serialize, because the
-name is a simple string.  If you instead saved the function, you'd have to use
-Pickle for serialization, which has many drawbacks.")
+     "This package is a tiny, zero-dependencies library that makes it easy to
+add function (or object) registries to your code.  Function registries are
+helpful when you have objects that need to be both easily serializable and
+fully customizable.  Instead of passing a function into your object, you pass
+in an identifier name, which the object can use to lookup the function from
+the registry.  This makes the object easy to serialize, because the name is a
+simple string.  If you instead saved the function, you'd have to use Pickle
+for serialization, which has many drawbacks.")
     (license license:expat)))
 
 (define-public python-wasabi
@@ -39720,13 +39651,9 @@ etc. to check code that uses @code{orjson}.")
             (assoc-ref py:%standard-phases 'build))
           (add-after 'build-python-module 'install-python-module
             (assoc-ref py:%standard-phases 'install)))
-      #:cargo-inputs
-      `(("rust-archery" ,rust-archery-1)
-        ("rust-pyo3" ,rust-pyo3-0.19)
-        ("rust-rpds" ,rust-rpds-1))
       #:install-source? #false))
     (inputs
-     (list maturin))
+     (cons maturin (cargo-inputs 'python-rpds-py)))
     (native-inputs
      (list python-wrapper))
     (home-page "https://github.com/crate-py/rpds")
