@@ -162,8 +162,7 @@ is available in Russian and English.")
     (arguments
      (list
       #:configure-flags
-      #~(list "-DSWORD_BUILD_TESTS=Yes"
-              "-DSWORD_USE_INTERNAL_ZLIB=No")))
+      #~(list "-DSWORD_BUILD_TESTS=Yes" "-DSWORD_USE_INTERNAL_ZLIB=No")))
     (home-page "https://www.crosswire.org/sword/")
     (synopsis "Cross-platform open source tools for writing Bible software")
     (description
