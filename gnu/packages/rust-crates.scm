@@ -23347,15 +23347,6 @@
 ;;; Cargo inputs.
 ;;;
 
-;; TODO: Maintain this automatically too.
-(define-public mesa-cargo-inputs
-  `(("paste" ,rust-paste-1.0.15)
-    ("proc-macro2" ,rust-proc-macro2-1.0.94)
-    ("quote" ,rust-quote-1.0.40)
-    ("rustc-hash" ,rust-rustc-hash-2.1.1)
-    ("syn" ,rust-syn-2.0.100)
-    ("unicode-ident" ,rust-unicode-ident-1.0.18)))
-
 (define-cargo-inputs lookup-cargo-inputs
                      (aardvark-dns =>
                                    (list rust-addr2line-0.24.2
@@ -37370,6 +37361,13 @@
                                     rust-zerovec-derive-0.10.3
                                     rust-zip-2.6.1
                                     rust-zopfli-0.8.1))
+                     (mesa =>           ; TODO: Maintain this automatically too.
+                           (list rust-paste-1.0.15
+                                 rust-proc-macro2-1.0.94
+                                 rust-quote-1.0.40
+                                 rust-rustc-hash-2.1.1
+                                 rust-syn-2.0.100
+                                 rust-unicode-ident-1.0.18))
                      (mollysocket =>
                                   (list rust-ahash-0.8.12
                                         rust-aho-corasick-1.1.3
