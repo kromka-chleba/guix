@@ -27,6 +27,7 @@
   #:use-module (guix monads)
   #:use-module (guix search-paths)
   #:use-module (guix build-system)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix packages)
@@ -129,6 +130,7 @@ TRIPLET."
 (define %meson-build-system-modules
   ;; Build-side modules imported by default.
   `((guix build meson-build-system)
+    ,@%cargo-build-system-modules
     ;; The modules from glib-or-gtk contains the modules from gnu-build-system,
     ;; so there is no need to import that too.
     ,@%glib-or-gtk-build-system-modules))
@@ -201,6 +203,7 @@ TRIPLET."
                                           "bin" "sbin"))
                       (phases '%standard-phases)
                       (system (%current-system))
+                      (guile-json (cargo-guile-json))
                       (imported-modules %meson-build-system-modules)
                       (modules '((guix build meson-build-system)
                                  (guix build utils)))
@@ -210,45 +213,46 @@ TRIPLET."
   "Build SOURCE using MESON, and with INPUTS, assuming that SOURCE
 has a 'meson.build' file."
   (define builder
-    (with-imported-modules imported-modules
-      #~(begin
-          (use-modules #$@(sexp->gexp modules))
+    (with-extensions (list guile-json)
+      (with-imported-modules imported-modules
+        #~(begin
+            (use-modules #$@(sexp->gexp modules))
 
-          (define build-phases
-            #$(let ((phases (if (pair? phases) (sexp->gexp phases) phases)))
-                (if glib-or-gtk?
-                    phases
-                    #~(modify-phases #$phases
-                        (delete 'glib-or-gtk-compile-schemas)
-                        (delete 'glib-or-gtk-wrap)))))
+            (define build-phases
+              #$(let ((phases (if (pair? phases) (sexp->gexp phases) phases)))
+                  (if glib-or-gtk?
+                      phases
+                      #~(modify-phases #$phases
+                          (delete 'glib-or-gtk-compile-schemas)
+                          (delete 'glib-or-gtk-wrap)))))
 
-          #$(with-build-variables inputs outputs
-              #~(meson-build #:source #+source
-                             #:system #$system
-                             #:outputs %outputs
-                             #:inputs %build-inputs
-                             #:search-paths '#$(sexp->gexp
-                                                (map search-path-specification->sexp
-                                                     search-paths))
-                             #:phases build-phases
-                             #:configure-flags
-                             #$(if (pair? configure-flags)
-                                   (sexp->gexp configure-flags)
-                                   configure-flags)
-                             #:out-of-source? #$out-of-source?
-                             #:build-type #$build-type
-                             #:tests? #$tests?
-                             #:test-options #$(if (pair? test-options)
-                                                  (sexp->gexp test-options)
-                                                  test-options)
-                             #:parallel-build? #$parallel-build?
-                             #:parallel-tests? #$parallel-tests?
-                             #:validate-runpath? #$validate-runpath?
-                             #:patch-shebangs? #$patch-shebangs?
-                             #:strip-binaries? #$strip-binaries?
-                             #:strip-flags #$strip-flags
-                             #:strip-directories #$strip-directories
-                             #:elf-directories #$(sexp->gexp elf-directories))))))
+            #$(with-build-variables inputs outputs
+                #~(meson-build #:source #+source
+                               #:system #$system
+                               #:outputs %outputs
+                               #:inputs %build-inputs
+                               #:search-paths '#$(sexp->gexp
+                                                  (map search-path-specification->sexp
+                                                       search-paths))
+                               #:phases build-phases
+                               #:configure-flags
+                               #$(if (pair? configure-flags)
+                                     (sexp->gexp configure-flags)
+                                     configure-flags)
+                               #:out-of-source? #$out-of-source?
+                               #:build-type #$build-type
+                               #:tests? #$tests?
+                               #:test-options #$(if (pair? test-options)
+                                                    (sexp->gexp test-options)
+                                                    test-options)
+                               #:parallel-build? #$parallel-build?
+                               #:parallel-tests? #$parallel-tests?
+                               #:validate-runpath? #$validate-runpath?
+                               #:patch-shebangs? #$patch-shebangs?
+                               #:strip-binaries? #$strip-binaries?
+                               #:strip-flags #$strip-flags
+                               #:strip-directories #$strip-directories
+                               #:elf-directories #$(sexp->gexp elf-directories)))))))
 
   (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
                                                   system #:graft? #f)))
@@ -289,6 +293,7 @@ has a 'meson.build' file."
                             (make-dynamic-linker-cache? #f)
                             (phases '%standard-phases)
                             (system (%current-system))
+                            (guile-json (cargo-guile-json))
                             (imported-modules %meson-build-system-modules)
                             (modules '((guix build meson-build-system)
                                        (guix build utils)))
@@ -305,66 +310,67 @@ SOURCE has a 'meson.build' file."
         #~(append #$(input-tuples->gexp host-inputs)
               #+(input-tuples->gexp target-inputs))))
   (define builder
-    (with-imported-modules imported-modules
-      #~(begin
-          (use-modules #$@(sexp->gexp modules))
+    (with-extensions (list guile-json)
+      (with-imported-modules imported-modules
+        #~(begin
+            (use-modules #$@(sexp->gexp modules))
 
-          (define %build-host-inputs
-            #+(input-tuples->gexp build-inputs))
+            (define %build-host-inputs
+              #+(input-tuples->gexp build-inputs))
 
-          (define %build-target-inputs
-            (append #$(input-tuples->gexp host-inputs)
-                    #+(input-tuples->gexp target-inputs)))
+            (define %build-target-inputs
+              (append #$(input-tuples->gexp host-inputs)
+                      #+(input-tuples->gexp target-inputs)))
 
-          (define %build-inputs
-            (append %build-host-inputs %build-target-inputs))
+            (define %build-inputs
+              (append %build-host-inputs %build-target-inputs))
 
-          (define %outputs
-            #$(outputs->gexp outputs))
+            (define %outputs
+              #$(outputs->gexp outputs))
 
-          (define build-phases
-            #$(let ((phases (if (pair? phases) (sexp->gexp phases) phases)))
-                (if glib-or-gtk?
-                    phases
-                    #~(modify-phases #$phases
-                        (delete 'glib-or-gtk-compile-schemas)
-                        (delete 'glib-or-gtk-wrap)))))
+            (define build-phases
+              #$(let ((phases (if (pair? phases) (sexp->gexp phases) phases)))
+                  (if glib-or-gtk?
+                      phases
+                      #~(modify-phases #$phases
+                          (delete 'glib-or-gtk-compile-schemas)
+                          (delete 'glib-or-gtk-wrap)))))
 
-          ;; Do not use 'with-build-variables', as there should be
-          ;; no reason to use %build-inputs and friends.
-          (meson-build #:source #+source
-                       #:system #$system
-                       #:build #$(nix-system->gnu-triplet system)
-                       #:target #$target
-                       #:outputs #$(outputs->gexp outputs)
-                       #:inputs #$inputs
-                       #:native-inputs #+(input-tuples->gexp build-inputs)
-                       #:search-paths '#$(sexp->gexp
-                                          (map search-path-specification->sexp
-                                               search-paths))
-                       #:native-search-paths '#$(sexp->gexp
-                                                 (map search-path-specification->sexp
-                                                      native-search-paths))
-                       #:phases build-phases
-                       #:make-dynamic-linker-cache? #$make-dynamic-linker-cache?
-                       #:configure-flags `("--cross-file" #+cross-file
-                                           ,@#$(if (pair? configure-flags)
-                                                   (sexp->gexp configure-flags)
-                                                   configure-flags))
-                       #:out-of-source? #$out-of-source?
-                       #:build-type #$build-type
-                       #:tests? #$tests?
-                       #:test-options #$(if (pair? test-options)
-                                            (sexp->gexp test-options)
-                                            test-options)
-                       #:parallel-build? #$parallel-build?
-                       #:parallel-tests? #$parallel-tests?
-                       #:validate-runpath? #$validate-runpath?
-                       #:patch-shebangs? #$patch-shebangs?
-                       #:strip-binaries? #$strip-binaries?
-                       #:strip-flags #$strip-flags
-                       #:strip-directories #$strip-directories
-                       #:elf-directories #$(sexp->gexp elf-directories)))))
+            ;; Do not use 'with-build-variables', as there should be
+            ;; no reason to use %build-inputs and friends.
+            (meson-build #:source #+source
+                         #:system #$system
+                         #:build #$(nix-system->gnu-triplet system)
+                         #:target #$target
+                         #:outputs #$(outputs->gexp outputs)
+                         #:inputs #$inputs
+                         #:native-inputs #+(input-tuples->gexp build-inputs)
+                         #:search-paths '#$(sexp->gexp
+                                            (map search-path-specification->sexp
+                                                 search-paths))
+                         #:native-search-paths '#$(sexp->gexp
+                                                   (map search-path-specification->sexp
+                                                        native-search-paths))
+                         #:phases build-phases
+                         #:make-dynamic-linker-cache? #$make-dynamic-linker-cache?
+                         #:configure-flags `("--cross-file" #+cross-file
+                                             ,@#$(if (pair? configure-flags)
+                                                     (sexp->gexp configure-flags)
+                                                     configure-flags))
+                         #:out-of-source? #$out-of-source?
+                         #:build-type #$build-type
+                         #:tests? #$tests?
+                         #:test-options #$(if (pair? test-options)
+                                              (sexp->gexp test-options)
+                                              test-options)
+                         #:parallel-build? #$parallel-build?
+                         #:parallel-tests? #$parallel-tests?
+                         #:validate-runpath? #$validate-runpath?
+                         #:patch-shebangs? #$patch-shebangs?
+                         #:strip-binaries? #$strip-binaries?
+                         #:strip-flags #$strip-flags
+                         #:strip-directories #$strip-directories
+                         #:elf-directories #$(sexp->gexp elf-directories))))))
 
   (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
                                                   system #:graft? #f)))
