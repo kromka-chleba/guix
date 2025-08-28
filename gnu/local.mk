@@ -105,6 +105,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services.scm			\
   %D%/home/services/admin.scm			\
   %D%/home/services/backup.scm			\
+  %D%/home/services/containers.scm		\
   %D%/home/services/desktop.scm			\
   %D%/home/services/dict.scm			\
   %D%/home/services/dotfiles.scm		\
@@ -146,7 +147,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/anthy.scm			\
   %D%/packages/antivirus.scm			\
   %D%/packages/apl.scm				\
-  %D%/packages/apple.scm			\
   %D%/packages/apparmor.scm			\
   %D%/packages/appimage.scm			\
   %D%/packages/apr.scm				\
@@ -239,13 +239,11 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/dezyne.scm			\
   %D%/packages/decker.scm			\
   %D%/packages/dhall.scm			\
-  %D%/packages/dico.scm				\
   %D%/packages/dictd.scm			\
   %D%/packages/dotnet.scm			\
   %D%/packages/dictionaries.scm			\
   %D%/packages/diffoscope.scm			\
   %D%/packages/digest.scm			\
-  %D%/packages/direct-connect.scm		\
   %D%/packages/disk.scm			\
   %D%/packages/distributed.scm			\
   %D%/packages/display-managers.scm		\
@@ -837,6 +835,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/build/linux-initrd.scm			\
   %D%/build/linux-modules.scm			\
   %D%/build/marionette.scm			\
+  %D%/build/oci-containers.scm			\
   %D%/build/secret-service.scm			\
 						\
   %D%/tests.scm					\
@@ -1619,7 +1618,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/insight-toolkit-fix-build.patch			\
   %D%/packages/patches/irrlicht-use-system-libs.patch		\
   %D%/packages/patches/irrlicht-link-against-needed-libs.patch	\
-  %D%/packages/patches/isl-0.11.1-aarch64-support.patch	\
+  %D%/packages/patches/isl-0.11.1-aarch64-support.patch		\
+  %D%/packages/patches/ispell-for-linphone-cmake.patch		\
   %D%/packages/patches/jamesdsp-fix-bulid-on-pipewire-1.4.0.patch\
   %D%/packages/patches/jami-disable-webengine.patch		\
   %D%/packages/patches/jami-enable-testing.patch		\
@@ -1768,6 +1768,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libmpeg2-global-symbol-test.patch	\
   %D%/packages/patches/libmygpo-qt-fix-qt-5.11.patch		\
   %D%/packages/patches/libmygpo-qt-missing-qt5-modules.patch	\
+  %D%/packages/patches/liblinphone-jsoncpp.patch		\
   %D%/packages/patches/libphonenumber-reproducible-build.patch	\
   %D%/packages/patches/libqalculate-3.8.0-libcurl-ssl-fix.patch	\
   %D%/packages/patches/libquicktime-ffmpeg.patch 		\
@@ -1803,7 +1804,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/lierolibre-remove-arch-warning.patch	\
   %D%/packages/patches/lierolibre-try-building-other-arch.patch	\
   %D%/packages/patches/libcdio-glibc-compat.patch		\
-  %D%/packages/patches/linphone-desktop-without-sdk.patch	\
+  %D%/packages/patches/linphone-desktop-ispell.patch	\
+  %D%/packages/patches/linphone-desktop-qtkeychain.patch	\
   %D%/packages/patches/linux-libre-infodocs-target.patch	\
   %D%/packages/patches/linux-libre-support-for-Pinebook-Pro.patch \
   %D%/packages/patches/linux-libre-arm64-mnt-reform-revert-phy-rockchip-samsung.patch	\
@@ -1811,7 +1813,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/linux-libre-arm64-mnt-reform-revert-vop2-display-modes.patch	\
   %D%/packages/patches/linux-pam-no-setfsuid.patch		\
   %D%/packages/patches/linux-pam-unix_chkpwd.patch		\
-  %D%/packages/patches/linuxdcpp-openssl-1.1.patch		\
   %D%/packages/patches/lirc-localstatedir.patch			\
   %D%/packages/patches/lirc-reproducible-build.patch		\
   %D%/packages/patches/llvm-3.5-fix-clang-build-with-gcc5.patch	\
@@ -1858,6 +1859,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lvm2-no-systemd.patch    		\
   %D%/packages/patches/maturin-no-cross-compile.patch		\
   %D%/packages/patches/mecab-variable-param.patch		\
+  %D%/packages/patches/mediastreamer2-cmake-findgsm.patch	\
   %D%/packages/patches/mediasdk-gcc-14.patch			\
   %D%/packages/patches/memtest86+-build-reproducibly.patch	\
   %D%/packages/patches/mercurial-hg-extension-path.patch	\
@@ -1899,6 +1901,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/mosaicatcher-unbundle-htslib.patch	\
   %D%/packages/patches/mrrescue-support-love-11.patch		\
   %D%/packages/patches/mrustc-patches.patch			\
+  %D%/packages/patches/mswebrtc-b64-refactor.patch		\
+  %D%/packages/patches/mswebrtc-cmake.patch			\
   %D%/packages/patches/mtools-mformat-uninitialized.patch	\
   %D%/packages/patches/mupen64plus-ui-console-notice.patch	\
   %D%/packages/patches/musescore-fix-build.patch			\
@@ -1935,11 +1939,13 @@ dist_patch_DATA =						\
   %D%/packages/patches/nss-getcwd-nonnull.patch			\
   %D%/packages/patches/nss-increase-test-timeout.patch		\
   %D%/packages/patches/nss-3.56-pkgconfig.patch			\
+  %D%/packages/patches/nss-disable-broken-tests.patch           \
+  %D%/packages/patches/nss-3.115-disable-broken-tests.patch     \
+  %D%/packages/patches/nss-3.115-disable-pkix-ocsp-tests.patch  \
   %D%/packages/patches/ntp-fix-dereferencing-the-wrong-variable.patch   \
   %D%/packages/patches/nvi-assume-preserve-path.patch		\
   %D%/packages/patches/nvi-dbpagesize-binpower.patch		\
   %D%/packages/patches/nvi-db4.patch				\
-  %D%/packages/patches/nyacc-binary-literals.patch		\
   %D%/packages/patches/obs-modules-location.patch		\
   %D%/packages/patches/ocaml-ctypes-test-oo.patch		\
   %D%/packages/patches/ocaml-multiple-definitions.patch		\
@@ -2072,6 +2078,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/sdl-pango-matrix_declarations.patch	\
   %D%/packages/patches/sdl-pango-sans-serif.patch		\
   %D%/packages/patches/smalltalk-multiplication-overflow.patch	\
+  %D%/packages/patches/soci-mysql-ddl-types.patch		\
   %D%/packages/patches/sqlite-hurd.patch			\
   %D%/packages/patches/strace-readlink-tests.patch		\
   %D%/packages/patches/sunxi-tools-remove-sys-io.patch	\
@@ -2502,6 +2509,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/zig-0.14-fix-runpath.patch		\
   %D%/packages/patches/zig-0.14-use-baseline-cpu-by-default.patch	\
   %D%/packages/patches/zig-0.14-use-system-paths.patch		\
+  %D%/packages/patches/zig-0.15-fix-runpath.patch		\
   %D%/packages/patches/zsh-egrep-failing-test.patch		\
   %D%/packages/patches/zuo-bin-sh.patch			\
   %D%/packages/patches/zxing-cpp-1.2.0-gcc-14.patch	\

@@ -903,18 +903,34 @@ many input formats and provides a customisable Vi-style user interface.")
 (define-public denemo
   (package
     (name "denemo")
-    (version "2.6.0")
+    (version "2.6.44")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://gnu/denemo/denemo-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.git.savannah.gnu.org/denemo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0pdmjij2635jbw2a24ivk1y4w0z58jbmq9vnz3qrfzw4d469grab"))))
+        (base32
+         "1vpaiw34f0h0z01r40ln00494l4dwmyc4cy00hz2xggp6pa4abqy"))))
     (build-system gnu-build-system)
     (arguments
      (list
+      #:configure-flags
+      #~(list (string-append
+               "CFLAGS="
+               (string-join (list "-Wno-error=incompatible-pointer-types"
+                                  "-Wno-error=implicit-function-declaration")
+                            " ")))
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'bootstrap 'patch-autogen
+            (lambda _
+              (substitute* "autogen.sh"
+                (("/usr/share/aclocal")
+                 (string-append #$(this-package-native-input "automake")
+                                "/share/aclocal")))))
           (replace 'check
             (lambda* (#:key inputs tests? #:allow-other-keys)
               ;; Tests require to write $HOME.
@@ -938,8 +954,10 @@ many input formats and provides a customisable Vi-style user interface.")
                                   lilypond
                                   "\");")))))))))
     (native-inputs
-     (list diffutils
-           `(,glib "bin")               ; for gtester
+     (list autoconf
+           automake
+           diffutils
+           `(,glib "bin")             ; for gtester
            gtk-doc/stable
            intltool
            libtool
@@ -953,7 +971,7 @@ many input formats and provides a customisable Vi-style user interface.")
            glib
            gtk+
            gtksourceview-3
-           guile-2.0
+           guile-3.0
            (librsvg-for-system)
            libsndfile
            libxml2
@@ -7005,16 +7023,16 @@ ZaMultiComp, ZaMultiCompX2 and ZamSynth.")
 (define-public geonkick
   (package
     (name "geonkick")
-    (version "2.7.0")
+    (version "3.6.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/iurie-sw/geonkick")
+             (url "https://codeberg.org/Geonkick-Synthesizer/geonkick")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w1mvqm46qdwldcl81svaykwii4wvx7mcr57kwvnj0iv2qrc891i"))))
+        (base32 "0817hsfvgri315aw0y06rzjcw96lhgxjc37rbxqagk3ciw0naj6n"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;no tests included
@@ -7036,7 +7054,7 @@ ZaMultiComp, ZaMultiCompX2 and ZamSynth.")
     (description "Geonkick is a synthesizer that can synthesize elements
 of percussion such as kicks, snares, hit-hats, shakers, claps and sticks.
 It can also play and mix samples.")
-    (home-page "https://gitlab.com/iurie-sw/geonkick")
+    (home-page "https://geonkick.org")
     (license license:gpl3+)))
 
 (define-public mamba

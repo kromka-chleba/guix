@@ -2701,24 +2701,27 @@ Java objects.")
 (define-public python-pymdown-extensions
   (package
     (name "python-pymdown-extensions")
-    (version "8.1.1")
+    (version "10.16.1")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        (pypi-uri "pymdown-extensions" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/facelessuser/pymdown-extensions")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0d8pdndrl1kj105lq7r6kw2dnhcvll6h2qs07w71mcpi7gx728v3"))))
-    (build-system python-build-system)
-    ;; FIXME: "AssertionError: False is not true"
+        (base32 "0r36nk1ppq1wrgb1lcy9asp9872xr0gbhxrjw7dpa8lp6m7nqb9k"))))
+    (build-system pyproject-build-system)
+    ;; XXX: A lot of HTML tests fail with negligible discrepancies.
     (arguments
-     `(#:tests? #f))
-    (propagated-inputs
-     (list python-markdown))
+     (list #:tests? #f))
+    (native-inputs (list python-hatchling python-pytest python-pyyaml))
+    (propagated-inputs (list python-markdown))
     (home-page "https://github.com/facelessuser/pymdown-extensions")
     (synopsis "Extension pack for Python Markdown")
-    (description "PyMdown Extensions is a collection of extensions for Python
-Markdown.  All extensions are found under the module namespace of pymdownx.")
+    (description
+     "PyMdown Extensions is a collection of extensions for Python Markdown.
+All extensions are found under the module namespace of pymdownx.")
     (license license:expat)))
 
 (define-public python-plotext
@@ -6787,7 +6790,7 @@ palettes.")
     (propagated-inputs
      ;; Youtube-dl is a python package which is imported in the file
      ;; "backend_youtube_dl.py", therefore it needs to be propagated.
-     (list youtube-dl))
+     (list yt-dlp))
     (home-page "https://np1.github.io/pafy/")
     (synopsis "Retrieve YouTube content and metadata")
     (description
@@ -7635,29 +7638,30 @@ memory usage and transliteration quality.")
     (license license:expat)))
 
 (define-public python-pymsgbox
-  (package
-    (name "python-pymsgbox")
-    (version "1.0.6")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              ;; LICENSE.txt is not present on pypi
-              (url "https://github.com/asweigart/PyMsgBox")
-              (commit "55926b55f46caa969c5ddb87990ebea2737bd66f")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0zy7rjfpwlrd8b64j7jk2lb8m2npc21rnpwakpfvwgl4nxdy80rg"))))
-    (arguments
-     ;; Circular dependency to run tests:
-     ;; Tests need pyautogui, which depends on pymsgbox.
-     '(#:tests? #f))
-    (build-system python-build-system)
-    (home-page "https://github.com/asweigart/PyMsgBox")
-    (synopsis "Python module for JavaScript-like message boxes")
-    (description
-     "PyMsgBox is a simple, cross-platform, pure Python module for
+  (let ((commit "944b7cdc67058d005ce5fd011c66f2d87d25aba0")
+        (revision "1"))
+    (package
+      (name "python-pymsgbox")
+      (version (git-version "1.0.6" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/asweigart/PyMsgBox")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1bhipfvnc06l8hiadk302v74yin38nwz1r47njliwk8kz103yl3g"))))
+      (build-system pyproject-build-system)
+      (arguments
+       ;; Circular dependency to run tests:
+       ;; Tests need pyautogui, which depends on pymsgbox.
+       '(#:tests? #f))
+      (native-inputs (list python-setuptools python-wheel))
+      (home-page "https://github.com/asweigart/PyMsgBox")
+      (synopsis "Python module for JavaScript-like message boxes")
+      (description
+       "PyMsgBox is a simple, cross-platform, pure Python module for
 JavaScript-like message boxes.  Types of dialog boxes include:
 @enumerate
 @item alert
@@ -7666,7 +7670,7 @@ JavaScript-like message boxes.  Types of dialog boxes include:
 @item password
 @end enumerate
 ")
-    (license license:bsd-3)))
+      (license license:bsd-3))))
 
 (define-public python-pympler
   (package
@@ -8960,7 +8964,7 @@ ecosystem, but can naturally be used also by other projects.")
 (define-public python-robotframework
   (package
     (name "python-robotframework")
-    (version "7.2.2")
+    (version "7.3.2")
     (source
      (origin
        (method git-fetch) ; no tests in the PyPI archive
@@ -8969,7 +8973,7 @@ ecosystem, but can naturally be used also by other projects.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a34dv5gpaiqbddblfnirp1ja2a1069n9nifasn4g26kcj69fpra"))))
+        (base32 "0azis3dj7lfiwrr5gr1gr78z5m05vvl8n20rw3bz93s05z94h5i7"))))
     (outputs '("out" "doc"))
     (build-system pyproject-build-system)
     (arguments
@@ -9009,6 +9013,7 @@ ecosystem, but can naturally be used also by other projects.")
            python-jsonschema
            python-pygments
            python-rellu
+           python-typing-extensions-next
            python-setuptools
            `(,python "tk")              ;used when building the HTML doc
            python-wheel))
@@ -9621,22 +9626,9 @@ errors when data is invalid.")
      (list
       #:test-flags
       #~(list "--ignore=tests/test_docs.py"   ; no pytest_examples
-              ;; These tests include hashes that keep changing depending on
-              ;; package versions.
-              "--ignore=tests/benchmarks/test_north_star.py"
+              "--ignore-glob=tests/benchmarks/*"
               ;; Unimportant difference in one test's error message.
-              "--ignore=tests/test_networks.py")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'pre-check
-            (lambda _
-              ;; Remove the addopts from pyproject.toml, it breaks the 'check
-              ;; phase.
-              (substitute* "pyproject.toml"
-                (("'--benchmark") "#'--benchmark")
-                ;; Do not fail on deprecation warnings.
-                (("ignore:path is deprecated.*:DeprecationWarning:")
-                 "ignore::DeprecationWarning")))))))
+              "--ignore=tests/test_networks.py")))
     (native-inputs
      (list tzdata-for-tests
            python-dirty-equals
@@ -13038,7 +13030,6 @@ data, and scientific formats.")
     (build-system pyproject-build-system)
     (native-inputs
      (list pkg-config
-           python-pyperf
            python-pytest
            python-setuptools
            python-wheel))
@@ -17577,38 +17568,35 @@ reading and writing MessagePack data.")
                #t))))))))
 
 (define-public python-openstep-plist
- (package
-  (name "python-openstep-plist")
-  (version "0.3.0")
-  (home-page "https://github.com/fonttools/openstep-plist")
-  (source (origin
-            (method git-fetch)
-            (uri (git-reference
-                  (url home-page)
-                  (commit (string-append "v" version))))
-            (file-name (git-file-name name version))
-            (sha256
-             (base32
-              "1rxjgzh0p069ncsr2986rn32vhdqyq35irbqg2559jh18456mkca"))))
-  (build-system python-build-system)
-  (arguments
-   (list #:phases
-         #~(modify-phases %standard-phases
-             (add-after 'unpack 'pretend-version
-               (lambda _
-                 (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
-                         #$(package-version this-package))))
-             (replace 'check
-               (lambda* (#:key tests? #:allow-other-keys)
-                 (when tests?
-                   (invoke "pytest" "-vv")))))))
-  (native-inputs
-   (list python-cython python-pytest python-setuptools-scm))
-  (synopsis "OpenStep plist parser and writer")
-  (description
-   "This package provides a parser for the \"old style\" OpenStep property
+  (package
+    (name "python-openstep-plist")
+    (version "0.3.0")
+    (home-page "https://github.com/fonttools/openstep-plist")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rxjgzh0p069ncsr2986rn32vhdqyq35irbqg2559jh18456mkca"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'pretend-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                      #$(package-version this-package)))))))
+    (native-inputs (list python-cython python-pytest python-setuptools-scm
+                         python-setuptools python-wheel))
+    (synopsis "OpenStep plist parser and writer")
+    (description
+     "This package provides a parser for the \"old style\" OpenStep property
 list format (also known as ASCII plist), written in Cython.")
-  (license license:expat)))
+    (license license:expat)))
 
 (define-public python-wrapt
   (package
@@ -17720,25 +17708,15 @@ Unicode-aware.  It is not intended as an end-user tool.")
        (uri (pypi-uri "xlwt" version))
        (sha256
         (base32 "123c2pdamshkq75wwvck8fq0cjq1843xd3x9qaiz2a4vg9qi56f5"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (setenv "GUIX_PYTHONPATH"
-                       (string-append (getcwd) "/build/lib:"
-                                      (getenv "GUIX_PYTHONPATH")))
-               (invoke "nosetests" "-v")))))))
-    (native-inputs
-     `(("nose" ,python-nose)))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://www.python-excel.org/")
     (synopsis "Library for creating spreadsheet Excel files")
-    (description "@code{xlwt} is a library for writing data and formatting
-information to older Excel files (i.e. .xls).  The package itself is pure
-Python with no dependencies on modules or packages outside the standard Python
-distribution.  It is not intended as an end-user tool.")
+    (description
+     "@code{xlwt} is a library for writing data and formatting information to
+older Excel files (i.e. .xls).  The package itself is pure Python with no
+dependencies on modules or packages outside the standard Python distribution.
+It is not intended as an end-user tool.")
     (license license:bsd-3)))
 
 (define-public python-immutables
@@ -20712,17 +20690,39 @@ library as well as on the command line.")
     (version "1.7.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "plumbum" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tomerfiliba/plumbum")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1kidj821k79dw064rlxh84xamb9h79ychg3pgj81jlvm5hs48xri"))))
-    (build-system python-build-system)
+        (base32 "1vlaiz4bwgrcay51knj6a20lh3lwihjqxhxhdk6nqkn9ijg0hc81"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f))                    ;no tests
+     (list
+      #:test-flags
+      #~(list "--ignore=tests/test_remote.py"
+              "--ignore=tests/test_putty.py"
+              "--ignore=tests/test_sudo.py"
+              "-k"
+              (string-join (list "not test_home"
+                                 "test_iter_lines_error"
+                                 "test_quoting"
+                                 "test_copy_move_delete")
+                           " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (native-inputs
-     ;; XXX: Not actually used since there are no tests but required for
-     ;; build.
-     (list python-pytest))
+     (list procps
+           python-psutil
+           python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://plumbum.readthedocs.io")
     (synopsis "Python shell combinators library")
     (description
@@ -38126,12 +38126,13 @@ collection.")
        (uri (pypi-uri "types-toml" version))
        (sha256
         (base32 "10400bd3yv6rjfnq8galskkbpqz1sfx9sfgr5qwvw04270x4cjgr"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/python/typeshed")
     (synopsis "Typing stubs for TOML")
-    (description "This package contains typing stubs for TOML, a very small
-subset the Python stubs contained in the complete @code{typeshed}
-collection.")
+    (description
+     "This package contains typing stubs for TOML, a very small subset the
+Python stubs contained in the complete @code{typeshed} collection.")
     (license license:asl2.0)))
 
 (define-public python-types-ujson
@@ -38382,32 +38383,18 @@ easy to write code that's correct across platforms and Pythons.")
        (uri (pypi-uri "pyperf" version))
        (sha256
         (base32 "189qf9wdbig0fk4n3bavx8acgdbay5lllfvw48jvbfaafb7y5hja"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           (lambda _
-             ;; Some of these tests fail with:
-             ;;
-             ;;   ModuleNotFoundError: No module named 'pyperf'
-             ;;
-             ;; even when calling ‘add-installed-pythonpath’ in the ‘check’
-             ;; phase.
-             (delete-file "pyperf/tests/test_examples.py")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; From tox.ini's ‘testenv.commands’.
-               (invoke "python" "-bb" "-Wd"
-                       "-m" "unittest" "discover"
-                       "-s" "pyperf/tests/" "-v")))))))
-    (native-inputs
-     (list python-psutil))
+     (list
+      #:test-flags
+      #~(list "--ignore=pyperf/tests/test_examples.py")))
+    (native-inputs (list python-psutil python-pytest python-setuptools
+                         python-wheel))
     (home-page "https://github.com/psf/pyperf")
     (synopsis "Toolkit for running Python benchmarks")
-    (description "The Python @code{pyperf} module is a toolkit for writing,
-running and analyzing benchmarks.  It features a simple API that can:
+    (description
+     "The Python @code{pyperf} module is a toolkit for writing, running and
+analyzing benchmarks.  It features a simple API that can:
 
 @itemize
 @item automatically calibrate a benchmark for a time budget;
@@ -38850,68 +38837,86 @@ nested data structures in Python like lists and dictionaries.")
     (license license:expat)))
 
 (define-public python-murmurhash3
-  (package
-    (name "python-murmurhash3")
-    (version "2.3.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "murmurhash3" version))
-              (sha256
-               (base32
-                "1gdzys1212dx70byz07ipknbw1awbqskh6aznlkm85js8b8qfczm"))))
-    (build-system python-build-system)
-    (native-inputs (list python-cython python-pytest))
-    (inputs (list python))
-    (arguments
-     (list #:modules
-           '((ice-9 ftw) (ice-9 match)
-             (guix build utils)
-             (guix build python-build-system))
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'set-source-file-times-to-1980
-                 (lambda _
-                   (let ((circa-1980 (* 10 366 24 60 60)))
-                     (ftw "."
-                          (lambda (file stat flag)
-                            (utime file circa-1980 circa-1980) #t))))))))
-    (home-page "https://github.com/veegee/mmh3")
-    (synopsis "Python wrapper for MurmurHash (MurmurHash3)")
-    (description
-     "@code{murmurhash3} is a Python library for MurmurHash (MurmurHash3), a set
+  (let ((commit "01f1128a2c5ea08e6dc33515e140bedd68393a2d")
+        (revision "0"))
+    (package
+      (name "python-murmurhash3")
+      (version (git-version "2.3.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/veegee/mmh3")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1zpk51ms1bvzg52zc9s9az71bgw2kgxidjcc1xib7y9r7dl7vczz"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-package
+              (lambda _
+                (substitute* "mmh3module.cpp"
+                  (("#include <stdio\\.h>")
+                   "#define PY_SSIZE_T_CLEAN\n#include <stdio.h>")))))))
+      (native-inputs
+       (list python-cython python-pytest python-setuptools python-wheel))
+      (home-page "https://github.com/veegee/mmh3")
+      (synopsis "Python wrapper for MurmurHash (MurmurHash3)")
+      (description
+       "@code{murmurhash3} is a Python library for MurmurHash (MurmurHash3), a set
 of fast and robust hash functions.  This library is a Python extension module
 written in C.")
-    (license license:public-domain)))
+      (license license:public-domain))))
 
 (define-public python-murmurhash
   (package
     (name "python-murmurhash")
     (version "1.0.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "murmurhash" version))
-              (sha256
-               (base32
-                "0vwkn98c703nvsigl2nz99rax2pafkx3djjfkgc49jiipmp3j2k3"))))
-    (build-system python-build-system)
-    (native-inputs (list python-cython python-pytest))
-    (inputs (list python python-murmurhash3))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/explosion/murmurhash")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p8afy51nfvswl2fcimy5vc584zv89349rq12ymbcpp06yidzdfh"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:modules
-           '((ice-9 ftw) (ice-9 match)
-             (guix build utils)
-             (guix build python-build-system))
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'set-source-file-times-to-1980
-                 (lambda _
-                   (let ((circa-1980 (* 10 366 24 60 60)))
-                     (ftw "."
-                          (lambda (file stat flag)
-                            (utime file circa-1980 circa-1980) #t))))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'fix-installation
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion
+                  (string-append (site-packages inputs outputs) "/murmurhash")
+                (delete-file-recursively "tests")
+                (delete-file "mrmr.pyx")
+                (for-each
+                 (lambda (file)
+                   (chmod file #o555))
+                 (find-files "." "\\.so$")))))
+          ;; XXX: Otherwise ModuleNotFoundError, and --pyargs doesn't seem
+          ;; to fix the issue.
+          (replace 'check
+            (lambda args
+              (copy-recursively "murmurhash/tests" "tests")
+              (delete-file-recursively "murmurhash")
+              (with-directory-excursion "tests"
+                (apply (assoc-ref %standard-phases 'check) args)))))))
+    (native-inputs
+     (list python-cython
+           python-murmurhash3
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/explosion/murmurhash")
     (synopsis "Cython bindings for MurmurHash2")
-    (description "This package provides Cython bindings for MurmurHash2.")
+    (description
+     "This package provides Cython bindings for MurmurHash2.")
     (license license:expat)))
 
 ;; Scooby requires for its test suite a ‘pyvips’ package that is missing its

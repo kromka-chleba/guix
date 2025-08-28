@@ -31,7 +31,7 @@
 ;;; Copyright © 2020, 2021 Masaya Tojo <masaya@tojo.tokyo>
 ;;; Copyright © 2020 Jesse Gibbons <jgibbons2357@gmail.com>
 ;;; Copyright © 2020 Mike Rosset <mike.rosset@gmail.com>
-;;; Copyright © 2020 Liliana Marie Prikler <liliana.prikler@gmail.com>
+;;; Copyright © 2020, 2025 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2020, 2021, 2022 pukkamustard <pukkamustard@posteo.net>
 ;;; Copyright © 2021 Bonface Munyoki Kilyungi <me@bonfacemunyoki.com>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
@@ -163,14 +163,14 @@
 (define-public artanis
   (package
     (name "artanis")
-    (version "1.2.2")
+    (version "1.3.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/artanis/artanis-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "013rs623075bbf824hf6jxng0kwbmg587l45fis9mmpq5168kspq"))
+                "16cwjyl0ykz6r7vvczrwaik6y4pc0fwc0hvwskfbgv9z71j2alzi"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -1961,17 +1961,21 @@ the Guile compiler tower to generate the DSL from AWS JSON specifications.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lvxic93cyzhdq7gb22pfz5j5pf7b1pcv0ahblkan8jbhzpqxvm0"))))
+        (base32 "1lvxic93cyzhdq7gb22pfz5j5pf7b1pcv0ahblkan8jbhzpqxvm0"))
+       ;; FIXME: report upstream and remove when fixed.
+       (modules '((guix build utils)))
+       (snippet '(substitute* "module/Makefile.am"
+                   (("compile-ffi -o mosquitto-nyacc.scm")
+                    "compile-ffi -X -o $(srcdir)/ffi/mosquitto-nyacc.scm")))))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:make-flags
-      #~(list "GUILE_AUTO_COMPILE=0")
+      #:parallel-build? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'patch-extension-path
             (lambda* (#:key inputs #:allow-other-keys)
-              (setenv "HOME" "/tmp")
+              (setenv "GUILE_AUTO_COMPILE" "0")
               (with-directory-excursion "module"
                 (invoke "make" "ffi/mosquitto.scm")
                 (substitute* "ffi/mosquitto.scm"
@@ -1983,7 +1987,7 @@ the Guile compiler tower to generate the DSL from AWS JSON specifications.")
     (native-inputs (list autoconf
                          automake
                          guile-3.0
-                         nyacc-2.01
+                         nyacc
                          pkg-config
                          texinfo))
     (inputs (list mosquitto))
@@ -4924,6 +4928,68 @@ return accumulators.  It is implemented by wrapping the sample
 implementation in a thin Guile compatibility layer.")
       (license license:gpl3+))))
 
+(define-public guile-srfi-165
+  (let ((commit "1b441c0edc258e39cb943096bd47dd45071e2f70")
+        (revision "0"))
+    (package
+      (name "guile-srfi-165")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+            (url "https://github.com/scheme-requests-for-implementation/srfi-165")
+            (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1ac1nmf413sayy0xq4c2l4kmbjkh8ksg3s4fwgk44zcd8phy3kxw"))))
+      (build-system guile-build-system)
+      (arguments
+       (list
+        #:scheme-file-regexp "(srfi-165|impl)\\.scm$"
+        #:documentation-file-regexp "srfi-165\\.html$"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'build 'rename-files
+              (lambda _
+                (mkdir-p "srfi/srfi-165")
+                (rename-file "srfi/165.scm" "srfi/srfi-165/impl.scm")
+                (substitute* "srfi/165.sld"
+                  (("\\(include \"165.scm\"\\)")
+                   "(include \"srfi-165/impl.scm\")"))
+                (rename-file "srfi/165.sld" "srfi/srfi-165.scm")))
+            (add-after 'build 'check-installed
+              (lambda _
+                (substitute* "srfi/165/test.sld"
+                  (("srfi 165 test") "srfi #{165}# test"))
+                (define-values (scm go) (target-guile-scm+go #$output))
+
+                (invoke "guile"
+                        "-L" scm "-C" go
+                        "-l" "./srfi/165/test.sld"
+                        "-c"
+                        (format #f "~S"
+                                '(begin
+                                   (use-modules (srfi #{165}# test))
+                                   (run-tests)))))))))
+      (native-inputs (list guile-3.0
+                           guile-srfi-125
+                           guile-srfi-128
+                           guile-srfi-146))
+      (propagated-inputs
+       (list guile-srfi-125 guile-srfi-128 guile-srfi-146))
+      (home-page "https://srfi.schemers.org/srfi-165/")
+      (synopsis "Environment/Reader Monad")
+      (description
+       "This library provides the sample implementation of SRFI-165.
+This SRFI defines an environment monad, which models computations that depend on
+values from a shared environment.  These computations can read values from the
+environment, pass values to subsequent computations, execute sub-computations in
+an extended environment, and modify the environment for future computations.")
+      (license license:expat))))
+
 (define-public guile-srfi-180
   (let ((commit "9188bf9724c6d320ef804579d222e855b007b193")
         (revision "0"))
@@ -6729,15 +6795,15 @@ tools.")
 (define-public guile-eris
   (package
     (name "guile-eris")
-    (version "1.0.0")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://codeberg.org/eris/guile-eris.git")
-             (commit (string-append "v" version))))
+              (url "https://codeberg.org/eris/guile-eris.git")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0d4wbjwwaxk0zn5gjhl86qhvk1aisgzp1vnvy4xbvrv5ydqpgyqm"))))
+       (sha256 (base32 "03z9dr725kdj57gmkwnx6v6p8nkf0xbn359q2dnn4b29x3dxf39x"))))
     (build-system gnu-build-system)
     (arguments '())
     (native-inputs
@@ -6750,8 +6816,14 @@ tools.")
            guile-quickcheck))
     (inputs (list guile-3.0))
     (propagated-inputs
-     (list guile-sodium))
-    (synopsis "Guile implementation of the Encoding for Robust Immutable Storage (ERIS)")
+     (list guile-sodium
+           guile-coap
+           guile-fibers
+           guile-sqlite3
+           guile-zstd
+           guile-cbor))
+    (synopsis "Guile implementation of the Encoding for Robust Immutable
+Storage (ERIS)")
     (description
      "Guile-ERIS is a Guile implementation of the @url{http://purl.org/eris,
 Encoding for Robust Immutable Storage (ERIS)}.  ERIS allows arbitrary content
@@ -6943,9 +7015,12 @@ schedulers.")
                 (("dynamic-link \"libyaml\"")
                  (format #f "dynamic-link \"~a/lib/libyaml\""
                          (assoc-ref inputs "libyaml")))))))))
-    (native-inputs (list gcc guile-3.0 nyacc))
+    ;; guile-libyaml does not work with nyacc-2.02.2. See
+    ;; https://github.com/mwette/guile-libyaml/issues/7 for upstream bug
+    ;; report. Hence, we use the older nyacc-1.08.1.
+    (native-inputs (list gcc guile-3.0 nyacc-1.08.1))
     (inputs (list libyaml))
-    (propagated-inputs (list guile-bytestructures nyacc))
+    (propagated-inputs (list guile-bytestructures nyacc-1.08.1))
     (home-page "https://github.com/mwette/guile-libyaml")
     (synopsis "Guile wrapper for libyaml")
     (description

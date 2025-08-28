@@ -4625,6 +4625,30 @@ submodules:
 @end itemize")
     (license license:asl2.0)))
 
+(define-public go-github-com-cosiner-argv
+  (package
+    (name "go-github-com-cosiner-argv")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cosiner/argv")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ard8655lr4rqd929pvn9phv4mbgzrl3rswcl6i7p97cls7gn2yc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/cosiner/argv"))
+    (home-page "https://github.com/cosiner/argv")
+    (synopsis "Split command line string into arguments array")
+    (description
+     "Package argv parses command line string into arguments array using the
+bash syntax.")
+    (license license:expat)))
+
 (define-public go-github-com-couchbase-gomemcached
   (package
     (name "go-github-com-couchbase-gomemcached")
@@ -5366,6 +5390,46 @@ formatting information, rather than the current locale name.")
      "This package provides an optimized implementation of protobuf's varint
 encoding/decoding.  It has no dependencies.")
     (license license:expat)))
+
+(define-public go-github-com-derekparker-trie
+  (package
+    (name "go-github-com-derekparker-trie")
+    (version "0.0.0-20230829180723-39f4de51ef7d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/derekparker/trie")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ik8xsxm7bd12lycga6d0zw561axmdwdqxi5qbf39n7mw41l9vj2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/derekparker/trie"))
+    (home-page "https://github.com/derekparker/trie")
+    (synopsis "Prefix/fuzzy string searching in Golang")
+    (description "Implementation of an R-Way Trie data structure.")
+    (license license:expat)))
+
+(define-public go-github-com-derekparker-trie-v3
+  (package
+    (inherit go-github-com-derekparker-trie)
+    (name "go-github-com-derekparker-trie-v3")
+    (version "3.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/derekparker/trie")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02br0cw2wh27xffs1hsbwh145d3vpaihcd7mygf36ihdhrp00pka"))))
+    (arguments
+     (list
+      #:import-path "github.com/derekparker/trie/v3"))))
 
 (define-public go-github-com-detailyang-go-fallocate
   (package
@@ -7510,6 +7574,35 @@ handle reading output (STDOUT and STDERR) while a command is running and
 killing a command.  All operations are safe to call from multiple
 goroutines.")
     (license license:expat)))
+
+;; For delve@1.25.1
+(define-public go-github-com-go-delve-liner
+  (hidden-package
+   (package
+     (name "go-github-com-go-delve-liner")
+     (version "1.2.3-0.20231231155935-4726ab1d7f62")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/go-delve/liner")
+               (commit (go-version->git-ref version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "0f94qx7jzign64gv865whirq9xw7rakxf3wy4y9fsn52bxx408x0"))))
+     (build-system go-build-system)
+     (arguments
+      (list
+       #:import-path "github.com/go-delve/liner"))
+     (propagated-inputs
+      (list go-github-com-mattn-go-runewidth
+            go-golang-org-x-sys))
+     (home-page "https://github.com/go-delve/liner")
+     (synopsis "Command line editor Go library")
+     (description
+      "This package is an alternative fork of https://github.com/peterh/liner
+to build @code{delve} - debugger for the Go programming language.")
+     (license license:expat))))
 
 (define-public go-github-com-go-errors-errors
   (package
@@ -21790,9 +21883,9 @@ when they'd prefer a more familiar, loosely typed API.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/uber-go/zap")
-             (commit (go-version->git-ref version
-                                          #:subdir "exp"))))
+              (url "https://github.com/uber-go/zap")
+              (commit (go-version->git-ref version
+                                           #:subdir "exp"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "05i15278swdmpif3p6g18sy0sn7rnfdl3m2rj5p30cnyb0j29vig"))
@@ -21805,18 +21898,11 @@ when they'd prefer a more familiar, loosely typed API.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "." "exp")))))
     (build-system go-build-system)
     (arguments

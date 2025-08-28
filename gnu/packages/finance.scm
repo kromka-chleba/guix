@@ -845,7 +845,7 @@ blockchain.")
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.18.4.1")
+    (version "0.18.4.2")
     (source
      (origin
        (method git-fetch)
@@ -863,7 +863,7 @@ blockchain.")
             delete-file-recursively
             '("external/miniupnp" "external/rapidjson"))))
        (sha256
-        (base32 "0k4z01l8dvnazh650yarwn6ja1wrxcqq4g7302xw0dhw7h1qvy1j"))))
+        (base32 "1285kigw9j633ghvp4apld9ddrvw7hjgjv23yabjvl7l2gc6hlv6"))))
     (build-system cmake-build-system)
     (native-inputs
      (list doxygen
@@ -950,7 +950,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.18.4.1")
+    (version "0.18.4.2")
     (source
      (origin
        (method git-fetch)
@@ -966,7 +966,7 @@ the Monero command line client and daemon.")
            ;; See the 'extract-monero-sources' phase.
            (delete-file-recursively "monero")))
        (sha256
-        (base32 "1r2cfzh4lc94mb7fqa8f41613msnsyy5kz6mzcr4npjpm8bxqs8k"))))
+        (base32 "0sa90shh82k6pzj1xr1f6x13q1q4mif4v00zahq96i7iglqpn4b6"))))
     (build-system qt-build-system)
     (native-inputs
      `(,@(package-native-inputs monero)
@@ -2530,7 +2530,7 @@ and manipulation.")
 (define-public xmrig
   (package
     (name "xmrig")
-    (version "6.22.2")
+    (version "6.24.0")
     (source
      (origin
        (method git-fetch)
@@ -2538,7 +2538,7 @@ and manipulation.")
              (url "https://github.com/xmrig/xmrig")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0dis9v8xykiqqzcib22djgmzyvx71akjs25aqvxjjzl1n8cm4npz"))
+       (sha256 (base32 "10q91sh29hlb7yd4lkfjsrk16qgb2j1z19ac77c9y7ccfci97f01"))
        (modules '((guix build utils)))
        (snippet
         ;; TODO: Try to use system libraries instead of bundled ones in
@@ -2587,7 +2587,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.9")
+    (version "4.9.1")
     (source
      (origin
        (method git-fetch)
@@ -2596,7 +2596,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0898a823mi38z6dwdm6crb2l98rv79sznmqwa0ss96xggvk12nlw"))
+       (sha256 (base32 "0zdsp6pb4rlbdqanx94rw1rii5jih1szf4rl3nf8fldvjkwkydlf"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively

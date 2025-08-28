@@ -1194,23 +1194,24 @@ cardinality matching from a bipartite graph.")
 (define-public python-persim
   (package
     (name "python-persim")
-    (version "0.3.2")
+    (version "0.3.8")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "persim" version))
        (sha256
-        (base32 "0q8wfakx8q4h3ryvw8cba0v6z7xn9139qkrzs3mi1ggyzacnx9d7"))))
+        (base32 "03d4kgakpgj54c3pl9dkqrkbmj6w13gmczkds5jagf3n85c1hgg1"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-deprecated
-                             python-hopcroftkarp
-                             python-joblib
-                             python-matplotlib
-                             python-numpy
-                             python-scikit-learn
-                             python-scipy))
-    (native-inputs (list python-pytest python-pytest-cov python-setuptools
-                         python-wheel))
+    (native-inputs
+     (list python-pytest python-setuptools-next))
+    (propagated-inputs
+     (list python-deprecated
+           python-hopcroftkarp
+           python-joblib
+           python-matplotlib
+           python-numpy
+           python-scikit-learn
+           python-scipy))
     (home-page "https://persim.scikit-tda.org")
     (synopsis "Tools for analyzing persistence diagrams in Python")
     (description
@@ -3975,6 +3976,21 @@ advanced research.")
               (with-directory-excursion "/tmp/fft2d"
                 (invoke "tar" "--strip-components=1"
                         "-xf" (assoc-ref inputs "fft2d-src")))))
+          (add-after 'copy-sources 'opencl-fix
+            (lambda _ (substitute* "delegates/gpu/cl/opencl_wrapper.h"
+              (("cl_ndrange_kernel_command_properties_khr")
+               "cl_command_properties_khr"))))
+          (add-after 'opencl-fix 'absl-fix
+            (lambda _ (substitute* '(
+                        "delegates/gpu/cl/cl_operation.h"
+                        "delegates/gpu/common/task/qcom_thin_filter_desc.cc"
+                        "delegates/gpu/common/tasks/special/thin_pointwise_fuser.cc")
+              (("#include <vector>")
+               "#include <vector>\n\n#include \"absl/strings/str_cat.h\"\n"))))
+          (add-after 'opencl-fix 'stdint-fix
+            (lambda _ (substitute* "kernels/internal/spectrogram.cc"
+              (("#include <math.h>")
+               "#include <math.h>\n#include <cstdint>\n"))))
           (add-after 'build 'build-shared-library
             (lambda* (#:key configure-flags #:allow-other-keys)
               (mkdir-p "c")
@@ -3999,7 +4015,7 @@ advanced research.")
               (when tests?
                 (invoke "ctest" "-L" "plain")))))))
     (inputs
-     `(("abseil-cpp" ,abseil-cpp-20200923.3)
+     `(("abseil-cpp" ,abseil-cpp)
        ("cpuinfo" ,cpuinfo)
        ("eigen" ,eigen)
        ("fp16" ,fp16)
@@ -5596,24 +5612,23 @@ as torchvision, torchtext, and others.")
 (define-public python-readchar
   (package
     (name "python-readchar")
-    (version "4.0.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "readchar" version))
-              (sha256
-               (base32
-                "09n8vl2jjbnbnrzfvkynijrnwrqvc91bb2267zg8r261sz15d908"))))
+    (version "4.2.1")
+    (source
+     (origin
+       ;; There is no tests data in PyPI archive.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/magmax/python-readchar/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "16ypci664l54ka6ickwkpaa2id14h9h00y7z24z0bv0szld4mrxg"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         ;; This one file requires the msvcrt module, which we don't have.
-         (add-after 'unpack 'delete-windows-file
-           (lambda _
-             (delete-file "readchar/_win_read.py"))))))
-    (propagated-inputs (list python-setuptools))
-    (native-inputs (list python-wheel))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools-next))
     (home-page "https://github.com/magmax/python-readchar")
     (synopsis "Library to easily read single chars and key strokes")
     (description "This package provides a Python library to easily read single

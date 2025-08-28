@@ -116,14 +116,14 @@
 (define computed-origin-method (@@ (guix packages) computed-origin-method))
 
 (define firefox-l10n
-  (let ((commit "25c14798b15f9933b6c1e2bc655030842b6e0edd"))
+  (let ((commit "93aea9134e458a78257e4164832e4871d1e425d8"))
     (origin
       (method git-fetch)
       (uri (git-reference
             (url "https://github.com/mozilla-l10n/firefox-l10n.git")
             (commit commit)))
       (file-name (git-file-name "firefox-l10n" commit))
-      (sha256 (base32 "06iymygkf94s04ixvk1mlis9p5lmypx5k8pmrd3z3jddpmawk0r1")))))
+      (sha256 (base32 "1bpn8jp477lzcnba4s23dy0dqr64ll2qvkaj45aa5j40nrz7qfwk")))))
 
 (define* (make-librewolf-source #:key version firefox-hash librewolf-hash l10n)
   (let* ((ff-src (firefox-source-origin
@@ -193,10 +193,20 @@
         "librewolf-compare-paths.patch"
         "librewolf-use-system-wide-dir.patch"
         "librewolf-add-store-to-rdd-allowlist.patch"))
-      ;; XXX: 75 Mo (800+ Mo uncompressed) of unused tests.
-      ;; Removing it makes it possible to compile on some systems.
+      ;; Slim down the tarball by removing unbundled libraries and 75 Mo (800+
+      ;; Mo uncompressed) of unused tests.
+      ;; TODO: Unbundle security/nss and media/libpng.
       (modules '((guix build utils)))
-      (snippet #~(delete-file-recursively "testing/web-platform")))))
+      (snippet
+       #~(for-each delete-file-recursively
+                   '("testing/web-platform"
+                     "gfx/cairo/libpixman"
+                     "js/src/ctypes/libffi"
+                     "ipc/chromium/src/third_party/libevent"
+                     "media/libvpx"
+                     "docs/nspr"
+                     "media/libwebp"
+                     "modules/zlib"))))))
 
 ;;; Define the versions of rust needed to build firefox, trying to match
 ;;; upstream.  See table at [0], `Uses' column for the specific version.
@@ -210,17 +220,17 @@
 ;; It's used for cache validation and therefore can lead to strange bugs.
 ;; ex: date '+%Y%m%d%H%M%S'
 ;; or: (format-time-string "%Y%m%d%H%M%S")
-(define %librewolf-build-id "20250727200313")
+(define %librewolf-build-id "20250823164949")
 
 (define-public librewolf
   (package
     (name "librewolf")
-    (version "141.0-1")
+    (version "142.0-1")
     (source
      (make-librewolf-source
       #:version version
-      #:firefox-hash "1j1m6niw47xi6aj9rlcny8jhqkppjvg22cq7mikim93wpf22m640"
-      #:librewolf-hash "18k3d09dr6jkhr6g8z8c3aa7jj0ynjalkmvc3nj7wd98mgvky2xj"
+      #:firefox-hash "03sblq1l5hjlwgqh1vyshrw1161cs5amlx7kjqzmjv1v1zqy2218"
+      #:librewolf-hash "1yk7cyqwr264968dyl7v92jn25giaawg5i2zla89177iw32zvfgx"
       #:l10n firefox-l10n))
     (build-system gnu-build-system)
     (arguments

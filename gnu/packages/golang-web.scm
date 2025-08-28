@@ -1077,18 +1077,11 @@ parameter types for AWS Secrets Manager.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "service" "sqs")
             (delete-all-but "." "service")))))
     (build-system go-build-system)
@@ -4173,6 +4166,30 @@ be returned from the RPC call.")
      "Groupcache is a caching and cache-filling library, intended as a
 replacement for memcached in many cases.  It provides a data loading mechanism
 with caching and de-duplication that works across a set of peer processes.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-google-go-dap
+  (package
+    (name "go-github-com-google-go-dap")
+    (version "0.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-dap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c0941wxnpx3pscf08gr6vrn90rja8k8pjhl1px0r54kcjidd5js"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/google/go-dap"))
+    (home-page "https://github.com/google/go-dap")
+    (synopsis "Implementation of the Debug Adapter Protocol in Golang")
+    (description
+     "Package dap contains data types and code for Debug Adapter
+Protocol (DAP) specification.")
     (license license:asl2.0)))
 
 (define-public go-github-com-google-go-github-v31
@@ -11864,18 +11881,11 @@ Handler) and routes @code{WithRouteTag}.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "propagators" "autoprop")
             (delete-all-but "." "propagators")))))
     (build-system go-build-system)
@@ -12109,9 +12119,9 @@ go.opentelemetry.io/otel/trace.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "exporters/otlp/otlptrace"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "exporters/otlp/otlptrace"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
@@ -12124,18 +12134,11 @@ go.opentelemetry.io/otel/trace.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters/otlp" "otlptrace")
             (delete-all-but "." "exporters")
             ;; Submodules with their own go.mod files and packed as separated
@@ -12171,9 +12174,9 @@ go.opentelemetry.io/otel/trace.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "exporters/otlp/otlptrace/otlptracegrpc"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "exporters/otlp/otlptrace/otlptracegrpc"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
@@ -12186,18 +12189,11 @@ go.opentelemetry.io/otel/trace.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters/otlp/otlptrace" "otlptracegrpc")
             (delete-all-but "." "exporters")))))
     (build-system go-build-system)
@@ -12234,9 +12230,9 @@ By default the telemetry is sent to @@url{https://localhost:4317}.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "exporters/otlp/otlptrace/otlptracehttp"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "exporters/otlp/otlptrace/otlptracehttp"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
@@ -12249,18 +12245,11 @@ By default the telemetry is sent to @@url{https://localhost:4317}.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters/otlp/otlptrace" "otlptracehttp")
             (delete-all-but "." "exporters")))))
     (build-system go-build-system)
@@ -12328,9 +12317,9 @@ telemetry to be written to an output destination as JSON.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "exporters/zipkin"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "exporters/zipkin"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
@@ -12343,18 +12332,11 @@ telemetry to be written to an output destination as JSON.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters" "zipkin")
             (delete-all-but "." "exporters")))))
     (build-system go-build-system)
@@ -12383,9 +12365,9 @@ telemetry to be written to an output destination as JSON.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "log"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "log"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
@@ -12398,18 +12380,11 @@ telemetry to be written to an output destination as JSON.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "." "log")))))
     (build-system go-build-system)
     (arguments
@@ -12450,8 +12425,8 @@ OpenTelemetry API.")))
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version #:subdir "sdk"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version #:subdir "sdk"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
@@ -12464,18 +12439,11 @@ OpenTelemetry API.")))
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "." "sdk")
             (delete-file-recursively "sdk/log")
             (delete-file-recursively "sdk/metric")))))
@@ -12506,9 +12474,9 @@ OpenTelemetry API.")))
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "sdk/log"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "sdk/log"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
@@ -12521,18 +12489,11 @@ OpenTelemetry API.")))
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "sdk" "log")
             (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -12561,9 +12522,9 @@ OpenTelemetry API.")))
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/open-telemetry/opentelemetry-go")
-             (commit (go-version->git-ref version
-                                          #:subdir "sdk/metric"))))
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "sdk/metric"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
@@ -12576,18 +12537,11 @@ OpenTelemetry API.")))
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "sdk" "metric")
             (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -12804,8 +12758,8 @@ the standard @code{context} package to store request-scoped values.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/googleapis/go-genproto")
-             (commit (go-version->git-ref version #:subdir "googleapis/api"))))
+              (url "https://github.com/googleapis/go-genproto")
+              (commit (go-version->git-ref version #:subdir "googleapis/api"))))
        (modules '((guix build utils)
                   (ice-9 ftw)
                   (srfi srfi-26)))
@@ -12815,18 +12769,11 @@ the standard @code{context} package to store request-scoped values.")
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             ;; Submodules with their own go.mod files and packaged separately:
             ;;
             ;; - google.golang.org/genproto/googleapis/api/apikeys

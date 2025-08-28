@@ -5803,24 +5803,26 @@ The drivers officially supported by @code{libdbi} are:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "12aq7pama96l2c1kmfkclb4bvrsxs9a8ppgk5gmzw45w2lg35i0y"))))
+                "12aq7pama96l2c1kmfkclb4bvrsxs9a8ppgk5gmzw45w2lg35i0y"))
+              (patches (search-patches "soci-mysql-ddl-types.patch"))))
     (build-system cmake-build-system)
     (propagated-inputs
      ;; Headers of soci has include-references to headers of these inputs.
-     `(("firebird" ,firebird)
-       ("postgresql" ,postgresql)
-       ("sqlite" ,sqlite)
-       ("odbc" ,unixodbc)
-       ("boost" ,boost)
-       ("mariadb:dev" ,mariadb "dev")))
+     (list firebird
+           postgresql
+           sqlite
+           unixodbc
+           boost
+           `(,mariadb "dev")))
     (arguments
-     `(#:configure-flags
-       ;; C++11 (-DSOCI_CXX11) is OFF by default.  hyperledger-iroha needs it.
-       (list "-DCMAKE_CXX_STANDARD=17"
-             "-DSOCI_LIBDIR=lib"
-             ;; This is for relocation when linking statically
-             "-DCMAKE_CXX_FLAGS=-fPIE")
-       #:tests? #f))         ; may require running database management systems
+     (list #:configure-flags
+           ;; C++11 (-DSOCI_CXX11) is OFF by default.  hyperledger-iroha needs
+           ;; it.
+           #~(list "-DCMAKE_CXX_STANDARD=17"
+                   "-DSOCI_LIBDIR=lib"
+                   ;; This is for relocation when linking statically
+                   "-DCMAKE_CXX_FLAGS=-fPIE")
+           #:tests? #f))     ; may require running database management systems
     (synopsis "C++ Database Access Library")
     (description
      "SOCI is an abstraction layer for several database backends, including

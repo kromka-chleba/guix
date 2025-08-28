@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013 Aljosha Papsch <misc@rpapsch.de>
-;;; Copyright © 2014-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2018 Raoul Jean Pierre Bonnal <ilpuccio.febo@gmail.com>
@@ -15,7 +15,7 @@
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2016, 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
-;;; Copyright © 2016–2024 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2016–2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016 Bake Timmons <b3timmons@speedymail.org>
 ;;; Copyright © 2017 Thomas Danckaert <post@thomasdanckaert.be>
@@ -1494,6 +1494,68 @@ project)
 @item Very simple API with operator sugar for C++
 @end itemize")
     (license license:bsd-2)))
+
+(define-public webhook
+  (package
+    (name "webhook")
+    (version "2.8.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/adnanh/webhook")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "15cihbf49kbhgwavjsvl4qfcf3lyqa39vyqdxglmnkn603c3nk6w"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   ;; Remove bundled dependencies.
+                   (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list #:go go-1.23
+           #:import-path "github.com/adnanh/webhook"
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'configure
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/github.com/adnanh/webhook/webhook_test.go"
+                     (("/bin/echo")
+                      (search-input-file inputs "bin/echo"))
+                     (("/bin/sh")
+                      (search-input-file inputs "bin/sh"))))))))
+    (native-inputs
+     (list go-github-com-clbanning-mxj-v2
+           go-github-com-coreos-go-systemd-v22
+           go-github-com-dustin-go-humanize
+           go-github-com-fsnotify-fsnotify
+           go-github-com-ghodss-yaml
+           go-github-com-go-chi-chi-v5
+           go-github-com-gofrs-uuid-v5
+           go-github-com-gorilla-mux
+           go-golang-org-x-sys))
+    (home-page "https://github.com/adnanh/webhook")
+    (synopsis "Lightweight incoming webhook server")
+    (description "webhook is a lightweight configurable tool to create HTTP
+endpoints (hooks) which can execute configured commands.  Data from the HTTP
+request (such as headers, payload or query variables) can be passed on to the
+configured commands.  Hooks may also be configured to trigger only when
+certain rules are satisfied.
+
+webhook aims to be minimal and do nothing more than it should do.  And, that
+is:
+
+@itemize
+@item receive the request
+@item parse the headers, payload and query variables
+@item check if the specified rules for the hook are satisfied
+@item and finally, pass the specified arguments to the specified command via
+command line arguments or via environment variables.
+@end itemize")
+    (license (list license:expat       ;; main license
+                   license:asl2.0))))  ;; internal/pidfile
 
 (define-public qjson
   (package
@@ -5522,11 +5584,9 @@ Cloud.")
               (lambda* (#:key inputs outputs #:allow-other-keys)
                 (let* ((out (assoc-ref outputs "out"))
                        (bin (string-append out "/bin"))
-                       (guile (assoc-ref inputs "guile"))
                        (guile-effective-version
                         (read-line
-                         (open-pipe* OPEN_READ
-                                     (string-append guile "/bin/guile")
+                         (open-pipe* OPEN_READ (which "guile")
                                      "-c" "(display (effective-version))")))
                        (scm (string-append out "/share/guile/site/"
                                            guile-effective-version))
@@ -5542,13 +5602,11 @@ Cloud.")
                        `("PATH" ":" prefix
                          ,(cons*
                            bin
-                           (map (lambda (input)
-                                  (string-append
-                                   (assoc-ref inputs input)
-                                   "/bin"))
-                                '("ephemeralpg"
-                                  "util-linux"
-                                  "postgresql"))))
+                           (map (lambda (file)
+                                  (search-input-file inputs file))
+                                '("/bin/pg_tmp"   ;ephemeralpg
+                                  "/bin/ionice"   ;util-linux
+                                  "/bin/psql")))) ;postgresql
                        `("GUILE_LOAD_PATH" ":" prefix
                          (,scm ,(getenv "GUILE_LOAD_PATH")))
                        `("GUILE_LOAD_COMPILED_PATH" ":" prefix
@@ -5575,7 +5633,9 @@ Cloud.")
              guile-squee
              guile-lzlib))
       (native-inputs
-       (list (lookup-package-native-input guix "guile")
+       ;; Use the highest Guile version found among dependencies to ensure .go
+       ;; files can be loaded.
+       (list (lookup-package-native-input guile-fibers-next "guile")
              autoconf
              automake
              emacs-minimal
@@ -9694,6 +9754,21 @@ for ZIM files.")
 It contains the code shared by all Kiwix ports.")
     (license license:gpl3)))
 
+(define-public kiwix-lib-13
+  (package
+    (inherit kiwix-lib)
+    (name "kiwix-lib")
+    (version "13.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/kiwix/kiwix-lib/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0mgzmqar70rj83x27a4zh7qr6yl5pi95g6i3fvvxysdjy76v18qc"))))))
+
 (define-public kiwix-desktop
   (package
     (name "kiwix-desktop")
@@ -9764,7 +9839,7 @@ offline (such as Wikipedia), without any access to Internet.")
     (inputs
      (list curl
            icu4c
-           kiwix-lib
+           kiwix-lib-13
            libmicrohttpd
            libzim
            pugixml

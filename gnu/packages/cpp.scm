@@ -2041,8 +2041,10 @@ other values of screen objects, by setting their values as the tween starting
 point and then, after each tween step, plugging back the result.")
     (license license:expat)))
 
-;;; This older LTS release is kept for tensorflow.
 (define-public abseil-cpp-20200923.3
+  ;; "guix refresh -l" shows no dependents of this package, but by input
+  ;; rewriting, grpc-1.16.1 depends on it;
+  ;; in turn this is an input to hyperledger-iroha and tensorflow.
   (package
     (name "abseil-cpp")
     (version "20200923.3")

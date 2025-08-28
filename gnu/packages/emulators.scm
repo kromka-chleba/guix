@@ -643,18 +643,11 @@ turbo speed, networked multiplayer, and graphical enhancements.")
           #~(begin
               ;; XXX: 'delete-all-but' is copied from the turbovnc package.
               (define (delete-all-but directory . preserve)
-                (define (directory? x)
-                  (and=> (stat x #f)
-                         (compose (cut eq? 'directory <>) stat:type)))
                 (with-directory-excursion directory
-                  (let* ((pred
-                          (negate (cut member <> (append '("." "..") preserve))))
+                  (let* ((pred (negate (cut member <>
+                                            (cons* "." ".." preserve))))
                          (items (scandir "." pred)))
-                    (for-each (lambda (item)
-                                (if (directory? item)
-                                    (delete-file-recursively item)
-                                    (delete-file item)))
-                              items))))
+                    (for-each (cut delete-file-recursively <>) items))))
 
               ;; Clean up the source from bundled libraries we don't need.
               (delete-all-but "Externals"
@@ -2866,18 +2859,11 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
                          (srfi srfi-26))
             ;; XXX: 'delete-all-but' is copied from the turbovnc package.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             ;; Remove as much bundled sources as possible, shaving off about
             ;; 65 MiB.
             (delete-all-but "deps"
@@ -4366,72 +4352,96 @@ on a Commodore C64, C128 etc.")
     (license license:zlib)))
 
 (define-public flycast
-  (package
-    (name "flycast")
-    (version "2.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/flyinghead/flycast")
-             (commit (string-append "v" version))
-             ;; There are many bundled packages here included as git
-             ;; submodules. Removing many of them would require patching the
-             ;; source code and repository layout.
-             (recursive? #t)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0ainy75gkrvilcm89hq6wq9md41w0mxgp6l27q5fzrxxykpjh6ym"))
-       (modules '((guix build utils)))
-       (snippet #~(begin
-                    (substitute* "CMakeLists.txt"
-                      (("add_subdirectory\\(core/deps/Vulkan-Headers\\)")
-                       "find_package(VulkanHeaders)"))
-                    (with-directory-excursion "core/deps"
-                      (for-each delete-file-recursively
-                                '("SDL"
-                                  "Spout"
-                                  "Syphon"
-                                  "Vulkan-Headers"
-                                  "breakpad"
-                                  "discord-rpc"
-                                  "libzip"
-                                  "oboe")))))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:tests? #f ; no test suite
-      #:configure-flags
-      #~(list "-DUSE_ALSA=ON"
-              "-DUSE_BREAKPAD=OFF"
-              "-DUSE_DX11=OFF"
-              "-DUSE_DX9=OFF"
-              ;; The USE_HOST_GLSLANG option is not implemented correctly.
-              ;; (see: https://github.com/flyinghead/flycast/issues/1843)
-              "-DUSE_HOST_GLSLANG=OFF"
-              "-DUSE_HOST_LIBZIP=ON"
-              "-DUSE_HOST_SDL=ON"
-              "-DUSE_LIBAO=ON"
-              "-DUSE_LUA=ON"
-              "-DUSE_PULSEAUDIO=ON"
-              "-DUSE_VULKAN=ON")))
-    (inputs (list alsa-lib
-                  ao
-                  curl
-                  glslang
-                  libzip
-                  lua
-                  miniupnpc
-                  pulseaudio
-                  sdl2
-                  spirv-tools
-                  vulkan-headers
-                  pkg-config))
-    (home-page "https://github.com/flyinghead/flycast")
-    (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
-    (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
+  ;; Use a git snapshot as the latest 2.5 release is still on an older glslang
+  ;; version that doesn't build with GCC 14.
+  (let ((commit "33833cfd1ed2d94d907223442fdb8cdafd8d5d80")
+        (revision "0"))
+    (package
+      (name "flycast")
+      (version (git-version "2.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/flyinghead/flycast")
+                (commit commit)
+                ;; There are many bundled packages here included as git
+                ;; submodules, but removing many of them would require patching
+                ;; the source code and repository layout (see: <>).
+                (recursive? #t)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "16vwhw33zhq2b8mpg863cn7sz4f04wxjz2650jgqjv7i5lkdd1g9"))
+         (modules '((guix build utils)))
+         (snippet #~(begin
+                      ;; TODO: Uncomment after our vulkan-headers
+                      ;; are update to 1.3.261.0 or newer.
+                      ;; (substitute* "CMakeLists.txt"
+                      ;;   (("add_subdirectory\\(core/deps/Vulkan-Headers\\)")
+                      ;;    "find_package(VulkanHeaders)"))
+                      (with-directory-excursion "core/deps"
+                        (for-each
+                         delete-file-recursively
+                         '("SDL"
+                           "Spout"
+                           "Syphon"
+                           ;; TODO: Uncomment after our vulkan-headers
+                           ;; are update to 1.3.261.0 or newer.
+                           ;;"Vulkan-Headers"
+                           "breakpad"
+                           "discord-rpc"
+                           ;; XXX: The libretro build requires the bundled
+                           ;; libzip, which it uses to produce a
+                           ;; static library.
+                           ;;"libzip"
+                           "oboe")))))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:tests? #f                       ;no test suite
+        #:configure-flags
+        #~(list "-DUSE_ALSA=ON"
+                "-DUSE_BREAKPAD=OFF"
+                "-DUSE_DX11=OFF"
+                "-DUSE_DX9=OFF"
+                ;; The USE_HOST_GLSLANG option is not implemented correctly.
+                ;; (see: https://github.com/flyinghead/flycast/issues/1843)
+                "-DUSE_HOST_GLSLANG=OFF"
+                "-DUSE_HOST_LIBZIP=ON"
+                "-DUSE_HOST_SDL=ON"
+                "-DUSE_LIBAO=ON"
+                "-DUSE_LIBCDIO=ON"
+                "-DUSE_LUA=ON"
+                "-DUSE_PULSEAUDIO=ON"
+                "-DUSE_VULKAN=ON")))
+      (native-inputs (list pkg-config))
+      (inputs (list alsa-lib
+                    ao
+                    curl
+                    glslang
+                    libcdio
+                    libzip
+                    lua
+                    miniupnpc
+                    pulseaudio
+                    sdl2
+                    spirv-tools
+                    ;; TODO: Uncomment after vulkan-headers
+                    ;; is updated to 1.3.261.0 or newer.
+                    ;;vulkan-headers
+                    ))
+      (home-page "https://github.com/flyinghead/flycast")
+      (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
+      (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
 and Atomiswave emulator derived from reicast.")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
+
+(define-public libretro-flycast
+  (package/inherit flycast
+    (name "libretro-flycast")
+    (arguments (substitute-keyword-arguments (package-arguments flycast)
+                 ((#:configure-flags flags)
+                  #~(cons "-DLIBRETRO=ON" #$flags))))))
 
 (define-public freedisksysrom
   ;; There is no release; use the latest commit.

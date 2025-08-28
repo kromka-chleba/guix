@@ -34,7 +34,7 @@
 ;;; Copyright © 2018 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2019 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;; Copyright © 2019 mikadoZero <mikadozero@yandex.com>
-;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019 Stefan Stefanović <stefanx2ovic@gmail.com>
 ;;; Copyright © 2019-2022 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2019 Kei Kebreau <kkebreau@posteo.net>
@@ -514,7 +514,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.15-version "6.15.10")
+(define-public linux-libre-6.15-version "6.15.11")
 (define-public linux-libre-6.15-gnu-revision "gnu")
 (define deblob-scripts-6.15
   (linux-libre-deblob-scripts
@@ -524,7 +524,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0301x3n5qbg8xm48pxq1dhrq0vkr61bqdcyaz0mbckrg20kw6m67")))
 (define-public linux-libre-6.15-pristine-source
   (let ((version linux-libre-6.15-version)
-        (hash (base32 "01pxk3cnil1wbysp4s6ybh5djskxzf9llmk1qy7zfr2l4mwnbkd4")))
+        (hash (base32 "14sxwrvw9p4ybizb8ky1rgahc62q0aw5qkmzqp3cpnavqfgldaw9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.15)))
@@ -533,7 +533,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.42")
+(define-public linux-libre-6.12-version "6.12.43")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -543,7 +543,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1yy17c06sn6l0skz8n1kxqhzldgwxxd0xhs11fd3086d56554128")))
+        (hash (base32 "1vmxywg11z946i806sg7rk7jr9px87spmwwbzjxpps2nsjybpjqg")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
@@ -8103,124 +8103,128 @@ not as a replacement for it.")
                    license:gpl3+))))            ; everything else
 
 (define-public hotspot
-  (package
-    (name "hotspot")
-    (version "1.5.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/KDAB/hotspot")
-                    (commit (string-append "v" version))
-                    ;; Include the bundled perfparser and PrefixTickLabels
-                    ;; libraries, which are to be used in source form.
-                    (recursive? #t)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "04k2rvf2lgi8hp7dzqzn65fcd2lsiylwr04d44q75j0wvgbjjv1v"))))
-    (build-system qt-build-system)
-    (arguments
-     (list
-      ;; As mentioned in the option help text, the KAuth helper cannot be
-      ;; installed to a custom prefix and the build fails with "file cannot
-      ;; create directory: /polkit-1/actions.  Maybe need administrative"
-      ;; (see: https://bugs.kde.org/show_bug.cgi?id=363678).
-      #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
-                                "-DQT6_BUILD=ON")
-      #:qtbase qtbase
-      ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
-      ;; the later seemingly requiring sudo or access to the kernel
-      ;; trace points.
-      #:test-exclude
-       (string-append
-        "("
-        (string-join
-         ;; The 'tst_models' expected output doesn't exactly
-         ;; match.
-         '("tst_models"
-           ;; The 'tst_callgraphgenerator' perf invocation
-           ;; fails when run in the build container.
-           "tst_callgraphgenerator"
-           ;; The 'tst_perfparser' test requires sudo/access
-           ;; to the kernel scheduler trace points.
-           "tst_perfparser")
-         "|")
-        ")")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-perfparser
-            ;; XXX: This phase is copied from qt-creator: keep them in sync!
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; perfparser attempts to dynamically load the demangle
-              ;; libraries; use their absolute file name to avoid having to
-              ;; set LD_LIBRARY_PATH.
-              (let ((librustc_demangle.so
-                     (with-exception-handler (lambda (ex)
-                                               (if (search-error? ex)
-                                                   #f
-                                                   (raise-exception ex)))
-                       (lambda ()
-                         (search-input-file inputs "lib/librustc_demangle.so"))
-                       #:unwind? #t)))
-                (substitute* "3rdparty/perfparser/app/demangler.cpp"
-                  (("loadDemangleLib\\(QStringLiteral\\(\"rustc_demangle\")"
-                    all)
-                   (if librustc_demangle.so
-                       (format #f "loadDemangleLib(QStringLiteral(~s)"
-                               librustc_demangle.so)
-                       all))            ;no rustc_demangle; leave unchanged
-                  (("loadDemangleLib\\(QStringLiteral\\(\"d_demangle\")")
-                   (format #f "loadDemangleLib(QStringLiteral(~s)"
-                           (search-input-file inputs
-                                              "lib/libd_demangle.so")))))))
-          (add-after 'unpack 'path-paths
-            (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "src/perfoutputwidgetkonsole.cpp"
-                (("\"tail\"")
-                 (format #f "~s" (search-input-file inputs "bin/tail"))))
-              (substitute* "src/perfrecord.cpp"
-                (("\"perf( )?\"" _ space)
-                 (string-append "\"" (search-input-file inputs "bin/perf")
-                                (or space "") "\""))))))))
-    (native-inputs
-     (list extra-cmake-modules
-           vulkan-headers))
-    (inputs
-     (append
-      (list coreutils-minimal
-            d-demangler
-            elfutils
-            karchive
-            kconfig
-            kcoreaddons
-            kddockwidgets
-            kgraphviewer
-            ki18n
-            kio
-            kiconthemes
-            kitemmodels
-            kitemviews
-            knotifications
-            kparts
-            ksyntaxhighlighting
-            kwindowsystem
-            libxkbcommon
-            perf
-            qtdeclarative
-            qtsvg
-            solid
-            threadweaver
-            `(,zstd "lib"))
-      (if (supported-package? rust-rustc-demangle-capi-0.1)
-          (list rust-rustc-demangle-capi-0.1)
-          '())))
-    (home-page "https://github.com/KDAB/hotspot")
-    (synopsis "Performance analysis GUI for Linux perf")
-    (description "Hotspot is a standalone GUI for performance data analysis.
+  ;; Use the latest git commit as it includes unreleased fixes for the test
+  ;; suite.
+  (let ((commit "5cec69301a3f34ada86ce9fe01a9538b04b3cf7c")
+        (revision "0"))
+    (package
+      (name "hotspot")
+      (version (git-version "1.5.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/KDAB/hotspot")
+                       (commit commit)
+                       ;; Include the bundled perfparser and PrefixTickLabels
+                       ;; libraries, which are to be used in source form.
+                       (recursive? #t)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "115gskjdcb1q3mgrnv1qcdrhxabjzl1hhkpk1klk67ayicsk1ym6"))))
+      (build-system qt-build-system)
+      (arguments
+       (list
+        ;; As mentioned in the option help text, the KAuth helper cannot be
+        ;; installed to a custom prefix and the build fails with "file cannot
+        ;; create directory: /polkit-1/actions.  Maybe need administrative"
+        ;; (see: https://bugs.kde.org/show_bug.cgi?id=363678).
+        #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
+                                  "-DQT6_BUILD=ON")
+        #:qtbase qtbase
+        ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
+        ;; the later seemingly requiring sudo or access to the kernel
+        ;; trace points.
+        #:test-exclude
+        (string-append
+         "("
+         (string-join
+          ;; The 'tst_models' expected output doesn't exactly
+          ;; match.
+          '("tst_models"
+            ;; The 'tst_callgraphgenerator' perf invocation
+            ;; fails when run in the build container.
+            "tst_callgraphgenerator"
+            ;; The 'tst_perfparser' test requires sudo/access
+            ;; to the kernel scheduler trace points.
+            "tst_perfparser")
+          "|")
+         ")")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-perfparser
+              ;; XXX: This phase is copied from qt-creator: keep them in sync!
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; perfparser attempts to dynamically load the demangle
+                ;; libraries; use their absolute file name to avoid having to
+                ;; set LD_LIBRARY_PATH.
+                (let ((librustc_demangle.so
+                       (with-exception-handler (lambda (ex)
+                                                 (if (search-error? ex)
+                                                     #f
+                                                     (raise-exception ex)))
+                         (lambda ()
+                           (search-input-file inputs "lib/librustc_demangle.so"))
+                         #:unwind? #t)))
+                  (substitute* "3rdparty/perfparser/app/demangler.cpp"
+                    (("loadDemangleLib\\(QStringLiteral\\(\"rustc_demangle\")"
+                      all)
+                     (if librustc_demangle.so
+                         (format #f "loadDemangleLib(QStringLiteral(~s)"
+                                 librustc_demangle.so)
+                         all))            ;no rustc_demangle; leave unchanged
+                    (("loadDemangleLib\\(QStringLiteral\\(\"d_demangle\")")
+                     (format #f "loadDemangleLib(QStringLiteral(~s)"
+                             (search-input-file inputs
+                                                "lib/libd_demangle.so")))))))
+            (add-after 'unpack 'path-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "src/perfoutputwidgetkonsole.cpp"
+                  (("\"tail\"")
+                   (format #f "~s" (search-input-file inputs "bin/tail"))))
+                (substitute* "src/perfrecord.cpp"
+                  (("\"perf( )?\"" _ space)
+                   (string-append "\"" (search-input-file inputs "bin/perf")
+                                  (or space "") "\""))))))))
+      (native-inputs
+       (list extra-cmake-modules
+             vulkan-headers))
+      (inputs
+       (append
+        (list coreutils-minimal
+              d-demangler
+              elfutils
+              karchive
+              kconfig
+              kcoreaddons
+              kddockwidgets
+              kgraphviewer
+              ki18n
+              kio
+              kiconthemes
+              kitemmodels
+              kitemviews
+              knotifications
+              kparts
+              ksyntaxhighlighting
+              kwindowsystem
+              libxkbcommon
+              perf
+              qtdeclarative
+              qtsvg
+              solid
+              threadweaver
+              `(,zstd "lib"))
+        (if (supported-package? rust-rustc-demangle-capi-0.1)
+            (list rust-rustc-demangle-capi-0.1)
+            '())))
+      (home-page "https://github.com/KDAB/hotspot")
+      (synopsis "Performance analysis GUI for Linux perf")
+      (description "Hotspot is a standalone GUI for performance data analysis.
 It aims to be similar to KCachegrind, but for data collected with
 @command{perf}, a profiler for use with the kernel Linux.  Its main feature is
 graphically visualizing a @file{perf.data} file.")
-    (license (list license:gpl2+ license:gpl3+)))) ;dual licensed
+      (license (list license:gpl2+ license:gpl3+))))) ;dual licensed
 
 (define-public ecryptfs-utils
   (package
