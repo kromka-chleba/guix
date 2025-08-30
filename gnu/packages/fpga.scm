@@ -795,61 +795,66 @@ using different abstraction levels.")
      (list perl python systemc))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'bootstrap
-           (lambda _ (invoke "autoconf")))
-         (add-after 'unpack 'adjust-source
-           (lambda _
-             (substitute* "bin/verilator"
-               (("/bin/echo") "echo"))))
-         (add-before 'check 'disable-gdb-safe-path
-           (lambda _
-             (setenv "HOME" (getcwd))
-             (mkdir-p (string-append (getcwd) "/.config/gdb"))
-             (with-output-to-file (string-append (getcwd) "/.config/gdb/gdbinit")
-               (lambda ()
-                 (display "set auto-load safe-path /"))))))
-       #:test-target "test"))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'bootstrap
+            (lambda _ (invoke "autoconf")))
+          (add-after 'unpack 'adjust-source
+            (lambda _
+              (substitute* "bin/verilator"
+                (("/bin/echo") "echo"))))
+          (add-before 'check 'disable-gdb-safe-path
+            (lambda _
+              (setenv "HOME" (getcwd))
+              (mkdir-p (string-append (getcwd) "/.config/gdb"))
+              (with-output-to-file
+                  (string-append (getcwd) "/.config/gdb/gdbinit")
+                (lambda ()
+                  (display "set auto-load safe-path /"))))))
+      #:test-target "test"))
     (home-page "https://www.veripool.org/verilator/")
     (synopsis "Verilog/SystemVerilog simulator")
     (description
-     "Verilator transforms the specified Verilog or SystemVerilog code by reading it,
-performing lint checks, and optionally inserting assertion checks and
-coverage-analysis points.  It outputs single- or multi-threaded @file{.cpp}
-and @file{.h} files.")
+     "Verilator transforms the specified Verilog or SystemVerilog code by
+reading it, performing lint checks, and optionally inserting assertion checks
+and coverage-analysis points.  It outputs single- or multi-threaded
+@file{.cpp} and @file{.h} files.")
     (license license:lgpl3)))
 
 (define-public fftgen
-  (let ((commit "1d75a992efd0528edea128a903aafdabe133cb08") ;no releases
-        (revision "0"))
+  (let ((commit "3378b77d83a98b06184656a5cb9b54e50dfe4485") ;no releases
+        (revision "1"))
     (package
       (name "fftgen")
       (version (git-version "0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/ZipCPU/dblclockfft")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0qq874yalzpjdwnxhc5df8a0ifywv29wcncb09945x56xplvkcmd"))))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/ZipCPU/dblclockfft")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1rvln871wjkbbqnv88jnx328xlhn5sgbr8fglk3ajnd9rwgiq3jg"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:tests? #f                              ;no tests
-         #:make-flags '("CFLAGS=-g -O2")          ;default flags lack -O2
-         #:phases (modify-phases %standard-phases
-                    (delete 'configure)
-                    (replace 'install
-                      (lambda* (#:key outputs #:allow-other-keys)
-                        (let ((bin (string-append (assoc-ref outputs "out")
-                                                  "/bin")))
-                          (install-file "sw/fftgen" bin)))))))
+       (list
+        #:test-target "bench-test"
+        #:make-flags #~(list "CFLAGS=-g -O2") ;default flags lack -O2
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'install
+              (lambda _
+                (install-file "sw/fftgen"
+                              (string-append #$output "/bin")))))))
+      (native-inputs (list bc fftw python-minimal verilator which))
       (synopsis "Generic pipelined FFT core generator")
       (description "fftgen produces @acronym{FFT, fast-Fourier transforms}
 hardware designs in Verilog.")
-      (home-page "https://zipcpu.com/")
+      (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
 
 (define-public openfpgaloader
@@ -921,7 +926,7 @@ to @samp{info \"(guix) Base Services\"} for examples.")
                        #:test-flags #~(list "test_all.py")))
       (native-inputs (list python-pytest python-setuptools python-wheel))
       (propagated-inputs (list python-networkx python-six))
-      (home-page "https://gitlab.com/ohwr/project/hdl-make/")
+      (home-page "https://ohwr.gitlab.io/project/hdl-make/")
       (synopsis "Generate multi-purpose makefiles for HDL projects")
       (description
        "Hdlmake helps manage and share @acronym{HDL, hardware description

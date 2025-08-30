@@ -1439,6 +1439,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/ghostscript-no-header-id.patch		\
   %D%/packages/patches/ghostscript-no-header-uuid.patch		\
   %D%/packages/patches/ghostscript-no-header-creationdate.patch \
+  %D%/packages/patches/gimp-fix-metadata-editor.patch		\
+  %D%/packages/patches/gimp-fix-tiff-load.patch			\
   %D%/packages/patches/git-filter-repo-generate-doc.patch	\
   %D%/packages/patches/gklib-suitesparse.patch			\
   %D%/packages/patches/glib-appinfo-watch.patch			\
@@ -1834,6 +1836,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lugaru-fix-sound.patch			\
   %D%/packages/patches/luit-posix.patch				\
   %D%/packages/patches/lxc-no-static-bin.patch	\
+  %D%/packages/patches/lxsession-potfiles-ignore.patch		\
   %D%/packages/patches/mactelnet-remove-init.patch		\
   %D%/packages/patches/mailutils-variable-lookup.patch		\
   %D%/packages/patches/mandoc-support-zstd-compression.patch	\

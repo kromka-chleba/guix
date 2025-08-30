@@ -27494,6 +27494,39 @@ internbombing, excessive input and macro characters.")
 (define-public ecl-safe-read
   (sbcl-package->ecl-package sbcl-safe-read))
 
+(define-public sbcl-salmagundi
+  (let ((commit "aa231f6043111ec5dbeb06feab732efb7d59c959")
+        (revision "0"))
+    (package
+      (name "sbcl-salmagundi")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/s-expressionists/Salmagundi")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1i0hknnd555ih509kvna2xdirfxyy05wr2bp628997rnj8drlsnx"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-trivial-package-locks))
+      (home-page "https://github.com/s-expressionists/Salmagundi")
+      (synopsis "Implementation of Common Lisp hash tables")
+      (description "This library contains code that implements Common Lisp
+hash tables.")
+      (license license:bsd-2))))
+
+(define-public cl-salmagundi
+  (sbcl-package->cl-source-package sbcl-salmagundi))
+
+(define-public ecl-salmagundi
+  (sbcl-package->ecl-package sbcl-salmagundi))
+
+(define-public clasp-salmagundi
+  (sbcl-package->clasp-package sbcl-salmagundi))
+
 (define-public sbcl-salza2
   (package
     (name "sbcl-salza2")
@@ -31693,6 +31726,39 @@ in DEFPACKAGE.")
 
 (define-public ecl-trivial-package-local-nicknames
   (sbcl-package->ecl-package sbcl-trivial-package-local-nicknames))
+
+(define-public sbcl-trivial-package-locks
+  (let ((commit "ca2e2b17124c7898942894383002313cea59486d")
+        (revision "0"))
+    (package
+      (name "sbcl-trivial-package-locks")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/yitzchak/trivial-package-locks")
+                (commit commit)))
+         (file-name (git-file-name "cl-trivial-package-locks" commit))
+         (sha256
+          (base32 "0kbyrkd7a9apyq83bl96jspjggjsswxh93111wrmpvhbnm2vll60"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-parachute))
+      (home-page "https://github.com/yitzchak/trivial-package-locks")
+      (synopsis "Standard interface to the various package lock implementations")
+      (description
+       "This package provides a standard interface to the various package lock
+implementations of Common Lisp.")
+      (license license:expat))))
+
+(define-public cl-trivial-package-locks
+  (sbcl-package->cl-source-package sbcl-trivial-package-locks))
+
+(define-public ecl-trivial-package-locks
+  (sbcl-package->ecl-package sbcl-trivial-package-locks))
+
+(define-public clasp-trivial-package-locks
+  (sbcl-package->clasp-package sbcl-trivial-package-locks))
 
 (define-public sbcl-trivial-raw-io
   (let ((commit "b1a3c876305baa0dead419841de7b3e433a75867")

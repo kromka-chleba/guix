@@ -216,39 +216,40 @@ to take care of the OS-specific details when writing software that uses serial p
          (file-name (git-file-name name version))))
       (outputs '("out" "doc"))
       (arguments
-       `(#:tests? #f                      ; tests need USB access
-         #:phases
-         (modify-phases %standard-phases
-           (add-before 'configure 'change-udev-group
-             (lambda _
-               (substitute* (find-files "contrib" "\\.rules$")
-                 (("plugdev") "dialout"))))
-           (add-after 'build 'build-doc
-             (lambda _
-               (invoke "doxygen")))
-           (add-after 'install 'install-doc
-             (lambda* (#:key outputs #:allow-other-keys)
-               (copy-recursively "doxy/html-api"
-                                 (string-append (assoc-ref outputs "doc")
-                                                "/share/doc/libsigrok"))))
-           (add-after 'install-doc 'install-udev-rules
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out   (assoc-ref outputs "out"))
-                      (rules (string-append out "/lib/udev/rules.d/")))
-                 (for-each (lambda (file)
-                             (install-file file rules))
-                           (find-files "contrib" "\\.rules$")))))
-           (add-after 'install-udev-rules 'install-fw
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((fx2lafw (assoc-ref inputs "sigrok-firmware-fx2lafw"))
-                      (out (assoc-ref outputs "out"))
-                      (dir-suffix "/share/sigrok-firmware/")
-                      (input-dir (string-append fx2lafw dir-suffix))
-                      (output-dir (string-append out dir-suffix)))
-                 (for-each
-                  (lambda (file)
-                    (install-file file output-dir))
-                  (find-files input-dir "."))))))))
+       (list
+        #:tests? #f                      ; tests need USB access
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'configure 'change-udev-group
+              (lambda _
+                (substitute* (find-files "contrib" "\\.rules$")
+                  (("plugdev") "dialout"))))
+            (add-after 'build 'build-doc
+              (lambda _
+                (invoke "doxygen")))
+            (add-after 'install 'install-doc
+              (lambda _
+                (copy-recursively
+                 "doxy/html-api"
+                 (string-append #$output:doc "/share/doc/libsigrok"))))
+            (add-after 'install-doc 'install-udev-rules
+              (lambda _
+                (for-each
+                 (lambda (file)
+                   (install-file
+                    file
+                    (string-append #$output "/lib/udev/rules.d/")))
+                          (find-files "contrib" "\\.rules$"))))
+            (add-after 'install-udev-rules 'install-fw
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let* ((fx2lafw (assoc-ref inputs "sigrok-firmware-fx2lafw"))
+                       (dir-suffix "/share/sigrok-firmware/")
+                       (input-dir (string-append fx2lafw dir-suffix))
+                       (output-dir (string-append #$output dir-suffix)))
+                  (for-each
+                   (lambda (file)
+                     (install-file file output-dir))
+                   (find-files input-dir "."))))))))
       (native-inputs
        (list autoconf automake doxygen graphviz libtool
              sigrok-firmware-fx2lafw pkg-config))
@@ -289,18 +290,18 @@ supported devices, as well as input/output file format support.")
                   "11l8vnf2khqbaqas7cfnq3f8q5w7am6nbkkd5mqj5kpb3ya2avb9"))))
       (outputs '("out" "doc"))
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'build 'build-doc
-             (lambda _
-               (invoke "doxygen")
-               #t))
-           (add-after 'install 'install-doc
-             (lambda* (#:key outputs #:allow-other-keys)
-               (copy-recursively "doxy/html-api"
-                                 (string-append (assoc-ref outputs "doc")
-                                                "/share/doc/libsigrokdecode"))
-               #t)))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'build 'build-doc
+              (lambda _
+                (invoke "doxygen")))
+            (add-after 'install 'install-doc
+              (lambda _
+                (copy-recursively
+                 "doxy/html-api"
+                 (string-append #$output:doc
+                                "/share/doc/libsigrokdecode")))))))
       (native-inputs
        (list check doxygen graphviz pkg-config automake autoconf libtool))
       ;; libsigrokdecode.pc lists "python" in Requires.private, and "glib" in
@@ -644,28 +645,29 @@ formats.")
   (package
     (name "pulseview")
     (version "0.4.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://sigrok.org/download/source/pulseview/pulseview-"
-                    version ".tar.gz"))
-              (sha256
-               (base32
-                "1jxbpz1h3m1mgrxw74rnihj8vawgqdpf6c33cqqbyd8v7rxgfhph"))
-              (patches (search-patches "pulseview-qt515-compat.patch"
-                                       "pulseview-glib-2.68.patch"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://sigrok.org/download/source/pulseview/pulseview-"
+             version ".tar.gz"))
+       (sha256
+        (base32
+         "1jxbpz1h3m1mgrxw74rnihj8vawgqdpf6c33cqqbyd8v7rxgfhph"))
+       (patches (search-patches "pulseview-qt515-compat.patch"
+                                "pulseview-glib-2.68.patch"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f ;format_time_minutes_test is failing
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'remove-empty-doc-directory
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (with-directory-excursion (string-append out "/share")
-                 ;; Use RMDIR to never risk silently deleting files.
-                 (rmdir "doc/pulseview")
-                 (rmdir "doc"))))))))
+     (list
+      #:tests? #f ;format_time_minutes_test is failing
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'remove-empty-doc-directory
+            (lambda _
+              (with-directory-excursion (string-append #$output "/share")
+                ;; Use RMDIR to never risk silently deleting files.
+                (rmdir "doc/pulseview")
+                (rmdir "doc")))))))
     (native-inputs
      (list pkg-config qttools-5))
     (inputs
@@ -678,8 +680,8 @@ formats.")
            qtsvg-5))
     (home-page "https://www.sigrok.org/wiki/PulseView")
     (synopsis "Qt based logic analyzer, oscilloscope and MSO GUI for sigrok")
-    (description "PulseView is a Qt based logic analyzer, oscilloscope and MSO GUI
-for sigrok.")
+    (description "PulseView is a Qt based logic analyzer, oscilloscope and MSO
+GUI for sigrok.")
     (license license:gpl3+)))
 
 (define-public python-cocotb
