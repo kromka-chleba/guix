@@ -453,7 +453,7 @@ handlers.")
 (define-public go-github-com-alexliesenfeld-health
   (package
     (name "go-github-com-alexliesenfeld-health")
-    (version "0.8.0")
+    (version "0.8.1")
     (source
      (origin
        (method git-fetch)
@@ -462,7 +462,7 @@ handlers.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fchlvxwidsscskwq07vhxfwcn5wbigbizi51619l8gg09mr158q"))))
+        (base32 "19p0rs1dmvf3cnylyykmmnma2g5x2vy8gasr2rjl28ma58w6l0d3"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1571,7 +1571,7 @@ and reduce scope of key compromise.
 (define-public go-github-com-caddyserver-zerossl
   (package
     (name "go-github-com-caddyserver-zerossl")
-    (version "0.1.0")
+    (version "0.1.3")
     (source
      (origin
        (method git-fetch)
@@ -1580,7 +1580,7 @@ and reduce scope of key compromise.
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hr2kdabhm35hz5krp7m3g6wxvyb9xlqgmy3krf4wwb3yabsqp1m"))))
+        (base32 "16mrlmsl3ajdrn2qsdq51k79z3fi8v8j82r2c6xyj7mp2yr979h6"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -8723,7 +8723,7 @@ to @url{https://www.rfc-editor.org/rfc/rfc3550, RFC 3550},
 (define-public go-github-com-pion-rtp
   (package
     (name "go-github-com-pion-rtp")
-    (version "1.8.11")
+    (version "1.8.21")
     (source
      (origin
        (method git-fetch)
@@ -8732,11 +8732,13 @@ to @url{https://www.rfc-editor.org/rfc/rfc3550, RFC 3550},
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a4fj31j7glhfsnxxwm8r72l6capz9mh8kfr340659ahgiijdkcg"))))
+        (base32 "1hc5cdxgf0m44awvzzaby3hrlnhjbxjivl6981069xwgxspqakhm"))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/pion/rtp"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (propagated-inputs
      (list go-github-com-pion-randutil))
     (home-page "https://github.com/pion/rtp")
@@ -8838,7 +8840,7 @@ Protocol,SCTP} as specified in
   (package
     (inherit go-github-com-pion-srtp-v2)
     (name "go-github-com-pion-srtp-v3")
-    (version "3.0.4")
+    (version "3.0.7")
     (source
      (origin
        (method git-fetch)
@@ -8847,7 +8849,7 @@ Protocol,SCTP} as specified in
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03343fsgrawfy9plsl7y5022ygjln3jvsn3im5xl1qwnc68rb1a2"))))
+        (base32 "0l8y01ci5fsx8b6ajn9cvs45hqpz838x0jnyyj1p2z714nw9jh61"))))
     (arguments
      (list
       #:import-path "github.com/pion/srtp/v3"))
@@ -10203,7 +10205,7 @@ Supports S3 and STS.")
 (define-public go-github-com-sourcegraph-jsonrpc2
   (package
     (name "go-github-com-sourcegraph-jsonrpc2")
-    (version "0.2.0")
+    (version "0.2.1")
     (home-page "https://github.com/sourcegraph/jsonrpc2")
     (source
      (origin
@@ -10213,7 +10215,7 @@ Supports S3 and STS.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1id35b4mhif9gy1b70mv0x7xkmpm2p8xydix8six10yjyhvm1wjh"))))
+        (base32 "0nxiq8da4x4sipjkap50cfzjg9b8vqm45w65hbjywwj6q73jl54a"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/sourcegraph/jsonrpc2"))
@@ -10500,6 +10502,52 @@ and binary encoder.")
 runtime.  It has zero dependencies, and doesn't rely on CGO.  This means you
 can run applications in other languages and still keep cross compilation.")
     (license license:asl2.0)))
+
+(define-public go-github-com-things-go-go-socks5
+  (package
+    (name "go-github-com-things-go-go-socks5")
+    (version "0.0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/things-go/go-socks5")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r7v1bpja4j8q9bjh124w8l5m29vwnpaq0flm97izvzw4pcyxybf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/things-go/go-socks5"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-net))
+    (home-page "https://github.com/things-go/go-socks5")
+    (synopsis "SOCKS5 with full TCP/UDP and IPv4/IPv6 support in Golang")
+    (description
+     "This package implements a @url{http://en.wikipedia.org/wiki/SOCKS,
+SOCKS5}.  SOCKS (Secure Sockets) is used to route traffic between a client and
+server through an intermediate proxy layer.  This can be used to bypass
+firewalls or NATs.
+
+Features:
+@itemize
+@item support socks5 server
+@item support TCP/UDP and IPv4/IPv6
+@item unit tests
+@item \"No Auth\" mode
+@item user/password authentication optional user addr limit
+@item support for the CONNECT command
+@item support for the ASSOCIATE command
+@item rules to do granular filtering of commands
+@item custom DNS resolution
+@item custom goroutine pool
+@item buffer pool design and optional custom buffer pool
+@item custom logger
+@end itemize")
+    (license license:expat)))
 
 (define-public go-github-com-tj-go-elastic
   (package
@@ -12706,7 +12754,7 @@ the standard @code{context} package to store request-scoped values.")
 (define-public go-golang-zx2c4-com-wireguard
   (package
     (name "go-golang-zx2c4-com-wireguard")
-    (version "0.0.0-20231211153847-12269c276173")
+    (version "0.0.0-20250521234502-f333402bd9cb")
     (source
      (origin
        (method git-fetch)
@@ -12718,33 +12766,16 @@ the standard @code{context} package to store request-scoped values.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fbc6m0ahifhrd6jdrpdxi8l3b2slpp8fmv20kpq2yzz19vzzgkf"))))
+        (base32 "1h4rmdvssk939gk31f0sfwa1yaks72zk8rkcs7fj3qcvl8sgq6hr"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "golang.zx2c4.com/wireguard"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; XXX: Workaround for go-build-system's lack of Go modules
-          ;; support.
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v"
-                          ;; "./tune/..." ; Requires gvisor.dev/gvisor, not packed yet
-                          "./"
-                          "./conn/..."
-                          "./device/..."
-                          "./ipc/..."
-                          "./ratelimiter/..."
-                          "./replay/..."
-                          "./rwcancel/..."
-                          "./tai64n/..."))))))))
+      #:import-path "golang.zx2c4.com/wireguard"))
     (propagated-inputs
      (list go-golang-org-x-crypto
            go-golang-org-x-net
-           go-golang-org-x-sys))
+           go-golang-org-x-sys
+           go-gvisor-dev-gvisor))
     (home-page "https://git.zx2c4.com/wireguard")
     (synopsis "Implementation of WireGuard in Go")
     (description "This package is a Go Implementation of WireGuard.")

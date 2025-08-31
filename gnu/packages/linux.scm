@@ -2349,7 +2349,7 @@ and the notification, WiFi, and Bluetooth LED.")
 (define-public tuxedo-keyboard
   (package
     (name "tuxedo-keyboard")
-    (version "4.14.2")
+    (version "4.15.4")
     (source
      (origin
        (method git-fetch)
@@ -2358,21 +2358,23 @@ and the notification, WiFi, and Bluetooth LED.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0b7qivyd8r58cq84q11b2z919px5p9k5zbinm6ahj07w0lsq2j7b"))))
+        (base32 "0mimgcbp57gp3smd439g8040sl80qqnfzmh2vhs2qv1kwyxs75sq"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite
+    ;; This package fails to build on aarch64, and the manufacturer only sells
+    ;; machines based on Intel-compatible processors. For more information, see
+    ;; <https://codeberg.org/guix/guix/pulls/1795>.
+    (supported-systems '("i686-linux" "x86_64-linux"))
     (home-page "https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers")
     (synopsis "Linux kernel modules to control keyboard on most Tuxedo computers")
     (description
      "This package provides the @code{tuxedo_keyboard}, @code{tuxedo_io},
 @code{clevo_wmi} @acronym{WMI, Windows Management Engine} and the
 @code{clevo_acpi} @acronym{ACPI, Advanced Configuration and Power Interface}
-kernel modules to control the keyboard on most Tuxedo computers.  Only white
-backlight only models are currently not supported.  The @code{tuxedo_io}
-module is also needed for the @code{tuxedo-control-center} (short tcc)
-package.")
-    (license license:gpl3+)))
+kernel modules to control the keyboard on most Tuxedo computers. The @code{tuxedo_io}
+module is also needed for the @code{tuxedo-control-center} (short tcc) package.")
+    (license license:gpl2+)))
 
 (define-public evdi
   (package
@@ -3379,24 +3381,20 @@ slabtop, tload, top, vmstat, w, watch and sysctl.")
 (define-public usbutils
   (package
     (name "usbutils")
-    (version "017")
+    (version "018")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kernel.org/linux/utils/usb/usbutils/"
-                          "usbutils-" version ".tar.xz"))
-      (sha256
-       (base32 "0nz008kshcajc9asxr4j5dh4wgq72z52lws4ga6y60wirzymz8m6"))))
-    (build-system gnu-build-system)
+       (method url-fetch)
+       (uri (string-append "mirror://kernel.org/linux/utils/usb/usbutils/"
+                           "usbutils-" version ".tar.xz"))
+       (sha256
+        (base32 "14xd7j9fl3pm0z4dhqj3mf9paqk431kq4vi602f5hiw5nmcqpxl3"))))
+    (build-system meson-build-system)
     (outputs (list "out" "python"))
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'bootstrap 'patch-bootstrap-scripts
-            (lambda _
-              (substitute* "usbhid-dump/bootstrap"
-                (("/bin/sh") (which "sh")))))
           (add-after 'install 'separate-python-output
             ;; Separating one Python script shaves more than 106 MiB from :out.
             (lambda _
@@ -3405,17 +3403,21 @@ slabtop, tload, top, vmstat, w, watch and sysctl.")
                                 (new (string-append #$output:python "/" file)))
                             (mkdir-p (dirname new))
                             (rename-file old new)))
-                        (list "bin/lsusb.py")))))))
-    (inputs
-     (list eudev libusb python))
-    (native-inputs
-     (list autoconf automake libtool pkg-config))
+                        (list "bin/lsusb.py"))))
+          (add-after 'install 'install-usbreset
+            (lambda _
+              (install-file "usbreset"
+                            (string-append #$output "/bin")))))))
+    (native-inputs (list pkg-config))
+    (inputs (list eudev libusb python))
     (home-page "http://www.linux-usb.org/")
     (synopsis
      "Tools for working with USB devices")
     (description
-     "Collection of tools to query what type of USB devices are connected to the
-system, including @command{lsusb}.")
+     "Collection of tools to query what type of USB devices are connected to
+the system, including @command{lsusb}.  The experimental @command{usbreset}
+command included in the package, but be aware that it may not work for all
+devices.")
     (license license:gpl2+)))
 
 (define-public usbip-utils

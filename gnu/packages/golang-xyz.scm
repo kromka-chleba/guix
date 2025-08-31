@@ -1013,6 +1013,32 @@ Distance}.")
 http://tartarus.org/~martin/PorterStemmer/index.html.")
     (license license:expat)))
 
+(define-public go-github-com-akamensky-argparse
+  (package
+    (name "go-github-com-akamensky-argparse")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/akamensky/argparse")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m7rzrfwyrwxbbry5ppds2b3c5gdslpakvjhsh6i8mhdfhywd8wc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Panic: unexpected call to os.Exit(0) during test.
+      #:test-flags #~(list "-skip" "TestUsageString")
+      #:import-path "github.com/akamensky/argparse"))
+    (home-page "https://github.com/akamensky/argparse")
+    (synopsis "Argparse for golang")
+    (description
+     "This package implements a flexible and configurable option for command
+line arguments parsing.")
+    (license license:expat)))
+
 (define-public go-github-com-alecaivazis-survey-v2
   (package
     (name "go-github-com-alecaivazis-survey-v2")
@@ -12372,6 +12398,35 @@ representation suitable for computing diffs.")
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-landlock-lsm-go-landlock
+  (package
+    (name "go-github-com-landlock-lsm-go-landlock")
+    (version "0.0.0-20250303204525-1544bccde3a3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/landlock-lsm/go-landlock")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00qis8gg2ajyph9jyrjghm6cn0h22pwjwdp6qa22ji6jslgnm02n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/landlock-lsm/go-landlock"))
+    (propagated-inputs
+     (list go-golang-org-x-sys
+           go-kernel-org-pub-linux-libs-security-libcap-psx))
+    (home-page "https://landlock.io/")
+    (synopsis "Golang library for the Linux Landlock sandboxing feature")
+    (description
+     "This package implements a restriction for the current processes' ability
+to use files, using Linux 5.13's
+@url{https://docs.kernel.org/security/landlock.html, Landlock} feature.")
+    (license license:expat)))
+
 (define-public go-github-com-lann-builder
   (package
     (name "go-github-com-lann-builder")
@@ -22671,6 +22726,33 @@ also provides V-style logging controlled by the @code{-v} and
 kubernetes-independent packages supplementing the
 @url{https://pkg.go.dev/std#stdlib,Go standard libs}.")
     (license license:asl2.0)))
+
+(define-public go-kernel-org-pub-linux-libs-security-libcap-psx
+  (package
+    (name "go-kernel-org-pub-linux-libs-security-libcap-psx")
+    (version "1.2.76")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.kernel.org/pub/scm/libs/libcap/libcap.git")
+             (commit (go-version->git-ref version
+                                          #:subdir "psx"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0va0bkq5kxf0ccsdpw598vsmk4kdzhaafjvym0g5b2n49c5sn59b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "kernel.org/pub/linux/libs/security/libcap/psx"
+      #:unpack-path "kernel.org/pub/linux/libs/security/libcap"))
+    ;; Redirects from <https://kernel.org/pub/linux/libs/security/libcap>
+    (home-page "https://sites.google.com/site/fullycapable")
+    (synopsis "API for invoking Linux system calls in Golang")
+    (description
+     "This package provides a support for system calls that are run
+simultaneously on all threads under Linux.")
+    (license license:gpl2)))
 
 (define-public go-maunium-net-go-mauflag
   (package
