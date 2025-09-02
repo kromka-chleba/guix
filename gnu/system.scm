@@ -1086,13 +1086,15 @@ GUIX_PROFILE=/run/current-system/profile ; \\
 
 # Since 'lshd' does not use pam_env, /etc/environment must be explicitly
 # loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
-# We need 'PATH' to be defined here, for 'cat' and 'cut'.  Do this before
-# reading the user's 'etc/profile' to allow variables to be overridden.
+# Do this before reading the user's 'etc/profile' to allow variables to
+# be overridden.
 if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
      -a -z \"$LINUX_MODULE_DIRECTORY\" ]
 then
-  . /etc/environment
-  export `cat /etc/environment | cut -d= -f1`
+  while read READ_LINE
+  do export \"$READ_LINE\"
+  done </etc/environment
+  unset READ_LINE
 fi
 
 # Arrange so that ~/.config/guix/current comes first,
