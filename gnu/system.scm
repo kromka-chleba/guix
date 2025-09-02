@@ -1066,6 +1066,19 @@ the /etc directory."
         ;; Startup file for POSIX-compliant login shells, which set system-wide
         ;; environment variables.
         (profile    (mixed-text-file "profile"  "\
+# Since 'lshd' does not use pam_env, /etc/environment must be explicitly
+# loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
+# Do this before reading the user's 'etc/profile' to allow variables to
+# be overridden.
+if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
+     -a -z \"$LINUX_MODULE_DIRECTORY\" ]
+then
+  while read READ_LINE
+  do export \"$READ_LINE\"
+  done </etc/environment
+  unset READ_LINE
+fi
+
 # Crucial variables that could be missing in the profiles' 'etc/profile'
 # because they would require combining both profiles.
 # FIXME: See <http://bugs.gnu.org/20255>.
@@ -1083,19 +1096,6 @@ unset PATH
 # Load the system profile's settings.
 GUIX_PROFILE=/run/current-system/profile ; \\
 . /run/current-system/profile/etc/profile
-
-# Since 'lshd' does not use pam_env, /etc/environment must be explicitly
-# loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
-# Do this before reading the user's 'etc/profile' to allow variables to
-# be overridden.
-if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
-     -a -z \"$LINUX_MODULE_DIRECTORY\" ]
-then
-  while read READ_LINE
-  do export \"$READ_LINE\"
-  done </etc/environment
-  unset READ_LINE
-fi
 
 # Arrange so that ~/.config/guix/current comes first,
 # and guix-home comes before guix-profile.
