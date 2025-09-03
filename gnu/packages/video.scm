@@ -45,7 +45,7 @@
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Alexandru-Sergiu Marton <brown121407@posteo.ro>
 ;;; Copyright © 2020 Ivan Kozlov <kanichos@yandex.ru>
-;;; Copyright © 2020 Antoine Côté <antoine.cote@posteo.net>
+;;; Copyright © 2020, 2025 Antoine Côté <antoine.cote@posteo.net>
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2021 Alexey Abramov <levenson@mmer.org>
 ;;; Copyright © 2021, 2022, 2023 Andrew Tropin <andrew@trop.in>
@@ -3013,7 +3013,7 @@ wallpaper using mpv.")
 (define-public libvpx
   (package
     (name "libvpx")
-    (version "1.15.0")
+    (version "1.15.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3022,9 +3022,8 @@ wallpaper using mpv.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1q2scpfiifhpilw6qqpqihk98plj57gwh0vyiqwsv991i7b322bv"))
-              (patches (search-patches "libvpx-CVE-2016-2818.patch"
-                                       "libvpx-CVE-2025-5262.patch"))))
+                "07c29a5q19613pldp8qm6harqwl7kvqhs7vw4mr8s3dnwyb5jpnl"))
+              (patches (search-patches "libvpx-CVE-2016-2818.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--enable-shared"
@@ -6161,7 +6160,7 @@ and audio capture, network stream playback, and many more.")
 (define-public dav1d
   (package
     (name "dav1d")
-    (version "1.5.0")
+    (version "1.5.1")
     (source
       (origin
         (method git-fetch)
@@ -6170,7 +6169,7 @@ and audio capture, network stream playback, and many more.")
                (commit version)))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "0rn8zvmqapjq4r9s9hlpz1866war4ap7hzp5h8qhm5igry7i1qvq"))))
+         (base32 "1n0b5m4srdjsqg15plc9fng5kjv14ygqahjxy8863fbzhr13vjx9"))))
     (build-system meson-build-system)
     (native-inputs
      (if (target-x86?)

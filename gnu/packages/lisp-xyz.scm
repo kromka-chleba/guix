@@ -12205,8 +12205,8 @@ interfaces as well as a functional and an object oriented interface.")
           `(cons "clsql-cffi" ,asd-systems)))))))
 
 (define-public sbcl-clss
-  (let ((revision "2")
-        (commit "f62b849189c5d1be378f0bd3d403cda8d4fe310b"))
+  (let ((revision "3")
+        (commit "cd5f603e8207ec23c147c5cfda636ef8273a7525"))
     (package
       (name "sbcl-clss")
       (version (git-version "0.3.1" revision commit))
@@ -12215,10 +12215,10 @@ interfaces as well as a functional and an object oriented interface.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/clss")
+           (url "https://codeberg.org/shinmera/clss")
            (commit commit)))
          (sha256
-          (base32 "1033dchpanhcgxl5qfhr80aw9adbp9bvllhzvvy5p9mrfnidd1fv"))
+          (base32 "15wh1zafamxc5z5hni9ni72xg4n24am2xfqv7fwwhfw1sl06bcm2"))
          (file-name (git-file-name name version))))
       (inputs
        (list sbcl-array-utils sbcl-plump))
@@ -12226,7 +12226,7 @@ interfaces as well as a functional and an object oriented interface.")
       (synopsis "DOM tree searching engine based on CSS selectors")
       (description "CLSS is a DOM traversal engine based on CSS
 selectors.  It makes use of the Plump-DOM and is used by lQuery.")
-      (home-page "https://github.com/Shinmera/clss")
+      (home-page "https://codeberg.org/shinmera/clss")
       (license license:zlib))))
 
 (define-public cl-clss
@@ -21075,8 +21075,8 @@ Lisp, featuring:
   (sbcl-package->ecl-package sbcl-lparallel))
 
 (define-public sbcl-lquery
-  (let ((revision "1")
-        (commit "8048111c6b83956daa632e7a3ffbd8c9c203bd8d"))
+  (let ((revision "2")
+        (commit "08c9cb6c2b169bf71d4444bc80e87e5b19f8499c"))
     (package
       (name "sbcl-lquery")
       (version (git-version "3.2.1" revision commit))
@@ -21085,10 +21085,10 @@ Lisp, featuring:
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/lquery")
+           (url "https://codeberg.org/shinmera/lquery")
            (commit commit)))
          (sha256
-          (base32 "0520mcpxc2d6fdm8z61arpgd2z38kan7cf06qs373n5r64rakz6w"))
+          (base32 "11l03pwlvv76lxrmvjs3prkrjsgl70wz7vbl1n6rhg9kmyv91a74"))
          (file-name (git-file-name name version))))
       (native-inputs
        (list sbcl-fiveam))
@@ -21102,7 +21102,7 @@ functions.  It uses Plump and CLSS as DOM and selector engines.  The
 main idea behind lQuery is to provide a simple interface for crawling
 and modifying HTML sites, as well as to allow for an alternative
 approach to templating.")
-      (home-page "https://github.com/Shinmera/lquery")
+      (home-page "https://codeberg.org/shinmera/lquery")
       (license license:zlib))))
 
 (define-public cl-lquery
@@ -25153,8 +25153,8 @@ for Common Lisp.")
   (sbcl-package->clasp-package sbcl-piping))
 
 (define-public sbcl-plump
-  (let ((commit "0c3e0b57b43b6e0c5794b6a902f1cf5bee2a2927")
-        (revision "3"))
+  (let ((commit "251fbe02e9bcdb5940d881788b880d51f7f35303")
+        (revision "4"))
     (package
       (name "sbcl-plump")
       (version (git-version "2.0.0" revision commit))
@@ -25163,11 +25163,11 @@ for Common Lisp.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/plump")
+           (url "https://codeberg.org/shinmera/plump")
            (commit commit)))
          (file-name (git-file-name "cl-plump" version))
          (sha256
-          (base32 "1fyb66pqvr1iy31ah9638ihs8cax17zkxk0zq14jy7x5l9rq1qlf"))))
+          (base32 "0w2n5wskgqvazb721amfd7smydnj3mxsyzg03xk2k1vaizzxdzvk"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-array-utils sbcl-documentation-utils))
@@ -25179,7 +25179,7 @@ bad closing tag order, unencoded entities, inexistent tag types, self-closing
 tags and so on.  It parses documents to a class representation and offers a
 small set of DOM functions to manipulate it.  It can be extended to parse to
 your own classes.")
-      (home-page "https://shinmera.github.io/plump/")
+      (home-page "https://codeberg.org/shinmera/plump")
       (license license:zlib))))
 
 (define-public cl-plump

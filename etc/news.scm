@@ -40,6 +40,82 @@
 (channel-news
  (version 0)
 
+ (entry (commit "6e57701013a69a20df6983f5e05aa3598073282f")
+        (title
+         (en "Linux-libre 6.16 now available")
+         (de "Linux-libre 6.16 jetzt verfügbar"))
+        (body
+         (en "The Linux-libre 6.16 kernel series is now available in GNU Guix.
+This kernel series was added to Guix without a custom kernel configuration for
+the armhf-linux system (32-bit ARM with floating point support, also called
+'armv7+'), due to lack of interest.  The generic armhf-linux kernel packages are
+still available.
+
+Soon, linux-libre 6.16 will be made the default linux-libre package because 6.15
+is no longer supported upstream.")
+         (de "Die Kernel-Versionsreihe 6.16 von Linux-libre ist ab jetzt in
+GNU Guix verfügbar.  Diese Kernel-Versionsreihe wurde zu Guix ohne eine
+angepasste Kernel-Konfiguration für das armhf-linux-System hinzugefügt (d.h.
+32-Bit-ARM mit Gleitkommaunterstützung, auch bekannt als „armv7+“), weil sich
+zu wenige Menschen dafür interessieren.  Die generischen
+armhf-Linuxkernelpakete bleiben verfügbar.
+
+Bald wird Linux-libre 6.16 zum vorgegebenen Linux-libre-Paket, weil 6.15 vom
+Anbieter nicht mehr unterstützt wird.")))
+
+ (entry (commit "1618ca7aa2ee8b6519ee9fd0b965e15eca2bfe45")
+        (title
+         (en "New @command{guix-daemon} privilege escalation vulnerability
+fixed")
+         (de "Weitere Schwachstelle in @command{guix-daemon} zur
+Rechteausweitung behoben"))
+        (body
+         (en "A new vulnerability was identified and fixed in the build
+daemon, @command{guix-daemon} (CVE ID assignment pending).  Everyone is
+strongly advised to upgrade @command{guix-daemon}.  Guix System users can do
+this with commands along these lines:
+
+@example
+sudo guix system reconfigure /run/current-system/configuration.scm
+sudo herd restart guix-daemon
+@end example
+
+If you are using Guix on another distro, run @command{info \"(guix) Upgrading
+Guix\"} or visit
+@uref{https://guix.gnu.org/manual/devel/en/html_node/Upgrading-Guix.html} to
+learn how to upgrade Guix.
+
+This vulnerability lies in the @code{builtin:download} derivation builder:
+anyone with access to the daemon can craft a @code{content-addressed-mirrors}
+Scheme procedure that the daemon will execute as a build user (or as the
+daemon user, when running @command{guix-daemon} unprivileged).  An attacker
+could use this to gain build user privileges and thereafter compromise builds
+performed on the system.  See @uref{https://codeberg.org/guix/guix/pulls/2419}
+for more information.")
+         (de "Eine weitere Schwachstelle im Erstellungsdaemon,
+@command{guix-daemon}, wurde erkannt und behoben (CVE-ID-Zuweisung steht noch
+aus).  Wir raten allen deutlich dazu, @command{guix-daemon} zu aktualisieren.
+Auf Guix System können Nutzer dazu Befehle verwenden wie:
+
+@example
+sudo guix system reconfigure /run/current-system/configuration.scm
+sudo herd restart guix-daemon
+@end example
+
+Wenn Sie Guix auf einer anderen Distribution verwenden, erfahren Sie mit dem
+Befehl @command{info \"(guix.de) Aktualisieren von Guix\"} oder auf
+@uref{https://guix.gnu.org/manual/devel/de/html_node/Aktualisieren-von-Guix.html},
+wie Sie Guix aktualisieren.
+
+Die Schwachstelle besteht im Ableitungsersteller @code{builtin:download}:
+Jeder, der Zugriff auf den Daemon hat, kann eine Scheme-Prozedur
+@code{content-addressed-mirrors} anfertigen, die der Daemon als
+Erstellungsbenutzer ausführen wird (oder als der Daemon-Benutzer, wenn
+@command{guix-daemon} unprivilegiert ausgeführt wird).  Ein Angreifer kann das
+ausnutzen, um sich die Berechtigungen eines Erstellungsbenutzers anzueignen, und
+kann von da an auf dem System durchgeführte Erstellungen kompromittieren.  Siehe
+@uref{https://codeberg.org/guix/guix/pulls/2419} für mehr Informationen.")))
+
  (entry (commit "3e45fc0f37d027516ac3d112ca7768d698eeac74")
         (title
          (en "All Rust applications repackaged")

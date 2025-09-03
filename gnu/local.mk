@@ -356,6 +356,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/gv.scm				\
   %D%/packages/gxmessage.scm			\
   %D%/packages/hardware.scm			\
+  %D%/packages/hare.scm				\
   %D%/packages/haskell.scm			\
   %D%/packages/haskell-apps.scm			\
   %D%/packages/haskell-check.scm		\
@@ -1038,7 +1039,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/bash-completion-directories.patch	\
   %D%/packages/patches/bash-linux-pgrp-pipe.patch		\
   %D%/packages/patches/bastet-change-source-of-unordered_set.patch	\
-  %D%/packages/patches/bc-fix-cross-compilation.patch		\
   %D%/packages/patches/bdb-4-5-configure.patch                  \
   %D%/packages/patches/bdb-5.3-atomics-on-gcc-9.patch		\
   %D%/packages/patches/biboumi-cmake-ignore-git.patch		\
@@ -1162,6 +1162,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/curlftpfs-fix-no_verify_hostname.patch	\
   %D%/packages/patches/cursynth-wave-rand.patch			\
   %D%/packages/patches/cvs-CVE-2017-12836.patch		\
+  %D%/packages/patches/cyrus-sasl-fix-time-h.patch              \
   %D%/packages/patches/d-feet-drop-unused-meson-argument.patch	\
   %D%/packages/patches/daemontools-gcc14.patch                  \
   %D%/packages/patches/dante-non-darwin.patch			\
@@ -1572,6 +1573,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/gtksourceview-2-add-default-directory.patch \
   %D%/packages/patches/gzdoom-search-in-installed-share.patch	\
   %D%/packages/patches/gzdoom-find-system-libgme.patch	\
+  %D%/packages/patches/hare-fallback-cache.patch 		\
+  %D%/packages/patches/hare-toolpath.patch 		\
   %D%/packages/patches/hdf4-reproducibility.patch 		\
   %D%/packages/patches/hdf4-shared-fortran.patch 		\
   %D%/packages/patches/hdf5-config-date.patch			\
@@ -1794,7 +1797,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libutils-remove-damaging-includes.patch	\
   %D%/packages/patches/libvdpau-va-gl-unbundle.patch		\
   %D%/packages/patches/libvpx-CVE-2016-2818.patch		\
-  %D%/packages/patches/libvpx-CVE-2025-5262.patch		\
   %D%/packages/patches/libxml2-xpath0-Add-option-xpath0.patch	\
   %D%/packages/patches/libwpd-gcc-compat.patch			\
   %D%/packages/patches/libxslt-generated-ids.patch		\
@@ -2198,11 +2200,10 @@ dist_patch_DATA =						\
   %D%/packages/patches/qdigidoc-bundle-tsl-files.patch          \
   %D%/packages/patches/qemu-build-info-manual.patch		\
   %D%/packages/patches/qemu-disable-bios-tables-test.patch	\
-  %D%/packages/patches/qemu-disable-migration-test.patch	\
   %D%/packages/patches/qemu-glibc-2.27.patch 			\
   %D%/packages/patches/qemu-glibc-2.30.patch 			\
-  %D%/packages/patches/qemu-glibc-2.41.patch 			\
   %D%/packages/patches/qemu-fix-agent-paths.patch 		\
+  %D%/packages/patches/qemu-fix-test-virtio-version.patch       \
   %D%/packages/patches/qrcodegen-cpp-cmake.patch		\
   %D%/packages/patches/qtbase-absolute-runpath.patch		\
   %D%/packages/patches/qtbase-fix-thread-test.patch             \

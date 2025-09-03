@@ -725,19 +725,18 @@ binary.")
 (define-public bc
   (package
     (name "bc")
-    (version "1.08.0")
+    (version "1.08.2")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://gnu/bc/bc-" version ".tar.xz"))
+             (uri (string-append "mirror://gnu/bc/bc-" version ".tar.gz"))
              (sha256
               (base32
-               "1kvd4hpq0fmb9bali9x21zwb1g0msvsj1jahanz96x13w06v9i3v"))
-             (patches (search-patches "bc-dc-build.patch"))))
+               "11jzg23ks39k58bnb5y55wxqqz6h534ys5900hz6axcp8bn0yixf"))))
     (build-system gnu-build-system)
     (native-inputs
      (list automake autoconf ed flex readline texinfo))
     (inputs
-     (list readline  ncurses))
+     (list readline ncurses))
     (arguments
      '(#:configure-flags
        (list "--with-readline")

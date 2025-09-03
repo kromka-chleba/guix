@@ -1,16 +1,17 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017 Theodoros Foradis <theodoros@foradis.org>
+;;; Copyright © 2016, 2017, 2018 Theodoros Foradis <theodoros@foradis.org>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Leo Famulari <leo@famulari.name>
-;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2023, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
 ;;; Copyright © 2018-2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -33,6 +34,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system qt)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -42,6 +44,7 @@
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages c)
@@ -59,6 +62,7 @@
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages libftdi)
@@ -78,6 +82,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages stb)
   #:use-module (gnu packages swig)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages toolkits)
@@ -320,7 +325,7 @@ supported devices, as well as input/output file format support.")
 (define-public m8c
   (package
     (name "m8c")
-    (version "1.7.10")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)
@@ -329,7 +334,7 @@ supported devices, as well as input/output file format support.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18bx6jf0jbgnd6cfydh4iknh25rrpyc8awma4a1hkia57fyjy2gi"))))
+        (base32 "1x6klsqgy6j2b6cvkk386jmb0nbcpsrr36ji6cfwd3039wx657i8"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -338,9 +343,10 @@ supported devices, as well as input/output file format support.")
       #~(modify-phases %standard-phases
           (delete 'configure))
       #:tests? #f)) ;no tests
-    (native-inputs (list pkg-config))
-    (inputs (list libserialport
-                  sdl2))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list libserialport sdl3))
     (home-page "https://github.com/laamaa/m8c")
     (synopsis "Cross-platform M8 tracker headless client")
     (description
@@ -764,7 +770,7 @@ and reusable bus interfaces to be used with @code{cocotb}.")
 (define-public python-edalize
   (package
     (name "python-edalize")
-    (version "0.6.0")
+    (version "0.6.1")
     (source
      (origin
        (method git-fetch)
@@ -773,7 +779,7 @@ and reusable bus interfaces to be used with @code{cocotb}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gfysk6wj3mxndyzma604i3y2lkfn1im0bdmzxv5rn4x2nyk68sc"))))
+        (base32 "03mkzkmi96jkrpgcnawixvy832p3b8li8lrirdjhfp9dmp7d5kg5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -782,18 +788,13 @@ and reusable bus interfaces to be used with @code{cocotb}.")
                     ;; XXX: Tests failing with assertion not equal, find out
                     ;; why.
                     (list "not test_gatemate"
-                          "test_gatemate_minimal"
                           "test_vcs_tool_options"
                           "test_vcs_no_tool_options"
                           "test_vcs_minimal"
-                          "test_vivado_edif_netlist"
-                          "test_vivado_edif_netlist_no_link_design"
                           "test_xcelium")
                     " and not "))))
     (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-wheel))
+     (list python-pytest python-setuptools-next))
     (propagated-inputs
      (list python-jinja2))
     (home-page "https://github.com/olofk/edalize/")
@@ -875,7 +876,7 @@ design.")
 (define-public python-vsg
   (package
     (name "python-vsg")
-    (version "3.33.0")
+    (version "3.34.0")
     (source
      (origin
        (method git-fetch)
@@ -884,7 +885,7 @@ design.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pnhha7dfika5jv1wrdwjkwrqaz22n0fb845wid5sy62gn549hmb"))))
+        (base32 "0sryf1wv4r5maxj4di5rpsmzcxins3gq8aksv7cpw6ywvdk1nj5l"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -892,12 +893,7 @@ design.")
       ;; Tests are expensive and may introduce race condition on systems with
       ;; high (more than 16) threads count; limit parallel jobs to 8x.
       #~(list
-         "--numprocesses" (number->string (min 8 (parallel-job-count)))
-         ;; TODO: Remove in 3.34.0.
-         ;; "file" command on "utf-8_encoded.vhd" file fails to detect
-         ;; utf-8 formatting. See:
-         ;; https://github.com/jeremiah-c-leary/vhdl-style-guide/issues/1471
-         "-vv" "-k" "not test_utf_8")
+         "--numprocesses" (number->string (min 8 (parallel-job-count))))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'pathch-pytest-options
@@ -907,12 +903,10 @@ design.")
                 ((".*--self-contained-html.*") "")
                 ((".*-n.*auto.*") "")))))))
     (native-inputs
-     (list python-pytest
-           python-pytest-cov
+     (list python-pytest-cov
            python-pytest-html
            python-pytest-xdist
-           python-setuptools
-           python-wheel))
+           python-setuptools-next))
     (propagated-inputs
      (list python-pyyaml))
     (home-page "https://github.com/jeremiah-c-leary/vhdl-style-guide/")
@@ -921,6 +915,119 @@ design.")
      "VSG lets you define a VHDL coding style and provides a command-line tool
 to enforce it.")
     (license license:gpl3+)))
+
+(define-public qucsator-rf
+  (package
+    (name "qucsator-rf")
+    (version "1.0.6")                   ;required by qucs-s, keep in sync
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ra3xdh/qucsator_rf/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fx0kzj6hn0094jnvn6b1zqwjnkmd79xdr0zdyz5lmsyixlmxmvk"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'run-tests
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Qucs-test is a collection of python scripts and data test
+                ;; cases. Its purpose is to test Qucs (GUI) and Qucsator;
+                ;; tests are under `testsuite` directory.
+                (copy-recursively
+                 #$(origin
+                     (method git-fetch)
+                     (uri
+                      ;; Using latest revision; refer to
+                      ;; .github/workflows/cmake.yml to keep up to date.
+                      (git-reference
+                        (url "https://github.com/ra3xdh/qucs-test/")
+                        (commit "ce69e05ceecab910175e6ea36b6e021a6d279947")))
+                     (sha256
+                      (base32
+                       (string-append "1r3hx43wvd0s11mzsvj1chylzv"
+                                      "0lk9qhaw7205j9x316ly03bl08"))))
+                 "qucs-test")
+                (with-directory-excursion "qucs-test"
+                  (invoke "python3" "run.py" "--qucsator"
+                          (format #f "--prefix=~a/bin" #$output)
+                          "--exclude=skip.txt"))))))
+      #:configure-flags
+      #~(list (format #f "-DBISON_DIR=~a/bin"
+                      #$(this-package-native-input "bison"))
+              (format #f "-DADMSXML_DIR=~a/bin"
+                      #$(this-package-native-input "adms")))))
+    (native-inputs
+     (list adms bison dos2unix flex gperf python python-looseversion
+           python-numpy python-matplotlib))
+    (synopsis "RF and microwave circuits simulator")
+    (description
+     "@code{Qucsator-rf} is a command line driven circuit simulator targeted
+for RF and microwave circuits.  It takes a network list in a certain format as
+input and outputs an XML dataset.")
+    (home-page "https://ra3xdh.github.io//")
+    (license license:gpl2+)))
+
+(define-public qucs-s
+  (package
+    (name "qucs-s")
+    (version "25.1.2")                  ;update qucsator-rf accordingly
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/ra3xdh/qucs_s")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "07wrpqgbj77rmh1yxy233lk1y4ys1x0721b3jsldp058dcgf24zv"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:qtbase qtbase                   ;for Qt 6
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'adjust-default-settings
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "qucs/settings.cpp"
+                (("\"ngspice\"")
+                 (format #f "~s" (search-input-file inputs "bin/ngspice")))
+                (("\"octave\"")
+                 (format #f "~s" (search-input-file inputs "bin/octave"))))))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/qucs-s")
+                `("PATH" ":" prefix
+                  (,(string-append #$(this-package-input "ngspice") "/bin")
+                   ,(string-append
+                     #$(this-package-input "qucsator-rf") "/bin")))))))))
+    (native-inputs (list qttools))
+    (inputs
+     ;; TODO Add xyce-serial to the list.
+     (list bash-minimal octave qtbase qtcharts qtsvg qtwayland qucsator-rf ngspice))
+    (synopsis "GUI for different circuit simulation kernels")
+    (description
+     "@acronym{Qucs-S, Quite universal circuit simulator with SPICE} provides
+a fancy graphical user interface for a number of popular circuit simulation
+engines.  The package contains libraries for schematic capture, visualization
+and components.  The following simulation kernels are supported:
+@itemize
+@item Ngspice (recommended)
+@item Xyce
+@item SpiceOpus
+@item Qucsator (non-SPICE)
+@end itemize\n")
+    (home-page "https://ra3xdh.github.io/")
+    (license license:gpl2+)))
 
 (define-public xschem
   (package
@@ -1150,19 +1257,16 @@ verification flows.")
 (define-public uhdm
   (package
     (name "uhdm")
-    (version "1.84")
+    (version "1.86")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/chipsalliance/UHDM/")
-             (commit (string-append "v" version))
-             ;; avoid submodules, and use guix packages capnproto and
-             ;; googletest instead
-             (recursive? #f)))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "06i06wfyymhvmpnw79lgb84l9w9cyydvnr7n3bgmgf8a77jbxk2y"))))
+        (base32 "0nsy385frxz5v7i757h1x59xkl21asz3h2fk1nyvx37z8cj0kd3z"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1173,12 +1277,15 @@ verification flows.")
       #:test-target "test"
       #:make-flags
       #~(list
-         "ADDITIONAL_CMAKE_OPTIONS=-DUHDM_USE_HOST_CAPNP=On -DUHDM_USE_HOST_GTEST=On"
-         (string-append "PREFIX="
-                        #$output))))
-    (native-inputs (list cmake-minimal googletest pkg-config python-wrapper
-                         swig))
-    (inputs (list capnproto openssl python-orderedmultidict zlib))
+         (string-append
+          "ADDITIONAL_CMAKE_OPTIONS=-DUHDM_USE_HOST_CAPNP=On"
+          ;; " -DUHDM_WITH_PYTHON=On"      ;FIXME
+          " -DUHDM_USE_HOST_GTEST=On")
+         (string-append "PREFIX=" #$output))))
+    (native-inputs
+     (list cmake-minimal googletest pkg-config python-wrapper swig))
+    (inputs
+     (list capnproto openssl python-orderedmultidict zlib))
     (home-page "https://github.com/chipsalliance/UHDM/")
     (synopsis "Universal Hardware Data Model")
     (description

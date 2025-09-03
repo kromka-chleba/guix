@@ -365,47 +365,33 @@ all the files it generates a report.")
 written in pure Python.")
     (license license:expat)))
 
-(define-deprecated/public python-case #f
-  (package
-    (name "python-case")
-    (version "1.5.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "case" version))
-       (sha256
-        (base32 "1cagg06vfph864s6l5jb0zqliwxh647bki8j6lf4a4qrv40jnhs8"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-mock python-nose python-six))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://github.com/celery/case")
-    (synopsis "Unittest utilities and convenience methods")
-    (description
-     "The @code{case} package provides utilities on top of unittest, including
-some helpful Python 2 compatibility convenience methods.")
-    (license license:bsd-3)))
-
 (define-public python-codacy-coverage
   (package
     (name "python-codacy-coverage")
     (version "1.3.11")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "codacy-coverage" version))
-        (sha256
-         (base32
-          "1g0c0w56xdkmqb8slacyw5qhzrkp814ng3ddh2lkiij58y9m2imr"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/codacy/python-codacy-coverage")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cxq2c6wyzynqjvc5szyhwvzdz4g3a4dv6bx80w4k4d9p40699hv"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)); no tests
-    (propagated-inputs
-     (list python-check-manifest python-requests))
+     (list
+      ;; XXX: Pytest is unable to find tests, even with common tricks.
+      ;; TODO: Run tox.ini unittests after next python-team merge.
+      #:tests? #f))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-check-manifest python-requests))
     (home-page "https://github.com/codacy/python-codacy-coverage")
     (synopsis "Codacy coverage reporter for Python")
-    (description "This package analyses Python test suites and reports how much
-of the code is covered by them.  This tool is part of the Codacy suite for
-analysing code quality.")
+    (description
+     "This package analyses Python test suites and reports how much of the
+code is covered by them.  This tool is part of the Codacy suite for analysing
+code quality.")
     (license license:expat)))
 
 (define-public python-covdefaults
@@ -679,20 +665,24 @@ text styles of documentation.")
 (define-public python-eradicate
   (package
     (name "python-eradicate")
-    (version "2.0.0")
+    (version "3.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "eradicate" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/myint/eradicate")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1j30g9jfmbfki383qxwrfds8b23yiwywj40lng4lqcf5yab4ahr7"))))
-    (build-system python-build-system)
+        (base32 "135xywygriid1wvqkra13iccaayh5r6a233jyfrj6kizhflksy2p"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/myint/eradicate")
     (synopsis "Remove commented-out code from Python sources")
-    (description "The @command{eradicate} command removes commented-out code
-from Python files.  It does this by detecting block comments that contain
-valid Python syntax that are likely to be commented out code.")
+    (description
+     "The @command{eradicate} command removes commented-out code from Python
+files.  It does this by detecting block comments that contain valid Python
+syntax that are likely to be commented out code.")
     (license license:expat)))
 
 (define-public python-expecttest
@@ -2137,25 +2127,29 @@ files and/or directories.")
     (version "1.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-doctest-custom" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/danilobellini/pytest-doctest-custom")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0kxkdd6q9c3h31kc88lbyfll4c45b0zjd24cbr4c083fcvcy7lip"))))
-    (build-system python-build-system)
+        (base32 "0hpdfazzvpgyhfr5la9n8k7a1j3z2nvqp76wiyzr73ha5wij33zl"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "python" "test_pytest_doctest_custom.py")))))))
-    (native-inputs
-     (list python-pytest))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key inputs outputs tests? #:allow-other-keys)
+              (when tests?
+                (add-installed-pythonpath inputs outputs)
+                (invoke "python" "test_pytest_doctest_custom.py")))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/danilobellini/pytest-doctest-custom")
     (synopsis
      "Pytest plugin to customize string representations of doctest results")
-    (description "This package provides a Pytest plugin for customizing string
+    (description
+     "This package provides a Pytest plugin for customizing string
 representations of doctest results.  It can change the display hook used by
 doctest to render the object representations.")
     (license license:expat)))
@@ -2396,29 +2390,30 @@ times and detect flakyness.")
     (version "2021.3.24")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-helpers-namespace" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/saltstack/pytest-helpers-namespace")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0pyj2d45zagmzlajzqdnkw5yz8k49pkihbydsqkzm413qnkzb38q"))))
-    (build-system python-build-system)
+        (base32 "0ikwiwp9ycgg7px78nxdkqvg7j97krb6vzqlb8fq8fvbwrj4q4v2"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              ;; Make the installed plugin discoverable by Pytest.
-              (add-installed-pythonpath inputs outputs)
-              (invoke "pytest" "-vv"))))))
-    (native-inputs
-     (list python-pytest python-setuptools ; needs setuptools >= 50.3.2
-           python-setuptools-scm python-setuptools-declarative-requirements))
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs (list python-pytest python-setuptools python-setuptools-scm
+                         python-setuptools-declarative-requirements
+                         python-wheel))
     (home-page "https://github.com/saltstack/pytest-helpers-namespace")
     (synopsis "Pytest Helpers Namespace Plugin")
-    (description "Pytest Helpers Namespace Plugin provides a helpers pytest
-namespace which can be used to register helper functions without requiring
-someone to import them in their actual tests to use them.")
+    (description
+     "Pytest Helpers Namespace Plugin provides a helpers pytest namespace
+which can be used to register helper functions without requiring someone to
+import them in their actual tests to use them.")
     (license license:asl2.0)))
 
 (define-public python-pytest-html
@@ -2698,28 +2693,25 @@ of tests run in a specific order.")
   (package
     (name "python-pytest-parawtf")
     (version "1.0.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytest-parawtf" version))
-              (sha256
-               (base32
-                "08s86hy58lvrd90cnayzydvac4slaflj0ph9yknakcc42anrm023"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-parawtf" version))
+       (sha256
+        (base32 "08s86hy58lvrd90cnayzydvac4slaflj0ph9yknakcc42anrm023"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key tests? #:allow-other-keys)
-               (when tests?
-                 ;; https://github.com/flub/pytest-parawtf/issues/1
-                 (invoke "pytest" "-k" "not test_mark")))))))
+      #:test-flags
+      ;; https://github.com/flub/pytest-parawtf/issues/1
+      #~(list "-k" "not test_mark")))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-pytest))
     (home-page "https://github.com/flub/pytest-parawtf/")
     (synopsis "Finally spell paramete?ri[sz]e correctly")
     (description
-"@code{python-pytest} uses one of four different spellings of
-parametrize.  This plugin allows you to use all four.")
+     "Pytest uses one of four different spellings of parametrize.  This plugin
+allows you to use all four.")
     (license license:expat)))
 
 (define-public python-pytest-pycodestyle
@@ -2751,7 +2743,7 @@ for the @code{pytest} framework.")
 (define-public python-pytest-pydocstyle
   (package
     (name "python-pytest-pydocstyle")
-    (version "2.2.0")
+    (version "2.4.0")
     (source
      (origin
        (method git-fetch)
@@ -2760,17 +2752,23 @@ for the @code{pytest} framework.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w6fivz4nb4b70wzmi5sk17qs9pd05rnh03fmch6v00r3dmfpk39"))))
-    (build-system python-build-system)
+        (base32 "08jaz92pzq6lqg64jbl9f6j0gdb622wl0qb2llfcy82grx2vv09q"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)) ; test requires the package itself
-    (propagated-inputs
-     (list python-pydocstyle
-           python-pytest))              ;apparently required
+     (list
+      ;; XXX: pytest failed to import 'py.io', while python can.
+      #:tests? #f))
+    (native-inputs
+     (list python-pytest
+           python-pytest-isort
+           python-pytest-pycodestyle
+           python-setuptools
+           python-wheel))
+    (propagated-inputs (list python-pydocstyle python-pytest)) ;apparently required
     (home-page "https://github.com/henry0312/pytest-pydocstyle")
     (synopsis "Pytest plugin to run @command{pydocstyle}")
-    (description "This package provides a Pytest plugin to run
-@command{pydocstyle}.")
+    (description
+     "This package provides a Pytest plugin to run @command{pydocstyle}.")
     (license license:expat)))
 
 (define-public python-pytest-pylint
@@ -2969,18 +2967,20 @@ you to test your code asynchronously.")
     (name "python-pytest-services")
     (version "1.3.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "pytest-services" version))
-        (sha256
-         (base32
-          "0b2zfv04w6m3gp2v44ifdhx22vcji069qnn95ry3zcyxib7cjnq3"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f)) ; Tests not included in release tarball.
-    (propagated-inputs
-     (list python-psutil python-requests))
-    (native-inputs
-     (list python-pytest))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pytest-dev/pytest-services")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "123s2vd3h5knfs6lz7b83z0wl2miqsbya3w71cm8xk6hgyb10nmv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; XXX: Tests require running memcached, mysql and X servers.
+     (list #:tests? #f))
+    (propagated-inputs (list python-psutil python-requests))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/pytest-dev/pytest-services")
     (synopsis "Services plugin for pytest testing framework")
     (description
@@ -3546,19 +3546,20 @@ simpler.")
   (package
     (name "python-robber")
     (version "1.1.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "robber" version))
-              (sha256
-               (base32
-                "0xp5csgv2g9q38hscml6bc5i1nm4xy5lzqqiimm2drxsf0hw2nq5"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "robber" version))
+       (sha256
+        (base32 "0xp5csgv2g9q38hscml6bc5i1nm4xy5lzqqiimm2drxsf0hw2nq5"))))
+    (build-system pyproject-build-system)
     ;; There are no tests in the tarball downloaded from PyPI.
     ;; The last version tagged in Github (0.1.0) is older than the one on PyPI.
     ;; Reported upstream: <https://github.com/vesln/robber.py/issues/20>.
-    (arguments '(#:tests? #f))
-    (propagated-inputs
-     (list python-mock python-termcolor))
+    (arguments
+     '(#:tests? #f))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-mock python-termcolor))
     ;; URL of the fork used to generate the package available on PyPI.
     (home-page "https://github.com/EastAgile/robber.py")
     (synopsis "Test-driven development (TDD) assertion library for Python")
