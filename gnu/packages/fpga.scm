@@ -571,8 +571,8 @@ Simulator Trace} files.")
   ;; XXX: The latest version tag (0.9.2) was placed in 2019, there are latest
   ;; changes supporting Python 3.11 on master branch, see
   ;; <https://github.com/m-labs/migen/issues/259>.
-  (let ((commit "2828df54594673653a641ab551caf6c6b1bfeee5")
-        (revision "0"))
+  (let ((commit "6e3a9e150fb006dabc4b55043d3af18dbfecd7e8")
+        (revision "1"))
     (package
       (name "python-migen")
       (version (git-version "0.9.2" revision commit))
@@ -585,12 +585,11 @@ Simulator Trace} files.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0my2jwrb64n39dfcipiw9s2cbg1r4s6zh4ybf4dwid9hk86fi6hs"))))
+          (base32 "1hibhjnj5b3ka5y4nnqx9zp5w730gfqfa3r5injpa14i4cz6bj1n"))))
       (build-system pyproject-build-system)
       (native-inputs
        (list python-pytest
-             python-setuptools
-             python-wheel))
+             python-setuptools-next))
       (propagated-inputs
        (list python-colorama))
       (home-page "https://m-labs.hk/gateware/migen/")
@@ -904,8 +903,8 @@ to @samp{info \"(guix) Base Services\"} for examples.")
     (license license:asl2.0)))
 
 (define-public python-hdlmake
-  (let ((commit "48260fb0d7ace3ff2ee124121a5780a226513077")
-        (revision "2"))
+  (let ((commit "c56cb8efa2000d06cec698f0149bc4ca4ef4e5bc")
+        (revision "3"))
     (package
       (name "python-hdlmake")
       (version (git-version "3.3" revision commit))
@@ -917,14 +916,14 @@ to @samp{info \"(guix) Base Services\"} for examples.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1s36gc5g3v20x2v26d45hfw2x9r7k54lj7sggz94qi7ydbi1ng41"))))
+          (base32 "1w4b0g015rzfypr8sjyr8xqij6s2p5qxhxraswrhjvg1w86b6s36"))))
       (build-system pyproject-build-system)
       (arguments (list #:phases #~(modify-phases %standard-phases
                                     (add-before 'check 'chdir
                                       (lambda _
                                         (chdir "testsuite"))))
                        #:test-flags #~(list "test_all.py")))
-      (native-inputs (list python-pytest python-setuptools python-wheel))
+      (native-inputs (list python-pytest python-setuptools-next))
       (propagated-inputs (list python-networkx python-six))
       (home-page "https://ohwr.gitlab.io/project/hdl-make/")
       (synopsis "Generate multi-purpose makefiles for HDL projects")

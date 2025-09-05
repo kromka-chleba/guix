@@ -197,6 +197,9 @@
 (define-public qemu
   (package
     (name "qemu")
+    ;; Do not forget to update the various firmware used by QEMU, and sync the
+    ;; configuration options used by the seabios-qemu package with those
+    ;; provided by QEMU.
     (version "10.1.0")
     (source
      (origin
@@ -206,7 +209,6 @@
        (sha256
         (base32 "0ldyh3qia7zwv0xq6f67cp567i6ma1hb11gsqaz3x9qcnm4p6lg0"))
        (patches (search-patches "qemu-build-info-manual.patch"
-                                "qemu-disable-bios-tables-test.patch"
                                 "qemu-fix-agent-paths.patch"
                                 "qemu-fix-test-virtio-version.patch"))
        (modules '((guix build utils)))
@@ -302,11 +304,11 @@
                      (allowed-differences
                       ;; Ignore minor differences (addresses etc) in the firmware
                       ;; data tables compared to what the test suite expects.
-                      '("tests/data/acpi/pc/SSDT.dimmpxm"
-                        "tests/data/acpi/pc/DSDT.dimmpxm"
-                        "tests/data/acpi/pc/ERST.acpierst"
-                        "tests/data/acpi/q35/ERST.acpierst"
-                        "tests/data/acpi/q35/DSDT.cxl"))
+                      '("tests/data/acpi/x86/pc/SSDT.dimmpxm"
+                        "tests/data/acpi/x86/pc/DSDT.dimmpxm"
+                        "tests/data/acpi/x86/pc/ERST.acpierst"
+                        "tests/data/acpi/x86/q35/ERST.acpierst"
+                        "tests/data/acpi/x86/q35/DSDT.cxl"))
                      (allowed-differences-whitelist
                       (open-file "tests/qtest/bios-tables-test-allowed-diff.h"
                                  "a")))
@@ -1772,7 +1774,7 @@ to integrate other virtualization mechanisms if needed.")
            `(,glib "bin") vala))
     (propagated-inputs
      ;; ‘Required:’ by the installed .pc files.
-     (list glib libvirt libxml2 gobject-introspection))
+     (list glib libvirt libxml2-next gobject-introspection))
     (home-page "https://libvirt.org")
     (synopsis "GLib wrapper around libvirt")
     (description "libvirt-glib wraps the libvirt library to provide a

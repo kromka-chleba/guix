@@ -256,7 +256,7 @@
 (define-public gupnp-igd
   (package
     (name "gupnp-igd")
-    (version "1.2.0")
+    (version "1.6.0")
     (source
      (origin
        (method url-fetch)
@@ -265,7 +265,7 @@
                        (version-major+minor version) "/"
                        name "-" version ".tar.xz"))
        (sha256
-        (base32 "1q9bw12ibih3yxpha3gm1dabyqg9gx6yxacbh4kxsgm1i84j0lab"))))
+        (base32 "0x0vfw8jzz7ih43qd5w7qx2gr56hnqra7wk895ni48mb761rg6a0"))))
     (build-system meson-build-system)
     (outputs '("out" "doc"))
     (arguments
@@ -297,7 +297,7 @@
      ;; These libraries are required by the .pc file.
      (list glib
            glib-networking
-           gupnp-1.4))
+           gupnp))
     (synopsis "UPnP IGD for GNOME")
     (description "GUPnP-IGD is a library to handle UPnP IGD port mapping.")
     (home-page "https://gitlab.gnome.org/GNOME/gupnp-igd")
@@ -441,7 +441,7 @@ services.")
                                                      "/share/gtk-doc/html"))))
     (native-inputs (list docbook-xml-4.1.2 gobject-introspection gtk-doc/stable
                          pkg-config))
-    (propagated-inputs (list glib libsoup-minimal-2 libxml2))
+    (propagated-inputs (list glib libsoup-minimal-2 libxml2-next))
     (synopsis "Glib library for feeds")
     (description "LibGRSS is a Glib abstraction to handle feeds in RSS, Atom,
 and other formats.")
@@ -1246,7 +1246,7 @@ Library reference documentation.")
      ;; These inputs are required by the pkg-config file.
      (list glib
            libsoup
-           libxml2))
+           libxml2-next))
     (synopsis "WebDav server implementation using libsoup")
     (description "PhoDav was initially developed as a file-sharing mechanism for Spice,
 but it is generic enough to be reused in other projects,
@@ -1456,39 +1456,13 @@ a debugging tool, @command{gssdp-device-sniffer}.")
            gsettings-desktop-schemas    ;for ‘org.gnome.system.proxy’.
            gssdp
            libsoup
-           libxml2))
+           libxml2-next))
     (synopsis "PnP API for GNOME")
     (description "This package provides GUPnP, an object-oriented framework
 for creating UPnP devices and control points, written in C using
 @code{GObject} and @code{libsoup}.")
     (home-page "https://gitlab.gnome.org/GNOME/gupnp")
     (license license:lgpl2.0+)))
-
-(define-public gupnp-1.4
-  (package
-    (inherit gupnp)
-    (name "gupnp")
-    (version "1.4.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/" name "/"
-                                  (version-major+minor version) "/"
-                                  name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0vz3ifs8mi3zaz8zj8v27zfkf6xg82y39mcgqspa38jdp01gn3sr"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments gupnp)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (add-after 'unpack 'meson-compatibility
-            (lambda _
-              (substitute* "subprojects/gssdp-1.2.wrap"
-                (("provides") "provide"))))))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs gupnp)
-       (replace "libsoup" libsoup-minimal-2)
-       (replace "gssdp" gssdp-1.4)))))
 
 (define-public gupnp-dlna
   (package
@@ -2117,7 +2091,7 @@ formats like PNG, SVG, PDF and EPS.")
        ("json-glib" ,json-glib)
        ("liboauth" ,liboauth)
        ("libsoup" ,libsoup-minimal-2)
-       ("libxml2" ,libxml2)))
+       ("libxml2" ,libxml2-next)))
     (home-page "https://wiki.gnome.org/Projects/libgdata")
     (synopsis "Library for accessing online service APIs")
     (description
@@ -3649,7 +3623,7 @@ XML/CSS rendering engine.")
            zlib))
     (propagated-inputs
      (list glib
-           libxml2))
+           libxml2-next))
     (synopsis "G Structured File Library")
     (description "Libgsf aims to provide an efficient extensible I/O abstraction
 for dealing with different structured file formats.")
@@ -4257,7 +4231,7 @@ ported to GTK+.")
     (inputs
      (list python)) ;; needed for the optional libglade-convert program
     (propagated-inputs
-     (list gtk+-2 libxml2)) ; required by libglade-2.0.pc
+     (list gtk+-2 libxml2-next)) ; required by libglade-2.0.pc
     (native-inputs
      (list pkg-config))
     (home-page "https://developer.gnome.org/libglade")
@@ -4294,7 +4268,7 @@ widgets built in the loading process.")
                ;; Therefore we must do it.
                (zero? (system (format #f "~a/bin/Xvfb ~a &" xorg-server disp)))))))))
     ;; Mentioned as Required by the .pc file
-    (propagated-inputs (list libxml2))
+    (propagated-inputs (list libxml2-next))
     (inputs
      (list popt pangox-compat libgnome libgnomecanvas libglade))
     (native-inputs
@@ -4977,7 +4951,7 @@ GLib and GObject, and integrates JSON with GLib data types.")
        ("libtool" ,libtool)))
     (propagated-inputs
      ;; Required by libxklavier.pc.
-     (list glib libxml2))
+     (list glib libxml2-next))
     (inputs
      (list iso-codes/pinned libxi libxkbfile xkbcomp xkeyboard-config))
     (home-page "https://www.freedesktop.org/wiki/Software/LibXklavier/")
@@ -5087,6 +5061,7 @@ files.")
 
 (define-public rest
   (package
+    (replacement rest/fixed)
     (name "rest")
     (version "0.8.1")
     (source (origin
@@ -5114,6 +5089,13 @@ files.")
 claim to be \"RESTful\".  It includes convenience wrappers for libsoup and
 libxml to ease remote use of the RESTful API.")
     (license license:lgpl2.1+)))
+
+(define-public rest/fixed
+  (package
+    (inherit rest)
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs rest)
+       (replace "libxml2" libxml2-next)))))
 
 (define-public rest-next
   (package
@@ -5219,6 +5201,7 @@ as OpenStreetMap, OpenCycleMap, OpenAerialMap and Maps.")
 ;;; A minimal version of libsoup used to prevent a cycle with Inkscape.
 (define-public libsoup-minimal
   (package
+    (replacement libsoup-minimal/fixed)
     (name "libsoup-minimal")
     (version "3.6.4")
     (source (origin
@@ -5281,10 +5264,18 @@ and the GLib main loop, to integrate well with GNOME applications.")
     (license license:lgpl2.0+)
     (properties '((upstream-name . "libsoup")))))
 
+(define-public libsoup-minimal/fixed
+  (package
+    (inherit libsoup-minimal)
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs libsoup-minimal)
+       (replace "libxml2" libxml2-next)))))
+
 ;;; An older variant kept to build the 'rest' package.
 (define-public libsoup-minimal-2
   (package
     (inherit libsoup-minimal)
+    (replacement libsoup-minimal-2/fixed)
     (version "2.74.3")
     (source (origin
               (method url-fetch)
@@ -5310,10 +5301,21 @@ and the GLib main loop, to integrate well with GNOME applications.")
                   (("[ \t]*\\['ssl', true, \\[\\]\\],") ""))))))))
     (native-inputs
      (modify-inputs (package-native-inputs libsoup-minimal)
-       (replace "vala" vala-0.52)))))
+       (replace "vala" vala-0.52)))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs libsoup-minimal)
+       (replace "libxml2" libxml2)))))
+
+(define-public libsoup-minimal-2/fixed
+  (package
+    (inherit libsoup-minimal-2)
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs libsoup-minimal-2)
+       (replace "libxml2" libxml2-next)))))
 
 (define-public libsoup
   (package/inherit libsoup-minimal
+    (replacement #f)
     (name "libsoup")
     (outputs (cons "doc" (package-outputs libsoup-minimal)))
     (arguments
@@ -6074,7 +6076,7 @@ service via the system message bus.")
      (list gtk+
            gdk-pixbuf
            json-glib
-           libxml2
+           libxml2-next
            libsoup
            geocode-glib))
     (inputs
@@ -6193,7 +6195,7 @@ settings, themes, mouse settings, and startup of other daemons.")
     (list intltool
           `(,glib "bin") gobject-introspection pkg-config))
    (propagated-inputs
-    (list glib gmime libarchive libgcrypt libxml2))
+    (list glib gmime libarchive libgcrypt libxml2-next))
    (inputs
     (list libsoup))
    (home-page "https://projects.gnome.org/totem")
@@ -8177,7 +8179,7 @@ to display dialog boxes from the commandline and shell scripts.")
            libxext
            libxfixes
            libxkbcommon
-           libxml2
+           libxml2-next
            libxrandr
            mesa
            pango
@@ -8936,7 +8938,7 @@ the available networks and allows users to easily switch between them.")
         (base32 "07h11vl0rv8b0w31as5xiirpx17lprkx7fimphy3f5mkwhz8njba"))))
     (build-system gnu-build-system)
     (propagated-inputs
-     (list libxml2))                    ;required by .pc file
+     (list libxml2-next))                    ;required by .pc file
     (native-inputs
      (list autoconf
            automake
@@ -13891,7 +13893,7 @@ developed with the aim of being used with the Librem 5 phone.")
            sqlite
            vala))
     (propagated-inputs
-     (list libxml2))                    ; required by libgda-5.0.pc
+     (list libxml2-next))                    ; required by libgda-5.0.pc
     (home-page "https://gitlab.gnome.org/GNOME/libgda")
     (synopsis "Uniform data access")
     (description

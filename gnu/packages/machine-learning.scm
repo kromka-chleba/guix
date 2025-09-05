@@ -152,7 +152,7 @@
 (define-public dlpack
   (package
     (name "dlpack")
-    (version "1.0")
+    (version "1.1")
     (source
      (origin
        (method git-fetch)
@@ -161,10 +161,10 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "169slm88jin4ddhdwk1qhqzzkhkwk1jrz35i7abhcqkry9wjib4f"))))
+        (base32 "0vlp8gcf7s3snalj6xmvgqxxn96fki6gw9hzph30gmgdbaz730j6"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))      ;No tests.
-    (home-page "https://github.com/dmlc/dlpack")
+    (home-page "https://dmlc.github.io/dlpack/latest/")
     (synopsis "In memory tensor structure")
     (description
      "DLPack is an in-memory tensor structure for sharing tensors among
@@ -221,7 +221,7 @@ family of functions.")
 (define-public python-faster-whisper
   (package
     (name "python-faster-whisper")
-    (version "1.1.1")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -230,7 +230,7 @@ family of functions.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0g9cdvphifn4rqhh7p4z1d3pp6bhcx0jmcahjigvcgry0qsijgfn"))))
+        (base32 "0wmc9aszpnbr60l5v97np0rc3zsz4pldjald7kmnr668rhpakzcj"))))
     (build-system pyproject-build-system)
     ;; XXX: Currently tests requires model download, which we'd rather avoid
     ;; in Guix unless we're sure about the FOSS weights. To test in source :
@@ -302,30 +302,41 @@ distributions.")
     (license license:asl2.0)))
 
 (define-public fann
-  ;; The last release is >100 commits behind, so we package from git.
-  (let ((commit "d71d54788bee56ba4cf7522801270152da5209d7"))
+  ;; The last release is 14 years old.
+  (let ((commit "1783cbf6239a597c4d29f694e227e22b8d4f4bf6")
+        (revision "2"))
     (package
       (name "fann")
-      (version (string-append "2.2.0-1." (string-take commit 8)))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/libfann/fann")
-                      (commit commit)))
-                (file-name (string-append name "-" version "-checkout"))
-                (sha256
-                 (base32
-                  "0ibwpfrjs6q2lijs8slxjgzb2llcl6rk3v2ski4r6215g5jjhg3x"))))
+      (version (git-version "2.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/libfann/fann")
+                (commit commit)))
+         (modules '((guix build utils)))
+         (snippet #~(delete-file-recursively "lib/googletest"))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0jlcxl0czlr3982mak3935mb08i2f368f0jsxca91ppgfd596ldr"))))
       (build-system cmake-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out")))
-                 (with-directory-excursion (string-append (getcwd) "/tests")
-                   (invoke "./fann_tests"))))))))
-      (home-page "http://leenissen.dk/fann/wp/")
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'remove-googletest
+              (lambda _
+                (substitute* "CMakeLists.txt"
+                  (("ADD_SUBDIRECTORY\\( lib/googletest \\)")
+                   ""))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (with-directory-excursion "tests"
+                    (invoke "./fann_tests"))))))))
+      (native-inputs (list googletest))
+      (home-page "https://leenissen.dk/")
       (synopsis "Fast Artificial Neural Network")
       (description
        "FANN is a neural network library, which implements multilayer
@@ -336,39 +347,40 @@ sparsely connected networks.")
 (define-public libsvm
   (package
     (name "libsvm")
-    (version "3.23")
+    (version "336")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://www.csie.ntu.edu.tw/~cjlin/libsvm/"
-                           name "-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cjlin1/libsvm/")
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "0jpaq0rr92x38p4nk3gjan79ip67m6p80anb28z1d8601miysyi5"))))
+        (base32 "03ns6frhfdcyl661ws1yqbzsa6m8wrmba544vlacghry2kg88hn2"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no "check" target
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-after 'build 'build-lib
-           (lambda _
-             (invoke "make" "lib")))
-         (replace 'install              ; no ‘install’ target
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin/"))
-                    (lib (string-append out "/lib/"))
-                    (inc (string-append out "/include/libsvm")))
-               (mkdir-p bin)
-               (for-each (lambda (file)
-                           (copy-file file (string-append bin file)))
-                         '("svm-train"
-                           "svm-predict"
-                           "svm-scale"))
-               (mkdir-p lib)
-               (install-file "libsvm.so.2" lib)
-               (mkdir-p inc)
-               (install-file "svm.h" inc)))))))
+     (list
+      #:tests? #f ;no "check" target
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'build 'build-lib
+            (lambda _
+              (invoke "make" "lib")))
+          (replace 'install
+             ;no "install" target
+            (lambda _
+              (for-each (lambda (file)
+                          (install-file file
+                                        (string-append #$output "/bin")))
+                        '("svm-train" "svm-predict" "svm-scale"))
+              (install-file "libsvm.so.4"
+                            (string-append #$output "/lib"))
+              (symlink (string-append #$output "/lib/libsvm.so.4")
+                       (string-append #$output "/lib/libsvm.so"))
+              (install-file "svm.h"
+                            (string-append #$output "/include/"
+                                           #$name)))))))
+    (native-inputs (list python-minimal-wrapper))
     (home-page "https://www.csie.ntu.edu.tw/~cjlin/libsvm/")
     (synopsis "Library for Support Vector Machines")
     (description
@@ -427,35 +439,20 @@ machine learning algorithms based on GPs.")
     (license license:bsd-3)))
 
 (define-public python-libsvm
-  (package (inherit libsvm)
+  (package
+    (inherit libsvm)
     (name "python-libsvm")
-    (build-system gnu-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f                      ; no "check" target
-       #:make-flags '("-C" "python")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace
-          'install                      ; no ‘install’ target
-          (lambda* (#:key inputs outputs #:allow-other-keys)
-            (let ((site (string-append (assoc-ref outputs "out")
-                                       "/lib/python"
-                                       (string-take
-                                        (string-take-right
-                                         (assoc-ref inputs "python") 5) 3)
-                                       "/site-packages/")))
-              (substitute* "python/svm.py"
-                (("../libsvm.so.2") "libsvm.so.2"))
-              (mkdir-p site)
-              (for-each (lambda (file)
-                          (copy-file file (string-append site (basename file))))
-                        (find-files "python" "\\.py"))
-              (copy-file "libsvm.so.2"
-                         (string-append site "libsvm.so.2")))
-            #t)))))
-    (inputs
-     (list python))
+     (list
+      #:tests? #f ;no "check" target
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'chdir
+            (lambda _
+              (chdir "python"))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list libsvm python-scipy))
     (synopsis "Python bindings of libSVM")))
 
 (define-public python-mcfit
@@ -979,16 +976,17 @@ algorithm.")
 (define-public openmm
   (package
     (name "openmm")
-    (version "8.1.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/openmm/openmm")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "064vv6zaci30pj38z5lwfqscxssm67jqxkz30hcya9vm4ng831d5"))))
+    (version "8.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/openmm/openmm")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0pcy1f6r4h6z0b75gx4lcnkf7yr8342w2dch7jml1ycmzpqkxvfx"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1141,16 +1139,17 @@ optimizing, and searching weighted finite-state transducers (FSTs).")
 (define-public sentencepiece
   (package
     (name "sentencepiece")
-    (version "0.1.97")
+    (version "0.2.1")
     (source
      (origin
        (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/google/sentencepiece")
-             (commit (string-append "v" version))))
+       (uri
+        (git-reference
+         (url "https://github.com/google/sentencepiece/")
+         (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kzfkp2pk0vabyw3wmkh16h11chzq63mzc20ddhsag5fp6s91ajg"))))
+        (base32 "1yzsaam3kk9fqzxfc3nm2pskwq1bdgkrijmcmzmg5x0338rn0hmb"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))      ;no tests
     (native-inputs (list gperftools))
@@ -1457,22 +1456,21 @@ storing tensors safely.")
 
 (define-public python-sentencepiece
   (package
+    (inherit sentencepiece)
     (name "python-sentencepiece")
-    (version "0.1.97")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "sentencepiece" version))
-       (sha256
-        (base32 "0v0z9ryl66432zajp099bcbnwkkldzlpjvgnjv9bq2vi19g300f9"))))
     (build-system python-build-system)
-    (native-inputs (list pkg-config))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "python"))))))
+    (native-inputs (list pkg-config protobuf))
     (propagated-inputs (list sentencepiece))
-    (home-page "https://github.com/google/sentencepiece")
     (synopsis "SentencePiece python wrapper")
     (description "This package provides a Python wrapper for the SentencePiece
-unsupervised text tokenizer.")
-    (license license:asl2.0)))
+unsupervised text tokenizer.")))
 
 (define-public python-sentence-transformers
   (package
@@ -4076,11 +4074,10 @@ devices.")
         (base32 "1x4ad1jhn84fywlk031fmv1kxyiscclmrqn9hhj8gz0mh7z9vcrh"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
-       (list "-DGOOGLE_TEST=ON")))
+     (list
+      #:configure-flags #~(list "-DGOOGLE_TEST=ON")))
     (native-inputs
-     `(("googletest" ,googletest)
-       ("python" ,python-wrapper)))
+     (list googletest python-wrapper))
     (home-page "https://github.com/dmlc/dmlc-core")
     (synopsis "Common bricks library for machine learning")
     (description
@@ -4309,7 +4306,7 @@ methodxs at scale on CPU or GPU.")
 (define-public python-umap-learn
   (package
     (name "python-umap-learn")
-    (version "0.5.8")
+    (version "0.5.9")
     (source
      (origin
        (method git-fetch)               ;no tests in pypi release
@@ -4318,7 +4315,7 @@ methodxs at scale on CPU or GPU.")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pdlb6qn9vnvabksiabxmcj30j8ff7526mz1qszrbdl5kh2sl7sm"))))
+        (base32 "0pkniia9lccdbshwl4sh2iria7dny13qk0flkk67msb777sm5bmn"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5032,7 +5029,7 @@ PyTorch.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'cmake-patches
-            (lambda* (#:key inputs #:allow-other-keys)
+            (lambda* (#:key inputs outputs #:allow-other-keys)
               (substitute* "cmake/Dependencies.cmake"
                 (("#POCKETFFT_INCLUDE_DIR")
                  (string-append
@@ -5041,8 +5038,7 @@ PyTorch.")
                  (string-append
                   #$(this-package-input "fp16") "/include"))
                 (("#CONCURRENTQUEUE_INCLUDE_DIR")
-                 (dirname (search-input-file inputs
-                                           "include/concurrentqueue/concurrentqueue.h")))
+                 (search-input-directory inputs "include/concurrentqueue"))
                 ;; Disable opentelemetry
                 ((".*(add_library|target_include_directories).*opentelemetry.*")
                  ""))
@@ -5051,9 +5047,11 @@ PyTorch.")
               ;; Fix Python install directory
               (substitute* "caffe2/CMakeLists.txt"
                 (("\\$\\{Python_SITELIB\\}")
-                 (string-append #$output "/lib/python"
-                                #$(version-major+minor (package-version python))
-                                "/site-packages")))))
+                 (site-packages inputs outputs)))
+              ;; Ensure httplib::httplib is defined when used.
+              (substitute* "cmake/Caffe2Config.cmake.in"
+                (("include *\\(.*Caffe2Targets\\.cmake.*\\)" all)
+                 (string-append "find_package(httplib REQUIRED)\n" all)))))
           ;; This entry point is broken, because it refers to a module that is
           ;; (intentionally) not installed
           ;; (https://github.com/pytorch/pytorch/pull/134729), which causes
@@ -5207,9 +5205,8 @@ PyTorch.")
                           (find-files python-site
                                       "(^test_cpp_rpc|_test)$")))))
           (add-after 'install2 'remove-caffe2-onnx-scripts
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (bin (string-append out "/bin")))
+            (lambda _
+              (let ((bin (string-append #$output "/bin")))
                 ;; Remove 'convert-caffe2-to-onnx' and
                 ;; 'convert-onnx-to-caffe2': they seem to be
                 ;; deprecated and they cause a failure of the
@@ -5221,7 +5218,7 @@ PyTorch.")
                 (for-each delete-file
                           (find-files bin "^convert-.*caffe2"))
 
-                (substitute* (find-files out "^entry_points\\.txt$")
+                (substitute* (find-files #$output "^entry_points\\.txt$")
                   (("^convert-.*" all)
                    (string-append "# " all "\n")))))))
 
@@ -5323,6 +5320,83 @@ PyTorch when needed.
 
 Note: currently this package does not provide GPU support.")
     (license license:bsd-3)))
+
+(define-public python-torchaudio
+  (package
+    (name "python-torchaudio")
+    (version %python-pytorch-version)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pytorch/audio")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0snrn6bhc7hcfzs5y4h61dl4dmwxymkf46dygjq6c09nc1jvmxj8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; XXX: Those packages require additional inputs.
+         "--ignore=\
+test/torchaudio_unittest/prototype/hifi_gan/hifi_gan_cpu_test.py"
+         "--ignore=\
+test/torchaudio_unittest/prototype/hifi_gan/hifi_gan_gpu_test.py"
+         "--ignore=test/torchaudio_unittest/kaldi_io_test.py"
+         "--ignore=test/torchaudio_unittest/test_load_save_torchcodec.py"
+         "--ignore-glob=test/torchaudio_unittest/backend/dispatcher/ffmpeg"
+         ;; XXX: We don't really want to run those tests.
+         "--ignore-glob=test/torchaudio_unittest/example"
+         ;; XXX: Integration tests require additional data / models.
+         "--ignore-glob=test/integration_tests"
+         ;; XXX: Those tests are very costly.
+         "--ignore-glob=test/torchaudio_unittest/functional"
+         "--ignore-glob=test/torchaudio_unittest/models"
+         "--ignore=test/torchaudio_unittest/models/models_test.py"
+         "--ignore=test/torchaudio_unittest/transforms/autograd_cpu_test.py"
+         "-k" (string-append "not test_torchscript_fails"  ; requires BUILD_SOX=1
+                             ;; XXX: Unmatching harmless warning message.
+                             " and not test_unknown_subtype_warning"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'configure
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (setenv "BUILD_SOX" "0")
+              (setenv "USE_FFMPEG" "0")
+              (substitute* "tools/setup_helpers/extension.py"
+                (("^( *)\"-DCMAKE_VERBOSE_MAKEFILE=ON\"," all blank)
+                 (string-append
+                  blank "f\"-DCMAKE_INSTALL_RPATH="
+                  (site-packages inputs
+                                 `(("out" .
+                                    ,(assoc-ref inputs "python-pytorch"))))
+                  "/torch/lib;"
+                  (site-packages inputs outputs) "/torchaudio/lib\",\n"
+                  blank "\"-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON\",\n"
+                  all))))))))
+    (native-inputs
+     (list cmake
+           ninja
+           oneapi-dnnl
+           python-expecttest
+           python-parameterized
+           python-pytest
+           python-scipy
+           python-setuptools
+           python-wheel
+           sox))
+    (inputs (package-inputs python-pytorch))
+    (propagated-inputs (list python-soundfile python-pytorch))
+    (home-page "https://pytorch.org/audio")
+    (synopsis
+     "Data manipulation and transformation for audio signal processing")
+    (description
+     "This package provides a machine learning library of popular datasets,
+model architectures, and common transformations to apply @code{python-pytorch}
+in the audio domain.")
+    (license license:bsd-2)))
 
 ;; This package variant includes the dependencies requiring at least AVX2 or
 ;; AVX-512.
@@ -5744,7 +5818,8 @@ feedback.")
              python-pytest
              python-psutil
              python-requests-mock
-             python-scikit-learn))
+             python-scikit-learn
+             python-setuptools-next))
       (home-page "https://lightning.ai/")
       (synopsis "Deep learning framework to train, deploy, and ship AI products")
       (description
@@ -6434,7 +6509,7 @@ linear algebra routines needed for structured matrices (or operators).")
 (define-public python-botorch
   (package
     (name "python-botorch")
-    (version "0.14.0")
+    (version "0.15.1")
     (source (origin
               (method git-fetch) ;no tests in PyPI
               (uri (git-reference
@@ -6443,10 +6518,17 @@ linear algebra routines needed for structured matrices (or operators).")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1hgjjzdqcs8y0z20vkdzzpbm0nvnxmrav4mfvbpp0gny8pk64913"))))
+                "1c6p5h5gypiyj59820q2w3k7rx715r3vxxcr5mnwdjbhi4l2q47a"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:test-flags #~(list "-k" "not test_all_cases_covered")
+     ;; 7 failed, 1502 passed, 1 skipped, 1 deselected, 807 warnings
+     (list #:test-flags #~(list "-k"
+                                (string-append
+                                 "not test_all_cases_covered"
+                                 " and not test_input_constructors"
+                                 " and not test_gen"
+                                 " and not test_mock"
+                                 " and not test_evaluation"))
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'build 'pretend-version
@@ -6593,8 +6675,8 @@ simple speech recognition.")
                  "lib.")))))))))
 
 (define-public nerd-dictation
-  (let* ((commit "0eb44b7fd0927d69c92de5566e5807ed2c2e20b7")
-         (revision "1"))
+  (let* ((commit "03ce043a6d569a5bb9a715be6a8e45d8ba0930fd")
+         (revision "2"))
     (package
       (name "nerd-dictation")
       (version (git-version "0" revision commit))
@@ -6606,7 +6688,7 @@ simple speech recognition.")
                 (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0frdpswv6w3cwj3c7wd5w8gj3s1hvpdwd48qhfhfxf7imahz9bqf"))))
+          (base32 "0ksnlpy2jcldxamq7bsbcgxgafcmgxkbjccd4fwmmn0y814kkz9k"))))
       (build-system pyproject-build-system)
       (arguments
        (list

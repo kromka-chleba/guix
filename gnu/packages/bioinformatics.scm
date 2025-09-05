@@ -10962,7 +10962,7 @@ distribution, coverage uniformity, strand specificity, etc.")
        `(#:configure-flags
          ,#~(list (string-append "-DSVM_LIBRARY="
                                  #$(this-package-input "libsvm")
-                                 "/lib/libsvm.so.2")
+                                 "/lib/libsvm.so")
                   (string-append "-DSVM_INCLUDE="
                                  #$(this-package-input "libsvm")
                                  "/include"))
@@ -23306,7 +23306,7 @@ The output is in SAM format.")
                                #$(this-package-input "libxml2")
                                "/include/libxml2"))))
     (propagated-inputs
-     (list libxml2))
+     (list libxml2-next))
     (native-inputs
      (list check swig))
     (home-page "https://sbml.org/Software/libSBML")

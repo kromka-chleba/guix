@@ -896,6 +896,15 @@ importer."
         #:scope (list "gnu/packages/chez.scm"
                       "gnu/packages/racket.scm")))
 
+(define-team release
+  (team 'release
+        #:name "Release team"
+        #:description
+        "The current release team.  Members are expected to change with each
+release."
+        #:scope (list "NEWS"
+                      "etc/manifests/release.scm")))
+
 (define-team reproduciblebuilds
   (team 'reproduciblebuilds
         #:name "Reproducible Builds team"
@@ -1080,7 +1089,7 @@ the \"texlive\" importer."
 (define-member (person "Efraim Flashner"
                        "efraim@flashner.co.il"
                        "efraim")
-  embedded bootstrap rust)
+  embedded bootstrap release rust)
 
 (define-member (person "jgart"
                        "jgart@dismail.de"
@@ -1271,7 +1280,7 @@ the \"texlive\" importer."
 (define-member (person "Noé Lopez"
                        "noelopez@free.fr"
                        "Baleine")
-  gnome)
+  gnome release)
 
 (define-member (person "Ashvith Shetty"
                        "ashvithshetty0010@zohomail.in")
@@ -1305,6 +1314,16 @@ the \"texlive\" importer."
                        "goodoldpaul@autistici.org"
                        "fishinthecalculator")
   audio)
+
+(define-member (person "Saku Laesvuori"
+                       "saku@laesvuori.fi"
+                       "slaesvuo")
+  haskell)
+
+(define-member (person "Rodion Goritskov"
+                       "rodion@goritskov.com"
+                       "rodion-goritskov")
+  release)
 
 
 (define (find-team name)

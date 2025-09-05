@@ -527,10 +527,12 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.5.2")
+    (version "5.6.0")
     (outputs '("out" "docker"))
     (properties
-      `((output-synopsis "docker" "docker alias for podman")))
+     `((output-synopsis "docker" "docker alias for podman")
+       ;; XXX: Adressed already.
+       (lint-hidden-cve . ("CVE-2022-2989"))))
     (source
      (origin
        (method git-fetch)
@@ -538,7 +540,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0smdfyhyx1j78anvlwhbmimsrwm4fzf858yh83g37ykg5m04kfl8"))
+        (base32 "1w5p76ynhlayvala76xsh1b1sv8w50fjp02sjm819mg98scbc3fk"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

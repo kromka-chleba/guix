@@ -522,7 +522,7 @@ gpgpme starting with version 1.7.")
 (define-public guile-gcrypt
   (package
     (name "guile-gcrypt")
-    (version "0.4.0")
+    (version "0.5.0")
     (home-page "https://notabug.org/cwebber/guile-gcrypt")
     (source (origin
               (method git-fetch)
@@ -531,7 +531,7 @@ gpgpme starting with version 1.7.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "0m75h9q10yb27kzjsvhhq0yk3jaxiy9bpbfd9qg269hf9gabgfdx"))
+                "0zh5bqgbc3r4dlzz64flnh10pq0ipbxx8mpbwgp4di0abhlcxz30"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -562,17 +562,7 @@ GNU Libgcrypt crytographic library.  It provides modules for cryptographic
 hash functions, message authentication codes (MAC), public-key cryptography,
 strong randomness, and more.  It is implemented using the foreign function
 interface (FFI) of Guile.")
-    (license license:gpl3+)))
-
-(define-public guile2.0-gcrypt
-  (package (inherit guile-gcrypt)
-    (name "guile2.0-gcrypt")
-    (native-inputs
-     (modify-inputs (package-native-inputs guile-gcrypt)
-       (replace "guile" guile-2.0)))
-    (inputs
-     (modify-inputs (package-inputs guile-gcrypt)
-       (replace "guile" guile-2.0)))))
+    (license license:lgpl3+)))
 
 (define-public guile2.2-gcrypt
   (package

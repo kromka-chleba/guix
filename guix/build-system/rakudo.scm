@@ -44,21 +44,16 @@
     ,@%default-gnu-imported-modules))
 
 (define (default-rakudo)
-  "Return the default Rakudo package."
-
-  ;; Do not use `@' to avoid introducing circular dependencies.
-  (let ((module (resolve-interface '(gnu packages perl6))))
-    (module-ref module 'rakudo)))
+  "Return the default Rakudo package, resolved lazily."
+  (@* (gnu packages perl6) rakudo))
 
 (define (default-prove6)
-  "Return the default perl6-tap-harness package for tests."
-  (let ((module (resolve-interface '(gnu packages perl6))))
-    (module-ref module 'perl6-tap-harness)))
+  "Return the default perl6-tap-harness package for tests, resolved lazily."
+  (@* (gnu packages perl6) perl6-tap-harness))
 
 (define (default-zef)
   "Return the default perl6-zef package."
-  (let ((module (resolve-interface '(gnu packages perl6))))
-    (module-ref module 'perl6-zef)))
+  (@* (gnu packages perl6) perl6-zef))
 
 (define* (lower name
                 #:key source inputs native-inputs outputs
@@ -72,7 +67,8 @@
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:target #:rakudo #:prove6 #:zef #:inputs #:native-inputs))
+    '(#:target #:inputs #:native-inputs
+      #:rakudo #:prove6 #:zef #:with-prove6? #:with-zef?))
 
   (and (not target)                               ;XXX: no cross-compilation
        (bag
@@ -106,8 +102,6 @@
                        (outputs '("out"))
                        (system (%current-system))
                        (guile #f)
-                       (with-zef? #t)
-                       (with-prove6? #t)
                        (imported-modules %rakudo-build-system-modules)
                        (modules '((guix build rakudo-build-system)
                                   (guix build utils))))

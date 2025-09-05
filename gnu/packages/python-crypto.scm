@@ -640,18 +640,30 @@ OpenSSL library.")
 (define-public python-ed25519
   (package
     (name "python-ed25519")
-    (version "1.4")
+    (version "1.5")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "ed25519" version))
-        (sha256
-          (base32
-            "0ahx1nkxa0xis3cw0h5c4fpgv8mq4znkq7kajly33lc3317bk499"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/warner/python-ed25519")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0adxfm12wygh2gdsn83xmp1sw7w96ni7mr7v3z3y6q0mvh9n5x0p"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Use custom test back-end on python-team branch.
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests? (invoke "python" "test_ed25519_kat.py")))))))
+    (native-inputs (list python-setuptools-next))
     (home-page "https://github.com/warner/python-ed25519")
     (synopsis "Ed25519 public-key signatures")
-    (description "Ed25519 public-key signatures")
+    (description
+     "This package provides Ed25519 public-key signatures in Python.")
     (license license:expat)))
 
 (define-public python-axolotl-curve25519
@@ -690,28 +702,33 @@ python-axolotl.")
     (version "0.2.3")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "python-axolotl" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tgalal/python-axolotl")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1bwdp24fmriffwx91aigs9k162albb51iskp23nc939z893q23py"))))
-    (build-system python-build-system)
+        (base32 "0bwzsyb3z54259kh667m714n28r6jp8almb5mrx48ar0pgashsrl"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; Don't install tests
-         (add-before 'install 'remove-tests
-           (lambda _
-             (for-each delete-file-recursively
-                       '("axolotl/tests" "build/lib/axolotl/tests"))
-             #t)))))
-    (propagated-inputs
-     (list python-axolotl-curve25519 python-cryptography python-protobuf))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Don't install tests
+          (add-after 'install 'cleanup-install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (delete-file-recursively
+               (string-append (site-packages inputs outputs)
+                              "/axolotl/tests")))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-axolotl-curve25519 python-cryptography
+                             python-protobuf))
     (home-page "https://github.com/tgalal/python-axolotl")
     (synopsis "Python port of libaxolotl-android")
-    (description "This is a python port of libaxolotl-android.  This
-is a ratcheting forward secrecy protocol that works in synchronous and
-asynchronous messaging environments.")
+    (description
+     "This is a python port of libaxolotl-android.  This is a ratcheting
+forward secrecy protocol that works in synchronous and asynchronous messaging
+environments.")
     (license license:gpl3)))
 
 (define-public python-omemo-dr
@@ -1120,39 +1137,22 @@ supports KDBX3 and KDBX4.")
 (define-public python-pylibscrypt
   (package
     (name "python-pylibscrypt")
-    (version "1.7.1")
+    (version "2.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pylibscrypt" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jvarho/pylibscrypt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1b3rgzl6dbzs08vhv41b6y4n5189wv7lr27acxn104hs45745abs"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'hard-code-path-to-libscrypt
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((libscrypt (assoc-ref inputs "libscrypt")))
-               (substitute* "pylibscrypt/pylibscrypt.py"
-                 (("find_library\\('scrypt'\\)")
-                  (string-append "'" libscrypt "/lib/libscrypt.so'")))
-               #t))))
-       ;; The library can use various scrypt implementations and tests all of
-       ;; them.  Since we only provide a single implementation, most tests
-       ;; fail.  Simply skip them.
-       #:tests? #f))
-    ;; FIXME: Using "libscrypt" is the second best choice.  The best one
-    ;; requires "hashlib.scrypt", provided by Python 3.6+ built with OpenSSL
-    ;; 1.1+.  Use that as soon as Guix provides it.
-    (inputs
-     (list libscrypt))
+        (base32 "0hshivwl3xznlqhrvwbylp40k1bfx4gnyzmxwldkwjhf1260zan1"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/jvarho/pylibscrypt")
     (synopsis "Scrypt for Python")
-    (description "There are a lot of different scrypt modules for Python, but
-none of them have everything that I'd like, so here's one more.  It uses
-@code{libscrypt}.")
+    (description
+     "This package provides another Scrypt module for Python.")
     (license license:isc)))
 
 (define-public python-libnacl
@@ -1217,21 +1217,24 @@ require users to log in.")
 (define-public python-scrypt
   (package
     (name "python-scrypt")
-    (version "0.8.7")
+    (version "0.9.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "scrypt" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/holgern/py-scrypt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0hjk71k3mgnl8siikm9lii9im8kv0rb7inkjzx78rnancra48xxr"))))
-    (build-system python-build-system)
-    (inputs
-     (list openssl))
-    (home-page "https://bitbucket.org/mhallin/py-scrypt")
+        (base32 "07mr8slhplk0pfji3pfb86281wf035c3vxg7w4g17vgry1l5fdg2"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list openssl))
+    (home-page "https://github.com/holgern/py-scrypt")
     (synopsis "Bindings for the scrypt key derivation function library")
-    (description "This is a set of Python bindings for the scrypt key
-derivation function.")
+    (description
+     "This package is a set of Python bindings for the scrypt key derivation
+function.")
     (license license:bsd-2)))
 
 (define-public python-service-identity
@@ -1399,51 +1402,52 @@ storing and retrieving sensitive information in your programs.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/JuulLabs-OSS/mcuboot")
-             (commit (string-append "v" version))))
+              (url "https://github.com/mcu-tools/mcuboot")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1m1csyvzq4jx81zg635ssy1n7sc0z539z0myh872ll3nwqx7wa0q"))))
-    (build-system python-build-system)
+        (base32 "1m1csyvzq4jx81zg635ssy1n7sc0z539z0myh872ll3nwqx7wa0q"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-broken-test
-           (lambda _
-             (substitute* "scripts/imgtool/keys/ed25519_test.py"
-               (("raw_sign") "sign_digest"))
-             #t))
-         (add-before 'build 'change-directory
-           (lambda _
-             (chdir "scripts")
-             #t)))))
-    (propagated-inputs
-     (list python-click python-intelhex python-cryptography))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-broken-test
+            (lambda _
+              (substitute* "scripts/imgtool/keys/ed25519_test.py"
+                (("raw_sign")
+                 "sign_digest"))))
+          (add-before 'build 'change-directory
+            (lambda _
+              (chdir "scripts"))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-click python-intelhex python-cryptography))
     (home-page "https://mcuboot.com")
     (synopsis "Tool to securely sign firmware images for booting by MCUboot")
-    (description "MCUboot is a secure bootloader for 32-bit MCUs.  This
-package provides a tool to securely sign firmware images for booting by
-MCUboot.")
+    (description
+     "MCUboot is a secure bootloader for 32-bit MCUs.  This package provides a
+tool to securely sign firmware images for booting by MCUboot.")
     (license license:expat)))
 
 (define-public python-ntlm-auth
   (package
     (name "python-ntlm-auth")
-    (version "1.4.0")
+    (version "1.5.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "ntlm-auth" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jborean93/ntlm-auth")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "16mavidki4ma5ip8srqalr19gz4f5yn3cnmmgps1fmgfr24j63rm"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-cryptography))
+        (base32 "00dpf5bfsy07frsjihv1k10zmwcyq4bvkilbxha7h6nlwpcm2409"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-requests python-setuptools python-wheel))
+    (propagated-inputs (list python-cryptography))
     (home-page "https://github.com/jborean93/ntlm-auth")
-    (synopsis
-     "Calculates NTLM Authentication codes")
+    (synopsis "Calculates NTLM Authentication codes")
     (description
      "This library handles the low-level details of NTLM authentication for
 use in authenticating with a service that uses NTLM.  It will create and parse
@@ -1518,19 +1522,20 @@ use in your tests.")
 (define-public python-certipy
   (package
     (name "python-certipy")
-    (version "0.1.3")
+    (version "0.2.2")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "certipy" version))
-        (sha256
-         (base32
-          "0n980gqpzh0fm58h3i4mi2i10wgj606lscm1r5sk60vbf6vh8mv9"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pyopenssl))
-    (native-inputs
-     (list python-pytest))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "certipy" version))
+       (sha256
+        (base32 "0pm0kf079ws9s93vpkxnw3gj6a1hi34p34bicx69rqlyh7cg7wgy"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-cryptography))
+    (native-inputs (list python-pypa-build
+                         python-flask
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
     (home-page "https://github.com/LLNL/certipy")
     (synopsis "Utility to create and sign CAs and certificates")
     (description
@@ -1696,19 +1701,20 @@ interacting with a U2F device over USB.")
 (define-public python-sop
   (package
     (name "python-sop")
-    (version "0.2.0")
+    (version "0.5.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "sop" version))
-        (sha256
-         (base32
-          "0gljyjsdn6hdmwlwwb5g5s0c031p6izamvfxp0d39x60af8k5jyf"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/dkg/python-sop")
+              (commit (string-append "sop-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sin5miiiqgww0s52jz098x44nbnx003vfd4jn55bs5mgca60lll"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:tests? #f)) ; There are no tests, and unittest throws an error trying
-                     ; to find some:
-                     ;     TypeError: don't know how to make test from: 0.2.0
+     (list #:tests? #f)) ; XXX: No tests upstream.
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://gitlab.com/dkg/python-sop")
     (synopsis "Stateless OpenPGP Command-Line Interface")
     (description
@@ -1753,23 +1759,25 @@ speed but without C extensions.")
 (define-public python-zxcvbn
   (package
     (name "python-zxcvbn")
-    (version "4.4.28")
-    (source (origin
-              (method git-fetch)        ;for tests
-              (uri (git-reference
-                    (url "https://github.com/dwolfhub/zxcvbn-python")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0xzlsqc9h0llfy19w4m39jgfcnvzqviv8jhgwn3r75kip97i5mvs"))))
-    (build-system python-build-system)
+    (version "4.5.0")
+    (source
+     (origin
+       (method git-fetch) ;for tests
+       (uri (git-reference
+             (url "https://github.com/dwolfhub/zxcvbn-python")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x39yi4zc1n6mjjk3rx32ick0hysyi9hv9ln69apcch4jf84j9fi"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/dwolfhub/zxcvbn-python")
     (synopsis "Realistic password strength estimator Python library")
-    (description "This is a Python implementation of the @code{zxcvbn} library
-created at Dropbox.  The original library, written for JavaScript, can be
-found @url{https://github.com/dropbox/zxcvbn, here}.  This port includes
-features such as:
+    (description
+     "This is a Python implementation of the @code{zxcvbn} library created at
+Dropbox.  The original library, written for JavaScript, can be found
+@url{https://github.com/dropbox/zxcvbn, here}.  This port includes features
+such as:
 @enumerate
 @item Accepts user data to be added to the dictionaries that are tested
 against (name, birthdate, etc.)

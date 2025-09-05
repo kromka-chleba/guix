@@ -31,6 +31,7 @@
 (define-module (gnu packages electronics)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
@@ -144,6 +145,50 @@ are implemented as a core Linux kernel module providing common functionality and
 individual low-level driver modules.")
     (home-page "https://www.comedi.org/")
     (license license:lgpl2.1)))
+
+(define-public json-for-vhdl
+  ;; No tagged releases.
+  (let ((commit "0dc9e317440263cd4941f157f5e5668baa858ec2")
+        (revision "0"))
+    (package
+      (name "json-for-vhdl")
+      (version (git-version "20220905" revision commit)) ;last revision
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Paebbels/JSON-for-VHDL/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1062g2c3dpsb67zhqrn1j04p7jl28g4mcxd6nhrqqfffjsvxkpw9"))))
+      (build-system copy-build-system)
+      (arguments
+       (list
+        #:install-plan
+        #~'(("src" "share/json-for-vhdl"
+             #:include ("vhdl")))
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; The examples/Encodings_VUnit test requires vhdl builtins.
+            (add-after 'unpack 'fix-check
+              (lambda _
+                (substitute* "tests/VUnit/run.py"
+                  (("from_argv\\(\\)")
+                   "from_argv()\nvu.add_vhdl_builtins()"))))
+            (add-after 'install 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "python3" "tests/VUnit/run.py" "-v")))))))
+      (native-inputs
+       (list nvc python-minimal python-vunit))
+      (home-page "https://github.com/Paebbels/JSON-for-VHDL/")
+      (synopsis "Parse and query JSON data structures in VHDL")
+      (description
+       "The JSON-for-VHDL library provides a parser to query JSON data
+structures from external files on disk.  It provides a context to be
+used in the declarative section of design units.")
+      (license license:asl2.0))))
 
 (define librnd
   (package
@@ -689,6 +734,71 @@ formats.")
     (description "PulseView is a Qt based logic analyzer, oscilloscope and MSO
 GUI for sigrok.")
     (license license:gpl3+)))
+
+(define-public osvvm
+  (package
+    (name "osvvm")
+    (version "2025.06")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/osvvm/OsvvmLibraries/")
+              (commit version)
+              ;; OsvvmLibraries repository gathers all osvvm libraries as
+              ;; submodules.
+              (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08mfh7pyrb26mp8wx3xjns79slb3yf1c78nf8y1awvxc1p8q1wq4"))))
+    (outputs
+     '("out" "common" "scripts" "uart" "axi4"))
+    (properties
+     `((output-synopsis "out" "Verification Utility Library")
+       (output-synopsis "common" "Common library")
+       (output-synopsis "scripts" "Simulator script library")
+       (output-synopsis "uart" "UART Verification Component Library")
+       (output-synopsis "axi4" "AXI4 Verification Component Library")))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("osvvm" "share/osvvm/osvvm/"
+           #:include ("vhd" "pro" "md")
+           #:output "out")
+          ("Common" "share/osvvm/Common/"
+           #:include ("vhd" "pro" "md")
+           #:output "common")
+          ("Scripts" "share/osvvm/Scripts/"
+           #:include ("tcl" "md")
+           #:output "scripts")
+          ("UART" "share/osvvm/UART"
+           #:include ("vhd" "pro" "md")
+           #:exclude-regexp ("GHDL_Debug")
+           #:output "uart")
+          ("AXI4" "share/osvvm/AXI4"
+           #:include ("vhd" "pro" "md")
+           #:output "axi4"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'fix-scripts
+            (lambda _
+              ;; Default conflicts with read-only /gnu/store.
+              (substitute* "osvvm/OsvvmVhdlSettings.pro"
+                (("\\[FindOsvvmSettingsDirectory\\]")
+                 " \"\" ")))))))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "OSVVM")
+             (separator #f)
+             (files (list "share/osvvm")))))
+    (home-page "https://osvvm.github.io/Overview/Osvvm1About.html/")
+    (synopsis "The OSVVM VHDL Verification Libraries and Scripts")
+    (description "OSVVM is a verification methodology that defines a VHDL
+verification framework, verification utility library, verification component
+library, scripting API, and co-simulation capability for FPGA or ASIC
+verification.")
+    (license license:asl2.0)))
 
 (define-public python-cocotb
   (package

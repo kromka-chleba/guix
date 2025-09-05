@@ -1677,7 +1677,7 @@ with the included @command{xfstests-check} helper.")
 (define-public zfs
   (package
     (name "zfs")
-    (version "2.3.3")
+    (version "2.3.4")
     (outputs '("out" "module" "src"))
     (source
      (origin
@@ -1686,7 +1686,7 @@ with the included @command{xfstests-check} helper.")
                            "/download/zfs-" version
                            "/zfs-" version ".tar.gz"))
        (sha256
-        (base32 "0wgh64qjfm81s7f6dy61cy4hycqm2g5vnlqpl02i5a0fiw8j4hc4"))))
+        (base32 "15d47y4alicdl99pjidks9p1hqk9glz5y0w024d1ccq16v7rghwy"))))
     (build-system linux-module-build-system)
     (arguments
      (list
@@ -2473,59 +2473,46 @@ filtering and ordering functionality.
     (license license:gpl3+)))
 
 (define-public watcher
-  (let ((commit "0aff9ee86f0b62f17d7b0105cae6304ef1bcfbb2")
-        (revision "0"))
-    (package
-      (name "watcher")
-      (version (git-version "0.13.6" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                       (url "https://github.com/e-dant/watcher")
-                       (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "10bwdqnhgpsk2w60331npspkqjvdgb0jh2by89g8d3hwfjibk3p4"))))
-      (build-system cmake-build-system)
-      (arguments
-       (list
-        ;; The test suite is currently flaky
-        ;; (see: https://github.com/e-dant/watcher/issues/85).
-        #:tests? #f
-        #:configure-flags
-        #~(list "-DBUILD_TESTING=ON"
-                ;; This is needed to find 'snitch' from the system.
-                "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS")
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'fix-.pc-files-prefix
-              ;; There are some issues with the new .pc files (see:
-              ;; <https://github.com/e-dant/watcher/issues/82>).
-              (lambda _
-                (substitute* "CMakeLists.txt"
-                  (("\"\\$\\{CMAKE_INSTALL_LIBDIR}\"")
-                   "\"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\"")
-                  (("\\$\\{CMAKE_INSTALL_INCLUDEDIR}/wtr")
-                   "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/wtr"))
-                (substitute* "watcher.pc.in"
-                  (("@PC_WATCHER_PREFIX@")
-                   #$output))
-                (substitute* "watcher-c/watcher-c.pc.in"
-                  (("@PC_LIBWATCHER_C_PREFIX@")
-                   #$output))))
-            (replace 'check
-              (lambda* (#:key tests? #:allow-other-keys)
-                (when tests?
-                  (setenv "PATH" (string-append (getcwd) ":" (getenv "PATH")))
-                  (substitute* "../source/tool/test/.ctx"
-                    (("../../out")
-                     "../../../build"))
-                  (invoke "../source/tool/test/all")))))))
-      (native-inputs (list jq snitch))
-      (home-page "https://github.com/e-dant/watcher")
-      (synopsis "File system watcher program and library")
-      (description "Watcher may be used as a library or a program that can be
+  (package
+    (name "watcher")
+    (version "0.13.8")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/e-dant/watcher")
+                     (commit (string-append "release/" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "118zkz6zfj57rny1ysy80ib3sqy3lfjpf611j5b4rw29dzwsa1xi"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_TESTING=ON"
+              ;; This is needed to find 'snitch' from the system.
+              "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-.pc-files-prefix
+            ;; There are some issues with the new .pc files (see:
+            ;; <https://github.com/e-dant/watcher/issues/82>).
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("\"\\$\\{CMAKE_INSTALL_LIBDIR}\"")
+                 "\"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\"")
+                (("\\$\\{CMAKE_INSTALL_INCLUDEDIR}/wtr")
+                 "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/wtr"))
+              (substitute* "watcher.pc.in"
+                (("@PC_WATCHER_PREFIX@")
+                 #$output))
+              (substitute* "watcher-c/watcher-c.pc.in"
+                (("@PC_LIBWATCHER_C_PREFIX@")
+                 #$output)))))))
+    (native-inputs (list jq snitch))
+    (home-page "https://github.com/e-dant/watcher")
+    (synopsis "File system watcher program and library")
+    (description "Watcher may be used as a library or a program that can be
 used to efficiently watch a file system for changes.  This package provides
 the following components:
 @table @asis
@@ -2538,4 +2525,4 @@ Command-line interface (CLI)
 @item @command{tw}
 Minimal, more human-readable CLI variant
 @end table")
-      (license license:expat))))
+    (license license:expat)))

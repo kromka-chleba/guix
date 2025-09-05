@@ -47,7 +47,7 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 Pradana Aumars <paumars@courrier.dev>
 ;;; Copyright © 2021, 2022, 2024 Arun Isaac <arunisaac@systemreboot.net>
-;;; Copyright © 2021, 2022, 2024 jgart <jgart@dismail.de>
+;;; Copyright © 2021-2022, 2024-2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2021 Alice Brenon <alice.brenon@ens-lyon.fr>
 ;;; Copyright © 2021 Mekeor Melire <mekeor.melire@gmail.com>
 ;;; Copyright © 2022 John Kehayias <john.kehayias@protonmail.com>
@@ -5059,6 +5059,28 @@ sanitizer Rust crate.")
     (synopsis "Implementation of Noise Protocol Framework")
     (description
      "This package provides an implementation of Noise Protocol Framework.")
+    (license license:expat)))
+
+(define-public python-webrtcvad-wheels
+  (package
+    (name "python-webrtcvad-wheels")
+    (version "2.0.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/daanzu/py-webrtcvad-wheels")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sqgg8jmg2j14f4h96h0rs42kr460v65lhanps6lhdvj5zp81cbh"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-psutil python-pytest python-setuptools-next))
+    (home-page "https://github.com/daanzu/py-webrtcvad-wheels")
+    (synopsis "Python interface to the WebRTC Voice Activity Detector (VAD)")
+    (description
+     "This package provides a Python interface to the Google
+@url{https://webrtc.org/, WebRTC} @acronym{VAD, Voice Activity Detector}.")
     (license license:expat)))
 
 (define-public python-websocket-client
@@ -11152,6 +11174,26 @@ Interface) framework/toolkit for building async web services in Python.")
 @code{InMemoryBackend} and @code{CookieBackend} implementations for Starlette
 and FastAPI.")
     (license license:expat)))
+
+(define-public python-whereismyip
+  (package
+    (name "python-whereismyip")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "whereismyip" version))
+       (sha256
+        (base32 "0psrlvax8249ccs2rvgdygpckzz22vxjcyzr2pql06d48k61gk54"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #false)) ; There are no tests.
+    (native-inputs (list python-setuptools-next))
+    (home-page "https://pypi.org/project/whereismyip/")
+    (synopsis "Queries multiple geolocation services until one succeeds")
+    (description
+     "This package provides a simple Python library that queries multiple geolocation
+services until one succeeds.")
+    (license license:gpl3)))
 
 (define-public python-whitenoise
   (package
