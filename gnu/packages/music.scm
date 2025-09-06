@@ -5343,13 +5343,16 @@ can receive input from a MIDI keyboard.")
                    (string-append "CXX=" #$(cxx-for-target)))
            #:phases
            #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-portaudio-path
+               (add-after 'unpack 'patch-portaudio-and-portmidi-paths
                  (lambda* (#:key inputs #:allow-other-keys)
                    (substitute* "src/sgui/widgets/hardware_dialog.py"
                      (("\\\"libportaudio")
                       (string-append "\"" (assoc-ref inputs "portaudio")
-                                     "/lib/libportaudio")))))
-               (add-after 'patch-portaudio-path 'change-directory
+                                     "/lib/libportaudio"))
+                     (("'libportmidi")
+                      (string-append "'" (assoc-ref inputs "portmidi")
+                                     "/lib/libportmidi")))))
+               (add-after 'patch-portaudio-and-portmidi-paths 'change-directory
                  (lambda _
                    (chdir "src")))
                (delete 'configure) ;no configure script
@@ -5380,7 +5383,9 @@ can receive input from a MIDI keyboard.")
                      `("GUIX_PYTHONPATH" ":" prefix
                        (,(getenv "GUIX_PYTHONPATH")))
                      `("PATH" ":" prefix
-                       (,(getenv "PATH")))))))))
+                       (,(getenv "PATH")))
+                     `("QT_PLUGIN_PATH" ":" prefix
+                       (,(getenv "QT_PLUGIN_PATH")))))))))
     (native-inputs
      (list pkg-config
            python-gcovr
@@ -5396,8 +5401,9 @@ can receive input from a MIDI keyboard.")
            jq
            libsndfile
            portaudio
-           portmidi
+           portmidi-2
            python
+           python-distro
            python-jinja2
            python-mido
            python-mutagen
@@ -5408,6 +5414,7 @@ can receive input from a MIDI keyboard.")
            python-pyyaml
            python-wavefile
            python-yq
+           qtwayland
            rubberband
            valgrind/pinned
 
