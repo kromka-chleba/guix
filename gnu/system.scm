@@ -1076,6 +1076,8 @@ then
   # pam_env uses '\\' to skip newline-terminated whitespace, so use '-r'.
   while read -r READ_LINE
   do
+    READ_LINE=\"${READ_LINE%%#*}\"
+    READ_LINE=\"${READ_LINE#export }\"
     case \"${READ_LINE%%=*}\" in
       \"$READ_LINE\"|*[^[:alnum:]_]*|'') ;;
       # pam_env exports variables with names starting with [[:alnum:]_].
