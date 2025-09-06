@@ -1073,8 +1073,15 @@ the /etc directory."
 if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
      -a -z \"$LINUX_MODULE_DIRECTORY\" ]
 then
-  while read READ_LINE
-  do export \"$READ_LINE\"
+  # pam_env uses '\\' to skip newline-terminated whitespace, so use '-r'.
+  while read -r READ_LINE
+  do
+    case \"${READ_LINE%%=*}\" in
+      \"$READ_LINE\"|*[^[:alnum:]_]*|'') ;;
+      # pam_env exports variables with names starting with [[:alnum:]_].
+      [A-Z_]*) export \"$READ_LINE\" ;;
+      *) ;;
+    esac
   done </etc/environment
   unset READ_LINE
 fi
