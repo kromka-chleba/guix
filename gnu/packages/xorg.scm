@@ -97,6 +97,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
@@ -116,6 +117,7 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages onc-rpc)
+  #:use-module (gnu packages openbox)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
@@ -6854,6 +6856,68 @@ and embedded platforms.")
 cursor to any point on the screen with a few key strokes.  It also simulates
 mouse click.  You can do everything mouse can do with a keyboard.")
     (license license:bsd-3)))
+
+(define-public quicktile
+  ;; Latest release, 0.4.0, is 5 years old and does not use pyproject.toml yet.
+  (let ((commit "2c499beedf31d5906e86c482f70129d94e429350")
+        (revision "0"))
+    (package
+      (name "quicktile")
+      (version (git-version "0.4.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ssokolow/quicktile")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "08kwilln32kx2cdg1sg7ffb214fkhacchx8jd64pyjbshmradgxr"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (setenv "HOME" "/tmp")
+                  (mkdir-p "/tmp/.config")
+                  ;; First run creates /tmp/.config/quicktile.cfg.
+                  (invoke "xvfb-run"
+                          "-a"
+                          "./quicktile.sh")
+                  ;; test_functional.py moves windows around and thus needs
+                  ;; access to an X server.
+                  (invoke "xvfb-run"
+                          "-a"
+                          "python3"
+                          "-m"
+                          "pytest"
+                          "-vv"
+                          "tests")))))))
+      (native-inputs (list openbox ;necessary for test_functional.py
+                           python-pluggy
+                           python-pytest
+                           python-pytest-cov
+                           python-setuptools
+                           xvfb-run))
+      (inputs (list gtk+
+                    libwnck
+                    python-xlib
+                    python-pygobject
+                    python-dbus-python))
+      ;; The actual home page https://ssokolow.com/quicktile/
+      ;; gives an SSL error.
+      (home-page "https://github.com/ssokolow/quicktile")
+      (synopsis
+       "Utility that adds window-tiling keybindings to your X11 window manager")
+      (description
+       "QuickTile is a simple utility, inspired by WinSplit Revolution for
+Windows, which adds window-tiling keybindings to your existing X11 window
+manager.  See <https://github.com/dozius/winsplit-revolution> for Winsplit
+Revolution.")
+      (license license:gpl2+))))
 
 (define-public transset
   (package
