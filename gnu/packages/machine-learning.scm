@@ -1808,6 +1808,7 @@ with a single function call.")
               ;; XXX: Fixes build with gcc@14.
               "-DCMAKE_CXX_FLAGS=-Wl,-z,noexecstack")
       #:phases
+      (with-extensions (list (pyproject-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _
@@ -1864,7 +1865,7 @@ with a single function call.")
               ((assoc-ref py:%standard-phases 'sanity-check)
                #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
                           ,@inputs)
-               #:outputs `(("out" . ,#$output:python))))))))
+               #:outputs `(("out" . ,#$output:python)))))))))
     (outputs (list "out" "python"))
     (inputs
      (list abseil-cpp
