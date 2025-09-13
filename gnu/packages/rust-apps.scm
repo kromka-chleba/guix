@@ -1835,6 +1835,7 @@ specified image or color, easing the process of theme creation.")
          "--skip=metadata::test::test_merge_metadata_from_pyproject_toml_with_customized_python_source_dir"
          "--skip=pyproject_toml::tests::test_warn_missing_maturin_version")
       #:phases
+      (with-extensions (list (pyproject-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'build 'build-python-module
             (lambda _
@@ -1881,7 +1882,7 @@ specified image or color, easing the process of theme creation.")
                 (mkdir-p (string-append share "/nushell/vendor/autoload"))
                 (with-output-to-file
                     (string-append share "/nushell/vendor/autoload/maturin")
-                  (lambda _ (invoke maturin "completions" "nushell")))))))))
+                  (lambda _ (invoke maturin "completions" "nushell"))))))))))
     (propagated-inputs
      (list python-tomli))
     (inputs (cons bzip2 (cargo-inputs 'maturin)))
