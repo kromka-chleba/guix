@@ -1090,13 +1090,14 @@ fi
 export PATH=/run/privileged/bin:$PATH
 
 # ~/.icons is a typical Xcursor search path along with $XDG_DATA_HOME/icons.
-XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"
+[ -d \"$HOME/.icons\" ] && XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"
 
 # Set the umask, notably for users logging in via 'lsh'.
 # See <http://bugs.gnu.org/22650>.
 umask 022
 
 # Allow GStreamer-based applications to find plugins.
+[ -d \"$HOME/.guix-profile/lib/gstreamer-1.0\" ] && \
 export GST_PLUGIN_PATH=\"$HOME/.guix-profile/lib/gstreamer-1.0\"
 
 for i in /etc/profile.d/*.sh; do
