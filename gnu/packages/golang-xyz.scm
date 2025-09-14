@@ -67,6 +67,7 @@
 ;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
+;;; Copyright © 2025 Tomás Ortín Fernández <quanrong@mailbox.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19845,6 +19846,70 @@ distributable command line applications in an expressive way.")
            go-github-com-go-md2man
            go-github-com-xrash-smetrics
            go-gopkg-in-yaml-v3))))
+
+(define-public go-github-com-urfave-cli-v3
+  (package
+    (inherit go-github-com-urfave-cli-v2)
+    (name "go-github-com-urfave-cli-v3")
+    (version "3.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/urfave/cli")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g8vk5wpx2vnb600ppkjh9j8aql0jgdgp5rrk06h92j7sx17fnfc"))
+       (modules '((guix build utils)))
+       (snippet #~(begin
+                    ;; Submodules with their own go.mod files and packaged separately:
+                    ;;
+                    ;; - github.com/urfave/cli/docs/v3
+                    (delete-file-recursively "docs")))))
+    (arguments
+     (list
+      #:import-path "github.com/urfave/cli/v3"
+      #:test-flags
+      #~(list "-vet=off")))
+    (propagated-inputs '())))
+
+(define-public go-github-com-urfave-cli-altsrc-v3
+  (package
+    (name "go-github-com-urfave-cli-altsrc-v3")
+    (version "3.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/urfave/cli-altsrc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nk1c31li7yijfa2p9s2723p5727ad3fl80dj6a5cwjg1qkbsl12"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;tests need git in PATH
+      #:import-path "github.com/urfave/cli-altsrc/v3"
+      ;; Pattern autocomplete: cannot embed directory autocomplete: contains
+      ;; no embeddable files.
+      #:embed-files
+      #~(list "bash_autocomplete"
+              "powershell_autocomplete.ps1"
+              "zsh_autocomplete")))
+    (native-inputs
+     (list go-github-com-stretchr-testify
+           go-github-com-urfave-cli-v3))
+    (propagated-inputs
+     (list go-github-com-burntsushi-toml
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/urfave/cli-altsrc")
+    (synopsis "Read values for urfave/cli/v3 flags from config files")
+    (description
+     "This package provides an extension for https://github.com/urfave/cli, to
+read flag values from JSON, YAML, and TOML.")
+    (license license:expat)))
 
 (define-public go-github-com-valyala-bytebufferpool
   (package

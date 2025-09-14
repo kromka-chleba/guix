@@ -32940,114 +32940,6 @@ Defaults to @samp{#t}.
 @node Monitoring Services
 @subsection Monitoring Services
 
-@subsubheading Tailon Service
-
-@uref{https://tailon.readthedocs.io/, Tailon} is a web application for
-viewing and searching log files.
-
-The following example will configure the service with default values.
-By default, Tailon can be accessed on port 8080 (@code{http://localhost:8080}).
-
-@lisp
-(service tailon-service-type)
-@end lisp
-
-The following example customises more of the Tailon configuration,
-adding @command{sed} to the list of allowed commands.
-
-@lisp
-(service tailon-service-type
-         (tailon-configuration
-           (config-file
-             (tailon-configuration-file
-               (allowed-commands '("tail" "grep" "awk" "sed"))))))
-@end lisp
-
-
-@deftp {Data Type} tailon-configuration
-Data type representing the configuration of Tailon.
-This type has the following parameters:
-
-@table @asis
-@item @code{config-file} (default: @code{(tailon-configuration-file)})
-The configuration file to use for Tailon.  This can be set to a
-@dfn{tailon-configuration-file} record value, or any gexp
-(@pxref{G-Expressions}).
-
-For example, to instead use a local file, the @code{local-file} function
-can be used:
-
-@lisp
-(service tailon-service-type
-         (tailon-configuration
-           (config-file (local-file "./my-tailon.conf"))))
-@end lisp
-
-@item @code{package} (default: @code{tailon})
-The tailon package to use.
-
-@end table
-@end deftp
-
-@deftp {Data Type} tailon-configuration-file
-Data type representing the configuration options for Tailon.
-This type has the following parameters:
-
-@table @asis
-@item @code{files} (default: @code{(list "/var/log")})
-List of files to display.  The list can include strings for a single file
-or directory, or a list, where the first item is the name of a
-subsection, and the remaining items are the files or directories in that
-subsection.
-
-@item @code{bind} (default: @code{"localhost:8080"})
-Address and port to which Tailon should bind on.
-
-@item @code{relative-root} (default: @code{#f})
-URL path to use for Tailon, set to @code{#f} to not use a path.
-
-@item @code{allow-transfers?} (default: @code{#t})
-Allow downloading the log files in the web interface.
-
-@item @code{follow-names?} (default: @code{#t})
-Allow tailing of not-yet existent files.
-
-@item @code{tail-lines} (default: @code{200})
-Number of lines to read initially from each file.
-
-@item @code{allowed-commands} (default: @code{(list "tail" "grep" "awk")})
-Commands to allow running.  By default, @code{sed} is disabled.
-
-@item @code{debug?} (default: @code{#f})
-Set @code{debug?} to @code{#t} to show debug messages.
-
-@item @code{wrap-lines} (default: @code{#t})
-Initial line wrapping state in the web interface.  Set to @code{#t} to
-initially wrap lines (the default), or to @code{#f} to initially not
-wrap lines.
-
-@item @code{http-auth} (default: @code{#f})
-HTTP authentication type to use.   Set to @code{#f} to disable
-authentication (the default).  Supported values are @code{"digest"} or
-@code{"basic"}.
-
-@item @code{users} (default: @code{#f})
-If HTTP authentication is enabled (see @code{http-auth}), access will be
-restricted to the credentials provided here.  To configure users, use a
-list of pairs, where the first element of the pair is the username, and
-the 2nd element of the pair is the password.
-
-@lisp
-(tailon-configuration-file
-  (http-auth "basic")
-  (users     '(("user1" . "password1")
-               ("user2" . "password2"))))
-@end lisp
-
-@end table
-@end deftp
-
-
 @subsubheading Darkstat Service
 @cindex darkstat
 Darkstat is a packet sniffer that captures network traffic, calculates
@@ -52511,6 +52403,21 @@ providing a @file{~/.config/sway/config} file,
 @item
 adding Sway-related packages to your profile.
 @end itemize
+
+It is possible to extend this service (@pxref{Service Composition}).
+The resulting configuration file contains the concatenation of
+keybindings, modes, @i{etc.}@: found in all extensions.
+
+@quotation Note
+At the moment, only one bar configuration is allowed.  If more are
+found, an error will be raised.
+@end quotation
+@end defvar
+
+@defvar %empty-sway-configuration
+The variable @code{%empty-sway-configuration} contains an empty
+@code{sway-configuration} record.  This value can help users write
+simple service extensions.
 @end defvar
 
 @deftp {Data Type} sway-configuration
@@ -52541,25 +52448,35 @@ to them.
 
 @item @code{keybindings} (default: @code{%sway-default-keybindings})
 This field describes keybindings for the @emph{default} mode.  The value
-is an association list: keys are symbols and values are either strings
-or G-expressions.
+is an association list in which keys are symbols.  Values can either be:
+@itemize
+@item
+strings or G-expressions,
+@item
+a cons-cell of a string or G-expression and a list of options.  Options
+must be a string starting with ``input-device='' or strings among
+``no-warn'', ``whole-window'', ``border'', ``exclude-titlebar'',
+``release'', ``locked'', ``to-code'', ``inhibited'' and ``no-repeat''.
+@end itemize
 
 The following snippet launches the terminal when pressing @kbd{$mod+t}
 and @kbd{$mod+Shift+t} (assuming that a variable @code{$term} is
 defined):
 @lisp
 `(($mod+t . ,#~(string-append "exec " #$foot "/bin/foot"))
-  ($mod+Shift+t . "exec $term"))
+  ($mod+Shift+t . "exec $term")
+  ($mod+q "exec $term" . ("to-code"))) ;; passes the --to-code option.
 @end lisp
 
 @item @code{gestures} (default: @code{%sway-default-gestures})
-Similar to the previous field, but for finger-gestures.
+Similar to the previous field, but for finger-gestures.  Options must
+start with ``input-device='' or be among ``exact'' and ``no-warn''.
 
 The following snippet allows to navigate through workspaces by swiping
 right and left with three fingers:
 @lisp
 '((swipe:3:right . "workspace next_on_output")
-  (swipe:3:left  . "workspace prev_on_output"))
+  (swipe:3:left    "workspace prev_on_output" . ("exact")))
 @end lisp
 
 @item @code{packages} (default: @code{%sway-default-packages})
@@ -52805,7 +52722,8 @@ an executable file:
 
 @item @code{mouse-bindings} (default: @code{'()})
 This field accepts an associative list.  Keys are integers describing
-mouse events.  Values can either be strings or G-expressions.
+mouse events.  Values are similar to that of key-bindings (except that
+``to-code'' is not a valid option for mouse-bindings).
 
 The module @code{(gnu home services sway)} exports constants
 @code{%ev-code-mouse-left}, @code{%ev-code-mouse-right} and
@@ -52841,9 +52759,9 @@ snippet defines the resize mode of the default Sway configuration:
 Name of the mode.  This field accepts strings.
 
 @item  @code{keybindings} (default: @code{'()})
-This field describes keybindings.  The value is an association list:
-keys are symbols and values are either strings or G-expressions, as
-above.
+This field describes keybindings.  The value is an association list.  As
+above, keys are symbols and values are either strings, G-expressions or
+cons-cells.
 
 @item @code{mouse-bindings} (default: @code{'()})
 Ditto, but keys are mouse events (integers).  Constants

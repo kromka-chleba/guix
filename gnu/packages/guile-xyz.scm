@@ -1145,7 +1145,7 @@ is not available for Guile 2.0.")
   (package
     (inherit guile-fibers-1.3)
     (name "guile-fibers")
-    (version "1.4.0")
+    (version "1.4.1")
     (source
      (origin (inherit (package-source guile-fibers-1.3))
              (file-name (git-file-name name version))
@@ -1154,20 +1154,9 @@ is not available for Guile 2.0.")
                     (commit (string-append "v" version))))
              (sha256
               (base32
-               "1ryp04w6ghgdfhlv9hkwl00iv6nwnw2hj2pywlxvpp92pyxhkwpi"))
+               "15ynxr3pfjscd6mz641zagv6i84jh9y65i5dnbb3j3q72j6bbvnb"))
              (patches '())))
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'configure 'fix-cross-compilation
-                 (lambda _
-                   ;; Fix cross-compilation by removing use of ./env in the
-                   ;; .scm.go target; see
-                   ;; <https://codeberg.org/fibers/fibers/pulls/132>.  Remove
-                   ;; when 1.4.1 is out.
-                   (substitute* "Makefile"
-                     (("\\$\\(top_builddir\\)/env")
-                      "")))))))))
+    (arguments '())))
 
 (define-public guile-fibers guile-fibers-1.4)
 
@@ -5527,127 +5516,6 @@ debugging code.")
 @url{https://en.wikipedia.org/wiki/PNG, PNG format}.  This library provides API for
 reading and writing PNG data, as well as some graphic primitives and basic image
 processing filters.")
-    (license license:gpl3+)))
-
-(define-public nomad
-  (package
-    (name "nomad")
-    (version "0.2.0-alpha-199-g3e7a475")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://git.savannah.gnu.org/git/nomad.git/")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0p0ha6prp7pyadp61clbhc6b55023vxzfwy14j2qygb2mkq7fhic"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     `(("autoconf" ,autoconf)
-       ("automake" ,automake)
-       ("bash" ,bash)
-       ("pkg-config" ,pkg-config)
-       ("libtool" ,libtool)
-       ("guile" ,guile-2.2)
-       ("glib:bin" ,glib "bin")
-       ("texinfo" ,texinfo)
-       ("gettext" ,gettext-minimal)
-       ("perl" ,perl)))
-    (inputs
-     `(("bash" ,bash-minimal) ; for wrap-program
-       ;; Guile
-       ("guile" ,guile-2.2)
-       ("guile-lib" ,guile2.2-lib)
-       ("guile-readline" ,guile2.2-readline)
-       ("guile-gcrypt" ,guile2.2-gcrypt)
-       ("gnutls" ,gnutls)
-       ("g-golf" ,guile2.2-g-golf)
-       ("shroud" ,shroud)
-       ("emacsy" ,emacsy-minimal)
-       ;; Gtk
-       ("glib" ,glib)
-       ("dbus-glib" ,dbus-glib)
-       ("glib-networking" ,glib-networking)
-       ("gtk+" ,gtk+)
-       ("gtk+:bin" ,gtk+ "bin")
-       ("webkitgtk" ,webkitgtk-for-gtk3)
-       ("gtksourceview" ,gtksourceview-4)
-       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
-       ("vte" ,vte/gtk+-3)
-       ;; Gstreamer
-       ("gstreamer" ,gstreamer)
-       ("gst-plugins-base" ,gst-plugins-base)
-       ("gst-plugins-good" ,gst-plugins-good)
-       ("gst-plugins-bad" ,gst-plugins-bad)
-       ("gst-plugins-ugly" ,gst-plugins-ugly)
-       ;; Util
-       ("xorg-server" ,xorg-server)))
-    (arguments
-     `(#:modules ((guix build gnu-build-system)
-                  (guix build utils)
-                  (ice-9 popen)
-                  (ice-9 rdelim)
-                  (srfi srfi-26))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-webkitgtk
-           (lambda _
-             ;; Adapt to the version we have in Guix.
-             (substitute* "configure.ac"
-               (("webkit2gtk-4\\.0") "webkit2gtk-4.1")
-               (("webkit2gtk-web-extension-4\\.0")
-                "webkit2gtk-web-extension-4.1"))
-
-             (substitute* "typelib/Makefile.am"
-               (("WebKit2-4\\.0") "WebKit2-4.1"))))
-         (add-before 'check 'start-xorg-server
-           (lambda* (#:key inputs #:allow-other-keys)
-             ;; The test suite requires a running X server.
-             (system (format #f "~a/bin/Xvfb :1 &"
-                             (assoc-ref inputs "xorg-server")))
-             (setenv "DISPLAY" ":1")
-             #t))
-         (add-after 'install 'wrap-binaries
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out        (assoc-ref outputs "out"))
-                    (effective  (read-line (open-pipe*
-                                            OPEN_READ
-                                            "guile" "-c"
-                                            "(display (effective-version))")))
-                    (gst-plugins (map (lambda (i)
-                                        (string-append (assoc-ref inputs i)
-                                                       "/lib/gstreamer-1.0"))
-                                      `("gstreamer"
-                                        "gst-plugins-base"
-                                        "gst-plugins-good"
-                                        "gst-plugins-bad"
-                                        "gst-plugins-ugly")))
-                    (out-append (lambda (. args)
-                                  (apply string-append out args)))
-                    (gi-path    (out-append "/lib/girepository-1.0"))
-                    (load-path  (out-append "/share/guile/site/" effective))
-                    (comp-path  (out-append "/lib/guile/"
-                                            effective "/site-ccache"))
-                    (ext-path   (out-append "/libexec/nomad")))
-               (wrap-program (string-append out "/bin/nomad")
-                 `("GUILE_LOAD_PATH" ":" prefix
-                   (,load-path
-                    ,(getenv "GUILE_LOAD_PATH")))
-                 `("GUILE_LOAD_COMPILED_PATH" ":" prefix
-                   (,comp-path
-                    ,(getenv "GUILE_LOAD_COMPILED_PATH")))
-                 `("GI_TYPELIB_PATH" ":" prefix
-                   (,gi-path ,(getenv "GI_TYPELIB_PATH")))
-                 `("GIO_EXTRA_MODULES" ":" prefix
-                   (,(getenv "GIO_EXTRA_MODULES")))
-                 `("GST_PLUGIN_SYSTEM_PATH" ":" prefix ,gst-plugins)
-                 `("NOMAD_WEB_EXTENSION_DIR" ":" prefix (,ext-path)))
-               #t))))))
-    (home-page "https://savannah.nongnu.org/projects/nomad/")
-    (synopsis "Extensible Web Browser in Guile Scheme")
-    (description "Nomad is a Emacs-like web browser that consists of a modular
-feature-set, fully programmable in Guile Scheme.")
     (license license:gpl3+)))
 
 (define-public guile-cv

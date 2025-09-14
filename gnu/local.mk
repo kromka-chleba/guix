@@ -239,7 +239,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/dezyne.scm			\
   %D%/packages/decker.scm			\
   %D%/packages/dhall.scm			\
-  %D%/packages/dictd.scm			\
   %D%/packages/dotnet.scm			\
   %D%/packages/dictionaries.scm			\
   %D%/packages/diffoscope.scm			\
@@ -386,7 +385,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/instrumentation.scm		\
   %D%/packages/ipfs.scm			\
   %D%/packages/irc.scm  			\
-  %D%/packages/irods.scm  			\
   %D%/packages/iso-codes.scm			\
   %D%/packages/jami.scm				\
   %D%/packages/java.scm				\
@@ -1095,7 +1093,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-3.5-libc-search-path.patch		\
   %D%/packages/patches/clang-3.5-libsanitizer-ustat-fix.patch	\
   %D%/packages/patches/clang-3.8-libc-search-path.patch		\
-  %D%/packages/patches/clang-6.0-libc-search-path.patch		\
   %D%/packages/patches/clang-11.0-libc-search-path.patch	\
   %D%/packages/patches/clang-12.0-libc-search-path.patch	\
   %D%/packages/patches/clang-13.0-libc-search-path.patch	\
@@ -1113,8 +1110,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-runtime-12-remove-crypt-interceptors.patch \
   %D%/packages/patches/clang-runtime-13-glibc-2.36-compat.patch	\
   %D%/packages/patches/clang-runtime-14-glibc-2.36-compat.patch	\
-  %D%/packages/patches/clang-runtime-9-glibc-2.36-compat.patch		\
-  %D%/packages/patches/clang-runtime-9-libsanitizer-mode-field.patch	\
   %D%/packages/patches/clang-runtime-3.7-fix-build-with-python3.patch	\
   %D%/packages/patches/clang-runtime-3.9-libsanitizer-mode-field.patch	\
   %D%/packages/patches/clang-runtime-3.8-libsanitizer-mode-field.patch	\
@@ -2204,14 +2199,12 @@ dist_patch_DATA =						\
   %D%/packages/patches/qemu-fix-test-virtio-version.patch       \
   %D%/packages/patches/qrcodegen-cpp-cmake.patch		\
   %D%/packages/patches/qtbase-absolute-runpath.patch		\
-  %D%/packages/patches/qtbase-fix-thread-test.patch             \
   %D%/packages/patches/qtbase-qmake-fix-includedir.patch 	\
   %D%/packages/patches/qtbase-qmlimportscanner-qml-import-path.patch 	\
   %D%/packages/patches/qtbase-moc-ignore-gcc-macro.patch	\
   %D%/packages/patches/qtbase-qmake-use-libname.patch		\
   %D%/packages/patches/qtbase-5-use-TZDIR.patch			\
   %D%/packages/patches/qtscript-disable-tests.patch		\
-  %D%/packages/patches/qtwebengine-fix-system-libvpx.patch	\
   %D%/packages/patches/quagga-reproducible-build.patch          \
   %D%/packages/patches/quickswitch-fix-dmenu-check.patch	\
   %D%/packages/patches/quilt-grep-compat.patch 			\
@@ -2219,6 +2212,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/qtwayland-dont-recreate-callbacks.patch	\
   %D%/packages/patches/qtwayland-cleanup-callbacks.patch	\
   %D%/packages/patches/qtwayland-update-wayland-xml.patch	\
+  %D%/packages/patches/qtwebengine-fix-dependencies.patch       \
+  %D%/packages/patches/qtwebsockets-6.9-fix-tst_QWebSocket.patch\
   %D%/packages/patches/rabbitmq-defaults.patch		\
   %D%/packages/patches/ragel-char-signedness.patch		\
   %D%/packages/patches/randomjungle-disable-static-build.patch	\
@@ -2387,9 +2382,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/uftrace-fix-tests.patch			\
   %D%/packages/patches/ultrastar-deluxe-no-freesans.patch		\
   %D%/packages/patches/ungoogled-chromium-extension-search-path.patch	\
-  %D%/packages/patches/ungoogled-chromium-nullptr_t.patch       \
   %D%/packages/patches/ungoogled-chromium-RUNPATH.patch		\
   %D%/packages/patches/ungoogled-chromium-system-nspr.patch	\
+  %D%/packages/patches/ungoogled-chromium-unbundle-icu-target.patch     \
   %D%/packages/patches/unknown-horizons-python-3.8-distro.patch	\
   %D%/packages/patches/unknown-horizons-python-3.9.patch	\
   %D%/packages/patches/unknown-horizons-python-3.10.patch	\

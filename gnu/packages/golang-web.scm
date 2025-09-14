@@ -23,7 +23,7 @@
 ;;; Copyright © 2022 Leo Nikkilä <hello@lnikki.la>
 ;;; Copyright © 2022 jgart via Guix-patches via <guix-patches@gnu.org>
 ;;; Copyright © 2022 muradm <mail@muradm.net>
-;;; Copyright © 2022, 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2022, 2023, 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
 ;;; Copyright © 2023 Filip Lajszczak <filip@lajszczak.dev>
 ;;; Copyright © 2023 Fries <fries1234@protonmail.com>
@@ -44,6 +44,7 @@
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
 ;;; Copyright © 2025 David Thompson <davet@gnu.org>
+;;; Copyright © 2025 Danny Milosavljevic <dannym@friendly-machines.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4400,6 +4401,37 @@ parameters.")
     (description
      "This package provides packet processing capabilities for Go.")
     (license license:bsd-3)))
+
+(define-public go-github-com-google-nftables
+  (package
+    (name "go-github-com-google-nftables")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/google/nftables")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14ckjnfw35p5za4mad789yiciigj0ak3qfg4kdmz67ncw697205c"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/google/nftables"))
+    (native-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-vishvananda-netlink))
+    (propagated-inputs
+     (list go-github-com-mdlayher-netlink
+           go-github-com-vishvananda-netns
+           go-golang-org-x-sys))
+    (home-page "https://github.com/google/nftables")
+    (synopsis "Go module for interacting with Linux nftables")
+    (description
+     "This package provides a library to manipulates Linux nftables (the
+iptables successor).  It does not rely on libnftnl wrappers.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-google-safehtml
   (package
@@ -10839,6 +10871,35 @@ replacement for native @code{net/http} module.")
 performance-related options.")
     (license license:expat)))
 
+(define-public go-github-com-varlink-go-varlink
+  (package
+    (name "go-github-com-varlink-go-varlink")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/varlink/go")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bhpi18xrmf5in2m4y6wj2q05rxk9m219knk9dj3bin1aj1dlf56"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/varlink/go"
+      ;; Tests in cmd are broken.
+      #:test-subdirs #~(list "varlink/...")))
+    (home-page "https://github.com/varlink/go")
+    (synopsis "Go implementation of the Varlink IPC protocol")
+    (description
+     "This package provides a Go implementation of the
+@url{https://varlink.org/, Varlink} protocol, a protocol for inter-process
+communication.  Varlink utilizes a plain-text, JSON-based format for messages
+and is designed to be accessible to both humans and machines.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-vektah-gqlparser-v2
   (package
     (name "go-github-com-vektah-gqlparser-v2")
@@ -12866,6 +12927,48 @@ the standard @code{context} package to store request-scoped values.")
      "Package grpc implements an RPC system called @code{gRPC}.")
     (license license:asl2.0)))
 
+(define-public go-google-golang-org-grpc-cmd-protoc-gen-go-grpc
+  (package
+    (name "go-google-golang-org-grpc-cmd-protoc-gen-go-grpc")
+    (version "1.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/grpc/grpc-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "cmd/protoc-gen-go-grpc"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yn1ir5y0wc91q95ngr3dlz2cyhp0wlb9l30hkw2cr34r38hq19w"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "cmd")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
+      #:unpack-path "google.golang.org/grpc"))
+    (propagated-inputs
+     (list go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://google.golang.org/grpc")
+    (synopsis "Generate Go bindings of gRPC's services in protobuf definition files")
+    (description
+     "This packge provides a plugin for the Google protocol buffer compiler to
+generate Go code.")
+    (license license:asl2.0)))
+
 ;; This to satisfy alternative import path, some of the projects still use it
 ;; in go.mod.
 (define-public go-gopkg-in-evanphx-json-patch-v4
@@ -13448,6 +13551,20 @@ go-github-com-tdewolff-minify-v2 source.")))
      "TLSRouter is a TLS proxy that routes connections to backends based on
 the TLS @acronym{SNI, Server Name Indication} of the TLS handshake.  It
 carries no encryption keys and cannot decode the traffic that it proxies.")))
+
+(define-public protoc-gen-go-grpc
+  (package/inherit go-google-golang-org-grpc-cmd-protoc-gen-go-grpc
+    (name "protoc-gen-go-grpc")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-google-golang-org-grpc-cmd-protoc-gen-go-grpc)
+       ((#:install-source? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:tests? _ #t) #f)))
+    (native-inputs (package-propagated-inputs
+                    go-google-golang-org-grpc-cmd-protoc-gen-go-grpc))
+    (propagated-inputs '())
+    (inputs '())))
 
 (define-public swag
   (package/inherit go-github-com-swaggo-swag

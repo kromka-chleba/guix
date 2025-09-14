@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2024 Arnaud Daby-Seesaram <ds-ac@nanein.fr>
+;;; Copyright © 2024, 2025 Arnaud Daby-Seesaram <ds-ac@nanein.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -50,7 +50,10 @@
             %sway-default-modes
             %sway-default-keybindings
             %sway-default-startup-programs
-            %sway-default-packages))
+            %sway-default-packages
+
+            ;; Convenient value to inherit for extensions.
+            %empty-sway-configuration))
 
 ;; Helper function.
 (define (flatmap f l)
@@ -98,22 +101,54 @@
 (define (extra-content? extra)
   (every string-or-gexp? extra))
 
-(define (make-alist-predicate key? val?)
+(define* (make-alist-predicate key? val? #:optional (options? (lambda _ #f)))
   (lambda (lst)
     (every
      (lambda (item)
        (match item
+         ((k v . o)
+          (and (key? k)
+               (val? v)
+               (options? o)))
          ((k . v)
           (and (key? k)
                (val? v)))
          (_ #f)))
      lst)))
 
-(define bindings?
-  (make-alist-predicate symbol? string-or-gexp?))
+(define (keybinding-options? lst)
+  (every
+   (lambda (e)
+     (or (member e
+                 '("no-warn" "whole-window" "border" "exclude-titlebar"
+                   "release" "locked" "inhibited" "no-repeat"))
+         (string-prefix? "input-device=" e)))
+   lst))
+
+(define (codebinding-options? lst)
+  (every
+   (lambda (e)
+     (or (member e
+                 '("no-warn" "whole-window" "border" "exclude-titlebar"
+                   "release" "locked" "to-code" "inhibited" "no-repeat"))
+         (string-prefix? "input-device=" e)))
+   lst))
+
+(define (gesture-options? lst)
+  (every
+   (lambda (e)
+     (or (member e '("exact" "no-warn"))
+         (string-prefix? "input-device=" e)))
+   lst))
+
+(define key-bindings?
+  (make-alist-predicate symbol? string-or-gexp? keybinding-options?))
+
+(define gestures?
+  (make-alist-predicate symbol? string-or-gexp? gesture-options?))
 
 (define mouse-bindings?
-  (make-alist-predicate integer? string-or-gexp?))
+  (make-alist-predicate integer? string-or-gexp? codebinding-options?))
 
 (define (variables? lst)
   (make-alist-predicate symbol? string-ish?))
@@ -266,7 +301,7 @@
    (string "default")
    "Name of the mode.")
   (keybindings
-   (bindings '())
+   (key-bindings '())
    "Keybindings.")
   (mouse-bindings
    (mouse-bindings '())
@@ -277,10 +312,10 @@
 
 (define-configuration/no-serialization sway-configuration
   (keybindings
-   (bindings %sway-default-keybindings)
+   (key-bindings %sway-default-keybindings)
    "Keybindings.")
   (gestures
-   (bindings %sway-default-gestures)
+   (gestures %sway-default-gestures)
    "Gestures.")
   (packages
    (list-of-packages
@@ -554,29 +589,37 @@
 (define-inlinable (serialize-boolean-ed b)
   (if b "enable" "disable"))
 
-(define-inlinable (serialize-binding binder key value)
-  #~(string-append #$binder #$key " " #$value))
+(define-inlinable (serialize-binding binder key value options)
+  #~(string-append
+     #$binder
+     #$(string-join options " --" 'prefix) " "
+     #$key " " #$value))
 
 (define (serialize-mouse-binding var)
-  (let* ((ev (car var))
-         (ev-code (number->string ev))
-         (command (cdr var)))
-    (serialize-binding "bindcode " ev-code command)))
+  (match var
+    ((ev command . options)
+     (serialize-binding "bindcode" (number->string ev) command options))
+    ((ev . command)
+     (serialize-binding "bindcode" (number->string ev) command '()))))
 
 (define (serialize-keybinding var)
-  (let ((name (symbol->string (car var)))
-        (value (cdr var)))
-    (serialize-binding "bindsym " name value)))
+  (match var
+    ((name value . options)
+     (serialize-binding "bindsym" (symbol->string name) value options))
+    ((name . value)
+     (serialize-binding "bindsym" (symbol->string name) value '()))))
 
 (define (serialize-gesture var)
-  (let ((name (symbol->string (car var)))
-        (value (cdr var)))
-    (serialize-binding "bindgesture " name value)))
+  (match var
+    ((name value . options)
+     (serialize-binding "bindgesture" (symbol->string name) value options))
+    ((name . value)
+     (serialize-binding "bindgesture" (symbol->string name) value '()))))
 
 (define (serialize-variable var)
   (let ((name (symbol->string (car var)))
         (value (cdr var)))
-    (serialize-binding "set $" name value)))
+    #~(string-append "set $" #$name " " #$value)))
 
 (define (serialize-exec b)
   (if b
@@ -743,7 +786,7 @@
     (computed-file
      "sway-config"
      #~(begin
-         (use-modules (ice-9 format) (ice-9 match) 
+         (use-modules (ice-9 format) (ice-9 match)
                       (srfi srfi-1))
 
          (call-with-output-file #$output
@@ -854,8 +897,69 @@
 ;;; Definition of the Home Service.
 ;;;
 
+(define %empty-sway-configuration
+  (sway-configuration
+    (variables '())
+    (keybindings '())
+    (gestures '())
+    (packages '())
+    (inputs '())
+    (outputs '())
+    (modes '())
+    (startup+reload-programs '())
+    (startup-programs '())))
+
 (define (sway-configuration->files sway-conf)
   `((".config/sway/config" ,(sway-configuration->file sway-conf))))
+
+(define (sway-combine config1 config2)
+  (sway-configuration
+    (keybindings (append (sway-configuration-keybindings config1)
+                         (sway-configuration-keybindings config2)))
+    (gestures (append (sway-configuration-gestures config1)
+                      (sway-configuration-gestures config2)))
+    (packages (append (sway-configuration-packages config1)
+                      (sway-configuration-packages config2)))
+    (variables (append (sway-configuration-variables config1)
+                       (sway-configuration-variables config2)))
+    (inputs (append (sway-configuration-inputs config1)
+                    (sway-configuration-inputs config2)))
+    (outputs (append (sway-configuration-outputs config1)
+                     (sway-configuration-outputs config2)))
+    (bar (let ((bar1 (sway-configuration-bar config1))
+               (bar2 (sway-configuration-bar config2)))
+           (if (eq? bar1 %unset-value)
+               bar2
+               (if (eq? bar2 %unset-value)
+                   bar1
+                   (throw "[Sway configuration] Too many bar configurations \
+have been found.")))))
+    (modes (append (sway-configuration-modes config1)
+                   (sway-configuration-modes config2)))
+    (startup+reload-programs
+     (append (sway-configuration-startup+reload-programs config1)
+             (sway-configuration-startup+reload-programs config2)))
+    (startup-programs
+     (append (sway-configuration-startup-programs config1)
+             (sway-configuration-startup-programs config2)))
+    (extra-content
+     (append (sway-configuration-extra-content config1)
+             (sway-configuration-extra-content config2)))))
+
+(define (sway-compose lst)
+  "Naive composition procedure for @code{home-sway-service-type}.  Most fields
+of above configuration records are lists.  The composition procedure simply
+concatenates them."
+  (match lst
+    (() %unset-value)
+    ((h) h)
+    ((h . t)
+     (fold sway-combine h t))))
+
+(define (sway-extend ini res)
+  (if (eq? res %unset-value)
+      ini
+      (sway-combine ini res)))
 
 (define home-sway-service-type
   (service-type
@@ -865,6 +969,8 @@
                              sway-configuration->files)
           (service-extension home-profile-service-type
                              sway-configuration-packages)))
+   (compose sway-compose)
+   (extend sway-extend)
    (description "Configure Sway by providing a file
 @file{~/.config/sway/config}.")
    (default-value (sway-configuration))))

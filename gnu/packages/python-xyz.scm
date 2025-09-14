@@ -167,6 +167,7 @@
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Luis Felipe López Acevedo <sirgazil@zoho.com>
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
+;;; Copyright © 2025 Matthias Riße <matrss@0px.xyz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -311,6 +312,33 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
+
+(define-public python-annexremote
+  (package
+    (name "python-annexremote")
+    (version "1.6.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Lykos153/AnnexRemote")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fhd712z143mvsidlwhnq951cvkbfcpybbim3fiyn6r3l1r46a25"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools-next
+           python-setuptools-scm))
+    (home-page "https://github.com/Lykos153/AnnexRemote")
+    (synopsis "Helper module to easily develop git-annex special remotes")
+    (description
+     "This package provides a helper module to develop special remotes for
+git-annex.  AnnexRemote implements the line-based external special remote
+protocol of git-annex, while leaving the behavior of the remote up to the
+user.")
+    (license license:gpl3)))
 
 (define-public python-apprise
   (package
@@ -7749,18 +7777,6 @@ API, and sensible error messages.  PyYAML supports standard YAML tags and
 provides Python-specific tags that represent an arbitrary Python object.")
     (license license:expat)))
 
-(define-public python-pyyaml-5
-  (package
-    (inherit python-pyyaml)
-    (version "5.4.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "PyYAML" version))
-       (sha256
-        (base32
-         "0pm440pmpvgv5rbbnm8hk4qga5a292kvlm1bh3x2nwr8pb5p8xv0"))))))
-
 (define-public python-vine
   (package
     (name "python-vine")
@@ -13779,6 +13795,34 @@ def get_requires_for_build_sdist(config_settings=None):
      "@code{importlib_resources} is a backport of Python 3's standard library
 @code{importlib.resources} module for Python 2.7, and Python 3.")
     (license license:asl2.0)))
+
+(define-public python-importlib-resources-6
+  (package/inherit python-importlib-resources
+    (version "6.4.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "importlib_resources" version))
+              (sha256
+               (base32
+                "0ic177y1j3v0zd7fzdg7x2h4c56f7i7xiccfg7is8v04p19v9cnd"))))
+    (native-inputs
+     (list python-jaraco-collections
+           python-jaraco-test
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (arguments
+     (cons*
+      #:test-flags
+      ;; AttributeError: module 'zipp' has no attribute 'CompleteDirs'
+      #~(list "--ignore=importlib_resources/tests/test_contents.py"
+              "--ignore=importlib_resources/tests/test_files.py"
+              "--ignore=importlib_resources/tests/test_open.py"
+              "--ignore=importlib_resources/tests/test_path.py"
+              "--ignore=importlib_resources/tests/test_read.py"
+              "--ignore=importlib_resources/tests/test_resource.py")
+      (package-arguments python-importlib-resources)))))
 
 (define-public python-importlib-metadata
   (package
@@ -22174,23 +22218,6 @@ customization required.")
 for Python inspired by modern web development.")
     (license license:expat)))
 
-;; For cobib@5.3.0; there is a condition in requirements: textual>=1.0,<2.0.
-(define-public python-textual-1
-  (hidden-package
-   (package
-     (inherit python-textual)
-     (name "python-textual")
-     (version "1.0.0")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/Textualize/textual")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "14s45p82ajak115lrkc6vwf5v1w7721sfmipykb7vx9a947594yy")))))))
-
 (define-public python-magic
   (package
     (name "python-magic")
@@ -28402,6 +28429,34 @@ syntax validity, but for weirdnesses like key repetition and cosmetic problems
 such as lines length, trailing spaces, indentation, etc.")
     (license license:gpl3+)))
 
+(define-public python-yamlordereddictloader
+  (package
+    (name "python-yamlordereddictloader")
+    (version "0.4.2")
+    (home-page "https://github.com/fmenabe/python-yamlordereddictloader")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1rwvasdmfq7lbd2bm7vmx759fv535cp5ndyhf845fqd86mr7a94c"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-pyyaml))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (synopsis "Loader and a dumper for PyYAML")
+    (description "yamlordereddictloader is a python package that provides a
+loader and a dumper for PyYAML allowing to keep items order when loading a
+file (by putting them in OrderedDict objects) and to manage OrderedDict
+objects when dumping to a file.")
+    (license license:expat)))
+
 (define-public python-yapf
   (package
     (name "python-yapf")
@@ -31297,24 +31352,6 @@ your jobs in a database, they will also survive scheduler restarts and maintain
 their state.  When the scheduler is restarted, it will then run all the jobs it
 should have run while it was offline.")
     (license license:expat)))
-
-(define-public python-pylzma
-  (package
-    (name "python-pylzma")
-    (version "0.5.0")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "pylzma" version))
-        (sha256
-          (base32
-            "074anvhyjgsv2iby2ql1ixfvjgmhnvcwjbdz8gk70xzkzcm1fx5q"))))
-    (build-system python-build-system)
-    (home-page "https://www.joachim-bauch.de/projects/pylzma/")
-    (synopsis "Python bindings for the LZMA library by Igor Pavlov")
-    (description "This package provides Python bindings for the LZMA library
-by Igor Pavlov.")
-    (license license:lgpl2.1+)))
 
 (define-public python-ifaddr
   (package
