@@ -12,7 +12,7 @@
 ;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2024-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1606,7 +1606,7 @@ protocols used in KDE Plasma.")
 (define-public kwayland
   (package
     (name "kwayland")
-    (version "6.3.4")
+    (version "6.3.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1614,7 +1614,7 @@ protocols used in KDE Plasma.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0db8vwg9miin8g4rzz1gx50h84gmpsn3b9cndiq5xdwa4galh259"))))
+                "1m7zjdfj54bi6dalkhgdjjgbjsafg9gjyjvy7gyjczmfj7gqndlh"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config
@@ -3134,7 +3134,7 @@ maintaining an index of the contents of your files.")
 (define-public plasma-activities
   (package
     (name "plasma-activities")
-    (version "6.3.4")
+    (version "6.3.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -3142,7 +3142,7 @@ maintaining an index of the contents of your files.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "01fxs3rp1qycy3b4pg7dz4i3naa6id7s69dilrfr234g8cc5f2k7"))))
+                "0a1rj0i6kbg0a003zr55sjgas0f3wnvjq6rv7879rc4g0q529nrk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -3170,7 +3170,7 @@ with other frameworks.")
 (define-public plasma-activities-stats
   (package
     (name "plasma-activities-stats")
-    (version "6.3.4")
+    (version "6.3.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -3178,7 +3178,7 @@ with other frameworks.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0kcbnajlmn6rf298x493sv8bjqh5966jzl1fyl7y3j1xk3mx6jq1"))))
+                "1qhh01srvbdlry3i269j3bmwyjkaqa3fdgqipq2k3n7a8kbzrj8m"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))
     (native-inputs
@@ -5055,7 +5055,7 @@ descriptions for integrating actions from plugins.")
 (define-public libplasma
   (package
     (name "libplasma")
-    (version "6.3.4")
+    (version "6.3.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -5063,7 +5063,7 @@ descriptions for integrating actions from plugins.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1w7m038gr7d6r7dbaf97ihvdpr0abca2iaafiwkkkyr1j85rf2w8"))))
+                "0i5k4w45gcm9kagawmskqbfcb4shajh59vrnbq09zi3hz78sxcxi"))))
     (build-system qt-build-system)
     (propagated-inputs
      (list kpackage kwindowsystem))
@@ -5264,7 +5264,7 @@ need.")
 (define-public ktextaddons
   (package
     (name "ktextaddons")
-    (version "1.5.4")
+    (version "1.6.0")
     (source
      (origin
        (method url-fetch)
@@ -5272,7 +5272,7 @@ need.")
              "mirror://kde/stable/" name "/" name "-" version ".tar.xz"))
        (sha256
         (base32
-         "083v4x5f46h609g8zar6x22mp1ps85ikzbr08qbfj9abx010df34"))))
+         "1p7c461mnvsq7jz77x412k1kwmr9phr306dd9skbv5rgll2nb16r"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -5297,8 +5297,10 @@ need.")
            ki18n
            kio
            ksyntaxhighlighting
+           ktextwidgets
            kxmlgui
            qtkeychain-qt6
+           qtmultimedia
            sonnet))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Various text handling addons")

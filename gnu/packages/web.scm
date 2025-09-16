@@ -385,16 +385,16 @@ one.")
 (define-public miniflux
   (package
     (name "miniflux")
-    (version "2.2.9")
+    (version "2.2.12")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/miniflux/v2")
-             (commit version)))
+              (url "https://github.com/miniflux/v2")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mfynlwbmzfgh24pv3bz7i0mprxbajx417v8hxjaalyvhxm917x6"))))
+        (base32 "0nz12an801r9d2da8p6fic9qy4524y7cprfpimw13ac5c4iqvr0d"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -417,8 +417,7 @@ one.")
                 (rename-file (string-append bindir "v2")
                              (string-append bindir "miniflux"))))))))
     (inputs
-     (list go-github-com-abadojack-whatlanggo
-           go-github-com-andybalholm-brotli
+     (list go-github-com-andybalholm-brotli
            go-github-com-coreos-go-oidc-v3
            go-github-com-go-webauthn-webauthn
            go-github-com-gorilla-mux
@@ -426,13 +425,11 @@ one.")
            go-github-com-prometheus-client-golang
            go-github-com-puerkitobio-goquery
            go-github-com-tdewolff-minify-v2
-           go-github-com-yuin-goldmark
            go-golang-org-x-crypto
            go-golang-org-x-image
            go-golang-org-x-net
            go-golang-org-x-oauth2
-           go-golang-org-x-term
-           go-golang-org-x-text))
+           go-golang-org-x-term))
     (home-page "https://miniflux.app/")
     (synopsis "Minimalist and opinionated feed reader")
     (description
@@ -5795,75 +5792,6 @@ you'd expect.")
     ;; Both those CVEs are actually fixed in version 1.7.1.
     (properties `((lint-hidden-cve . ("CVE-2023-50246"
                                       "CVE-2023-50268"))))))
-
-(define-public go-github-com-mikefarah-yq-v4
-  (package
-    (name "go-github-com-mikefarah-yq-v4")
-    (version "4.45.4")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/mikefarah/yq")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1adrbxqsmpsvz2jfjkvarvnvblj5zdznr3sxpakv85vvs3njdjx9"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:skip-build? #t
-      #:import-path "github.com/mikefarah/yq/v4"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Tests need this.
-          (add-after 'unpack 'fix-access-to-doc
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (for-each make-file-writable
-                          (find-files "./pkg/yqlib/doc" "\\.md"))))))))
-    (propagated-inputs
-     (list go-github-com-a8m-envsubst
-           go-github-com-alecthomas-participle-v2
-           go-github-com-alecthomas-repr
-           go-github-com-dimchansky-utfbom
-           go-github-com-elliotchance-orderedmap
-           go-github-com-fatih-color
-           go-github-com-goccy-go-json
-           go-github-com-goccy-go-yaml
-           go-github-com-jinzhu-copier
-           go-github-com-magiconair-properties
-           go-github-com-pelletier-go-toml-v2
-           go-github-com-pkg-diff
-           go-github-com-spf13-cobra
-           go-github-com-spf13-pflag
-           go-github-com-yuin-gopher-lua
-           go-golang-org-x-net
-           go-golang-org-x-text
-           go-gopkg-in-op-go-logging-v1
-           go-gopkg-in-yaml-v3))
-    (home-page "https://mikefarah.gitbook.io/yq/")
-    (synopsis
-     "Command-line YAML, JSON, XML, CSV, TOML and properties processor")
-    (description
-     "This package provides @code{yq}, a command-line YAML, JSON and XML
-processor.  It uses @code{jq}-like syntax but works with YAML files as well as
-JSON, XML, properties, CSV and TSV.")
-    (license license:expat)))
-
-(define-public yq
-  (package
-    (inherit go-github-com-mikefarah-yq-v4)
-    (name "yq")
-    (arguments
-     (substitute-keyword-arguments
-         (package-arguments go-github-com-mikefarah-yq-v4)
-       ((#:install-source? _ #t) #f)
-       ((#:skip-build? _ #t) #f)
-       ((#:tests? _ #t) #f)
-       ((#:import-path _) "github.com/mikefarah/yq")))
-    (propagated-inputs '())
-    (inputs (package-propagated-inputs go-github-com-mikefarah-yq-v4))))
 
 (define-public go-github-com-itchyny-gojq
   (package

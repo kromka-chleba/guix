@@ -746,7 +746,7 @@ verification.")
 (define-public python-cocotb
   (package
     (name "python-cocotb")
-    (version "2.0.0b1")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)
@@ -755,7 +755,7 @@ verification.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14aas4vw9cb9krnvw21vfmwqivvc2cwzi9rvmvap6xcw9f2dsyy9"))))
+        (base32 "0b9wc14df11wkwa20wkij4iip07841qsr0yir9g7dww069rj36q6"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -765,8 +765,7 @@ verification.")
      (list iverilog
            nvc
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-setuptools-next))
     (propagated-inputs
      (list python-find-libpython))
     (home-page "https://github.com/cocotb/cocotb")
@@ -779,10 +778,11 @@ and Verilog RTL using Python.")
 (define-public python-cocotb-bus
   ;; XXX: The latest tagged release (2.6.1) was placed on <2023-07-01>, switch
   ;; to tag when the fresh release is available.
-  (let ((commit "8269cbdacdc26e676eace4e19fc753c96ac9a059")
-        (revision "0"))
+  (let ((commit "c3541f15c43c914d8cf3e57ecf92c5d256c97e6c")
+        (revision "1"))
     (package
       (name "python-cocotb-bus")
+      ;; Version from src/cocotb_bus/_version.py
       (version (git-version "0.2.1" revision commit))
       (source
        (origin
@@ -792,11 +792,12 @@ and Verilog RTL using Python.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "12762rdg630dq5qyvnv1g9kc36g0997nx8c5qndl34v6s9fc2152"))))
+          (base32 "1xx0w9g8psn4f8qlv7jzdwwr2ivvlaxi3flgp1v0qybzzhz6l1k3"))))
       (build-system pyproject-build-system)
       ;; TODO: Build documentation from <docs>.
       (arguments
        (list
+        #:tests? #f                     ;not compatible with cocotb 2.0
         #:phases
         #~(modify-phases %standard-phases
             (replace 'check
@@ -808,8 +809,7 @@ and Verilog RTL using Python.")
        (list iverilog
              nvc
              python-pytest
-             python-setuptools
-             python-wheel))
+             python-setuptools-next))
       (propagated-inputs
        (list python-cocotb
              python-packaging

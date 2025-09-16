@@ -376,20 +376,6 @@ generator that converts Protocol Buffer @code{.proto} files to C descriptor
 code.")
     (license license:bsd-2)))
 
-(define-public protobuf-c-for-aiscm
-  (package
-    (inherit protobuf-c)
-    (version "1.3.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/protobuf-c/protobuf-c/"
-                                  "releases/download/v" version
-                                  "/protobuf-c-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0y3yaanq97si7iyld06p8w20m0shpj7sf4xwzbhhvijhxw36d592"))))
-    (inputs (list protobuf-3.6))))
-
 (define-public protozero
   (package
     (name "protozero")
@@ -625,33 +611,6 @@ dataclasses module to define message types.  Protocol buffers are a
 language-neutral, platform-neutral extensible mechanism for serializing
 structured data.")
     (license license:expat)))
-
-;; For tensorflow.
-(define-public python-protobuf-3.6
-  (package
-    (inherit python-protobuf)
-    (name "python-protobuf")
-    (version (package-version protobuf-3.6) )
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "protobuf" version))
-       (sha256
-        (base32
-         "04bqb12smlckzmgkj6vgmpbr3cby0n6726cmz33bqr7kn1vb728l"))))
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'compatibility
-           (lambda _
-             (substitute* '("google/protobuf/internal/containers.py"
-                            "google/protobuf/internal/well_known_types.py")
-               (("collections.Mutable")
-                "collections.abc.Mutable")))))))
-    (inputs (list python-six))
-    (native-inputs
-     (list python-setuptools-for-tensorflow))))
 
 (define-public python-proto-plus
   (package

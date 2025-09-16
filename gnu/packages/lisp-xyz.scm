@@ -15320,7 +15320,7 @@ in which case it returns the appropriate closure.")
 
 (define-public sbcl-envy
   (let ((commit "26a7faadc981f2a047daa36f715a44faec5dd00c")
-	(revision "2"))
+        (revision "2"))
     (package
       (name "sbcl-envy")
       (version (git-version "0.1" revision commit))
@@ -19930,7 +19930,7 @@ performance and simplicity in mind.")
 
 (define-public sbcl-lambda-fiddle
   (let ((commit "d16bba55acf6065b412f64ab8fdff679a4a32b1e") ;; no tagged branch
-	(revision "1"))
+        (revision "1"))
     (package
       (name "sbcl-lambda-fiddle")
       (version (git-version "1.0.0" revision commit))
@@ -20111,8 +20111,8 @@ LASS files.")
      (list #:tests? #f))))
 
 (define-public sbcl-legit
-  (let ((commit "9c677b9b798803d37ab6f5e0e0705441872f7230")
-        (revision "3"))
+  (let ((commit "877147a3b4b17dff49a4ca21a30e067b7750aee8")
+        (revision "4"))
     (package
       (name "sbcl-legit")
       (version (git-version "1.0.0" revision commit))
@@ -20120,11 +20120,11 @@ LASS files.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/legit")
+               (url "https://codeberg.org/shinmera/legit")
                (commit commit)))
          (file-name (git-file-name "cl-legit" version))
          (sha256
-          (base32 "0jy021ywrbnkgbgb63ip6j7kr40m4wz2pz1v5ybn6xkkn6dyprsz"))))
+          (base32 "06cvplibn21nm9l4k3j4rik549wrcbscjfrz00l0gmxh68qsqy31"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        `(#:phases
@@ -20141,7 +20141,7 @@ LASS files.")
              sbcl-documentation-utils
              sbcl-lambda-fiddle
              sbcl-simple-inferiors))
-      (home-page "https://shinmera.github.io/legit/")
+      (home-page "https://codeberg.org/shinmera/legit")
       (synopsis "Interface to the git binary")
       (description
        "This is an interface to the @code{git} binary to make controlling it
@@ -20755,7 +20755,7 @@ syntax such that is accepts Org files as Lisp source code files.")
 
 (define-public sbcl-livesupport
   (let ((commit "71e6e412df9f3759ad8378fabb203913d82e228a")
-	(revision "1"))
+        (revision "1"))
     (package
       (name "sbcl-livesupport")
       (version (git-version "0.0.0" revision commit))
@@ -22344,7 +22344,7 @@ extensions to Common Lisp.  It contains:
 
 (define-public sbcl-mito
   (let ((commit "47ba4865ca4bb2894b53703a49a299e973f8eb86")
-	(revision "3"))
+        (revision "3"))
     (package
       (name "sbcl-mito")
       (version (git-version "0.1" revision commit))
@@ -25200,8 +25200,8 @@ your own classes.")
   (sbcl-package->clasp-package sbcl-plump))
 
 (define-public sbcl-plump-sexp
-  (let ((commit "bbcf75e9ecda8fe7603098ab8c15828407bb4f08")
-        (revision "0"))
+  (let ((commit "a40f66dbc7bf9d5957b1f85b184ce6798519ab96")
+        (revision "1"))
     (package
       (name "sbcl-plump-sexp")
       (version (git-version "0.1.0" revision commit))
@@ -25210,12 +25210,12 @@ your own classes.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/plump-sexp")
+           (url "https://codeberg.org/shinmera/plump-sexp")
            (commit commit)))
          (file-name (git-file-name "cl-plump-sexp" version))
          (sha256
           (base32
-           "0zm9h0assjb8766z2v6l1k1s60y90y6f8smrl1dczwqlvc8xyln5"))))
+           "0iyz4xn7sk6pxx9avc2ajcy9268zdfr3xyvi16hgpajwcbqi5sjq"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-plump))
@@ -25223,7 +25223,7 @@ your own classes.")
       (description
        "The Plump-SEXP library is a backend for Plump which can convert
 between S-expressions and the Plump DOM.")
-      (home-page "https://github.com/Shinmera/plump-sexp")
+      (home-page "https://codeberg.org/shinmera/plump-sexp")
       (license license:zlib))))
 
 (define-public cl-plump-sexp
@@ -25939,13 +25939,13 @@ an array-based heap.")
          (file-name (git-file-name "proc-parse" version))))
       (build-system asdf-build-system/sbcl)
       (inputs
-       `(("alexandria" ,sbcl-alexandria)
-         ("babel" ,sbcl-babel)))
+       (list sbcl-alexandria
+             sbcl-babel))
       (native-inputs
        (list sbcl-prove))
       (arguments
        '(#:asd-systems '("proc-parse-test"
-			 "proc-parse")))
+                         "proc-parse")))
       (synopsis "Procedural vector parser")
       (description
        "This is a string/octets parser library for Common Lisp with speed and
@@ -30447,8 +30447,8 @@ determine the cost of certain actions on a given platform and implementation.")
   (sbcl-package->clasp-package sbcl-the-cost-of-nothing))
 
 (define-public sbcl-tooter
-  (let ((commit "4583049c708b3f18d49d84aabfb19ec79210fda3")
-        (revision "6"))
+  (let ((commit "6d66a55a87f45cfa940b826ec990a3f5fa9b9630")
+        (revision "7"))
     (package
       (name "sbcl-tooter")
       (version (git-version "1.0.0" revision commit))
@@ -30456,11 +30456,11 @@ determine the cost of certain actions on a given platform and implementation.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/tooter")
+               (url "https://codeberg.org/shinmera/tooter")
                (commit commit)))
          (file-name (git-file-name "cl-tooter" version))
          (sha256
-          (base32 "1z9f8idvr2idn18xkw7ymxyglgc0lfhdhnq6xpbdmk5v8c1245iq"))))
+          (base32 "1i0hx0i6jgwf9c69m9wmlrv7hzq5n0k43r573jmsldbaxvnm4189"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-alexandria
@@ -30472,7 +30472,7 @@ determine the cost of certain actions on a given platform and implementation.")
       (description
        "This is a Common Lisp library implementing the full v1 REST API
 protocol for Mastodon.")
-      (home-page "https://shinmera.github.io/tooter/")
+      (home-page "https://codeberg.org/shinmera/tooter")
       (license license:zlib))))
 
 (define-public cl-tooter

@@ -42,14 +42,14 @@
 (define-public sequoia-chameleon-gnupg
   (package
     (name "sequoia-chameleon-gnupg")
-    (version "0.12.0")
+    (version "0.13.1")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "sequoia-chameleon-gnupg" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0ydb6wbyznr9p734p4jh896arcc45wi0b4isfjs6znwa40j3s66c"))))
+        (base32 "1qpanr7ydsr79adbn4bxwgqmhhq4wn7y90lw42a0g6p71x2cg73h"))))
     (build-system cargo-build-system)
     (arguments
      (list
@@ -125,14 +125,14 @@ This Guix package is built to use the nettle cryptographic library.")
 (define-public sequoia-sq
   (package
     (name "sequoia-sq")
-    (version "1.2.0")
+    (version "1.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "sequoia-sq" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0p3z6njzgffz8hrjnj3c1xk9fwfr8fjp81nmr03v8n2fspzyq6l7"))))
+        (base32 "01aph6n9lj7qcz1n8gr6q48an4ypn9d6xzxfprwpw80wv9ibc12w"))))
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
@@ -192,14 +192,14 @@ gpg-agent, openpgp-card and softkeys keystore backends.")
 (define-public sequoia-sqv
   (package
     (name "sequoia-sqv")
-    (version "1.2.1")
+    (version "1.3.0")
     (source
       (origin
         (method url-fetch)
         (uri (crate-uri "sequoia-sqv" version))
         (file-name (string-append name "-" version ".tar.gz"))
         (sha256
-          (base32 "0nizac02bwl5cdmcvn3vjjxdhcy431mnsijyswnq101p764dlkl2"))))
+          (base32 "0q2ylgzpnx290mwp8626j14b5z318074ag5dj99282vj4qfmf949"))))
     (build-system cargo-build-system)
     (inputs
      (cons* nettle openssl (cargo-inputs 'sequoia-sqv)))
@@ -248,33 +248,29 @@ constraints on the signature into account.
 This Guix package is built to use the nettle cryptographic library.")
     (license license:lgpl2.0+)))
 
-;; There hasn't been a release cut since the tools were split from the library
-;; so we use the 0.1.0 number from tools/Cargo.toml and the tag from the library.
 (define-public sequoia-wot-tools
   (package
     (name "sequoia-wot-tools")
-    (version "0.1.0")
+    (version "0.15.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
               (url "https://gitlab.com/sequoia-pgp/sequoia-wot")
-              (commit "sequoia-wot/v0.13.2")))
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vvq2izz2088x9jvii1xj14z4hls948wn18wb53fpahyhx8kkbvx"))))
+        (base32 "03wa4l582hx0qq28pkhrf0pagckyx6df01pb4chyngadk49q1xn7"))))
     (build-system cargo-build-system)
     (arguments
      (list
        #:features '(list "sequoia-openpgp/crypto-nettle")
+       #:cargo-package-crates ''("tools")
        #:cargo-test-flags '(list "--" "--skip=gpg_trust_roots")
        #:install-source? #f
+       #:cargo-install-paths ''("tools")
        #:phases
        #~(modify-phases %standard-phases
-           (add-after 'unpack 'chdir
-             (lambda _
-               (delete-file "Cargo.lock")
-               (chdir "tools")))
            (add-after 'install 'install-more
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out   (assoc-ref outputs "out"))
@@ -313,7 +309,7 @@ This Guix package is built to use the nettle cryptographic library.")
 (define-public sequoia
   (package
     (name "sequoia")
-    (version "1.22.0")
+    (version "2.0.0")
     (source #f)
     (build-system trivial-build-system)
     (arguments
