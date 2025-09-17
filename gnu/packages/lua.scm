@@ -101,7 +101,8 @@
              (sha256
               (base32 "1b2qn2rv96nmbm6zab4l877bd4zq7wpwm8drwjiy2ih4jqzysbhc"))
              (patches (search-patches "lua-pkgconfig.patch"
-                                      "lua-liblua-so.patch"))))
+                                      "lua-liblua-so.patch"
+                                      "lua-5.3+-search-paths.patch"))))
     (build-system gnu-build-system)
     (inputs (list readline))
     (arguments
@@ -125,6 +126,15 @@
                        (string-append "INSTALL_TOP=" out)
                        (string-append "INSTALL_MAN=" out
                                       "/share/man/man1"))))))))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "GUIX_LUA_PATH")
+             (separator ";")
+             (files '("share/lua/5.3")))
+           (search-path-specification
+             (variable "GUIX_LUA_CPATH")
+             (separator ";")
+             (files '("lib/lua/5.3")))))
     (home-page "https://www.lua.org/")
     (synopsis "Embeddable scripting language")
     (description
@@ -151,7 +161,17 @@ for configuration, scripting, and rapid prototyping.")
                      (sha256
                       (base32 "1bi90r9nzmqhjwhr8ysffhmhq30wxxcpqwmbxr33wyaf2npds62g"))
                      (patches (search-patches "lua-5.4-pkgconfig.patch"
-                                              "lua-5.4-liblua-so.patch"))))))
+                                              "lua-5.4-liblua-so.patch"
+                                              "lua-5.3+-search-paths.patch"))))
+           (native-search-paths
+            (list (search-path-specification
+                   (variable "GUIX_LUA_PATH")
+                   (separator ";")
+                   (files '("share/lua/5.4")))
+                  (search-path-specification
+                   (variable "GUIX_LUA_CPATH")
+                   (separator ";")
+                   (files '("lib/lua/5.4")))))))
 
 (define-public lua-5.2
   (package (inherit lua)
@@ -164,7 +184,17 @@ for configuration, scripting, and rapid prototyping.")
               (sha256
                (base32 "0jwznq0l8qg9wh5grwg07b5cy3lzngvl5m2nl1ikp6vqssmf9qmr"))
               (patches (search-patches "lua-pkgconfig.patch"
-                                       "lua-liblua-so.patch"))))))
+                                       "lua-liblua-so.patch"
+                                       "lua-5.2-search-paths.patch"))))
+           (native-search-paths
+            (list (search-path-specification
+                    (variable "GUIX_LUA_PATH")
+                    (separator ";")
+                    (files '("share/lua/5.2")))
+                  (search-path-specification
+                    (variable "GUIX_LUA_CPATH")
+                    (separator ";")
+                    (files '("lib/lua/5.2")))))))
 
 (define-public lua-5.1
   (package (inherit lua)
@@ -177,7 +207,17 @@ for configuration, scripting, and rapid prototyping.")
               (base32 "0cskd4w0g6rdm2q8q3i4n1h3j8kylhs3rq8mxwl9vwlmlxbgqh16"))
              (patches (search-patches "lua51-liblua-so.patch"
                                       "lua-CVE-2014-5461.patch"
-                                      "lua51-pkgconfig.patch"))))))
+                                      "lua51-pkgconfig.patch"
+                                      "lua-5.1-search-paths.patch"))))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "GUIX_LUA_PATH")
+             (separator ";")
+             (files '("share/lua/5.1")))
+           (search-path-specification
+             (variable "GUIX_LUA_CPATH")
+             (separator ";")
+             (files '("lib/lua/5.1")))))))
 
 (define-public luajit
   (let ((branch "v2.1")
@@ -193,7 +233,8 @@ for configuration, scripting, and rapid prototyping.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0srwk9nmiz8a93f70inq2597ff6xy203ckr4c0k7jcksdixymi9v"))))
+                  "0srwk9nmiz8a93f70inq2597ff6xy203ckr4c0k7jcksdixymi9v"))
+                (patches (search-patches "luajit-search-paths.patch"))))
       (build-system gnu-build-system)
       (arguments
        (list #:tests? #f                    ; luajit is distributed without tests
@@ -211,6 +252,15 @@ for configuration, scripting, and rapid prototyping.")
                  (delete 'configure)) ; no configure script
              #:make-flags #~(list (string-append "PREFIX="
                                                  (assoc-ref %outputs "out")))))
+      (native-search-paths
+       (list (search-path-specification
+               (variable "GUIX_LUA_PATH")
+               (separator ";")
+               (files '("share/lua/5.1")))
+             (search-path-specification
+               (variable "GUIX_LUA_CPATH")
+               (separator ";")
+               (files '("lib/lua/5.1")))))
       (home-page "https://www.luajit.org/")
       (synopsis
        "Just in time compiler for Lua programming language version 5.1")
