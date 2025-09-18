@@ -138,6 +138,8 @@
           (commit "b28088164b7a46c70ae2cfd9daf865f6425610b2")))
     (file-name
      (git-file-name "lib-base-for-telegram-desktop" %telegram-version))
+    (patches
+     (search-patches "telegram-desktop-fix-qt-version-check.patch"))
     (sha256
      (base32
       "1dwqdnasn3igr7i14hkx1glxj0gn6rd852bj0w3k1ai9j295wnfz"))))
