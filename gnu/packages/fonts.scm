@@ -34,8 +34,8 @@
 ;;; Copyright © 2020 John Soo <jsoo1@asu.edu>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
 ;;; Copyright © 2020, 2021 Julien Lepiller <julien@lepiller.eu>
-;;; Copyright © 2020, 2024 Zhu Zihao <all_but_last@163.com>
-;;; Copyright © 2020, 2021, 2022 Simen Endsjø <simendsjo@gmail.com>
+;;; Copyright © 2020, 2024, 2025 Zhu Zihao <all_but_last@163.com>
+;;; Copyright © 2020-2022, 2025 Simen Endsjø <contact@simendsjo.me>
 ;;; Copyright © 2020 Tim Van den Langenbergh <tmt_vdl@gmx.com>
 ;;; Copyright © 2020 Nicolò Balzarotti <nicolo@nixo.xyz>
 ;;; Copyright © 2021 Antoine Côté <antoine.cote@posteo.net>
@@ -269,31 +269,33 @@ glyphset has also been extended, supporting now a wider number of languages.")
       (license license:silofl1.1))))
 
 (define-public font-ibm-plex
-  (package
-    (name "font-ibm-plex")
-    (version "6.4.2")
-    ;; We prefer git-fetch since it lets us get the opentype, truetype and web
-    ;; fonts all in one download. The zip archive releases separate the
-    ;; opentype, truetype and web fonts into three separate archives.
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/IBM/plex")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "00lzbm1b7zbx5q3p0s8fh9q9zj6z4k01fn7n177iybh9xn4jgx0p"))))
-    (build-system font-build-system)
-    (outputs '("out" "ttf" "woff"))
-    (home-page "https://github.com/IBM/plex")
-    (synopsis "IBM Plex typeface")
-    (description
-     "This package provides the Plex font family.  It comes in a Sans, Serif,
+  (let ((commit "89cba80dad75561262e758f4b6ddd474c5119796")
+        (revision "0"))
+    (package
+      (name "font-ibm-plex")
+      (version (git-version "6.4.2" revision commit))
+      ;; We prefer git-fetch since it lets us get the opentype, truetype and web
+      ;; fonts all in one download.  The zip archive releases separate the
+      ;; opentype, truetype and web fonts into three separate archives.
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/IBM/plex")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0ddc3471m2jhbdq7cfxnimsi4v31n69xlw8rxd2hyphyg79nqfrl"))))
+      (build-system font-build-system)
+      (outputs '("out" "ttf" "woff"))
+      (synopsis "IBM Plex typeface")
+      (description
+       "This package provides the Plex font family.  It comes in a Sans, Serif,
 Mono and Sans Condensed, all with roman and true italics.  The fonts have been
 designed to work well in user interface (UI) environments as well as other
 mediums.")
-    (license license:silofl1.1)))
+      (home-page "https://github.com/IBM/plex")
+      (license license:silofl1.1))))
 
 (define-public font-lilex
   (package
@@ -990,41 +992,96 @@ terminal applications, and user interfaces that involve both Latin and Japanese
 text.")
     (license license:silofl1.1)))
 
-(define-public font-cns11643
-  ;; Since upstream doesn't provide any version numbers, the date of the last
-  ;; edit is used, taken from https://data.gov.tw/dataset/5961
-  ;; XXX: The source is also updated in-place, so it may be desirable to mirror
-  ;; it elsewhere to avoid suddenly losing the current source file.
+(define-public font-cns11643-sung
   (package
-    (name "font-cns11643")
-    (version "98.1.20180605")
-    (source (origin
-              (method url-fetch)
-              (uri "http://www.cns11643.gov.tw/AIDB/Open_Data.zip")
-              (sha256
-               (base32
-                "000a9whrjr1cd4pjc23pbl60zwkq3wcb5g61p9qi7fn3hwkp0kyw"))))
+    (name "font-cns11643-sung")
+    (version "20250718") ; see https://www.cns11643.gov.tw/opendata/release.txt
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://web.archive.org/web/20250914051659if_/"
+                           "https://cns11643.gov.tw/opendata/Fonts_Sung.zip"))
+       (file-name (string-append name "-" version))
+       (sha256
+        (base32
+         "0b570p5jnw4bqhapalascrx8z1ybgf1c9xj691f5g48pq1jxrhqb"))))
     (build-system font-build-system)
-    (home-page "http://www.cns11643.gov.tw/AIDB/welcome.do")
-    (synopsis "CJK TrueType fonts, TW-Kai and TW-Sung")
+    (home-page "https://www.cns11643.gov.tw")
+    (synopsis "CJK TrueType fonts, TW-Sung")
     (description
      "@code{CNS 11643} character set (Chinese National Standard, or Chinese
 Standard Interchange Code) is the standard character set of the Republic of
 China (Taiwan) for Chinese Characters and other Unicode symbols.  Contained
-are six TrueType fonts based on two script styles, Regular script (Kai), and
-Sung/Ming script, each with three variants:
+are three variant of TrueType fonts in Sung/Ming script:
 
 @itemize
-@item @code{CNS 11643} (@code{TW-Kai} and @code{TW-Sung}): Tens of thousands
-of CJK characters from frequency tables published by the Taiwanese
-Ministry of Education.  ISO 10646 and Unicode compatible encoding.
-@item @code{Big-5 Plus}: Several thousand frequently used CJK characters
-encoded in the user defined area of the Big-5 code.
-@item @code{Big-5 Extended}: A Big-5 character set based on the
-@code{Big-5 Plus} and @code{CNS 11643} character sets.
+@item @code{TW-Sung-98_1.ttf}: CJK characters in the Basic Multilingual Plane
+of Unicode.
+@item @code{TW-Sung-Ext-B-98_1.ttf}: CJK characters in the CJK Unified
+Ideographs Extension B of Unicode.
+@item @code{TW-Sung-Plus-98_1.ttf}: CJK characters in the Plane 15 (Private Use)
+of Unicode.
 @end itemize\n")
-    (license (license:non-copyleft
-              "http://data.gov.tw/license")))) ; CC-BY 4.0 compatible
+    (license license:silofl1.1)))
+
+(define-public font-cns11643-kai
+  (package
+    (inherit font-cns11643-sung)
+    (name "font-cns11643-kai")
+    (version "20250718")
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://web.archive.org/web/20250914051659if_/"
+                           "https://cns11643.gov.tw/opendata/Fonts_Kai.zip"))
+       (file-name (string-append name "-" version))
+       (sha256
+        (base32
+         "10xylq0p8qhi8rlq62rhnfskfy6kdlh4ay8v7sp28xxl2291ll1j"))))
+    (synopsis "CJK TrueType fonts, TW-Kai")
+    (description
+     "@code{CNS 11643} character set (Chinese National Standard, or Chinese
+Standard Interchange Code) is the standard character set of the Republic of
+China (Taiwan) for Chinese Characters and other Unicode symbols.  Contained
+are three variant of TrueType fonts in Regular script (Kai):
+
+@itemize
+@item @code{TW-Kai-98_1.ttf}: CJK characters in the Basic Multilingual Plane
+of Unicode.
+@item @code{TW-Kai-Ext-B-98_1.ttf}: CJK characters in the CJK Unified
+Ideographs Extension B of Unicode.
+@item @code{TW-Kai-Plus-98_1.ttf}: CJK characters in the Plane 15 (Private Use)
+of Unicode.
+@end itemize\n")))
+
+;; In past, TW-Kai and TW-Sung are distributed in same zip archive.  But now
+;; they are already separated in font-cns11643-kai and font-cns11643-sung.
+;; This package exists as a backward-compatible definition.
+(define-public font-cns11643
+  (package
+    (inherit font-cns11643-sung)
+    (name "font-cns11643")
+    (source #f)
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build union))
+      #:builder
+      #~(begin
+          (use-modules (ice-9 match)
+                       (guix build union))
+          (match %build-inputs
+            (((names . directories) ...)
+             (union-build #$output directories))))))
+    (inputs (list font-cns11643-kai font-cns11643-sung))
+    (synopsis "CJK TrueType fonts, TW-Kai and TW-Sung")
+    (description
+     "@code{CNS 11643} character set (Chinese National Standard, or Chinese
+Standard Interchange Code) is the standard character set of the Republic of
+China (Taiwan) for Chinese Characters and other Unicode symbols.
+
+This package is an amalgamation of @code{font-cns11643-sung} and
+@code{font-cns11643-kai}.")))
 
 (define-public font-cns11643-swjz
   (package
@@ -2238,7 +2295,7 @@ guix repl <<EOF
              (ice-9 string-fun)
              (gnu packages fonts))
 
-(let ((new-version "20.0.0")
+(let ((new-version "33.3.0")
       (iosevka-hashes #nil)
       (iosevka-fails #nil))
   (for-each (lambda (font)
@@ -2290,7 +2347,7 @@ EOF
 (define-public font-iosevka
   (package
     (name "font-iosevka")
-    (version "32.5.0")
+    (version "33.3.0")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -2298,7 +2355,7 @@ EOF
                            "/releases/download/v" version
                            "/PkgTTC-Iosevka-" version ".zip"))
        (sha256
-        (base32 "1w7043q2pxllry2njrk4cpqwvralb0a1d3bxac36y0ai9al3m5w0"))))
+        (base32 "0r6zs5a7ryishfa18dlgzifkdjbwgn9p0g0ma6sssmiz5c4h81rm"))))
     (build-system font-build-system)
     (home-page "https://be5invis.github.io/Iosevka/")
     (synopsis "Coders' typeface, built from code")
@@ -2321,7 +2378,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSlab-" version ".zip"))
        (sha256
-        (base32 "03r7ldsk3qrvy46ag08fhs3ppxmzycn8gh6xxmi3pw972hn9kgpi"))))))
+        (base32 "1j6manjf5kb348c94jqzwgypym1wcvhhncc97fkcvy2fh7v23pjx"))))))
 
 (define-public font-iosevka-term
   (package
@@ -2335,7 +2392,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTF-IosevkaTerm-" version ".zip"))
        (sha256
-        (base32 "13g3czmd36k261ip9l8r94hcq6swbvag80zb9g7i9frjsr97xn2h"))))
+        (base32 "0li50ysnk2ry1fs9f7d8r9xh76jrx60si7f58blb648qn387hflh"))))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -2356,7 +2413,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "releases/download/v" version
                            "/PkgTTF-IosevkaTermSlab-" version ".zip"))
        (sha256
-        (base32 "00dwp06za3i8kyqqk5xqsd9div2ydf0rgdnj3vl5g6g5621asd39"))))
+        (base32 "1sz4l3fv37kvyj4gg9z36yh7wafb764v9j1fqjy2hc2p8pbsjv6r"))))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -2377,7 +2434,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaAile-" version ".zip"))
        (sha256
-        (base32 "10sf5q4f3l9z4pai46sszkswnwfnjmyqzs6ark1dlsifxh8c86wb"))))))
+        (base32 "0kry26cy7h6awmcyn9q2anz4654gz7gjniamdlfy27qwjzd01g6i"))))))
 
 (define-public font-iosevka-curly
   (package
@@ -2391,7 +2448,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "releases/download/v" version
                            "/PkgTTC-IosevkaCurly-" version ".zip"))
        (sha256
-        (base32 "0qg4r8hid50hnjj3gs0xagdymm15z919s0pn6n2dnlmmxvw1c5nv"))))))
+        (base32 "11zvpdg8kf1fh0ymrj7zpzfqmxp6njx5c9zb0sxkkp9hza22dg61"))))))
 
 (define-public font-iosevka-curly-slab
   (package
@@ -2405,7 +2462,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "releases/download/v" version
                            "/PkgTTC-IosevkaCurlySlab-" version ".zip"))
        (sha256
-        (base32 "1lkcs3aqxvdlpgbplhpd4i6vza1xyqnim2awak9b310byyf35d0c"))))))
+        (base32 "0dpkk161wbprx7a706jk9zizcbp7fvkknxgc8d10qg3rj7y0rih1"))))))
 
 (define-public font-iosevka-etoile
   (package
@@ -2419,7 +2476,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaEtoile-" version ".zip"))
        (sha256
-        (base32 "1yh8vlhrcczmsir87f84qr605rf1kp86bvf1c459myc4a6hcqc3z"))))))
+        (base32 "0whpdbwwqdk4qk6n324q7hy4va5qa8w208szzqjyl56mf8n6xxcc"))))))
 
 (define-public font-iosevka-ss01
   (package
@@ -2433,7 +2490,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS01-" version ".zip"))
        (sha256
-        (base32 "0h1ln3bisbgwd7cc6c9jcmplzvgca42csd5cfxj1jjs4i2vmx2d6"))))))
+        (base32 "1hbnaf2wr7svzl24a5vfxzwz5zpy202acm0bjr814jyfczrvjfcf"))))))
 
 (define-public font-iosevka-ss02
   (package
@@ -2447,7 +2504,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS02-" version ".zip"))
        (sha256
-        (base32 "0z0b14cwhbb85fjp508cb1ihscxcc75asjmq9fw5rfl3kx85w6h8"))))))
+        (base32 "0zn7zz12ai9jvlnj7zi2mpaw29xsaabf1mrx40kydbr71i155dx2"))))))
 
 (define-public font-iosevka-ss03
   (package
@@ -2461,7 +2518,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS03-" version ".zip"))
        (sha256
-        (base32 "18gs7h6mb5c9fqmx7ip1a5k3garqbgp640m338h776pcq9mlnndv"))))))
+        (base32 "1w4shz9q89h1fgqmd0wxd7cnfr5s22h0dwl1ksqbc6cx86p503b9"))))))
 
 (define-public font-iosevka-ss04
   (package
@@ -2475,7 +2532,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS04-" version ".zip"))
        (sha256
-        (base32 "1yjywm9r390gnagla6g5yjach0ydng0m0q752k39fb2z5rpjzphp"))))))
+        (base32 "041ldyblwiz7yp19xbsqhpyq78ln61406h9i907686zhs16c9ikv"))))))
 
 (define-public font-iosevka-ss05
   (package
@@ -2489,7 +2546,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS05-" version ".zip"))
        (sha256
-        (base32 "1jn8xb7f3hxs4yl54hmiar49wwdl7489xv0f0sqr5c66ip2jar0k"))))))
+        (base32 "15lryq5km6b3l81xra04vcvapdssbx5yy03a0sdr1d78z4x8wgfp"))))))
 
 (define-public font-iosevka-ss06
   (package
@@ -2503,7 +2560,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS06-" version ".zip"))
        (sha256
-        (base32 "0c6wysyg8nzgan39z4w6l41abx2d0gj89mli63ydagqlljk7vs71"))))))
+        (base32 "1ba5alcfwrhxcdy1wjjhwmx82dlll6ihqw54c6m5g4z79l36zq3x"))))))
 
 (define-public font-iosevka-ss07
   (package
@@ -2517,7 +2574,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS07-" version ".zip"))
        (sha256
-        (base32 "006khr7hh14dcq81mqzn3fkfrpbix1vghrvwff289r7cfy45ijkk"))))))
+        (base32 "1gj1ksg2yhq5g55v7xsdis706ahc5gf6gdxd3svkklngd5rhnx3p"))))))
 
 (define-public font-iosevka-ss08
   (package
@@ -2531,7 +2588,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS08-" version ".zip"))
        (sha256
-        (base32 "1dbnhbljybal9l61iq88h85jkmc16aaw8kxcq3r0ikzv2pq3vslm"))))))
+        (base32 "1y72hpss830l6a86w8r311s86ph4qdwcljfjpr5fp49hi1k564ia"))))))
 
 (define-public font-iosevka-ss09
   (package
@@ -2545,7 +2602,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS09-" version ".zip"))
        (sha256
-        (base32 "0b218h42n5qg920q95ip3mva2xz012ijzgxj8r9m638qar0ba1qi"))))))
+        (base32 "0xwb59ybr0c8bx3861xq1f5k4vf5ddrgdrdjfwph56x3m9imx5k0"))))))
 
 (define-public font-iosevka-ss10
   (package
@@ -2559,7 +2616,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS10-" version ".zip"))
        (sha256
-        (base32 "005i3am8amvwg8skq5lh5pisq1ll8hi9nj3imlcvcwj0w2i8b04w"))))))
+        (base32 "0j2iwg3bb5xpmkj8618k89ns4rs9qwpkzw5hak1lyg6ig87mqk6n"))))))
 
 (define-public font-iosevka-ss11
   (package
@@ -2573,7 +2630,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS11-" version ".zip"))
        (sha256
-        (base32 "0gnk9arz1dfksjx2d7gnb6vx0p0p7hpz4gcnkaj6ppdry9a5lmdn"))))))
+        (base32 "0mn30rvj337n4nl9iqmy7jqvvdydylrzfdzxpbcy6idps59s0517"))))))
 
 (define-public font-iosevka-ss12
   (package
@@ -2587,7 +2644,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS12-" version ".zip"))
        (sha256
-        (base32 "17ri9f2ka7jsb4n3bbb18vxnjxk432f8740hzbjpnvzy16av5nhk"))))))
+        (base32 "0x0mnmayl232clk57wfbq0xyg7g4vgy7wrmp616b851pb1zaai4f"))))))
 
 (define-public font-iosevka-ss13
   (package
@@ -2601,7 +2658,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS13-" version ".zip"))
        (sha256
-        (base32 "1nb3vd7q3xcbijawk9pqznkcfrjdykrc83jl58dnx7jf0znk7j4d"))))))
+        (base32 "1mjf5x2vzibmm3m4dfn56c963xkickc9xnzi4i5kvi6f0za2kjq3"))))))
 
 (define-public font-iosevka-ss14
   (package
@@ -2615,7 +2672,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS14-" version ".zip"))
        (sha256
-        (base32 "0dqkrf86h77ps90rdbsndngzg0l8c4jh8l3f3vcmdy1vlcrycpbi"))))))
+        (base32 "0d38sjq53lh97walsn6d6m3icabw800wsyb856l34hbzlnnakk80"))))))
 
 (define-public font-iosevka-ss15
   (package
@@ -2629,7 +2686,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS15-" version ".zip"))
        (sha256
-        (base32 "0qd2di4phlxakprm5bqi0kz9yy48wqrhkxidzjswagf6bnm3mk5v"))))))
+        (base32 "0vap4g5gf8qmczwbnvav865cjpa12j6p44bl0ysn34mizjzsyrbv"))))))
 
 (define-public font-iosevka-ss16
   (package
@@ -2643,7 +2700,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS16-" version ".zip"))
        (sha256
-        (base32 "15yr94a3faribc19j91q7jna0hx3dsdpz1axkzr5gy56w7hg6bw4"))))))
+        (base32 "1m8p6hjxlcmvi8h4zpn1iad5wa6kmq4hd5l9hjffr5l8bmkbmdh4"))))))
 
 (define-public font-iosevka-ss17
   (package
@@ -2657,7 +2714,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS17-" version ".zip"))
        (sha256
-        (base32 "0k8blbzymyvwczngafz3vijwdy4iwhxc4lrfqxgddrfi57lbnj5r"))))))
+        (base32 "1nw0zqqhwzw1p08rrz1ysz6fbvmya5h5wmx89bgl8h0dd9p146pl"))))))
 
 (define-public font-iosevka-ss18
   (package
@@ -2671,7 +2728,7 @@ programming.  Iosevka is completely generated from its source code.")
                            "/releases/download/v" version
                            "/PkgTTC-IosevkaSS18-" version ".zip"))
        (sha256
-        (base32 "08ijx9rbcx95yiaiwv6k25xmsi24rdy50mkmmaw94mmwv22mxdra"))))))
+        (base32 "12k9g1fkvgvlmr8m6n51wwk442cazqn5zxl226prvrxzwl0xj9l3"))))))
 
 (define-public font-apl2741-unicode
   (let ((commit "1e11efae38e5095bfe49a786b111d563e83dad03"))

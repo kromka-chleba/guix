@@ -77,6 +77,7 @@
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2579,38 +2580,57 @@ other HTTP libraries.")
 (define-public httpie
   (package
     (name "httpie")
-    (version "3.2.2")
+    (version "3.2.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "httpie" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/httpie/cli")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "140w4mr0w7scpf4j5qm4h475vbwrgxzkdwyygwcmql1r1cgngywb"))))
+        (base32 "0ii11xfqkbawg1v8dlli4fqq5k3yc2v65z3j7k3p4gng998s94mr"))))
     (build-system pyproject-build-system)
     (arguments
-     ;; The tests attempt to access external web servers, so we cannot run them.
-     '(#:tests? #f))
-    (native-inputs (list python-setuptools python-wheel))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+         (add-before 'build 'remove-unnecessary-dependencies
+           ;; Remove pip and setuptools dependencies so sanity-check.py passes.
+           (lambda _
+             (substitute* "setup.cfg"
+               (("(pip|setuptools)") "")))))
+      #:test-flags
+      ;; test_plugins_cli.py communicates through subprocesses
+      ;;   mocking stdin, which does not work in the build container.
+      ;; test_ssl.py cannot find the SSL certificates.
+      ;; test_binary.py fails for an unknown reason.
+      #~(list "--ignore=tests/test_plugins_cli.py"
+              "--ignore=tests/test_ssl.py"
+              "--ignore=tests/test_binary.py")))
+    (native-inputs (list python-pytest
+                         python-pytest-httpbin
+                         python-pytest-mock
+                         python-responses
+                         python-setuptools
+                         python-werkzeug
+                         python-wheel))
     (propagated-inputs
      (list python-charset-normalizer
-           python-colorama
            python-defusedxml
-           python-importlib-metadata
            python-multidict
-           python-pip
            python-pygments
            python-requests
            python-requests-toolbelt
-           python-rich
-           python-setuptools))
+           python-rich))
     (home-page "https://httpie.io")
-    (synopsis "cURL-like tool for humans")
+    (synopsis "Modern, user-friendly command-line HTTP client for the API era")
     (description
      "A command line HTTP client with an intuitive UI, JSON support,
 syntax highlighting, wget-like downloads, plugins, and more.  It consists of
 a single http command designed for painless debugging and interaction with
 HTTP servers, RESTful APIs, and web services.")
-    ;; This was fixed in 1.0.3.
+    ;; CVE-2019-10751 was fixed in 1.0.3.
     (properties `((lint-hidden-cve "CVE-2019-10751")))
     (license license:bsd-3)))
 
@@ -8285,19 +8305,18 @@ for HTTP/2 is planned.")
         (sha256
          (base32
           "1pcy9z8gmb8x41gjhw9x0lkr0d2mv5mdxcs2hwg6q8mxs857j589"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'remove-failing-test
-           (lambda _
-             (delete-file "translation_finder/test_api.py")
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'remove-failing-test
+            (lambda _
+              (delete-file "translation_finder/test_api.py"))))))
     (propagated-inputs
-     (list python-chardet python-pathlib2 python-ruamel.yaml python-six))
+     (list python-chardet python-ruamel.yaml))
     (native-inputs
-     (list python-codecov python-codacy-coverage python-pytest-cov
-           python-pytest-runner python-twine))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://weblate.org/")
     (synopsis "Translation file finder for Weblate")
     (description "This package provides a function to find translation file in

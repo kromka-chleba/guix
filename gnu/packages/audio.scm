@@ -3436,6 +3436,51 @@ compensation, (de)interleaving, and byte-swapping
     ;; original developer.
     (license license:expat)))
 
+(define-public rtosc
+  (package
+    (name "rtosc")
+    (version "0.3.1")
+    (source (origin
+             (method git-fetch)
+             (uri (git-reference
+                   (url "https://github.com/fundamental/rtosc")
+                   (commit (string-append "v" version))))
+             (file-name (git-file-name name version))
+             (sha256
+              (base32
+               "1djvyq53cjwd0szkvhpk45zcmdgrlirjwr02nqq9hzdmh0n26pk2"))
+             (patches
+              (search-patches
+                "rtosc-0.3.1-fix-invalid-comparison-operator.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "-DPERF_TEST=ON"
+                   "-DRTOSC_BUILD_SHARED_LIBS=ON")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'build 'build-documentation
+                 (lambda _
+                   (invoke "make" "rtosc-doc")))
+               (add-after 'install 'install-documentation
+                 (lambda _
+                     (copy-recursively "html"
+                      (string-append #$output:doc
+                       "/share/doc/rtosc/html")))))))
+    (native-inputs
+     (list doxygen pkg-config ruby))
+    (inputs
+     (list jack-1
+           liblo
+           libx11
+           mesa))
+    (outputs (list "out" "doc"))
+    (home-page "https://fundamental-code.com/wiki/rtosc/")
+    (synopsis "Realtime Safe OSC packet serialization and dispatch")
+    (description
+     "RtOSC is a realtime safe library for handling OSC messages.")
+    (license license:expat)))
+
 (define-public python-jack-client
   (package
     (name "python-jack-client")
@@ -6533,12 +6578,32 @@ as is the case with audio plugins.")
                    (invoke "make" "features")))
                (add-after 'install 'make-carla-executable
                  (lambda _
-                   (chmod (string-append #$output "/share/carla/carla") #o555)))
+                   (with-directory-excursion (string-append #$output
+                                                           "/share/carla")
+                     (for-each (lambda (file)
+                                 (chmod file #o555))
+                               (list "carla"
+                                     "carla-control"
+                                     "carla-jack-multi"
+                                     "carla-jack-single"
+                                     "carla-patchbay"
+                                     "carla-rack")))))
                (add-after 'install 'wrap-executables
-                 (lambda _
-                   (wrap-program (string-append #$output "/bin/carla")
-                     `("GUIX_PYTHONPATH" ":" prefix
-                       (,(getenv "GUIX_PYTHONPATH")))))))))
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   ;; Wrap only those executable files that other programs
+                   ;; (e.g. lmms) would call.
+                   (with-directory-excursion #$output
+                     (for-each (lambda (file)
+                                 (when (and (executable-file? file)
+                                            (not (symbolic-link? file))
+                                            (not (string-suffix? ".py" file)))
+                                   (wrap-program file
+                                     `("GUIX_PYTHONPATH" ":" prefix
+                                       (,(getenv "GUIX_PYTHONPATH")))
+                                     `("QT_PLUGIN_PATH" ":" prefix
+                                       (,(getenv "QT_PLUGIN_PATH"))))))
+                               (append (find-files "share/carla/resources")
+                                       (find-files "bin")))))))))
     (inputs
      (list alsa-lib
            ffmpeg
@@ -6549,6 +6614,7 @@ as is the case with audio plugins.")
            libx11
            gtk+-2              ;needed for bridging GTK2 plugins in GTK3 hosts
            gtk+
+           pulseaudio
            python-pyliblo
            python-pyqt
            python-rdflib
@@ -6557,9 +6623,35 @@ as is the case with audio plugins.")
            ;; (ModuleNotFoundError: No module named 'PyQt5')
            python-wrapper
            qtbase-5
+           qtwayland-5
            zlib))
     (native-inputs
      (list pkg-config))
+    (native-search-paths
+       (list (search-path-specification
+              (variable "CLAP_PATH")
+              (files '("lib/clap")))
+             (search-path-specification
+              (variable "LADSPA_PATH")
+              (files '("lib/ladspa")))
+             (search-path-specification
+              (variable "LV2_PATH")
+              (files '("lib/lv2")))
+             (search-path-specification
+              (variable "LXVST_PATH")
+              (files '("lib/lxvst")))
+             (search-path-specification
+              (variable "VST2_PATH")
+              (files '("lib/vst")))
+             (search-path-specification
+              (variable "VST3_PATH")
+              (files '("lib/vst3")))
+             (search-path-specification
+              (variable "SF2_PATH")
+              (files '("share/sf2")))
+             (search-path-specification
+              (variable "SFZ_PATH")
+              (files '("share/sfz")))))
     (home-page "https://kx.studio/Applications:Carla")
     (synopsis "Audio plugin host")
     (description "Carla is a modular audio plugin host, with features like

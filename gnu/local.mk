@@ -291,7 +291,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/fluidplug.scm			\
   %D%/packages/fonts.scm			\
   %D%/packages/fontutils.scm			\
-  %D%/packages/fpga.scm				\
   %D%/packages/forth.scm			\
   %D%/packages/fortran-check.scm			\
   %D%/packages/fortran-xyz.scm			\
@@ -484,6 +483,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/mpd.scm				\
   %D%/packages/mp3.scm				\
   %D%/packages/mpi.scm				\
+  %D%/packages/mruby-xyz.scm			\
   %D%/packages/multiprecision.scm		\
   %D%/packages/music.scm			\
   %D%/packages/musl.scm				\
@@ -961,8 +961,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/abcl-fix-build-xml.patch	\
   %D%/packages/patches/ableton-link-system-libraries-debian.patch	\
   %D%/packages/patches/abiword-explictly-cast-bools.patch	\
-  %D%/packages/patches/abseil-cpp-20200923.3-adjust-sysinfo.patch	\
-  %D%/packages/patches/abseil-cpp-20200923.3-duration-test.patch	\
   %D%/packages/patches/abseil-cpp-20220623.1-no-kepsilon-i686.patch	\
   %D%/packages/patches/abseil-cpp-fix-strerror_test.patch	\
   %D%/packages/patches/adb-add-libraries.patch			\
@@ -1215,7 +1213,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/elm-reactor-static-files.patch		\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
   %D%/packages/patches/emacs-deferred-fix-number-of-arguments.patch	\
-  %D%/packages/patches/emacs-elpy-dup-test-name.patch		\
   %D%/packages/patches/emacs-disable-jit-compilation.patch			\
   %D%/packages/patches/emacs-exec-path.patch			\
   %D%/packages/patches/emacs-fix-scheme-indent-function.patch	\
@@ -1598,9 +1595,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/icecat-makeicecat.patch			\
   %D%/packages/patches/icecat-avoid-bundled-libraries.patch	\
   %D%/packages/patches/icecat-compare-paths.patch		\
+  %D%/packages/patches/icecat-fhs-configure-option.patch        \
   %D%/packages/patches/icecat-use-system-graphite2+harfbuzz.patch	\
   %D%/packages/patches/icecat-use-system-media-libs.patch	\
   %D%/packages/patches/icecat-use-system-wide-dir.patch		\
+  %D%/packages/patches/icedove-observer-fix.patch               \
   %D%/packages/patches/icedtea-7-hotspot-aarch64-use-c++98.patch	\
   %D%/packages/patches/icedtea-7-hotspot-pointer-comparison.patch	\
   %D%/packages/patches/icu4c-icu-22132-fix-vtimezone.patch	\
@@ -2078,6 +2077,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/smalltalk-multiplication-overflow.patch	\
   %D%/packages/patches/soci-mysql-ddl-types.patch		\
   %D%/packages/patches/sqlite-hurd.patch			\
+  %D%/packages/patches/stk-5.0.1-fix-typo.patch			\
   %D%/packages/patches/strace-readlink-tests.patch		\
   %D%/packages/patches/sunxi-tools-remove-sys-io.patch	\
   %D%/packages/patches/p11-kit-hurd.patch			\
@@ -2231,6 +2231,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ripperx-missing-file.patch		\
   %D%/packages/patches/rpcbind-CVE-2017-8779.patch		\
   %D%/packages/patches/rtags-separate-rct.patch			\
+  %D%/packages/patches/rtosc-0.3.1-fix-invalid-comparison-operator.patch	\
   %D%/packages/patches/racket-chez-scheme-bin-sh.patch		\
   %D%/packages/patches/racket-launcher-config-dir.patch		\
   %D%/packages/patches/racket-rktio-bin-sh.patch		\
@@ -2364,6 +2365,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/tlf-support-hamlib-4.2+.patch		\
   %D%/packages/patches/tofi-32bit-compat.patch			\
   %D%/packages/patches/torbrowser-compare-paths.patch           \
+  %D%/packages/patches/torbrowser-use-system-wide-dir.patch     \
   %D%/packages/patches/torbrowsers-add-store-to-rdd-allowlist.patch     \
   %D%/packages/patches/tpetra-remove-duplicate-using.patch	\
   %D%/packages/patches/transcode-ffmpeg.patch	\
@@ -2510,7 +2512,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/zsh-egrep-failing-test.patch		\
   %D%/packages/patches/zuo-bin-sh.patch			\
   %D%/packages/patches/zxing-cpp-1.2.0-gcc-14.patch	\
-  %D%/packages/patches/zynaddsubfx-3.0.6-include-cstdint.patch
+  %D%/packages/patches/zynaddsubfx-3.0.6-include-cstdint.patch	\
+  %D%/packages/patches/zynaddsubfx-3.0.6-system-rtosc.patch
 
 MISC_DISTRO_FILES =				\
   %D%/packages/ld-wrapper.in

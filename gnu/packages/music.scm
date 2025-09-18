@@ -45,7 +45,7 @@
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021 Thomas Albers Raviola <thomas@thomaslabs.org>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2022, 2023 Sughosha <sughosha@disroot.org>
+;;; Copyright © 2022, 2023, 2024 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2022, 2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022 Wamm K. D. <jaft.r@outlook.com>
@@ -167,6 +167,7 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages mpd)
+  #:use-module (gnu packages mruby-xyz)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages netpbm)
   #:use-module (gnu packages networking)
@@ -1835,6 +1836,119 @@ listeners answer questions about music quickly and simply.")
     ;; Software is dual-licensed.
     (license (list license:bsd-3 license:lgpl3+))))
 
+(define-public stk
+  (package
+    (name "stk")
+    (version "5.0.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/thestk/stk")
+                    (commit version)))
+              (sha256
+               (base32
+                "0z16614ljbvqa1ax6wl0nkzpqffaz1y59g4r09ch8x45wmy0xknb"))
+              (file-name (git-file-name name version))
+              (patches
+               (search-patches "stk-5.0.1-fix-typo.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f ;no tests
+           #:modules
+           '((guix build cmake-build-system)
+             (guix build utils)
+             (srfi srfi-26))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-paths
+                 (lambda _
+                   ;; Patch rawwaves path.
+                   (substitute* (find-files "." "(\\.h$|\\.cpp$)")
+                     (("\\.\\./\\.\\./rawwaves")
+                      (string-append #$output "/share/stk/rawwaves"))
+                     (("\"rawwaves")
+                      (string-append "\"" #$output "/share/stk/rawwaves")))
+                   ;; Patch tk and tcl paths.
+                   (with-directory-excursion "projects"
+                     (for-each (lambda (file)
+                                 (substitute* (string-drop-right file 4)
+                                   (("wish") (which "wish"))
+                                   (("< tcl") (string-append "< " #$output:gui
+                                                             "/share/stk/tcl"))
+                                   (("\\./") (string-append #$output "/bin/"))))
+                      (find-files "." "\\.bat$"))
+                     (substitute* (find-files "share/stk/tcl" "\\.tcl$")
+                       (("tcl/bitmaps")
+                        (string-append #$output:gui "/share/stk/tcl/bitmaps"))))))
+               (add-after 'install 'install-rawwaves-and-projects
+                 (lambda _
+                   (let* ((bin (string-append #$output "/bin"))
+                          (data (string-append #$output "/share/stk"))
+                          (rawwaves (string-append data "/rawwaves"))
+                          (scores (string-append data "/scores"))
+                          (gui (string-append #$output:gui "/bin"))
+                          (tcl (string-append #$output:gui "/share/stk/tcl")))
+                     (mkdir-p data)
+                     ;; Install rawwaves.
+                     (copy-recursively "rawwaves" rawwaves)
+                     ;; Install projects.
+                     (with-directory-excursion "../source/projects"
+                       ;; Install project binaries.
+                       (for-each (cut install-file <> bin)
+                                 '("demo/stk-demo"
+                                   "effects/effects"
+                                   "examples/audioprobe"
+                                   "examples/bethree"
+                                   "examples/controlbee"
+                                   "examples/crtsine"
+                                   "examples/duplex"
+                                   "examples/foursine"
+                                   "examples/grains"
+                                   "examples/inetIn"
+                                   "examples/inetOut"
+                                   "examples/midiprobe"
+                                   "examples/play"
+                                   "examples/playsmf"
+                                   "examples/record"
+                                   "examples/rtsine"
+                                   "examples/sine"
+                                   "examples/sineosc"
+                                   "examples/threebees"
+                                   "eguitar/eguitar"
+                                   "ragamatic/ragamat"))
+                       ;; Install project rawwaves.
+                       (for-each (cut copy-recursively <> rawwaves)
+                                 '("examples/rawwaves"
+                                   "ragamatic/rawwaves"))
+                       ;; Install project scores.
+                       (for-each (cut copy-recursively <> scores)
+                                 '("demo/scores"
+                                   "eguitar/scores"
+                                   "examples/scores"))
+                       ;; Install GUI scripts.
+                       (for-each (lambda (file)
+                                   (install-file (string-drop-right file 4) gui))
+                                 (find-files "." "\\.bat"))
+                       ;; Install TCL files.
+                       (for-each (cut copy-recursively <> tcl)
+                                 '("demo/tcl"
+                                   "effects/tcl"
+                                   "eguitar/tcl"
+                                   "ragamatic/tcl")))))))))
+    (outputs
+     '("out" "gui"))
+    (inputs
+     (list alsa-lib jack-2 tk))
+    (home-page "https://ccrma.stanford.edu/software/stk/")
+    (synopsis "Audio signal processing and algorithmic synthesis classes")
+    (description
+     "Synthesis ToolKit in C++ (STK) is a set of audio signal processing and
+algorithmic synthesis classes written in C++.
+
+This package also provides its demo project, examples, ElectricGuitar,
+RagaMatic and Effects.")
+    (license (license:non-copyleft "file:///LICENSE"))))
+
 (define-public abjad
   (package
     (name "abjad")
@@ -3491,10 +3605,17 @@ instrument or MIDI file player.")
                (base32
                 "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))
               (patches
-               (search-patches "zynaddsubfx-3.0.6-include-cstdint.patch"))))
+               (search-patches "zynaddsubfx-3.0.6-system-rtosc.patch"
+                               "zynaddsubfx-3.0.6-include-cstdint.patch"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:phases
+     `(#:configure-flags
+       `("-DGuiModule=zest"
+         ,(string-append "-DZYN_DATADIR="
+                         (assoc-ref %outputs "out")
+                         "/share/zynaddsubfx")
+         "-DZYN_SYSTEM_RTOSC=ON")
+       #:phases
        (modify-phases %standard-phases
          ;; Move SSE compiler optimization flags from generic target to
          ;; athlon64 and core2 targets, because otherwise the build would fail
@@ -3504,10 +3625,19 @@ instrument or MIDI file player.")
             (substitute* "src/CMakeLists.txt"
               (("-msse -msse2 -mfpmath=sse") "")
               (("-march=(athlon64|core2)" flag)
-               (string-append flag " -msse -msse2 -mfpmath=sse"))))))))
+               (string-append flag " -msse -msse2 -mfpmath=sse")))))
+         (add-after 'unpack 'patch-paths
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "src/main.cpp"
+               (("\\./zyn-fusion")
+                (search-input-file inputs "/bin/zyn-fusion")))
+             (substitute* "src/Plugin/ZynAddSubFX/ZynAddSubFX-UI-Zest.cpp"
+               (("\\./libzest\\.so")
+                (search-input-file inputs "/lib/libzest.so"))))))))
     (inputs
      (list liblo
-           ntk
+           mruby-zest
+           rtosc
            mesa
            alsa-lib
            jack-1
@@ -5225,8 +5355,17 @@ and more.  Full API documentation and examples are included.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "11xgf461cnmq0jkgdgx5bddi87ammpik4whg1m4fcvd3i0d5i601"))))
-    (build-system cmake-build-system)
+         "11xgf461cnmq0jkgdgx5bddi87ammpik4whg1m4fcvd3i0d5i601"))
+       (modules '((guix build utils)))
+       ;; Include carla headers from the system.
+       (snippet
+        '(substitute* "plugins/carlabase/carla.h"
+           (("\"CarlaNativePlugin\\.h\"")
+            "<carla/includes/CarlaNativePlugin.h>")
+           (("\"CarlaBackend\\.h\"") "<carla/CarlaBackend.h>")
+           (("\"CarlaNative\\.h\"") "<carla/includes/CarlaNative.h>")
+           (("\"CarlaUtils\\.h\"") "<carla/CarlaUtils.h>")))))
+    (build-system qt-build-system)
     (arguments
      (list
       #:tests? #f                       ; no tests
@@ -5247,6 +5386,12 @@ and more.  Full API documentation and examples are included.")
             (lambda* (#:key inputs #:allow-other-keys)
               (copy-recursively (assoc-ref inputs "rpmalloc")
                                 "src/3rdparty/rpmalloc/rpmalloc")))
+          (add-after 'unpack 'patch-stk-path
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (substitute* "cmake/modules/FindSTK.cmake"
+                    (("/usr") (assoc-ref inputs "stk")))
+                  (substitute* "src/core/ConfigManager.cpp"
+                    (("/usr") (assoc-ref inputs "stk")))))
           (add-before 'configure 'set-ldflags
             (lambda _
               (setenv "LDFLAGS"
@@ -5279,15 +5424,20 @@ and more.  Full API documentation and examples are included.")
            freetype
            jack-2
            ladspa
+           lame
+           libgig
            libogg
            libsamplerate
            libsndfile
+           libsoundio
            libvorbis
            libxft
            portaudio
-           qtbase-5
+           pulseaudio
+           qtwayland-5
            qtx11extras
-           sdl))
+           sdl
+           stk))
     (home-page "https://lmms.io/")
     (synopsis "Music composition tool")
     (description "LMMS is a digital audio workstation.  It includes tools for

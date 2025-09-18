@@ -601,10 +601,10 @@ already exists.  Lookup team IDs among CURRENT-TEAMS."
   (team 'electronics
         #:name "Electronics team"
         #:description "Electronics and hardware related packages."
-        #:scope (list "gnu/packages/fpga.scm"
-                      "gnu/packages/electronics.scm"
+        #:scope (list "gnu/packages/electronics.scm"
                       "gnu/packages/libftdi.scm"
-                      "gnu/packages/engineering.scm")))
+                      "gnu/packages/engineering.scm"
+                      "gnu/packages/flashing-tools.scm")))
 
 (define-team emacs
   (team 'emacs
@@ -1068,7 +1068,8 @@ the \"texlive\" importer."
   bootstrap core-packages lxqt science tex)
 
 (define-member (person "Tanguy Le Carrour"
-                       "tanguy@bioneland.org")
+                       "tanguy@bioneland.org"
+                       "tanguybl")
   python home)
 
 (define-member (person "Tobias Geerinckx-Rice"
@@ -1142,7 +1143,8 @@ the \"texlive\" importer."
   home emacs)
 
 (define-member (person "pukkamustard"
-                       "pukkamustard@posteo.net")
+                       "pukkamustard@posteo.net"
+                       "pukkamustard")
   ocaml)
 
 (define-member (person "Josselin Poiret"
@@ -1255,7 +1257,7 @@ the \"texlive\" importer."
 
 (define-member (person "Sughosha"
                        "sughosha@disroot.org")
-  kde)
+  audio kde)
 
 (define-member (person "Jelle Licht"
                        "jlicht@fsfe.org"

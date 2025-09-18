@@ -601,13 +601,8 @@ interface and is based on GNU Guile.")
                                "/bin/gzip")
                 (string-append "--with-zstd=" #$(this-package-input "zstd")
                                "/bin/zstd")))))
-    (native-inputs
-     (modify-inputs (package-native-inputs shepherd-0.10)
-       (replace "guile-fibers" guile-fibers))) ;use latest guile-fibers available
-    (inputs
-     (modify-inputs (package-inputs shepherd-0.10)
-       (replace "guile-fibers" guile-fibers) ;use latest guile-fibers available
-       (append gzip zstd)))))
+    (inputs (modify-inputs (package-inputs shepherd-0.10)
+              (append gzip zstd)))))
 
 (define-public shepherd shepherd-0.10)
 
@@ -1255,7 +1250,8 @@ re-executing them as necessary.")
                      '("--with-path-procnet-dev=/proc/net/dev")
                      '())
               #$@(if (target-hurd?)
-                     '("--disable-rcp"
+                     '("--with-path-klog=/dev/klog"
+                       "--disable-rcp"
                        "--disable-rexec"
                        "--disable-rexecd"
                        "--disable-rlogin"

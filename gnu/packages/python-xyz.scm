@@ -5103,8 +5103,7 @@ sending and receiving messages on a CAN bus.")
         (base32 "05l0hi279y1dc8ifm2223lpn7z9dx2h7kk599bkymvasb2qa1xrx"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pathlib2
-           python-pytest
+     (list python-pytest
            python-pytest-cov
            python-pytest-timeout
            python-setuptools
@@ -39781,7 +39780,7 @@ platform using the ActivityPub protocol.")
 (define-public python-lief
   (package
     (name "python-lief")
-    (version "0.16.6")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -39790,7 +39789,7 @@ platform using the ActivityPub protocol.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pq9nagrnkl1x943bqnpiyxmkd9vk99znfxiwqp6vf012b50bz2a"))))
+                "037ffw62yygkn74p51dnia9rhk81byj1xm8xzy3ciz4qv1di3k49"))))
     (build-system pyproject-build-system)
     (native-inputs (list cmake-minimal
                          ninja

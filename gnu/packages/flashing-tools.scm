@@ -11,9 +11,11 @@
 ;;; Copyright © 2021 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2021 Mathieu Othacehe <othacehe@gnu.org>
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
+;;; Copyright © 2022 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2023 B. Wilson <x@wilsonb.com>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024, 2025 Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Joaquín Aguirrezabalaga <kinote@kinote.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Ian Eure <ian@retrospec.tv>
@@ -238,14 +240,15 @@ firmware from it.")
 (define-public teensy-loader-cli
   (package
     (name "teensy-loader-cli")
-    (version "2.2")
+    (version "2.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/PaulStoffregen/teensy_loader_cli")
              (commit version)))
-       (sha256 (base32 "12n8ifz4gph1anhwd8if3j1kw0wc3yxf48abbyxl8071l9vj3m0b"))
+       (sha256
+        (base32 "0kqjmbmns3ansmrs6pbpsqk0g4d82hxknpng6lp7375zccsq52im"))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
        (snippet
@@ -257,14 +260,18 @@ firmware from it.")
     (arguments
      (list
       #:tests? #f ;; Makefile has no test target
-      #:make-flags #~(list "CC=gcc" (string-append "PREFIX=" #$output))
-      #:phases #~(modify-phases %standard-phases
-                   (delete 'configure)
-                   (replace 'install
-                     (lambda _
-                       (install-file "teensy_loader_cli"
-                                     (string-append #$output "/bin")))))))
-    (inputs (list libusb-compat))       ;only compatible with libusb 0.1
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'install
+            (lambda _
+              (install-file "teensy_loader_cli"
+                            (string-append #$output "/bin")))))))
+    (inputs
+     (list libusb-compat))       ;only compatible with libusb 0.1
     (synopsis "Command line firmware uploader for Teensy development boards")
     (description
      "The Teensy loader program communicates with your Teensy board when the
@@ -399,30 +406,31 @@ referred to as the \"Odin 3 protocol\".")
   (package
     (name "ifdtool")
     (version "4.9")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/coreboot/coreboot")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0jidj29jh6p65d17k304wlzhxvp4p3c2namgcdwg2sxq8jfr0zlm"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://review.coreboot.org/coreboot")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0jidj29jh6p65d17k304wlzhxvp4p3c2namgcdwg2sxq8jfr0zlm"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (list "CC=gcc"
-             "INSTALL=install"
-             (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'chdir
-           (lambda _
-             (chdir "util/ifdtool")
-             #t))
-         (delete 'configure))           ; no configure script
-       #:tests? #f))                    ; no test suite
-    (home-page "https://github.com/corna/me_cleaner/")
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              "INSTALL=install"
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "util/ifdtool")))
+          (delete 'configure))           ; no configure script
+      #:tests? #f))                    ; no test suite
+    (home-page "https://doc.coreboot.org/util/ifdtool/")
     (synopsis "Intel Firmware Descriptor dumper")
     (description "This package provides @command{ifdtool}, a program to
 dump Intel Firmware Descriptor data of an image file.")
@@ -587,6 +595,52 @@ Additionally your user must be member of the @code{plugdev} group.")
     (description "@code{uefitool} is a graphical image file editor for
 Unifinished Extensible Firmware Interface (UEFI) images.")
     (license license:bsd-2)))
+
+(define-public openfpgaloader
+  (package
+    (name "openfpgaloader")
+    (version "1.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/trabucayre/openfpgaloader")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "00xr4dzd1mlc1k4rivh9ibmdlx6yizb016laad10dkhjqfz1ixhq"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     (list pkg-config))
+    (inputs (list eudev
+                  hidapi
+                  libftdi
+                  libgpiod
+                  libusb
+                  zlib))
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-rules
+                 (lambda _
+                   (install-file
+                    "../source/99-openfpgaloader.rules"
+                    (string-append #$output "/lib/udev/rules.d/")))))))
+    (synopsis "Utility for programming FPGA")
+    (description "This package provides a program to transfer a bitstream
+to an FPGA.  To use @code{openfpgaloader} without root privileges it is
+necessary to install the necessary udev rules.  This can be done by extending
+@code{udev-service-type} in the @code{operating-system} configuration file with
+this package, as in:
+@lisp
+(udev-rules-service 'openfpgaloader openfpgaloader #:groups '(\"plugdev\")
+@end lisp
+Additionally, the @samp{plugdev} group should be registered in the
+@code{supplementary-groups} field of your @code{user-account} declaration. Refer
+to @samp{info \"(guix) Base Services\"} for examples.")
+    (home-page "https://trabucayre.github.io/openFPGALoader/")
+    (license license:asl2.0)))
 
 (define-public srecord
   (package

@@ -38,7 +38,9 @@
                                      group-entry
                                      write-passwd
                                      write-group)
-  #:autoload   (gnu build linux-container) (call-with-container %namespaces)
+  #:autoload   (gnu build linux-container) (call-with-container
+                                            %namespaces
+                                            %writable-/tmp)
   #:use-module ((gnu system) #:select (operating-system?
                                        operating-system-user-services))
   #:autoload   (gnu system linux-container) (eval/container)
@@ -353,22 +355,20 @@ immediately.  Return the exit status of the process in the container."
    #:namespaces (if network?
                     (delq 'net %namespaces)       ; share host network
                     %namespaces)
-   #:mounts (list (file-system                    ;writable /tmp
-                    (device "none")
-                    (mount-point "/tmp")
-                    (type "tmpfs")
-                    (check? #f))
+   #:mounts (list %writable-/tmp
                   (file-system
                     (device "none")
                     (mount-point
                      (in-vicinity "/run/user"     ;for shepherd & co.
                                   (number->string uid)))
                     (type "tmpfs")
+                    (options "size=10%,mode=700")
                     (check? #f))
                   (file-system                    ;writable home
                     (device "none")
                     (mount-point home-directory)
                     (type "tmpfs")
+                    (options "mode=700")
                     (check? #f)))
    #:mappings (append network-mappings mappings)
    #:guest-uid uid

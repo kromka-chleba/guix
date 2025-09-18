@@ -8131,7 +8131,7 @@ cpufreq sub-system is enabled or not.")
 (define-public haveged
   (package
     (name "haveged")
-    (version "1.9.18")
+    (version "1.9.19")
     (source
      (origin
        (method git-fetch)
@@ -8140,7 +8140,7 @@ cpufreq sub-system is enabled or not.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1y1p3qhjzhpgd20xz5ffms3w1bdvpk883y38ydwsmp9mc0kzy8kz"))))
+        (base32 "1qka68dlfz9z3gjfvfwvh60l2121c1yx0z264jqsf2vjp5f0xbmn"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -10252,7 +10252,7 @@ interface to this kernel feature.")
 (define-public mbpfan
   (package
     (name "mbpfan")
-    (version "2.2.1")
+    (version "2.4.0")
     (source
      (origin
        (method git-fetch)
@@ -10261,21 +10261,20 @@ interface to this kernel feature.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gc9ypxi55vxs77nx8ihhh9zk7fr9v0m0zfm76q7x0bi6jz11mbr"))))
+        (base32 "146sshsjafi26n741jvi9mdbazwf74jlacxfwkky4fhbq98idlhp"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; tests ask to be run as root
-       #:make-flags (let ((out (assoc-ref %outputs "out")))
-                      (list (string-append "DESTDIR=" out)
-                            ,(string-append "CC=" (cc-for-target))))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-paths
-           (lambda _
-             (substitute* "Makefile"
-               (("/usr") ""))
-             #t))
-         (delete 'configure))))         ; there's no configure phase
+     (list #:tests? #f                      ; tests ask to be run as root
+           #:make-flags
+           #~(list (string-append "DESTDIR=" #$output)
+                   (string-append "CC=" #$(cc-for-target)))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-paths
+                 (lambda _
+                   (substitute* "Makefile"
+                     (("/usr") ""))))
+               (delete 'configure))))         ; there's no configure phase
     (home-page "https://github.com/dgraziotin/mbpfan")
     (synopsis "Control fan speed on Macbooks")
     (description
@@ -11799,7 +11798,7 @@ libraries are found or why they cannot be located.")
 (define-public touchegg
   (package
     (name "touchegg")
-    (version "2.0.14")
+    (version "2.0.18")
     (source
      (origin
        (method git-fetch)
@@ -11808,7 +11807,7 @@ libraries are found or why they cannot be located.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0shvslz0c8nqx5f988z55qjc9xw0in9rb7b19r6vr1f7cdkqb6yr"))))
+        (base32 "0m8zgihij14b8dxrxxvpl8sdsx49mjlnxnm0fhgfxscy7n07kcpc"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f ; No tests exist
@@ -11837,7 +11836,7 @@ desktop.")
 (define-public evtest
   (package
     (name "evtest")
-    (version "1.35")
+    (version "1.36")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -11846,7 +11845,7 @@ desktop.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "164prnw35kda6jfykl7h52lfzy99ma2lk029zscyqk766k19spf4"))))
+                "0mwjvz0fwwcwm4fpw0m4x8bcxpnzjkiy7fpb438vf4i5g5q0dc1k"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ;No tests exist
