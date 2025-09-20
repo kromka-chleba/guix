@@ -2463,7 +2463,7 @@ KDE using certificate-based crypto.")
 (define-public libksieve
   (package
     (name "libksieve")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
@@ -2471,7 +2471,7 @@ KDE using certificate-based crypto.")
                            "/src/libksieve-" version ".tar.xz"))
        (sha256
         (base32
-	 "1syshv3i1qfs6mg8cds9jkpzgngkiy1i1l5p0qva2hvz6lp64kmk"))))
+	 "0nil66jnk9m6209fr8yrzgnd9g5mmlx33q1a4b7yi9lqd16wkixs"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -2502,16 +2502,7 @@ KDE using certificate-based crypto.")
            qtwebengine))
     (arguments
      (list #:qtbase qtbase
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'substitute
-                 (lambda _
-                   ;; Disable a failing test
-                   ;; sieveeditorhelphtmlwidgettest fails with `sigtrap`
-                   (substitute*
-                       "src/ksieveui/editor/webengine/autotests/CMakeLists.txt"
-                     (("^\\s*(add_test|ecm_mark_as_test|set_tests_properties)\\W" line)
-                      (string-append "# " line))))))))
+           #:test-exclude "sieveeditorhelphtmlwidgettest"))
     (home-page "https://invent.kde.org/pim/libksieve")
     (synopsis "KDE Sieve library")
     (description "Sieve is a language that can be used filter emails.  KSieve
