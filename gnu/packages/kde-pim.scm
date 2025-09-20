@@ -43,6 +43,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages kde-plasma)
   #:use-module (gnu packages markup)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages pdf)
@@ -2167,6 +2168,7 @@ pass files.")
            kwindowsystem
            kxmlgui
            libxslt
+           plasma-activities
            purpose
            qtwebengine))
     (propagated-inputs (list kimap ktextaddons libkdepim))
