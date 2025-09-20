@@ -291,6 +291,8 @@ Breeze is the default theme for the KDE Plasma desktop.")
                              (string-append (getcwd)
                                             ":" (getenv "XDG_DATA_DIRS")))))))))
     (native-inputs (list extra-cmake-modules pkg-config))
+    ;; TODO: Add packagekit-qt6 when a guix backend for packagekit will be
+    ;; available.
     (inputs (list appstream-qt6
                   attica
                   fwupd ; optional
@@ -317,14 +319,12 @@ Breeze is the default theme for the KDE Plasma desktop.")
                   kidletime
                   libostree ; required by flatpak
                   markdown
-                  packagekit-qt6
                   purpose
                   qcoro-qt6
                   qt5compat
                   qtdeclarative
                   qtsvg
-                  qtwebview
-                  qcoro-qt6))
+                  qtwebview))
     ;; -- The following features have been disabled:
     ;; * RpmOstree, rpm-ostree binary to manage the system. Required to build the rpm-ostree backend
     ;;
@@ -1187,48 +1187,6 @@ the running system.")
     (home-page "https://invent.kde.org/plasma/ksystemstats")
     (license (list license:gpl2 license:gpl3))))
 
-(define-public latte-dock
-  (package
-    (name "latte-dock")
-    (version "0.10.9")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/latte-dock/"
-                                  "latte-dock-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0zj818wpxdiqpzivvwrgbzj26lcmmv49zw8206v4shcms1afbl9j"))))
-    (build-system cmake-build-system)
-    (native-inputs (list extra-cmake-modules))
-    (inputs (list qtbase-5
-                  qtdeclarative-5
-                  knotifications
-                  kwindowsystem
-                  kio
-                  plasma-framework
-                  kwayland
-                  kactivities
-                  kcrash
-                  kiconthemes
-                  knewstuff
-                  karchive
-                  kguiaddons
-                  kdbusaddons
-                  kglobalaccel
-                  kirigami
-                  ki18n
-                  kdeclarative
-                  kcoreaddons
-                  xcb-util
-                  qtx11extras
-                  libsm))
-    (synopsis "Latte is a dock based on plasma frameworks")
-    (description
-     "Latte is a dock based on plasma frameworks that provides
-an elegant and intuitive experience for your tasks and plasmoids.")
-    (home-page "https://github.com/KDE/latte-dock")
-    (license license:gpl2+)))
-
 (define-public layer-shell-qt
   (package
     (name "layer-shell-qt")
@@ -1878,7 +1836,6 @@ on top of Baloo.")
                              kiconthemes ;required by sddm breeze theme
                              kinfocenter
                              kmenuedit
-                             kpmcore
                              krdp
                              kscreen
                              kscreenlocker
@@ -1895,7 +1852,7 @@ on top of Baloo.")
                              milou
                              ocean-sound-theme
                              oxygen-sounds
-                             partitionmanager
+                             packagekit     ;for discover
                              plasma5support ;required by sddm breeze theme
                              plasma-browser-integration
                              plasma-desktop
@@ -1931,7 +1888,15 @@ on top of Baloo.")
                              (module-ref
                               (resolve-interface
                                '(gnu packages kde-systemtools))
+                              'kpmcore)
+                             (module-ref
+                              (resolve-interface
+                               '(gnu packages kde-systemtools))
                               'kwalletmanager)
+                             (module-ref
+                              (resolve-interface
+                               '(gnu packages kde-systemtools))
+                              'partitionmanager)
                              spectacle))
     ;; plasma-thunderbolt ;waiting for bolt
     (synopsis "The KDE Plasma desktop environment")

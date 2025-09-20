@@ -47,7 +47,6 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (gnu packages)
-  #:use-module (gnu packages admin)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages apr)
   #:use-module (gnu packages astronomy)
@@ -61,7 +60,6 @@
   #:use-module (gnu packages code)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages djvu)
   #:use-module (gnu packages documentation)
@@ -90,7 +88,6 @@
   ;; Including this module breaks the build.
   ;#:use-module ((gnu packages kde-systemtools) #:select (dolphin))
   #:use-module (gnu packages libusb)
-  #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages markup)
   #:use-module (gnu packages maths)
@@ -102,7 +99,6 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
-  #:use-module (gnu packages polkit)
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
@@ -124,14 +120,14 @@
 (define-public baloo-widgets
   (package
     (name "baloo-widgets")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/baloo-widgets-" version ".tar.xz"))
        (sha256
-        (base32 "0iawqhkq3adnsg1mihyh3pqhikwk593sa2fs2fhqi705svfiip53"))))
+        (base32 "1wamfsl9nq7si4sys0y49yrf5gwvr16m0qgpd3xww8dddma7ckc6"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -811,37 +807,6 @@ KDSoap.")
 the functionality of the KDE resource and network access abstractions.")
     (license license:lgpl2.0+)))
 
-(define-public kio-fuse
-  (package
-    (name "kio-fuse")
-    (version "5.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/kio-fuse/kio-fuse-"
-                                  version ".tar.xz"))
-              (sha256
-               (base32
-                "0jz9952dd20sw0c25pyn2l86nmc1s5l42gxk4js1jnkx4a0la43x"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
-      #:phases #~(modify-phases %standard-phases
-                   (replace 'check
-                     (lambda* (#:key tests? #:allow-other-keys)
-                       (when tests?
-                         (setenv "HOME" (getcwd))
-                         (setenv "XDG_RUNTIME_DIR" (getcwd))
-                         (setenv "QT_QPA_PLATFORM" "offscreen")
-                         (invoke "dbus-launch" "ctest" "-E"
-                                 "(fileopstest-cache|fileopstest-filejob)")))))))
-    (native-inputs (list dbus extra-cmake-modules pkg-config))
-    (inputs (list fuse kio kcoreaddons qtbase))
-    (home-page "https://community.kde.org/Frameworks")
-    (synopsis "FUSE Interface for KIO")
-    (description "This package provides FUSE Interface for KIO.")
-    (license license:lgpl2.1+)))
-
 (define-public kirigami-addons
   (package
     (name "kirigami-addons")
@@ -1393,110 +1358,6 @@ opening hours expressions.")
 multi-floor indoor maps.")
     (license license:lgpl2.0+)))
 
-(define-public kpmcore
-  (package
-    (name "kpmcore")
-    (version "24.12.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "mirror://kde/stable/release-service/" version
-                    "/src/" name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "19xfaqj7i8mi5iwkh8n5d5h3m15bny0mzg2skpgbjdlmzc773iga"))))
-    (build-system cmake-build-system)
-    (native-inputs
-     (list extra-cmake-modules pkg-config))
-    (inputs
-     `(("coreutils" ,coreutils)
-       ("cryptsetup" ,cryptsetup)
-       ("eudev" ,eudev)
-       ("kauth" ,kauth)
-       ("kcoreaddons" ,kcoreaddons)
-       ("ki18n" ,ki18n)
-       ("kwidgetsaddons" ,kwidgetsaddons)
-       ("lvm2" ,lvm2)
-       ("mdadm" ,mdadm)
-       ("polkit-qt6" ,polkit-qt6)
-       ("qtbase" ,qtbase)
-       ("qca-qt6" ,qca-qt6)
-       ("smartmontools" ,smartmontools)
-       ("util-linux" ,util-linux)
-       ("util-linux:lib" ,util-linux "lib")))
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-polkit-action-path
-            (lambda _
-              (substitute* "src/util/CMakeLists.txt"
-                (("DESTINATION \\$\\{POLKITQT-1_POLICY_FILES_INSTALL_DIR\\}")
-                 "DESTINATION share/polkit-1/actions"))
-              (substitute* "src/backend/corebackend.cpp"
-                  (("\\/usr") #$output))))
-          (add-before 'configure 'patch-trustedprefixes-file
-              (lambda* (#:key inputs #:allow-other-keys)
-                (call-with-output-file "src/util/trustedprefixes"
-                  (lambda (port)
-                    (map (lambda (prefix)
-                           (display prefix port)
-                           (newline port))
-                         (list (assoc-ref inputs "coreutils")
-                               (assoc-ref inputs "util-linux")
-                               (assoc-ref inputs "eudev")
-                               (assoc-ref inputs "cryptsetup")
-                               (assoc-ref inputs "lvm2")
-                               (assoc-ref inputs "mdadm")
-                               (assoc-ref inputs "smartmontools")
-                               "/run/current-system/profile"
-                               "/usr"
-                               "/")))))))))
-    (home-page "https://community.kde.org/Frameworks")
-    (synopsis "Library for managing partitions")
-    (description "Library for managing partitions.")
-    (license license:gpl3+)))
-
-(define-public partitionmanager
-  (package
-    (name "partitionmanager")
-    (version "24.12.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/" version
-                           "/src/partitionmanager-" version ".tar.xz"))
-       (sha256
-        (base32 "17p63a9igpbcv0xdziaf3d30n88rj9474w9yx2cpvh0m2nrv3582"))))
-    (build-system qt-build-system)
-    (arguments
-     (list #:qtbase qtbase
-           #:tests? #f))
-    (native-inputs
-     (list extra-cmake-modules kdoctools))
-    (inputs
-     (list kconfig
-           kconfigwidgets
-           kcoreaddons
-           kcrash
-           kdbusaddons
-           ki18n
-           kio
-           kjobwidgets
-           kpmcore
-           kwidgetsaddons
-           kwindowsystem
-           kxmlgui
-           polkit-qt6))
-    (home-page "https://apps.kde.org/partitionmanager/")
-    (synopsis "Disk device, partition and file system manager")
-    (description "KDE Partition Manager is a utility to help you manage the
-disks, partitions, and file systems.  It allows you to easily create, copy,
-move, delete, back up, restore, and resize them without losing data.  It
-supports a large number of file systems, including ext2/3/4, btrfs, NTFS,
-FAT16/32, JFS, XFS and more.")
-    (license license:gpl3+)))
-
 (define-public kpublictransport
   (package
     (name "kpublictransport")
@@ -1786,44 +1647,6 @@ scientific data.  It provides an easy way to create, manage and edit plots and
 to perform data analysis.")
     (license (list license:gpl2+     ;labplot
                    license:gpl3+)))) ;liborigin
-
-(define-public kdf
-  (package
-    (name "kdf")
-    (version "24.12.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/release-service/"
-                                  version "/src/kdf-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1agv2bpz0gi2l759w4pkafb1pfqyh3m7dhfxpmpvlr8759z4skyv"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules kdoctools))
-    (inputs
-     (list kcmutils
-           kconfigwidgets
-           kcoreaddons
-           kcrash
-           ki18n
-           kiconthemes
-           kio
-           knotifications
-           kwidgetsaddons
-           kstatusnotifieritem
-           kxmlgui
-           qt5compat))
-    (arguments
-     (list #:qtbase qtbase
-           #:tests? #f))
-    (home-page "https://kde.org/applications/system/kdk")
-    (synopsis "View Disk Usage")
-    (description "KDiskFree displays the available file devices (hard drive
-partitions, floppy and CD drives, etc.) along with information on their
-capacity, free space, type and mount point.  It also allows you to mount and
-unmount drives and view them in a file manager.")
-    (license license:gpl2+)))
 
 (define-public ktimer
   (package

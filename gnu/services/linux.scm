@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 raid5atemyhomework <raid5atemyhomework@protonmail.com>
@@ -651,10 +651,9 @@ placed in a udev rules file."
   (group         vfs-mapping-group
                  (default "users"))
   (name          vfs-mapping-name
-                 (default (string-append
-                           (vfs-mapping-source      this-record) "-["
-                           (vfs-mapping-policy      this-record) "]->"
-                           (vfs-mapping-destination this-record)))
+                 (default (format #f "~a-on-~a"
+                                  (vfs-mapping-policy      this-record)
+                                  (vfs-mapping-destination this-record)))
                  (thunked))
   (requirement   vfs-mapping-requirement
                  (default '(file-systems user-homes))))

@@ -3,7 +3,7 @@
 ;;; Copyright © 2017, 2019 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
-;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2023-2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
@@ -47,6 +47,7 @@
             u-boot-pinebook-bootloader
             u-boot-pinebook-pro-rk3399-bootloader
             u-boot-puma-rk3399-bootloader
+            u-boot-rock-4c-plus-rk3399-bootloader
             u-boot-rock64-rk3328-bootloader
             u-boot-rockpro64-rk3399-bootloader
             u-boot-sifive-unmatched-bootloader
@@ -251,6 +252,11 @@ is BLOCK-SIZE * COUNT, or FILE size if COUNT is not given."
    (inherit u-boot-bootloader)
    (package u-boot-puma-rk3399)
    (disk-image-installer install-puma-rk3399-u-boot)))
+
+(define u-boot-rock-4c-plus-rk3399-bootloader
+  (bootloader
+   (inherit u-boot-rockchip-bootloader)
+   (package u-boot-rock-4c-plus-rk3399)))
 
 (define u-boot-rock64-rk3328-bootloader
   (bootloader

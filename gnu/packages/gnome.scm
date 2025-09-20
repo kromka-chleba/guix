@@ -4237,7 +4237,9 @@ widgets built in the loading process.")
                 "1kbgqh7bw0fdx4f1a1aqwpff7gp5mwhbaz60c6c98bc4djng5dgs"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
+     `(#:configure-flags
+       '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
+       #:phases
        (modify-phases %standard-phases
          (add-before 'check 'start-xserver
            (lambda* (#:key inputs #:allow-other-keys)
@@ -4690,32 +4692,6 @@ editors, IDEs, etc.")
     (inputs (modify-inputs (package-inputs vte)
               (append libsixel)
               (append lz4)))))
-
-;; Stable version for gtk2, required by gnurobots and lxterminal as of 2020-07.
-(define-public vte/gtk+-2
-  (package (inherit vte)
-    (name "vte")
-    (version "0.28.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/" name "/"
-                                  (version-major+minor version) "/"
-                                  name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1bmhahkf8wdsra9whd3k5l5z4rv7r58ksr8mshzajgq2ma0hpkw6"))
-              (patches (search-patches
-                         "vte-CVE-2012-2738-pt1.patch"
-                         "vte-CVE-2012-2738-pt2.patch"))))
-    (build-system gnu-build-system)
-    (arguments
-     '(#:configure-flags '("--disable-python")))
-    (native-inputs
-     (list pkg-config intltool
-           `(,glib "bin")))   ; for glib-genmarshal, etc.
-    (propagated-inputs
-     (list gtk+-2 ; required by libvte.pc
-           ncurses)))) ; required by libvte.la
 
 (define-public vinagre
   (package

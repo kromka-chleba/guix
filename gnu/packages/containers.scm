@@ -75,7 +75,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.23.1")
+    (version "1.24")
     (source
      (origin
        (method url-fetch)
@@ -85,7 +85,7 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "1y23fz82d7zaa2svyzjhfhahl6l0a3yrasfbcfacplhkwk7bflnp"))))
+         "0lnfvwxq14pyqyxx56bdr7k4h3l99imc9vynxram7fh0chxf7dlh"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -463,7 +463,7 @@ configure network interfaces in Linux containers.")
 (define-public gvisor-tap-vsock
   (package
     (name "gvisor-tap-vsock")
-    (version "0.8.6")
+    (version "0.8.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -472,7 +472,7 @@ configure network interfaces in Linux containers.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18pwpw3dap42mpv5a1ciq6fh0y8ya5ix7r38bi8i1xc7dxcy3jdj"))))
+                "1p9vypphssvqfcm3y2nc7b9v0wcc2smkrqq8k60vskaiza89974k"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -550,7 +550,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.6.0")
+    (version "5.6.1")
     (outputs '("out" "docker"))
     (properties
      `((output-synopsis "docker" "docker alias for podman")
@@ -563,7 +563,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1w5p76ynhlayvala76xsh1b1sv8w50fjp02sjm819mg98scbc3fk"))
+        (base32 "1k8dppbni8wbzxqqaknp08h687qw884wn7bkpiwmbw9np261fl4b"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -708,7 +708,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.41.1")
+    (version "1.41.4")
     (source
      (origin
        (method git-fetch)
@@ -716,7 +716,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "12mi2084dmk8hg35chfbfbdl1s9ibsq000hhi1n9f0ibk177y6qw"))
+        (base32 "0gca1zv98c58z6c06ckgg63mm2305b1qzavxfmlgmj8s4f72g3zh"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

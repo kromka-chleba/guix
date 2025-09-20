@@ -4,7 +4,7 @@
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021, 2022, 2024 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2022, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright @ 2022, Kitzman <kitzman@disroot.org>
 ;;;
@@ -405,7 +405,7 @@ mouse) with any VNC viewer.")
 (define-public libvnc
   (package
     (name "libvnc")
-    (version "0.9.13")
+    (version "0.9.15")
     (source
      (origin
        (method git-fetch)
@@ -414,7 +414,7 @@ mouse) with any VNC viewer.")
              (commit (string-append "LibVNCServer-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zz0hslw8b1p3crnfy3xnmrljik359h83dpk64s697dqdcrzy141"))))
+        (base32 "0b3ik1dbd9lyiiavv3zpyb3iycnfvjgsjym0ilyr1yac6899qxkb"))))
     (build-system cmake-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases

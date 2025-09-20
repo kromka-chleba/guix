@@ -8,9 +8,9 @@
 ;;; Copyright © 2018 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2019, 2020 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2019 Jelle Licht <jlicht@fsfe.org>
-;;; Copyright © 2020, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Ryan Prior <rprior@protonmail.com>
-;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2023 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
@@ -89,7 +89,7 @@
 (define-public ruby-3.4
   (package
     (name "ruby")
-    (version "3.4.4")
+    (version "3.4.6")
     (source
      (origin
        (method url-fetch)
@@ -98,7 +98,67 @@
                            "/ruby-" version ".tar.xz"))
        (sha256
         (base32
-         "1x18dr3qhr1mypbvxc7yr46z06l11if3cx3babcfv7a9x7pn6vgp"))))
+         "1f2r91mfcas1wz0dyplmsfd40cxi7h8d603h29ss92lk4ay9ajc0"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:test-target "test"
+       #:configure-flags
+       ,(if (%current-target-system)
+            '(list (string-append
+                    "LDFLAGS=-Wl,-rpath="
+                    (assoc-ref %outputs "out") "/lib")
+                   "--enable-shared")
+            ''("--enable-shared")) ; dynamic linking
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'configure 'replace-bin-sh-and-remove-libffi
+           (lambda _
+             (substitute* '("configure.ac"
+                            "template/Makefile.in"
+                            "lib/rubygems/installer.rb"
+                            "ext/pty/pty.c"
+                            "io.c"
+                            "lib/mkmf.rb"
+                            "process.c"
+                            "test/rubygems/test_gem_ext_configure_builder.rb"
+                            "test/rdoc/rdoc_parser_test.rb"
+                            "test/ruby/test_rubyoptions.rb"
+                            "test/ruby/test_process.rb"
+                            "test/ruby/test_system.rb"
+                            "tool/rbinstall.rb")
+               (("/bin/sh") (which "sh"))))))))
+    (native-inputs
+     (append (if (%current-target-system)
+                 (list this-package)
+                 '())
+             (list autoconf libyaml)))
+    (inputs
+     (list readline openssl-1.1 libffi gdbm))
+    (propagated-inputs
+     (list zlib))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "GEM_PATH")
+            (files (list (string-append "lib/ruby/vendor_ruby"))))))
+    (synopsis "Programming language interpreter")
+    (description "Ruby is a dynamic object-oriented programming language with
+a focus on simplicity and productivity.")
+    (home-page "https://www.ruby-lang.org")
+    (license license:ruby)))
+
+(define-public ruby-3.3
+  (package
+    (name "ruby")
+    (version "3.3.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://cache.ruby-lang.org/pub/ruby/"
+                           (version-major+minor version)
+                           "/ruby-" version ".tar.xz"))
+       (sha256
+        (base32
+         "1fvng8x44x90pn8nl4sxa5nzb34jwq0is6l5k7066zrg18ca491b"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
@@ -145,20 +205,6 @@
 a focus on simplicity and productivity.")
     (home-page "https://www.ruby-lang.org")
     (license license:ruby)))
-
-(define-public ruby-3.3
-  (package
-    (inherit ruby-3.4)
-    (version "3.3.9")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://cache.ruby-lang.org/pub/ruby/"
-                           (version-major+minor version)
-                           "/ruby-" version ".tar.xz"))
-       (sha256
-        (base32
-         "1fvng8x44x90pn8nl4sxa5nzb34jwq0is6l5k7066zrg18ca491b"))))))
 
 (define-public ruby-2.7
   (package

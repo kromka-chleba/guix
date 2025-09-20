@@ -46,7 +46,7 @@
 ;;; Copyright © 2020, 2022 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020, 2021 Ryan Prior <rprior@protonmail.com>
 ;;; Copyright © 2020 Alexandru-Sergiu Marton <brown121407@posteo.ro>
-;;; Copyright © 2021, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2021 la snesne <lasnesne@lagunposprasihopre.org>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
@@ -4183,14 +4183,15 @@ and multipart/form-data.")
 (define-public perl-http-cookiejar
   (package
     (name "perl-http-cookiejar")
-    (version "0.012")
+    (version "0.014")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/D/DA/DAGOLDEN/"
                            "HTTP-CookieJar-" version ".tar.gz"))
        (sha256
-        (base32 "0jk0ps4i67dhhhwaxwwa9nkv3n6n5w44xlnwyzvk59735pwvyjh0"))))
+        (base32
+          "0wvyqh69ryjkwp58xq4c83212glnk97ap0syp1ix4dpmj5ffm53h"))))
     (build-system perl-build-system)
     (native-inputs
      (list perl-test-deep perl-test-requires perl-time-mock perl-uri))
@@ -4198,8 +4199,9 @@ and multipart/form-data.")
      (list perl-time-local perl-http-date))
     (home-page "https://metacpan.org/release/HTTP-CookieJar")
     (synopsis "Minimalist HTTP user agent cookie jar")
-    (description "This module implements a minimalist HTTP user agent cookie
-jar in conformance with RFC 6265 <http://tools.ietf.org/html/rfc6265>.")
+    (description "This module (@code{HTTP::CookieJar::LWP}) implements a minimalist
+HTTP user agent cookie jar in conformance with
+@uref{http://tools.ietf.org/html/rfc6265, RFC 6265}.")
     (license license:asl2.0)))
 
 (define-public perl-http-cookies
@@ -4567,7 +4569,7 @@ select or poll.")
 (define-public perl-libwww
   (package
     (name "perl-libwww")
-    (version "6.67")
+    (version "6.78")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -4575,10 +4577,14 @@ select or poll.")
                    version ".tar.gz"))
              (sha256
               (base32
-               "08xp4q90nkvpwnks2qfqjhqgff6447myayqi6kc1panh7w5c9vln"))))
+                "0i4sga0hydhhvkq81skinfbpyd43pi3yr0rbzn0vpip2ak7vsf5p"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-test-fatal perl-test-needs perl-test-requiresinternet))
+     (list perl-http-cookiejar
+           perl-test-fatal
+           perl-test-leaktrace
+           perl-test-needs
+           perl-test-requiresinternet))
     (propagated-inputs
      (list perl-encode-locale
            perl-file-listing

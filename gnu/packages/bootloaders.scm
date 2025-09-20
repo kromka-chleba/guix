@@ -17,7 +17,7 @@
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2022, 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2021 Stefan <stefan-guix@vodafonemail.de>
-;;; Copyright © 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2023, 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023-2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2023 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
@@ -1491,6 +1491,9 @@ Documentation} for more information (for example by running @samp{info
 
 (define-public u-boot-firefly-rk3399
   (make-u-boot-rockchip-package "firefly" 'rk3399))
+
+(define-public u-boot-rock-4c-plus-rk3399
+  (make-u-boot-rockchip-package "rock-4c-plus" 'rk3399))
 
 (define-public u-boot-rockpro64-rk3399
   (let ((base (make-u-boot-rockchip-package

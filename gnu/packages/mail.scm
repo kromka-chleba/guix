@@ -32,7 +32,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Justus Winter <justus@sequoia-pgp.org>
 ;;; Copyright © 2020 Eric Brown <ecbrown@ericcbrown.com>
-;;; Copyright © 2020, 2021, 2022, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2021, 2022, 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020, 2021 Alexey Abramov <levenson@mmer.org>
 ;;; Copyright © 2020 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
@@ -503,16 +503,16 @@ Maildir, MH, MMDF or mbox folders.")
 (define-public nmail
   (package
     (name "nmail")
-    (version "4.54")
+    (version "5.5.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/d99kris/nmail/")
-             (commit (string-append "v" version))))
+              (url "https://github.com/d99kris/nmail/")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bk2kq0pk1r4w5xv94yh37vrwxs8lczjg11gfraxh9cxyjigwsrp"))))
+        (base32 "1ikl5n6s08gh62cs54mr874walm440w0nxmi0fgnx8giaj3mc436"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -530,9 +530,9 @@ Maildir, MH, MMDF or mbox folders.")
            ncurses
            openssl
            sqlite
-           (list util-linux "lib")
            xapian
-           zlib))
+           zlib
+           (list util-linux "lib")))
     (native-inputs (list pkg-config))
     (home-page "https://github.com/d99kris/nmail")
     (synopsis "Terminal-based email client")
@@ -4667,40 +4667,6 @@ extension.")
 complement or replace traditional mailing lists.  Readers may read via NNTP,
 IMAP, Atom feeds or HTML archives.")
     (license license:agpl3+)))
-
-(define-public sylpheed
-  (package
-    (name "sylpheed")
-    (version "3.7.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://sylpheed.sraoss.jp/sylpheed/v3.7/"
-                                  name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0j9y5vdzch251s264diw9clrn88dn20bqqkwfmis9l7m8vmwasqd"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list bogofilter
-           compface
-           gnupg-1
-           gpgme
-           gtk+-2
-           gtkspell3
-           libnsl
-           openldap
-           openssl))
-    (home-page "https://sylpheed.sraoss.jp/en/")
-    (synopsis "Lightweight GTK+ email client")
-    (description
-     "Sylpheed is a simple, lightweight but featureful, and easy-to-use e-mail
-client.  Sylpheed provides intuitive user-interface.  Sylpheed is also
-designed for keyboard-oriented operation.")
-    (properties '((release-monitoring-url
-                   . "https://sylpheed.sraoss.jp/en/download.html")))
-    (license license:gpl2+)))
 
 (define-public python-authres
   (package

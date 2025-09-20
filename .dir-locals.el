@@ -6,7 +6,7 @@
 ;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2017 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2018-2020 Caleb Ristvedt <caleb.ristvedt@cune.org>
-;;; Copyright © 2020-2023,2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020-2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Miguel Ángel Arruga Vivas <rosen644835@gmail.com>
 ;;; Copyright © 2020 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2022 Liliana Marie Prikler <liliana.prikler@gmail.com>
@@ -98,27 +98,9 @@
   ((indent-tabs-mode . nil)
 
    ;; Emacs 28 changed the behavior of 'lisp-fill-paragraph', which causes the
-   ;; first line of package descriptions to extrude past 'fill-column', and
-   ;; somehow that is deemed more correct upstream (see:
-   ;; https://issues.guix.gnu.org/56197).
-   (eval . (progn
-             (require 'lisp-mode)
-             (defun emacs27-lisp-fill-paragraph (&optional justify)
-               (interactive "P")
-               (or (fill-comment-paragraph justify)
-                   (let ((paragraph-start
-                          (concat paragraph-start
-                                  "\\|\\s-*\\([(;\"]\\|\\s-:\\|`(\\|#'(\\)"))
-                         (paragraph-separate
-                          (concat paragraph-separate "\\|\\s-*\".*[,\\.]$"))
-                         (fill-column (if (and (integerp emacs-lisp-docstring-fill-column)
-                                               (derived-mode-p 'emacs-lisp-mode))
-                                          emacs-lisp-docstring-fill-column
-                                        fill-column)))
-                     (fill-paragraph justify))
-                   ;; Never return nil.
-                   t))
-             (setq-local fill-paragraph-function #'emacs27-lisp-fill-paragraph)))
+   ;; first line of package descriptions to extrude past 'fill-column'. The
+   ;; following variable reverts its behavior to the previous one.
+   (lisp-fill-paragraphs-as-doc-string nil)
 
    ;; This notably allows '(' in Paredit to not insert a space when the
    ;; preceding symbol is one of these.

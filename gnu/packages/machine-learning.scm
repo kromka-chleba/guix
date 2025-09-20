@@ -15,7 +15,7 @@
 ;;; Copyright © 2020 Konrad Hinsen <konrad.hinsen@fastmail.net>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
-;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022-2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Kiran Shila <me@kiranshila.com>
 ;;; Copyright © 2022 Wiktor Zelazny <wzelazny@vurv.cz>
@@ -517,6 +517,65 @@ transforms.")
     (description
      "ML Collections is a library of Python collections designed for Machine
 Learning usecases.")
+    (license license:asl2.0)))
+
+(define-public python-ml-dtypes
+  (package
+    (name "python-ml-dtypes")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jax-ml/ml_dtypes")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yv90f28c9w34430xjwvn1lzxdylvp1zi6b02cx7crla6qkvrzn5"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-eigen-package
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "setup.py"
+                (("third_party/eigen")
+                 (search-input-directory inputs "include/eigen3")))))
+          (add-after 'install 'symlink-lib
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (for-each
+               (lambda (file)
+                 (symlink file
+                          (string-append #$output "/lib/ml_dtypes.so")))
+               (find-files (site-packages inputs outputs) "\\.so$")))))))
+    (inputs (list eigen-for-python-ml-dtypes))
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list pybind11
+                         python-absl-py
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/jax-ml/ml_dtypes")
+    (synopsis "NumPy dtype extensions used in machine learning")
+    (description
+     "This package is a stand-alone implementation of several
+NumPy @code{dtype} extensions used in machine learning libraries, including:
+
+@itemize
+@item @code{bfloat16}: an alternative to the standard @code{float16} format
+@item @code{float8_*}: several experimental 8-bit floating point
+  representations including:
+  @itemize
+  @item @code{float8_e4m3b11fnuz}
+  @item @code{float8_e4m3fn}
+  @item @code{float8_e4m3fnuz}
+  @item @code{float8_e5m2}
+  @item @code{float8_e5m2fnuz}
+  @end itemize
+@item @code{int4} and @code{uint4}: low precision integer types.
+@end itemize
+")
     (license license:asl2.0)))
 
 (define-public ghmm
@@ -1834,49 +1893,52 @@ compatibility.")
     (license license:expat)))
 
 (define-public gemmlowp
-  (let ((commit "08e4bb339e34017a0835269d4a37c4ea04d15a69")
+  (let ((commit "16e8662c34917be0065110bfcd9cc27d30f52fdf")
         (version "0.1")
-        (revision "1"))
+        (revision "2"))
     (package
       (name "gemmlowp")
       (version (git-version version revision commit))
-      (home-page "https://github.com/google/gemmlowp")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference (url home-page) (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1q8f3w5slxd8fbn31hpm00y6wyp7gm71rzr27cmcff4b3px4ca6k"))))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/google/gemmlowp")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "02xmrv921al94nihiqrvi8inlq6qc07j0zll3f9qi8322r31x83v"))))
       (arguments
-       `(#:configure-flags
-         (list ,@(match (%current-system)
-                   ((or "x86_64-linux" "i686-linux")
-                    '("-DCMAKE_CXX_FLAGS=-msse2"))
-                   (_ '()))
-               "-DBUILD_SHARED_LIBS=ON")
-         #:phases
-         (modify-phases %standard-phases
-           ;; This directory contains the CMakeLists.txt.
-           (add-after 'unpack 'chdir
-             (lambda _ (chdir "contrib") #t))
-           ;; There is no install target
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (lib (string-append out "/lib/"))
-                      (inc (string-append out "/include/")))
-                 (install-file "../build/libeight_bit_int_gemm.so" lib)
-                 (for-each (lambda (dir)
-                             (let ((target
-                                    (string-append inc "/gemmlowp/" dir)))
-                               (for-each (lambda (h)
-                                           (install-file h target))
-                                         (find-files (string-append "../" dir)
-                                                     "\\.h$"))))
-                           '("meta" "profiling" "public" "fixedpoint"
-                             "eight_bit_int_gemm" "internal"))))))))
+       (list
+        #:configure-flags
+        #~(list #$@(match (%current-system)
+                     ((or "x86_64-linux" "i686-linux")
+                      '("-DCMAKE_CXX_FLAGS=-msse2"))
+                     (_ '()))
+                "-DBUILD_SHARED_LIBS=ON")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; This directory contains the CMakeLists.txt.
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "contrib")))
+            ;; There is no install target
+            (replace 'install
+              (lambda _
+                (let ((lib (string-append #$output "/lib/")))
+                  (install-file "../build/libeight_bit_int_gemm.so" lib)
+                  (for-each
+                   (lambda (dir)
+                     (let ((target (string-append #$output
+                                                  "/include/gemmlowp/" dir)))
+                       (for-each (lambda (h)
+                                   (install-file h target))
+                                 (find-files (string-append "../" dir)
+                                             "\\.h$"))))
+                   '("meta" "profiling" "public" "fixedpoint"
+                     "eight_bit_int_gemm" "internal"))))))))
       (build-system cmake-build-system)
+      (home-page "https://github.com/google/gemmlowp")
       (synopsis "Small self-contained low-precision GEMM library")
       (description
        "This is a small self-contained low-precision @dfn{general matrix
@@ -3132,7 +3194,7 @@ Python.")
 (define-public tensorflow-lite
   (package
     (name "tensorflow-lite")
-    (version "2.13.1")
+    (version "2.14.0")
     (source
      (origin
        (method git-fetch)
@@ -3142,15 +3204,18 @@ Python.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "09mfskmpvpbq919wibnw3bnhi1y3hkx3qrzm72gdr0gsivn1yb3w"))
-       (patches (search-patches "tensorflow-lite-unbundle.patch"))))
+         "07f4x4g3kwhfjz7iadhqrv97zmw0blacixvca1gdqkqqi7aipxis"))))
     (build-system cmake-build-system)
+    (outputs (list "out" "python"))
     (arguments
      (list
       #:build-type "Release"
+      #:imported-modules (append %cmake-build-system-modules
+                                 %pyproject-build-system-modules)
       #:modules '((ice-9 match)
                   (guix build utils)
-                  (guix build cmake-build-system))
+                  (guix build cmake-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:))
       #:configure-flags
       #~(list
          ;; "-DTFLITE_KERNEL_TEST=ON"  ; TODO: build tests
@@ -3164,6 +3229,7 @@ Python.")
          "-DTFLITE_ENABLE_RUY=ON"
          "-DTFLITE_ENABLE_XNNPACK=ON"
 
+         "-DSYSTEM_PTHREADPOOL=ON"
          ;; TODO: turn on Farmhash
          ;;"-DSYSTEM_FARMHASH=ON"
          (string-append "-Dabsl_DIR=" #$(this-package-input "abseil-cpp")
@@ -3179,8 +3245,11 @@ Python.")
                         "/share/cpuinfo")
          (string-append "-Druy_DIR=" #$(this-package-input "ruy")
                         "/lib/cmake/ruy")
+         (string-append "-DML_DTYPES_LIBRARY_DIRS="
+                        #$(this-package-input "python-ml-dtypes") "/lib")
 
          ;; Don't fetch the sources.  We have these already
+         "-Dml_dtypes_POPULATED=ON"
          "-Dgemmlowp_POPULATED=TRUE"
          "-Degl_headers_POPULATED=TRUE"
          "-Dfp16_headers_POPULATED=TRUE"
@@ -3200,22 +3269,28 @@ Python.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _ (chdir "tensorflow/lite")))
+          (add-after 'chdir 'unbundle-gemmlowp
+            (lambda _
+              (call-with-output-file "tools/cmake/modules/gemmlowp.cmake"
+                (lambda (port)
+                  (display "\
+add_library(gemmlowp INTERFACE IMPORTED)
+include_directories(\"${gemmlowp_ROOT}/include/gemmlowp\")" port)))
+              (call-with-output-file "tools/cmake/modules/ml_dtypes.cmake"
+                (lambda (port)
+                  (display "\
+add_library(ml_dtypes INTERFACE IMPORTED)
+find_library(ML_DTYPES_LIBRARIES
+  NAMES ml_dtypes.so
+  PATHS \"${ML_DTYPES_LIBRARY_DIRS}\"
+  NO_DEFAULT_PATH)" port)))))
           (add-after 'chdir 'copy-sources
             (lambda* (#:key inputs #:allow-other-keys)
-              ;; TODO: properly use Guix's pthreaqdpool.  We are not using
-              ;; pthreadpool because we are not enabling xnnpack
-              (substitute* "CMakeLists.txt"
-                (("if\\(NOT DEFINED PTHREADPOOL_SOURCE_DIR\\)")
-                 "if(false)"))
-              (substitute* "CMakeLists.txt"
-                (("if\\(NOT TARGET pthreadpool\\)")
-                 "if(false)"))
-
               ;; Don't fetch source code; we already have everything we need.
               (substitute* '("tools/cmake/modules/fft2d.cmake"
                              "tools/cmake/modules/farmhash.cmake"
                              "tools/cmake/modules/gemmlowp.cmake")
-                (("OverridableFetchContent_Populate.*") ""))
+                (("^ *OverridableFetchContent_Populate.*") ""))
 
               (mkdir-p "/tmp/farmhash")
               (with-directory-excursion "/tmp/farmhash"
@@ -3241,6 +3316,11 @@ Python.")
             (lambda _ (substitute* "kernels/internal/spectrogram.cc"
               (("#include <math.h>")
                "#include <math.h>\n#include <cstdint>\n"))))
+          (add-after 'stdint-fix 'gemmlowp-fix
+            (lambda _
+              (substitute* "kernels/internal/common.h"
+                (("#include \"fixedpoint/fixedpoint\\.h\"")
+                 "#include <fixedpoint/fixedpoint.h>"))))
           (add-after 'build 'build-shared-library
             (lambda* (#:key configure-flags #:allow-other-keys)
               (mkdir-p "c")
@@ -3252,40 +3332,75 @@ Python.")
             (lambda _
               (invoke "cmake" "--build" "." "--target" "benchmark_model"
                       "-j" (number->string (parallel-job-count)))))
-
+          (add-after 'build-benchmark-model 'build-python
+            (lambda* (#:key configure-flags #:allow-other-keys)
+              (let ((script (string-append "../lite/tools/pip_package/"
+                                           "build_pip_package_with_cmake.sh")))
+                (substitute* script
+                  (("\"\\$\\{TENSORFLOW_LITE_DIR\\}\"" all)
+                   (string-append "${CMAKE_ADDITIONAL_CONFIGURE_FLAGS} "
+                                  all)))
+                (setenv "BUILD_NUM_JOBS" (number->string (parallel-job-count)))
+                (setenv "CMAKE_ADDITIONAL_CONFIGURE_FLAGS"
+                        (string-join configure-flags " "))
+                (invoke "sh" script))))
           (add-after 'install 'install-extra
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (lib (string-append out "/lib"))
-                     (bin (string-append out "/bin")))
-                (install-file "../build/c/libtensorflowlite_c.so" lib)
-                (install-file "../build/tools/benchmark/benchmark_model" bin))))
+            (lambda _
+              (install-file "../build/c/libtensorflowlite_c.so"
+                            (string-append #$output "/lib"))
+              (install-file "../build/tools/benchmark/benchmark_model"
+                            (string-append #$output "/bin"))))
+          (add-after 'install-extra 'install-python
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion
+                  "../lite/tools/pip_package/gen/tflite_pip/python3"
+                ((assoc-ref py:%standard-phases 'install)
+                 #:inputs inputs
+                 #:outputs `(("out" . ,#$output:python))))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                (invoke "ctest" "-L" "plain")))))))
+                (invoke "ctest" "-L" "plain"))))
+          (add-after 'install-python 'add-install-to-pythonpath
+            (lambda* (#:key inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
+               #:inputs inputs
+               #:outputs `(("out" . ,#$output:python)))))
+          (add-after 'add-install-to-pythonpath 'python-sanity-check
+            (lambda* (#:key tests? inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'sanity-check)
+               #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
+                          ,@inputs)
+               #:outputs `(("out" . ,#$output:python))))))))
     (inputs
-     `(("abseil-cpp" ,abseil-cpp)
-       ("cpuinfo" ,cpuinfo)
-       ("eigen" ,eigen)
-       ("fp16" ,fp16)
-       ("flatbuffers" ,flatbuffers-23.1)
-       ("gemmlowp" ,gemmlowp)
-       ("mesa-headers" ,mesa-headers)
-       ("neon2sse" ,neon2sse)
-       ("nsync" ,nsync)
-       ("opencl-clhpp" ,opencl-clhpp)
-       ("opencl-headers" ,opencl-headers)
-       ("opencl-icd-loader" ,opencl-icd-loader)
-       ("pthreadpool" ,pthreadpool)
-       ("python" ,python)
-       ("ruy" ,ruy)
-       ("re2" ,re2)
-       ("xnnpack" ,xnnpack)
-       ("vulkan-headers" ,vulkan-headers)))
+     (list abseil-cpp
+           cpuinfo
+           eigen
+           fp16
+           flatbuffers-23.5
+           gemmlowp
+           mesa-headers
+           neon2sse
+           nsync
+           opencl-clhpp
+           opencl-headers
+           opencl-icd-loader
+           pthreadpool
+           python-wrapper
+           python-ml-dtypes
+           ruy
+           re2
+           xnnpack
+           vulkan-headers
+           zlib))
+    (propagated-inputs
+     (list python-numpy))
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("googletest" ,googletest)
+       ("pybind11" ,pybind11)
+       ("python-wheel" ,python-wheel)
+       ("swig" ,swig)
        ("farmhash-src"
         ,(let ((commit "816a4ae622e964763ca0862d9dbd19324a1eaf45"))
            (origin
@@ -3314,6 +3429,22 @@ Python.")
 learning models.  This package provides the \"lite\" variant for mobile
 devices.")
     (license license:asl2.0)))
+
+(define-public python-tflite-runtime
+  (package
+    (inherit tensorflow-lite)
+    (name "python-tflite-runtime")
+    (source #f)
+    (build-system trivial-build-system)
+    (outputs (list "out"))
+    (arguments
+     (list
+      #:builder
+      #~(begin
+          (mkdir #$output)
+          (symlink (string-append #$tensorflow-lite:python "/lib")
+                   (string-append #$output "/lib")))))
+    (native-inputs '())))
 
 (define-public dmlc-core
   (package

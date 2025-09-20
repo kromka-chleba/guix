@@ -13,7 +13,7 @@
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2023 B. Wilson <x@wilsonb.com>
-;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024, 2025 Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Joaquín Aguirrezabalaga <kinote@kinote.org>
@@ -321,8 +321,8 @@ for possible workarounds.")
                                %supported-systems))))
 
 (define-public rkflashtool
-  (let ((commit "8966c4e277de8148290554aaaa4146a3a84a3c53")
-        (revision "1"))
+  (let ((commit "6022dd724e8247ff7a0825b0eda6a07c446aacdd")
+        (revision "2"))
     (package
       (name "rkflashtool")
       (version (git-version "5.2" revision commit))
@@ -332,17 +332,19 @@ for possible workarounds.")
           (uri (git-reference
                 (url "https://github.com/linux-rockchip/rkflashtool")
                 (commit commit)))
-          (file-name (git-file-name name version))
-          (sha256
-           (base32
-            "1ndyzg1zlgg20dd8js9kfqm5kq19k005vddkvf65qj20w0pcyahn"))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0s4zir2s0c3igplj42lq7bq0f0416nf9hrprbxzm87c9mvsdhyvv"))))
       (build-system gnu-build-system)
       (arguments
-       '(#:phases
-         (modify-phases %standard-phases
-           (delete 'configure)) ; no configure
-         #:make-flags (list (string-append "PREFIX=" %output))
-         #:tests? #f)) ; no tests
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)) ; no configure
+        #:make-flags
+        #~(list (string-append "PREFIX=" #$output))
+        #:tests? #f)) ; no tests
       (native-inputs
        (list pkg-config))
       (inputs
@@ -843,10 +845,14 @@ production use.")
       (native-inputs (list libxml2))
       (inputs (list eudev))
       (arguments
-       `(#:tests? #f  ; No tests implemented
-         #:make-flags (list (string-append "CC=" ,(cc-for-target))
-                            (string-append "prefix=" %output))
-         #:phases (modify-phases %standard-phases (delete 'configure))))
+       (list
+        #:tests? #f  ; No tests implemented
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "prefix=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure))))
       (home-page "https://git.linaro.org/landing-teams/working/qualcomm/qdl")
       (synopsis "Qualcomm EDL mode flashing tool")
       (description "This tool communicates with USB devices of id 05c6:9008 to

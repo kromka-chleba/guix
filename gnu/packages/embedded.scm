@@ -11,7 +11,7 @@
 ;;; Copyright © 2020, 2021, 2022 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2021 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2022 Mathieu Othacehe <othacehe@gnu.org>
-;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Junker dk@junkeria.club
@@ -1428,58 +1428,6 @@ toolchain, the loader, the Openspin compiler, the Spin2cpp tool, and the Spin
 simulator.")
         (home-page (package-home-page propeller-gcc))
         (license (package-license propeller-gcc))))))
-
-(define-public binutils-vc4
-  (let ((commit "708acc851880dbeda1dd18aca4fd0a95b2573b36"))
-    (package
-      (name "binutils-vc4")
-      (version (string-append "2.23.51-0." (string-take commit 7)))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                       (url "https://github.com/puppeh/binutils-vc4")
-                       (commit commit)))
-                (file-name (string-append name "-" version "-checkout"))
-                (sha256
-                 (base32
-                  "1kdrz6fki55lm15rwwamn74fnqpy0zlafsida2zymk76n3656c63"))))
-      (build-system gnu-build-system)
-      (arguments
-       `(#:configure-flags '("--target=vc4-elf"
-                             "--disable-werror"
-                             "--enable-cgen-maint")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'unpack-cgen
-             (lambda* (#:key inputs #:allow-other-keys)
-               (copy-recursively (string-append (assoc-ref inputs "cgen")
-                                                "/cgen") "cgen")
-               #t))
-           (add-after 'unpack-cgen 'fix-cgen-guile
-             (lambda _
-               (substitute* "opcodes/Makefile.in"
-                 (("guile\\{,-\\}1.8") "guile"))
-               (invoke "which" "guile"))))))
-      (native-inputs
-       `(("cgen"
-          ,(origin
-                (method git-fetch)
-                (uri (git-reference
-                       (url "https://github.com/puppeh/cgen")
-                       (commit "d8e2a9eb70425f180fdd5bfd032884b0855f2032")))
-                (sha256
-                 (base32
-                  "14b3h2ji740s8zq5vwm4qdcxs4aa4wxi6wb9di3bv1h39x14nyr9"))))
-         ("texinfo" ,texinfo)
-         ("flex" ,flex)
-         ("bison" ,bison)
-         ("guile-1.8" ,guile-1.8)
-         ("which" ,which)))
-      (synopsis "Binutils for VC4")
-      (description "This package provides @code{binutils} for VideoCore IV,
-the Raspberry Pi chip.")
-      (license license:gpl3+)
-      (home-page "https://github.com/puppeh/vc4-toolchain/"))))
 
 (define make-gcc-vc4
   (mlambda ()

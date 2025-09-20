@@ -15,7 +15,7 @@
 ;;; Copyright © 2023 Alexey Abramov <levenson@mmer.org>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Vinicius Monego <monego@posteo.net>
-;;; Copyright © 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2023, 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
@@ -932,7 +932,7 @@ game development and other performance-critical applications.")
   (hidden-package
    (package
      (inherit flatbuffers)
-     ;; needed explicitly by onnxruntime
+     ;; needed explicitly by onnxruntime and tensorflow-lite@2.14.0
      (version "23.5.26")
      (source
       (origin

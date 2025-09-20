@@ -309,7 +309,6 @@ gnu/packages/printers.scm
 gnu/packages/profiling.scm
 gnu/packages/prometheus.scm
 gnu/packages/pth.scm
-gnu/packages/pure.scm
 gnu/packages/pv.scm
 gnu/packages/pypy.scm
 gnu/packages/python-build.scm
@@ -484,7 +483,6 @@ gnu/packages/plotutils.scm
 gnu/packages/postmarketos.scm
 gnu/packages/potassco.scm
 gnu/packages/power.scm
-gnu/packages/presentation.scm
 gnu/packages/prolog.scm
 gnu/packages/protobuf.scm
 gnu/packages/pulseaudio.scm

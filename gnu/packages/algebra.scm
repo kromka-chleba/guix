@@ -14,7 +14,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020, 2021, 2023, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Lars-Dominik Braun <ldb@leibniz-psychology.org>
-;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
@@ -1213,7 +1213,7 @@ Python.")
                           ;; Then run 'CTest' with -V so we get more
                           ;; details upon failure.
                           (invoke "ctest" "-V" dash-j))))))))
-    (home-page "https://eigen.tuxfamily.org")
+    (home-page "https://eigen.tuxfamily.org/index.php?title=Main_Page")
     (synopsis "C++ template library for linear algebra")
     (description
      "Eigen is a C++ template library for linear algebra: matrices, vectors,
@@ -1268,24 +1268,53 @@ features, and more.")
 (define-public eigen-for-onnxruntime
   (let ((commit "1d8b82b0740839c0de7f1242a3585e3390ff5f33")
         (revision "0"))
-    (package/inherit eigen
-      (name "eigen")
-      (version (git-version "3.4.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-                (url "https://gitlab.com/libeigen/eigen")
-                (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0pxh81jjnz97ndwaanla6zch1128bfdrf2kgqxgxyjvqbdg1vqwi"))))
-      ;; XXX: Some tests fail, but onnxruntime will move on to the next
-      ;; release soon enough.
-      (arguments
-       (substitute-keyword-arguments (package-arguments eigen)
-         ((#:tests? tests? #t)
-          #f))))))
+    (hidden-package
+      (package
+        (inherit eigen)
+        (name "eigen-for-onnxruntime")
+        (version (git-version "3.4.0" revision commit))
+        (source
+         (origin
+           (method git-fetch)
+           (uri (git-reference
+                  (url "https://gitlab.com/libeigen/eigen")
+                  (commit commit)))
+           (file-name (git-file-name name version))
+           (sha256
+            (base32 "0pxh81jjnz97ndwaanla6zch1128bfdrf2kgqxgxyjvqbdg1vqwi"))))
+        ;; XXX: Some tests fail, but onnxruntime will move on to the next
+        ;; release soon enough.
+        (arguments
+         (substitute-keyword-arguments (package-arguments eigen)
+           ((#:tests? tests? #t)
+            #f)))))))
+
+;; XXX: python-ml-dtypes uses this commit specifically since at least version
+;; 0.2.0.  It's not compiling with another eigen, so build this one for now.
+(define-public eigen-for-python-ml-dtypes
+  (let ((commit "7bf2968fed5f246c0589e1111004cb420fcd7c71")
+        (revision "0"))
+    (hidden-package
+     (package
+       (inherit eigen)
+       (name "eigen-for-python-ml-dtypes")
+       (version (git-version "3.4.0" revision commit))
+       (source
+        (origin
+          (inherit (package-source eigen))
+          (method git-fetch)
+          (uri (git-reference
+                 (url "https://gitlab.com/libeigen/eigen")
+                 (commit commit)))
+          (file-name (git-file-name name version))
+          (sha256
+           (base32 "0yq69h7pasbzq5r83d974xi031r0z2y2x0my1rz5crky54i1j0r7"))
+          (patches '())))
+       ;; XXX: Tests stable_norm_5 and stable_norm_6 are failing due to
+       ;; EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE.
+       (arguments
+        (substitute-keyword-arguments (package-arguments eigen)
+          ((#:tests? flag #f) #false)))))))
 
 (define-public xtensor
   (package

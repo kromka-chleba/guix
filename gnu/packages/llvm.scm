@@ -17,7 +17,7 @@
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2021, 2022 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2020-2022, 2024-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020-2022, 2024-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
@@ -891,6 +891,12 @@ Library.")
       (patches (search-patches "llvm-13-gcc-14.patch"))))
     (arguments
      (substitute-keyword-arguments (package-arguments llvm-14)
+      ((#:tests? _ #t)
+       ;; The tests on riscv64 error on the differences between
+       ;; generic and generic-rv64.
+       (not (or (%current-target-system)
+                (target-x86-32?)
+                (target-riscv64?))))
        ((#:phases phases '%standard-phases)
         #~(modify-phases #$phases
             (delete 'change-directory)))))
@@ -1025,110 +1031,6 @@ Library.")
 
 (define-public clang-toolchain-12
   (make-clang-toolchain clang-12 libomp-12))
-
-(define-public llvm-6
-  (package
-    (inherit llvm-12)
-    (version "6.0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "llvm" version))
-              (sha256
-               (base32
-                "1qpls3vk85lydi5b4axl0809fv932qgsqgdgrk098567z4jc7mmn"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments llvm-12)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (delete 'delete-failing-tests)))))
-    (native-inputs
-     `(("python" ,python-wrapper)
-       ("perl"   ,perl)
-       ;; In llvm-11 riscv64 support was added manually to config.guess.
-       ,@(if (target-riscv64?)
-           `(("config" ,config))
-           '())))))
-
-(define-public llvm-3.8
-  (package (inherit llvm-6)
-    (name "llvm")
-    (version "3.8.1")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (llvm-uri "llvm" version))
-      (sha256
-       (base32
-        "1ybmnid4pw2hxn12ax5qa5kl1ldfns0njg8533y3mzslvd5cx0kf"))
-      (patches (search-patches "llvm-3.x.1-fix-build-with-gcc.patch"))))
-    (outputs '("out"))
-    (arguments
-     (substitute-keyword-arguments (package-arguments llvm-6)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (add-before 'build 'shared-lib-workaround
-              ;; Even with CMAKE_SKIP_BUILD_RPATH=FALSE, llvm-tblgen
-              ;; doesn't seem to get the correct rpath to be able to run
-              ;; from the build directory.  Set LD_LIBRARY_PATH as a
-              ;; workaround.
-              (lambda _
-                (setenv "LD_LIBRARY_PATH"
-                        (string-append (getcwd) "/lib"))))
-            (delete 'install-opt-viewer)))))))
-
-(define-public llvm-3.7
-  (package (inherit llvm-6)
-    (version "3.7.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (llvm-uri "llvm" version))
-       (sha256
-        (base32
-         "1masakdp9g2dan1yrazg7md5am2vacbkb3nahb3dchpc1knr8xxy"))
-      (patches (search-patches "llvm-3.x.1-fix-build-with-gcc.patch"))))
-    (outputs '("out"))
-    (arguments
-     (substitute-keyword-arguments (package-arguments llvm-6)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (add-before 'build 'shared-lib-workaround
-              ;; Even with CMAKE_SKIP_BUILD_RPATH=FALSE, llvm-tblgen
-              ;; doesn't seem to get the correct rpath to be able to run
-              ;; from the build directory.  Set LD_LIBRARY_PATH as a
-              ;; workaround.
-              (lambda _
-                (setenv "LD_LIBRARY_PATH"
-                        (string-append (getcwd) "/lib"))))
-            (delete 'install-opt-viewer)))))))
-
-(define-public clang-runtime-3.7
-  (clang-runtime-from-llvm
-   llvm-3.7
-   "10c1mz2q4bdq9bqfgr3dirc6hz1h3sq8573srd5q5lr7m7j6jiwx"
-   '("clang-runtime-asan-build-fixes.patch"
-     "clang-runtime-3.8-libsanitizer-mode-field.patch"
-     "clang-3.5-libsanitizer-ustat-fix.patch"
-     "clang-runtime-3.7-fix-build-with-python3.patch")))
-
-(define-public clang-3.7
-  (clang-from-llvm llvm-3.7 clang-runtime-3.7
-                   "0x065d0w9b51xvdjxwfzjxng0gzpbx45fgiaxpap45ragi61dqjn"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-3.5-libc-search-path.patch")))
-
-(define-public llvm-3.5
-  (package (inherit llvm-3.7)
-    (version "3.5.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (llvm-uri "llvm" version))
-       (patches
-        (search-patches "llvm-3.5-fix-clang-build-with-gcc5.patch"))
-       (sha256
-        (base32
-         "0xf5q17kkxsrm2gsi93h4pwlv663kji73r2g4asb97klsmb626a4"))))))
 
 (define-public llvm-16
   (make-llvm "16.0.6"))

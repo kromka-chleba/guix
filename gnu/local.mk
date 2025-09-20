@@ -562,10 +562,8 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/pth.scm				\
   %D%/packages/pulseaudio.scm			\
   %D%/packages/pumpio.scm			\
-  %D%/packages/presentation.scm		\
   %D%/packages/pretty-print.scm			\
   %D%/packages/protobuf.scm			\
-  %D%/packages/pure.scm				\
   %D%/packages/purescript.scm			\
   %D%/packages/pv.scm				\
   %D%/packages/pypy.scm				\
@@ -808,6 +806,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/system/images/pine64.scm			\
   %D%/system/images/pinebook-pro.scm		\
   %D%/system/images/rock64.scm			\
+  %D%/system/images/rock-4c-plus.scm		\
   %D%/system/images/unmatched.scm		\
   %D%/system/images/visionfive2.scm		\
   %D%/system/images/wsl2.scm			\
@@ -1089,9 +1088,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/cl-asdf-config-directories.patch		\
   %D%/packages/patches/clamav-config-llvm-libs.patch		\
   %D%/packages/patches/clamav-system-tomsfastmath.patch		\
-  %D%/packages/patches/clang-3.5-libc-search-path.patch		\
-  %D%/packages/patches/clang-3.5-libsanitizer-ustat-fix.patch	\
-  %D%/packages/patches/clang-3.8-libc-search-path.patch		\
   %D%/packages/patches/clang-11.0-libc-search-path.patch	\
   %D%/packages/patches/clang-12.0-libc-search-path.patch	\
   %D%/packages/patches/clang-13.0-libc-search-path.patch	\
@@ -1104,14 +1100,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-17.0-libc-search-path.patch	\
   %D%/packages/patches/clang-17.0-link-dsymutil-latomic.patch	\
   %D%/packages/patches/clang-18.0-libc-search-path.patch	\
-  %D%/packages/patches/clang-runtime-asan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-esan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-12-remove-crypt-interceptors.patch \
   %D%/packages/patches/clang-runtime-13-glibc-2.36-compat.patch	\
   %D%/packages/patches/clang-runtime-14-glibc-2.36-compat.patch	\
-  %D%/packages/patches/clang-runtime-3.7-fix-build-with-python3.patch	\
   %D%/packages/patches/clang-runtime-3.9-libsanitizer-mode-field.patch	\
-  %D%/packages/patches/clang-runtime-3.8-libsanitizer-mode-field.patch	\
   %D%/packages/patches/clasp-hide-event-ids.patch		\
   %D%/packages/patches/classpath-aarch64-support.patch		\
   %D%/packages/patches/classpath-miscompilation.patch		\
@@ -1812,8 +1805,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/linux-pam-unix_chkpwd.patch		\
   %D%/packages/patches/lirc-localstatedir.patch			\
   %D%/packages/patches/lirc-reproducible-build.patch		\
-  %D%/packages/patches/llvm-3.5-fix-clang-build-with-gcc5.patch	\
-  %D%/packages/patches/llvm-3.x.1-fix-build-with-gcc.patch	\
   %D%/packages/patches/llvm-13-gcc-14.patch			\
   %D%/packages/patches/lm-sensors-hwmon-attrs.patch		\
   %D%/packages/patches/lsh-fix-x11-forwarding.patch		\
@@ -2340,7 +2331,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/tcsh-fix-autotest.patch			\
   %D%/packages/patches/teensy-loader-cli-help.patch		\
   %D%/packages/patches/tensorflow-c-api-fix.patch		\
-  %D%/packages/patches/tensorflow-lite-unbundle.patch 		\
   %D%/packages/patches/texinfo-headings-single.patch		\
   %D%/packages/patches/texinfo-5-perl-compat.patch		\
   %D%/packages/patches/telegram-desktop-allow-disable-libtgvoip.patch   \

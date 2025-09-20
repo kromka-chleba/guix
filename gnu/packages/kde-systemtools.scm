@@ -21,6 +21,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages kde-systemtools)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system qt)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -29,8 +30,11 @@
   #:use-module (guix utils)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
+  #:use-module (gnu packages admin)
   #:use-module (gnu packages aidc)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages image)
   #:use-module (gnu packages kde)
@@ -39,6 +43,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages ocr)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages polkit)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages ruby)
@@ -55,21 +60,21 @@
 (define-public dolphin
   (package
     (name "dolphin")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dolphin-" version ".tar.xz"))
        (sha256
-        (base32 "061a05dab11isn7pnv07mvvh84wgx8appxpygmj25bqjxw2fr5w9"))))
+        (base32 "1kgaf4889g2hpgi9rdsnlf90a27z3gy6myhgca6zs937d7053c08"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools ruby ruby-test-unit))
     (inputs
      (list baloo
            baloo-widgets
-           plasma-activities
+           breeze-icons ;; default icon set
            kbookmarks
            kcmutils
            kcompletion
@@ -87,10 +92,10 @@
            ktextwidgets
            kuserfeedback
            kwindowsystem
-           breeze-icons ;; default icon set
-           phonon
-           solid
-           libxkbcommon))
+           libxkbcommon
+           plasma-activities
+           qtmultimedia
+           solid))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f)) ;; TODO: 4/15 tests fail even with offscreen
@@ -113,14 +118,14 @@ The main features of Dolphin are:
 (define-public dolphin-plugins
   (package
     (name "dolphin-plugins")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dolphin-plugins-" version ".tar.xz"))
        (sha256
-        (base32 "16sd5ygzzi0r2245kfj4gclid15xhylsy5xvf3nif1az9f8bw6pz"))))
+        (base32 "1jqr3k9zc9xgzx7sg2x7iwmim143402aznng0w3m9pw5zpaj5x3p"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -143,17 +148,55 @@ The main features of Dolphin are:
 Dolphin with the version control systems: Bzr, Git, Mercurial, Subversion.")
     (license license:gpl2+)))
 
+(define-public kdf
+  (package
+    (name "kdf")
+    (version "25.08.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/release-service/"
+                                  version "/src/kdf-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0h527y4bnr2z4krkbl9m2091v9065waqyc0cqcbvglrs8zj2bjda"))))
+    (build-system qt-build-system)
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list kcmutils
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           ki18n
+           kiconthemes
+           kio
+           knotifications
+           kwidgetsaddons
+           kstatusnotifieritem
+           kxmlgui
+           qt5compat))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
+    (home-page "https://kde.org/applications/system/kdk")
+    (synopsis "View Disk Usage")
+    (description "KDiskFree displays the available file devices (hard drive
+partitions, floppy and CD drives, etc.) along with information on their
+capacity, free space, type and mount point.  It also allows you to mount and
+unmount drives and view them in a file manager.")
+    (license license:gpl2+)))
+
 (define-public khelpcenter
   (package
     (name "khelpcenter")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/khelpcenter-" version ".tar.xz"))
        (sha256
-        (base32 "0nbv5lzsn45wszqdz3mj7bz6w4dli9nhn7w6abcl553h002vadch"))))
+        (base32 "1br0hw7a61672cg453c32q2b9z8wy2zx2afin5wzx7m7fgwjqmvx"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools perl))
@@ -188,17 +231,112 @@ also described by a meta data file which contains the same information as a
 document meta data file.")
     (license license:gpl2+)))
 
+(define-public kio-fuse
+  (package
+    (name "kio-fuse")
+    (version "5.1.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/kio-fuse/kio-fuse-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "0jz9952dd20sw0c25pyn2l86nmc1s5l42gxk4js1jnkx4a0la43x"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (setenv "HOME" (getcwd))
+                         (setenv "XDG_RUNTIME_DIR" (getcwd))
+                         (setenv "QT_QPA_PLATFORM" "offscreen")
+                         (invoke "dbus-launch" "ctest" "-E"
+                                 "(fileopstest-cache|fileopstest-filejob)")))))))
+    (native-inputs (list dbus extra-cmake-modules pkg-config))
+    (inputs (list fuse kio kcoreaddons qtbase))
+    (home-page "https://community.kde.org/Frameworks")
+    (synopsis "FUSE Interface for KIO")
+    (description "This package provides FUSE Interface for KIO.")
+    (license license:lgpl2.1+)))
+
+(define-public kpmcore
+  (package
+    (name "kpmcore")
+    (version "25.08.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://kde/stable/release-service/" version
+                    "/src/" name "-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0q7pdjvsd7sxmhmwazvxlccxjmpsyzn3phkhwm8s9fnka2qzqj9g"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     (list extra-cmake-modules pkg-config))
+    (inputs
+     `(("coreutils" ,coreutils)
+       ("cryptsetup" ,cryptsetup)
+       ("eudev" ,eudev)
+       ("kauth" ,kauth)
+       ("kcoreaddons" ,kcoreaddons)
+       ("ki18n" ,ki18n)
+       ("kwidgetsaddons" ,kwidgetsaddons)
+       ("lvm2" ,lvm2)
+       ("mdadm" ,mdadm)
+       ("polkit-qt6" ,polkit-qt6)
+       ("qtbase" ,qtbase)
+       ("qca-qt6" ,qca-qt6)
+       ("smartmontools" ,smartmontools)
+       ("util-linux" ,util-linux)
+       ("util-linux:lib" ,util-linux "lib")))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-polkit-action-path
+            (lambda _
+              (substitute* "src/util/CMakeLists.txt"
+                (("DESTINATION \\$\\{POLKITQT-1_POLICY_FILES_INSTALL_DIR\\}")
+                 "DESTINATION share/polkit-1/actions"))
+              (substitute* "src/backend/corebackend.cpp"
+                  (("\\/usr") #$output))))
+          (add-before 'configure 'patch-trustedprefixes-file
+              (lambda* (#:key inputs #:allow-other-keys)
+                (call-with-output-file "src/util/trustedprefixes"
+                  (lambda (port)
+                    (map (lambda (prefix)
+                           (display prefix port)
+                           (newline port))
+                         (list (assoc-ref inputs "coreutils")
+                               (assoc-ref inputs "util-linux")
+                               (assoc-ref inputs "eudev")
+                               (assoc-ref inputs "cryptsetup")
+                               (assoc-ref inputs "lvm2")
+                               (assoc-ref inputs "mdadm")
+                               (assoc-ref inputs "smartmontools")
+                               "/run/current-system/profile"
+                               "/usr"
+                               "/")))))))))
+    (home-page "https://community.kde.org/Frameworks")
+    (synopsis "Library for managing partitions")
+    (description "Library for managing partitions.")
+    (license license:gpl3+)))
+
 (define-public konsole
   (package
     (name "konsole")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konsole-" version ".tar.xz"))
        (sha256
-        (base32 "1lbr7bkmm5lz0am9z70z06y7cf6kl7ganszd6181wcqpgfjxn9nk"))))
+        (base32 "1q1w0m0rgl3q096mmaz69d2248fidzd9fkvf3b7gqgg1mgkiz4b0"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools zlib))
@@ -245,14 +383,14 @@ This package is part of the KDE base applications module.")
 (define-public krfb
   (package
     (name "krfb")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/krfb-" version ".tar.xz"))
        (sha256
-        (base32 "1m3f4lpzwbrbdmp9237186x4p0w2rk1cz4a7nin38c8ll9sgrfb2"))))
+        (base32 "0mqm2s8sbs1c1441pwlm47jg5hanpb4wm4si4w7flixznjddcvs2"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
                      #:tests? #f
@@ -306,14 +444,14 @@ This package is part of the KDE networking module.")
 (define-public ksystemlog
   (package
     (name "ksystemlog")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ksystemlog-" version ".tar.xz"))
        (sha256
-        (base32 "0qsps71bfi7sm6f5x3jd1lss7pgjpmvmqsky3wjk34jzxq953rzs"))))
+        (base32 "0cc3dslyw8zps4y6f0b56miaj52ndmbw4hn8ajcfm890kjgb3lq4"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -346,14 +484,14 @@ This package is part of the KDE administration module.")
 (define-public kwalletmanager
   (package
     (name "kwalletmanager")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kwalletmanager-" version ".tar.xz"))
        (sha256
-        (base32 "17mb07a8s2x2qlazfjwaqi7329w9894fy03saqa6jx61lfas7g8y"))))
+        (base32 "014799qlyk9nz459niqr39xpgwmli0knm34iwyljmidbd9sf4lnd"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -384,6 +522,46 @@ This package is part of the KDE administration module.")
     (description
      "This package provides a tool to manage passwords on @code{kwallet}.")
     (license license:gpl2+)))
+
+(define-public partitionmanager
+  (package
+    (name "partitionmanager")
+    (version "25.08.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/partitionmanager-" version ".tar.xz"))
+       (sha256
+        (base32 "14575n9wkp0jd1wqnhdd6wj9l76xl22jwi2gllfhqvgqldw97vqv"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list kconfig
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           kdbusaddons
+           ki18n
+           kio
+           kjobwidgets
+           kpmcore
+           kwidgetsaddons
+           kwindowsystem
+           kxmlgui
+           polkit-qt6))
+    (home-page "https://apps.kde.org/partitionmanager/")
+    (synopsis "Disk device, partition and file system manager")
+    (description "KDE Partition Manager is a utility to help you manage the
+disks, partitions, and file systems.  It allows you to easily create, copy,
+move, delete, back up, restore, and resize them without losing data.  It
+supports a large number of file systems, including ext2/3/4, btrfs, NTFS,
+FAT16/32, JFS, XFS and more.")
+    (license license:gpl3+)))
 
 (define-public spectacle-ocr-screenshot
   (package
@@ -431,14 +609,14 @@ as well as QR codes.")
 (define-public yakuake
   (package
     (name "yakuake")
-    (version "24.12.1")
+    (version "25.08.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/yakuake-" version ".tar.xz"))
               (sha256
                (base32
-                "13ndnsibdyymnn8awwbzx1rxsw34223gkvnndbrk3jaqlmp4cgv4"))))
+                "0bjmdgzy2n5y7k82b42spyhg971zs066g32k8i9whgm3bflgyzda"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))

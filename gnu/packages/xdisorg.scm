@@ -42,7 +42,7 @@
 ;;; Copyright © 2020 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
 ;;; Copyright © 2020-2021, 2023-2025 Zheng Junjie <z572@z572.online>
-;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021, 2022, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021 Renzo Poddighe <renzo@poddighe.nl>
@@ -1145,7 +1145,7 @@ move windows, switch between desktops, etc.).")
 (define-public scrot
   (package
     (name "scrot")
-    (version "1.11.1")
+    (version "1.12.1")
     (source
      (origin
        (method git-fetch)
@@ -1155,7 +1155,7 @@ move windows, switch between desktops, etc.).")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pvp44lb2lrvm11x92vzxwl21hmcbld55kk8wjqa5k1kjg6syj9i"))))
+        (base32 "080wh1rb11xzzmwpmb0qxn7zhabkgqaklg4395dzf4p9p3wlf5hk"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf autoconf-archive automake pkg-config))
