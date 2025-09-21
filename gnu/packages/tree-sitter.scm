@@ -874,3 +874,10 @@ which will be used as a snippet in origin."
    "1r9p7hhnc1zagwxzdxhs4p6rnqs9naddkgbfymi6pbw6cyg2ccwl"
    "1.1.2"
    #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-zig"))
+
+(define-public tree-sitter-vim
+  (tree-sitter-grammar "vim"
+   "Vimscript"
+   "0wr0sijh3vpka0gysbf0ki8zkvwfg8r5lvhi3xbwmkbyszjzgrqw"
+   "0.7.0"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-vim"))
