@@ -322,6 +322,14 @@ guix/import/crate/cargo-lock\.scm                  @guix/rust
 guix/scripts/import/crate\.scm                     @guix/rust
 tests/import/crate\.scm                            @guix/rust
 
+gnu/packages/crypto\.scm                           @guix/crypto
+gnu/packages/gnupg\.scm                            @guix/crypto
+gnu/packages/nettle\.scm                           @guix/crypto
+gnu/packages/password-utils\.scm                   @guix/crypto
+gnu/packages/security-token\.scm                   @guix/crypto
+gnu/packages/ssh\.scm                              @guix/crypto
+gnu/packages/tls\.scm                              @guix/crypto
+
 gnu/packages/fortran(-.+|)\.scm$                   @guix/science
 gnu/packages/algebra\.scm                          @guix/science
 gnu/packages/astronomy\.scm                        @guix/science
