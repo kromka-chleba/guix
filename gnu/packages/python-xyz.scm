@@ -14079,8 +14079,6 @@ releases.")
     (propagated-inputs (list python-autocommand python-inflect
                              python-jaraco-context python-jaraco-functools
                              python-more-itertools))
-    ;; TODO: Add python-pytest-ruff to native-inputs once it has been
-    ;; packaged.
     (native-inputs (list python-pytest
                          python-pytest-black
                          python-pytest-checkdocs
