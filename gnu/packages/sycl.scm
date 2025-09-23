@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2023, 2024 Andy Tai <atai@atai.org>
+;;; Copyright © 2023, 2024, 2025 Andy Tai <atai@atai.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -37,7 +37,7 @@
 (define-public adaptivecpp
   (package
     (name "adaptivecpp")
-    (version "24.10.0")
+    (version "25.02.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -46,11 +46,13 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gha90zkvg6nabyj1y55rflxzygdkznkjqj8v6zb1jgm1f5w60b7"))))
+                "01wajw1vvbic1hiyz4rj7in09js3kl0xvaa2qpcg1pv7xkrz0xxx"))))
     (build-system cmake-build-system)
     (native-inputs (list clang-15 llvm-15 python spirv-tools))
     (inputs (list boost rocm-opencl-runtime spirv-headers))
-    (arguments `(#:tests? #f)) ; no tests
+    (arguments
+        `(#:tests? #f   ; no tests
+          #:validate-runpath? #f)) ; some validation failure
     (home-page "https://adaptivecpp.github.io/")
     (synopsis "Implementation of the SYCL programming language for accelerators")
     (description
