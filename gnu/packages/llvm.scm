@@ -1078,16 +1078,19 @@ Library.")
   (clang-runtime-from-llvm llvm-17))
 
 (define-public clang-17
-  (clang-from-llvm
-   llvm-17 clang-runtime-17
-   #:tools-extra
-   (origin
-     (method url-fetch)
-     (uri (llvm-uri "clang-tools-extra"
-                    (package-version llvm-17)))
-     (sha256
-      (base32
-       "1f8szx762c325916gjxb5lw7zxyidynwnvx6fxxqscsx8514cxxa")))))
+  (let ((base (clang-from-llvm
+               llvm-17 clang-runtime-17
+               #:tools-extra
+               (origin
+                 (method url-fetch)
+                 (uri (llvm-uri "clang-tools-extra"
+                                (package-version llvm-17)))
+                 (sha256
+                  (base32
+                   "1f8szx762c325916gjxb5lw7zxyidynwnvx6fxxqscsx8514cxxa"))))))
+    (package-with-extra-patches
+     base
+     `(,(search-patch "clang-fix-build-with-gcc14-on-arm.patch")))))
 
 (define-public libomp-17
   (package
