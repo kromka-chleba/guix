@@ -1788,77 +1788,6 @@ US-ASCII, non-text attachments, multi-part message bodies, and header
 information in non-ASCII character sets.")
     (license license:lgpl2.0+)))
 
-(define-public knotes
-  (package
-    (name "knotes")
-    (version "24.05.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/" version
-                           "/src/knotes-" version ".tar.xz"))
-       (sha256
-        (base32 "14nm2s86hqvvg0wyg8q5dd273dpppqw692h3mzya5mfg3j7acvaf"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules kdoctools libxslt))
-    (inputs
-     (list akonadi
-           akonadi-contacts
-           akonadi-mime
-           akonadi-notes
-           akonadi-search
-           boost
-           breeze-icons ; default icon set, required for tests
-           grantleetheme
-           kcalendarcore
-           kcalutils
-           kcmutils
-           kcompletion
-           kconfig
-           kconfigwidgets
-           kcontacts
-           kcoreaddons
-           kcrash
-           kdnssd
-           kglobalaccel
-           kiconthemes
-           kimap
-           kitemmodels
-           kitemviews
-           kmime
-           knewstuff
-           knotifications
-           knotifyconfig
-           kontactinterface
-           kparts
-           kpimcommon
-           kpimtextedit
-           kstatusnotifieritem
-           ktextaddons
-           ktextwidgets
-           ktexttemplate
-           kwidgetsaddons
-           kwindowsystem
-           kxmlgui
-           kxmlgui
-           libkdepim))
-    (arguments (list #:qtbase qtbase))
-    (home-page "https://apps.kde.org/knotes/")
-    (synopsis "Note-taking utility")
-    (description "KNotes lets you write the computer equivalent of sticky
-notes.  The notes are saved automatically when you exit the program, and they
-display when you open the program.
-
-Features:
-@itemize
-@item Write notes in your choice of font and background color
-@item Use drag and drop to email your notes
-@item Can be dragged into Calendar to book a time-slot
-@item Notes can be printed
-@end itemize")
-    (license (list license:gpl2+ license:lgpl2.0+))))
-
 (define-public kontactinterface
   (package
     (name "kontactinterface")
@@ -2131,14 +2060,14 @@ unnecessary network operations.")
 (define-public kpimtextedit
   (package
     (name "kpimtextedit")
-    (version "24.12.1")
+    (version "25.04.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kpimtextedit-" version ".tar.xz"))
        (sha256
-        (base32 "0xrlym88l2xsclcbmdl7jsphnf3z39hxgk0xdb6qjk719mi4w2lb"))))
+        (base32 "0ckcphwa7jxlpay66wx68ak9vpwwr5n8hrbviz0gsda55ah7q42a"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules qttools))
