@@ -1648,39 +1648,6 @@ to perform data analysis.")
     (license (list license:gpl2+     ;labplot
                    license:gpl3+)))) ;liborigin
 
-(define-public ktimer
-  (package
-    (name "ktimer")
-    (version "24.12.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/release-service/" version
-                                  "/src/ktimer-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1kpz1hz0s32qc1cpbvrs9yw9w86ingc9sk03cykljsc493fhmy9m"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules
-           kdoctools))
-    (inputs
-     (list kcrash
-           kdbusaddons
-           ki18n
-           kio
-           knotifications
-           kconfigwidgets
-           kstatusnotifieritem
-           qt5compat))
-    (arguments
-     (list #:qtbase qtbase
-           #:tests? #f))
-    (home-page "https://kde.org/applications/utilities/ktimer")
-    (synopsis "Countdown Launcher")
-    (description "KTimer is a little tool to execute programs after some time.
-It allows you to enter several tasks and to set a timer for each of them.  The
-timers for each task can be started, stopped, changed, or looped.")
-    (license license:gpl2+)))
 
 (define-public kcachegrind
   (package
@@ -1716,51 +1683,6 @@ system-wide profiler for Linux using statistical sampling with hardware
 performance counters.  There also exist converters for profiling output of
 Python, PHP, and Perl.")
     (license license:gpl2)))
-
-(define-public libkdegames
-  (package
-    (name "libkdegames")
-    (version "25.04.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/" version
-                           "/src/libkdegames-" version ".tar.xz"))
-       (sha256
-        (base32 "0zq481x2l6sqilw5ialacp3cksvw58syxz9dkk3yha0vfjp1p8k9"))))
-    (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
-    (native-inputs
-     (list extra-cmake-modules))
-    (inputs
-     (list karchive
-           kbookmarks
-           kcodecs
-           kcompletion
-           kconfigwidgets
-           kcrash
-           kdbusaddons
-           kdeclarative
-           kdnssd
-           kglobalaccel
-           kguiaddons
-           ki18n
-           kiconthemes
-           kitemviews
-           kjobwidgets
-           knewstuff
-           kservice
-           ktextwidgets
-           kwidgetsaddons
-           kxmlgui
-           libsndfile
-           openal
-           qtdeclarative
-           qtsvg))
-    (home-page "https://apps.kde.org/categories/games/")
-    (synopsis "Runtime library for kdegames")
-    (description "Runtime library for kdegames")
-    (license (list license:gpl2+  license:fdl1.2+))))
 
 (define-public marble-qt
   (package

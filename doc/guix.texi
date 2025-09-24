@@ -22096,6 +22096,9 @@ resolver:
 @end lisp
 @end defvar
 
+
+@c %start of fragment
+
 @deftp {Data Type} dhcpcd-configuration
 Available @code{dhcpcd-configuration} fields are:
 
@@ -22150,10 +22153,14 @@ refer to @uref{https://www.rfc-editor.org/rfc/rfc2132#section-9.13,RFC
 
 @item @code{client-id} (type: maybe-string)
 Use the interface hardware address or the given string as a client
-identifier, this is matually exclusive with the @code{duid} option.
+identifier, this is mutually exclusive with the @code{duid} option.
 
 @item @code{extra-content} (type: maybe-string)
 Extra content to append to the configuration as-is.
+
+@item @code{shepherd-provision} (default: @code{(networking)}) (type: list-of-symbols)
+This is a list of symbols naming Shepherd services provided by this
+service.
 
 @item @code{shepherd-requirement} (default: @code{()}) (type: list-of-symbols)
 This is a list of symbols naming Shepherd services that this service
@@ -22162,6 +22169,9 @@ will depend on.
 @end table
 
 @end deftp
+
+
+@c %end of fragment
 
 @cindex NetworkManager
 
@@ -43618,8 +43628,8 @@ Service type for binding a directory in multiple places on the file
 system.
 
 The access rights are either the same in source and destination
-(@code{'bind}), or writes are translated back to the sources as if made
-by the destination's owner (@code{'translate}), or kept in an overlay
+(@code{'bind}), or writes are translated back to the source as if made
+by the source's owner (@code{'translate}), or kept in an overlay
 directory near the destination (@code{'overlay}).  The service's value
 must be a @code{vfs-mapping-configuration} object.
 @end defvar
@@ -46432,8 +46442,7 @@ user need to enter a passphrase or use the REPL, this happens using the
 intended keyboard layout.
 
 When @var{qemu-networking?} is true, set up networking with the standard QEMU
-parameters.  When @var{virtio?} is true, load additional modules so that the
-initrd can be used as a QEMU guest with para-virtualized I/O drivers.
+parameters.
 
 When @var{volatile-root?} is true, the root file system is writable but any changes
 to it are lost.

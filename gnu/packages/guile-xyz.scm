@@ -141,6 +141,7 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages version-control)
+  #:use-module (gnu packages vim)  
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg)
@@ -353,6 +354,38 @@ currently does not do much, but it might in the future.")
      "This package provides Guile modules to interface with the OAuth and
 OAuth2 protocols.")
     (license license:gpl3+)))
+
+(define-public guile-bewaking
+  (package
+    (name "guile-bewaking")
+    (version "0.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/jjba23/bewaking.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cx2pn6bfgy1xzms92v28q3mf24p195sjl2yyz7wbq8r9nz6rc2i"))))
+    (build-system guile-build-system)
+    (arguments
+     (list
+      #:source-directory "src"))
+    (native-inputs (list guile-uuid guile-gcrypt guile-3.0))
+    (propagated-inputs (list openssl xxd))
+    (home-page "https://codeberg.org/jjba23/bewaking")
+    (synopsis "Authentication / Authorization library for Guile Scheme")
+    (description
+     "bewaking provides functionalities to (double) encrypt and
+decrypt data, aided by a custom obfuscation algorithm.
+
+It also provides a DSL to be used for Authorization and Authentication
+for your Guile Scheme projects with a simple user permission system.
+
+Data is protected through multiple layers of cryptography techniques
+and obfuscation tricks, producing secure files and tokens one can use.")
+    (license license:lgpl3+)))
 
 (define-public guile-openai
   (let ((commit "751cd5db5f8bb7c00e60042a7ec86100930b0f02")
@@ -2968,55 +3001,6 @@ users and in some situations.")
     (home-page "https://github.com/artyom-poptsov/guile-udev")
     (synopsis "Guile bindings to libudev")
     (description "Guile-Udev provides GNU Guile bindings to libudev.")
-    (license license:gpl3+)))
-
-(define-public guile-sly
-  (package
-    (name "guile-sly")
-    (version "0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://files.dthompson.us/sly/sly-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1svzlbz2vripmyq2kjh0rig16bsrnbkwbsm558pjln9l65mcl4qq"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  (substitute* "configure"
-                    (("_guile_required_version=\"2.0.11\"")
-                     "_guile_required_version=\"2\"")
-                    (("ac_subst_vars='")
-                     "ac_subst_vars='GUILE_EFFECTIVE_VERSION\n"))
-                  (substitute* (find-files "." "Makefile.in")
-                    (("moddir = .*$")
-                     (string-append
-                      "moddir = "
-                      "$(prefix)/share/guile/site/@GUILE_EFFECTIVE_VERSION@\n"))
-                    (("godir = .*$")
-                     (string-append
-                      "godir = "
-                      "$(prefix)/lib/guile/@GUILE_EFFECTIVE_VERSION@/site-ccache\n")))
-                  #t))))
-    (build-system gnu-build-system)
-    (arguments
-     '(#:configure-flags
-       (list (string-append "--with-libfreeimage-prefix="
-                            (assoc-ref %build-inputs "freeimage"))
-             (string-append "--with-libgslcblas-prefix="
-                            (assoc-ref %build-inputs "gsl")))))
-    (native-inputs
-     (list pkg-config))
-    (propagated-inputs
-     (list guile-sdl guile-opengl))
-    (inputs
-     (list guile-2.2 gsl freeimage mesa))
-    (synopsis "2D/3D game engine for GNU Guile")
-    (description "Sly is a 2D/3D game engine written in Guile Scheme.  Sly
-features a functional reactive programming interface and live coding
-capabilities.")
-    (home-page "https://dthompson.us/projects/sly.html")
     (license license:gpl3+)))
 
 (define* (g-golf-source #:key version hash)

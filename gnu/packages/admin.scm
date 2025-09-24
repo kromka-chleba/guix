@@ -4420,7 +4420,7 @@ you are running, what theme or icon set you are using, etc.")
 (define-public hyfetch
   (package
     (name "hyfetch")
-    (version "2.0.1")
+    (version "2.0.2")
     (source
      (origin
        (method git-fetch)
@@ -4429,7 +4429,7 @@ you are running, what theme or icon set you are using, etc.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1c81425jaa2i0jdkfp2v7rsb0z7vzgba3735lgf5m921618k18rr"))))
+        (base32 "1h3s8m6csmxj815cpzh30m59132n8drxya0s2lh5ngjkpazgdnv3"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest
@@ -4640,7 +4640,7 @@ information tool.")
 (define-public fastfetch-minimal
   (package
     (name "fastfetch-minimal")
-    (version "2.51.1")
+    (version "2.53.0")
     (source
      (origin
        (method git-fetch)
@@ -4649,7 +4649,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1c5z1mgpgm8nzxkdjfh0412zdnv1f8i1vvic2h5v99f9cmdjwr25"))
+        (base32 "0w260lscjy3rqahhr2637hb3fqsklv2qx59f2v66wy99nnmqvbha"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -6242,7 +6242,8 @@ alias cysdig=sudo csysdig --modern-bpf
                                 '("paths-arch.conf" "paths-debian.conf"
                                   "paths-fedora.conf" "paths-freebsd.conf"
                                   "paths-opensuse.conf" "paths-osx.conf")))))
-       (patches (search-patches "fail2ban-paths-guix-conf.patch"))))
+       (patches (search-patches "fail2ban-fix-sshd-filter.patch"
+                                "fail2ban-paths-guix-conf.patch"))))
     (build-system pyproject-build-system)
     (arguments
      (list

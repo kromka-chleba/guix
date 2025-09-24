@@ -248,6 +248,42 @@ individual low-level driver modules.")
     (home-page "https://www.comedi.org/")
     (license license:lgpl2.1)))
 
+(define-public ieee-p1076
+  (package
+    (name "ieee-p1076")
+    (version "2019")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://opensource.ieee.org/vasg/Packages/")
+             (commit (string-append "1076-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1va626i5ww2ziw3dghw0d2mq7mrj5dwcn0h019h77866yw2pq9xn"))))
+    (build-system copy-build-system)
+    (native-inputs (list python-minimal-wrapper nvc python-vunit))
+    (arguments
+     (list
+      ;; Not all 2019 features are supported by nvc compiler.
+      ;; pass 1055 of 1648
+      #:tests? #f
+      #:install-plan
+      #~'(("ieee" "share/ieee/p1076/ieee" #:include ("vhdl"))
+          ("std" "share/ieee/p1076/std" #:include ("vhdl")))))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "IEEE-1076")
+             (separator #f)
+             (files (list "share/ieee/p1076")))))
+    (home-page "https://IEEE-P1076.gitlab.io")
+    (synopsis "VHDL libraries corresponding to the IEEE 1076 standard")
+    (description
+     "Open source materials intended for reference by the IEEE standard 1076,
+as approved and published by the @acronym{VHDL, Very High Speed Hardware
+Description Language} Analysis and Standardization Group.")
+    (license license:asl2.0)))
+
 (define-public fftgen
   (let ((commit "3378b77d83a98b06184656a5cb9b54e50dfe4485") ;no releases
         (revision "1"))
@@ -371,68 +407,69 @@ For synthesis, the compiler generates netlists in the desired format.")
     (license (list license:gpl2 license:lgpl2.1+))))
 
 (define-public icestorm
-  (let ((commit "3cdcf4b009bb8681ab7e2e09d65043f04334b60e")
-        (revision "5"))
-    (package
-      (name "icestorm")
-      (version (git-version "0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-                (url "https://github.com/YosysHQ/icestorm/")
-                (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0ygp6cj7grlnyji572kx215p2mw4crllskif9g795f390bp38g68"))))
-      (build-system gnu-build-system)
-      (arguments
-       (list
-        #:tests? #f               ;avoid a cyclic dependency with nextpr-ice40
-        #:make-flags
-        #~(list (string-append "CC="
-                               #$(cc-for-target))
-                (string-append "CXX="
-                               #$(cxx-for-target))
-                (string-append "PREFIX="
-                               #$output)
-                "ICEPROG=1")
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'fix-usr-local
-              (lambda* (#:key outputs #:allow-other-keys)
-                (substitute* "icepack/Makefile"
-                  (("/usr/local")
-                   #$output))
-                (substitute* "icebox/Makefile"
-                  (("/usr/local")
-                   #$output))
-                (substitute* "icebox/icebox_vlog.py"
-                  (("/usr/local")
-                   #$output))))
-            (add-after 'build 'make-info
-              (lambda* (#:key outputs #:allow-other-keys)
-                (with-directory-excursion "docs"
-                  (invoke "make" "info")
-                  (install-file "build/texinfo/projecticestorm.info"
-                                (string-append #$output "/share/info"))
-                  (copy-recursively "build/texinfo/projecticestorm-figures"
-                                    (string-append #$output
-                                                   "/share/info/projecticestorm-figures")))))
-            (delete 'configure))))
-      (inputs (list libftdi))
-      (native-inputs (list pkg-config
-                           python
-                           python-sphinx
-                           python-sphinx-rtd-theme
-                           texinfo))
-      (home-page "https://prjicestorm.readthedocs.io/")
-      (synopsis "Bitstream tools for Lattice iCE40 FPGAs")
-      (description
-       "Project IceStorm aims at documenting the bitstream format of
-Lattice iCE40 FPGAs and providing simple tools for analyzing and creating bitstream
+  (package
+    (name "icestorm")
+    (version "1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/YosysHQ/icestorm/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yh36kd23y4sk65g34r1h244ax9fj5c668y6pwqwaq3c0nmb3d28"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f               ;no tests
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "CXX=" #$(cxx-for-target))
+              (string-append "PREFIX=" #$output)
+              "ICEPROG=1")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-usr-local
+            (lambda _
+              (substitute* "config.mk"
+                (("/usr/local")
+                 #$output))
+              (substitute* "icepack/Makefile"
+                (("/usr/local")
+                 #$output))
+              (substitute* "icebox/Makefile"
+                (("/usr/local")
+                 #$output))
+              (substitute* "icebox/icebox_vlog.py"
+                (("/usr/local")
+                 #$output))))
+          (add-after 'build 'make-info
+            (lambda _
+              (with-directory-excursion "docs"
+                (invoke "make" "info")
+                (install-file "build/texinfo/projecticestorm.info"
+                              (string-append #$output "/share/info"))
+                (copy-recursively
+                 "build/texinfo/projecticestorm-figures"
+                 (string-append #$output
+                                "/share/info/projecticestorm-figures")))))
+          (delete 'configure))))
+    (inputs
+     (list libftdi))
+    (native-inputs
+     (list pkg-config
+           python-minimal
+           python-sphinx-rtd-theme
+           python-sphinxcontrib-svg2pdfconverter
+           texinfo))
+    (home-page "https://prjicestorm.readthedocs.io/")
+    (synopsis "Bitstream tools for Lattice iCE40 FPGAs")
+    (description
+     "Project IceStorm aims at documenting the bitstream format of Lattice
+iCE40 FPGAs and providing simple tools for analyzing and creating bitstream
 files.")
-      (license license:isc))))
+    (license license:isc)))
 
 (define-public json-for-vhdl
   ;; No tagged releases.
@@ -477,6 +514,30 @@ files.")
 structures from external files on disk.  It provides a context to be
 used in the declarative section of design units.")
       (license license:asl2.0))))
+
+;;; Required by python-vunit.
+(define json-for-vhdl-for-vunit
+  (let ((commit "95e848b8902c6b4275d715462e1a2cc60706917c") ;sync with vunit
+        (revision "0"))
+    (package
+      (inherit json-for-vhdl)
+      (name "json-for-vhdl-for-vunit")
+      (version (git-version "20220106" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Paebbels/JSON-for-VHDL/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1c106hm0sfnzdi5j9vaacjlz7i5m1dm75j7lrgcdsa4siw5ac7k3"))))
+      (arguments
+       (list
+        #:install-plan
+        #~'(("src" "share/json-for-vhdl" #:include ("vhdl")))))
+      (native-inputs
+       '()))))
 
 (define librnd
   (package
@@ -1219,6 +1280,30 @@ library, scripting API, and co-simulation capability for FPGA or ASIC
 verification.")
     (license license:asl2.0)))
 
+;;; Required by python-vunit.
+(define osvvm-2023.04
+  (package
+    (inherit osvvm)
+    (name "osvvm")
+    (version "2023.04")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/osvvm/OsvvmLibraries/")
+              (commit version)
+              ;; OsvvmLibraries repository gathers all osvvm libraries as
+              ;; submodules.
+              (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kn18ibvm7bzdyw2d914284wriravyh5qwfarj06pb052x1yblyx"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments osvvm)
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (delete 'fix-scripts)))))))
+
 (define-public python-cocotb
   (package
     (name "python-cocotb")
@@ -1553,11 +1638,10 @@ to enforce it.")
        (method git-fetch)
        (uri (git-reference
               (url "https://github.com/VUnit/vunit")
-              (commit (string-append "v" version))
-              (recursive? #t)))
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zm7733g7ivcx6y00bigvqzkxa2i46sw4pb5k1n3lfbqvsjymshh"))))
+        (base32 "1si542jrrvibiigaridg2vds5smbiass7g5pdfk5z26xqgbh0fxc"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1571,7 +1655,18 @@ to enforce it.")
                 ((": \"llvm\",")
                  (string-append
                   ": \"llvm\",\n\tr\"static elaboration, LLVM JIT code "
-                  "generator\": \"llvm-jit\","))))))
+                  "generator\": \"llvm-jit\",")))))
+          (add-after 'ensure-no-mtimes-pre-1980 'dosymlink
+            (lambda* (#:key inputs #:allow-other-keys)
+              (with-directory-excursion "vunit/vhdl/JSON-for-VHDL"
+                (symlink
+                 (search-input-directory inputs "/share/json-for-vhdl")
+                 "src"))
+              (with-directory-excursion "vunit/vhdl"
+                (delete-file-recursively "osvvm")
+                (symlink
+                 (search-input-directory inputs "/share/osvvm/osvvm")
+                 "osvvm")))))
       #:test-flags
       ;; Skip lint tests which require python-pycodestyle, python-pylint and
       ;; python-mypy to reduce closoure size; some lint test fails, see
@@ -1587,6 +1682,8 @@ to enforce it.")
            python-setuptools
            python-setuptools-scm
            python-wheel))
+    (inputs
+     (list json-for-vhdl-for-vunit osvvm-2023.04))
     (propagated-inputs
      (list python-colorama))
     (home-page "https://vunit.github.io")

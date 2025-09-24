@@ -24,14 +24,14 @@
 ;;; Copyright © 2021 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
-;;; Copyright © 2022, 2024 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2022, 2024, 2025 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2022, 2023 Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;; Copyright © 2022 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2022 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2023 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2023 Ahmad Draidi <a.r.draidi@redscript.org>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
-;;; Copyright © 2023, 2024 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2023-2025 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 Raven Hallsby <karl@hallsby.com>
@@ -117,6 +117,7 @@
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages guile)
   #:use-module (gnu packages java)
   #:use-module (gnu packages haskell)
   #:use-module (gnu packages haskell-apps)
@@ -2269,7 +2270,7 @@ Machine Protocol.")
 (define-public looking-glass-client
   (package
     (name "looking-glass-client")
-    (version "B6")
+    (version "B7")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://looking-glass.io/artifact/" version
@@ -2277,7 +2278,7 @@ Machine Protocol.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "15d7wwbzfw28yqbz451b6n33ixy50vv8acyzi8gig1mq5a8gzdib"))))
+                "11crsvy783ig7kzmr2cr68wv9zsjkcbp1akcs28rc6yc1ik0dr89"))))
     (build-system cmake-build-system)
     (inputs (list bash-minimal
                   font-dejavu
@@ -2622,6 +2623,322 @@ and its various components should behave as well as a library of testing
 helpers that let you write your own unit and acceptance tests for Vagrant.")
     (home-page "https://github.com/hashicorp/vagrant-spec")
     (license license:mpl2.0)))
+
+(define-public vagrant
+  (package
+    (name "vagrant")
+    (version "2.3.7")  ;; last release under BSD-3 license
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hashicorp/vagrant")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0c674c5v70skh38lpydz8cdmcp8wgr9h7rn00rxdpgizrzbfxl82"))
+              (patches (search-patches
+                        "vagrant-bin-vagrant-silence-warning-about-installer.patch"
+                        "vagrant-Support-system-installed-plugins.patch"
+                        "vagrant-Use-a-private-temporary-dir.patch"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:tests? #f  ; test require ruby-grpc-tools which are not packaged yet
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-gemfile
+            (lambda _
+              (substitute* "Gemfile"
+                ((", git:.*") "\n"))))
+          (add-after 'unpack 'pin-executables
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((bsdtar (search-input-file inputs "/bin/bsdtar"))
+                     (curl (search-input-file inputs "/bin/curl"))
+                     (dnsmasq (search-input-file inputs "/sbin/dnsmasq"))
+                     (grep (search-input-file inputs "/bin/grep"))
+                     (modinfo (search-input-file inputs "/bin/modinfo"))
+                     (ps (search-input-file inputs "/bin/ps")))
+                ;; bsdtar
+                (for-each
+                 (lambda (rbfile)
+                   (substitute* rbfile
+                     (("\"bsdtar\",") (string-append "\"" bsdtar "\","))))
+                 (find-files "lib/vagrant/" "\\.rb$"))
+                ;; curl
+                (substitute* "lib/vagrant/util/downloader.rb"
+                  (("\"curl\",") (string-append "\"" curl "\",")))
+                (substitute* "lib/vagrant/util/uploader.rb"
+                  (("\"curl\",") (string-append "\"" curl "\",")))
+                (substitute* "plugins/hosts/linux/cap/nfs.rb"
+                  ;; grep
+                  (("\\| grep #\\{nfs_service")
+                   (string-append "| " grep " #{nfs_service"))
+                  (("\"grep\",") (string-append "\"" grep "\","))
+                  ;; modinfo
+                  (("Vagrant::Util::Which.which\\(\"modinfo\"\\)")
+                   (string-append "\"" modinfo "\"")))
+                ;; ssh, rsync:
+                ;; Don't pin ssh to allow different clients and to avoid
+                ;; configuration conflicts when running on a foreign distro.
+                ;; (substitute* "lib/vagrant/util/ssh.rb"
+                ;;   (("Which.which\\(\"ssh\", original_path: true\\)")
+                ;;    (string-append "\"" ssh "\"")))
+                ;; ps
+                (substitute* "lib/vagrant/util/platform.rb"
+                  (("\"ps\",") (string-append "\"" ps "\","))))))
+          (add-after 'extract-gemspec 'relax-requirements
+            (lambda _
+              (substitute* "vagrant.gemspec"
+                ;; Relax some version specification.
+                (("s\\.required_ruby_version ") "# s.required_ruby_version ")
+                (("dependency \"rgl\", \"~> 0.5.10\"")
+                 "dependency \"rgl\"")
+                (("dependency \"vagrant_cloud\", \"~> 3.0.5\"")
+                 "dependency \"vagrant_cloud\"")
+                (("dependency \"rexml\", .*")
+                 "dependency \"rexml\"\n")
+                ;; Remove Windows specific dependencies
+                ((".*dependency \"(wdm|winrm(|-elevated|-fs))\".*") "")
+                ;; Remove BSD dependency
+                ((".*dependency \"rb-kqueue\".*") "")
+                ;; Remove cyclic inclusion of gem
+                (("^  gitignore_path = " line)
+                 (string-append
+                  "all_files.reject! { |file| file.match?(\"vagrant-.*\\.gem\") }\n"
+                  line))))))))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "GUIX_VAGRANT_PLUGINS_PATH")
+            (files '("share/vagrant-plugins")))))
+    ;; TODO: install bash/zsh completions, man-page, etc.
+    ;; see http://svnweb.mageia.org/packages/cauldron/vagrant/current/SPECS/vagrant.spec
+    (native-inputs (list ruby-fake-ftp ruby-webrick bundler ruby-vagrant-spec))
+    (inputs (list curl dnsmasq grep kmod libarchive openssh procps))
+    (propagated-inputs
+     (list ruby-bcrypt-pbkdf ruby-childprocess ruby-ed25519 ruby-erubi
+           ruby-googleapis-common-protos-types ruby-grpc
+           ruby-hashicorp-checkpoint ruby-i18n ruby-listen ruby-log4r
+           ruby-mime-types ruby-net-ftp ruby-net-ssh ruby-net-sftp
+           ruby-net-scp ruby-ipaddr ruby-rexml ruby-rgl ruby-rubyzip
+           ruby-vagrant-cloud ruby-vagrant-spec))
+    (synopsis "Build and distribute virtualized development environments")
+    (description "Vagrant is the command line utility for managing the
+lifecycle of virtual machines.  Isolate dependencies and their configuration
+within a single disposable and consistent environment.
+
+Note: Make sure to have @code{ssh} and @code{rsync} installed — if you use the
+respective Vagrant functions.  This package does not link to any specific
+implementation of these to allow different clients and to avoid configuration
+conflicts when running on a `foreign distribution'.")
+    (home-page "https://www.vagrantup.com")
+    ;; CVE-2021-21361 is related to the gradle-vagrant-plugin
+    (properties '((lint-hidden-cve . ("CVE-2021-21361"))))
+    (license license:bsd-3)))
+
+(define-public vagrant-cachier
+  (package
+    (name "vagrant-cachier")
+    (version "1.2.1")
+    (source (origin
+              (method url-fetch)
+              (uri (rubygems-uri "vagrant-cachier" version))
+              (sha256
+               (base32
+                "0v11nf2d2y2knwm4zackd5ap8h2927n8rc1q73b6ii4hndv98fh9"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:tests? #f ; neither gem nor source actually has tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-plugin.json
+            (lambda _
+              (let* ((plugins.d (string-append
+                                 #$output "/share/vagrant-plugins/plugins.d"))
+                     (plugin.json (string-append
+                                   plugins.d "/" #$name ".json")))
+                (mkdir-p plugins.d)
+                #$(with-extensions (list guile-json-4)
+                    #~(begin
+                        (use-modules (json))
+                        (call-with-output-file plugin.json
+                          (lambda (port)
+                            (scm->json
+                             '((#$name
+                                .
+                                (("ruby_version"
+                                  . #$(package-version (this-package-input "ruby")))
+                                 ("vagrant_version"
+                                  . #$(package-version (this-package-input "vagrant")))
+                                 ("gem_version" .  "")
+                                 ("require" . "")
+                                 ("installed_gem_version" . #$version)
+                                 ("sources" . #()))))
+                             port)))))))))))
+    (inputs (list ruby vagrant))
+    (synopsis "Share a common package cache among similar VM instances")
+    (description "This package provides a Vagrant plugin that helps you reduce
+the amount of coffee you drink while waiting for boxes to be provisioned by
+sharing a common package cache among similar VM instances.  Kinda like
+vagrant-apt_cache or this magical snippet but targeting multiple package
+managers and Linux distros.")
+    (home-page "https://github.com/fgrehm/vagrant-cachier")
+    (license license:expat)))
+
+(define-public vagrant-libvirt
+  (package
+    (name "vagrant-libvirt")
+    (version "0.12.2")
+    (source (origin
+              (method url-fetch)
+              (uri (rubygems-uri "vagrant-libvirt" version))
+              (sha256
+               (base32
+                "013g6wn24k01lwwkzcb0vvxj959lws8c52bkyqi6b8shnn793j1l"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests involve running vagrant, downloading a box and
+                  ; access to libvirt socket
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-plugin.json
+            (lambda _
+              (let* ((plugins.d (string-append
+                                 #$output "/share/vagrant-plugins/plugins.d"))
+                     (plugin.json (string-append
+                                   plugins.d "/" #$name ".json")))
+                (mkdir-p plugins.d)
+                #$(with-extensions (list guile-json-4)
+                    #~(begin
+                        (use-modules (json))
+                        (call-with-output-file plugin.json
+                          (lambda (port)
+                            (scm->json
+                             '((#$name
+                                .
+                                (("ruby_version"
+                                  . #$(package-version (this-package-input "ruby")))
+                                 ("vagrant_version"
+                                  . #$(package-version (this-package-input "vagrant")))
+                                 ("gem_version" .  "")
+                                 ("require" . "")
+                                 ("installed_gem_version" . #$version)
+                                 ("sources" . #()))))
+                             port)))))))))))
+    (inputs (list ruby vagrant))
+    (propagated-inputs (list ruby-diffy
+                             ruby-fog-core
+                             ruby-fog-libvirt
+                             ruby-nokogiri
+                             ruby-rexml
+                             ruby-xml-simple))
+    (synopsis "Libvirt provider for Vagrant")
+    (description "This is a Vagrant plugin that adds a Libvirt provider to
+Vagrant, allowing Vagrant to control and provision machines via the Libvirt
+toolkit.")
+    (home-page "https://github.com/vagrant-libvirt/vagrant-libvirt")
+    (license license:expat)))
+
+(define-public vagrant-reload
+  (package
+    (name "vagrant-reload")
+    (version "0.0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (rubygems-uri "vagrant-reload" version))
+              (sha256
+               (base32
+                "0smy0px20xgakcyki5hdbk3n63k9c6ychh5pvbannn1p4zjxa0xa"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:tests? #f ; has no tests, testing as described in the Readme requires
+                  ; running vagrant, a provider and downloading a box
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-gemfile
+            (lambda _
+              (substitute* "Gemfile"
+                ((", :git.*") "\n"))))
+          (add-after 'install 'install-plugin.json
+            (lambda _
+              (let* ((plugins.d (string-append
+                                 #$output "/share/vagrant-plugins/plugins.d"))
+                     (plugin.json (string-append
+                                   plugins.d "/" #$name ".json")))
+                (mkdir-p plugins.d)
+                #$(with-extensions (list guile-json-4)
+                    #~(begin
+                        (use-modules (json))
+                        (call-with-output-file plugin.json
+                          (lambda (port)
+                            (scm->json
+                             '((#$name
+                                .
+                                (("ruby_version"
+                                  . #$(package-version (this-package-input "ruby")))
+                                 ("vagrant_version"
+                                  . #$(package-version (this-package-input "vagrant")))
+                                 ("gem_version" .  "")
+                                 ("require" . "")
+                                 ("installed_gem_version" . #$version)
+                                 ("sources" . #()))))
+                             port)))))))))))
+    (inputs (list ruby vagrant))
+    (synopsis "Reload a Vagrant VM as a provisioning step")
+    (description "This Vagrant plugin enables reloading a Vagrant VM as a
+provisioning step.")
+    (home-page "http://www.vagrantup.com")
+    (license license:expat)))
+
+(define-public vagrant-vai
+  (package
+    (name "vagrant-vai")
+    (version "0.9.3")
+    (source (origin
+              (method url-fetch)
+              (uri (rubygems-uri "vai" version))
+              (sha256
+               (base32
+                "041bi8hk03ybhacqzhw153j3knqhwvxn8aczzq6nikmpklcs4m4a"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests involve running vagrant and downloading a box
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-plugin.json
+            (lambda _
+              (let* ((plugins.d (string-append
+                                 #$output "/share/vagrant-plugins/plugins.d"))
+                     (plugin.json (string-append
+                                   plugins.d "/" #$name ".json")))
+                (mkdir-p plugins.d)
+                #$(with-extensions (list guile-json-4)
+                    #~(begin
+                        (use-modules (json))
+                        (call-with-output-file plugin.json
+                          (lambda (port)
+                            (scm->json
+                             '(("vai" ;; #$name
+                                .
+                                (("ruby_version"
+                                  . #$(package-version (this-package-input "ruby")))
+                                 ("vagrant_version"
+                                  . #$(package-version (this-package-input "vagrant")))
+                                 ("gem_version" .  "")
+                                 ("require" . "")
+                                 ("installed_gem_version" . #$version)
+                                 ("sources" . #()))))
+                             port)))))))))))
+    (inputs (list ruby vagrant))
+    (synopsis "Vagrant provisioning plugin to output an Ansible inventory")
+    (description "This plugin creates an Ansible inventory file containing the
+created virtual machines and the respective ssh-parameters.")
+    (home-page "https://github.com/MatthewMi11er/vai")
+    (license license:expat)))
 
 (define-public python-vagrant
   (package

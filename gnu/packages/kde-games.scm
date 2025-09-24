@@ -30,6 +30,7 @@
   #:use-module (guix build-system qt)
   #:use-module (guix build-system trivial)
   #:use-module (guix gexp)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages games)
@@ -38,23 +39,69 @@
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages xiph))
 
+(define-public libkdegames
+  (package
+    (name "libkdegames")
+    (version "25.08.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/libkdegames-" version ".tar.xz"))
+       (sha256
+        (base32 "0fp84nkjzf4m2r2gfp8i45xw9bv1mqxzbwn0ghawb4ah3jajyasl"))))
+    (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules))
+    (inputs
+     (list karchive
+           kbookmarks
+           kcodecs
+           kcompletion
+           kconfigwidgets
+           kcrash
+           kdbusaddons
+           kdeclarative
+           kdnssd
+           kglobalaccel
+           kguiaddons
+           ki18n
+           kiconthemes
+           kitemviews
+           kjobwidgets
+           knewstuff
+           kservice
+           ktextwidgets
+           kwidgetsaddons
+           kxmlgui
+           libsndfile
+           openal
+           qtdeclarative
+           qtsvg))
+    (home-page "https://apps.kde.org/categories/games/")
+    (synopsis "Runtime library for kdegames")
+    (description "Runtime library for kdegames")
+    (license (list license:gpl2+  license:fdl1.2+))))
+
 (define-public ktuberling
   (package
     (name "ktuberling")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ktuberling-" version ".tar.xz"))
        (sha256
-        (base32 "0hdn2rvi1v6jzvidqq6db38axiah7cg1jsmj0bdlpfjzbffi8mjl"))))
+        (base32 "0aqxk98qll6a89brbqdwrw92pazyg5z32rp141nc7zgx8j8i174w"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -98,14 +145,14 @@ This package is part of the KDE games module.")
 (define-public picmi
   (package
     (name "picmi")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/picmi-" version ".tar.xz"))
        (sha256
-        (base32 "1s2841rii2zdv6dg7987rgli28gczjsrglq19wxzg78gshhhjdbg"))))
+        (base32 "0kigm9m5ydzwfqsp4c5prywyl3x4fiswky5ji0cdi8fhcsgm9ixl"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -135,14 +182,14 @@ This package is part of the KDE games module.")
 (define-public kolf
   (package
     (name "kolf")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kolf-" version ".tar.xz"))
        (sha256
-        (base32 "0pbq1v84j8jl64p4lv60x1gss28181594vlhcpqyjadxwgy5n37m"))))
+        (base32 "0jp3gzw3mgwjricwi7qk6zhnnqbndzhh6ww0x8a1rps8j24x6cx4"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -185,14 +232,14 @@ This package is part of the KDE games module.")
 (define-public libkmahjongg
   (package
     (name "libkmahjongg")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/libkmahjongg-" version ".tar.xz"))
        (sha256
-        (base32 "0h3mvzqp00g9x21v6bxa04p12hkvb2zl6bg0zbkig53hxaiy775s"))))
+        (base32 "0alwrgx4n5nacmzp1523yw0hyiz4my53534zv125lpm27xqinwwd"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -234,14 +281,14 @@ other Mah Jongg like games.")
 (define-public kmahjongg
   (package
     (name "kmahjongg")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/kmahjongg-" version ".tar.xz"))
        (sha256
-        (base32 "0cwxn49isb2c31462irng83rg82v18cvyd9cz8i6ais2imvls2r2"))))
+        (base32 "1yp5ifhg1kzpakss7mnwg8qxn17c9v5pssmnqa7n82kbr8drk6pm"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -275,14 +322,14 @@ This package is part of the KDE games module.")
 (define-public kshisen
   (package
     (name "kshisen")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/kshisen-" version ".tar.xz"))
        (sha256
-        (base32 "12rw0wqzr8z2khy6yim6khlfgyxrhx5mx5f41xq8hmsd4125z0sz"))))
+        (base32 "0q5va5wk8ldwi5846vcb7fhyg3w7l5zb72gpb47qi02smwvdhjwy"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules
@@ -313,14 +360,14 @@ This package is part of the KDE games module.")
 (define-public kajongg
   (package
     (name "kajongg")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/kajongg-" version ".tar.xz"))
        (sha256
-        (base32 "0pq0vzxy7n64hjqx8hkn7gl58ligfmcnbk1mjnh9ndby8ar9pmz7"))))
+        (base32 "1sgng5709p4ghfp13z3qw4xlm2m667gzqw2vs2bzmm75gscj0c17"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -386,14 +433,14 @@ This package is part of the KDE games module.")
 (define-public kbreakout
   (package
     (name "kbreakout")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kbreakout-" version ".tar.xz"))
        (sha256
-        (base32 "00qbyv7awf70dxid2m71izsl39mfvjgzrfqdpfgkgisfvrwwnw90"))))
+        (base32 "1mfjka7myzs2vpjr8b22a3j6ndkqmyz97h88a4xbrmxq9w70wgzr"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -426,14 +473,14 @@ This package is part of the KDE games module.")
 (define-public kmines
   (package
     (name "kmines")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmines-" version ".tar.xz"))
        (sha256
-        (base32 "0qw460yp5g1ca21dl72mkdl7fidcbzs8ajvdsqyylrslh4aafxjq"))))
+        (base32 "1jxn4p1l8ijykchxn1918whgsnajl0z9fc3rpx3ybr920xlq3lbs"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -466,14 +513,14 @@ This package is part of the KDE games module.")
 (define-public konquest
   (package
     (name "konquest")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/konquest-" version ".tar.xz"))
        (sha256
-        (base32 "1ks4x320q6di0f8w8r9bnayhmn11cnfqw86jx63a74vgkn4878w6"))))
+        (base32 "1v1nbr5cfydj9kwiak0y74czlwj1grm02nh3ak4nxk8llhcdbg5s"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -508,14 +555,14 @@ This package is part of the KDE games module.")
 (define-public kbounce
   (package
     (name "kbounce")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/kbounce-" version ".tar.xz"))
        (sha256
-        (base32 "1kdrwn4i24kn9r3ardz92m2c2lfh2fla6x62g8wd8j30sd4q2i8j"))))
+        (base32 "1ylrsh1qzhhkvjs5x1n9zlw8v89iv9k48328x0h2cx74wnxf8z68"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -549,14 +596,14 @@ This package is part of the KDE games module.")
 (define-public kblocks
   (package
     (name "kblocks")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/kblocks-" version ".tar.xz"))
        (sha256
-        (base32 "0naipskix96gdigwhadnnz6mkcxkh7sjyvakigmkfdkac4fpd90c"))))
+        (base32 "1zscip75qjhxbq3lf4ysz0cwbvq009wid93lk4gdkybs7ydd1r4i"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -590,14 +637,14 @@ This package is part of the KDE games module.")
 (define-public ksudoku
   (package
     (name "ksudoku")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/ksudoku-" version ".tar.xz"))
        (sha256
-        (base32 "0mhc56s59l2hqdb27jypdgd82l2li2lil9a7kb4zg8x245c42jhk"))))
+        (base32 "0vgkhaj1w3r6kgq0sajdk66si7mjqkknfnz9bkq3saf6f9fv2g6z"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -653,14 +700,14 @@ This package is part of the KDE games module.")
 (define-public klines
   (package
     (name "klines")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/klines-" version ".tar.xz"))
        (sha256
-        (base32 "0xqddz0xzyn2j578v2clqsnqmqbf83787wkv54kpzdz3v6nbdswk"))))
+        (base32 "0hildpklv83xdbs1yxprplqgyggb8s8mgb0ri8gpnan3yd0wb890"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -699,14 +746,14 @@ This package is part of the KDE games module.")
 (define-public kgoldrunner
   (package
     (name "kgoldrunner")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kgoldrunner-" version ".tar.xz"))
        (sha256
-        (base32 "07mz92k9ggdfrl3hnpwg6xl70mjaklwrp26a282n1j66arawmkjv"))))
+        (base32 "14zx8cd4d1csprcf8ysz7avmdhl8whwnfhprqlsj8c5yxizkf1v2"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -743,14 +790,14 @@ This package is part of the KDE games module.")
 (define-public kdiamond
   (package
     (name "kdiamond")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kdiamond-" version ".tar.xz"))
        (sha256
-        (base32 "1a2fgdfckmsz3ycrlbiddfd2vfhlhx8zn47zg5f2ic00jpp8wch4"))))
+        (base32 "1ml5fj9ji7xbf74k5jzywlb9vr7gnznphi3zlabld3l0v1i30x97"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -784,14 +831,14 @@ This package is part of the KDE games module.")
 (define-public kfourinline
   (package
     (name "kfourinline")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kfourinline-" version ".tar.xz"))
        (sha256
-        (base32 "05cddjavbhdn4bwmg6ik2q0y0vjl1pn2nrlpkivsn97m1aka57hl"))))
+        (base32 "0h82s9bw4j0adb5zh3hz9d40az92qlhlimbw9fvkwgsk2a87078s"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -826,14 +873,14 @@ This package is part of the KDE games module.")
 (define-public kblackbox
   (package
     (name "kblackbox")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kblackbox-" version ".tar.xz"))
        (sha256
-        (base32 "1bj181is31hci056qxvf0wcqzggxxlszn65npm16038wa3bh95lw"))))
+        (base32 "0a4pwq3lck6lg2cgigv8qjyyscv419m79dwsxhpl00pwks8lfrjq"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -869,14 +916,14 @@ This package is part of the KDE games module.")
 (define-public knetwalk
   (package
     (name "knetwalk")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/knetwalk-" version ".tar.xz"))
        (sha256
-        (base32 "1d9v6cx7gskwv6qrayb7b5lxn8xx5rb8hr5q51zydivfry9cnlkx"))))
+        (base32 "04wv5vpcg3krgx6dq0g19rk720c3gydsmin9x0ag0wdmy9yiz3ki"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -911,14 +958,14 @@ This package is part of the KDE games module.")
 (define-public bomber
   (package
     (name "bomber")
-    (version "24.12.3")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/bomber-" version ".tar.xz"))
        (sha256
-        (base32 "03llwmd8ichdb9n2xy0rhxy3hwzrxq39jmspjcynxnapl8qq2jnh"))))
+        (base32 "1v6bqlw3ksyp4h0xk9n92jvp2p6k1xcbjmjfvnnfjnppa0q10g60"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -929,6 +976,7 @@ This package is part of the KDE games module.")
            kcrash
            kdbusaddons
            ki18n
+           kiconthemes
            kxmlgui
            libkdegames
            qtdeclarative))
@@ -954,14 +1002,14 @@ This package is part of the KDE games module.")
 (define-public granatier
   (package
     (name "granatier")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/granatier-" version ".tar.xz"))
        (sha256
-        (base32 "1k8j498gwkf0pg92jy22jmk6gcjxf88snbgvbvxic46xgv07n6vg"))))
+        (base32 "11k70q4xvcdmcwwk17r9xfp46y9jnig6xbyh4wjcr7iykbpl4fy6"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -994,14 +1042,14 @@ This package is part of the KDE games module.")
 (define-public ksirk
   (package
     (name "ksirk")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ksirk-" version ".tar.xz"))
        (sha256
-        (base32 "0n19nhzzh1acgkia0b5s827rpzxvkp2acl3v2qjsr9kzk43cf7bb"))))
+        (base32 "0b4ay3s0dm15azxdycvp3frnbxc27z9c5li58vpp5wmalqv9hch5"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1054,14 +1102,14 @@ This package is part of the KDE games module.")
 (define-public palapeli
   (package
     (name "palapeli")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/palapeli-" version ".tar.xz"))
        (sha256
-        (base32 "1b26qx1xdsby0vm93c0p89ka5hyrbn0z6mknja3s5vds0apwjrz9"))))
+        (base32 "1vnw6zpgmcscjcbcq5ijx32ibpxrfs4bi1418p1zqc9saq8c0y2l"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1103,14 +1151,14 @@ This package is part of the KDE games module.")
 (define-public kiriki
   (package
     (name "kiriki")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kiriki-" version ".tar.xz"))
        (sha256
-        (base32 "1blzngbwiqjs42qb79c41g714glmpwpfv5myww912i1k7n345gm6"))))
+        (base32 "0iciqi1ai8m1rpp3snzbdh9w6185mjck71836gpqb30k3wn1r81s"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1143,14 +1191,14 @@ This package is part of the KDE games module.")
 (define-public kigo
   (package
     (name "kigo")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kigo-" version ".tar.xz"))
        (sha256
-        (base32 "1gj9srz5rakkb2hjkd8awg2ra9acnizk2v4a4ldv11imxmx2fx1q"))))
+        (base32 "1zal219viq2qwpshka9rm87jz81qyh1hivgy21ixz4wksyrjd5wr"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1200,14 +1248,14 @@ This package is part of the KDE games module.")
 (define-public kubrick
   (package
     (name "kubrick")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kubrick-" version ".tar.xz"))
        (sha256
-        (base32 "1adysq3kfi70f60gj3b2g82b3p30y5sla1q87fmljvgfyb0zxyn5"))))
+        (base32 "109kklsv7rnhg4xrdnj51hmw6gmvhyi4cds42l20vkwkkchmbgfv"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1245,14 +1293,14 @@ This package is part of the KDE games module.")
 (define-public lskat
   (package
     (name "lskat")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/lskat-" version ".tar.xz"))
        (sha256
-        (base32 "05j5xfva0xc67x6ig3349amryza2fgrgvpg95svai4p8g5khppaa"))))
+        (base32 "1n2c74ykqd7lq3pm6fyyx79ind63p43a4lljwq0w9pwcvh7gy7f1"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1287,14 +1335,14 @@ This package is part of the KDE games module.")
 (define-public kapman
   (package
     (name "kapman")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kapman-" version ".tar.xz"))
        (sha256
-        (base32 "1hcfscsrd9sx6h5813mgr4is4154z9xxbh8sr8idkr8hqxrhf108"))))
+        (base32 "0pvmhh8mkm1yf2hq20c32hiq3d3fzk8jbxigk5gzzhwykml16gc2"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1329,14 +1377,14 @@ This package is part of the KDE games module.")
 (define-public kspaceduel
   (package
     (name "kspaceduel")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kspaceduel-" version ".tar.xz"))
        (sha256
-        (base32 "0lhy72afybp4z9hz7p48hyy17q29z5aj46981p3hn309y3yv2lac"))))
+        (base32 "1hg5rbi540alqrsswm0zpn54k4yp42p71pa3m2vznhfqkcacrq61"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1366,14 +1414,14 @@ This package is part of the KDE games module.")
 (define-public bovo
   (package
     (name "bovo")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/bovo-" version ".tar.xz"))
        (sha256
-        (base32 "1rdx9d3pghs7a8c5dhs0j07ckgxbbap4lxj1immsl62syk3jxrd5"))))
+        (base32 "1pb67vs42qfgxg701ligys9a5wrpq9qj0pyf88h4hjkmdzzyq4dz"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1405,14 +1453,14 @@ This package is part of the KDE games module.")
 (define-public killbots
   (package
     (name "killbots")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/killbots-" version ".tar.xz"))
        (sha256
-        (base32 "1h1j3n2wy641gp53m2rb8zbsn93ciprivfi718bcvwvr2k41ncga"))))
+        (base32 "17rp893yh5fvavwp2djydnrmckswy7qnqpal3kr1q6pp1yy3mvk8"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1449,14 +1497,14 @@ This package is part of the KDE games module.")
 (define-public ksnakeduel
   (package
     (name "ksnakeduel")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ksnakeduel-" version ".tar.xz"))
        (sha256
-        (base32 "0v7rh6zlf742gz6y8w440ap9zirv2yvmdybhz3qiwbxag5qvr5r0"))))
+        (base32 "1wl1m25bg2xz084bcnhry18qw4acmgfx27myfj7qyprsr7r7kry2"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1490,14 +1538,14 @@ This package is part of the KDE games module.")
 (define-public kollision
   (package
     (name "kollision")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kollision-" version ".tar.xz"))
        (sha256
-        (base32 "0hh85zl2wid190bgp542msigjyvdwfgvzvfcl22sx15ydnp6v6ma"))))
+        (base32 "0b9c1n434cwz7n59jivasqycxy78vrf3yqs6g5llah3dvb7jypl2"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1530,14 +1578,14 @@ This package is part of the KDE games module.")
 (define-public knavalbattle
   (package
     (name "knavalbattle")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/knavalbattle-" version ".tar.xz"))
        (sha256
-        (base32 "0dammn0a2z5valmbr3c85y6rsxh2isixl72wvfj6zvvp2s5lvsi1"))))
+        (base32 "1sgfy6sj7qv2bzvaw17zw3lb3rixiakkgcgpchp7iwyk8qiywkdy"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1572,14 +1620,14 @@ This package is part of the KDE games module.")
 (define-public kreversi
   (package
     (name "kreversi")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kreversi-" version ".tar.xz"))
        (sha256
-        (base32 "01chrif9f73nxx4fdmipi3yl2r8dzi5wsgksrc6kqj12j6gpdpjy"))))
+        (base32 "0znsljjhwll8v1hcm9fni5rs2nbvkck3fl57jd0gcv90fy8jp58n"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1616,14 +1664,14 @@ This package is part of the KDE games module.")
 (define-public ksquares
   (package
     (name "ksquares")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ksquares-" version ".tar.xz"))
        (sha256
-        (base32 "0p1nc34n93mzdxih6799j25fic95mha311rifnghk9mlc6fw416n"))))
+        (base32 "1q7012fdhw2425ky9r8r0jss4ds88ys85wv0i74axlpg2d3izglm"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1654,14 +1702,14 @@ This package is part of the KDE games module.")
 (define-public kjumpingcube
   (package
     (name "kjumpingcube")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kjumpingcube-" version ".tar.xz"))
        (sha256
-        (base32 "058sbbx73kbm2ils6ay0g3n9q05lid8aixl81i0246cgi2kvwvwy"))))
+        (base32 "13939dgjppzcmzwm4k76w9cvlg53v4xa5rmapi7v57igjnk91lr7"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1694,14 +1742,14 @@ This package is part of the KDE games module.")
 (define-public knights
   (package
     (name "knights")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/knights-" version ".tar.xz"))
        (sha256
-        (base32 "0yrrbmiv9blpafwpa24w4farv76rqghqnrr6r01kkxrikcav9j0y"))))
+        (base32 "1ak0hik6gvdy54p0jmyf7gn4z3qwy6nkxkja93pcmis1ibzcxx97"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1756,7 +1804,7 @@ This package is part of the KDE games module.")
 (define-public kde-games
   (package
     (name "kde-games")
-    (version "25.04.0")
+    (version "25.08.1")
     (source #f)
     (build-system trivial-build-system)
     (arguments

@@ -720,7 +720,7 @@ them out, at the source.")
 (define-public libpwquality
   (package
     (name "libpwquality")
-    (version "1.4.4")
+    (version "1.4.5")
     (source (origin
               (method url-fetch)
               (uri (list
@@ -732,7 +732,7 @@ them out, at the source.")
                                    "libpwquality-" version ".tar.bz2")))
               (sha256
                (base32
-                "0id5a8bi8xnjg11g9vzrl2xbpx65mfxclxcvis7zx1v8vhisyfyl"))))
+                "1209l7ba51rjsq724hi8my0s11xpslp9hhif9p89jp9hbnviikvg"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -1671,20 +1671,21 @@ your online accounts makes it necessary.")
 (define-public hashcat
   (package
     (name "hashcat")
-    (version "6.2.6")
+    (version "7.1.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://hashcat.net/files/hashcat-" version
                                   ".tar.gz"))
               (sha256
                (base32
-                "0akv1cgbmwyw8h8zbw5w5ixh92y95sdadh8qiz60hjgkpivi0pmj"))
+                "15lbzjfb6n3d06090g1dyf3llc20mnmrn1yc9ys30xbldlracilm"))
               (modules '((guix build utils)))
               ;; Delete bundled libraries.
               (snippet
                ;; TODO: Unbundle LZMA-SDK as well
                #~(for-each delete-file-recursively
-                           '("deps/zlib" "deps/xxHash" "deps/OpenCL-Headers")))))
+                           '("deps/unrar" ;; nonfree license
+                             "deps/zlib" "deps/xxHash" "deps/OpenCL-Headers")))))
     (inputs (list minizip opencl-headers xxhash zlib))
     (build-system gnu-build-system)
     (arguments
@@ -1692,6 +1693,7 @@ your online accounts makes it necessary.")
            #:make-flags #~(list (string-append "PREFIX=" #$output)
                                 (string-append "AR=" #$(ar-for-target))
                                 (string-append "CC=" #$(cc-for-target))
+                                (string-append "ENABLE_UNRAR=0")
                                 (string-append "USE_SYSTEM_ZLIB=1")
                                 (string-append "USE_SYSTEM_OPENCL=1")
                                 (string-append "USE_SYSTEM_XXHASH=1"))
@@ -1702,6 +1704,7 @@ your online accounts makes it necessary.")
                               (("\\$\\(shell date \\+%s\\)")
                                "0"))))
                         (delete 'configure))))
+    (supported-systems %64bit-supported-systems)
     (home-page "https://hashcat.net/hashcat/")
     (synopsis "Advanced password recovery utility")
     (description

@@ -17,7 +17,7 @@
 # Copyright © 2017, 2020 Mathieu Othacehe <m.othacehe@gmail.com>
 # Copyright © 2017, 2018, 2019 Gábor Boskovits <boskovits@gmail.com>
 # Copyright © 2018 Amirouche Boubekki <amirouche@hypermove.net>
-# Copyright © 2018, 2019, 2020, 2021, 2022, 2024 Oleg Pykhalov <go.wigust@gmail.com>
+# Copyright © 2018, 2019, 2020, 2021, 2022, 2024, 2025 Oleg Pykhalov <go.wigust@gmail.com>
 # Copyright © 2018 Stefan Stefanović <stefanx2ovic@gmail.com>
 # Copyright © 2018, 2020-2025 Maxim Cournoyer <maxim@guixotic.coop>
 # Copyright © 2019, 2020, 2021, 2022, 2024 Guillaume Le Vaillant <glv@posteo.net>
@@ -1012,6 +1012,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/audiofile-CVE-2015-7747.patch		\
   %D%/packages/patches/audiofile-CVE-2018-13440.patch		\
   %D%/packages/patches/audiofile-CVE-2018-17095.patch		\
+  %D%/packages/patches/audiofile-CVE-2022-24599.patch		\
   %D%/packages/patches/audiofile-check-number-of-coefficients.patch \
   %D%/packages/patches/audiofile-Fail-on-error-in-parseFormat.patch \
   %D%/packages/patches/audiofile-Fix-index-overflow-in-IMA.cpp.patch \
@@ -1239,9 +1240,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/erlang-man-path.patch			\
   %D%/packages/patches/esmini-use-pkgconfig.patch		\
   %D%/packages/patches/esmtp-add-lesmtp.patch		\
+  %D%/packages/patches/esound-c99.patch         		\
   %D%/packages/patches/exercism-disable-self-update.patch	\
   %D%/packages/patches/extempore-unbundle-external-dependencies.patch	\
   %D%/packages/patches/extundelete-e2fsprogs-1.44.patch		\
+  %D%/packages/patches/fail2ban-fix-sshd-filter.patch           \
   %D%/packages/patches/fail2ban-paths-guix-conf.patch		\
   %D%/packages/patches/faiss-tests-CMakeLists-find-googletest.patch	\
   %D%/packages/patches/falcosecurity-libs-shared-build.patch	\
@@ -1704,7 +1707,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/kodi-set-libcurl-ssl-parameters.patch		\
   %D%/packages/patches/krita-bump-sip-abi-version-to-12.8.patch	\
   %D%/packages/patches/krita-xsimd-13-compat.patch	\
-  %D%/packages/patches/kvmfr-linux-module-fix-build.patch	\
   %D%/packages/patches/kwayland-5-fix-build.patch		\
   %D%/packages/patches/kwin-unwrap-executable-name-for-dot-desktop-search.patch\
   %D%/packages/patches/laby-make-install.patch			\
@@ -1993,6 +1995,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/openssl-hurd64.patch			\
   %D%/packages/patches/opentaxsolver-file-browser-fix.patch     \
   %D%/packages/patches/open-zwave-hidapi.patch			\
+  %D%/packages/patches/opusfile-CVE-2022-47021.patch		\
   %D%/packages/patches/orangeduck-mpc-fix-pkg-config.patch	\
   %D%/packages/patches/orbit2-fix-array-allocation-32bit.patch \
   %D%/packages/patches/orpheus-cast-errors-and-includes.patch	\
@@ -2416,6 +2419,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/unzip-32bit-zipbomb-fix.patch    \
   %D%/packages/patches/ustr-fix-build-with-gcc-5.patch		\
   %D%/packages/patches/util-linux-tests.patch			\
+  %D%/packages/patches/vagrant-bin-vagrant-silence-warning-about-installer.patch	\
+  %D%/packages/patches/vagrant-Support-system-installed-plugins.patch	\
+  %D%/packages/patches/vagrant-Use-a-private-temporary-dir.patch	\
   %D%/packages/patches/vboot-utils-fix-format-load-address.patch	\
   %D%/packages/patches/vboot-utils-fix-tests-show-contents.patch	\
   %D%/packages/patches/vboot-utils-skip-test-workbuf.patch	\

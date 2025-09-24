@@ -2395,7 +2395,7 @@ such as chess or stockfish.")
 (define-public gnubg
   (package
     (name "gnubg")
-    (version "1.07.001")
+    (version "1.08.003")
     (source
      (origin
        (method url-fetch)
@@ -2403,10 +2403,10 @@ such as chess or stockfish.")
                            version "-sources.tar.gz"))
        (sha256
         (base32
-         "07l2srlm05c99l4pppba8l54bnh000ns2rih5h8rzbcw84lrffbj"))))
+         "0yar8j6g2f1q9zz9m9ha9xzvjr6mwp2qrzwhp9ppizyg2fdrczbg"))))
     (build-system gnu-build-system)
     (inputs (list ;; XXX: Build with an older Pango for 'pango_font_get_hb_font' and
-                  ;; 'pango_coverage_get_type'.  Try removing this for versions > 1.07.001.
+                  ;; 'pango_coverage_get_type'.  Try removing this for versions > 1.08.003.
                   pango-1.42
                   glib
                   readline
@@ -2415,10 +2415,10 @@ such as chess or stockfish.")
                   glu
                   gtkglext
                   sqlite
-                  libcanberra
-                  libxcrypt))           ;required by Python.h
-    (native-inputs `(("python-2" ,python-2)
-                     ("pkg-config" ,pkg-config)))
+                  libcanberra))
+    (native-inputs (list flex
+                         python
+                         pkg-config))
     (arguments
      `(#:configure-flags
        ;; SSE instructions are available on Intel systems only.
@@ -2777,7 +2777,7 @@ Every puzzle has a complete solution, although there may be more than one.")
 (define-public dsda-doom
   (package
     (name "dsda-doom")
-    (version "0.29.0")
+    (version "0.29.3")
     (source
      (origin
        (method git-fetch)
@@ -2786,7 +2786,7 @@ Every puzzle has a complete solution, although there may be more than one.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1aki559nz1czlvzah1rdmpdcad4mswpp5gszfwxhil9x0hc3gj4r"))))
+        (base32 "1nhlwxwhs69ibsi873cdjanfdlpqcb4ybcp8c2j8j9l07xpgvk1n"))))
     (build-system cmake-build-system)
     (arguments
      (list
