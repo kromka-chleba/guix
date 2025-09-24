@@ -1561,21 +1561,21 @@ also includes the druntime and phobos libraries."
             #:frontend-version "2.111.0"))
 (define-public gdc gdc-14)
 
-(define-public gdmd
-  (let ((commit "ff2c97a47408fb71c18a2d453294d18808a97cc5")
-        (revision "1"))
+(define* (make-gdmd pkg-gdc)
+  (let ((gdc-version (package-version pkg-gdc))
+        (gdmd-version "0.25.0"))
     (package
       (name "gdmd")
-      (version (git-version "0.1.0" revision commit))
+      (version (string-append gdc-version "-" gdmd-version))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                 (url "https://github.com/D-Programming-GDC/gdmd")
-                (commit commit)))
-         (file-name (git-file-name name version))
+                (commit (string-append "script-" gdmd-version))))
+         (file-name (git-file-name name gdmd-version))
          (sha256
-          (base32 "0pd70clk70069xcjysaas7zszzmigrcw1zl2xxv8kzdg7y7xrzvm"))))
+          (base32 "02zncqbjrrbh5w9s18frcylhn5x3qmqb3gdlr4kxd8dkajkr3vjj"))))
       (build-system copy-build-system)
       (arguments
        (list
@@ -1591,12 +1591,30 @@ also includes the druntime and phobos libraries."
                    (string-append "my $gdc_dir = \""
                                   (dirname (search-input-file inputs "/bin/gdc"))
                                   "\";\n"))))))))
-      (inputs (list gdc perl))
+      (inputs
+       (list pkg-gdc
+             perl))
       (home-page "https://github.com/D-Programming-GDC/gdmd")
       (synopsis "DMD-like wrapper for GDC")
       (description "This package provides a DMD-like wrapper for the
 @acronym{GNU D Compiler,GDC}.")
       (license gpl3+))))
+
+(define-public gdmd-9
+  (make-gdmd gdc-9))
+(define-public gdmd-10
+  (make-gdmd gdc-10))
+(define-public gdmd-11
+  (make-gdmd gdc-11))
+(define-public gdmd-12
+  (make-gdmd gdc-12))
+(define-public gdmd-13
+  (make-gdmd gdc-13))
+(define-public gdmd-14
+  (make-gdmd gdc-14))
+(define-public gdmd-15
+  (make-gdmd gdc-15))
+(define-public gdmd gdmd-14)
 
 (define-public gm2
   (hidden-package
