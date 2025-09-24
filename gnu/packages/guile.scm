@@ -474,8 +474,6 @@ without requiring the source code to be rewritten.")
             (variable "GUILE_EXTENSIONS_PATH")
             (files '("lib/guile/3.0/extensions")))))))
 
-(define-public guile-3.0-latest guile-3.0)
-
 ;;; The symbol guile-3.0/fixed should be used when guile-3.0 needs fixes
 ;;; (security or else) and this deprecation could be removed.
 (define-deprecated/public-alias guile-3.0/fixed guile-3.0/pinned)
@@ -536,6 +534,8 @@ without requiring the source code to be rewritten.")
                   gperf)
          (replace "guile" this-package)))
       (synopsis "Development version of GNU Guile"))))
+
+(define-public guile-3.0-latest guile-next)
 
 (define* (make-guile-readline guile #:optional (name "guile-readline"))
   (package
