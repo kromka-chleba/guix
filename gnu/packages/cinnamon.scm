@@ -97,7 +97,7 @@ for theming and features used in desktop environments outside of GNOME.")
 (define-public libxapp
   (package
     (name "libxapp")
-    (version "2.4.3")
+    (version "2.8.13")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -106,7 +106,7 @@ for theming and features used in desktop environments outside of GNOME.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0n443lwmxzmfnw03n98cqnm2ah1iij6pwsnwbly8sncmzg5jyklg"))))
+                "0i7pyib8s4hjf5k01gaw8nmckxi6haji4ngpj41y1ymq7y9k1cq9"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -126,7 +126,7 @@ for theming and features used in desktop environments outside of GNOME.")
           (add-before 'configure 'set-gtk-module-path
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (substitute* "libxapp/meson.build"
-                (("gtk3_dep\\.get_pkgconfig_variable[(]'libdir'[)]")
+                (("gtk3_dep\\.get_variable[(]pkgconfig: 'libdir'[)]")
                  (string-append "'" (assoc-ref outputs "out") "/lib'")))
 
               (substitute* "scripts/pastebin"
