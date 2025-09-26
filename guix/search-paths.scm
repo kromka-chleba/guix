@@ -207,6 +207,9 @@
 
 (define %common-search-paths
   (list (search-path-specification
+          (variable "DICPATH")
+          (files '("share/hunspell")))
+        (search-path-specification
           (variable "GUIX_LOCPATH")
           (files '("lib/locale")))
         (search-path-specification
