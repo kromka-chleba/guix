@@ -320,11 +320,11 @@ persist XApp settings windows using GSettings.")
            gnome-common
            gtk+
            iso-codes
-           libxkbfile
            libxrandr
            libxext
            pulseaudio
            xkeyboard-config))
+    (propagated-inputs (list libxkbfile))
     (native-inputs
      (list gettext-minimal
            `(,glib "bin")               ;glib-gettextize
