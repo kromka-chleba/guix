@@ -31,6 +31,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
@@ -46,6 +47,7 @@
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnuzilla)
@@ -63,9 +65,11 @@
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages samba)
+  #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wm)
@@ -652,6 +656,98 @@ settings, themes, mouse settings, and startup of other daemons.")
     (description "This package provides translation files for cinnamon and
 related packages.")
     (license license:gpl2+)))
+
+(define-public cinnamon
+  (package
+    (name "cinnamon")
+    (version "6.4.13")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/linuxmint/cinnamon")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0pyr8hn5psdn0hpa3zanagh1h26nlyavkvl4chpmiiwazr0vjqaw"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:glib-or-gtk? #true
+      #:imported-modules `((guix build python-build-system)
+                           ,@%meson-build-system-modules)
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-install
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "meson.build"
+                (("install_dir: '/',") "install_dir: prefix,"))
+              (substitute* "install-scripts/meson_update_icon_cache.py"
+                (("gtk-update-icon-cache") "true"))
+              (substitute* (append (find-files "files/usr/bin")
+                                   (find-files "files/usr/share" "\\.py$"))
+                ((".*octopi.*") "")
+                (("/usr/bin/passwd") "passwd")
+                (("/usr/bin/([a-z_-]*)" all command)
+                 (if (string-prefix? "cinnamon" command)
+                     (string-append #$output "/bin/" command)
+                     (search-input-file inputs
+                                        (string-append "/bin/" command))))
+                (("/usr/share") (string-append #$output "/share")))
+              (rename-file "files/usr/bin" "files/bin")
+              (rename-file "files/usr/share" "files/share")
+              (rmdir "files/usr")))
+          (add-after 'install 'add-install-to-pythonpath
+            (@@ (guix build python-build-system) add-install-to-pythonpath))
+          (add-after 'add-install-to-pythonpath 'wrap-for-python
+            (@@ (guix build python-build-system) wrap))
+          (add-after 'wrap-for-python 'wrap-gi
+            (lambda _
+              (define gi-typelib-path (getenv "GI_TYPELIB_PATH"))
+              (for-each
+               (lambda (program)
+                 (unless (wrapped-program? program)
+                   (wrap-program program
+                     `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))))
+               (find-files (string-append #$output "/bin"))))))))
+    (inputs (list cinnamon-control-center
+                  cinnamon-desktop
+                  cinnamon-menus
+                  cjs
+                  cups-minimal
+                  gcr-3
+                  gstreamer
+                  libgnomekbd
+                  libsecret
+                  libxapp
+                  network-manager
+                  muffin
+                  polkit
+                  python-wrapper
+                  python-dbus
+                  python-libsass
+                  python-pam
+                  python-pycairo
+                  python-pexpect
+                  python-psutil
+                  python-pytz
+                  python-pygobject
+                  python-requests
+                  python-setproctitle
+                  python-tinycss2
+                  python-xlrd
+                  xdg-utils))
+    (native-inputs (list gettext-minimal
+                         `(,glib "bin")
+                         gobject-introspection
+                         intltool
+                         pkg-config))
+    (home-page "https://github.com/linuxmint/cinnamon/")
+    (synopsis "Graphical desktop environment")
+    (description
+     "Cinnamon is a desktop environment reminiscent of ye olde GNOME 2,
+with its underlying technology forked from modern GNOME.")
+    (license (list license:gpl2+))))
 
 (define-public muffin
   (package
