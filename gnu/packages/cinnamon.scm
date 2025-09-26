@@ -43,6 +43,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages iso-codes)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages photo)
@@ -224,7 +225,7 @@ persist XApp settings windows using GSettings.")
 (define-public cinnamon-desktop
   (package
     (name "cinnamon-desktop")
-    (version "5.6.2")
+    (version "6.4.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -233,7 +234,7 @@ persist XApp settings windows using GSettings.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0rnk0vmpjiz8pgn5y8zizr91ilwzfh9w7cmfsjpqg3h5wkpxz22z"))))
+                "15yq710rphidq35nk5d7dmd0cq0yiamp70ic9pwdqhj2zds5bp4h"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -242,9 +243,11 @@ persist XApp settings windows using GSettings.")
     (inputs
      (list accountsservice
            alsa-lib
+           eudev
            glib
            gnome-common
            gtk+
+           iso-codes
            libxkbfile
            libxrandr
            libxext
