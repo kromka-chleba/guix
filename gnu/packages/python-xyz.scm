@@ -347,32 +347,33 @@ user.")
 (define-public python-apprise
   (package
     (name "python-apprise")
-    (version "1.9.3")
+    (version "1.9.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "apprise" version))
        (sha256
-        (base32 "19k51ici58134m61f6di0m36mbqgdyr6r31i8v6rk22vldz6d0zm"))))
+        (base32 "126951n9lnlqrw5lbsvs9xs7jzg33bqqxm7cfnqag2csw6p24ca8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; These tests used to be ran with --numprocesses, but that seems to have
+      ;; made them non-deterministic.
       #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count))
-              "--ignore=test/test_plugin_macosx.py"
-              ;; AssertionError
-              "--deselect=test/test_plugin_wxpusher.py::test_plugin_wxpusher_urls")))
+      #~(list
+         "--deselect=tests/test_plugin_glib.py::test_plugin_glib_send_raises_generic"
+         "--ignore=tests/test_plugin_macosx.py")))
     (native-inputs
      (list python-babel
            python-pytest
            python-pytest-mock
-           python-pytest-xdist
            python-setuptools
            python-wheel))
     (propagated-inputs
      (list python-certifi
            python-click
            python-markdown
+           python-pygobject
            python-pyyaml
            python-requests
            python-requests-oauthlib))
