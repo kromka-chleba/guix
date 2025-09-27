@@ -86,6 +86,7 @@
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Aleksandr Lebedev <alex.lebedev2003@icloud.com>
 ;;; Copyright © 2026 Carlos Durán Domínguez <wurt@wurt.eu>
+;;; Copyright © 2025 John Khoo <johnkhootf@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2811,6 +2812,32 @@ corners, shadows, inactive window dimming, etc.")
     (description
      "Swayidle is a idle management daemon for Wayland compositors.")
     (license license:expat))) ; MIT license
+
+(define-public sway-audio-idle-inhibit
+  (let ((commit "f1e924628a59e7b658493514297aea0991f76b74")
+        (revision "1"))          ; commit fixes elogind build
+  (package
+    (name "sway-audio-idle-inhibit")
+    (version (git-version "0.2.0" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ErikReider/SwayAudioIdleInhibit")
+             (commit commit)))
+       (file-name (git-file-name "SwayAudioIdleInhibit" version))
+       (sha256
+        (base32 "1lgfy7bd1kkc6fg5i9blrmn2ssxggqpshh1l8pbv7wn7d8y4r84f"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:configure-flags '("-Dlogind-provider=elogind")))
+    (inputs (list elogind pulseaudio))
+    (native-inputs (list pkg-config))
+    (home-page "https://github.com/ErikReider/SwayAudioIdleInhibit")
+    (synopsis "Idle inhibit for Sway/Hyprland")
+    (description "Prevents swayidle/hypridle from sleeping while any
+     application is outputting or receiving audio.")
+    (license license:gpl3))))
 
 (define-public swaylock
   (package
