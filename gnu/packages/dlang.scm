@@ -34,11 +34,13 @@
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module ((guix build utils) #:hide (delete which))
+  #:use-module (guix build-system)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
@@ -54,6 +56,24 @@
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages xorg)
   #:use-module (srfi srfi-1))
+
+
+;; Compilers and tooling for the D programming language.
+;; Note: The GNU D compiler is defined in (gnu packages gcc) instead.
+
+(define (force* arg)
+  (if (promise? arg)
+      (force arg)
+      arg))
+
+(define (gexp-list? l)
+  (and (gexp? l)
+       (list? (gexp->approximate-sexp l))))
+
+(define* (gexp-if cond t #:optional (f #~()))
+  (unless (every gexp-list? (list t f))
+    (error "gexp-if: Not a GEXP list."))
+  (if cond t f))
 
 (define-public d-tools
   (package
@@ -107,266 +127,497 @@ which runs D source files as scripts, and @code{dustmite}, which reduces D code
 to a minimal test case.")
     (license license:boost1.0)))
 
-;; We use GDC, the D frontend for GCC, to bootstrap ldc.  We then use
-;; ldc to bootstrap itself so that no reference remains to GDC.
-(define ldc-bootstrap
-  (package
-    (name "ldc")
-    (version "1.38.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/ldc-developers/ldc/releases"
-                           "/download/v" version "/ldc-" version "-src.tar.gz"))
-       (sha256
-        (base32 "13pkg69wjj4ali4ikijicccpg8y6f2hghhb70z9lrqr2w3pkhqna"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:disallowed-references (,tzdata-for-tests)
-       #:tests? #f                  ;skip in the bootstrap
-       #:build-type "Release"
-       #:configure-flags
-        (list "-GNinja"
-              ;; see .github/actions/2-build-bootstrap/action.yml
-              "-DBUILD_SHARED_LIBS=OFF")
-       #:make-flags                 ;used as build targets
-        (list "all")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "runtime/phobos/std/process.d"
-               (("/bin/sh") (which "sh"))
-               (("echo") (which "echo")))))
-         (replace 'build
-           ;; Building with Make would result in "make: *** [Makefile:166:
-           ;; all] Error 2".
-           (lambda* (#:key make-flags parallel-build? #:allow-other-keys)
-             (let ((job-count (number->string (or (and parallel-build?
-                                                       (parallel-job-count))
-                                                  1))))
-               (apply invoke "cmake" "--build" "." "-j" job-count
-                      "--target" make-flags))))
-         (replace 'install
-           (lambda _
-             (invoke "cmake" "--install" "."))))))
-    (inputs
-     `(("libconfig" ,libconfig)
-       ("libedit" ,libedit)
-       ("zlib" ,zlib)))
-    (native-inputs
-     `(("lld-wrapper" ,(make-lld-wrapper lld-17 #:lld-as-ld? #t))
-       ("llvm" ,llvm-17)
-       ("ldc" ,gdmd)
-       ("ninja" ,ninja)
-       ("python-wrapper" ,python-wrapper)
-       ("tzdata" ,tzdata-for-tests)
-       ("unzip" ,unzip)))
-    (home-page "http://wiki.dlang.org/LDC")
-    (synopsis "LLVM-based compiler for the D programming language")
-    (description
-     "LDC is an LLVM compiler for the D programming language.  It is based on
-the latest DMD compiler that was written in C and is used for
-bootstrapping more recent compilers written in D.")
-    (properties
-     ;; Some of the tests take a very long time on ARMv7.  See
-     ;; <https://lists.gnu.org/archive/html/guix-devel/2018-02/msg00312.html>.
-     `((max-silent-time . ,(* 3600 3))))
-    ;; Most of the code is released under BSD-3, except for code originally
-    ;; written for GDC, which is released under GPLv2+, and the DMD frontend,
-    ;; which is released under the "Boost Software License version 1.0".
-    (license (list license:bsd-3
-                   license:gpl2+
-                   license:boost1.0))))
+;; LLVM-based D compiler
 
+;; FIXME/TODO: Use seperate output for libdruntime-ldc-shared and
+;; libphobos-ldc-shared, to remove runtime dependency on ldc, llvm,
+;; clang-runtime and clang for D applications. Add debug output.
+(define* (make-ldc version hash
+                   #:key
+                   (name "ldc")
+                   (frontend-version #f)
+
+                   (bootstrap-dmd (delay gdmd-11))
+                   (llvm (delay llvm))
+                   (clang-runtime (delay clang-runtime))
+                   (clang (delay clang)))
+  (define (since-version? since) (version>=? version since))
+  (define (until-version? until) (version>? until version))
+  (define (dmd-test-path subpath)
+    (string-append
+     (if (until-version? "1.31")
+         "tests/d2/dmd-testsuite"
+         "tests/dmd")
+     subpath))
+  (define* (make-ldc-stage stage prev-stage)
+    (package
+      (name name)
+      (version version)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/ldc-developers/ldc")
+                (commit (string-append "v" version))
+                (recursive? #t)))
+         (file-name (git-file-name name version))
+         (sha256 (base32 hash))))
+      (inputs
+       (list (force* llvm)
+             (force* clang-runtime)
+             libconfig
+             zlib
+             (force* clang) ; Used as a linker wrapper.
+             tzdata         ; std.datetime.timezone
+             curl           ; std.net.curl
+             bash-minimal)) ; std.process
+      (native-inputs
+       (list (force* (cond ((= stage 1) bootstrap-dmd)
+                           ((= stage 2) prev-stage)))
+             (force* clang)
+             lld-as-ld-wrapper
+             ;; For testing
+             (@* (gnu packages commencement) ld-gold-wrapper)
+             gdb-16
+             python-wrapper
+             python-lit))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; Note: In stage 1, allow references to the bootstrap compiler for
+        ;; dynamic linking. In stage 2 those should not remain. Stage 2 might
+        ;; still have internal error messages referencing stage 1 paths, which
+        ;; is fine.
+        #:disallowed-references
+        (cond ((= stage 1) (list))
+              ((= stage 2) (list (force* bootstrap-dmd))))
+        #:generator "Ninja"
+        #:configure-flags
+        (if (target-riscv64?)
+            #~'("-DCMAKE_EXE_LINKER_FLAGS=-latomic")
+            #~'())
+        #:build-type
+        (cond ((= stage 1) "Debug")
+              ((= stage 2) "RelWithDebInfo"))
+        #:tests?
+        (cond ((= stage 1) #f)
+              ((= stage 2) #t))
+        #:phases
+        (let* ((target-file
+                (lambda (pkg path)
+                  (file-append (this-package-input pkg) path)))
+               (native-file
+                (lambda (pkg path)
+                  (file-append (this-package-native-input pkg) path)))
+               (target-bin-sh (target-file "bash-minimal" "/bin/sh"))
+               (target-bin-clang (target-file "clang" "/bin/clang"))
+               (target-clang-runtime (target-file "clang-runtime" ""))
+               (target-lib-curl (target-file "curl" "/lib/libcurl.so"))
+               (target-zoneinfo (target-file "tzdata" "/share/zoneinfo/"))
+               (native-bin-clang (native-file "clang" "/bin/clang"))
+               (native-bin-clang++ (native-file "clang" "/bin/clang++")))
+          #~(modify-phases %standard-phases
+              #$@(gexp-if
+                  ;; LDC needs a C compiler as a linker wrapper.
+                  ;; Change the default fallback "cc" to clang.
+                  ;; Discovery implemented in ldc v1.19.0.
+                  (since-version? "1.19.0")
+                  (let ((file-to-patch (if (until-version? "1.33.0")
+                                           "driver/tool.cpp"
+                                           "driver/tool.h")))
+                    #~((add-after 'patch-usr-bin-file 'patch-default-cc
+                         (lambda _
+                           (substitute* #$file-to-patch
+                             (("\"cc\"")
+                              (format #f "~s" #$target-bin-clang))))))))
+              (add-after 'unpack 'patch-compiler-rt-library-discovery
+                (lambda _
+                  (let* ((system #$(or (%current-target-system)
+                                       (%current-system)))
+                         (arch (car (string-split system #\-)))
+                         (clang-arch (cond
+                                      ((string-suffix? "86" arch) "i386")
+                                      (#t arch))))
+                    ;; Coax LLVM into agreeing with Clang about system target
+                    ;; naming.
+                    (substitute* "driver/linker-gcc.cpp"
+                      (("triple.getArchName\\(\\)")
+                       (format #f "~s" clang-arch)))
+                    ;; Augment the configuration of the ldc2 binaries so they
+                    ;; can find the compiler-rt libraries they need to be
+                    ;; linked with for the tests.
+                    (substitute* (find-files "." "^ldc2.*\\.conf\\.in$")
+                      ((".*LIB_SUFFIX.*" all)
+                       (string-append all
+                                      "        \""
+                                      #$target-clang-runtime
+                                      "/lib/linux\",\n"))))))
+              #$@(gexp-if
+                  ;; Using ImportC will always emit warnings when using gcc 14+
+                  ;; as its preprocessor, causing tests that read stderr to
+                  ;; fail.
+                  ;; Introduced in ldc v1.29.0.
+                  ;; Fixed (like this) in ldc v1.40.0.
+                  (and (since-version? "1.29.0")
+                       (until-version? "1.40.0"))
+                  #~((add-after 'unpack 'patch-importc-system-header
+                       (lambda _
+                         (substitute* "runtime/druntime/src/importc.h"
+                           (("^#define __IMPORTC__ 1.*$" all)
+                            (string-append
+                             all
+                             "\n"
+                             "#ifdef __GNUC__\n"
+                             "#pragma GCC system_header\n"
+                             "#endif\n")))))))
+              ;; Using ImportC with clang as preprocessor will cause
+              ;; ImportC to fail on glibc float headers.
+              ;; Introduced in ldc v1.33.0.
+              #$@(gexp-if
+                  (since-version? "1.33.0")
+                  (if (until-version? "1.41.0")
+                      #~((add-after 'unpack 'patch-importc-float128
+                           (lambda _
+                             (substitute* "runtime/druntime/src/importc.h"
+                               (("^#ifndef __aarch64__.*$")
+                                (string-append
+                                 "#if !defined(__aarch64__) && defined(__clang__)\n"
+                                 "#define __float128 long double\n"
+                                 "#elif !defined(__aarch64__)\n"))))))
+                      #~((add-after 'unpack 'patch-importc-float128
+                           (lambda _
+                             (substitute* "runtime/druntime/src/importc.h"
+                               (("^#ifndef __clang__.*$")
+                                (string-append
+                                 "#ifdef __clang__\n"
+                                 "#define __float128 long double\n"
+                                 "#else\n"))))))))
+              #$@(gexp-if
+                  ;; The ldc-profgen tool is broken in ldc v1.36.0.
+                  (and (since-version? "1.36.0")
+                       (until-version? "1.37.0"))
+                  #~((add-after 'unpack 'disable-ldc-profgen
+                       (lambda _
+                         (delete-file-recursively "tools/ldc-profgen")))))
+              (add-after 'unpack 'patch-paths-in-phobos
+                (lambda _
+                  (with-directory-excursion "runtime/phobos"
+                    (substitute* "std/datetime/timezone.d"
+                      (("\"/usr/share/zoneinfo/\"")
+                       (format #f "~s" #$target-zoneinfo)))
+                    (substitute* "std/net/curl.d"
+                      (("\"libcurl\\.so\"")
+                       (format #f "~s" #$target-lib-curl)))
+                    (substitute* "std/process.d"
+                      (("return \"/bin/sh\";")
+                       (format #f "return ~s;" #$target-bin-sh))
+                      (("#!/bin/sh")
+                       (string-append "#!" #$target-bin-sh))))))
+              (add-after 'unpack 'patch-getInstalledTZNames-infinite-symlink
+                (lambda _
+                  ;; Disable following directory symlinks when iterating tzdata.
+                  (substitute* "runtime/phobos/std/datetime/timezone.d"
+                    (("SpanMode\\.depth\\)") "SpanMode.depth, false)"))))
+              (add-after 'unpack 'patch-tests
+                (lambda _
+                  ;; Patch a shell path in the dmd tests Makefile.
+                  ;; The file was fully replaced with run.d in ldc v1.37.0.
+                  #$@(gexp-if
+                      (until-version? "1.37.0")
+                      #~((substitute* #$(dmd-test-path "/Makefile")
+                           (("SHELL=/bin/bash")
+                            (string-append "SHELL=" #$target-bin-sh)))))
+
+                  ;; Fails often. Relies on guessing the test binary size,
+                  ;; sleeps, and file timestamps.
+                  ;; Introduced in ldc v1.1.0.
+                  #$@(gexp-if
+                      (since-version? "1.1.0")
+                      #~((delete-file "tests/linking/ir2obj_cache_pruning2.d")))
+
+                  ;; Very unreliable.
+                  ;; Introduced in ldc v1.4.0.
+                  #$@(gexp-if
+                      (since-version? "1.4.0")
+                      #~((delete-file "tests/sanitizers/fuzz_asan.d")))
+
+                  ;; These 2 tests try to build a Makefile on their own.
+                  ;; Introduced in ldc v1.8.0.
+                  #$@(gexp-if
+                      (since-version? "1.8.0")
+                      #~((delete-file-recursively "tests/plugins")))
+
+                  ;; This test doesn't expect the linker to demangle D symbols.
+                  ;; Introduced in ldc v1.8.1.
+                  #$@(gexp-if
+                      (since-version? "1.8.1")
+                      #~((substitute*
+                             #$(dmd-test-path "/fail_compilation/needspkgmod.d")
+                           (("_D7imports9pkgmod3133mod3barFZv")
+                            "imports.pkgmod313.mod.bar()"))))
+
+                  ;; Our gdb is more clever than expected.
+                  ;; Introduced in ldc v1.13.0. Fixed (like this) in v1.40.0.
+                  #$@(gexp-if
+                      (and (since-version? "1.13.1")
+                           (until-version? "1.40.0"))
+                      #~((substitute* "tests/debuginfo/print_gdb.d"
+                           (("GDB: p b_Glob")
+                            "GDB: p inputs.import_b.b_Glob"))))
+
+                  ;; These CTFE tests fail on riscv64-linux.
+                  ;; Test for signbit introduced in ldc v1.19.0.
+                  ;; Test for getNaNPayload introduced in vldc 1.25.0.
+                  ;; std.math was split into modules in vldc 1.27.0.
+                  #$@(gexp-if
+                      (target-riscv64?)
+                      (let ((comment (lambda (line) (string-append "// " line)))
+                            (nan-rgx "static assert\\(getNaNPayload\\(a\\)")
+                            (signbit-rgx "static assert\\(signbit\\(-.*\\.nan"))
+                        (cond
+                         ((and (since-version? "1.19.0")
+                               (until-version? "1.27.0"))
+                          #~((substitute* "runtime/phobos/std/math.d"
+                               ((nan-rgx line) (comment line))
+                               ((signbit-rgx line) (comment line)))))
+                         ((since-version? "1.27.0")
+                          #~((substitute* "runtime/phobos/std/math/operations.d"
+                               ((nan-rgx line) (comment line)))
+                             (substitute* "runtime/phobos/std/math/traits.d"
+                               ((signbit-rgx line) (comment line))))))))
+
+                  ;; This test creates a shell script and runs it.
+                  ;; Introduced in ldc v1.22.0.
+                  #$@(gexp-if
+                      (since-version? "1.22.0")
+                      #~((substitute* #$(dmd-test-path "/dshell/test6952.d")
+                           (("/usr/bin/env bash") #$target-bin-sh))))
+
+                  ;; Fails to detect the race condition for some reason.
+                  ;; Introduced in ldc v1.23.0.
+                  #$@(gexp-if
+                      (since-version? "1.23.0")
+                      #~((for-each delete-file
+                                   '("tests/sanitizers/tsan_tiny_race.d"
+                                     "tests/sanitizers/tsan_tiny_race_TLS.d"))))
+
+                  ;; Ditto.
+                  ;; Introduced in ldc v1.27.0.
+                  #$@(gexp-if
+                      (since-version? "1.27.0")
+                      #~((for-each delete-file
+                                   '("tests/sanitizers/msan_noerror.d"
+                                     "tests/sanitizers/msan_uninitialized.d"))))
+
+                  ;; Ditto.
+                  ;; Introduced in ldc v1.30.0.
+                  #$@(gexp-if
+                      (since-version? "1.30.0")
+                      #~((for-each delete-file
+                                   '("tests/sanitizers/lsan_memleak.d"))))
+
+                  ;; Doesn't compile due to implicit int error.
+                  ;; Introduced in ldc v1.31.0.
+                  ;; Fixed in ldc v1.38.0.
+                  #$@(gexp-if
+                      (and (since-version? "1.31.0")
+                           (until-version? "1.38.0"))
+                      #~((substitute* "runtime/druntime/test/shared/src/host.c"
+                           (("const fullpathsize")
+                            "const size_t fullpathsize"))))
+
+                  ;; Also related to ImportC with clang breaking on floats.
+                  ;; Introduced in ldc v1.36.0
+                  ;; Fixed (like this) in ldc v1.41.0.
+                  #$@(gexp-if
+                      (and (since-version? "1.36.0")
+                           (until-version? "1.41.0"))
+                      #~((delete-file
+                          #$(dmd-test-path "/compilable/fix24187.c"))))
+
+                  ;; Patch a shell path in the druntime profile test Makefile.
+                  ;; Introduced in ldc v1.34.0.
+                  #$@(gexp-if
+                      (since-version? "1.34.0")
+                      #~((substitute* "runtime/druntime/test/profile/Makefile"
+                           (("SHELL=/bin/bash")
+                            (string-append "SHELL=" #$target-bin-sh)))))
+
+                  ;; Since the implementation of SOURCE_DATE_EPOCH support in
+                  ;; Ddoc, this test fails, as it expects Ddoc timestamps to
+                  ;; match the output of the `date` command.
+                  ;; Introduced in ldc v1.36.0.
+                  #$@(gexp-if
+                      (since-version? "1.36.0")
+                      #~((substitute* #$(dmd-test-path
+                                         (string-append
+                                          "/compilable/extra-files"
+                                          "/ddocYear-postscript.sh"))
+                           (("^YEAR=.*$") "YEAR=1970\n"))))
+
+                  ;; This tests how the CC env var is handled by the compiler,
+                  ;; by setting it to cc, which we don't have.
+                  ;; Introduced in ldc v1.37.0.
+                  #$@(gexp-if
+                      (since-version? "1.37.0")
+                      #~((delete-file "tests/driver/cli_CC_envvar.d")))
+
+                  ;; One of these tests hangs when a modern llvm opt is applied.
+                  ;; Fix by only running debug builds.
+                  ;; Introduced in ldc v1.41.0.
+                  #$@(gexp-if
+                      (since-version? "1.41.0")
+                      #~((substitute*
+                             "runtime/druntime/test/exceptions/Makefile"
+                           (("TESTS\\+=memoryerror.*$" all)
+                            (string-append
+                             "ifeq ($(BUILD),debug)\n" all "endif\n")))))
+
+                  ;; The following tests fail on some systems, not all of
+                  ;; which are tested upstream.
+                  (for-each
+                   (lambda (path) (false-if-file-not-found (delete-file path)))
+                   (list
+                    #$@(gexp-if
+                        (or (target-x86-32?)
+                            (target-arm32?))
+                        #~(#$(dmd-test-path "/runnable_cxx/cppa.d")
+                           "tests/codegen/mangling.d"
+                           "tests/instrument/xray_check_pipeline.d"
+                           "tests/instrument/xray_link.d"
+                           "tests/instrument/xray_simple_execution.d"
+                           "tests/PGO/profile_rt_calls.d"
+                           "tests/sanitizers/msan_noerror.d"
+                           "tests/sanitizers/msan_uninitialized.d"))
+                    #$@(gexp-if
+                        (target-riscv64?)
+                        #~(#$(dmd-test-path "/codegen/simd_alignment.d")
+                           #$(dmd-test-path "/compilable/test23705.d")
+                           #$(dmd-test-path "/fail_compilation/diag7420.d")
+                           #$(dmd-test-path "/runnable/argufilem.d")
+                           #$(dmd-test-path "/runnable_cxx/cppa.d")))))))
+              ;; The tests require to be built with Clang; build everything
+              ;; with it, for simplicity.
+              (add-before 'configure 'set-cc
+                (lambda _
+                  (setenv "CC" #$native-bin-clang)
+                  (setenv "CXX" #$native-bin-clang++)))
+              ;; The test targets are tested separately to provide
+              ;; finer-grained diagnostics (see the `.github/actions/4*`
+              ;; files in the source).
+              (replace 'check
+                (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+                  (define* (run-tests name includes excludes
+                                      #:key
+                                      (job-count (if parallel-tests?
+                                                     (parallel-job-count)
+                                                     1)))
+                    (define (regex-flags prefix patterns)
+                      (if (> (length patterns) 0)
+                          (list prefix
+                                (format #f "(~a)" (string-join patterns "|")))
+                          '()))
+                    (format #t "running the ~a...\n" name)
+                    (apply invoke
+                           `("ctest"
+                             "--output-on-failure"
+                             "-j" ,(number->string job-count)
+                             ,@(regex-flags "-R" includes)
+                             ,@(regex-flags "-E" excludes))))
+                  (when tests?
+                    (run-tests "ldc2 unit tests"
+                               (list "ldc2-unittest")
+                               (list))
+                    (run-tests "lit test suite"
+                               (list "lit-tests")
+                               (list))
+                    ;; This test has a race condition so run it with 1 core.
+                    (run-tests "dmd test suite"
+                               (list "dmd-testsuite")
+                               (list)
+                               #:job-count 1)
+                    (run-tests "druntime unit tests"
+                               (list "druntime-test-runner"
+                                     "^core\\."
+                                     "^etc\\.linux" "etc\\.valgrind"
+                                     "^ldc\\."
+                                     "^object"
+                                     "^rt\\.")
+                               (list #$@(gexp-if
+                                         (target-riscv64?)
+                                         ;; These hang forever
+                                         #~("core.thread.fiber-.*shared"
+                                            "core.thread.osthread-.*shared"))))
+                    (run-tests "druntime integration tests"
+                               (list "druntime-test")
+                               (list "druntime-test-runner"
+                                     #$@(gexp-if
+                                         (target-aarch64?)
+                                         #~("druntime-test-exceptions-debug"))))
+                    ;; Building these tests is very resource intensive, so
+                    ;; limit the job count.
+                    (run-tests
+                     "phobos unit tests"
+                     (list "phobos"
+                           "etc\\.c\\."
+                           "^std")
+                     (list #$@(gexp-if
+                               (target-aarch64?)
+                               #~("std.internal.math.gammafunction-.*shared"
+                                  "std.math.exponential-shared"))
+                           #$@(gexp-if
+                               (target-riscv64?)
+                               #~("std.internal.math.errorfunction-.*shared"
+                                  "std.internal.math.gammafunction-.*shared"
+                                  "std.math.exponential-.*shared"
+                                  "std.math.operations-debug-shared"
+                                  "std.math.traits-debug-shared"
+                                  "std.math.trigonometry-.*shared"
+                                  "std.mathspecial-.*shared"
+                                  "std.socket-debug-shared"
+                                  "std.socket-shared")))
+                     #:job-count 1))))))))
+      (properties
+       ;; Some of the tests take a very long time on ARMv7.  See
+       ;; https://lists.gnu.org/archive/html/guix-devel/2018-02/msg00312.html.
+       (if (target-arm32?)
+           `((max-silent-time . ,(* 3600 3)))
+           '()))
+      (home-page "http://wiki.dlang.org/LDC")
+      (synopsis "LLVM-based compiler for the D programming language")
+      (description
+       (string-append
+        "The LDC project provides a portable D programming language compiler
+with modern optimization and code generation capabilities.  The compiler uses
+the official DMD frontend to support the latest version of D2, and relies on the
+LLVM Core libraries for code generation."
+        (if frontend-version
+            (format
+             #f "~%~%This compiler is based on the DMD frontend version ~a."
+             frontend-version)
+            "")))
+      ;; Most of the code is released under BSD-3, except for code originally
+      ;; written for GDC, which is released under GPLv2+, and the DMD frontend
+      ;; and druntime library which are released under the
+      ;; "Boost Software License version 1.0".
+      (license (list license:bsd-3
+                     license:gpl2+
+                     license:boost1.0))))
+  (let* ((stage1 (make-ldc-stage 1 #f))
+         (stage2 (make-ldc-stage 2 stage1)))
+    stage2))
+
+(define ldc-1.25
+  (make-ldc "1.25.1" "0h30gzl8fl6c5gjf3xrrjj4i6m5r1mzn6y5g8vkir3y0z0mgpd31"
+            #:frontend-version "2.095.1"
+            #:llvm (delay llvm-12)
+            #:clang-runtime (delay clang-runtime-12)))
 (define-public ldc
-  (package
-    (inherit ldc-bootstrap)
-    (arguments
-     (substitute-keyword-arguments
-       (strip-keyword-arguments '(#:tests?) (package-arguments ldc-bootstrap))
-       ((#:make-flags _ #f)
-        '(list "all"
-               ;; Also build the test runner binaries.
-               "ldc2-unittest" "all-test-runners"))
-       ((#:configure-flags _ #~'())
-        `(list "-GNinja"
-               "-DBUILD_SHARED_LIBS=ON"
-               ,@(if (target-riscv64?)
-                     `("-DCMAKE_EXE_LINKER_FLAGS=-latomic")
-                     '())))
-       ((#:phases phases)
-        `(modify-phases ,phases
-           (add-after 'unpack 'fix-compiler-rt-library-discovery
-             (lambda* (#:key inputs #:allow-other-keys)
-               (let ((clang-runtime (assoc-ref inputs "clang-runtime"))
-                     (system ,(or (%current-target-system)
-                                  (%current-system))))
-                 (define (gnu-triplet->clang-arch system)
-                   (let ((system-prefix
-                           (car (string-tokenize
-                                  system (char-set-complement (char-set #\-))))))
-                     (cond
-                       ((equal? system-prefix "i686") "i386")
-                       (#t system-prefix))))
-                 ;; Coax LLVM into agreeing with Clang about system target
-                 ;; naming.
-                 (substitute* "driver/linker-gcc.cpp"
-                   (("triple.getArchName\\(\\)")
-                    (format #f "~s" (gnu-triplet->clang-arch system))))
-                 ;; Augment the configuration of the ldc2 binaries so they can
-                 ;; find the compiler-rt libraries they need to be linked with
-                 ;; for the tests.
-                 (substitute* (find-files "." "^ldc2.*\\.conf\\.in$")
-                   ((".*LIB_SUFFIX.*" all)
-                    (string-append all
-                                   "        \"" clang-runtime
-                                   "/lib/linux\",\n"))))))
-           (add-after 'unpack 'patch-paths-in-tests
-             (lambda _
-               (substitute* "runtime/druntime/test/profile/Makefile"
-                 (("/bin/bash") (which "bash")))
-               (substitute* "tests/driver/cli_CC_envvar.d"
-                 (("cc") (which "clang")))
-               (substitute* "tests/linking/linker_switches.d"
-                 (("echo") (which "echo")))
-               (substitute* "tests/dmd/dshell/test6952.d"
-                 (("/usr/bin/env bash")
-                  (which "bash")))))
-           (add-after 'unpack 'disable-problematic-tests
-             (lambda* (#:key inputs #:allow-other-keys)
-               ;; Disable unittests in the following files.
-               (substitute* '("runtime/phobos/std/net/curl.d"
-                              "runtime/phobos/std/datetime/systime.d"
-                              "runtime/phobos/std/datetime/timezone.d")
-                 (("version(unittest)") "version(skipunittest)")
-                 ((" unittest") " version(skipunittest) unittest"))
-               ;; The following tests plugins we don't have.
-               (delete-file "tests/plugins/addFuncEntryCall/testPlugin.d")
-               (delete-file "tests/plugins/addFuncEntryCall/testPluginLegacy.d")
-               ;; This unit test requires networking, fails with
-               ;; "core.exception.RangeError@std/socket.d(778): Range
-               ;; violation".
-               (substitute* "runtime/phobos/std/socket.d"
-                 (("assert\\(ih.addrList\\[0\\] == 0x7F_00_00_01\\);.*")
-                  ""))
-
-               ;; These tests fail on riscv64-linux.
-               (substitute* "runtime/phobos/std/math/operations.d"
-                 (("static assert\\(getNaNPayload\\(a\\)" all )
-                  (string-append "// " all)))
-               (substitute* "runtime/phobos/std/math/traits.d"
-                 (("static assert\\(signbit\\(-.*\\.nan" all)
-                  (string-append "// " all)))
-
-               ;; The GDB tests suite fails; there are a few bug reports about
-               ;; it upstream.
-               (for-each delete-file (find-files "tests" "gdb.*\\.(c|d|sh)$"))
-               (delete-file "tests/dmd/runnable/b18504.d")
-               (substitute* "runtime/druntime/test/exceptions/Makefile"
-                 ((".*TESTS\\+=rt_trap_exceptions_drt_gdb.*")
-                  ""))
-               ;; Unsupported with glibc-2.35.
-               (delete-file "tests/dmd/compilable/stdcheaders.c")
-               (delete-file "tests/dmd/compilable/test23958.c")
-               (delete-file "tests/dmd/runnable/test23889.c")
-               (delete-file "tests/dmd/runnable/test23402.d")
-               (delete-file "tests/dmd/runnable/helloc.c")
-               ;; Only works in 2024 and without SOURCE_DATE_EPOCH
-               (delete-file "tests/dmd/compilable/ddocYear.d")
-               ;; Drop gdb_dflags from the test suite.
-               (substitute* "tests/dmd/CMakeLists.txt"
-                 (("\\$\\{gdb_dflags\\}") ""))
-               ;; The following tests fail on some systems, not all of
-               ;; which are tested upstream.
-               (with-directory-excursion "tests"
-                 (cond
-                   (,(or (target-x86-32?)
-                         (target-arm32?))
-                     (for-each delete-file
-                               '("PGO/profile_rt_calls.d"
-                                 "codegen/mangling.d"
-                                 "instrument/xray_check_pipeline.d"
-                                 "instrument/xray_link.d"
-                                 "instrument/xray_simple_execution.d"
-                                 "sanitizers/msan_noerror.d"
-                                 "sanitizers/msan_uninitialized.d"
-                                 "dmd/runnable_cxx/cppa.d")))
-                   (,(target-riscv64?)
-                     (for-each delete-file
-                               '("codegen/simd_alignment.d"
-                                 "dmd/runnable/argufilem.d"
-                                 "dmd/compilable/test23705.d"
-                                 "dmd/fail_compilation/diag7420.d")))
-                   (#t '())))))
-           (add-before 'configure 'set-cc-and-cxx-to-use-clang
-             ;; The tests require to be built with Clang; build everything
-             ;; with it, for simplicity.
-             (lambda _
-               (setenv "CC" (which "clang"))
-               (setenv "CXX" (which "clang++"))))
-           (replace 'check
-             (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
-               (when tests?
-                 (let ((job-count (number->string
-                                   (or (and parallel-tests?
-                                            (parallel-job-count))
-                                       1))))
-                   ;; The test targets are tested separately to provide
-                   ;; finer-grained diagnostics (see:
-                   ;; https://raw.githubusercontent.com/ldc-developers/
-                   ;; ldc/master/.azure-pipelines/3-posix-test.yml)
-                   (display "running the ldc2 unit tests...\n")
-                   (invoke "ctest" "--output-on-failure" "-j" job-count
-                           "-R" "ldc2-unittest")
-                   (display "running the lit test suite...\n")
-                   (invoke "ctest" "--output-on-failure" "-j" job-count
-                           "-R" "lit-tests")
-                   (display "running the dmd test suite...\n")
-                   ;; This test has a race condition so run it with 1 core.
-                   (invoke "ctest" "--output-on-failure" "-j" "1"
-                           "-R" "dmd-testsuite")
-                   (display "running the defaultlib unit tests and druntime \
-integration tests...\n")
-                   (invoke
-                     "ctest" "--output-on-failure" "-j" job-count "-E"
-                     (string-append
-                       "dmd-testsuite|lit-tests|ldc2-unittest"
-                       ,@(cond
-                           ((target-aarch64?)
-                            `(,(string-append
-                                 "|std.internal.math.gammafunction-shared"
-                                 "|std.math.exponential-shared"
-                                 "|std.internal.math.gammafunction-debug-shared"
-                                 "|druntime-test-exceptions-debug")))
-                           ((target-riscv64?)
-                            `(,(string-append
-                                 "|std.internal.math.errorfunction-shared"
-                                 "|std.internal.math.gammafunction-shared"
-                                 "|std.math.exponential-shared"
-                                 "|std.math.trigonometry-shared"
-                                 "|std.mathspecial-shared"
-                                 "|std.socket-shared"
-                                 "|std.internal.math.errorfunction-debug-shared"
-                                 "|std.internal.math.gammafunction-debug-shared"
-                                 "|std.math.operations-debug-shared"
-                                 "|std.math.exponential-debug-shared"
-                                 "|std.math.traits-debug-shared"
-                                 "|std.mathspecial-debug-shared"
-                                 "|std.math.trigonometry-debug-shared"
-                                 "|std.socket-debug-shared"
-                                 ;; These four hang forever
-                                 "|core.thread.fiber-shared"
-                                 "|core.thread.osthread-shared"
-                                 "|core.thread.fiber-debug-shared"
-                                 "|core.thread.osthread-debug-shared")))
-                           (#t `("")))))))))))))
-    (native-inputs
-     (append (delete "llvm"
-                     (alist-replace "ldc" (list ldc-bootstrap)
-                                    (package-native-inputs ldc-bootstrap)))
-         `(("clang" ,clang-17)          ;propagates llvm and clang-runtime
-           ("python-lit" ,python-lit))))))
+  (make-ldc "1.38.0" "068gqv368mhi9jywk9dcx9xssywcix5ypixxs9hi87cz3w913xbp"
+            #:frontend-version "2.108.1"
+            #:bootstrap-dmd ldc-1.25
+            #:llvm (delay llvm-18)
+            #:clang-runtime (delay clang-runtime-18)))
 
 ;;; Bootstrap version of phobos that is built with GDC, using GDC's standard
 ;;; library.
