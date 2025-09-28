@@ -21,11 +21,11 @@
 
 (define-module (gnu packages iso-codes)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (gnu packages check)
   #:use-module (gnu packages gettext)
@@ -152,17 +152,42 @@ region, WIOD classification, ccTLD.")
     (version "0.4.5")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "iso-639" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/noumar/iso639")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0jffmh4m20q8j27xb2fqbnlghjj0cx8pgsbzqisdg65qh2wd976w"))))
-    (build-system python-build-system)
+        (base32 "02kx6kr3x43linxqafjlx85zdk04s6ab2fv5ikyglghwr5hsvic4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "tests/tests.py"
+              "-k" (string-join
+                    (list
+                     ;; module 'collections' has no attribute 'Iterable'
+                     "not test_iter"
+                     ;; 'Moroccan Arabic' != 'Arabic'
+                     "test_logic_part2"
+                     ;; 'Languages' object has no attribute 'indices'
+                     "test_compare_alpha2"
+                     "test_compare_bibliographic"
+                     "test_compare_terminology")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'configure-tests
+            (lambda _
+              (setenv "PYTHONPATH"
+                      (string-append (getcwd) ":"
+                                     (getenv "GUIX_PYTHONPATH"))))))))
+    (native-inputs (list python-pycountry python-pytest python-setuptools))
     (home-page "https://github.com/noumar/iso639")
     (synopsis "Python library for ISO 639 standard")
-    (description "This package provides a Python library for ISO 639 standard
-that is concerned with representation of names for languages and language
-groups.")
+    (description
+     "This package provides a Python library for ISO 639 standard that is
+concerned with representation of names for languages and language groups.")
     (license license:agpl3+)))
 
 (define-public python-iso3166
@@ -171,13 +196,64 @@ groups.")
     (version "2.1.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "iso3166" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/deactivated/python-iso3166")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "068p94gavc8gbmp5a2kw8hi5l551wfzbpmp6z7ll8sx6vnw53mgw"))))
-    (build-system python-build-system)
+        (base32 "0j0bnm4bd23cyb7dga00gb20myg9skylchkw4d23yh31b7a315m8"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://github.com/deactivated/python-iso3166")
     (synopsis "Self-contained ISO 3166-1 country definitions")
     (description "This package provides the ISO 3166-1 country definitions.")
     (license license:expat)))
+
+(define-public python-pycountry
+  (package
+    (name "python-pycountry")
+    (version "24.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pycountry/pycountry")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qs99acz1vsj96s8pcwbnp3z3s01mzzvdayk7fm0nnl6lf3lz1g1"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core python-pytest python-pytest-cov))
+    (home-page "https://github.com/pycountry/pycountry")
+    (synopsis "ISO databases for languages, countries, currencies, etc.")
+    (description
+     "@code{pycountry} provides the ISO databases for the standards:
+     @enumerate
+     @item 639-3 (Languages)
+     @item 3166 (Countries)
+     @item 3166-3 (Deleted Countries)
+     @item 3166-2 (Subdivisions of countries)
+     @item 4217 (Currencies)
+     @item 15924 (Scripts)
+     @end enumerate
+     It includes a copy from Debian’s pkg-isocodes and makes the data accessible
+     through a Python API.")
+    (license license:lgpl2.1+)))
+
+(define-public python-pycountry-20.7.3
+  (hidden-package
+   (package
+     (inherit python-pycountry)
+     (name "python-pycountry")
+     (version "20.7.3")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/pycountry/pycountry")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1aqzbdqvy3pg0x33ay099vriazs28v6kw7fwc8ajg3avdcws2mgm"))))
+     (native-inputs (list python-pytest python-pytest-cov python-setuptools)))))

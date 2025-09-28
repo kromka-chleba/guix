@@ -626,26 +626,28 @@ are already predefined, but more can be added as logic programs.")
   (package
     (name "python-clorm")
     (version "1.6.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/potassco/clorm")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "03a7kcyilpvvd6i6njh67vy3zhb3yzi55fhgnffg15j3zflww6fy"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/potassco/clorm")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03a7kcyilpvvd6i6njh67vy3zhb3yzi55fhgnffg15j3zflww6fy"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-before 'check 'fix-breaking-tests
-                 (lambda _
-                   ;; noclingo tests rely on this being set
-                   (setenv "CLORM_NOCLINGO" "1")
-                   (delete-file "tests/test_mypy_query.py"))))))
+     (list
+      #:test-backend #~'unittest
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'fix-breaking-tests
+            (lambda _
+              ;; noclingo tests rely on this being set
+              (setenv "CLORM_NOCLINGO" "1")
+              (delete-file "tests/test_mypy_query.py"))))))
     (propagated-inputs (list python-clingo))
-    (native-inputs (list python-typing-extensions python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (home-page "https://potassco.org")
     (synopsis "Object relational mapping to clingo")
     (description "@acronym{Clorm, Clingo ORM} provides an @acronym{ORM,
@@ -697,18 +699,18 @@ the most probable model as well as finding all models and their probabilities.")
   (package
     (name "python-telingo")
     (version "2.1.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/potassco/telingo")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1q6hlh4b5hsa4n5agvmfa9rhsxfd2g6kpl4b9kfccwbmf6dh51k6"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/potassco/telingo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q6hlh4b5hsa4n5agvmfa9rhsxfd2g6kpl4b9kfccwbmf6dh51k6"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-clingo))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://potassco.org/")
     (synopsis "Solve dynamic temporal logic programs")
     (description "This package provides a system to solve dynamic temporal
@@ -774,8 +776,8 @@ as logic programs.")
                     "clingexplaid>=1.3.3"))))))
    (build-system pyproject-build-system)
    (native-inputs
-    (list python-setuptools
-          python-wheel))
+    (list python-pytest
+          python-setuptools))
    (propagated-inputs
     (list python-clingo
           python-clingo-dl

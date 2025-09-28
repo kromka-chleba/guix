@@ -2189,8 +2189,11 @@ touchscreen devices.")
     (license license:expat)))
 
 (define-public rusty
-  (let ((commit "ce6892169b4c4d8b924eaf4323db4564f722064c")
-        (revision "0"))
+  ;; commit before 7b80dee6fefc1f6f012a57e451331db524a8012f, which updates
+  ;; the rust version to 1.9. After rust has been updated in Guix, we can
+  ;; continue updating.
+  (let ((commit "2f406d938f95415c5063e5d3615dae29671b351e")
+        (revision "1"))
     (package
       (name "rusty")
       (version (git-version "0.2.0" revision commit))
@@ -2202,7 +2205,7 @@ touchscreen devices.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0m0g4xpwb43bh5vzlx9vp69rnhsry6bz8yn0xsvmsa9iwak4sgm5"))))
+          (base32 "0zsyyh7n4pc5q2dmsn3qcil00m8aw6id8qq2k61j02mz0cm6ylvp"))))
       (build-system cargo-build-system)
       (arguments
        (list
@@ -3782,7 +3785,7 @@ minimum contrast levels, and more.")
 (define-public rabbitmqadmin
   (package
     (name "rabbitmqadmin")
-    (version "2.3.0")
+    (version "2.9.0")
     (source
      (origin
        (method git-fetch)
@@ -3791,10 +3794,11 @@ minimum contrast levels, and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17x28ph4bgdkv66jv4b2nqwixbmi3j2ld4m842jqp808f0nwj7r7"))))
+        (base32 "04czi8s6nflvp1n2p1fl2wk6jqi0gsi7j52m4dnr6hvzf1mcn91n"))))
     (build-system cargo-build-system)
     (arguments
-     (list #:tests? #f         ;Tests require local instance of RabbitMQ broker.
+     (list #:rust rust-1.88
+           #:tests? #f         ;Tests require local instance of RabbitMQ broker.
            #:install-source? #f))
     (inputs (cons* mimalloc openssl (cargo-inputs 'rabbitmqadmin)))
     (home-page "https://www.rabbitmq.com/docs/management-cli")

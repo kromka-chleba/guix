@@ -797,7 +797,6 @@ asdf-build-system."
         "Localization of your system to specific languages."
         #:scope (list "gnu/packages/anthy.scm"
                       "gnu/packages/fcitx5.scm"
-                      "gnu/packages/fcitx.scm"
                       "gnu/packages/fonts.scm"
                       "gnu/packages/ibus.scm")))
 
@@ -1059,8 +1058,8 @@ the \"texlive\" importer."
 (define-member (person "Ludovic Courtès"
                        "ludo@gnu.org"
                        "civodul")
-  core home bootstrap core-packages installer
-  documentation mentors)
+  core core-packages hpc installer
+  mentors)
 
 (define-member (person "Andreas Enge"
                        "andreas@enge.fr"
@@ -1327,6 +1326,11 @@ the \"texlive\" importer."
 (define-member (person "Rodion Goritskov"
                        "rodion@goritskov.com"
                        "rodion-goritskov")
+  release)
+
+(define-member (person "Rutherther"
+                       "rutherther@ditigal.xyz"
+                       "Rutherther")
   release)
 
 

@@ -31,6 +31,7 @@
 ;;; Copyright © 2023, 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -109,21 +110,21 @@ the Bitcoin network.")
 (define-public python-bcrypt
   (package
     (name "python-bcrypt")
-    (version "3.2.0")
+    (version "3.2.2")    ;the latest not Rust version
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "bcrypt" version))
        (sha256
-        (base32 "0agvzdn7r7jx5y4scl5gjmrmr6njvizwmr9n7h1kmaahdrrc34sv"))))
-    (build-system python-build-system)
+        (base32 "1yvbdfmkssx1jf2lrhbs58xljmyi3p82r7rav82pf1bp44642g23"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pycparser python-pytest))
+     (list python-pytest
+           python-setuptools))
     (propagated-inputs
-     (list python-cffi python-six))
+     (list python-cffi))
     (home-page "https://github.com/pyca/bcrypt/")
-    (synopsis
-     "Modern password hashing library")
+    (synopsis "Modern password hashing library")
     (description
      "Bcrypt is a Python module which provides a password hashing method based
 on the Blowfish password hashing algorithm, as described in
@@ -151,7 +152,7 @@ Password Scheme\"} by Niels Provos and David Mazieres.")
             (lambda _
               (setenv "PYTHON_EGG_CACHE" "/tmp"))))))
     (native-inputs
-     (list python-nose python-setuptools python-wheel))
+     (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-argon2-cffi python-bcrypt python-cryptography))
     (home-page "https://bitbucket.org/ecollins/passlib")
@@ -167,24 +168,22 @@ to providing full-strength password hashing for multi-user application.")
 (define-public python-paramiko
   (package
     (name "python-paramiko")
-    (version "3.5.0")
+    (version "4.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "paramiko" version))
        (sha256
-        (base32 "0941n85xi32kvrh2mxppga527a0jz2iz2c99lpfwwmagv90fa4dd"))))
+        (base32 "17ynnmagd44gpp76r26rz1kldb37f79hm4ibinlckj8c71xz09ba"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest
-           python-icecream
+     (list python-icecream
+           python-pytest
            python-pytest-relaxed
-           python-pytest-xdist
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (propagated-inputs
-     (list python-cryptography
-           python-bcrypt
+     (list python-bcrypt
+           python-cryptography
            python-invoke
            python-pyasn1
            python-pynacl))
@@ -341,59 +340,21 @@ production use.  Include this module and use its backends at your own risk.")
     (arguments
      (list
       #:install-source? #f
+      #:imported-modules `(,@%pyproject-build-system-modules
+                           ,@%cargo-build-system-modules)
+      #:modules `((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'build-python-module
-            (lambda _
-              ;; We don't use maturin.
-              (delete-file "pyproject.toml")
-              (call-with-output-file "pyproject.toml"
-                (lambda (port)
-                  (format port "\
-[build-system]
-build-backend = 'setuptools.build_meta'
-requires = ['setuptools']
-")))
-              (call-with-output-file "setup.cfg"
-                (lambda (port)
-                  (format port "\
-
-[metadata]
-name = blake3
-version = ~a
-
-[options]
-packages = find:
-
-[options.packages.find]
-exclude =
-  src*
-  c_impl*
-  tests*
-  Cargo.toml
-" #$version)))
-              ;; ZIP does not support timestamps before 1980.
-              (setenv "SOURCE_DATE_EPOCH" "315532800")
-              (invoke "python" "-m" "build" "--wheel" "--no-isolation" ".")))
+          (add-after 'build 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
           (add-after 'build-python-module 'install-python-module
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((whl (car (find-files "dist" "\\.whl$"))))
-                (invoke "pip" "--no-cache-dir" "--no-input"
-                        "install" "--no-deps" "--prefix" #$output whl))))
-          (add-after 'install-python-module 'install-python-library
-            (lambda _
-              (let ((site (string-append #$output "/lib/python"
-                                         #$(version-major+minor
-                                            (package-version python))
-                                         "/site-packages")))
-                (mkdir-p site)
-                (copy-file "target/release/libblake3.so"
-                           (string-append site "/blake3.so"))))))))
-    (inputs (cargo-inputs 'python-blake3))
+            (assoc-ref py:%standard-phases 'install)))))
     (native-inputs
      (list python-wrapper
-           python-pypa-build
-           python-wheel))
+           maturin))
+    (inputs (cargo-inputs 'python-blake3))
     (home-page "https://github.com/oconnor663/blake3-py")
     (synopsis "Python bindings for the Rust blake3 crate")
     (description "This package provides Python bindings for the Rust crate of
@@ -448,20 +409,23 @@ for example, for recording or replaying web content.")
 (define-public python-certifi
   (package
     (name "python-certifi")
-    (version "2022.6.15")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "certifi" version))
-              (sha256
-               (base32
-                "03c2l11lgljx0kz17cvdc4hlc3p1594ajdih9zq0a4dig285mj44"))
-              (snippet
-               #~(begin
-                   (delete-file "certifi/cacert.pem")
-                   (delete-file "certifi/core.py")
-                   (with-output-to-file "certifi/core.py"
-                     (lambda _
-                       (display "\"\"\"
+    (version "2025.06.15")
+    (source
+     (origin
+       (method git-fetch)   ; no tests in PyPI package
+       (uri (git-reference
+             (url "https://github.com/certifi/python-certifi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yyy3c64xbwfg2b8hi1fd6vwh56fzc90jfy3czimv5i91gwrl7ba"))
+       (snippet #~(begin
+                    (delete-file "certifi/cacert.pem")
+                    (delete-file "certifi/core.py")
+                    (with-output-to-file "certifi/core.py"
+                      (lambda _
+                        (display
+                         "\"\"\"
 certifi.py
 ~~~~~~~~~~
 This file is a Guix-specific version of core.py.
@@ -484,8 +448,12 @@ def where() -> str:
 def contents() -> str:
     with open(where(), \"r\", encoding=\"ascii\") as data:
         return data.read()")))))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;no tests
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list nss-certs-for-test
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://certifi.io/")
     (synopsis "Python CA certificate bundle")
     (description
@@ -628,7 +596,7 @@ ciphers, message digests and key derivation functions.")
            python-pretend
            python-pytest
            python-pytest-rerunfailures
-           python-wheel))
+           python-setuptools))
     (home-page "https://github.com/pyca/pyopenssl")
     (synopsis "Python wrapper module around the OpenSSL library")
     (description "PyOpenSSL is a high-level wrapper around a subset of the
@@ -678,15 +646,16 @@ OpenSSL library.")
         (base32
          "18v3rfyv7xi26fb97nw1xc0l6x8wi0i4xj8dlq4gblpbjxiac187"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
     (arguments
      (list
+      #:test-backend #~'unittest
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-gcc-14-strictness
             (lambda _
               (setenv "CFLAGS"
                       (string-append "-g -O2 -Wno-error=int-conversion")))))))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/tgalal/python-axolotl-curve25519")
     (synopsis "Python wrapper for curve25519 library")
     (description "This is a python wrapper for the curve25519 library
@@ -743,11 +712,11 @@ environments.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1gx0znbfvs8jg9s754hha81l8wpghswkfsqx2jzpgv6gigf3sm8z"))))
-    (build-system python-build-system)
+        (base32 "1gx0znbfvs8jg9s754hha81l8wpghswkfsqx2jzpgv6gigf3sm8z"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest))
     (propagated-inputs
-     (list python-axolotl-curve25519 python-cryptography python-protobuf-5))
+     (list python-cryptography python-protobuf-5 python-setuptools))
     (home-page "https://dev.gajim.org/gajim/omemo-dr")
     (synopsis "OMEMO cryptography library")
     (description "OMEMO cryptography library that was forked from python-axolotl.")
@@ -765,7 +734,9 @@ environments.")
        (sha256
         (base32 "13vdaff15k0jyfcss4b4xvfgm8xyv0nrbyw5n1qc7lrqbi0b3h82"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list #:tests? #f))         ;no tests in PyPI
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/ricmoo/pyaes")
     (synopsis "Implementation of AES in Python")
     (description "This package contains a pure-Python implementation of the
@@ -1470,9 +1441,11 @@ and Backlog for a list of what is and is not currently supported.")
         (uri (pypi-uri "SecretStorage" version))
         (sha256
          (base32 "0xxxxr77sgmjm1rqzdd1rkan9xg0qmv8awc1pb9adv39ycz560r4"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #f)) ; Tests require a running dbus service.
+    (native-inputs
+     (list python-setuptools))
     (propagated-inputs
      (list python-cryptography python-jeepney))
     (home-page "https://github.com/mitya57/secretstorage")
@@ -1489,28 +1462,23 @@ items and collections, editing items, locking and unlocking collections
 (define-public python-trustme
   (package
     (name "python-trustme")
-    (version "0.9.0")
+    (version "1.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trustme" version))
        (sha256
-        (base32 "0v2qzszmyazfgc1snicdr4b4qdajpjd4pbinpgrn9vfff0yv41sy"))))
+        (base32 "0zz49agi7hy82fbr03xs6k9vjgiy7v8qsp426cgv8bbzphmvla35"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-more-itertools
+     (list python-hatchling
            python-pyopenssl
            python-pytest
-           python-pytest-cov
-           python-service-identity
-           python-setuptools
-           python-wheel
-           python-zipp))
+           python-service-identity))
     (propagated-inputs
      (list python-cryptography
-           python-idna
-           python-ipaddress))
-    (home-page "https://github.com/python-trio/trustme")
+           python-idna))
+    (home-page "https://trustme.readthedocs.io")
     (synopsis "Fake a certificate authority for tests")
     (description
      "@code{trustme} is a tiny Python package that does one thing: it gives you
@@ -1574,45 +1542,60 @@ I/O-free core, and integration modules for different event loops.")
 (define-public python-argon2-cffi
   (package
     (name "python-argon2-cffi")
-    (version "21.1.0")
+    (version "25.1.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "argon2-cffi" version))
-        (sha256
-         (base32
-          "0w5q5cdwmzpjgw3bl9f6b9a5xai87qvx3jryra9gd8fi0c8vc47p"))
-        (modules '((guix build utils)))
-        (snippet '(delete-file-recursively "extras"))))
-    ;; TODO: with pyproject-build-system the install phase fails.
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (replace 'build
-           (lambda _
-             (setenv "ARGON2_CFFI_USE_SYSTEM" "1")
-             (invoke "python" "setup.py" "build")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest")
-               (invoke "python" "-m" "argon2" "--help")
-               ;; see tox.ini
-               (invoke "python" "-m" "argon2" "-n" "1" "-t" "1" "-m" "8" "-p" "1")))))))
-    (propagated-inputs
-     (list python-cffi python-typing-extensions))
-    (inputs (list argon2))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "argon2_cffi" version))
+       (sha256
+        (base32 "1ha62fg9blw38q3qayjid8608fp2a57fd81cpzic9x22ib6fajk9"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-hypothesis
+     (list python-hatch-fancy-pypi-readme
+           python-hatch-vcs
+           python-hatchling
            python-pytest))
+    (propagated-inputs
+     (list python-argon2-cffi-bindings))
     (home-page "https://argon2-cffi.readthedocs.io/")
     (synopsis "Secure Password Hashes for Python")
     (description
      "Argon2 is a secure password hashing algorithm.  It is designed to have
 both a configurable runtime as well as memory consumption.  This means that you
 can decide how long it takes to hash a password and how much memory is required.")
+    (license license:expat)))
+
+(define-public python-argon2-cffi-bindings
+  (package
+    (name "python-argon2-cffi-bindings")
+    (version "25.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "argon2_cffi_bindings" version))
+       (sha256
+        (base32 "179256zsrh5c51zmv9k1sc9p102j152nzxqgwhhdhmadxbkg6mxr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'use-system-argon2
+            (lambda _
+              (setenv "ARGON2_CFFI_USE_SYSTEM" "1"))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm))
+    (inputs
+     (list argon2))
+    (propagated-inputs
+     (list python-cffi))
+    (home-page "https://github.com/hynek/argon2-cffi-bindings")
+    (synopsis "Low-level CFFI bindings for Argon2")
+    (description
+     "argon2-cffi-bindings provides low-level CFFI bindings to the official
+implementation of the Argon2 password hashing algorithm.")
     (license license:expat)))
 
 (define-public python-privy
@@ -1788,6 +1771,7 @@ in different situations.
 @end enumerate")
     (license license:expat)))
 
+;; XXX: Not maintained since 2016.
 (define-public python-pydes
   (package
     (name "python-pydes")
@@ -1799,8 +1783,10 @@ in different situations.
        (sha256
         (base32 "04lh71f47y04vspfrdrq6a0hn060ibxvdp5z1pcr0gmqs8hqxaz2"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "http://twhiteman.netfirms.com/des.html")
+    (arguments
+     (list #:tests? #f))        ;no tests in PyPI, I could not fine Git
+    (native-inputs (list python-setuptools))
+    (home-page "http://twhiteman.netfirms.com/des.html") ;XXX: Dead link
     (synopsis
      "Pure python implementation of the DES and TRIPLE DES encryption algorithms")
     (description

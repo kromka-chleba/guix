@@ -389,16 +389,22 @@ supersedes the RTED algorithm for computing the tree edit distance.")
 (define-public python-asap3
   (package
     (name "python-asap3")
-    (version "3.13.7")
+    (version "3.13.9")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "asap3" version))
        (sha256
-        (base32 "0z6m9ybiy4fdnzlkfkvyxich18iwlwlgj1jd99fylyfwf8l160am"))))
+        (base32 "0r4sx93v2ck4m9ykzj9zaar2l9wk4nrb3d3rlik1nqimk6pnnbm2"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-ase))
-    (native-inputs (list python-setuptools python-wheel which))
+    (arguments
+     (list #:tests? #f)) ;TODO: collecting ... ERROR: Wrong command line.
+    (native-inputs
+     (list python-setuptools
+           which)) ;for build
+    (propagated-inputs
+     (list python-ase
+           python-numpy))
     (home-page "https://wiki.fysik.dtu.dk/asap")
     (synopsis "ASAP - classical potentials for Molecular Dynamics with ASE.")
     (description "This package provides accelerated simulations and potentials
@@ -790,10 +796,9 @@ parentdir_prefix = dask-
      (list python-importlib-metadata
            python-pytest
            python-pytest-rerunfailures
-           python-pytest-runner
            python-pytest-xdist
            python-versioneer
-           python-wheel))
+           python-setuptools))
     (home-page "https://github.com/dask/dask/")
     (synopsis "Parallel computing with task scheduling")
     (description
@@ -905,21 +910,15 @@ optimization and generally improved organization.")
                  (string-append "version = \"" #$version "\""))))))))
     (propagated-inputs (list python-dask
                              python-numpy
-                             python-pandas-2
+                             python-pandas
                              python-pims
                              python-scipy
                              python-tifffile))
     (native-inputs
-     (list python-coverage
-           python-flake8
-           python-pytest
-           python-pytest-cov
-           python-pytest-flake8
+     (list python-pytest
            python-pytest-timeout
            python-setuptools
-           python-setuptools-scm
-           python-twine
-           python-wheel))
+           python-setuptools-scm))
     (home-page "https://github.com/dask/dask-image")
     (synopsis "Distributed image processing")
     (description "This is a package for image processing with Dask arrays.
@@ -1357,6 +1356,7 @@ that is 20-25x faster than @code{numpy.histogram2d}.")
        (sha256
         (base32 "19labbgnq85p4r4jbli2p045lgh57larhi2g2anagfxnlzpqdf5a"))))
     (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest))
     (propagated-inputs (list python-numpy))
     (native-inputs (list python-scipy python-setuptools python-wheel))
     (home-page "https://danifold.net/fastcluster.html")
@@ -1913,7 +1913,11 @@ between dataframe libraries.
        (sha256
         (base32 "1lpgsagmgxzsas7g8yiv6wmyss8q57w92h70fn11rnpadsvx16xz"))))
     (build-system pyproject-build-system)
-    (arguments (list #:test-flags #~(list "-c" "/dev/null"))) ;avoid coverage
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-c" "/dev/null" ;avoid coverage
+              "-k" "not test_iter_indices_matmul"))) ; flaky
     (native-inputs
      (list python-cython
            python-numpy
@@ -2452,19 +2456,19 @@ or as a TikZ file for use in LaTeX documents;
 (define-public python-qdldl
   (package
     (name "python-qdldl")
-    (version "0.1.7.post2")
+    (version "0.1.7.post5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "qdldl" version))
        (sha256
-        (base32 "1lspam0k8gnw1yglqxvdv350fq00nkgdfmkizmx7bk0hxjjkj5ab"))))
+        (base32 "0vi8dgrw32qj03z2dd3zqd0d625pibq3xmlgmidfsnwvqkhrj4qb"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list cmake-minimal
            pybind11
-           python-setuptools
-           python-wheel))
+           python-pytest
+           python-setuptools))
     (propagated-inputs (list python-numpy python-scipy))
     (home-page "https://github.com/oxfordcontrol/qdldl-python/")
     (synopsis "QDLDL LDL factorization routine")
@@ -2698,7 +2702,7 @@ CMake.")
 (define-public python-scikit-fem
   (package
     (name "python-scikit-fem")
-    (version "10.0.2")
+    (version "11.0.0")
     (source
      (origin
        (method git-fetch)        ; no tests in PyPI
@@ -2707,7 +2711,7 @@ CMake.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10kvzm4fmazsrddd83m0903wan67fkj13vdp6w1iw6wm6a0b5h28"))))
+        (base32 "13zh57raz2qcdfhsvpdlyiba5q0s0lh5b3gmsmh4cfrncrkdh6mh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2721,11 +2725,11 @@ CMake.")
            ;; python-jax ; not packed yet
            python-pytest
            python-shapely
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (propagated-inputs
      (list python-meshio
            python-numpy
+           python-matplotlib
            python-scipy))
     (home-page "https://scikit-fem.readthedocs.io/en/latest/")
     (synopsis "Library for performing finite element assembly")
@@ -2893,8 +2897,13 @@ and scientific computing.")
        (sha256
         (base32 "0ycqizgsj7q57asc1bphzhf1fx9zqn0vx5rli7q541bas64hfqiy"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy python-pytorch python-scipy))
-    (native-inputs (list python-setuptools))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-numpy
+           python-pytorch
+           python-scipy))
     (home-page "https://github.com/guofei9987/scikit-opt")
     (synopsis "Swarm intelligence algorithms in Python")
     (description
@@ -2955,7 +2964,7 @@ swarm algorithm.")
     (native-inputs
      (list python-pytest
            python-pytest-xdist
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-joblib
            python-matplotlib
@@ -3021,25 +3030,25 @@ the following purposes in mind:
     (license license:bsd-3)))
 
 (define-public python-scikit-survival
-  (let ((revision "1")
+  (let ((revision "0")
         ;; We need a later commit for support of a more recent sklearn and
-        ;; numpy 2.
-        (commit "bceb53ebb8306f959c70fae2be9d552f33dd3f21"))
+        ;; NumPy 2.
+        (commit "bc4a8914e8337c3be1b98371a3c26382696215a9"))
     (package
       (name "python-scikit-survival")
-      (version (git-version "0.22.2" revision commit))
+      (version (git-version "0.25.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/sebp/scikit-survival")
-               (commit commit)
-               ;; This package contains a copy of Eigen.  It would be good to
-               ;; figure out how to use our own Eigen package.
-               (recursive? #true)))
+                (url "https://github.com/sebp/scikit-survival")
+                (commit commit)
+                ;; This package contains a copy of Eigen.  It would be good to
+                ;; figure out how to use our own Eigen package.
+                (recursive? #true)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1m3z64nv4sgay0mdrrw4q4z5ylx63a9w2x43w1r4g8kpg7z9rdfc"))))
+          (base32 "001w73sz55vszp18h25dha74r34bbfzl02yh4d6zbli9zvr36hy4"))))
       (build-system pyproject-build-system)
       (arguments
        (list
@@ -3051,7 +3060,6 @@ the following purposes in mind:
                         #$(version-major+minor version)))))))
       (propagated-inputs
        (list python-ecos
-             python-importlib-resources
              python-joblib
              python-numexpr
              python-numpy
@@ -3060,16 +3068,11 @@ the following purposes in mind:
              python-scikit-learn
              python-scipy))
       (native-inputs
-       (list python-black
-             python-pypa-build
-             python-coverage
-             python-cython-3
+       (list python-cython
              python-packaging
              python-pytest
              python-setuptools
-             python-setuptools-scm
-             python-tomli
-             python-tox))
+             python-setuptools-scm))
       (home-page "https://github.com/sebp/scikit-survival")
       (synopsis "Survival analysis built on top of scikit-learn")
       (description "Scikit-survival is a Python module for survival analysis
@@ -3102,53 +3105,7 @@ cross-validation.")
                           (string-append
                            "import scipy; scipy.test('fast', parallel="
                            (number->string (parallel-job-count))
-                           ", verbose=2)"))))))
-          (add-after 'check 'install-doc
-            (lambda* (#:key outputs #:allow-other-keys)
-              ;; FIXME: Documentation cannot be built because it requires
-              ;; a newer version of pydata-sphinx-theme, which currently
-              ;; cannot build without internet access:
-              ;; <https://github.com/pydata/pydata-sphinx-theme/issues/628>.
-              ;; Keep the phase for easy testing.
-              (let ((sphinx-build (false-if-exception
-                                   (search-input-file input "bin/sphinx-build"))))
-                (if sphinx-build
-                    (let* ((doc (assoc-ref outputs "doc"))
-                           (data (string-append doc "/share"))
-                           (docdir (string-append
-                                    data "/doc/"
-                                    #$(package-name this-package) "-"
-                                    #$(package-version this-package)))
-                           (html (string-append docdir "/html")))
-                      (with-directory-excursion "doc"
-                        ;; Build doc.
-                        (invoke "make" "html"
-                                ;; Building the documentation takes a very long time.
-                                ;; Parallelize it.
-                                (string-append "SPHINXOPTS=-j"
-                                               (number->string (parallel-job-count))))
-                        ;; Install doc.
-                        (mkdir-p html)
-                        (copy-recursively "build/html" html)))
-                    (format #t "sphinx-build not found, skipping~%"))))))))
-    (propagated-inputs
-     (append
-       (if (supported-package? python-jupytext)  ; Depends on pandoc.
-           (list python-jupytext)
-           '())
-       (list python-matplotlib
-             python-mpmath
-             python-mypy
-             python-numpy
-             python-numpydoc
-             python-pydata-sphinx-theme
-             python-pydevtool
-             python-pythran
-             python-rich-click
-             python-sphinx
-             python-threadpoolctl
-             python-typing-extensions)))
-    (inputs (list openblas pybind11-2.10))
+                           ", verbose=2)")))))))))
     (native-inputs
      (list gfortran
            ;; XXX: Adding gfortran shadows GCC headers, causing a compilation
@@ -3157,16 +3114,25 @@ cross-validation.")
            meson-python
            pkg-config
            python-click
-           python-cython-0.29.35
+           python-cython-0
            python-doit
-           python-hypothesis
+           python-mpmath
+           python-numpydoc
            python-pooch
            python-pycodestyle
            python-pydevtool
            python-pytest
-           python-pytest-cov
            python-pytest-timeout
-           python-pytest-xdist))
+           python-pytest-xdist
+           python-pythran
+           python-rich-click
+           python-threadpoolctl
+           python-typing-extensions))
+    (inputs
+     (list openblas
+           pybind11-2.10))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "https://scipy.org/")
     (synopsis "The Scipy library provides efficient numerical routines")
     (description "The SciPy library is one of the core packages that make up
@@ -3378,7 +3344,7 @@ Snakemake and its storage plugins.")
            python-pytest
            python-pytest-cov
            python-setuptools
-           python-setuptools-scm-next
+           python-setuptools-scm
            python-wheel))
     (home-page "https://github.com/pydata/sparse/")
     (synopsis "Library for multi-dimensional sparse arrays")
@@ -3589,108 +3555,6 @@ library.")
 tissue-specificity metrics for gene expression.")
     (license license:gpl3+)))
 
-(define-public python-pandas-1
-  (package
-    (name "python-pandas")
-    (version "1.5.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pandas" version))
-       (sha256
-        (base32 "1cdhngylzh352wx5s3sjyznn7a6kmjqcfg97hgqm5h3yb9zgv8vl"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "--pyargs" "pandas"
-             "-n" (number->string (parallel-job-count))
-             "-m" "not slow and not network and not db"
-             "-k"
-             (string-append
-              ;; TODO: Missing input
-              "not TestS3"
-              " and not s3"
-              ;; No module named 'pandas.io.sas._sas'
-              " and not test_read_expands_user_home_dir"
-              " and not test_read_non_existent"
-              ;; Unknown failures
-              " and not test_switch_options"
-              ;; These fail with: td64 doesn't return NotImplemented, see numpy#17017
-              " and not test_nat_comparisons"
-              ;; Crashes
-              " and not test_bytes_exceed_2gb"
-              ;; get_subplotspec() returns None; possibly related to
-              ;; https://github.com/pandas-dev/pandas/issues/54577
-              " and not test_plain_axes"
-              ;; This test fails when run with pytest-xdist
-              ;; (see https://github.com/pandas-dev/pandas/issues/39096).
-              " and not test_memory_usage"))
-      #:phases
-       #~(modify-phases %standard-phases
-           (add-after 'unpack 'patch-build-system
-             (lambda _
-               (substitute* "pyproject.toml"
-                 ;; Not all data files are distributed with the tarball.
-                 (("--strict-data-files ") "")
-                 ;; Unknown property "asyncio_mode"
-                 (("asyncio_mode = \"strict\"") ""))))
-           (add-after 'unpack 'patch-which
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "pandas/io/clipboard/__init__.py"
-                 (("^WHICH_CMD = .*")
-                  (string-append "WHICH_CMD = \""
-                                 (search-input-file inputs "/bin/which")
-                                 "\"\n")))))
-           (add-before 'check 'prepare-x
-             (lambda _
-               (system "Xvfb &")
-               (setenv "DISPLAY" ":0")
-               ;; xsel needs to write a log file.
-               (setenv "HOME" "/tmp")))
-           ;; The compiled libraries are only in the output at this point,
-           ;; but they are needed to run tests.
-           ;; FIXME: This should be handled by the pyargs pytest argument,
-           ;; but is not for some reason.
-           (add-before 'check 'pre-check
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (copy-recursively
-                (string-append (site-packages inputs outputs)
-                               "/pandas/_libs")
-                "pandas/_libs"))))))
-    (propagated-inputs
-     (list python-jinja2
-           python-matplotlib
-           python-numpy
-           python-openpyxl
-           python-pytz
-           python-dateutil
-           python-xlrd
-           python-xlsxwriter))
-    (inputs
-     (list which xclip xsel))
-    (native-inputs
-     (list python-cython-0.29.35
-           python-beautifulsoup4
-           python-lxml
-           python-html5lib
-           python-pytest
-           python-pytest-mock
-           python-pytest-xdist
-           python-setuptools
-           python-wheel
-           ;; Needed to test clipboard support.
-           xorg-server-for-tests))
-    (home-page "https://pandas.pydata.org")
-    (synopsis "Data structures for data analysis, time series, and statistics")
-    (description
-     "Pandas is a Python package providing fast, flexible, and expressive data
-structures designed to make working with structured (tabular,
-multidimensional, potentially heterogeneous) and time series data both easy
-and intuitive.  It aims to be the fundamental high-level building block for
-doing practical, real world data analysis in Python.")
-    (license license:bsd-3)))
-
 (define-public python-pandas-2
   (package
     (name "python-pandas")
@@ -3747,6 +3611,9 @@ doing practical, real world data analysis in Python.")
                      ;; It requires a fresh python-tzdata, including new
                      ;; timezones.
                      "test_repr"
+                     ;; Fails with Pytest@8.4.1, fixed on main branch.
+                     ;; See: <https://github.com/pandas-dev/pandas/issues/61557>.
+                     "test_groupby_raises_category_on_category"
                      ;; These tests should be skipped on 32bit systems:
                      ;; Cannot cast array data from dtype('int64') to dtype('int32')
                      #$@(if (not (target-64bit?))
@@ -3954,76 +3821,72 @@ idea of the remaining amount of computation to be done.")
 (define-public python-pandera
   (package
     (name "python-pandera")
-    ;; FIXME: The latest version requires hypothesis >= 6.92.7, which can't be
-    ;; picked from python-hypothesis-next for some reason.
-    (version "0.18.0")
+    (version "0.26.1")
     (source
      (origin
-       ;; No tests in the PyPI tarball.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/unionai-oss/pandera")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (pypi-uri "pandera" version))
        (sha256
-        (base32 "14b5aij5zjkwvsimg0v00qvp59mhhq7ljim4qghcn432vkg9gh47"))))
+        (base32 "10px2wy3rb8gg2jyry8962yrd0m3jq88wgjcpyrk23bp55j5m9c1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 3093 passed, 48 skipped, 21 xfailed, 8232 warnings
       #:test-flags
-      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+      ;; With higher threads count tests randomly fail during collection.
+      #~(list "--numprocesses" (number->string (min 4 (parallel-job-count)))
+              ;; TODO: Ignore tests for not packaged python-ibis-framework,
+              ;; python-polars, and python-pyspark.
+              "--ignore=tests/ibis"
+              "--ignore=tests/polars"
               "--ignore=tests/pyspark"
               "-k" (string-join
-                    ;; Failed: DID NOT RAISE <class 'pandera.errors.SchemaError'>
-                    (list "not test_from_records_validates_the_schema"
-                          "test_init_pandas_dataframe_errors"
-                          "test_schema_dtype_crs_without_coerce"
-                          "test_schema_from_dataframe"
-                          "test_schema_model"
-                          "test_validate_coerce_on_init"
-                          ;; multimethod.DispatchError: ('str_length: 0
-                          ;; methods found', (<class
-                          ;; 'pandas.core.series.Series'>, <class 'NoneType'>,
-                          ;; <class 'int'>), [])
-                          "test_succeeding"
-                          "test_failing"
-                          "test_failing_with_none"
-                          ;; pandera.errors.SchemaError: Error while executing
-                          ;; check function: KeyError("foo")
-                          "test_check_groups"
-                          ;; [pandas_series.py-plugin_mypy.ini-expected_errors13]
-                          ;; - assert 1 == 2
-                          "test_pandas_stubs_false_positives"
-                          ;; TypeError: type 'Series' is not subscriptable
-                          "test_pandas_modules_importable")
+                    ;; Network access is required.
+                    (list "not test_items_endpoint"
+                          "test_transactions_endpoint"
+                          "test_upload_file_endpoint"
+                          ;; AssertionError: assert dtype('bool') == 'object'
+                          "test_index_dtypes[dask-Index-True-bool]"
+                          "test_index_dtypes[dask-Index-False-bool]"
+                          ;; TypeError: __class__ assignment: 'GeoDataFrame'
+                          ;; object layout differs from 'DataFrame'
+                          "test_schema_model[data0-True]"
+                          "test_schema_from_dataframe[data1-True]"
+                          "test_schema_no_geometry")
                     " and not "))))
-    ;; Pandera comes with a lot of extras. We test as many as possible, but do
-    ;; not include all of them in the propagated-inputs. Currently, we have to
-    ;; skip the pyspark and io tests due to missing packages python-pyspark
-    ;; and python-frictionless.
-    (propagated-inputs (list python-hypothesis-next ;strategies extra
-                             python-modin
-                             python-multimethod
-                             python-numpy
-                             python-packaging
-                             python-pandas
-                             python-pandas-stubs ;mypy extra
-                             python-pydantic-2
-                             python-scipy ;hypotheses extra
-                             python-typeguard
-                             python-typing-inspect
-                             python-wrapt))
-    (native-inputs (list python-dask ;dask extra
-                         python-fastapi ;fastapi extra
-                         python-geopandas ;geopandas extra
-                         python-pyarrow ;needed to run fastapi tests
-                         python-pytest
-                         python-pytest-asyncio
-                         python-pytest-xdist
-                         python-setuptools
-                         python-sphinx
-                         python-uvicorn ;needed to run fastapi tests
-                         python-wheel))
+    (native-inputs
+     (list python-joblib
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools-scm
+           python-uvicorn))
+    (inputs
+     ;; [optional]
+     ;; Pandera comes with a lot of extras. We test as many as possible, but do
+     ;; not include all of them in the propagated-inputs. Currently, we have to
+     ;; skip the pyspark and io tests due to missing packages python-pyspark
+     ;; and python-frictionless.
+     (list python-dask
+           python-distributed
+           python-geopandas
+           python-hypothesis
+           ;; python-ibis-framework ;missing from Guix
+           python-modin
+           python-numpy
+           python-pandas
+           ;; python-polars         ;missing from Guix
+           ;; python-pyspark        ;missing from Guix
+           ;; python-ray            ;missing from Guix
+           python-scipy
+           python-shapely))
+    (propagated-inputs
+     (list python-packaging
+           python-pydantic-2
+           python-typeguard
+           python-typing-extensions
+           python-typing-inspect))
     (home-page "https://github.com/unionai-oss/pandera")
     (synopsis "Perform data validation on dataframe-like objects")
     (description
@@ -4168,6 +4031,10 @@ y, z)}.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; FIXME: find more reliable tests file(s), all tests from
+      ;; test_typing.py fail with error: ModuleNotFoundError: No module named
+      ;; 'distutils.msvccompiler'.
+      #:tests? #f
       #:test-flags
       '(list (string-append "--numprocesses=" (number->string
                                                (parallel-job-count)))
@@ -5089,9 +4956,9 @@ and more
               (chdir "packages/python/plotly"))))))
     (native-inputs
      (list python-ipywidgets
+           python-nbformat
            python-pytest
            python-setuptools
-           python-wheel
            python-xarray))
     (propagated-inputs
      (list python-ipython
@@ -5571,34 +5438,37 @@ data.")
     (license license:expat)))
 
 (define-public python-supersmoother
-  (package
-    (name "python-supersmoother")
-    (version "0.4")
-    (source
-     (origin
-       (method git-fetch)        ; no package in PyPI
-       (uri (git-reference
-             (url "https://github.com/jakevdp/supersmoother")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1lkj8l2mpki6x2pxcwlrplx63lhi8h9v2rzxgjfb0cppsfr8m1wp"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-pytest
-           python-scipy
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "http://github.com/jakevdp/supersmoother")
-    (synopsis "Python implementation of Friedman's Supersmoother")
-    (description
-     "This package provides an efficient implementation of
+  ;; 0.4 was release in 2017, there a lot of changes on master branch
+  ;; providing tests fixtures.
+  (let ((commit "0a81544ac6bb33bdb08deeba69e97a4ceebcebcf")
+        (revision "0"))
+    (package
+      (name "python-supersmoother")
+      (version (git-version "0.4" revision commit))
+      (source
+       (origin
+         (method git-fetch)        ; no package in PyPI
+         (uri (git-reference
+                (url "https://github.com/jakevdp/supersmoother")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1r79nssw4a44zizvqg8y685nv3asdfj440s227phfww6kz33s3la"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-scipy
+             python-setuptools))
+      (propagated-inputs
+       (list python-numpy))
+      (home-page "http://github.com/jakevdp/supersmoother")
+      (synopsis "Python implementation of Friedman's Supersmoother")
+      (description
+       "This package provides an efficient implementation of
 @url{https://www.slac.stanford.edu/pubs/slacpubs/3250/slac-pub-3477.pdf,
 Friedman's SuperSmoother} based in Python.  It makes use of numpy for fast
 numerical computation.")
-    (license license:bsd-2)))
+      (license license:bsd-2))))
 
 (define-public python-pylems
   (package

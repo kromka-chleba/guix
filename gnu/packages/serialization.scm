@@ -660,7 +660,7 @@ This package also provides @samp{kdlpp}, a C++20 wrapper around @samp{ckdl}.")
 (define-public capnproto
   (package
     (name "capnproto")
-    (version "1.0")
+    (version "1.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -668,13 +668,13 @@ This package also provides @samp{kdlpp}, a C++20 wrapper around @samp{ckdl}.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "03f1862ljdshg7d0rg3j7jzgm3ip55kzd2y91q7p0racax3hxx6i"))
+                "1vs2zpk4l55hb4lq4kldbwdqcjnwm1jblhcaqxmii9dxrd7f807d"))
               (patches (search-patches "capnproto-fix-test.patch"))))
-    (build-system gnu-build-system)
+    (build-system cmake-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         (add-before 'check 'use-tmp-for-temporary-files
+         (add-after 'unpack 'use-tmp-for-temporary-files
            (lambda _
              ;; Use /tmp for temporary files, as the default /var/tmp directory
              ;; doesn't exist.
@@ -757,18 +757,20 @@ includes the following features:
 
 (define-public python-ruamel.yaml
   (package
+    ;; TODO: Fix package name.
     (name "python-ruamel.yaml")
-    (version "0.18.6")
+    (version "0.18.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ruamel.yaml" version))
        (sha256
         (base32
-         "06rimidc9nb3i3r90n3a1zwf0qxw24zqykb3wpxwd1p72yifc9wb"))))
-    (build-system python-build-system)
+         "1dsj3zcb5p73p2xpimdig45hrcvjgnzyyc37jcaxyr63mrmbf9vj"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))     ;no tests in PyPI archive
     (native-inputs
-     (list python-pytest))
+     (list python-setuptools))
     (propagated-inputs
      (list python-ruamel.yaml.clib))
     (home-page "https://sourceforge.net/projects/ruamel-yaml/")
@@ -798,6 +800,7 @@ style and key ordering are kept, so you can diff the source.")
 
 (define-public python-ruamel.yaml.clib
   (package
+    ;; TODO: Fix the name
     (name "python-ruamel.yaml.clib")
     (version "0.2.12")
     (source
@@ -815,7 +818,7 @@ style and key ordering are kept, so you can diff the source.")
         (snippet
          '(begin
             (delete-file "_ruamel_yaml.c")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f  ; This package is split from python-ruamel.yaml and
                     ; depends on modules from it for the test suite.
@@ -826,7 +829,7 @@ style and key ordering are kept, so you can diff the source.")
            (lambda _
              (invoke "cython" "_ruamel_yaml.pyx"))))))
     (native-inputs
-     (list python-cython))
+     (list python-cython python-setuptools))
     (home-page "https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree")
     (synopsis "C version of reader, parser and emitter for ruamel.yaml")
     (description
@@ -843,11 +846,39 @@ style and key ordering are kept, so you can diff the source.")
        (method url-fetch)
        (uri (pypi-uri "strictyaml" version))
        (sha256
-        (base32 "01y4hrakk1psdj6ir5k70apqkjjipvja0c40pbfvahmbzjjm9y12"))))
+        (base32 "01y4hrakk1psdj6ir5k70apqkjjipvja0c40pbfvahmbzjjm9y12"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Unbundle ruamel.
+            (delete-file-recursively "strictyaml/ruamel")))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-dateutil python-ruamel.yaml))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://pypi.org/project/strictyaml/")
+    (arguments
+     (list
+      ;; XXX: Tests require running Docker and an external test framework,
+      ;; see: <https://github.com/crdoconnor/strictyaml/blob/1.7.3/key.sh>
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-bundled-ruamel
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((", \"strictyaml.ruamel\"")
+                 "")
+                (("\"python-dateutil>=2.6.0\"" dateutils)
+                 (string-append dateutils ", \"ruamel.yaml\"")))
+              (substitute* "strictyaml/parser.py"
+                (("from strictyaml import ruamel")
+                 "import ruamel.yaml"))
+              (substitute* (find-files "." "\\.py$")
+                (("from strictyaml.ruamel")
+                 "from ruamel.yaml")))))))
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-dateutil
+           python-ruamel.yaml-0.16))
+    (home-page "https://hitchdev.com/strictyaml/")
     (synopsis "Strict, typed YAML parser")
     (description "StrictYAML is a type-safe YAML parser that parses and
 validates a restricted subset of the YAML specification.")
@@ -865,9 +896,12 @@ validates a restricted subset of the YAML specification.")
         (base32
          "1dmv163cnslyqccrybkxn0c9s1jk1mmafmgxv75iamnz5lk5l8hk"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Tests are broken upstrea, see <https://github.com/brianolson/cbor_py/issues/6>.
+      #:tests? #f))
     (native-inputs
-     (list python-setuptools
-           python-wheel))
+     (list python-setuptools))
     (home-page "https://github.com/brianolson/cbor_py")
     (synopsis "Implementation of the Concise Binary Object Representation")
     (description
@@ -881,7 +915,7 @@ to generate and parse.  The two primary functions are @code{cbor.loads} and
 (define-public flatbuffers
   (package
     (name "flatbuffers")
-    (version "24.12.23")
+    (version "24.12.23")               ; Keep in sync with python-flatbuffers.
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -942,19 +976,23 @@ game development and other performance-critical applications.")
 (define-public python-flatbuffers
   (package
     (name "python-flatbuffers")
-    (version "23.1.21")
+    (version (package-version flatbuffers))
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "flatbuffers" version))
        (sha256
-        (base32 "11gzc7mhl984248q6abz5rrsph76j0y99mwk24xc90sxpcxr2j59"))))
+        (base32 "1b1dqa2hgcx2lf3g51amzd0a56vhl2vx061bvmwdpdp9dayb0419"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://google.github.io/flatbuffers/")
+    ;; XXX: No tests on Pypi.  Even in the upstream repository, it's unclear
+    ;; if there is a way to run tests for the python library only.
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools))
+    (home-page "https://flatbuffers.dev")
     (synopsis "FlatBuffers serialization for Python")
-    (description "This package provides the @code{FlatBuffers} serialization
-format for Python.")
+    (description
+     "This package provides the @code{FlatBuffers} serialization format for
+Python.")
     (license license:asl2.0)))
 
 (define-public python-feather-format

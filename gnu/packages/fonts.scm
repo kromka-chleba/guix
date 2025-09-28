@@ -109,6 +109,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages xorg))
@@ -174,6 +175,29 @@ source code legibility.")
      "This package provides Adwaita Fonts, a variation of Inter, and Adwaita
  Mono, Iosevka customized to match Inter.")
     (license license:silofl1.1)))
+
+(define-public font-alcarin-tengwar
+  (let ((commit "a4530d430ea01871b0b0a54d1de218d2ffde0ea5")
+        (revision "1"))
+    (package
+      (name "font-alcarin-tengwar")
+      (version "0.83")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/Tosche/Alcarin-Tengwar")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "190g43y7b8kiswnc3d1mdyw7p336p950b5wyb8hnbd3303ccjlsv"))))
+      (build-system font-build-system)
+      (home-page "https://tosche.net/fonts/alcarin-tengwar")
+      (synopsis "Tengwar font")
+      (description
+       "Alcarin Tengwar is a Tengwar (script invented by J. R. R. Tolkien)
+typeface.  It is designed with an academic context in mind.")
+      (license license:silofl1.1))))
 
 (define-public font-arapey
   (let ((commit  "28fa45c7f31afe62f577b0b857570ab0326b9113")

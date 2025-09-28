@@ -186,85 +186,6 @@
   #:use-module (gnu packages xorg)
   #:use-module ((srfi srfi-1) #:hide (zip)))
 
-(define-public aacircuit
-  ;; No release in PyPI or version tag on Git, use the latest commit.
-  (let ((commit "18635c846754b6219da1a2ceb8977714f70004d0")
-        (revision "0"))
-    (package
-      (name "aacircuit")
-      (version (git-version "0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/Blokkendoos/AACircuit")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "07agb7fbpbq74zm27j9b00imr46q6kpwhxzmmffw2s9scv80c1km"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:imported-modules `((guix build glib-or-gtk-build-system)
-                             ,@%pyproject-build-system-modules)
-        #:modules '(((guix build glib-or-gtk-build-system)
-                     #:prefix glib-or-gtk:)
-                    (guix build pyproject-build-system)
-                    (guix build utils))
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'generate-gdk-pixbuf-loaders-cache-file
-              (assoc-ref glib-or-gtk:%standard-phases
-                         'generate-gdk-pixbuf-loaders-cache-file))
-            (replace 'check
-              (lambda* (#:key tests? #:allow-other-keys)
-                (when tests?
-                  ;; Delete develompent test file.
-                  (delete-file "tests/test_flake.py")
-                  ;; Exclude tests intended for visual review.
-                  (setenv "NOSE_EXCLUDE"
-                          (string-join '("test_export_pdf"
-                                         "test_import_aacircuit_export_pdf")
-                                       ","))
-                  (setenv "HOME" "/tmp")
-                  (invoke "xvfb-run" "./testrunner.sh"))))
-            (add-after 'wrap 'glib-or-gtk-wrap
-              (assoc-ref glib-or-gtk:%standard-phases
-                         'glib-or-gtk-wrap))
-            (add-after 'glib-or-gtk-wrap 'wrap-aacircuit
-              (lambda* (#:key outputs #:allow-other-keys)
-                (wrap-program (string-append (assoc-ref outputs "out")
-                                             "/bin/aacircuit")
-                  `("GDK_PIXBUF_MODULE_FILE" =
-                    (,(getenv "GDK_PIXBUF_MODULE_FILE")))
-                  `("GI_TYPELIB_PATH" ":" prefix
-                    (,(getenv "GI_TYPELIB_PATH")))))))))
-      (native-inputs
-       ;; XXX: Test runner may be migrated to Pytest
-       ;; <https://docs.pytest.org/en/7.1.x/how-to/nose.html> after report to
-       ;; the upstream to modify them, use deprecated Nose test runner for
-       ;; now.
-       (list python-nose
-             python-setuptools
-             python-wheel
-             xvfb-run))
-      (inputs
-       (list bash-minimal
-             gtk+
-             python-bresenham
-             python-platformdirs
-             python-pycairo
-             python-pyclip
-             python-pygobject
-             python-pypubsub))
-      (home-page "https://github.com/Blokkendoos/AACircuit")
-      (synopsis "Draw electronic circuits with ASCII characters")
-      (description
-       "This is a pythonized, kind of reverse engineered version of original
-AACircuit written by Andreas Weber in Borland Delphi.  The idea and GUI layout
-are also taken from the original.")
-      (license license:gpl3+))))
-
 (define-public cutecom
   (package
     (name "cutecom")
@@ -2081,7 +2002,9 @@ bindings for Python, Java, OCaml and more.")
                              python-croniter
                              python-docutils
                              python-flask
-                             python-marshmallow
+                             ;; v4 is supported in upcomming release, see
+                             ;; <https://git.platypush.tech/platypush/platypush/issues/445>.
+                             python-marshmallow-3
                              python-pillow
                              python-pygments
                              python-pyotp
@@ -2112,7 +2035,7 @@ multiple services and devices with hundreds of supported integrations.")
 (define-public python-esptool
   (package
     (name "python-esptool")
-    (version "5.0.1")
+    (version "5.0.2")
     (source
      (origin
        (method git-fetch)
@@ -2121,7 +2044,7 @@ multiple services and devices with hundreds of supported integrations.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04asqw6g4lhkz6fqn22wwk2wjq5q8c00m2k8wylksrc0v2f582i9"))))
+        (base32 "1wl75j6ncm5lahy9pzc38qivhaf9p42a2bijishdkwkw388fs6x1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2143,11 +2066,10 @@ multiple services and devices with hundreds of supported integrations.")
            python-pyserial
            python-pyyaml
            python-reedsolo
-           python-rich-click-next))
+           python-rich-click))
     (native-inputs (list python-pyelftools
                          python-pytest
-                         python-setuptools
-                         python-wheel))
+                         python-setuptools))
     (home-page "https://github.com/espressif/esptool")
     (synopsis "Bootloader utility for Espressif ESP8266 & ESP32 chips")
     (description

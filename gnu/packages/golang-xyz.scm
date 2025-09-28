@@ -751,6 +751,32 @@ Application Record Encoding} https://baremessages.org/ message format for
 Golang.")
     (license license:asl2.0)))
 
+(define-public go-github-com-a-h-parse
+  (package
+    (name "go-github-com-a-h-parse")
+    (version "0.0.0-20250122154542-74294addb73e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/a-h/parse")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1warii2f9mrp5m2da9pn4chzd4y3fjlc3547va8xljfh09bvray4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/a-h/parse"))
+    (native-inputs
+     (list go-github-com-google-go-cmp))
+    (home-page "https://github.com/a-h/parse")
+    (synopsis "Parsing tools for Golang")
+    (description
+     "This package provides a set of parsing tools for Go inspired by
+@url{https://github.com/sprache/Sprache/, Sprache}.")
+    (license license:expat)))
+
 (define-public go-github-com-a8m-envsubst
   (package
     (name "go-github-com-a8m-envsubst")
@@ -1608,6 +1634,34 @@ commands.")
     (description
      "This package implements optimal parameters for data-types.")
     (license license:expat)))
+
+(define-public go-github-com-antlr4-go-antlr-v4
+  (package
+    (name "go-github-com-antlr4-go-antlr-v4")
+    (version "4.13.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/antlr4-go/antlr")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m5q00fvz28dgvv3ws924p6gamxm6gzqfm12f5ryhljifg22xq3d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/antlr4-go/antlr/v4"))
+    (propagated-inputs
+     (list go-golang-org-x-exp))
+    (home-page "https://github.com/antlr4-go/antlr")
+    (synopsis "ANTLR4 Go Runtime Module")
+    (description
+     "This package implements the Go version of the
+@url{https://github.com/antlr/antlr4, ANTLR 4} runtime - ANother Tool for
+Language Recognition, a parser generator that uses a LL algorithm for
+parsing.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-apex-logs
   (package
@@ -4570,6 +4624,92 @@ dependencies and a simple API.")
      "This package provides a transport-agnostic, filesystem metadata manifest system.")
     (license license:asl2.0)))
 
+(define-public go-github-com-containerd-errdefs
+  (package
+    (name "go-github-com-containerd-errdefs")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/errdefs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0afaljkkd388f6igr3f2vjnd14yr8h20fcfzglw8j5q1q7a1cvik"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/containerd/errdefs/pkg
+            (delete-file-recursively "pkg")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/errdefs"))
+    (home-page "https://github.com/containerd/errdefs")
+    (synopsis "Common definition and library of errors used by containerd")
+    (description
+     "Package errdefs defines the common errors used throughout containerd
+packages.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-containerd-errdefs-pkg
+  (package
+    (name "go-github-com-containerd-errdefs-pkg")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/errdefs")
+              (commit (go-version->git-ref version
+                                           #:subdir "pkg"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0afaljkkd388f6igr3f2vjnd14yr8h20fcfzglw8j5q1q7a1cvik"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+            ;; Consider to implement it as re-usable procedure in
+            ;; guix/build/utils or guix/build-system/go.
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "pkg")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/containerd/errdefs/pkg"
+      #:unpack-path "github.com/containerd/errdefs"))
+    (propagated-inputs
+     (list go-github-com-containerd-errdefs
+           go-github-com-containerd-typeurl-v2
+           go-google-golang-org-genproto-googleapis-rpc
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/containerd/errdefs")
+    (synopsis "Addintional error handling modules for containerd")
+    (description
+     "This package provides an additinal Golang modules for error handling in
+containerd projects.
+
+@itemize
+@item errgrpc - provides utility functions for translating errors to and from
+a gRPC context
+@item errhttp - provides utility functions for translating errors to and from
+a HTTP context
+@end itemize")
+    (license license:asl2.0)))
+
 (define-public go-github-com-containerd-fifo
   (package
     (name "go-github-com-containerd-fifo")
@@ -7016,6 +7156,31 @@ in a consistent state and never represent an in-progress write.")
     ;; <...>
     (license license:bsd-3)))
 
+(define-public go-github-com-facebookgo-flagenv
+  (package
+    (name "go-github-com-facebookgo-flagenv")
+    (version "0.0.0-20160425205200-fcd59fca7456")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/facebookarchive/flagenv")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c7fw4y4gmdrn66dx7la637lx0hvs1w27x9j12wdx037n51r078g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f   ;Tests require dated code <github.com/facebookgo/ensure>
+      #:import-path "github.com/facebookgo/flagenv"))
+    (home-page "https://github.com/facebookgo/flagenv")
+    (synopsis "Populate flags from environment variables")
+    (description
+     "Package flagenv provides the ability to populate flags from environment
+variables.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-facette-natsort
   (package
     (name "go-github-com-facette-natsort")
@@ -8836,6 +9001,67 @@ This package contains a series of small enhancements and additions.")
 the resource usage and performance characteristics of running containers.")
       (license license:asl2.0))))
 
+(define-public go-github-com-google-cel-go
+  (package
+    (name "go-github-com-google-cel-go")
+    (version "0.26.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/google/cel-go")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hrdr9fzac0p7jrlbchz2qvdikr1szq5rg4sdsld7n849mmz8ypf"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/google/cel-go/codelab
+            ;; - github.com/google/cel-go/conformance
+            ;; - github.com/google/cel-go/policy
+            ;; - github.com/google/cel-go/repl/appengine
+            ;; - github.com/google/cel-go/repl
+            ;; - github.com/google/cel-go/tools
+            (for-each delete-file-recursively
+                      (list "codelab"
+                            "conformance"
+                            "policy"
+                            "repl/appengine"
+                            "repl"
+                            "tools"
+                            "vendor"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/google/cel-go"
+      #:test-flags #~(list "-skip" "TestStringFormat")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "examples")))))))
+    (propagated-inputs
+     (list go-cel-dev-expr
+           go-github-com-antlr4-go-antlr-v4
+           go-github-com-stoewer-go-strcase
+           go-golang-org-x-text
+           go-google-golang-org-genproto-googleapis-api
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/google/cel-go")
+    (synopsis "Common Expression Language")
+    (description
+     "The Common Expression Language (CEL) is a non-Turing complete language
+designed for simplicity, speed, safety, and portability.  CEL's C-like
+@url{https://github.com/google/cel-spec, syntax} looks nearly identical to
+equivalent expressions in C++, Go, Java, and TypeScript.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-google-gnostic-models
   (package
     (name "go-github-com-google-gnostic-models")
@@ -9220,6 +9446,31 @@ according @@url{https://rfc-editor.org/rfc/rfc8785.html, RFC 8785}.")
     (description
      "This package can generate ASCII line graphs in Golang.")
     (license license:bsd-3)))
+
+(define-public go-github-com-h2non-filetype
+  (package
+    (name "go-github-com-h2non-filetype")
+    (version "1.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/h2non/filetype")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05xad4dfimlccg3hy0fpcns4fl7yj17dbpdf6ijwbp6k4ryzy9cm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/h2non/filetype"))
+    (home-page "https://github.com/h2non/filetype")
+    (synopsis "Infer binary file types based on the magic numbers header signature")
+    (description
+     "This package implements a functionality to infer file and MIME type
+checking the @url{https://en.wikipedia.org/wiki/Magic_number_(programming)
+,magic numbers} signature.")
+    (license license:expat)))
 
 (define-public go-github-com-h2non-parth
   (package
@@ -14146,6 +14397,30 @@ the current user without cgo.  This library does that, enabling
 cross-compilation.")
     (license license:expat)))
 
+(define-public go-github-com-mitchellh-go-ps
+  (package
+    (name "go-github-com-mitchellh-go-ps")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mitchellh/go-ps")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ipcbz66x7q8xczi7cyfq06y7n7v0syvkp730vn9jrn7s8f5ag0z"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mitchellh/go-ps"))
+    (home-page "https://github.com/mitchellh/go-ps")
+    (synopsis "Process List Library for Golang")
+    (description
+     "This package provides an API for finding and listing processes in a
+platform-agnostic way.")
+    (license license:expat)))
+
 (define-public go-github-com-mitchellh-go-wordwrap
   (package
     (name "go-github-com-mitchellh-go-wordwrap")
@@ -14297,6 +14572,29 @@ parsing.")
     (synopsis "Docker Image Specification v1.")
     (description
      "This directory contains documents about Docker Image Specification v1.X.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-moby-spdystream
+  (package
+    (name "go-github-com-moby-spdystream")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/spdystream")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p5pwwspmp24ff900656fyvrgdz8xxl6y0dk9fqgcaaaylmw0v9g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/spdystream"))
+    (home-page "https://github.com/moby/spdystream")
+    (synopsis "Multiplexed streams for Golang")
+    (description
+     "This package provides a multiplexed stream library using spdy.")
     (license license:asl2.0)))
 
 (define-public go-github-com-moby-sys-capability
@@ -15145,6 +15443,31 @@ multibase} (self identifying base encodings) in Go.")
 varints.")
     (license license:expat)))
 
+(define-public go-github-com-mxk-go-flowrate
+  (package
+    (name "go-github-com-mxk-go-flowrate")
+    (version "0.0.0-20140419014527-cca7078d478f")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mxk/go-flowrate")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zqs39923ja0yypdmiqk6x8pgmfs3ms5x5sl1dqv9z6zyx2xy541"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/mxk/go-flowrate"))
+    (home-page "https://github.com/mxk/go-flowrate")
+    (synopsis "Limiting and monitoring data flow rate in Golang")
+    (description
+     "This package provides the tools for monitoring and limiting the flow
+rate of an arbitrary data stream.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-nakagami-firebirdsql
   (package
     (name "go-github-com-nakagami-firebirdsql")
@@ -15177,6 +15500,30 @@ varints.")
     (description
      "Package firebird provides database/sql driver for
 @url{https://firebirdsql.org/, Firebird} RDBMS.")
+    (license license:expat)))
+
+(define-public go-github-com-natefinch-atomic
+  (package
+    (name "go-github-com-natefinch-atomic")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/natefinch/atomic")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y1hr9smjfwp3zgn8s9njp84x9m42x3a7f1h2q7qyd0i5hf9bcvx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/natefinch/atomic"))
+    (home-page "https://github.com/natefinch/atomic")
+    (synopsis "Atomic file writing in Golang")
+    (description
+     "This package provides functions to atomically change files, by writing
+first to a temp file, and then overwriting the target file in an atomic way.")
     (license license:expat)))
 
 (define-public go-github-com-nathan-osman-go-sunrise
@@ -15334,6 +15681,38 @@ through it's psuedoterminal.")
     (description
      "This package provides functionality of converting a blob of text into a
 list of sentences.")
+    (license license:expat)))
+
+(define-public go-github-com-nicksnyder-go-i18n-v2
+  (package
+    (name "go-github-com-nicksnyder-go-i18n-v2")
+    (version "2.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/nicksnyder/go-i18n")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14v4v06j30rsn2y8lss7j5qyfbr7wir7yzpjd8wqh279aq489d2j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/nicksnyder/go-i18n/v2"
+      ;; One test fails with error: open active.en.toml: permission denied.
+      #:test-flags #~(list "-skip" "TestMain/extract")))
+    (propagated-inputs
+     (list go-github-com-burntsushi-toml
+           go-golang-org-x-text
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/nicksnyder/go-i18n")
+    (synopsis "Internationalization and localization for Golang")
+    (description
+     "This package provides support for implementing internationalization and
+localization of Go code, covering pluralized strings for all 200+ languages in
+@acronym{CLDR, Unicode Common Locale Data Repository}.")
     (license license:expat)))
 
 (define-public go-github-com-nightlyone-lockfile
@@ -17205,6 +17584,58 @@ your Go binary to be later served from an http.FileSystem.")
 watches memory utilization and forces Go GC in accordance with a user-defined
 policy.")
     (license (list license:asl2.0 license:expat))))
+
+(define-public go-github-com-redis-go-redis-v9
+  (package
+    (name "go-github-com-redis-go-redis-v9")
+    (version "9.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/redis/go-redis")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19scv5fbwacrbpv329w2a48z1w5wmxi7ax93bp1p398k4yqx6izf"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/redis/go-redis/extra/rediscensus/v9
+            ;; - github.com/redis/go-redis/extra/rediscmd/v9
+            ;; - github.com/redis/go-redis/extra/redisotel/v9
+            ;; - github.com/redis/go-redis/extra/redisprometheus/v9
+            ;; - github.com/redis/go-redis/internal/customvet
+            (delete-file-recursively "extra")
+            (delete-file-recursively "internal/customvet")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/redis/go-redis/v9"
+      #:test-flags
+      ;; Tests requir running Redis server.
+      #~(list "-skip" "Example|TestGinkgoSuite")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/example")))))))
+    (native-inputs
+     (list go-github-com-bsm-ginkgo-v2
+           go-github-com-bsm-gomega))
+    (propagated-inputs
+     (list go-github-com-cespare-xxhash-v2
+           go-github-com-dgryski-go-rendezvous))
+    (home-page "https://github.com/redis/go-redis")
+    (synopsis "Redis client for Golang")
+    (description
+     "go-redis is the official Redis client library for the Go programming
+language.  It offers a straightforward interface for interacting with Redis
+servers.")
+    (license license:bsd-2)))
 
 (define-public go-github-com-reiver-go-porterstemmer
   ;; The latest commit contain test fixtures.
@@ -22665,6 +23096,32 @@ machine readable.  It is modeled after the Go standard library's @code{io} and
            go-github-com-mattn-go-colorable
            go-golang-org-x-term))))
 
+(define-public go-gopkg-in-inf-v0
+  (package
+    (name "go-gopkg-in-inf-v0")
+    (version "0.9.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-inf/inf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00k5iqjcp371fllqxncv7jkf80hn1zww92zm78cclbcn4ybigkng"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/inf.v0"
+      ;; Tests are not copatiblw with Go 1.24+.
+      #:test-flags #~(list "-vet=off")))
+    (home-page "https://github.com/go-inf/inf")
+    (synopsis "Infinite precision decimal arithmetic in Golang")
+    (description
+     "This package (type @code{inf.Dec}) implements a \"infinite-precision\"
+decimal arithmetic.")
+    (license license:expat)))
+
 (define-public go-gopkg-in-ini-v1
   (package
     (name "go-gopkg-in-ini-v1")
@@ -22976,6 +23433,61 @@ dependencies.")
      "This list transcoder supports encoding/decoding property lists (Apple
 XML, Apple Binary, OpenStep, and GNUStep) from/to arbitrary Go types.")
     (license license:giftware)))
+
+(define-public go-k8s-io-apimachinery
+  (package
+    (name "go-k8s-io-apimachinery")
+    (version "0.34.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kubernetes/apimachinery")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mdmw951k9a2v817c0xxlazvz2500lw80mh53xjwspss0yx9b8fb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "k8s.io/apimachinery"
+      ;; TODO: Check why some tests fails in other subdirectories.
+      #:test-subdirs #~(list "pkg/test/...")))
+    (native-inputs
+     (list go-github-com-armon-go-socks5
+           go-github-com-stretchr-testify
+           go-golang-org-x-time))
+    (propagated-inputs
+     (list go-github-com-davecgh-go-spew
+           go-github-com-fxamacker-cbor-v2
+           go-github-com-gogo-protobuf
+           go-github-com-google-gnostic-models
+           go-github-com-google-go-cmp
+           go-github-com-google-uuid
+           go-github-com-moby-spdystream
+           go-github-com-mxk-go-flowrate
+           go-github-com-pmezard-go-difflib
+           go-github-com-spf13-pflag
+           go-golang-org-x-net
+           go-gopkg-in-evanphx-json-patch-v4
+           go-gopkg-in-inf-v0
+           go-k8s-io-klog-v2
+           go-k8s-io-kube-openapi
+           go-k8s-io-utils
+           go-sigs-k8s-io-json
+           go-sigs-k8s-io-randfill
+           go-sigs-k8s-io-structured-merge-diff-v6
+           go-sigs-k8s-io-yaml))
+    (home-page "https://k8s.io/apimachinery")
+    (synopsis "Kubernetes and Kubernetes-like API utilities")
+    (description
+     "This package provides scheme, typing, encoding, decoding, and conversion
+functions for Kubernetes and Kubernetes-like API objects.  It is a shared
+dependency for servers and clients to work with Kubernetes API infrastructure
+without direct type dependencies. Its first consumers are
+@code{k8s.io/kubernetes}, @code{k8s.io/client-go}, and
+@code{k8s.io/apiserver}.")
+    (license license:asl2.0)))
 
 (define-public go-k8s-io-gengo-v2
   (package
@@ -23547,6 +24059,61 @@ prints the Go version used to build that executable.")
     (description
      "This package provides case-sensitive, integer-preserving JSON
 unmarshaling functions based on @code{encoding/json} @code{Unmarshal()}.")
+    (license license:asl2.0)))
+
+(define-public go-sigs-k8s-io-kustomize-cmd-config
+  (package
+    (name "go-sigs-k8s-io-kustomize-cmd-config")
+    (version "0.20.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kubernetes-sigs/kustomize")
+              (commit (go-version->git-ref version
+                                           #:subdir "cmd/config"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12n8ij4gisah5mvxcgq263iic61gjpxdj3ml03826zckzn7wlv46"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+            ;; Consider to implement it as re-usable procedure in
+            ;; guix/build/utils or guix/build-system/go.
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "cmd")
+            (delete-all-but "cmd" "config")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "sigs.k8s.io/kustomize/cmd/config"
+      #:unpack-path "sigs.k8s.io/kustomize"
+      ;; Full test suite requires Docker in the PATH.
+      #:test-subdirs #~(list "internal/commands"
+                             "runner/...")))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-go-errors-errors
+           go-github-com-spf13-cobra
+           go-gopkg-in-inf-v0
+           go-sigs-k8s-io-kustomize-kyaml))
+    (home-page "https://sigs.k8s.io/kustomize")
+    (synopsis "Kubernetes config filters")
+    (description
+     "This package implements a functionality to expose Kubernetes config
+filters directly as CLI commands for the purposes of development of the
+@code{kyaml} package and as a reference implementation for using the
+libraries.")
     (license license:asl2.0)))
 
 (define-public go-sigs-k8s-io-kustomize-kyaml

@@ -52,6 +52,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -234,15 +235,18 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
   (package
     (name "python-django-cache-url")
     (version "3.4.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-cache-url" version))
-              (sha256
-               (base32
-                "05yr19gi5ln6za0y9nf184klaixnf1dr1nfajn63893mf6ab37zb"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/epicserve/django-cache-url")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a5vd07wrnfbclvf6pz9p8ag9kdd1453lsl9q0bkyc45hq2xqd2a"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-django python-setuptools python-wheel))
+     (list python-django python-pytest python-pytest-cov python-setuptools))
     (home-page "https://github.com/epicserve/django-cache-url")
     (synopsis "Configure Django cache settings from URLs")
     (description
@@ -264,6 +268,10 @@ with a @var{CACHE_URL} environment variable.")
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
+               (add-after 'unpack 'skip-bad-test
+                 (lambda _
+                   (substitute* "tests/test_values.py"
+                     (("test_database_url_value") "_test_database_url_value"))))
                (replace 'check
                  (lambda* (#:key tests? #:allow-other-keys)
                    (when tests?
@@ -326,7 +334,7 @@ and adapters that are useful for non-trivial configuration scenarios.")
            python-pytest
            python-pytest-cov ; runs by default
            python-pytest-django
-           python-setuptools-next
+           python-setuptools
            python-shortuuid
            python-wheel))
     (home-page "https://github.com/django-extensions/django-extensions")
@@ -412,18 +420,27 @@ with arguments to the field constructor.")
     (name "python-django-classy-tags")
     (version "4.1.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "django-classy-tags" version))
-        (sha256
-         (base32
-          "0ngffhbicyx1j0j0nxdvbg9bhs9ss88xvx3dhr6irrx65ymd3nf8"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/divio/django-classy-tags")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10xl1knpvnfjlc5mm0lyy62di463nwcgikdr18bqb1gxipfk6br4"))))
     (build-system pyproject-build-system)
-    (native-inputs
-     (list python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-django))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                (invoke "django-admin" "test" "tests"
+                        "--pythonpath=.")))))))
+    (native-inputs (list python-setuptools))
+    (propagated-inputs (list python-django))
     (home-page "https://github.com/divio/django-classy-tags")
     (synopsis "Class based template tags for Django")
     (description
@@ -599,24 +616,27 @@ them do this.")
     (version "65.3.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "django_allauth" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pennersr/django-allauth")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "11q56p07g987hsz7v27nrvr2piy72jhyzwjrcis3lxd2f4drabp0"))))
+        (base32 "1vm8q5jp854lrykqirmklmlppzz6dih2bzjgv4c7mdwhsfp9s1i2"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       ;; XXX: KeyError: location
-      '(list "--ignore=allauth/socialaccount/providers/openid/tests.py")
+      #~(list "--ignore=allauth/socialaccount/providers/openid/tests.py")
       #:phases
       #~(modify-phases %standard-phases
           ;; FIXME: This should be fixed in python-xmlsec
           (add-before 'check 'pre-check
             (lambda* (#:key inputs #:allow-other-keys)
-              (setenv "LD_LIBRARY_PATH"
-                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1.2.37"))))))))
+              (let ((lib (search-input-file inputs "lib/libxmlsec1-openssl.so")))
+                (setenv "LD_LIBRARY_PATH"
+                        (dirname lib))))))))
     (propagated-inputs
      (list python-asgiref
            python-django
@@ -627,12 +647,12 @@ them do this.")
            python-requests
            python-requests-oauthlib
            python-python3-saml))
+    (inputs (list xmlsec-openssl))
     (native-inputs
      (list tzdata-for-tests
            python-pytest
            python-pytest-django
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (home-page "https://github.com/pennersr/django-allauth")
     (synopsis "Set of Django applications addressing authentication")
     (description
@@ -732,38 +752,6 @@ queries done via the Django ORM, SQLAlchemy generated queries are displayed.")
 templatetags and a full test suite.")
     (license license:expat)))
 
-(define-public python-django-assets
-  (package
-    (name "python-django-assets")
-    (version "2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-assets" version))
-              (sha256
-               (base32
-                "0fc6i77faxxv1gjlp06lv3kw64b5bhdiypaygfxh5djddgk83fwa"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'disable-bad-tests
-           (lambda _
-             (substitute* "tests/test_django.py"
-               (("bundles = self.loader.load_bundles\\(\\)")
-                "return")))))))
-    (native-inputs
-     (list python-nose python-setuptools python-wheel))
-    (propagated-inputs
-     (list python-django python-webassets))
-    (home-page "https://github.com/miracle2k/django-assets")
-    (synopsis "Asset management for Django")
-    (description
-      "Asset management for Django, to compress and merge CSS and Javascript
-files.  Integrates the webassets library with Django, adding support for
-merging, minifying and compiling CSS and Javascript files.")
-    (license license:bsd-2)))
-
 (define-public python-django-jinja
   (package
     (name "python-django-jinja")
@@ -836,7 +824,9 @@ conn_max_age argument to easily enable Django’s connection pool.")
                (base32
                 "16k91rvd9889xxrrf84a3zb0jpinizhfqdmafn54zxa8kqrf7zsm"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list #:tests? #f)) ;XXX: no tests in PyPI, check in git
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/migonzalvar/dj-email-url")
     (synopsis "Configure email settings from URLs")
     (description
@@ -847,6 +837,7 @@ settings from URLs.")
                    license:cc0))))      ;configuration and data
 
 (define-public python-dj-search-url
+  ;; XXX: No updates since 2012, consider to remove in the next refresh cycle.
   (package
     (name "python-dj-search-url")
     (version "0.1")
@@ -857,7 +848,9 @@ settings from URLs.")
                (base32
                 "0h7vshhglym6af2pplkyivk6y0g0ncq0xpdzi88kq2sha9c1lka2"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list #:tests? #f))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/dstufft/dj-search-url")
     (synopsis "Configure Haystack search from URLs")
     (description
@@ -1025,7 +1018,7 @@ to asyncio and Pydantic.")
                 (invoke "django-admin" "test" "tests"
                         "--pythonpath=.")))))))
     (propagated-inputs (list python-asgiref python-django))
-    (native-inputs (list python-pytest python-setuptools-next python-wheel))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://django-htmx.readthedocs.io/en/latest/")
     (synopsis "Extensions for using Django with htmx")
     (description "This package provides a Django extension to work with
@@ -1063,12 +1056,9 @@ to asyncio and Pydantic.")
      (list python-jsmin
            python-css-html-js-minify))
     (native-inputs
-     (list python-coveralls
-           python-django
+     (list python-django
            python-setuptools
-           python-setuptools-scm
-           python-tox
-           python-wheel))
+           python-setuptools-scm))
     (home-page
      "https://github.com/jazzband/django-pipeline")
     (synopsis "Asset packaging library for Django")
@@ -1281,6 +1271,7 @@ Django Q, dependencies updates, docs updates and several bug fixes.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:tests? #f ; no tests.
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-poetry-core
@@ -1289,7 +1280,7 @@ Django Q, dependencies updates, docs updates and several bug fixes.")
               (substitute* "pyproject.toml"
                 (("poetry.masonry.api") "poetry.core.masonry.api")))))))
     (propagated-inputs (list python-sentry-sdk))
-    (native-inputs (list python-poetry-core python-setuptools python-wheel))
+    (native-inputs (list python-poetry-core python-setuptools))
     (home-page "https://django-q.readthedocs.org")
     (synopsis "Sentry support plugin for Django Q")
     (description "This package provides a Sentry support plugin for Django Q.")
@@ -1308,6 +1299,8 @@ Django Q, dependencies updates, docs updates and several bug fixes.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; XXX: No tests in Pypi archive, unclear how to get it from git.
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-poetry-core
@@ -1743,44 +1736,32 @@ backends in a single library.")
 (define-public python-django-auth-ldap
   (package
     (name "python-django-auth-ldap")
-    (version "4.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-auth-ldap" version))
-              (sha256
-               (base32
-                "0jd9jms9qpa92fk5n7gqcxjk3zs6ay79r73ann7cw1vqn79lkxvp"))))
-    (build-system python-build-system)
+    (version "4.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/django-auth-ldap/django-auth-ldap")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11mgxj05ra1yh2z9knzvcayd3zwqgl39gna0gm0xp290cyw5mnnb"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (replace 'build
-                 (lambda _
-                   ;; Set file modification times to the early 80's because
-                   ;; the Zip format does not support earlier timestamps.
-                   (setenv "SOURCE_DATE_EPOCH"
-                           (number->string (* 10 366 24 60 60)))
-                   (invoke "python" "-m" "build" "--wheel"
-                           "--no-isolation" ".")))
-               (replace 'check
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (setenv "SLAPD" (search-input-file inputs "/libexec/slapd"))
-                   (setenv "SCHEMA"
-                           (search-input-directory inputs "etc/openldap/schema"))
-                   (invoke "python" "-m" "django" "test"
-                           "--settings" "tests.settings")))
-               (replace 'install
-                 (lambda _
-                   (let ((whl (car (find-files "dist" "\\.whl$"))))
-                     (invoke "pip" "--no-cache-dir" "--no-input"
-                             "install" "--no-deps" "--prefix" #$output whl)))))))
-    (native-inputs
-     (list openldap python-wheel python-setuptools-scm python-toml
-
-           ;; These can be removed after <https://bugs.gnu.org/46848>.
-           python-pypa-build python-pip))
-    (propagated-inputs
-     (list python-django python-ldap))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "SLAPD"
+                      (search-input-file inputs "/libexec/slapd"))
+              (setenv "SCHEMA"
+                      (search-input-directory inputs "etc/openldap/schema"))
+              (invoke "python"
+                      "-m" "django" "test"
+                      "--settings" "tests.settings"))))))
+    (native-inputs (list openldap python-setuptools))
+    (propagated-inputs (list python-django python-ldap))
     (home-page "https://github.com/django-auth-ldap/django-auth-ldap")
     (synopsis "Django LDAP authentication backend")
     (description

@@ -13,6 +13,7 @@
 ;;; Copyright © 2022 Alice Brenon <alice.brenon@ens-lyon.fr>
 ;;; Copyright © 2022 Kyle Meyer <kyle@kyleam.com>
 ;;; Copyright © 2022 Philip McGrath <philip@philipmcgrath.com>
+;;; Copyright © 2023, 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -31,6 +32,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix import utils)
+  #:autoload   (git structs) (git-error-message)
   #:use-module (guix base32)
   #:use-module ((guix build download) #:prefix build:)
   #:use-module ((gcrypt hash) #:hide (sha256))
@@ -39,8 +41,11 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix deprecation)
+  #:use-module (guix diagnostics)
   #:use-module (guix discovery)
   #:use-module (guix build-system)
+  #:use-module (guix git)
+  #:use-module (guix hash)
   #:use-module ((guix i18n) #:select (G_))
   #:use-module (guix store)
   #:use-module (guix download)
@@ -65,6 +70,14 @@
 
             url-fetch
             guix-hash-url
+
+            peekable-lambda
+            peek-body
+
+            download-git-repository
+            git-origin
+            git->origin
+            default-git-error
 
             package-names->package-inputs
             maybe-inputs
@@ -164,6 +177,65 @@ thrown."
 (define (guix-hash-url filename)
   "Return the hash of FILENAME in nix-base32 format."
   (bytevector->nix-base32-string (file-sha256 filename)))
+
+(define-syntax-rule (peekable-lambda args this-body)
+  (lambda args
+    #((body . this-body))
+    this-body))
+
+(define (peek-body proc)
+  (procedure-property proc 'body))
+
+(define (download-git-repository url ref)
+  "Fetch the given REF from the Git repository at URL.  Return three values :
+the commit hash, the downloaded directory and its content hash."
+  (with-store store
+    (let (((values checkout commit-hash)
+           (latest-repository-commit store url #:ref ref)))
+      (values commit-hash
+              checkout
+              (bytevector->nix-base32-string
+               (query-path-hash store checkout))))))
+
+(define (git-origin url commit hash)
+  "Simple helper to generate a Git origin s-expression."
+  `(origin
+     (method git-fetch)
+     (uri (git-reference
+            (url ,(and (not (eq? url 'null)) url))
+            (commit ,commit)))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 ,hash))))
+
+(define* (git->origin url proc #:key ref #:rest rest)
+  "Return a generated `origin' block of a package depending on the Git version
+control system, and the directory in the store where the package has been
+downloaded, in case further processing is necessary.
+
+Unless overwritten with REF, the ref (as defined by the (guix git) module)
+is calculated from the evaluation of PROC with trailing arguments.  PROC must
+be a procedure with a 'body property, used to generate the origin sexp."
+  (let* ((args (strip-keyword-arguments '(#:ref) rest))
+         (commit (apply proc args))
+         (ref (or ref (and commit `(tag-or-commit . ,commit))))
+         (_ directory hash
+            (if (or ref commit)
+                (download-git-repository url ref)
+                (values #f #f #f))))
+    (values (git-origin url (peek-body proc) hash) directory)))
+
+(define (default-git-error home-page)
+  "Return a procedure to be passed to a `git-error' `catch' for HOME-PAGE."
+  (match-lambda*
+    (('git-error error)
+     (warning location
+              (G_ "failed to download Git repository ~a: ~a~%")
+              home-page
+              (git-error-message error))
+     #f)
+    (_
+     #f)))
 
 (define %spdx-license-identifiers
   ;; https://spdx.org/licenses/

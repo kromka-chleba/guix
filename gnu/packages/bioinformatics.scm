@@ -2204,26 +2204,38 @@ intended to behave exactly the same as the original BWK awk.")
 (define-public python-bcbio-gff
   (package
     (name "python-bcbio-gff")
-    (version "0.6.9")
+    ;; python-bcbio-gff can only be refreshed manually, because guix refresh
+    ;; does not understand the tags on the github repository.
+    (version "0.7.1")
     (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "bcbio-gff" version))
+              ;; No tests in PyPI package.
+              (method git-fetch)
+              (uri (git-reference
+               (url "https://github.com/chapmanb/bcbb")
+               (commit (string-append "bcbio-gff-v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pm1szyxabhn8jismrj9cjhf88ajgcmm39f0cgf36iagw5qakprl"))))
+                "0144xxzibq4mrg8a1w2scs120rd9svq07hm5ccs91n3a4nvwjfsd"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'enter-directory
+            (lambda _ (chdir "gff"))))))
     (native-inputs
-     (list python-pytest))
+     (list python-setuptools python-pytest))
     (propagated-inputs
      (list python-biopython
-           python-setuptools
-           python-six
-           python-wheel))
+           python-six))
     (home-page "https://github.com/chapmanb/bcbb/tree/master/gff")
     (synopsis "Read and write GFF files with Biopython integration")
     (description
      "This package lets you read and write files in Generic Feature
 Format (GFF) with Biopython integration.")
+    (properties
+     '((upstream-name . "bcbio-gff")))
     (license (license:non-copyleft "http://www.biopython.org/DIST/LICENSE"))))
 
 (define-public python-bcbio-gff/biopython-1.73
@@ -4742,35 +4754,30 @@ high-throughput sequencing of B cell and T cell repertoires.")
   (package
     (name "python-changeo")
     (version "1.3.4")
-    (home-page "https://github.com/immcantation/changeo")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url home-page)
-              (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (pypi-uri "changeo" version))
        (sha256
-        (base32
-         "1230bb7672n6nqkrw2fvrprknchhlvvxb76l1r4g6ybrq0g7l0rb"))))
+        (base32 "0jm4chddpl929a8daicp9mv14nwzf2hajpjfhzckg6x8cpgc1087"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:build-backend "setuptools.build_meta"))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
     (propagated-inputs
      (list python-airr
            python-biopython
-           python-importlib-resources-6
+           python-importlib-resources
            python-numpy
            python-packaging
            python-pandas
            python-presto
            python-pyyaml
            python-scipy))
-    (native-inputs
-     (list python-airr
-           python-setuptools
-           python-wheel))
-    (arguments
-     (list
-      #:build-backend "setuptools.build_meta"))
+    (home-page "http://changeo.readthedocs.io")
     (synopsis "Repertoire clonal assignment toolkit")
     (description "Change-O is a collection of tools for processing the output
 of V(D)J alignment tools, assigning clonal clusters to immunoglobulin (Ig)
@@ -4996,11 +5003,11 @@ long-read sequencing data.")
      (list lapack openblas))
     (native-inputs
      (list python-cython
-           python-setuptools
            python-pybiomart
-           python-wheel))
+           python-setuptools))
     (arguments
      (list
+      #:tests? #f       ;XXX: tests hangs during collection
       #:phases
       '(modify-phases %standard-phases
          ;; Numba needs a writable dir to cache functions.
@@ -6084,7 +6091,7 @@ subgroups.")
     (inputs
      (list ncurses curl zlib))
     (native-inputs
-     (list python-cython
+     (list python-cython-0
            python-pytest
            python-setuptools
            python-wheel
@@ -7315,7 +7322,9 @@ trees (phylogenies) and characters.")
         (base32
          "0w1p4l1jwg9kkifm0jsg33a212ps0jn61islmnng2afp77y5nkr6"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-setuptools-scm python-wheel))
+    (arguments
+     (list #:test-flags #~(list "py2bitTest/test.py")))
+    (native-inputs (list python-pytest python-setuptools python-setuptools-scm))
     (home-page "https://github.com/dpryan79/py2bit")
     (synopsis "Access 2bit files using lib2bit")
     (description
@@ -7689,23 +7698,22 @@ and paired-end bulk or single-cell sequencing data with any read length.")
   (package
     (name "python-airr")
     (version "1.5.1")
-    (home-page "https://pypi.org/project/airr/")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "airr" version))
        (sha256
-        (base32
-         "0jbigfdwa23xv5riw0ljdfq2qwg1b2fav2kfi81zxd1g1jprxy3i"))))
+        (base32 "0jbigfdwa23xv5riw0ljdfq2qwg1b2fav2kfi81zxd1g1jprxy3i"))))
     (build-system pyproject-build-system)
+    (native-inputs
+     (list python-jsondiff
+           python-pytest
+           python-setuptools))
     (propagated-inputs
      (list python-pandas
            python-pyyaml
            python-yamlordereddictloader))
-    (native-inputs
-     (list python-jsondiff
-           python-setuptools
-           python-wheel))
+    (home-page "http://docs.airr-community.org")
     (synopsis "Data Representation Standard library for antibody and TCR sequences")
     (description "Python-airr provides a library by the AIRR community to for
 describing, reporting, storing, and sharing adaptive immune receptor
@@ -8695,52 +8703,48 @@ comment or quality sections.")
 (define-public gemma
   (package
     (name "gemma")
-    (version "v0.98.5")
+    (version "0.98.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/genetics-statistics/GEMMA")
-                    (commit version)))
+                     (url "https://github.com/genetics-statistics/GEMMA")
+                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
                 "1dm8pf1fbdmv2yiz5aybcvk3050m5350gq8xlr4j6swzm3wwhydn"))
               (modules '((guix build utils)))
               (snippet
-               '(begin
-                  (delete-file-recursively "contrib")
-                  #t))))
+               #~(begin
+                   (delete-file-recursively "contrib")))))
     (build-system gnu-build-system)
     (inputs
      (list gsl openblas zlib))
     (native-inputs
-     `(("catch" ,catch2-1)
-       ("perl" ,perl)
-       ("shunit2" ,shunit2)
-       ("which" ,which)))
+     (list catch2-1
+           perl
+           shunit2
+           which))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-after 'unpack 'prepare-build
-           (lambda* (#:key inputs #:allow-other-keys)
-             (mkdir-p "bin")
-             (substitute* "Makefile"
-               (("/usr/local/opt/openblas")
-                (assoc-ref inputs "openblas")))
-             #t))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; 'make slow-check' expects shunit2-2.0.3.
-               (with-directory-excursion "test"
-                 (invoke "./test_suite.sh"))
-               #t)))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (install-file "bin/gemma"
-                           (string-append (assoc-ref outputs "out") "/bin"))
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'prepare-build
+            (lambda _
+              (mkdir-p "bin")
+              (substitute* "Makefile"
+                (("/usr/local/opt/openblas")
+                 #$(this-package-input "openblas")))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; 'make slow-check' expects shunit2-2.0.3.
+                (with-directory-excursion "test"
+                  (invoke "./test_suite.sh")))))
+          (replace 'install
+            (lambda _
+              (install-file "bin/gemma" (string-append #$output "/bin")))))))
     (home-page "https://github.com/genetics-statistics/GEMMA")
     (synopsis "Tool for genome-wide efficient mixed model association")
     (description
@@ -10469,7 +10473,7 @@ technology.  Its features include:
 (define-public mash
   (package
     (name "mash")
-    (version "2.1")
+    (version "2.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10478,12 +10482,13 @@ technology.  Its features include:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "049hwcc059p2fd9vwndn63laifvvsi0wmv84i6y1fr79k15dxwy6"))
+                "00x4pvxwp3isf0qign1qmxwxc9rwzn5b3igjw9hyn3vx17bsx92q"))
               (modules '((guix build utils)))
               (snippet
                ;; Delete bundled kseq.
                ;; TODO: Also delete bundled murmurhash and open bloom filter.
-               '(delete-file "src/mash/kseq.h"))))
+               '(delete-file "src/mash/kseq.h"))
+              (patches (search-patches "mash-add-missing-headers.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f ; No tests.
@@ -10502,7 +10507,8 @@ technology.  Its features include:
            (lambda _
              (substitute* '("src/mash/Sketch.cpp"
                             "src/mash/CommandFind.cpp"
-                            "src/mash/CommandScreen.cpp")
+                            "src/mash/CommandScreen.cpp"
+                            "src/mash/CommandTaxScreen.cpp")
                (("^#include \"kseq\\.h\"")
                 "#include \"htslib/kseq.h\""))))
          (add-after 'fix-includes 'use-c++14
@@ -12115,13 +12121,9 @@ complexity samples.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-importlib-resources
-           python-pycodestyle
            python-pytest
-           python-pytest-cov
            python-setuptools
-           python-setuptools-scm
-           python-setuptools-scm-git-archive
-           python-wheel))
+           python-setuptools-scm))
     (home-page "https://github.com/dib-lab/screed/")
     (synopsis "Short read sequence database utilities")
     (description "Screed parses FASTA and FASTQ files and generates databases.
@@ -12163,35 +12165,37 @@ interpretation.")
 (define-public python-taggd
   (package
     (name "python-taggd")
-    (version "0.3.6")
+    (version "0.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/SpatialTranscriptomicsResearch/taggd")
+                    (url "https://github.com/jfnavarro/taggd")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0j19ah81z7aqrdljah9hyarp91gvgbk63pz6fz3pdpksy1yqyi6k"))
-              (modules '((guix build utils)))
-              (snippet
-               '(for-each delete-file
-                          (find-files "taggd" "\\.c$")))))
-    (build-system python-build-system)
+                "17hi1vs1qwhxx8jnradnl9k471li6fjb6w5sljkpzjxy7rkxwb85"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'disable-broken-tests
-           (lambda _
-             (substitute* "tests/taggd_demultiplex_test.py"
-               (("def test_normal_bam_run")
-                "def _disabled_test_normal_bam_run")))))))
+      #~(modify-phases %standard-phases
+          (add-before 'check 'remove-local-taggd
+            (lambda _
+              ;; This would otherwise interfere with finding the installed
+              ;; taggd when running tests.
+              (delete-file-recursively "taggd"))))))
     (propagated-inputs
-     (list python-numpy python-pysam python-setuptools))
+     (list python-numpy
+           python-pysam
+           python-tqdm
+           python-aiofiles
+           python-dnaio
+           python-types-aiofiles
+           python-types-tqdm))
     (native-inputs
-     (list python-cython))
-    (home-page "https://github.com/SpatialTranscriptomicsResearch/taggd")
+     (list python-cython python-pytest python-setuptools))
+    (home-page "https://github.com/jfnavarro/taggd")
     (synopsis "Genetic barcode demultiplexing")
     (description "This package provides TagGD barcode demultiplexing utilities
 for Spatial Transcriptomics data.")
@@ -12200,40 +12204,45 @@ for Spatial Transcriptomics data.")
 (define-public stpipeline
   (package
     (name "stpipeline")
-    (version "1.8.1")
+    (version "2.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "stpipeline" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jfnavarro/st_pipeline")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0har2g42fvaqpiz66lincy86aj1hvwzds26kxhxfamvyvv4721wk"))))
+        (base32 "1qah9sa7wy9ywf0si2ngqg0qyr9jjp5gxmjx3y65i78bxyq8pfyx"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:phases '(modify-phases %standard-phases
-                  (add-after 'unpack 'relax-requirements
-                    (lambda _
-                      (substitute* "requirements.txt"
-                        (("argparse.*")
-                         "")))))))
+                  ;; requirements.txt and pyproject.toml have all versions
+                  ;; of the dependencies hardcoded. All tests pass, so it should
+                  ;; be good enough.
+                  ;; However, the sanity-check of any Python package that has
+                  ;; stpipelines a dependency, would fail too.
+                  (delete 'sanity-check))))
     (propagated-inputs (list htseq
-                             python-cython
-                             python-invoke
+                             python-distance
+                             python-dnaio
                              python-numpy
                              python-pandas
-                             python-pympler
                              python-pysam
                              python-regex
                              python-scikit-learn
                              python-scipy
                              python-seaborn
-                             python-setuptools
-                             python-sqlitedict
                              python-taggd
+                             python-types-regex
                              samtools
                              star))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://github.com/SpatialTranscriptomicsResearch/st_pipeline")
+    (native-inputs (list
+                    python-cython
+                    python-pytest
+                    python-poetry-core))
+    (home-page "https://github.com/jfnavarro/st_pipeline")
     (synopsis "Pipeline for spatial mapping of unique transcripts")
     (description
      "This package provides an automated pipeline for spatial mapping of
@@ -20734,7 +20743,7 @@ efficiently.")
 (define-public python-hic2cool
   (package
     (name "python-hic2cool")
-    (version "0.8.3")
+    (version "1.0.1")
     ;; pypi sources do not contain the test_data directory and no test can be
     ;; run
     (source
@@ -20746,32 +20755,15 @@ efficiently.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0dlnf0qfcp4jrc1nyya32a035c13xicyq16bwfnwhbb9s47mz7gl"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; Two of the test-data files need to be writable.
-         (add-after 'unpack 'make-test-data-writable
-           (lambda _
-             (for-each make-file-writable
-                       (list "test_data/hic2cool_0.4.2_single_res.cool"
-                             "test_data/hic2cool_0.7.0_multi_res.mcool"))))
-         ;; See https://github.com/4dn-dcic/hic2cool/issues/58
-         (add-after 'unpack 'fix-incompatibility-with-h5py-3
-           (lambda _
-             (substitute* "test.py"
-               (("h5py.File\\(fname\\)") "h5py.File(fname, 'r')"))
-             (substitute* "hic2cool/hic2cool_updates.py"
-               (("h5py.File\\(writefile\\)")
-                "h5py.File(writefile, 'a')"))))
-         ;; These two tests fail for unknown reasons.
-         (add-after 'unpack 'disable-broken-tests
-           (lambda _
-             (substitute* "test.py"
-               (("def test_convert") "def _test_convert")))))))
+         "0k0i43z43rxbpna4hfci406ma906w893frfj3cha1n8drvhdql6c"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core))
     (propagated-inputs
-     (list python-cooler python-h5py python-numpy python-pandas
+     (list python-cooler
+           python-h5py
+           python-numpy
+           python-pandas
            python-scipy))
     (home-page "https://github.com/4dn-dcic/hic2cool")
     (synopsis "Converter for .hic and .cool files")
@@ -20785,13 +20777,16 @@ matrices.")
 (define-public python-scanorama
   (package
     (name "python-scanorama")
-    (version "1.7.2")
+    (version "1.7.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "scanorama" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/brianhie/scanorama")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0il7bf4c7vli2dm2jx7dskh3ymgv8nmk0y90jzgfrnqjzh250x5w"))))
+        (base32 "1jpn4kq3qqa40xr0dwa9bw5cgga6h9ww9gfbyj6w3mfs8rv4w9rz"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-annoy
                              python-fbpca
@@ -20801,7 +20796,7 @@ matrices.")
                              python-numpy
                              python-scikit-learn
                              python-scipy))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-anndata python-pytest python-setuptools))
     (home-page "https://github.com/brianhie/scanorama")
     (synopsis
      "Panoramic stitching of heterogeneous single cell transcriptomic data")
@@ -24223,11 +24218,11 @@ sequence motif analysis.")
        (sha256
         (base32
          "1023hadgcsgi53kz53ql45207hfizf9sw57z0qij3ay1bx68zbpm"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #false))                ;no tests
     (native-inputs
-     (list python-cython python-nose2))
+     (list python-cython-0 python-setuptools))
     ;; The package mainly consists of a command-line tool, but also has a
     ;; Python-API. Thus these must be propagated.
     (propagated-inputs
@@ -24330,34 +24325,47 @@ data from @file{.hic} files.  This package provides Python bindings.")
 (define-public python-pybbi
   (package
     (name "python-pybbi")
-    (version "0.3.0")
+    (version "0.4.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pybbi" version))
        (sha256
-        (base32
-         "1hvy2f28i2b41l1pq15vciqbj538n0lichp8yr6413jmgg06xdsk"))))
-    (build-system python-build-system)
+        (base32 "0p1s6y9f33wzmvxdhfg9b37sas2kghnmvkfnb317aiad1p6ks6ba"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #false ; tests require network access
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'set-cc
-           (lambda _ (setenv "CC" "gcc")))
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (copy-recursively "tests" "/tmp/tests")
-               (with-directory-excursion "/tmp/tests"
-                 (invoke "python" "-m" "pytest" "-v"))))))))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Network is required to run these tests.
+                    (list "not test_aws_403_redirect"
+                          "test_chromsizes"
+                          "test_fetch_remote"
+                          "test_fetch_remote_https"
+                          "test_sigs")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-cc
+            (lambda _ (setenv "CC" #$(cc-for-target))))
+          (add-before 'check 'remove-local-bbi
+            (lambda _
+              ;; This would otherwise interfere with finding the installed bbi
+              ;; when running tests.
+              (delete-file-recursively "bbi"))))))
     (native-inputs
-     (list pkg-config python-pkgconfig python-pytest))
+     (list pkg-config
+           python-cython
+           python-pandas
+           python-pkgconfig
+           python-pytest
+           python-setuptools))
     (inputs
-     (list libpng openssl zlib))
+     (list libpng
+           openssl
+           zlib))
     (propagated-inputs
-     (list python-cython python-numpy python-pandas python-six))
+     (list python-numpy))
     (home-page "https://github.com/nvictus/pybbi")
     (synopsis "Python bindings to UCSC Big Binary file library")
     (description
@@ -24512,19 +24520,16 @@ sequences")
        (modules '((guix build utils)))
        (snippet
         '(for-each delete-file (find-files "." "\\.o$")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("wheel>=0.34") "wheel>=0.30"))))
-         ;; TODO: it's possible that the import error points to a real
-         ;; problem with the C sources.
-         (delete 'sanity-check))))
+     (list #:tests? #f ;no tests
+           #:phases
+           #~(modify-phases %standard-phases
+               ;; TODO: it's possible that the import error points to a real
+               ;; problem with the C sources.
+               (delete 'sanity-check))))
     (propagated-inputs
-     (list python-cffi python-setuptools python-wheel))
+     (list python-cffi python-setuptools))
     (inputs
      (list zlib))
     (home-page "https://github.com/ACEnglish/bwapy")
@@ -25149,27 +25154,42 @@ interest.")
       (license license:gpl3+))))
 
 (define-public python-vireosnp
-  (package
-    (name "python-vireosnp")
-    (version "0.5.7")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "vireoSNP" version))
-       (sha256
-        (base32 "02ybhzivsxwnb1axlgbs63wni1j27xajnkl4jw1ps5vmsz2l4b0d"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-matplotlib python-numpy python-scipy))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://github.com/huangyh09/vireoSNP")
-    (synopsis "Deconvolution based on SNP for multiplexed scRNA-seq data")
-    (description
-     "This package provides a deconvolution based on Single Nucleotide
+  (let ((commit "e3654633f7663732572c03c5dcf9fb00ec43b653")
+        (revision "0"))
+    (package
+      (name "python-vireosnp")
+      (version (git-version "0.5.9" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/huangyh09/vireoSNP")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1wd4llm54fvc1pc4nqfdc43g637gfx1f4z4aznvdr3biy9jksqza"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (if tests?
+                    (with-directory-excursion "examples"
+                      (invoke "bash" "demo.sh"))
+                    (format #f "test suite not run.~%")))))))
+      (propagated-inputs (list python-matplotlib python-numpy python-scipy))
+      (native-inputs (list python-setuptools))
+      (home-page "https://github.com/huangyh09/vireoSNP")
+      (synopsis "Deconvolution based on SNP for multiplexed scRNA-seq data")
+      (description
+       "This package provides a deconvolution based on Single Nucleotide
 Position (SNP) for multiplexed scRNA-seq data.  The name vireo stand for
 Variational Inference for Reconstructing Ensemble Origin by expressed SNPs in
 multiplexed scRNA-seq data and follows the clone identification from
 single-cell data named @url{https://github.com/PMBio/cardelino, cardelino}.")
-    (license license:asl2.0)))
+      (license license:asl2.0))))
 
 (define-public ccwl
   (package
@@ -25699,7 +25719,7 @@ exclude =
     (inputs
      (cons python-wrapper (cargo-inputs 'python-gseapy)))
     (native-inputs
-     (list python-pytest python-wheel))
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-numpy
            python-scipy

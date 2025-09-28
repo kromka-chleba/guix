@@ -228,6 +228,10 @@
                                    (find-files "breezy/tests"))
                 (("#!/bin/sh")
                  (format #f "#!~a" (which "sh"))))))
+          (add-after 'unpack 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append "-g -O2 -Wno-error=implicit-function-declaration"))))
           (add-before 'build 'adjust-for-python-3.10
             (lambda _
               (substitute* '("breezy/doc_generate/__init__.py"
@@ -253,11 +257,13 @@
                         ;; Unknown Failure
                         "-x" "breezy.tests.test_plugins.TestLoadPluginAt.test_compiled_loaded"
                         "-x" "breezy.tests.test_plugins.TestPlugins.test_plugin_get_path_pyc_only"
-                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal")))))))
+                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal"
+                        ;; AttributeError: module 'paramiko' has no attribute 'DSSKey'
+                        "-x" "breezy.tests.test_transport.TestSSHConnections.test_bzr_connect_to_bzr_ssh")))))))
     (native-inputs
      (append
       (list gettext-minimal
-            python-cython
+            python-cython-0
             python-setuptools
             python-setuptools-gettext
             python-setuptools-rust
@@ -1774,7 +1780,7 @@ supports AGit-Flow and lifts the requirement to use a manifest file.")
              bash-minimal
              openssl
              python
-             python-docutils
+             python-docutils-0.19
              python-markdown
              python-pygments
              zlib
@@ -1924,16 +1930,19 @@ default) of the repository.")
 (define-public python-gitdb
   (package
     (name "python-gitdb")
-    (version "4.0.2")
+    (version "4.0.12")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "gitdb" version))
               (sha256
                (base32
-                "0l113fphn6msjl3cl3kyf332b6lal7daxdd0nfma0x9ipfb013jr"))))
-    (build-system python-build-system)
+                "0wdmzngk870944nc6q5sphzv29jzhgddbh7vzhk366hrbn2izxsy"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
+     ;; One test fails, probably due to low ulimit: ValueError: Expected to
+     ;; write 1000 objects into pack, but received only 0 from iterators.
+     `(#:test-flags '("-k" "not test_pack_writing")
+       #:phases (modify-phases %standard-phases
                   (add-before 'check 'create-test-repository
                     (lambda _
                       (mkdir "/tmp/testrepo")
@@ -1955,16 +1964,15 @@ default) of the repository.")
                       ;; The repository checkout must be a "bare" clone.
                       (invoke "git" "clone" "--bare" "/tmp/testrepo"
                               "/tmp/testrepo.git")))
-                  (replace 'check
+                  (add-before 'check 'pre-check
                     (lambda _
                       (setenv "GITDB_TEST_GIT_REPO_BASE" "/tmp/testrepo.git")
                       ;; Skip tests that must be run from the gitdb repository.
-                      (setenv "TRAVIS" "1")
-                      (invoke "nosetests" "-v"))))))
+                      (setenv "TRAVIS" "1"))))))
     (propagated-inputs
      (list python-smmap))
     (native-inputs
-     (list git-minimal/pinned python-nose))
+     (list git-minimal/pinned python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/gitpython-developers/gitdb")
     (synopsis "Python implementation of the Git object database")
     (description
@@ -1977,14 +1985,14 @@ allowing to handle large objects with a small memory footprint.")
 (define-public python-gitpython
   (package
     (name "python-gitpython")
-    (version "3.1.24")
+    (version "3.1.44")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "GitPython" version))
+              (uri (pypi-uri "gitpython" version))
               (sha256
                (base32
-                "1rarp97cpjnhi106k2yhb7kygdyflmlgq0icxv3ggzl4wvszv0yz"))))
-    (build-system python-build-system)
+                "0scj4hqk6msyzqvq70wk6583qzwn33w601hvn0c59gskcar30zn8"))))
+    (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f ;XXX: tests can only be run within the GitPython repository
            #:phases
@@ -1999,9 +2007,9 @@ allowing to handle large objects with a small memory footprint.")
     (inputs
      (list git-minimal/pinned))
     (propagated-inputs
-     (list python-gitdb python-typing-extensions))
+     (list python-gitdb))
     (native-inputs
-     (list python-ddt python-nose))
+     (list python-setuptools))
     (home-page "https://github.com/gitpython-developers/GitPython")
     (synopsis "Python library for interacting with Git repositories")
     (description
@@ -2831,7 +2839,7 @@ execution of any hook written in any language before every commit.")
     (native-inputs
      (list python-docutils
            ;; The following inputs are only needed to run the tests.
-           python-setuptools-next python-setuptools-scm-next python-wheel unzip which))
+           python-setuptools python-setuptools-scm python-wheel unzip which))
     (inputs
      (list python-wrapper))
     ;; Find third-party extensions.
@@ -4216,7 +4224,11 @@ will reconstruct the object along its delta-base chain and return it.")
                              (install-file manpage
                                            (string-append #$output "/share/man/man1")))
                            (find-files "." "^git-lfs.*\\.1$"))))))
-                 #~()))))
+                 #~())
+          (add-after 'install 'rename-binary
+            (lambda _
+              (with-directory-excursion (string-append #$output "/bin")
+                (rename-file "v3" "git-lfs")))))))
     (native-inputs
      (append (list git-minimal
                    go-github-com-avast-retry-go
@@ -4243,7 +4255,7 @@ will reconstruct the object along its delta-base chain and return it.")
              (if (supported-package? ruby-asciidoctor/minimal)
                  (list ronn-ng ruby-asciidoctor/minimal)
                  '())))
-    (home-page "https://git-lfs.github.com/")
+    (home-page "https://git-lfs.com/")
     (synopsis "Git extension for versioning large files")
     (description
      "Git Large File Storage (LFS) replaces large files such as audio samples,

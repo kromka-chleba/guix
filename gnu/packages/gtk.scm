@@ -71,6 +71,7 @@
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system waf)
   #:use-module (gnu packages)
   #:use-module (gnu packages algebra)
@@ -1373,7 +1374,7 @@ application suites.")
            pkg-config
            python-pygobject
            ;; These python modules are required for building documentation.
-           python-docutils
+           python-docutils-0.19
            python-jinja2
            python-markdown
            python-markupsafe
@@ -2115,18 +2116,19 @@ printing and other features typical of a source code editor.")
 (define-public python-pycairo
   (package
     (name "python-pycairo")
-    (version "1.26.0")
+    (version "1.28.0")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "https://github.com/pygobject/pycairo/releases/download/v"
-                          version "/pycairo-" version ".tar.gz"))
-      (sha256
-       (base32
-        "1sybz43sj4ynjahlkidrcdpdrq8yi1avkndc2hgb5pgvfjld1p9d"))))
-    (build-system python-build-system)
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pygobject/pycairo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k0mm3kx0rsz07v7a4ijrgjnxigr9in1zcsij8nlg8aszxi7a09q"))))
+    (build-system meson-build-system)
     (native-inputs
-     (list pkg-config python-pytest))
+     (list pkg-config python python-pytest python-setuptools))
     (propagated-inputs                  ;pycairo.pc references cairo
      (list cairo))
     (home-page "https://cairographics.org/pycairo/")
@@ -2136,8 +2138,6 @@ printing and other features typical of a source code editor.")
     (properties
      '((upstream-name . "pycairo")))
     (license license:lgpl3+)))
-
-;; Pycairo no longer supports Python 2 since version 1.19.0, so we stick
 
 (define-public perl-cairo
   (package

@@ -601,8 +601,13 @@ interface and is based on GNU Guile.")
                                "/bin/gzip")
                 (string-append "--with-zstd=" #$(this-package-input "zstd")
                                "/bin/zstd")))))
-    (inputs (modify-inputs (package-inputs shepherd-0.10)
-              (append gzip zstd)))))
+    (native-inputs
+     (modify-inputs (package-native-inputs shepherd-0.10)
+       (replace "guile-fibers" guile-fibers))) ;use latest guile-fibers available
+    (inputs
+     (modify-inputs (package-inputs shepherd-0.10)
+       (replace "guile-fibers" guile-fibers) ;use latest guile-fibers available
+       (append gzip zstd)))))
 
 (define-public shepherd shepherd-0.10)
 
@@ -1110,8 +1115,21 @@ on memory usage on GNU/Linux systems.")
         (base32 "058y4a4mvx9m179dyr4wi8mlm6i4ybywshadaj4cvfn9fv0r0nkx"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
+    (arguments
+      (list
+        #:configure-flags
+        #~(list "--enable-sensors")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-dlopen
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "linux/LibSensors.c"
+                  (("dlopen\\(\"libsensors\\.so")
+                   (string-append "dlopen(\""
+                                  (search-input-file
+                                    inputs "/lib/libsensors.so")))))))))
     (inputs
-     (list ncurses))
+     (list ncurses (list lm-sensors "lib")))
     (native-inputs
      (list autoconf automake python-minimal-wrapper))     ; for scripts/MakeHeader.py
     (home-page "https://htop.dev")
@@ -2874,7 +2892,7 @@ development, not the kernel implementation of ACPI.")
            python-setuptools
            python-wheel))
     (inputs
-     (list python-psutil-7
+     (list python-psutil
            python-urwid-3))
     (home-page "https://github.com/amanusk/s-tui")
     (synopsis "Interactive terminal stress test and monitoring tool")
@@ -3350,7 +3368,7 @@ modules and plugins that extend Ansible.")
        (patches
         (search-patches "debops-setup-py-avoid-git.patch"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (inputs
      (list ansible
            encfs
@@ -3372,6 +3390,7 @@ modules and plugins that extend Ansible.")
            python-toml))
     (arguments
      (list
+      #:tests? #f ;no tests
       #:modules '((guix build pyproject-build-system)
                   (guix build utils)
                   (srfi srfi-26))
@@ -5125,23 +5144,22 @@ cache of unix and unix-like systems.")
   (package
     (name "solaar")
     (version "1.1.14")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/pwr-Solaar/Solaar")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "000700waw4z6ab40naycapjgqz8yvz9ny1px94ni4pwf8f3kh0vh"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'setenv-PATH
-           (lambda _
-             (setenv "PYTHONPATH" "lib"))))))
-    (native-inputs (list python-pytest))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pwr-Solaar/Solaar")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "000700waw4z6ab40naycapjgqz8yvz9ny1px94ni4pwf8f3kh0vh"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-mock
+           python-setuptools
+           python-typing-extensions
+           python-wheel))
     (propagated-inputs
      (list python-pygobject
            python-pyudev

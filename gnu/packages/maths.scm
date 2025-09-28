@@ -4784,9 +4784,11 @@ Mathematics (GLM) library to Python.")
      (list python-accupy
            python-pytest
            python-setuptools
-           python-wheel
            unzip
            vtk))
+    (inputs
+     ;; [optional]
+     (list python-matplotlib))
     (propagated-inputs
       (list python-importlib-metadata
             python-numpy
@@ -8204,37 +8206,36 @@ instruction sets.  Thus, an application written with Vc can be compiled for:
 (define-public reducelcs
   ;; This is the last commit which is available upstream, no
   ;; release happened since 2010.
-  (let ((commit "474f88deb968061abe8cf11c959e02319b8ae5c0")
-        (revision "1"))
+  (let ((commit "963f74f7279ba6fc0ea7d8ddfd361ea190c80313")
+        (revision "2"))
     (package
       (name "reducelcs")
-      (version (string-append "1.0-" revision "." (string-take commit 7)))
+      (version (git-version "1.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/gdv/Reduce-Expand-for-LCS")
                (commit commit)))
-         (file-name (string-append name "-" version "-checkout"))
+         (file-name (git-file-name name version))
          (sha256
           (base32
-           "1rllzcfwc042c336mhq262a8ha90x6afq30kvk60r7i4761j4yjm"))))
+           "03chvd9wb2z08r7ka2npr49dbimjvzn2gfm7cnp5l079vbw1dfny"))))
       (build-system gnu-build-system)
-      (inputs
-       (list openlibm))
+      (inputs (list openlibm))
       (arguments
-       `(#:tests? #f ; no tests
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure) ; No configure script exists.
-           (replace 'install ; No install phase exists.
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (bin (string-append out "/bin")))
-                 (install-file "Approximation" bin)
-                 (install-file "CollectResults" bin)
-                 (install-file "GenerateInstances" bin)
-                 #t))))))
+       (list
+        #:tests? #f ; no tests
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure) ; No configure script exists.
+            (replace 'install ; No install phase exists.
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (bin (string-append out "/bin")))
+                  (install-file "Approximation" bin)
+                  (install-file "CollectResults" bin)
+                  (install-file "GenerateInstances" bin)))))))
       (synopsis "Approximate Longest Commons Subsequence computation tool")
       (description
        "@code{reduceLCS} is an implementation of the Reduce-Expand
@@ -11315,8 +11316,12 @@ the Wolfram language.")
        (sha256
         (base32 "1iagdic8f0yjx01kdds40jfcxcpdbrd3i0ywydl01dhyyvd2yjk9"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-mathics-scanner python-pygments))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-mathics-scanner
+           python-pygments))
     (home-page "http://github.com/Mathics3/mathics-pygments/")
     (synopsis "Wolfram language lexer for Pygments")
     (description "This package provides a Wolfram language lexer for Pygments.")

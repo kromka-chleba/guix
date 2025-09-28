@@ -31,7 +31,7 @@
 ;;; Copyright © 2022-2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2022 Taiju HIGASHI <higashi@taiju.info>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
-;;; Copyright © 2023, 2024 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2023, 2024, 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023-2025 Hartmut Goebel <h.goebel@crazy-compilers.com>
@@ -2682,25 +2682,46 @@ support.")
 (define-public ruby-ethon
   (package
     (name "ruby-ethon")
-    (version "0.12.0")
+    (version "0.17.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (rubygems-uri "ethon" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/typhoeus/ethon")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0gggrgkcq839mamx7a8jbnp2h7x2ykfn34ixwskwb0lzx2ak17g9"))))
+         "06rjq0r3bbybycqp6n2xqpcqmz5x8lymnk6fj5wsq59s8gf843r9"))))
     (build-system ruby-build-system)
     (arguments
      (list
-      #:tests? #f  ; no included tests
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'libcurl-use-absolute-reference
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "lib/ethon/curls/settings.rb"
                 (("libcurl', 'libcurl\\.so\\.4")
-                 (search-input-file inputs "/lib/libcurl.so"))))))))
+                 (search-input-file inputs "/lib/libcurl.so")))))
+          (add-after 'extract-gemspec 'remove-MIME-types-version-constraint
+            (lambda _
+              (substitute* "Gemfile"
+                (("(gem \"mime-types\").*" _ gem)
+                 gem))))
+          ;; Tell Bundler not to request perf dependencies
+          (add-after 'extract-gemspec 'remove-Bundler-setup
+            (lambda _
+              (substitute* "spec/spec_helper.rb"
+                (("Bundler.setup")
+                 ""))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (for-each (lambda (file)
+                            (invoke "ruby" "-Ispec" file))
+                          (find-files "spec" "_spec\\.rb$"))))))))
+    (native-inputs (list ruby-rspec ruby-sinatra ruby-mustermann
+                         ruby-mime-types ruby-webrick))
     (inputs
      (list curl))
     (propagated-inputs

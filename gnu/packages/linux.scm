@@ -526,17 +526,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.16-version "6.16.7")
+(define-public linux-libre-6.16-version "6.16.8")
 (define-public linux-libre-6.16-gnu-revision "gnu")
 (define deblob-scripts-6.16
   (linux-libre-deblob-scripts
    linux-libre-6.16-version
    linux-libre-6.16-gnu-revision
-   (base32 "1s44yaxib45834mjmvqkl70s2lazbzvpxhp4z7qwxkrkpw94mdxx")
+   (base32 "0qwh82z5bjmq7hhx7s41mnybpr8ihdk2g0bgjb3hzd95x6pw4w51")
    (base32 "1i4kba2wpkc7jmj7b2qjkrgqsl0g0s1h7j9pfvc7zqyyn9v3kkqr")))
 (define-public linux-libre-6.16-pristine-source
   (let ((version linux-libre-6.16-version)
-        (hash (base32 "108sk9r6ac0sc7h6ydvlyv7kib6z3af4v2f46kdinys2z6hxmqsv")))
+        (hash (base32 "17x6pylbrbh4fyk088gvhbd3gy3gpr1vn9jdjhlk3p44f2yi24r3")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.16)))
@@ -545,7 +545,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.47")
+(define-public linux-libre-6.12-version "6.12.48")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -555,12 +555,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "099fj9qd8knafbl400drm8aqn5h7y6g39gc7d4i4hc3lf44f8bz8")))
+        (hash (base32 "1chx8ycj609pdpnkhl3d6dsimd4q49vkqdiqisbligsicxkypyav")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.106")
+(define-public linux-libre-6.6-version "6.6.107")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -570,12 +570,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "18584vys8qmbqj4hndiyhwbsn6z3832djm1mx07vgl6wv3i80c8c")))
+        (hash (base32 "0iz4kvnsvs5fx9m2zm93xla2pkr0hqqyahm5d6f7p1n7scbk1dy9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.152")
+(define-public linux-libre-6.1-version "6.1.153")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -585,7 +585,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0f3jgbfd2j7sz7h1hb30s1r9147g1cbb3ia09k9834fvbiz1ihaa")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1ndpnlmpsp2137aqis8bpa2cvdl28jg66pi0p2c6d26cm7i3n5qs")))
+        (hash (base32 "0j4yzkhkbcsa9pgwcyqyfxi73avi7m0hd6xfaql73zwrb3hbvsvn")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -5970,69 +5970,65 @@ information on country-specific regulations for the wireless spectrum.")
 (define-public lm-sensors
   (package
     (name "lm-sensors")
-    (version "3.6.0")
+    (version "3.6.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/groeck/lm-sensors")
+             (url "https://github.com/hramrach/lm-sensors")
              (commit (string-append "V" (string-join
                                          (string-split version #\.) "-")))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ipf6wjx037sqyhy0r5jh4983h216anq9l68ckn2x5c3qc4wfmzn"))
+        (base32 "0p2ck8p9zb1w53l37pvm6c10vi6r8bfz51nd3sdwwsfhfhgvsr0j"))
        (patches (search-patches "lm-sensors-hwmon-attrs.patch"))))
     (build-system gnu-build-system)
-    (inputs (list rrdtool perl kmod gnuplot))
-    (native-inputs (list pkg-config flex bison which))
     (outputs '("lib"                    ; avoid perl in closure
                "out"))
     (arguments
-     `(#:tests? #f                      ; no 'check' target
-       #:make-flags (list (string-append "PREFIX=" %output)
-                          (string-append "ETCDIR=" (assoc-ref %outputs "lib") "/etc")
-                          (string-append "INCLUDEDIR="
-                                         (assoc-ref %outputs "lib") "/include")
-                          (string-append "MANDIR=" %output "/share/man")
-                          (string-append "LIBDIR=" (assoc-ref %outputs "lib") "/lib"))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'build 'patch-exec-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "prog/detect/sensors-detect"
-               (("`uname")
-                (string-append "`" (assoc-ref inputs "coreutils")
-                               "/bin/uname"))
-               (("(`|\")modprobe" all open-quote)
-                (string-append open-quote
-                               (assoc-ref inputs "kmod")
-                               "/bin/modprobe")))
-             (substitute* '("prog/pwm/pwmconfig"
-                            "prog/pwm/fancontrol")
-               (("gnuplot")
-                (search-input-file inputs "/bin/gnuplot"))
-               (("cat ")
-                (string-append (search-input-file inputs "/bin/cat")
-                               " "))
-               (("e?grep " match)
-                (string-append (search-input-file inputs
-                                                  (string-append
-                                                   "/bin/"
-                                                   (string-trim-right match)))
-                               " "))
-               (("sed -e")
-                (string-append (search-input-file inputs "/bin/sed")
-                               " -e"))
-               (("cut -d")
-                (string-append (search-input-file inputs "/bin/cut")
-                               " -d"))
-               (("sleep ")
-                (string-append (search-input-file inputs "/bin/sleep")
-                               " "))
-               (("readlink -f")
-                (string-append (search-input-file inputs "/bin/readlink")
-                               " -f"))))))))
+     (list
+      #:tests? #f                        ; no 'check' target
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output)
+              (string-append "ETCDIR=" #$output:lib "/etc")
+              (string-append "INCLUDEDIR=" #$output:lib "/include")
+              (string-append "MANDIR=" #$output "/share/man")
+              (string-append "LIBDIR=" #$output:lib "/lib"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'patch-exec-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "prog/detect/sensors-detect"
+                (("`uname")
+                 (string-append
+                  "`" (assoc-ref inputs "coreutils") "/bin/uname"))
+                (("(`|\")modprobe" all open-quote)
+                 (string-append
+                  open-quote #$(this-package-input "kmod") "/bin/modprobe")))
+              (substitute* '("prog/pwm/pwmconfig" "prog/pwm/fancontrol")
+                (("gnuplot")
+                 (search-input-file inputs "/bin/gnuplot"))
+                (("cat ")
+                 (string-append (search-input-file inputs "/bin/cat") " "))
+                (("e?grep " match)
+                 (string-append
+                  (search-input-file
+                   inputs (string-append "/bin/" (string-trim-right match)))
+                  " "))
+                (("sed -e")
+                 (string-append (search-input-file inputs "/bin/sed") " -e"))
+                (("cut -d")
+                 (string-append (search-input-file inputs "/bin/cut") " -d"))
+                (("sleep ")
+                 (string-append (search-input-file inputs "/bin/sleep") " "))
+                (("readlink -f")
+                 (string-append
+                  (search-input-file inputs "/bin/readlink") " -f"))))))))
+    (inputs
+     (list gnuplot kmod perl rrdtool))
+    (native-inputs
+     (list bison flex pkg-config which))
     (home-page "https://hwmon.wiki.kernel.org/lm_sensors")
     (synopsis "Utilities to read temperature/voltage/fan sensors")
     (description
@@ -7944,7 +7940,7 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
                                               (search-input-file
                                                %build-inputs "/bin/rst2man.py")))))
     (native-inputs
-     (list pkg-config python-wrapper python-docutils)) ;for 'rst2man'
+     (list pkg-config python-wrapper python-docutils-0.19)) ;for 'rst2man'
     (inputs
      (list libnl eudev))
     (home-page "https://github.com/linux-rdma/rdma-core")
@@ -9717,7 +9713,7 @@ Text-based output formats: CSV, XML, Netfilter's LOG, Netfilter's conntrack
                          coreutils
                          pkg-config
                          ;; For rst2man, used to generate the manual page.
-                         python-docutils))
+                         python-docutils-0.19))
     (inputs (list libarchive talloc))
     (home-page "https://github.com/proot-me/PRoot")
     (synopsis "Unprivileged chroot, bind mount, and binfmt_misc")

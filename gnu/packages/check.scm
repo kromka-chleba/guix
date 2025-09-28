@@ -777,7 +777,6 @@ pattern.")
 a multi-paradigm automated test framework for C++ and Objective-C.")
     (license license:boost1.0)))
 
-
 (define-public catch2-3
   (package
     (inherit catch2-3.8)
@@ -792,35 +791,6 @@ a multi-paradigm automated test framework for C++ and Objective-C.")
               (sha256
                (base32
                 "11yla93vm2896fzhm3fz8lk3y3iz5iy7vd6wa7wnwvhsfd2dbfq3"))))))
-
-(define-public cmdtest
-  (package
-    (name "cmdtest")
-    ;; Use the latest commit (from 2019) in order to get Python 3 support.
-    (version "0.32-14-gcdfe14e")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.liw.fi/cmdtest/")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1yhcwsqcpckkq5kw3h07k0xg6infyiyzq9ni3nqphrzxis7hxjf1"))))
-    (build-system python-build-system)
-    (arguments `(#:tests? #f))          ;requires Python 2!
-    (native-inputs
-     (list python-coverage-test-runner python))
-    (inputs
-     (list python-cliapp python-markdown python-ttystatus))
-    (home-page "https://liw.fi/cmdtest/")
-    (synopsis "Black box Unix program tester")
-    (description
-     "@code{cmdtest} black box tests Unix command line tools.  Roughly, it is
-given a command line and input files, and the expected output, and it verifies
-that the command line produces the expected output.  If not, it reports a
-problem, and shows the differences.")
-    (license license:gpl3+)))
 
 (define-public cmocka
   (package
@@ -1088,44 +1058,6 @@ and continuous integration frameworks.  Kyua features an expressive test suite
 definition language, a safe runtime engine for test suites and a powerful
 report generation engine.")
     (license license:bsd-3)))
-
-(define-public python-gixy-ng
-  (package
-    (name "python-gixy-ng")
-    (version "0.2.7")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dvershinin/gixy")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0dipvy8y1nlhpka0cdk6hyv1j2388y7isbajpwskjrgqc5vayqx8"))))
-    (build-system pyproject-build-system)
-    ;; This package currently doesn't test properly, but we can't add
-    ;; pytest because it propagates another version of python-pyparsing
-    ;; that takes precedence over the right one.
-    (propagated-inputs (list python-configargparse
-                             python-jinja2
-                             python-pyparsing-2.4.7
-                             python-six))
-    (native-inputs (list python-cached-property
-                         python-setuptools
-                         python-wheel))
-    (home-page "https://github.com/dvershinin/gixy")
-    (synopsis "Static NGINX configuration analyzer")
-    (description "Gixy is a static analyzer whose main goal is to help
-prevent common NGINX misconfigurations.  It provides the @command{gixy}
-command.
-
-Note: This is an actively maintained fork of the original @code{python-gixy}
-package.")
-    (license license:mpl2.0)))
-
-(define-deprecated/public python-gixy python-gixy-ng
-  (package/inherit python-gixy-ng
-    (name "python-gixy")))
 
 (define-public googletest
   (package
@@ -1510,24 +1442,13 @@ syntax validation, ...
        (sha256
         (base32 "1c89vc40zj5aj2zvbvw875wqpyf0x6xrqhm3q5jg797g5hkhbjbz"))))
     (build-system pyproject-build-system)
+    ;; See: <https://github.com/wolever/parameterized/issues/181>,
+    ;;      <https://github.com/wolever/parameterized/issues/167>,
+    ;;      <https://github.com/wolever/parameterized/pull/162>.
     (arguments
-     (list
-      #:test-flags #~(list "parameterized/test.py")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-tests
-            (lambda _
-              (substitute* "parameterized/test.py"
-                ;; It's taken from NixOS package definition.
-                ;; <https://github.com/wolever/parameterized/issues/167>,
-                ;; <https://github.com/wolever/parameterized/pull/162>.
-                (("assert_equal\\(missing, \\[\\])") "")
-                (("assertRaisesRegexp") "assertRaisesRegex")))))))
+     (list #:tests? #f))
     (native-inputs
-     (list python-pytest
-           python-mock
-           python-setuptools
-           python-wheel))
+     (list python-setuptools))
     (home-page "https://github.com/wolever/parameterized")
     (synopsis "Parameterized testing with any Python test framework")
     (description
@@ -1607,15 +1528,15 @@ available via the @code{unittest.mock} module.")
 (define-public python-nose2
   (package
     (name "python-nose2")
-    (version "0.14.0")
+    (version "0.15.1")
       (source
         (origin
           (method url-fetch)
           (uri (pypi-uri "nose2" version))
           (sha256
            (base32
-            "1936fkrxg672bhp9i32ivna7jbydl9dpbhyn5f3059xrl1qdfa2w"))))
-    (build-system python-build-system)
+            "1pzhqk7yzdw2s9hk7q5l9rmrz6xzpymy9gp0pwycvgpmkm8hyxrn"))))
+    (build-system pyproject-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
@@ -1625,6 +1546,8 @@ available via the @code{unittest.mock} module.")
                      ;; Tests require nose2 itself.
                      (setenv "PYTHONPATH" (getcwd))
                      (invoke (string-append #$output "/bin/nose2") "-v")))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/nose-devs/nose2")
     (synopsis "Next generation of nicer testing for Python")
     (description
@@ -1634,81 +1557,40 @@ better plugin api, being easier for users to configure, and simplifying internal
 interfaces and processes.")
     (license license:bsd-2)))
 
-(define-public python-unittest2
-  (package
-    (name "python-unittest2")
-    (version "1.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "unittest2" version))
-       (patches
-        (search-patches "python-unittest2-python3-compat.patch"
-                        "python-unittest2-remove-argparse.patch"))
-       (sha256
-        (base32
-         "0y855kmx7a8rnf81d3lh5lyxai1908xjp0laf4glwa4c8472m212"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (zero? (system* "python" "-m" "unittest2" "discover" "--verbose")))))))
-    (propagated-inputs
-     (list python-six python-traceback2))
-    (home-page "https://pypi.org/project/unittest2/")
-    (synopsis "Python unit testing library")
-    (description
-     "Unittest2 is a replacement for the unittest module in the Python
-standard library.")
-    (license license:psfl)))
-
 (define-public python-pytest
   (package
     (name "python-pytest")
-    (version "8.3.3")
+    (version "8.4.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest" version))
        (sha256
-        (base32 "1081l7yr9z61ghjkrm8qw85ndg2hkb5fc1ibjnkhi0v4pl3q3fbh"))))
+        (base32 "0g593wjl45yck5g1xi8q31s08arxiapw67ipv6g3axs82xlzsrvw"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      ;; Tests requiring Pygment, introduces cycle.
-      #~(list "-k" (string-append
-                    "not test_code_highlight"
-                    " and not test_code_highlight_continuation"
-                    " and not test_code_highlight_custom_theme"
-                    " and not test_code_highlight_invalid_theme"
-                    " and not test_code_highlight_invalid_theme_mode"
-                    " and not test_code_highlight_simple"
-                    " and not test_color_yes"
-                    " and not test_comparisons_handle_colors"
-                    " and not test_empty_NO_COLOR_and_FORCE_COLOR_ignored"
-                    " and not test_remove_dir_prefix"))))
+      ;; Just 2 tests fail:
+      ;;   1. access to "/usr/" is required.
+      ;;   2. assertion fails to compare length of the list.
+      ;;
+      ;; 3780 passed, 119 skipped, 3 deselected, 11 xfailed, 1 xpassed
+      #~(list "-k" "not test_remove_dir_prefix and not test_len")))
     (native-inputs
      ;; Tests need the "regular" bash since 'bash-final' lacks `compgen`.
      (list bash
+           python-attrs-bootstrap
            python-hypothesis
-           python-nose
-           ;; python-pygments ; introduces cycle
-           python-pytest-bootstrap
            python-setuptools
            python-setuptools-scm
            python-xmlschema
            python-wheel))
     (propagated-inputs
-     (list python-attrs-bootstrap
-           python-iniconfig
+     (list python-iniconfig
            python-packaging-bootstrap
-           python-exceptiongroup
            python-pluggy
-           python-py
-           python-tomli))
+           python-pygments-bootstrap))  ;it is in installation dependencies
     (home-page "https://docs.pytest.org/en/latest/")
     (synopsis "Python testing library")
     (description
@@ -1724,16 +1606,12 @@ and many external plugins.")
 (export python-pytest-7)
 
 (define-public python-pytest-bootstrap
-  (package
-    (inherit python-pytest)
+  (package/inherit python-pytest
     (name "python-pytest-bootstrap")
+    (arguments (list #:tests? #f))
     (native-inputs
-     (list python-iniconfig
-           python-setuptools
-           python-setuptools-scm
-           python-tomli
-           python-wheel))
-    (arguments `(#:tests? #f))))
+     (list python-setuptools
+           python-setuptools-scm))))
 
 (define-public python-pytest-cov
   (package
@@ -1783,10 +1661,12 @@ supports coverage of subprocesses.")
        (sha256
         (base32 "0j37gkgcag4rpv9g5q2n80425cs1alwx8fwncx3mv7sdgqgdgqnz"))))
     (build-system pyproject-build-system)
+    (arguments
+     ;; Shaky tests with Pytest@8
+     (list #:test-flags #~(list "-k" "not test_skips_pytest_fixture")))
     (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-wheel))
+     (list python-pytest-bootstrap
+           python-setuptools))
     (propagated-inputs
      (list python-decorator))
     (home-page "https://github.com/bitprophet/pytest-relaxed")
@@ -1824,44 +1704,56 @@ from a .env file before running tests.")
 (define-public python-pytest-examples
   (package
     (name "python-pytest-examples")
-    (version "0.0.10")
+    (version "0.0.13")
     (source
      (origin
        ;; No tests in the PyPI tarball.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/pydantic/pytest-examples")
-             (commit (string-append "v" version))))
+              (url "https://github.com/pydantic/pytest-examples")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lwxgyfj6lnkhmrvb6kzfskpwfz70kxnhnjvyl3l65k568c4wb4c"))))
+        (base32 "11ifavc13s2b7grjv13l6am36v5kw8m9pj75j5hl4ch605ci4j27"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; TODO: Rework skipped tests when ruff is availalbe.
+      ;; tests: 49 passed, 23 deselected, 1 xfailed
       #:test-flags
-      #~(list "-k"
-              (string-append
-               ;; Disable tests requiring pthon-ruff.
-               "not test_ruff"
-               " and not test_ruff_config"
-               " and not test_ruff_offset"
-               " and not test_ruff_ok"
-               " and not test_ruff_error"
-               " and not test_update_files"
-               " and not test_cases_update[simple.md]"
-               " and not test_cases_update[dataclass_indent.md]"
-               " and not test_cases_update[long_python_lines.py]"
-               " and not test_cases_update[simple.py]"
-               " and not test_cases_update[python_class.py]"
-               " and not test_cases_update[call_twice.md]"
-               " and not test_insert_print[example/README.md:3-33]"
-               " and not test_insert_print[example/README.md:37-40]"
-               " and not test_insert_print[example/README.md:44-47]"
-               " and not test_insert_print[example/README.md:49-66]"
-               " and not test_python_self[example/test_example.py:28-31]"
-               " and not test_python_self[example/test_example.py:40-43]"
-               " and not test_python_self_change_docstyle[example/test_example.py:28-31]"
-               " and not test_python_self_change_docstyle[example/test_example.py:40-43]"))
+      #~(list "-k" (string-join
+                    ;; Disable tests requiring pthon-ruff.
+                    (list "not test_ruff"
+                          "test_find_examples[case_python_class.py:3-10]"
+                          "test_find_examples[my_file.md:3-5]"
+                          "test_find_examples[my_file.md:7-9]"
+                          "test_find_examples[my_file.py:5-7]"
+                          "test_find_run_examples[my_file.md:1-4]"
+                          "test_insert_print[example/README.md:3-33]"
+                          "test_insert_print[example/README.md:37-40]"
+                          "test_insert_print[example/README.md:44-47]"
+                          "test_insert_print[example/README.md:49-66]"
+                          "test_python_self[example/test_example.py:28-31]"
+                          "test_python_self[example/test_example.py:40-43]"
+                          "test_python_self_change_docstyle[example/test_example.py:28-31]"
+                          "test_python_self_change_docstyle[example/test_example.py:40-43]"
+                          "test_ruff_config"
+                          "test_ruff_error"
+                          "test_ruff_offset"
+                          "test_ruff_ok"
+                          ;; Black incompatability faileurs.
+                          "test_black_error"
+                          "test_black_error_multiline"
+                          "test_cases_update[call_twice.md]"
+                          "test_cases_update[dataclass_indent.md]"
+                          "test_cases_update[long_python_lines.py]"
+                          "test_cases_update[python_class.py]"
+                          "test_cases_update[simple.md]"
+                          "test_cases_update[simple.py]"
+                          "test_find_run_examples[my_file.md:3-5]"
+                          "test_run_example_ok_fail"
+                          "test_update_files")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
@@ -1869,9 +1761,7 @@ from a .env file before running tests.")
               (substitute* "pyproject.toml"
                 ;; XXX: Removing ruff from required packages to pass Sanity
                 ;; check, add it back when it's available.
-                (("'ruff>=0.0.258',") "")
-                ;; black>=23
-                ((">=23") ">22")))))))
+                (("'ruff>=0.5.0',") "")))))))
     (propagated-inputs
      ;; TODO: Add python-ruff once it has been packaged.
      (list python-black python-pytest))
@@ -2003,7 +1893,7 @@ reported in a previous test run.")
 (define-public python-pytest-randomly
   (package
     (name "python-pytest-randomly")
-    (version "3.11.0")
+    (version "3.16.0")
     (source (origin
               (method git-fetch)        ;no tests in pypi archive
               (uri (git-reference
@@ -2012,29 +1902,23 @@ reported in a previous test run.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1sjgq49g8f8973vhmzrim79b6wz29a765n99azjk1maimqh7mmik"))))
-    (build-system python-build-system)
+                "1ai6gn811wm1ixjimgpsi5nwlcpxaj4kmil69vf2s2ph0c2zw93s"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; The tests validating ordering fail, as well as as two
-                ;; others, for unknown reasons (see:
-                ;; https://github.com/pytest-dev/pytest-randomly/issues/454).
-                (invoke "pytest" "-vv" "-k"
-                        (string-append
-                         "not reordered "
-                         "and not test_it_runs_before_stepwise "
-                         "and not test_entrypoint_injection"))))))))
-    (native-inputs (list python-coverage
-                         python-factory-boy
-                         python-faker
-                         python-numpy
-                         python-pytest-xdist))
-    (propagated-inputs (list python-importlib-metadata python-pytest))
+      #:test-flags
+      #~(list "-p" "no:randomly"
+              ;; The tests validating ordering fail, as well as as two others,
+              ;; for unknown reasons (see:
+              ;; https://github.com/pytest-dev/pytest-randomly/issues/454).
+              "-k" "not test_it_runs_before_stepwise and not test_model_bakery")))
+    (native-inputs
+     (list python-factory-boy
+           python-faker
+           python-numpy
+           python-pytest-bootstrap
+           python-pytest-xdist
+           python-setuptools))
     (home-page "https://github.com/pytest-dev/pytest-randomly")
     (synopsis "Pytest plugin to randomly order tests")
     (description "This is a Pytest plugin to randomly order tests and control
@@ -2133,14 +2017,14 @@ same arguments.")
 (define-public python-pytest-xdist
   (package
     (name "python-pytest-xdist")
-    (version "3.6.1")
+    (version "3.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest_xdist" version))
        (sha256
         (base32
-         "039h0w8qc3d2ix55rrdj6i50i8jqxxl7dx9pjxvfq7i3vfj5dlga"))))
+         "1wd9sgcgmx5nj0n1qmfnjmahi38xkzaz54xac440bilvxhjq2mvy"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2148,22 +2032,22 @@ same arguments.")
       ;; Failes with execnet.gateway_base.RemoteError: Traceback (most recent
       ;; call last).
       #~(list "-k" "not test_ignore_sys_path_hook_entry")))
-    (native-inputs (list python-filelock
-                         python-pytest
-                         python-setuptools
-                         python-setuptools-scm
-                         python-wheel))
-    (propagated-inputs (list python-execnet python-pytest-forked))
+    (native-inputs
+     (list python-filelock
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-execnet))
     (home-page "https://github.com/pytest-dev/pytest-xdist")
-    (synopsis
-     "Plugin for py.test with distributed testing and loop-on-failing modes")
+    (synopsis "Plugin for py.test with distributed testing and loop-on-failing modes")
     (description
      "The pytest-xdist plugin extends py.test with some unique test execution
-modes: parallelization, running tests in boxed subprocesses, the ability
-to run tests repeatedly when failed, and the ability to run tests on multiple
-Python interpreters or platforms.  It uses rsync to copy the existing
-program code to a remote location, executes there, and then syncs the
-result back.")
+modes: parallelization, running tests in boxed subprocesses, the ability to
+run tests repeatedly when failed, and the ability to run tests on multiple
+Python interpreters or platforms.  It uses rsync to copy the existing program
+code to a remote location, executes there, and then syncs the result back.")
     (license license:expat)))
 
 (define-public python-pytest-timeout
@@ -2224,6 +2108,7 @@ timeout has been exceeded.")
      ;; to fail (see: https://github.com/pytest-dev/pytest-forked/issues/54).
      (list python-pytest-bootstrap python-setuptools
            python-setuptools-scm python-wheel))
+    (propagated-inputs (list python-py))
     (home-page "https://github.com/pytest-dev/pytest-forked")
     (synopsis "Pytest plugin to run tests in isolated forked subprocesses")
     (description "This package provides a Pytest plugin which enables running
@@ -2255,285 +2140,261 @@ command-line applications.  With it you can run a script in a subprocess and
 see the output as well as any file modifications.")
     (license license:expat)))
 
-(define-public python-testtools-bootstrap
+(define-public python-testtools
   (package
-    (name "python-testtools-bootstrap")
+    (name "python-testtools")
     (version "2.7.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "testtools" version))
        (sha256
-        (base32
-         "18vy77n4ab2dvgx5ni6gfp2d0haxhh3yrkm6mih8n3zsy30vprav"))))
+        (base32 "18vy77n4ab2dvgx5ni6gfp2d0haxhh3yrkm6mih8n3zsy30vprav"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #f))
-    (propagated-inputs
-     (list python-fixtures-bootstrap python-pbr-minimal))
-    (native-inputs
-     (list python-hatchling python-hatch-vcs
-           python-setuptools)) ;due to python-pbr-minimal
-    (home-page "https://github.com/testing-cabal/testtools")
-    (synopsis
-     "Extensions to the Python standard library unit testing framework")
-    (description
-     "This package is only for bootstrapping.  Do not use this.")
-    (license license:psfl)))
-
-(define-public python-testtools
-  (package
-    (inherit python-testtools-bootstrap)
-    (name "python-testtools")
     (arguments
      (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "-m" "testtools.run" "testtools.tests.test_suite")
       #:phases
-      '(modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; There are six failing tests:
-               ;; "test_fast_keyboard_interrupt_stops_test_run"
-               ;; "test_keyboard_interrupt_stops_test_run"
-               ;; "test_fast_sigint_raises_no_result_error"
-               ;; "test_fast_sigint_raises_no_result_error_second_time"
-               ;; "test_sigint_raises_no_result_error"
-               ;; "test_sigint_raises_no_result_error_second_time"
-               (substitute* "testtools/tests/twistedsupport/__init__.py"
-                 (("test_spinner,") "")
-                 (("test_runtest,") ""))
-               (invoke "python" "-m" "testtools.run"
-                       "testtools.tests.test_suite")))))))
-    (propagated-inputs
-     (list python-fixtures python-pbr))
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; There are six failing tests:
+              ;; "test_fast_keyboard_interrupt_stops_test_run"
+              ;; "test_keyboard_interrupt_stops_test_run"
+              ;; "test_fast_sigint_raises_no_result_error"
+              ;; "test_fast_sigint_raises_no_result_error_second_time"
+              ;; "test_sigint_raises_no_result_error"
+              ;; "test_sigint_raises_no_result_error_second_time"
+              (substitute* "testtools/tests/twistedsupport/__init__.py"
+                (("test_spinner,") "")
+                (("test_runtest,") "")))))))
     (native-inputs
-     (list python-hatchling python-hatch-vcs
-           python-testscenarios-bootstrap
+     (list python-hatch-vcs
+           python-hatchling
            python-twisted
-           python-setuptools)) ;due to python-pbr
+           python-testscenarios-bootstrap))
+    (propagated-inputs
+     (list python-fixtures))
+    (home-page "https://github.com/testing-cabal/testtools")
+    (synopsis "Extensions to the Python standard library unit testing framework")
     (description
      "Testtools extends the Python standard library unit testing framework to
 provide matchers, more debugging information, and cross-Python
-compatibility.")))
+compatibility.")
+    (license license:expat)))
 
-(define-public python-testscenarios-bootstrap
+(define-public python-testtools-bootstrap
+  (hidden-package
+   (package/inherit python-testtools
+     (arguments
+      ;; To break cycle with python-fixtures.
+      (list #:tests? #f))
+     (propagated-inputs '()))))
+
+;; XXX: The project is not maintained since 2015, consider to remove when
+;; nothing depends on it.
+(define-public python-testscenarios
   (package
-    (name "python-testscenarios-bootstrap")
+    (name "python-testscenarios")
     (version "0.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "testscenarios" version))
        (sha256
-        (base32
-         "1dm2aydqpv76vnsk1pw7k8n42hq58cfi4n1ixy7nyzpaj1mwnmy2"))))
-    (build-system python-build-system)
+        (base32 "1dm2aydqpv76vnsk1pw7k8n42hq58cfi4n1ixy7nyzpaj1mwnmy2"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "python" "-m" "testtools.run"
-                              "testscenarios.test_suite"))))))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "-m" "testtools.run" "testscenarios.test_suite")))
+    (native-inputs
+     (list python-setuptools))
     (propagated-inputs
-     `(("python-pbr" ,python-pbr-minimal)
-       ("python-testtools" ,python-testtools-bootstrap)))
+     (list python-pbr
+           python-testtools))
     (home-page "https://launchpad.net/testscenarios")
     (synopsis "Pyunit extension for dependency injection")
     (description
-     "This package is only for bootstrapping.  Don't use this.")
-    (license (list license:bsd-3 license:asl2.0)))) ; at the user's option
-
-(define-public python-testscenarios
-  (package
-    (inherit python-testscenarios-bootstrap)
-    (name "python-testscenarios")
-    (propagated-inputs
-     (list python-pbr python-testtools))
-    (description
      "Testscenarios provides clean dependency injection for Python unittest
-style tests.")))
-
-;; Testresources requires python-pbr at runtime, but pbr needs it for its
-;; own tests.  Hence this bootstrap variant.
-(define-public python-testresources-bootstrap
-  (package
-    (name "python-testresources-bootstrap")
-    (version "2.0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "testresources" version))
-              (sha256
-               (base32
-                "05s4dsli9g17m1r3b1gvwicbbgq011hnpb2b9qnj27ja2n11k7gf"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))
-    (propagated-inputs
-     `(("python-pbr" ,python-pbr-minimal)))
-    (home-page "https://launchpad.net/testresources")
-    (synopsis
-     "Pyunit extension for managing test resources")
-    (description
-     "This package is only here for bootstrapping purposes.  Use the regular
-testresources package instead.")
+style tests.")
     (license (list license:bsd-3 license:asl2.0)))) ; at the user's option
+
+(define-public python-testscenarios-bootstrap
+  (hidden-package
+   (package/inherit python-testscenarios
+     (arguments
+      ;; To break cycle with python-testtols and python-subunit.
+      (list #:tests? #f
+            #:phases
+            #~(modify-phases %standard-phases
+                (delete 'sanity-check))))
+     (propagated-inputs
+      (list python-pbr)))))
 
 (define-public python-testresources
   (package
-    (inherit python-testresources-bootstrap)
     (name "python-testresources")
+    (version "2.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "testresources" version))
+       (sha256
+        (base32 "1v7a3mzi461v4cw4qil094j39wzn8hk10jkm9gi9ybmb01z3vgrc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "-m" "testtools.run" "discover")))
+    (native-inputs
+     (list python-fixtures
+           python-setuptools
+           python-testtools))
     (propagated-inputs
      (list python-pbr))
-    (arguments '())
-    (native-inputs
-     (list python-fixtures python-testtools))
+    (home-page "https://github.com/testing-cabal/testresources")
+    (synopsis "Pyunit extension for managing test resources")
     (description
      "Testresources is an extension to Python's unittest to allow declarative
-use of resources by test cases.")))
+use of resources by test cases.")
+    (license (list license:bsd-3 license:asl2.0)))) ; at the user's option
 
-(define-public python-subunit-bootstrap
+(define-public python-subunit
   (package
-    (name "python-subunit-bootstrap")
-    (version "1.4.0")
+    (name "python-subunit")
+    (version "1.4.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-subunit" version))
        (sha256
-        (base32
-         "0j0ymmnc5nfxi1qzvy59j27viqca7l7xd0y9x29g7yr0h693j804"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-extras python-testtools-bootstrap))
+        (base32 "0d7arni5h98x7mpgpv90bzipf6p6q9djcdwj4m2ky7da64qkcy8h"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "-m" "testtools.run" "subunit.test_suite")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda _
+              ;; There are two failing tests:
+              ;; subunit.tests.test_test_protocol.TestExecTestCase.test_args
+              ;; AssertionError: 1 != 0
+              ;;
+              ;; subunit.tests.test_test_protocol.TestExecTestCase.test_run
+              ;; AssertionError: Lists differ: [('startTest',
+              ;; <subunit.RemotedTestCase de[666 chars]r'>)] != []
+              (substitute* "python/subunit/tests/test_test_protocol.py"
+                (("test_args") "_off_test_args")
+                (("test_run") "_off_test_run"))))
+          (add-after 'disable-failing-tests 'disable-failing-console-scripts
+            (lambda _
+              (substitute* "setup.py"
+                ;; Requries not maintained python-junitxml.
+                (("'subunit2junitxml=.*subunit2junitxml:main',") "")
+                ;; To avoid Gtk in inputs.
+                (("'subunit-notify=.*subunit_notify:main',") "")
+                (("'subunit2gtk=.*subunit2gtk:main',") "")))))))
     (native-inputs
-     (list python-fixtures-bootstrap python-hypothesis
-           python-testscenarios-bootstrap))
-    (home-page "https://launchpad.net/subunit")
+     (list python-fixtures
+           python-setuptools
+           python-testscenarios))
+    (propagated-inputs
+     (list python-iso8601
+           python-pygobject
+           python-testtools))
+    (home-page "https://github.com/testing-cabal/subunit")
     (synopsis "Python implementation of the subunit protocol")
     (description
-     "This package is here for bootstrapping purposes only.  Use the regular
-python-subunit package instead.")
-    (license (list license:bsd-3 license:asl2.0)))) ; at the user's option
-
-(define-public python-subunit
-  (package
-    (inherit python-subunit-bootstrap)
-    (name "python-subunit")
-    (propagated-inputs
-     (list python-extras python-testtools))
-    (native-inputs
-     (list python-fixtures python-hypothesis python-testscenarios))
-    (description
      "Python-subunit is a Python implementation of the subunit test streaming
-protocol.")))
-
-;; Fixtures requires python-pbr at runtime, but pbr uses fixtures for its
-;; own tests.  Hence this bootstrap variant.
-(define-public python-fixtures-bootstrap
-  (package
-    (name "python-fixtures-bootstrap")
-    (version "3.0.0")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "fixtures" version))
-        (sha256
-         (base32
-          "1vxj29bzz3rd4pcy51d05wng9q9dh4jq6wx92yklsm7i6h1ddw7w"))
-        (patches (search-patches "python-fixtures-remove-monkeypatch-test.patch"))))
-    (build-system python-build-system)
-    (arguments
-      `(#:tests? #f
-        #:phases
-         (modify-phases %standard-phases
-           ;; Package is not loadable on its own at this stage.
-           (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-pbr-minimal python-six python-extras))
-    (home-page "https://launchpad.net/python-fixtures")
-    (synopsis "Python test fixture library")
-    (description
-     "This package is only used for bootstrapping.  Use the regular
-python-fixtures package instead.")
-    (license (list license:bsd-3 license:asl2.0)))) ; at user's option
+protocol.")
+    (license (list license:bsd-3 license:asl2.0)))) ; at the user's option
 
 (define-public python-fixtures
   (package
-    (inherit python-fixtures-bootstrap)
     (name "python-fixtures")
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "-m" "testtools.run"
-                       "fixtures.test_suite")))))))
-    (propagated-inputs
-     ;; Fixtures uses pbr at runtime to check versions, etc.
-     (list python-pbr python-six python-extras))
+    (version "4.2.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fixtures" version))
+       (sha256
+        (base32 "02y92rnl2vyjcbc31mcpxkxjky6g9hjb2cxy5xkkl1j5n4ajniwm"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     `(("python-mock" ,python-mock)
-       ("python-testtools" ,python-testtools-bootstrap)))
+     (list python-hatch-vcs
+           python-hatchling
+           python-testtools-bootstrap))
+    (home-page "https://github.com/testing-cabal/fixtures")
+    (synopsis "Python test fixture library")
     (description
      "Fixtures provides a way to create reusable state, useful when writing
-Python tests.")))
+Python tests.")
+    (license (list license:bsd-3 license:asl2.0)))) ; at user's option
 
-(define-public python-testrepository-bootstrap
+(define-public python-testrepository
   (package
-    (name "python-testrepository-bootstrap")
-     (version "0.0.20")
+    (name "python-testrepository")
+    (version "0.0.21")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "testrepository" version))
        (sha256
-        (base32
-         "1ssqb07c277010i6gzzkbdd46gd9mrj0bi0i8vn560n2k2y4j93m"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))
-    (propagated-inputs
-     `(("python-fixtures" ,python-fixtures-bootstrap)
-       ("python-subunit" ,python-subunit-bootstrap)
-       ("python-testtools" ,python-testtools-bootstrap)))
+        (base32 "1nd36zf1gz7rp5qqqvw15d8lwcdwcigs4m6ppn4cdcwhw3vzr2in"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" "/tmp")
+                (invoke "./testr" "init")
+                (invoke "./testr" "run")))))))
     (native-inputs
-     (list python-mimeparse))
-    (home-page "https://launchpad.net/testrepository")
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytz
+           python-setuptools
+           python-testresources
+           python-testscenarios))
+    (propagated-inputs
+     (list python-fixtures
+           python-iso8601
+           python-subunit))
+    (home-page "https://github.com/testing-cabal/testrepository")
     (synopsis "Database for Python test results")
     (description
-     "Bootstrap package for python-testrepository.  Don't use this.")
+     "Testrepository provides a database of test results which can be used as
+part of a developer's workflow to check things such as what tests have failed
+since the last commit or what tests are currently failing.")
     (license (list license:bsd-3 license:asl2.0)))) ; at user's option
-
-(define-public python-testrepository
-  (package
-    (inherit python-testrepository-bootstrap)
-    (name "python-testrepository")
-    (arguments
-     ;; FIXME: Many tests are failing.
-     '(#:tests? #f))
-    (propagated-inputs
-     (list python-fixtures python-subunit python-testtools))
-    (native-inputs
-     (list python-mimeparse))
-    (description "Testrepository provides a database of test results which can
-be used as part of a developer's workflow to check things such as what tests
-have failed since the last commit or what tests are currently failing.")))
 
 (define-public python-coverage
   (package
     (name "python-coverage")
-    (version "7.6.8")
+    (version "7.9.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "coverage" version))
        (sha256
         (base32
-         "1z3wycig8hy7iq9nxwiiiyxn01yblnj69yl2dp424s5hxl1qaawb"))))
+         "12qcm2j4bnc2gp6sci9brly2k406gp4jwjfpzxj04ag3a7x28w4r"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       #~(list
          "--numprocesses" (number->string (parallel-job-count))
+         ;; TODO: Rework this test options by utilizing "-k" option.
+         ;;
+         ;; 1201 passed, 19 skipped, 389 warnings
          ;; XXX: Unable to properly compare reports.
          "--ignore=tests/test_report.py"
          ;; XXX: PyTracer or missing dependencies.
@@ -2550,13 +2411,20 @@ have failed since the last commit or what tests are currently failing.")))
          "--deselect=tests/test_annotate.py::AnnotationGoldTest::test_multi"
          ;; XXX: Needs C extension
          "--deselect=tests/test_cmdline.py::CmdLineStdoutTest::test_version"
+         "--deselect=tests/test_api.py::NamespaceModuleTest::test_bug_572"
          ;; XXX: Finds more files at toplevel
          "--deselect=tests/test_api.py::RelativePathTest::test_files_up_one_level"
          "--deselect=tests/test_xml.py::XmlReportTest::test_no_duplicate_packages"
          ;; XXX: zip1 module missing.
          "--deselect=tests/test_filereporter.py::FileReporterTest::test_zipfile"
+         ;; No module named 'coverage.tracer'
+         "--deselect=tests/test_api.py::ApiTest::test_completely_zero_reporting"
+         "--deselect=tests/test_api.py::ApiTest::test_warnings"
+         "--deselect=tests/test_oddball.py::RecursionTest::test_long_recursion_recovery"
          ;; XXX: Checking coverage for too much files, not only the target one.
-         "--deselect=tests/test_oddball.py::DoctestTest::test_doctest")
+         "--deselect=tests/test_oddball.py::DoctestTest::test_doctest"
+         ;; Module sys has no Python source
+         "--deselect=tests/test_api.py::ApiTest::test_warnings_suppressed")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-pyproject
@@ -2576,10 +2444,7 @@ have failed since the last commit or what tests are currently failing.")))
      (list python-pytest
            python-pytest-xdist ; hardcoded in tests/conftests.py
            python-flaky
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-tomli))
+           python-setuptools))
     (home-page "https://coverage.readthedocs.io")
     (synopsis "Code coverage measurement for Python")
     (description
@@ -2592,20 +2457,31 @@ executed.")
 (define-public python-pytest-asyncio
   (package
     (name "python-pytest-asyncio")
-    (version "0.24.0")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest_asyncio" version))
        (sha256
-        (base32 "0xmj8rndpv9gmwpilbfpc26sdy1bx60l46craf3mzn3nwlldi0fh"))))
+        (base32 "0gwbqikldfy5yvyzhi71h7vicni2dchj0iarsbmf2mj47z8n6m6i"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; 4 failed, 163 passed
+      #~(list "-k" (string-join
+                    (list "not test_strict_mode_ignores_unmarked_coroutine"
+                          "test_strict_mode_ignores_unmarked_fixture"
+                          "test_strict_mode_marked_test_unmarked_fixture_warning"
+                          "test_strict_mode_marked_test_unmarked_autouse_fixture_warning")
+                    " and not "))))
     (native-inputs
-     (list python-setuptools-scm
-           python-setuptools
+     (list python-setuptools
+           python-setuptools-scm
            python-wheel))
     (propagated-inputs
-     (list python-pytest))
+     (list python-pytest
+           python-typing-extensions))
     (home-page "https://github.com/pytest-dev/pytest-asyncio")
     (synopsis "Pytest support for asyncio")
     (description "Python asyncio code is usually written in the form of
@@ -2624,6 +2500,17 @@ to make testing async code easier.")
        (uri (pypi-uri "pytest_asyncio" version))
        (sha256
         (base32 "1lz4h8y6m6hxnsl7kqh0rjxqp5q2wc2m5gd88371rikd7ari16vm"))))))
+
+(define-public python-pytest-asyncio-0.26
+  (package
+    (inherit python-pytest-asyncio)
+    (version "0.26.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_asyncio" version))
+       (sha256
+        (base32 "0bri1scs8whdrxb3jrv0ywiz20qb0mrll3kzkvriy928frljmpy4"))))))
 
 (define-public python-pytest-asyncio-0.21
   (package
@@ -2645,19 +2532,22 @@ to make testing async code easier.")
 (define-public python-codecov
   (package
     (name "python-codecov")
-    (version "2.0.15")
+    (version "2.1.13")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "codecov" version))
         (sha256
          (base32
-          "1217c0vqf7ii65635gvl27a5pfhv0r7zhrpdp9cx640hg73bgn4f"))))
-    (build-system python-build-system)
+          "131av6sdzxf3qqqb85fm3mcd771mrrv9n6lmp52szbiwcf2vcqi3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests in PyPI, tests in git are broken
     (native-inputs
-     (list python-unittest2))
+     (list python-setuptools))
     (propagated-inputs
-     (list python-coverage python-requests))
+     (list python-coverage
+           python-requests))
     (home-page "https://github.com/codecov/codecov-python")
     (synopsis "Upload code coverage reports to @code{codecov.io}")
     (description
@@ -2689,26 +2579,6 @@ C/C++, R, and more, and uploads it to the @code{codecov.io} service.")
      "Testpath is a collection of utilities for Python code working with files
 and commands.  It contains functions to check things on the file system, and
 tools for mocking system commands and recording calls to those.")
-    (license license:expat)))
-
-;;; The software provided by this package was integrated into pytest 2.8.
-(define-public python-pytest-cache
-  (package
-    (name "python-pytest-cache")
-    (version "1.0")
-    (source (origin
-             (method url-fetch)
-             (uri (pypi-uri "pytest-cache" version))
-             (sha256
-              (base32
-               "1a873fihw4rhshc722j4h6j7g3nj7xpgsna9hhg3zn6ksknnhx5y"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-apipkg python-execnet python-py python-pytest))
-    (synopsis "Py.test plugin with mechanisms for caching across test runs")
-    (description "The pytest-cache plugin provides tools to rerun failures from
-the last py.test invocation.")
-    (home-page "https://bitbucket.org/hpk42/pytest-cache/")
     (license license:expat)))
 
 (define-public python-pytest-localserver
@@ -2797,47 +2667,34 @@ instantly.")
 (define-public python-hypothesis
   (package
     (name "python-hypothesis")
-    (version "6.54.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "hypothesis" version))
-              (sha256
-               (base32
-                "1ivyrjpnahvj359pfndnk8x3h0gw37kqm02fmnzibx4mas15d44a"))))
-    (build-system python-build-system)
-    (arguments
-     ;; XXX: Tests are not distributed with the PyPI archive.
-     (list #:tests? #f
-           #:phases
-           #~(modify-phases %standard-phases
-               ;; XXX: hypothesis requires pytest at runtime, but we can
-               ;; not propagate it due to a circular dependency.
-               (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-attrs-bootstrap python-exceptiongroup python-sortedcontainers))
-    (synopsis "Library for property based testing")
-    (description "Hypothesis is a library for testing your Python code against a
-much larger range of examples than you would ever want to write by hand.  It’s
-based on the Haskell library, Quickcheck, and is designed to integrate
-seamlessly into your existing Python unit testing work flow.")
-    (home-page "https://hypothesis.works/")
-    (license license:mpl2.0)))
-
-(define-public python-hypothesis-next
-  (package
-    (inherit python-hypothesis)
-    (name "python-hypothesis")
-    (version "6.131.8")
+    (version "6.135.26")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "hypothesis" version))
        (sha256
-        (base32 "1wx4ii5dxfp9gajfb5bqd3a2d1a38rbmvb620kj0cvlyvxkv5nk8"))))
+        (base32 "0073lb8xp789fxs5g8dmi3pr2p8q7imfsksidy0ccfahrm30xbvk"))))
     (build-system pyproject-build-system)
+    (arguments
+     ;; XXX: Tests are not distributed with the PyPI archive.
+     (list #:tests? #f))
     (native-inputs
-     (list python-setuptools-next
-           python-wheel))))
+     (list python-pytest-bootstrap      ;to pass sanity check
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-attrs-bootstrap
+           python-exceptiongroup
+           python-sortedcontainers))
+    (home-page "https://hypothesis.works/")
+    (synopsis "Library for property based testing")
+    (description "Hypothesis is a library for testing your Python code against a
+much larger range of examples than you would ever want to write by hand.  It’s
+based on the Haskell library, Quickcheck, and is designed to integrate
+seamlessly into your existing Python unit testing work flow.")
+    (license license:mpl2.0)))
+
+(define-public python-hypothesis-next python-hypothesis)
 
 ;; WARNING: This package is a dependency of mesa.
 (define-public python-lit
@@ -2849,18 +2706,14 @@ seamlessly into your existing Python unit testing work flow.")
         (method url-fetch)
         (uri (pypi-uri "lit" version))
         (sha256
-         (base32
-          "1nsf3ikvlgvqqf185yz5smkvw0268jipdvady0qfh6llhshp9ha7"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "lit.py" "tests")))))))
+         (base32 "1nsf3ikvlgvqqf185yz5smkvw0268jipdvady0qfh6llhshp9ha7"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'custom
+                     #:test-flags #~(list "lit.py" "tests")))
     ;; This can be built with any version of llvm.
-    (native-inputs (list llvm))
+    (native-inputs
+     (list llvm
+           python-setuptools))
     (home-page "https://llvm.org/")
     (synopsis "LLVM Software Testing Tool")
     (description "@code{lit} is a portable tool for executing LLVM and Clang
@@ -2871,29 +2724,24 @@ failures.")
 (define-public python-pytest-enabler
   (package
     (name "python-pytest-enabler")
-    (version "1.2.1")
+    (version "3.4.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pytest-enabler" version))
+       (uri (pypi-uri "pytest_enabler" version))
        (sha256
-        (base32 "023ymm0r2gpn5q7aikvx567s507j0zk46w41w6gxb69c688zgs73"))))
+        (base32 "0gxsr0wk8kzf8rqfnhy84yh1zi0b55j76c0m9n006d8q4bzy1v25"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #f
-                     #:test-flags '(list "tests")))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm))
     (propagated-inputs
-     (list python-jaraco-context
+     (list python-importlib-resources
+           python-jaraco-context
            python-jaraco-functools
            python-toml))
-    (native-inputs (list python-pytest
-                         python-pytest-black
-                         python-pytest-checkdocs
-                         python-pytest-cov
-                         python-pytest-flake8
-                         python-pytest-mypy
-                         python-setuptools
-                         python-setuptools-scm
-                         python-types-toml))
     (home-page "https://github.com/jaraco/pytest-enabler")
     (synopsis "Enable installed pytest plugins")
     (description "Enable installed pytest plugins")
@@ -2925,17 +2773,21 @@ failures.")
 (define-public python-pytest-mypy
   (package
     (name "python-pytest-mypy")
-    (version "0.10.3")
+    (version "1.0.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pytest-mypy" version))
+       (uri (pypi-uri "pytest_mypy" version))
        (sha256
-        (base32 "1nyk9xxkwb03sp6avn5l4ysncybnyw4ibrp2lcn3mw934dj8yigq"))))
+        (base32 "0x60ap70ix4blavrwih9aglp3ghviv1frxccnv3cq3f8fpzwlprz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags #~(list "--numprocesses" "auto")
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              "-p" "no:mypy"
+              ;; Fails to compare warnings.
+              "--deselect=tests/test_pytest_mypy.py::test_mypy_encoding_warnings")
       #:phases
       (if (or (target-riscv64?)
               (target-ppc64le?))
@@ -2947,14 +2799,11 @@ failures.")
                     (("60\\.0") "180.0")))))
           #~%standard-phases)))
     (native-inputs
-     (list python-pexpect
-           python-pytest-xdist
+     (list python-pytest-xdist
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
-     (list python-attrs
-           python-filelock
+     (list python-filelock
            python-mypy
            python-pytest))
     (home-page "https://github.com/dbader/pytest-mypy")
@@ -3145,7 +2994,7 @@ statements in the module it tests.")
 (define-public python-pylint
   (package
     (name "python-pylint")
-    (version "3.3.1")
+    (version "3.3.8")
     (source
      (origin
        (method git-fetch)
@@ -3154,7 +3003,7 @@ statements in the module it tests.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "023cd6gqhhykr1gf8w7nxs5n7qgqwwsd4mgn94r14is8gcf1hwvj"))))
+        (base32 "0h6ynaxsgb5bidjkbrfwb05nc7dw9paxc0bjgkqaxrkpqfm39baj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3180,16 +3029,14 @@ statements in the module it tests.")
      (list python-pytest
            python-pytest-timeout
            python-pytest-xdist
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (propagated-inputs
      (list python-astroid
            python-dill
            python-isort
            python-mccabe
            python-platformdirs
-           python-tomlkit
-           python-typing-extensions))
+           python-tomlkit))
     (home-page "https://github.com/PyCQA/pylint")
     (synopsis "Advanced Python code static checker")
     (description "Pylint is a Python source code analyzer which looks
@@ -3201,29 +3048,6 @@ all on a minimally sized program.  It's highly configurable and handle
 pragmas to control it from within your code.  Additionally, it is
 possible to write plugins to add your own checks.")
     (license license:gpl2+)))
-
-(define-public python-nosexcover
-  (package
-    (name "python-nosexcover")
-    (version "1.0.11")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "nosexcover" version))
-              (sha256
-               (base32
-                "10xqr12qv62k2flxwqhh8cr00cjhn7sfjrm6p35gd1x5bmjkr319"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-coverage python-nose))
-    (home-page "https://github.com/cmheisel/nose-xcover")
-    (synopsis "Extends nose.plugins.cover to add Cobertura-style XML reports")
-    (description "Nose-xcover is a companion to the built-in
-@code{nose.plugins.cover}.  This plugin will write out an XML coverage report
-to a file named coverage.xml.
-
-It will honor all the options you pass to the Nose coverage plugin,
-especially -cover-package.")
-    (license license:expat)))
 
 (define-public python-discover
   (package
@@ -3318,40 +3142,6 @@ tests written in a natural language style, backed up by Python code.")
 JSON APIs with Behave.")
     (license license:expat)))
 
-(define-public python-nose-exclude
-  (package
-    (name "python-nose-exclude")
-    (version "0.5.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "nose-exclude" version))
-       (sha256
-        (base32 "0123x1lyv5b2p9civcfg8vilj2ga3q7p2ks1hq25z0gb3ssai3zp"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'disable-test
-            (lambda _
-              ;; Disable failing test: AssertionError.
-              (substitute* '("test_dirs/build/test.py"
-                            "test_dirs/test_not_me/test.py")
-                (("def test_i_should_never_run")
-                 "def off_i_should_never_run")))))))
-    (native-inputs
-     (list python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-nose))
-    (home-page "https://github.com/kgrandis/nose-exclude")
-    (synopsis "Exclude specific directories from nosetests runs")
-    (description
-     "@code{nose-exclude} is a Nose plugin that allows you to easily specify
-directories to be excluded from testing.")
-    (license license:lgpl2.1+)))
-
 (define-public python-nose-timer
   (package
     (name "python-nose-timer")
@@ -3373,62 +3163,26 @@ directories to be excluded from testing.")
 (define-public python-freezegun
   (package
     (name "python-freezegun")
-    (version "1.2.2")
+    (version "1.5.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "freezegun" version))
        (sha256
-        (base32 "0ijlq32qvpm5zprfzbyzawpl9qjsknlxhryr1i0q84wl0sxd28nd"))
-       (modules '((guix build utils)))
-       (snippet
-        ;; Add an explicit case for static methods as they are callable
-        ;; in Python 3.10, breaking this conditional.
-        ;; XXX Taken from upstream pull request:
-        ;; https://github.com/spulec/freezegun/pull/397
-        '(substitute* "freezegun/api.py"
-           (("if not callable\\(attr_value\\) or \
-inspect\\.isclass\\(attr_value\\):")
-            "if (not callable(attr_value) or inspect.isclass(attr_value)\
-or isinstance(attr_value, staticmethod)):")))))
-    (build-system python-build-system)
+        (base32 "0pmwcjf0vxmars4kncb35pvrckp0j97lya5aqzbzy2m56d721inp"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-dateutil))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; The tests are normally executed via `make test`, but the PyPi
-         ;; package does not include the Makefile.
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "-vv"))))))
     (home-page "https://github.com/spulec/freezegun")
     (synopsis "Test utility for mocking the datetime module")
     (description
      "FreezeGun is a library that allows your python tests to travel through
 time by mocking the datetime module.")
     (license license:asl2.0)))
-
-(define-public python-flexmock
-  (package
-    (name "python-flexmock")
-    (version "0.12.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "flexmock" version))
-              (sha256
-               (base32
-                "18dcr7mpldf3cxsqi9rak75n4z7x3j544l4ixdspairm7cf6cp23"))))
-    (build-system pyproject-build-system)
-    (native-inputs (list poetry python-pytest))
-    (home-page "https://flexmock.readthedocs.org")
-    (synopsis "Testing library for Python")
-    (description
-     "flexmock is a testing library for Python that makes it easy to create
-mocks, stubs and fakes.")
-    (license license:bsd-3)))
 
 (define-public python-flaky
   (package
@@ -3473,25 +3227,18 @@ retried.")
 (define-public python-pyhamcrest
   (package
     (name "python-pyhamcrest")
-    (version "2.0.3")
-    (source (origin
-              (method git-fetch)        ;no tests in PyPI archive
-              (uri (git-reference
-                    (url "https://github.com/hamcrest/PyHamcrest")
-                    (commit (string-append "V" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0j0fpd7vw700l6gx29gz9j28d22ajkz6sngfzp4c8an4ibd2fw85"))))
-    (native-inputs                      ;all native inputs are for tests
-     (list python-pytest-cov python-mock python-pytest python-hypothesis))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key inputs outputs #:allow-other-keys)
-                      (add-installed-pythonpath inputs outputs)
-                      (invoke "pytest" "-vv"))))))
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyhamcrest" version))
+       (sha256
+        (base32 "175xfp4zgjmsxac79z39in77pjg7yck1kbr25kkvf31xjb0bxb66"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest-bootstrap))
     (home-page "https://hamcrest.org/")
     (synopsis "Hamcrest matchers for Python")
     (description "PyHamcrest is a framework for writing matcher objects,
@@ -3914,37 +3661,38 @@ grew out of the @dfn{Vc} project.")
       (license license:bsd-3))))
 
 (define-public python-pyfakefs
+  ;; TODO: Move to python-build.
   (package
     (name "python-pyfakefs")
-    (version "4.6.3")
-    (source (origin
-              (method url-fetch)
-              ;; We use the PyPI URL because there is no proper release
-              ;; available from GitHub.  The GitHub project only provides
-              ;; autogenerated tarballs, which are known to change in place.
-              (uri (pypi-uri "pyfakefs" version))
-              (sha256
-               (base32
-                "18bcv8yalg80zgigx40fk692yr3wf9ch1hkb0cdplqspyry2mwbd"))
-              (patches (search-patches
-                        "python-pyfakefs-remove-bad-test.patch"))
-              (file-name (string-append name "-" version ".tar.gz"))))
+    (version "5.9.1")
+    (source
+     (origin
+       (method git-fetch)       ;no tets in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/pytest-dev/pyfakefs")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xdq8fgbqrrnhwbgklwfngmpzgna2frr9vc318vy1rb0vhsmzvjk"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; The default test suite does not run these extra tests.
-         (add-after 'check 'check-pytest-plugin
-           (lambda _
-             (invoke
-              "python" "-m" "pytest"
-              "pyfakefs/pytest_tests/pytest_plugin_test.py"))))))
+     (list
+      #:test-backend #~'custom
+      ;; Ran 2699 tests; 1177 skipped, 2 expected failures
+      #:test-flags
+      #~(list "-m" "pyfakefs.tests.all_tests_without_extra_packages")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-root-tests
+            (lambda _
+              (substitute* "pyfakefs/tests/fake_filesystem_test.py"
+                (("def test_expand_root")
+                 "def __off_test_expand_root")))))))
+    ;; As it would be imported by many through python-importlib-metadata, keep
+    ;; dependencies on bare minimal.
     (native-inputs
-     (list python-pytest))
-    (build-system python-build-system)
-    ;; Guix lint doesn't like that this is a permanent redirect to the GitHub
-    ;; page, but the pyfakefs documentation asks us to use this specific URL
-    ;; when linking to the project.  Honor their request.
-    (home-page "http://pyfakefs.org/")
+     (list python-setuptools))
+    (home-page "https://github.com/pytest-dev/pyfakefs")
     ;; TRANSLATORS: In the synopsis, "Mock" is a verb.
     (synopsis "Mock file system interactions in tests")
     (description
@@ -3961,31 +3709,23 @@ system.  The code under test requires no modification to work with pyfakefs.")
 (define-public python-aiounittest
   (package
     (name "python-aiounittest")
-    (version "1.4.2")
-    ;; Pypi package lacks tests.
+    (version "1.5.0")
     (source
-     (origin (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/kwarunek/aiounittest.git")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "0srahyzrk5awfh4rmppvqkblfmiavdklxl9i5mcr8gl7ahiwwl7f"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "nosetests" "-v")
-                          (format #t "test suite not run~%"))
-                      #t)))))
-    (propagated-inputs (list python-wrapt))
+     (origin
+       (method git-fetch) ;no tets in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/kwarunek/aiounittest.git")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0266i5z589jh75hjzakvwcqx5shgv5zis8mr70qa209v7jjclzfd"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-coverage python-nose))
-    (home-page
-     "https://github.com/kwarunek/aiounittest")
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-wrapt))
+    (home-page "https://github.com/kwarunek/aiounittest")
     (synopsis "Test asyncio code more easily")
     (description "Aiounittest is a library that helps write tests using
 asynchronous code in Python (asyncio).")
@@ -4016,19 +3756,19 @@ skipped if any of the dependencies did fail or has been skipped.")
 (define-public python-pytest-datadir
   (package
     (name "python-pytest-datadir")
-    (version "1.3.1")
+    (version "1.7.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pytest-datadir" version))
+       (uri (pypi-uri "pytest_datadir" version))
        (sha256
         (base32
-         "066bg6wlzgq2pqnjp73dfrcmk8951xw3aqcxa3p1axgqimrixbyk"))))
-    (build-system python-build-system)
+         "0gj49053hzb3xchzrsp14hj7d4fakhxmvrv895g218yh6n525x8m"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools-scm))
-    (propagated-inputs
-     (list python-pytest python-wheel))
+     (list python-pytest-bootstrap
+           python-setuptools
+           python-setuptools-scm))
     (home-page "https://github.com/gabrielcnr/pytest-datadir")
     (synopsis "Pytest plugin for manipulating test data directories and files")
     (description
@@ -4173,28 +3913,34 @@ helpers for writing tests.")
 (define-public subunit
   (package
     (name "subunit")
-    (version "1.4.2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/testing-cabal/subunit")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "16n1zxwnmhb7vzixngvmm5zzk4q5jaqqjwyr6pr6w0ys60b7xja3"))))
+    (version "1.4.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/testing-cabal/subunit")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fcqxh4cwhn9yz2z1zszzvgc554gai5b7c59w45a4cg9y9p30h8d"))))
     (build-system gnu-build-system)
-    (native-inputs (list autoconf
-                         automake
-                         check
-                         cppunit
-                         libtool
-                         pkg-config
-                         python-fixtures
-                         python-hypothesis
-                         python-testscenarios))
-    (inputs (list perl python))
-    (propagated-inputs (list python-testtools))
+    (native-inputs
+     (list autoconf
+           automake
+           check
+           cppunit
+           libtool
+           pkg-config
+           python-fixtures
+           python-hypothesis
+           python-testscenarios))
+    (inputs
+     (list perl
+           python))
+    (propagated-inputs
+     (list python-iso8601
+           python-pygobject
+           python-testtools))
     (home-page "https://github.com/testing-cabal/subunit")
     (synopsis "Test reporting and control protocol")
     (description

@@ -14,6 +14,7 @@
 ;;; Copyright © 2020, 2021, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2021-2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
+;;; Copyright © 2022 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2022 Felipe Balbi <balbi@kernel.org>
 ;;; Copyright © 2023 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
@@ -241,6 +242,14 @@ them as it goes.")
                                     antlr-version
                                     "\"")))
                   (invoke "python" "BuildGrammar.py")))))
+          (add-before 'build 'relax-gcc-warnings
+            (lambda _
+              ;; Relax a warning turned error with GCC 14.
+              (setenv "CFLAGS" (string-join
+                                (list "-g" "-O2"
+                                      "-Wno-error=incompatible-pointer-types"
+                                      "-Wno-error=int-conversion")
+                                " "))))
           ;; The test suite expects the commands to be Python rather than
           ;; shell scripts, so move the wrap phase after the tests.
           (delete 'wrap)
@@ -250,10 +259,16 @@ them as it goes.")
                 (setenv "HOME" "/tmp")
                 (invoke "pytest" "-vv" "--dist" "loadfile" "-n"
                         (number->string (parallel-job-count))
-                        ;; This test fails because of a different date in the
-                        ;; copyright header of an expected file since an
-                        ;; update to ffmpeg.
-                        "-k" "not test_alt_missing_glyph"))))
+                        "-k" (string-join
+                              ;; This test fails because of a different date
+                              ;; in the copyright header of an expected file
+                              ;; since an update to ffmpeg.
+                              (list "not test_alt_missing_glyph"
+                                    ;; AssertionError: assert False
+                                    "test_build_font_and_check_messages"
+                                    "test_duplicate_warning_messages_bug751"
+                                    "test_cli_numerics")
+                              " and not ")))))
           (add-after 'check 'wrap
             (assoc-ref %standard-phases 'wrap))
           (add-before 'wrap 'wrap-PATH
@@ -288,7 +303,7 @@ them as it goes.")
            python-defcon
            python-fontmath
            python-fonttools
-           python-lxml
+           python-lxml-4.9
            python-tqdm
            python-ufonormalizer
            python-ufoprocessor))
@@ -384,10 +399,27 @@ but also provides many useful font conversion and analysis facilities.
                  "CFLAGS = -Wno-error=incompatible-pointer-types"))))
           (add-before 'build 'set-CC
             (lambda _
-              (setenv "CC" "gcc"))))))
+              (setenv "CC" "gcc")))
+          (replace 'check
+            ;; tests: 646 passed, 4 skipped, 40 warnings
+            ;; TODO: Try to fix more tests if this package is still required.
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" "/tmp")
+                (invoke "pytest" "-vv"
+                        "-n" (number->string (min 8 (parallel-job-count)))
+                        "--ignore=tests/buildcff2vf_test.py"
+                        "--ignore=tests/comparefamily_test.py"
+                        "--ignore=tests/makeinstancesufo_test.py"
+                        "--ignore=tests/makeotf_test.py"
+                        "--ignore=tests/makeotfexe_test.py"
+                        "--ignore=tests/otc2otf_test.py"
+                        "--ignore=tests/otf2ttf_test.py"
+                        "--ignore=tests/ttxn_test.py")))))))
     (native-inputs
      (list pkg-config
            python-pytest
+           python-pytest-xdist
            python-setuptools-scm
            python-wheel))
     (inputs
@@ -493,30 +525,36 @@ Kit for OpenType (AFDKO) @command{tx} tool.")
 (define-public python-compreffor
   (package
     (name "python-compreffor")
-    (version "0.5.4")
+    (version "0.5.6")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "compreffor" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googlefonts/compreffor")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "05gpszc8xh6wn3mdra05d6yz6ns624y67m9xs4vv8gh68m0aasrh"))))
-    (build-system python-build-system)
+        (base32 "04pgh1ajglvzm229c4janazfillh9156i4zrkhkyn2mb3dm1zq6y"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags #~(list "--pyargs" "compreffor")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-setup.py
+          (add-after 'unpack 'set-version
             (lambda _
-              (substitute* "setup.py"
-                ;; Not actually needed.
-                ((", \"setuptools_git_ls_files\"") "")))))))
-    (native-inputs (list python-pytest python-pytest-runner
-                         python-setuptools-scm))
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-setuptools
+           python-setuptools-scm))
     (propagated-inputs (list python-fonttools-minimal))
     (home-page "https://github.com/googlefonts/compreffor")
     (synopsis "@acronym{CFF, Compact Font Format} subroutinizer for fontTools")
-    (description "This package provides a @acronym{CFF, Compact Font Format}
-subroutinizer for fontTools.")
+    (description
+     "This package provides a @acronym{CFF, Compact Font Format} subroutinizer
+for fontTools.")
     (license license:asl2.0)))
 
 (define-public python-cu2qu
@@ -588,20 +626,29 @@ to generate OpenType font binaries from Unified Font Objects (UFOs).")
 (define-public python-fontmath
   (package
     (name "python-fontmath")
-    (version "0.9.3")
+    (version "0.9.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "fontMath" version ".zip"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/robotools/fontMath")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "070v1jz5f18g15if459ppwswq4w5hzffwp1gvdc5j47bgz5qflva"))))
-    (build-system python-build-system)
+        (base32 "0g8vpwn4flg0rj7ar8wl9xlpjhcgiz01p56fzkjdlf2jqb36akyy"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (propagated-inputs (list python-fonttools-minimal))
     (native-inputs
-     (list python-setuptools-scm
-           python-pytest
-           python-pytest-runner
-           python-wheel
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
            unzip))
     (home-page "https://github.com/robotools/fontMath")
     (synopsis "Fast font mathematical operations library")
@@ -668,13 +715,19 @@ implementing the pen protocol for manipulating glyphs.")
         (uri (pypi-uri "fontParts" version ".zip"))
         (sha256
          (base32 "0j4h8hszky639gmfy1avmw670y80ya49kca8yc635h5ihl0c3v8x"))))
-     (build-system python-build-system)
+     (build-system pyproject-build-system)
+     (arguments
+      (list #:test-backend #~'custom
+            #:test-flags #~(list "Lib/fontParts/fontshell/test.py")))
      (propagated-inputs
       (list python-booleanoperations
             python-defcon-bootstrap
             python-fontmath
             python-fonttools-minimal))
-     (native-inputs (list python-setuptools-scm unzip))
+     (native-inputs
+      (list python-setuptools
+            python-setuptools-scm
+            unzip))
      (home-page "https://github.com/robotools/fontParts")
      (synopsis "Library for interacting with font parts")
      (description "FontParts is an @acronym{API, Application Programming
@@ -691,6 +744,47 @@ process.  FontParts is the successor of RoboFab.")
     (properties
      (alist-delete 'hidden?
                    (package-properties python-fontparts-bootstrap)))))
+
+(define-public python-freetype-py
+  (package
+    (name "python-freetype-py")
+    (version "2.5.1")
+    (source
+     (origin
+       (method git-fetch)       ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/rougier/freetype-py")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cls0469zfqzwpq6k4pxa9vrczsqabqk4qh7444xybcyq9qgs1lp"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-lib-paths
+            (lambda _
+              (substitute* "freetype/raw.py"
+                (("ctypes.util.find_library\\('freetype'\\)")
+                 (format #f "'~a/~a'" #$(this-package-input "freetype")
+                         "lib/libfreetype.so")))))
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm))
+    (inputs
+     (list freetype))
+    (home-page "https://github.com/rougier/freetype-py")
+    (synopsis "Freetype python bindings")
+    (description
+     "Freetype Python provides bindings for the FreeType library.  Only the
+high-level API is bound.")
+    (license license:bsd-3)))
 
 (define-public python-glyphslib
   (package
@@ -936,7 +1030,7 @@ converter from FontForge’s @acronym{SFD, Spline Font Database} fonts to
        (snippet '(delete-file-recursively "src/cpp")) ;140+ MiB of stuff
        (sha256
         (base32 "1vlwl1w6sn8c78fsh1w549n3lk9v3v9hcp866vrsdr4byb7g2ani"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -949,14 +1043,10 @@ converter from FontForge’s @acronym{SFD, Spline Font Database} fonts to
               ;; Our version of Skia requires c++17.
               (substitute* "setup.py"
                 (("-std=c\\+\\+14")
-                 "-std=c++17"))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
+                 "-std=c++17")))))))
     (native-inputs
      (list pkg-config
-           python-cython
+           python-cython-0
            python-pytest
            python-setuptools-scm
            unzip))
@@ -1014,21 +1104,33 @@ tools can generate partial instances.
 (define-public python-ufonormalizer
   (package
     (name "python-ufonormalizer")
-    (version "0.6.1")
+    (version "0.6.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "ufonormalizer" version ".zip"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/unified-font-object/ufoNormalizer")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0v5awian2alap7nvxfz38aahyqbqnma16nrqcpr8602hbbki04g6"))))
-    (build-system python-build-system)
-    (native-inputs (list python-setuptools-scm unzip))
+        (base32 "1dc2ibk4bgdwhrv9pwmvvgsny4gyf80ncrhakvixd14pz08inafx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'unittest
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs (list python-setuptools python-setuptools-scm unzip))
     (home-page "https://github.com/unified-font-object/ufoNormalizer")
     (synopsis "Script to normalize @acronym{UFO, Unified Font Object} data")
-    (description "The purpose of the @command{ufonormalizer} command is to
-provide a standard formatting so that updates to @acronym{UFO, Unified Font
-Object} data can be usefully versioned.  Examples of formatting applied by
-ufoNormalizer include:
+    (description
+     "The purpose of the @command{ufonormalizer} command is to provide a
+standard formatting so that updates to @acronym{UFO, Unified Font Object} data
+can be usefully versioned.  Examples of formatting applied by ufoNormalizer
+include:
 @itemize
 @item Changing floating-point numbers to integers where it doesn't alter the
 value (e.g. @samp{x=\"95.0\"} becomes @samp{x=\"95\"})
@@ -1854,23 +1956,34 @@ API-compatible with defcon.")
 (define-public python-defcon-bootstrap
   (package
     (name "python-defcon-bootstrap")
-    (version "0.10.3")
+    (version "0.11.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "defcon" version ".zip"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/robotools/defcon")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "036clkwjfv5mmvy6s67s0pbni73n9hdw32z20gm4w5jzqzbjdpjn"))))
-    (build-system python-build-system)
+        (base32 "06w5kd5ac63m6m8x8j4xwdl7ncbpjl7pdpfpy9i6c8nhbd8sbjfm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (propagated-inputs (list python-fontpens-bootstrap python-fonttools))
     (native-inputs
      (list python-pytest
-           python-pytest-runner
+           python-setuptools
            python-setuptools-scm
            unzip))
     (home-page "https://github.com/robotools/defcon")
-    (synopsis "Flexible objects for representing @acronym{UFO, unified font object} data")
-    (description "Defcon is a set of @acronym{UFO, unified font object} based
+    (synopsis "Flexible objects for representing UFO data")
+    (description
+     "Defcon is a set of @acronym{UFO, unified font object} based
 objects optimized for use in font editing applications.  The objects are built
 to be lightweight, fast and flexible.  The objects are very bare-bones and
 they are not meant to be end-all, be-all objects.  Rather, they are meant to

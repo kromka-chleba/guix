@@ -248,8 +248,8 @@ data units.")
            python-importlib-metadata
            python-packaging
            python-pytest
-           python-setuptools-next
-           python-setuptools-scm-next
+           python-setuptools
+           python-setuptools-scm
            python-sphinx
            python-sphinxcontrib-newsfeed
            python-wheel))

@@ -3575,10 +3575,9 @@ linux/libcurl_wrapper.h")
            node-lts
            perl
            pkg-config
-           python2-six
-           python-2
-           ;; TODO Move to ruby@3 on the next rebuild cycle.
-           ruby-2.7))
+           python-six
+           python-wrapper
+           ruby))
     (inputs
      (list alsa-lib
            at-spi2-core
@@ -4125,26 +4124,73 @@ linux/libcurl_wrapper.h"
               (delete-file-recursively
                (string-append #$output "/tests")))))))
     (native-inputs
-     (modify-inputs (package-native-inputs qtwebengine-5)
-       (delete "python2" "python2-six")
-       (replace "node" node-lts)
-       (append clang-20
-               lld-as-ld-wrapper-18
-               python-wrapper
-               python-beautifulsoup4
-               python-html5lib)))
+     (list bison
+           clang-20
+           flex
+           gperf
+           lld-as-ld-wrapper-18
+           ninja
+           node-lts
+           perl
+           pkg-config
+           python-beautifulsoup4
+           python-html5lib
+           python-wrapper
+           ruby))
     (inputs
-     (modify-inputs (package-inputs qtwebengine-5)
-       (replace "ffmpeg" ffmpeg)
-       (replace "icu4c" icu4c)
-       (replace "re2" re2-next)
-       (replace "qtmultimedia" qtmultimedia)
-       (append fxdiv libxkbfile xkeyboard-config)))
+     (list alsa-lib
+           at-spi2-core
+           cups-minimal
+           curl
+           dbus
+           eudev
+           ffmpeg
+           fontconfig
+           fxdiv
+           harfbuzz
+           icu4c
+           jsoncpp
+           lcms
+           libcap
+           libevent
+           libgcrypt
+           libjpeg-turbo
+           libvpx
+           libwebp
+           libx11
+           libxcb
+           libxcomposite
+           libxcursor
+           libxi
+           libxkbcommon
+           libxkbfile
+           ;; FIXME: libxml2 needs to built with icu support though it links to
+           ;; libxml2 configure summary still states "Checking for compatible
+           ;; system libxml2... no"
+           libxml2
+           libxrandr
+           libxrender
+           libxslt
+           libxtst
+           mesa
+           minizip
+           nss
+           openh264
+           opus
+           pciutils
+           protobuf
+           pulseaudio
+           qtmultimedia
+           re2-next
+           snappy
+           valgrind/pinned
+           vulkan-headers
+           xcb-util
+           xkeyboard-config))
     (propagated-inputs
-     (modify-inputs (package-propagated-inputs qtwebengine-5)
-       (replace "qtbase" qtbase)
-       (replace "qtdeclarative" qtdeclarative)
-       (replace "qtwebchannel" qtwebchannel)))
+     (list qtbase
+           qtdeclarative
+           qtwebchannel))
     (home-page "https://wiki.qt.io/QtWebEngine")
     (synopsis "Qt WebEngine module")
     (description "The Qt WebEngine module provides support for web
@@ -4542,9 +4588,11 @@ contain over 620 classes.")
        (sha256
         (base32
          "0kqbz61fcbv9indv927cic90x0kbfzi2h1hcvjgsyf92pp6ssbb8"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f)) ;; No test code.
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://www.riverbankcomputing.com/software/sip/")
     (synopsis "Sip module support for PyQt5")
     (description "Sip module support for PyQt5")
@@ -4745,6 +4793,8 @@ PySide2, PyQt6, PySide6) and additional custom QWidgets.")
         (base32 "07rvfwzjl378j75j2va0c6xylwx16icxa6dycsjgjc329pgpng40"))))
     (build-system python-build-system)
     (native-inputs (list python-pyqt))
+    (arguments
+     (list #:tests? #f)) ; No tests
     (home-page "https://github.com/mottosso/Qt.py")
     (synopsis "Abstraction layer for Python Qt bindings")
     (description

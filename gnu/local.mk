@@ -166,7 +166,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/axoloti.scm			\
   %D%/packages/backup.scm			\
   %D%/packages/base.scm				\
-  %D%/packages/barrier.scm			\
   %D%/packages/bash.scm				\
   %D%/packages/batik.scm			\
   %D%/packages/bdw-gc.scm			\
@@ -277,7 +276,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/erlang-xyz.scm			\
   %D%/packages/esolangs.scm			\
   %D%/packages/fabric-management.scm		\
-  %D%/packages/fcitx.scm			\
   %D%/packages/fcitx5.scm			\
   %D%/packages/fediverse.scm			\
   %D%/packages/figlet.scm			\
@@ -1196,13 +1194,13 @@ dist_patch_DATA =						\
   %D%/packages/patches/durden-shadow-arcan.patch		\
   %D%/packages/patches/dvd+rw-tools-add-include.patch 		\
   %D%/packages/patches/dwarves-threading-reproducibility.patch	\
-  %D%/packages/patches/dynaconf-unvendor-deps.patch		\
   %D%/packages/patches/efivar-fix-fprint-format.patch		\
   %D%/packages/patches/eigen-fix-strict-aliasing-bug.patch	\
   %D%/packages/patches/einstein-build.patch			\
   %D%/packages/patches/elfutils-tests-ptrace.patch		\
   %D%/packages/patches/elixir-path-length.patch			\
   %D%/packages/patches/elm-ghc9.2.patch	\
+  %D%/packages/patches/python-treelib-remove-python2-compat.patch	\
   %D%/packages/patches/elm-offline-package-registry.patch	\
   %D%/packages/patches/elm-reactor-static-files.patch		\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
@@ -1831,6 +1829,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/make-impure-dirs.patch			\
   %D%/packages/patches/makem-replace-git.patch			\
   %D%/packages/patches/marisa-fix-MARISA_WORD_SIZE.patch	\
+  %D%/packages/patches/mash-add-missing-headers.patch           \
   %D%/packages/patches/mathjax-disable-webpack.patch			\
   %D%/packages/patches/mathjax-no-a11y.patch			\
   %D%/packages/patches/mathjax-3.1.2-no-a11y.patch		\
@@ -2040,6 +2039,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-clarabel-blas.patch		\
   %D%/packages/patches/python-docrepr-fix-tests.patch		\
   %D%/packages/patches/python-feedparser-missing-import.patch	\
+  %D%/packages/patches/python-hdmedians-replace-nose.patch	\
   %D%/packages/patches/python-louvain-fix-test.patch		\
   %D%/packages/patches/python-matplotlib-fix-legend-loc-best-test.patch	\
   %D%/packages/patches/python-mohawk-pytest.patch	\
@@ -2049,9 +2049,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pydocstyle-add-support-for-pep701.patch	\
   %D%/packages/patches/python-pyreadstat-link-libiconv.patch	\
   %D%/packages/patches/python-sip-include-dirs.patch	\
+  %D%/packages/patches/python-scikit-build-setuptools-compat.patch	\
   %D%/packages/patches/python-sgmllib3k-assertions.patch	\
   %D%/packages/patches/python-sphobjinv-defer-ssl-import.patch	\
   %D%/packages/patches/python-sphinx-prompt-docutils-0.19.patch	\
+  %D%/packages/patches/python-sshtunnel-pep518.patch	\
   %D%/packages/patches/python-zeroc-ice-3.6.5-python-3.11-support.patch	\
   %D%/packages/patches/qcodeeditor-qt6.patch			\
   %D%/packages/patches/qgit-2.12-fix-search-style.patch		\
@@ -2060,6 +2062,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/qtlocation-5.15.8-mapboxgl-gcc13.patch	\
   %D%/packages/patches/quodlibet-disable-bundled-packages.patch	\
   %D%/packages/patches/qxlsx-fix-include-directory.patch	\
+  %D%/packages/patches/schiffbruch-fix-build-for-gcc-13.patch	\
   %D%/packages/patches/scn-fast-float-compat.patch		\
   %D%/packages/patches/sdcc-disable-non-free-code.patch		\
   %D%/packages/patches/sdl-pango-api_additions.patch		\
@@ -2151,7 +2154,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-3-reproducible-build.patch	\
   %D%/packages/patches/python-cross-compile.patch		\
   %D%/packages/patches/python-configobj-setuptools.patch	\
-  %D%/packages/patches/python-dateutil-pytest-compat.patch	\
   %D%/packages/patches/python-debugpy-unbundle-pydevd.patch	\
   %D%/packages/patches/python-docopt-pytest6-compat.patch	\
   %D%/packages/patches/python-fixtures-remove-monkeypatch-test.patch	\
@@ -2161,10 +2163,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pep8-stdlib-tokenize-compat.patch \
   %D%/packages/patches/python-piexif-fix-tests-with-pillow-7.2.patch	\
   %D%/packages/patches/python-pillow-CVE-2022-45199.patch	\
-  %D%/packages/patches/python-pyfakefs-remove-bad-test.patch	\
   %D%/packages/patches/python-libxml2-utf8.patch		\
   %D%/packages/patches/python-memcached-syntax-warnings.patch	\
-  %D%/packages/patches/python-mox3-python3.6-compat.patch	\
   %D%/packages/patches/python-packaging-test-arch.patch		\
   %D%/packages/patches/python-pandas-2-no-pytz_datetime.patch		\
   %D%/packages/patches/python-property-cached-asyncio-3_11.patch	\
@@ -2177,8 +2177,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pytorch-system-libraries.patch	\
   %D%/packages/patches/python-pytorch-without-kineto.patch	\
   %D%/packages/patches/python-robotframework-sshlibrary-rf5-compat.patch \
-  %D%/packages/patches/python-unittest2-python3-compat.patch	\
-  %D%/packages/patches/python-unittest2-remove-argparse.patch	\
   %D%/packages/patches/python-vaex-core-fix-tsl-use.patch	\
   %D%/packages/patches/python-vega-datasets-remove-la-riots-code.patch	\
   %D%/packages/patches/python-versioneer-guix-support.patch	\
@@ -2462,6 +2460,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/xfce4-settings-defaults.patch		\
   %D%/packages/patches/xgboost-use-system-dmlc-core.patch	\
   %D%/packages/patches/xinit-startx-mcookie-path.patch		\
+  %D%/packages/patches/xiphos-glib.patch                        \
   %D%/packages/patches/xmonad-dynamic-linking.patch		\
   %D%/packages/patches/xplanet-1.3.1-cxx11-eof.patch		\
   %D%/packages/patches/xplanet-1.3.1-libdisplay_DisplayOutput.cpp.patch	\

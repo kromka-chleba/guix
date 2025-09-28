@@ -122,6 +122,7 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ninja)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
@@ -798,6 +799,11 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
               (substitute* "electroncash/secp256k1.py"
                 (("libsecp256k1.so.0")
                  (search-input-file inputs "lib/libsecp256k1.so.0")))))
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "contrib/requirements/requirements.txt"
+                (("python-dateutil<2\\.9")
+                 "python-dateutil"))))
           (add-after 'install 'wrap-qt
             (lambda* (#:key outputs inputs #:allow-other-keys)
               (let ((out (assoc-ref outputs "out")))
@@ -1085,7 +1091,8 @@ the Monero GUI client.")
          (sha256
           (base32 "0wq6q0yrw3x42d81v445xy4nh2qlrn7swsydgpv81dkay11kajrz"))))
       (build-system pyproject-build-system)
-      (native-inputs (list python-setuptools python-wheel))
+      (arguments (list #:test-backend #~'unittest))
+      (native-inputs (list python-setuptools))
       (home-page "https://github.com/fiatjaf/bech32")
       (synopsis "Reference implementation for Bech32 and Segwit addresses")
       (description "This package provides a python reference implementation for
@@ -1322,7 +1329,22 @@ Nano dongle.")
            (for-each delete-file
                      (append (find-files "." "^CHANGELOG.unreleased$")
                              (find-files "." "^.towncrier.template.md$")))))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Failed to resolve 'data.trezor.io'
+                    (list "not test_core_basic"
+                          "test_core_code_hashes"
+                          "test_disallow_unsigned"
+                          "test_embedded_v2"
+                          "test_integrity_core"
+                          "test_integrity_legacy"
+                          "test_legacy_basic"
+                          "test_unsigned"
+                          "test_vendor_header")
+                    " and not "))))
     (propagated-inputs
      (list python-attrs
            python-click
@@ -1334,15 +1356,14 @@ Nano dongle.")
            python-requests
            python-typing-extensions))
     (native-inputs ; Only needed for running the tests
-     (list protobuf
-           python-black
-           python-isort
+     (list nss-certs-for-test
+           protobuf
+           python-pytest
            python-pillow
            python-protobuf
            python-pyqt
            python-pytest
-           python-simple-rlp
-           python-wheel))
+           python-simple-rlp))
     (home-page "https://github.com/trezor/python-trezor")
     (synopsis "Python library for communicating with TREZOR Hardware Wallet")
     (description "@code{trezor} is a Python library for communicating with
@@ -1555,21 +1576,18 @@ features:
 (define-public python-stdnum
   (package
     (name "python-stdnum")
-    (version "1.18")
+    (version "2.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-stdnum" version))
+       (uri (pypi-uri "python_stdnum" version))
        (sha256
-        (base32 "1h5y4qx75b6i2051ch8k0pcwkvhxzpaqd9mpsajkvqlsqkcn7ixw"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "nosetests"))))))
+        (base32 "0yir8hka3vmpk0qhiaffagkdjg3mjgai808s0razsggbd5cn80bb"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-nose))
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools))
     (home-page "https://arthurdejong.org/python-stdnum/")
     (synopsis "Python module to handle standardized number and code formats")
     (description

@@ -2600,7 +2600,7 @@ follower.")
 (define-public fluidsynth
   (package
     (name "fluidsynth")
-    (version "2.3.1")
+    (version "2.4.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2609,7 +2609,7 @@ follower.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "05lr9f0q4x1kvgfa3xrfmagpwvijv9m1s316aa9figqlkcc5vv4k"))))
+                "1zx9pvarizjm98kqw47jzbiysywxl2z46sl8cr2vjnhdbm2yiqxc"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f                      ; no check target
@@ -2630,6 +2630,7 @@ follower.")
      (list alsa-lib
            glib
            jack-1
+           pipewire
            libsndfile
            readline))
     (home-page "https://www.fluidsynth.org/")
@@ -3591,7 +3592,7 @@ player-like clients.")
     (build-system pyproject-build-system)
     (arguments `(#:tests? #f)) ;no tests
     (native-inputs
-     (list python-cython python-setuptools python-wheel))
+     (list python-cython-0 python-setuptools python-wheel))
     (inputs
      (list liblo))
     (home-page "https://das.nasophon.de/pyliblo/")
@@ -3617,8 +3618,25 @@ included are the command line utilities @code{send_osc} and @code{dump_osc}.")
               (base32
                "1rr2m8jxa5yxyb3pw6h93kvdxg7x0m6sxxxvgn34vq8k8mg1kz21"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-cython python-setuptools python-wheel))
-    (inputs (list liblo))
+    (arguments
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "test/unit.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; long is not available and replaced by int, proposed in
+          ;; <https://github.com/gesellkammer/pyliblo3/pull/15>.
+          (add-after 'unpack 'fix-compilation
+            (lambda _
+              (substitute* "pyliblo3/_liblo.pyx"
+                (("long\\(") "int(")
+                ((", long") "")))))))
+    (native-inputs
+     (list python-cython
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list liblo))
     (home-page "https://github.com/gesellkammer/pyliblo3")
     (synopsis "Python bindings for liblo")
     (description
@@ -3761,7 +3779,7 @@ files.")
     (native-inputs
      (list python-pytest
            python-pytest-cov
-           python-setuptools-next))
+           python-setuptools))
     (inputs
      (list libsndfile
            portaudio))
@@ -5716,6 +5734,8 @@ loudness of audio and video files to the same level.")
     (license license:gpl2+)))
 
 (define-public r128gain
+  ;; XXX: Upstream notice: This project was archived by the owner on Aug 17,
+  ;; 2023. It is now read-only.
   (package
     (name "r128gain")
     (version "1.0.7")
@@ -5731,6 +5751,7 @@ loudness of audio and video files to the same level.")
     (build-system pyproject-build-system)
     (arguments
        (list
+        #:tests? #f ;require a complex set up, see <.github/workflows/ci.yml>.
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'hardcode-ffmpeg
@@ -5744,8 +5765,7 @@ loudness of audio and video files to the same level.")
                   python-tqdm ffmpeg))
     (native-inputs (list python-future
                          python-requests
-                         python-setuptools
-                         python-wheel))
+                         python-setuptools))
     (home-page "https://github.com/desbma/r128gain")
     (synopsis "Fast audio loudness scanner & tagger")
     (description

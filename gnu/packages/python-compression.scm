@@ -34,6 +34,7 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix gexp)
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system gnu)
@@ -45,6 +46,7 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages check)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -59,33 +61,39 @@
 (define-public python-blosc
   (package
     (name "python-blosc")
-    (version "1.11.1")
+    (version "1.11.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "blosc" version))
        (sha256
         (base32
-         "0xmjs28sgpnb940zrhw010dq2m9d8a5h4fgnjyk6645fgfr1j8f2"))
+         "13h8ks58iy4h3ayk7havb4hmkma88598qkf4i4paj53qpa76bvc9"))
        (snippet
         #~(begin (use-modules (guix build utils))
                  (delete-file-recursively "blosc/c-blosc")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'find-blosc
-                 (lambda _
-                   (setenv "USE_SYSTEM_BLOSC" "1")
-                   (setenv "Blosc_ROOT" #$(this-package-input "c-blosc"))))
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "python" "-m" "blosc.test")))))))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "-m" "blosc.test")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'find-blosc
+            (lambda _
+              (setenv "USE_SYSTEM_BLOSC" "1")
+              (setenv "Blosc_ROOT" #$(this-package-input "c-blosc")))))))
     (propagated-inputs
-     (list python-scikit-build python-numpy))
-    (inputs (list c-blosc))
-    (native-inputs (list cmake-minimal))
+     (list python-scikit-build))
+    (inputs
+     (list c-blosc))
+    (native-inputs
+     (list cmake-minimal
+           ninja/pinned
+           python-numpy
+           python-psutil
+           python-py-cpuinfo
+           python-setuptools))
     (home-page "https://github.com/blosc/python-blosc")
     (synopsis "Python wrapper for the Blosc data compressor library")
     (description "Blosc is a high performance compressor optimized for binary
@@ -110,17 +118,16 @@ This Python package wraps the Blosc library.")
        (uri (pypi-uri "blosc2" version))
        (sha256
         (base32 "1s4gpdf1hfbw5w3hpx0g8bfwjrws1b8wgmh7snafh5ivai0lvnrl"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'build
-                          (lambda* (#:key inputs #:allow-other-keys)
-                            (invoke "python" "setup.py" "build"
-                                    "-DUSE_SYSTEM_BLOSC2=ON")))
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (invoke "python" "-m" "pytest" "-vv")))))))
+     (list
+      #:test-flags
+      #~(list "--pyargs" "blosc2")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'configure
+            (lambda _
+              (setenv "USE_SYSTEM_BLOSC2" "ON"))))))
     (inputs (list c-blosc2))
     (propagated-inputs
      (list python-msgpack
@@ -133,7 +140,8 @@ This Python package wraps the Blosc library.")
            pkg-config
            python-cython-3
            python-pytest
-           python-scikit-build))
+           python-scikit-build
+           python-setuptools))
     (home-page "https://github.com/blosc/python-blosc2")
     (synopsis "Python wrapper for the Blosc2 data compressor library")
     (description
@@ -149,6 +157,39 @@ other features introduced in C-Blosc2.
 Python-Blosc2 also reproduces the API of Python-Blosc and is meant to be able
 to access its data, so it can be used as a drop-in replacement.")
     (license license:bsd-3)))
+
+(define-public python-brotli
+  (package
+    (name "python-brotli")
+    (version "1.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/brotli")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fikasxf7r2dwlk8mv8w7nmjkn0jw5ic31ky3mvpkdzwgd4xfndl"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+           ;; Cherry-picked from upstream since the latest release
+           ;; https://github.com/google/brotli/commit/09b0992b6acb7faa6fd3b23f9bc036ea117230fc
+           (substitute* (find-files "scripts" "^lib.*pc\\.in")
+             (("-R\\$\\{libdir\\} ") ""))))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (home-page "https://github.com/google/brotli")
+    (synopsis "Python interface to Brotli")
+    (description "This package provides a Python interface to the @code{brotli}
+package, an implementation of the Brotli lossless compression algorithm.")
+    (license license:expat)))
+
+(define-public python-google-brotli
+  (deprecated-package "python-google-brotli" python-brotli))
 
 (define-public python-multivolumefile
   (package
@@ -343,31 +384,50 @@ Jump conversion filter by CFFI for Python.")
   (package
     (name "python-brotlicffi")
     (version "1.0.9.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "brotlicffi" version))
-              (sha256
-               (base32
-                "15kxgdiqcg0cm6h5xq3vkbhw7674673hcx3n2yicd3wx29l8l90c"))
-              (snippet
-               #~(begin
-                   (use-modules (guix build utils))
-                   (delete-file-recursively "libbrotli")))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "brotlicffi" version))
+       (sha256
+        (base32 "15kxgdiqcg0cm6h5xq3vkbhw7674673hcx3n2yicd3wx29l8l90c"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "libbrotli")))))
     (build-system pyproject-build-system)
     (arguments
      (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (add-after 'unpack 'use-shared-brotli
-             (lambda _
-               (setenv "USE_SHARED_BROTLI" "1"))))))
-    (propagated-inputs (list python-cffi))
-    (inputs (list brotli))
-    (native-inputs (list python-setuptools python-wheel))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-shared-brotli
+            (lambda _
+              (setenv "USE_SHARED_BROTLI" "1")))
+          (add-before 'check 'set-brotli-source
+            (lambda _
+              (let* ((brotli-source
+                      #+(package-source (this-package-input "brotli")))
+                     (brotli-test-data
+                      (string-append brotli-source "/tests/testdata"))
+                     (brotli-version-source
+                      (string-append brotli-source "/c/common/version.h")))
+                (substitute* "test/conftest.py"
+                  (("TEST_DATA_DIR = .*")
+                   (format #f "TEST_DATA_DIR = ~s~%" brotli-test-data)))
+                (substitute* "test/test_compatibility.py"
+                  (("open\\(version_h\\)")
+                   (format #f "open(~s)" brotli-version-source)))))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list brotli))
+    (propagated-inputs
+     (list python-cffi))
     (home-page "https://github.com/python-hyper/brotlicffi")
     (synopsis "Python CFFI bindings to the Brotli library")
-    (description "This package provides Python CFFI bindings to the Brotli
-library.")
+    (description
+     "This package provides Python CFFI bindings to the Brotli library.")
     (license license:expat)))
 
 (define-public python-inflate64
@@ -407,13 +467,16 @@ compression algorithm.")
        ;; Remove bundled isa-l source code
        (modules '((guix build utils)))
        (snippet
-        '(delete-file-recursively "src/isal/isa-l"))))
+        #~(delete-file-recursively "src/isal/isa-l"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'use-dynamic-linking
-           (lambda _ (setenv "PYTHON_ISAL_LINK_DYNAMIC" "1"))))))
+     (list
+      #:test-backend #~'unittest
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-dynamic-linking
+            (lambda _
+              (setenv "PYTHON_ISAL_LINK_DYNAMIC" "1"))))))
     (inputs (list isa-l))
     (native-inputs (list python-cython python-setuptools python-wheel))
     (home-page "https://github.com/pycompression/python-isal")
@@ -426,16 +489,16 @@ and decompression by implementing Python bindings for the ISA-L library.")
 (define-public python-pylsqpack
   (package
     (name "python-pylsqpack")
-    (version "0.3.17")
+    (version "0.3.22")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pylsqpack" version))
               (sha256
                (base32
-                "1qiwmavmxy6ba89mrdkzk52hqrd4awnp4yca395pxp2np66pf81g"))))
+                "1npcdj416gqc5zvlkyh9z808k381lrm56zvz1zsdjw437hdp2zxn"))))
     ;; FIXME: Unbundle ls-qpack and xxhash!
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/aiortc/pylsqpack")
     (synopsis "Python bindings for @code{ls-qpack}")
     (description
@@ -767,7 +830,7 @@ install: libbitshuffle.so
     (arguments
      (list #:tests? #f)) ;no tests
     (native-inputs
-     (list python-setuptools-next))
+     (list python-setuptools))
     (home-page "https://github.com/kYwzor/uncompresspy")
     (synopsis "Uncompressing LZW files in Python")
     (description
@@ -805,19 +868,27 @@ Python.")
 (define-public python-zipp
   (package
     (name "python-zipp")
-    (version "1.0.0")
+    (version "3.23.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "zipp" version))
        (sha256
-        (base32
-         "0v3qayhqv7vyzydpydwcp51bqciw8p2ajddw68x5k8zppc0vx3yk"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-more-itertools))
+        (base32 "0rj182i2d7d2bz067zrk39s19j09xsxkzprl82fqql8ji9c5fwd0"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))       ;TODO: Tests requrie extra packaging
     (native-inputs
-     (list python-setuptools-scm))
+     (list ;; python-big-o
+           ;; python-coherent-licensed
+           ;; python-jaraco-functools ; introduces cycle
+           ;; python-jaraco-itertools
+           ;; python-jaraco-test ; introduces cycle
+           python-more-itertools
+           python-pytest
+           ;; python-pytest-ignore-flaky
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/jaraco/zipp")
     (synopsis
      "Backport of pathlib-compatible object wrapper for zip files")
@@ -907,18 +978,30 @@ generator")
 (define-public python-zstandard
   (package
     (name "python-zstandard")
-    (version "0.19.0")
+    (version "0.23.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "zstandard" version))
        (sha256
-        (base32 "0qvqhs121spk7yc1l20samflxx47waxv3xm55ksxpn1djk6jzl9i"))))
-    (build-system python-build-system)
+        (base32 "02dwqq5dw73zypvwpadscra8x6rwbglblh57yxl5y9g710nwdn5j"))))
+    (build-system pyproject-build-system)
+    ;; TODO: Unbunle zstd.
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-build-system
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((":__legacy__") ""))))
+          (add-before 'check 'build-extensions
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-cffi))
-    (native-inputs
-     (list python-hypothesis))
     (home-page "https://github.com/indygreg/python-zstandard")
     (synopsis "Zstandard bindings for Python")
     (description "This project provides Python bindings for interfacing with

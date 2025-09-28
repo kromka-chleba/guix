@@ -18,6 +18,8 @@
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2023 Miguel Ángel Moreno <mail@migalmoreno.com>
 ;;; Copyright © 2024 Leo Nikkilä <hello@lnikki.la>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2025 Rodion Goritskov <rodion@goritskov.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -39,8 +41,10 @@
   #:use-module (gnu services shepherd)
   #:use-module (gnu services admin)
   #:use-module (gnu services configuration)
+  #:use-module (gnu services databases)
   #:use-module (gnu services getmail)
   #:use-module (gnu services mail)
+  #:use-module (gnu system file-systems)
   #:use-module (gnu system pam)
   #:use-module (gnu system shadow)
   #:use-module (gnu packages admin)
@@ -51,13 +55,16 @@
   #:use-module (gnu packages php)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-web)
+  #:use-module (gnu packages rsync)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages logging)
   #:use-module (gnu packages mail)
   #:use-module (gnu packages rust-apps)
   #:autoload   (guix i18n) (G_)
+  #:autoload   (gnu build linux-container) (%namespaces)
   #:use-module (guix diagnostics)
+  #:use-module (guix least-authority)
   #:use-module (guix packages)
   #:use-module (guix records)
   #:use-module (guix modules)
@@ -68,9 +75,11 @@
   #:use-module ((guix packages) #:select (package-version))
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (ice-9 match)
   #:use-module (ice-9 format)
+  #:use-module (ice-9 regex)
   #:export (httpd-configuration
             httpd-configuration?
             httpd-configuration-package
@@ -112,6 +121,7 @@
             nginx-configuration-upstream-blocks
             nginx-configuration-server-names-hash-bucket-size
             nginx-configuration-server-names-hash-bucket-max-size
+            nginx-configuration-stream
             nginx-configuration-modules
             nginx-configuration-global-directives
             nginx-configuration-extra-content
@@ -150,6 +160,11 @@
             nginx-named-location-configuration?
             nginx-named-location-configuration-name
             nginx-named-location-configuration-body
+
+            nginx-stream-configuration
+            nginx-stream-configuration-server-blocks
+            nginx-stream-configuraiton-upstream-blocks
+            nginx-stream-configuration-extra-content
 
             nginx-service
             nginx-service-type
@@ -275,6 +290,9 @@
             mumi-configuration
             mumi-configuration?
             mumi-configuration-mumi
+            mumi-configuration-data-directory
+            mumi-configuration-rsync-remote
+            mumi-configuration-rsync-flags
             mumi-configuration-mailer?
             mumi-configuration-sender
             mumi-configuration-smtp
@@ -316,7 +334,23 @@
             agate-configuration-group
             agate-configuration-log-file
 
-            agate-service-type))
+            agate-service-type
+
+            miniflux-configuration
+            miniflux-configuration?
+            miniflux-configuration-listen-address
+            miniflux-configuration-base-url
+            miniflux-configuration-create-administrator-account?
+            miniflux-configuration-administrator-account-name
+            miniflux-configuration-administrator-account-password
+            miniflux-configuration-run-migrations?
+            miniflux-configuration-database-url
+            miniflux-configuration-user
+            miniflux-configuration-group
+            miniflux-configuration-log-file
+            miniflux-configuration-extra-settings
+
+            miniflux-service-type))
 
 ;;; Commentary:
 ;;;
@@ -587,6 +621,16 @@
                        (default #f))
   (body                nginx-named-location-configuration-body))
 
+(define-record-type* <nginx-stream-configuration>
+  nginx-stream-configuration make-nginx-stream-configuration
+  nginx-stream-configuration?
+  (upstream-blocks nginx-stream-configuration-upstream-blocks
+                   (default '()))  ;list of <nginx-upstream-configuration>
+  (server-blocks nginx-stream-configuration-server-blocks
+                 (default '()))  ;list of <nginx-server-configuration>
+  (extra-content nginx-stream-configuration-extra-content
+                 (default '())))
+
 (define-record-type* <nginx-configuration>
   nginx-configuration make-nginx-configuration
   nginx-configuration?
@@ -613,6 +657,8 @@
                                  (default #f))
   (server-names-hash-bucket-max-size nginx-configuration-server-names-hash-bucket-max-size
                                      (default #f))
+  (stream nginx-configuration-stream
+          (default #f))  ;#f | <nginx-stream-configuration>
   (modules nginx-configuration-modules (default '()))
   (global-directives nginx-configuration-global-directives
                      (default '((events . ()))))
@@ -677,7 +723,7 @@ of index files."
       (map (lambda (x) (list "        " x "\n")) body)
       "      }\n"))))
 
-(define (emit-nginx-server-config server)
+(define* (emit-nginx-server-config server #:optional (context 'http))
   (let ((listen (nginx-server-configuration-listen server))
         (server-name (nginx-server-configuration-server-name server))
         (ssl-certificate (nginx-server-configuration-ssl-certificate server))
@@ -702,16 +748,20 @@ of index files."
      "      server_name " (config-domain-strings server-name) ";\n"
      (and/l ssl-certificate     "      ssl_certificate " <> ";\n")
      (and/l ssl-certificate-key "      ssl_certificate_key " <> ";\n")
-     (if (not (equal? "" root))
+     (if (and (eq? context 'http)
+              (not (equal? "" root)))
          (list "      root " root ";\n")
          "")
-     (if (not (null? index))
+     (if (and (eq? context 'http)
+              (not (null? index)))
          (list "      index " (config-index-strings index) ";\n")
          "")
      (if (not (nil? try-files))
          (and/l (config-index-strings try-files) "      try_files " <> ";\n")
          "")
-     "      server_tokens " (if server-tokens? "on" "off") ";\n"
+     (if (eq? context 'http)
+         (list "      server_tokens " (if server-tokens? "on" "off") ";\n")
+         "")
      "\n"
      (map emit-nginx-location-config locations)
      "\n"
@@ -761,6 +811,7 @@ of index files."
                  server-blocks upstream-blocks
                  server-names-hash-bucket-size
                  server-names-hash-bucket-max-size
+                 stream
                  modules
                  global-directives
                  lua-package-path
@@ -773,6 +824,20 @@ of index files."
            "error_log " (nginx-error-log-file config) " " (symbol->string log-level) ";\n"
            (map emit-load-module modules)
            (map emit-global-directive global-directives)
+           (match stream
+             (#f "")
+             (_
+              (list "stream {\n"
+                    (map emit-nginx-upstream-config
+                         (nginx-stream-configuration-upstream-blocks stream))
+                    (map (cut emit-nginx-server-config <> 'stream)
+                         (nginx-stream-configuration-server-blocks stream))
+                    (let ((extra-content (nginx-stream-configuration-extra-content stream)))
+                      (if (list? extra-content)
+                          (map (cut list "    " <> "\n")
+                               extra-content)
+                          extra-content))
+                    "}\n")))
            "http {\n"
            "    client_body_temp_path " run-directory "/client_body_temp;\n"
            "    proxy_temp_path " run-directory "/proxy_temp;\n"
@@ -1891,6 +1956,11 @@ WSGIPassAuthorization On
   mumi-configuration make-mumi-configuration
   mumi-configuration?
   (mumi    mumi-configuration-mumi (default mumi))
+  (data-directory mumi-configuration-data-directory
+                  (default "/var/mumi/data"))
+  (rsync-remote mumi-configuration-rsync-remote)
+  (rsync-flags mumi-configuration-rsync-flags
+               (default '()))
   (mailer? mumi-configuration-mailer? (default #t))
   (sender  mumi-configuration-sender (default #f))
   (smtp    mumi-configuration-smtp (default #f))
@@ -1938,7 +2008,7 @@ WSGIPassAuthorization On
 
 (define %mumi-mailer-log "/var/log/mumi.mailer.log")
 
-(define %mumi-worker-log "/var/log/mumi.worker.log")
+(define %mumi-rsync-and-index-log "/var/log/mumi.rsync-and-index.log")
 
 (define mumi-package-configuration->alist
   (match-record-lambda <mumi-package-configuration>
@@ -1976,6 +2046,23 @@ WSGIPassAuthorization On
                                           packages)))
                               <>))))))
 
+(define (mumi-rsync-and-index config)
+  (match-record config <mumi-configuration>
+    (data-directory rsync-remote rsync-flags)
+    (program-file "mumi-rsync-and-index"
+                  (with-imported-modules '((guix build utils))
+                    #~(begin
+                        (use-modules (guix build utils))
+
+                        (invoke #$(file-append rsync "/bin/rsync")
+                                "--delete" "--archive" "--verbose"
+                                #$@rsync-flags
+                                #$rsync-remote
+                                #$data-directory)
+                        (invoke #$(file-append mumi "/bin/mumi") "fetch"
+                                (string-append "--config="
+                                               #$(mumi-config-file config))))))))
+
 (define (mumi-shepherd-services config)
   (define environment
     #~(list "LC_ALL=en_US.utf8"
@@ -1983,9 +2070,9 @@ WSGIPassAuthorization On
                            #$(libc-utf8-locales-for-target)
                            "/lib/locale")))
 
-  (match config
-    (($ <mumi-configuration> mumi mailer? sender smtp)
-     (list (shepherd-service
+  (match-record config <mumi-configuration>
+    (mumi mailer? sender smtp)
+    (list (shepherd-service
             (provision '(mumi))
             (documentation "Mumi bug-tracking web interface.")
             (requirement '(user-processes networking))
@@ -1997,19 +2084,21 @@ WSGIPassAuthorization On
                       #:user "mumi" #:group "mumi"
                       #:log-file #$%mumi-log))
             (stop #~(make-kill-destructor)))
-           (shepherd-service
-            (provision '(mumi-worker))
-            (documentation "Mumi bug-tracking web interface database worker.")
-            (requirement '(user-processes networking))
-            (start #~(make-forkexec-constructor
-                      `(#$(file-append mumi "/bin/mumi") "worker"
-                        ,(string-append "--config="
-                                        #$(mumi-config-file config)))
-                      #:environment-variables #$environment
-                      #:user "mumi" #:group "mumi"
-                      #:log-file #$%mumi-worker-log))
-            (stop #~(make-kill-destructor)))
-           (shepherd-service
+          (shepherd-service
+            (provision '(mumi-rsync-and-index))
+            (modules '((shepherd service timer)))
+            (start #~(make-timer-constructor
+                      ;; Run every 5 minutes, unless an instance of
+                      ;; this job is already running.
+                      (calendar-event #:minutes '#$(iota 12 0 5))
+                      (command (list #$(mumi-rsync-and-index config)))
+                      #:log-file #$%mumi-rsync-and-index-log
+                      #:max-duration (* 2 60 60)
+                      #:wait-for-termination? #t))
+            (stop #~(make-timer-destructor))
+            (actions (list shepherd-trigger-action))
+            (documentation "Rsync and index the GNU Debbugs data"))
+          (shepherd-service
             (provision '(mumi-mailer))
             (documentation "Mumi bug-tracking web interface mailer.")
             (requirement '(user-processes networking))
@@ -2026,7 +2115,7 @@ WSGIPassAuthorization On
                       #:environment-variables #$environment
                       #:user "mumi" #:group "mumi"
                       #:log-file #$%mumi-mailer-log))
-            (stop #~(make-kill-destructor)))))))
+            (stop #~(make-kill-destructor))))))
 
 (define mumi-service-type
   (service-type
@@ -2039,9 +2128,7 @@ WSGIPassAuthorization On
           (service-extension shepherd-root-service-type
                              mumi-shepherd-services)))
    (description
-    "Run Mumi, a Web interface to the Debbugs bug-tracking server.")
-   (default-value
-     (mumi-configuration))))
+    "Run Mumi, a Web interface to the Debbugs bug-tracking server.")))
 
 (define %default-gmnisrv-config-file
   (plain-file "gmnisrv.ini" "
@@ -2214,3 +2301,173 @@ root=/srv/gemini
    (default-value (agate-configuration))
    (description "Run Agate, a simple Gemini protocol server written in
 Rust.")))
+
+(define (serialize-string field-name val)
+  (format #f "~a=~a\n" field-name val))
+
+(define (string-or-file-path? val)
+  (string? val))
+(define (serialize-string-or-file-path field-name val)
+  (serialize-string (if (absolute-file-name? val)
+                        (format #f "~a_FILE" field-name) field-name) val))
+(define-maybe string-or-file-path)
+
+(define (serialize-list field-name val)
+  (string-append (string-join val "\n") "\n"))
+(define-maybe list)
+
+(define (serialize-boolean field-name val)
+  (if val (serialize-string field-name "1") (serialize-string field-name "0")))
+
+(define-configuration/no-serialization miniflux-configuration
+  (listen-address
+   (string "127.0.0.1:8080")
+   "Address to listen on.
+Use absolute path like @code{\"/var/run/miniflux/miniflux.sock\"} for a Unix socket.")
+  (base-url
+   (string "http://127.0.0.1/")
+   "Base URL to generate HTML links and base path for cookies.")
+  (create-administrator-account?
+   (boolean #f)
+   "Create an initial administrator account.")
+  (administrator-account-name
+   maybe-string-or-file-path
+   "Initial administrator account name as a string or an absolute path to a file with a account name inside.")
+  (administrator-account-password
+   maybe-string-or-file-path
+   "Initial administrator account password as a string or an absolute path to a file with a password inside.")
+  (run-migrations?
+   (boolean #t)
+   "Run database migrations during application startup.")
+  (database-url
+   (string "host=/var/run/postgresql")
+   "PostgreSQL connection string.")
+  (user
+   (string "miniflux")
+   "User name for Postgresql and system account.")
+  (group
+   (string "miniflux")
+   "Group for the system account.")
+  (log-file
+   (string "/var/log/miniflux.log")
+   "Path to the log file.")
+  (extra-settings
+   maybe-list
+   "Extra configuration parameters as a list of strings."))
+
+(define (miniflux-serialize-configuration config)
+  (match-record config <miniflux-configuration>
+                (listen-address base-url create-administrator-account?
+                                administrator-account-name administrator-account-password
+                                run-migrations? database-url extra-settings)
+    (string-append (serialize-string "LISTEN_ADDR" listen-address)
+                   (serialize-string "BASE_URL" base-url)
+                   (serialize-boolean "CREATE_ADMIN" create-administrator-account?)
+                   (serialize-maybe-string-or-file-path "ADMIN_USERNAME" administrator-account-name)
+                   (serialize-maybe-string-or-file-path "ADMIN_PASSWORD" administrator-account-password)
+                   (serialize-boolean "RUN_MIGRATIONS" run-migrations?)
+                   (serialize-string "DATABASE_URL" database-url)
+                   (serialize-maybe-list #f extra-settings))))
+
+(define (miniflux-configuration-file config)
+  (mixed-text-file "miniflux.conf" (miniflux-serialize-configuration config)))
+
+(define (pair->file-system-mapping pair previous)
+  (if (pair? pair)
+      (let ((path (car pair))
+            (writable (cdr pair)))
+        (if (or (and (string? path)
+                     (absolute-file-name? path))
+                (computed-file? path))
+            (append previous (list (file-system-mapping
+                                     (source path)
+                                     (target source)
+                                     (writable? writable))))
+            previous))
+      previous))
+
+(define (miniflux-shepherd-service config)
+  (match-record config <miniflux-configuration>
+                (user group log-file database-url listen-address
+                      administrator-account-name administrator-account-password)
+    (let ((config-file (miniflux-configuration-file config)))
+      (list (shepherd-service
+	      (documentation "Run Miniflux server")
+	      (provision '(miniflux))
+	      (requirement '(postgres networking))
+	      (start #~(make-forkexec-constructor
+		        (list #$(least-authority-wrapper
+                                 (file-append miniflux "/bin/miniflux")
+                                 #:name "miniflux"
+                                 #:user user
+                                 #:group group
+                                 #:preserved-environment-variables
+                                 (append %default-preserved-environment-variables
+                                         '("SSL_CERT_FILE"))
+                                 #:mappings
+                                 (fold pair->file-system-mapping
+                                       '()
+                                       `((,log-file . #t)
+                                         (,config-file . #f)
+                                         ("/etc/ssl/certs/ca-certificates.crt" . #f)
+                                         (,administrator-account-name . #f)
+                                         (,administrator-account-password . #f)
+                                         (,(dirname listen-address)  . #t)
+                                         ,(let* ((db-socket-match (string-match ".*host=(/[^ ]*).*" database-url))
+                                                 (db-socket (if db-socket-match (match:substring db-socket-match 1) #f)))
+                                            (if db-socket
+                                                `(,db-socket . #t)))))
+                                 #:namespaces
+                                 (fold delq %namespaces '(net user)))
+                              "-config-file"
+                              #$config-file)
+		        #:log-file #$log-file))
+              (stop #~(make-kill-destructor)))))))
+
+(define (miniflux-accounts config)
+  (match-record config <miniflux-configuration>
+                (user group)
+    `(,(user-group
+         (name group)
+         (system? #t))
+      ,(user-account
+         (name user)
+         (group group)
+         (system? #t)
+         (comment "miniflux server user")
+         (home-directory "/var/empty")
+         (shell (file-append shadow "/sbin/nologin"))))))
+
+(define (miniflux-postgresql-role config)
+  (list (postgresql-role
+          (name (miniflux-configuration-user config))
+          (create-database? #t))))
+
+(define (miniflux-log-files config)
+  (list (miniflux-configuration-log-file config)))
+
+(define (miniflux-activation-service-type config)
+  (match-record config <miniflux-configuration>
+                (user listen-address)
+    #~(begin
+        (use-modules (gnu build activation))
+        (let ((user (getpwnam #$user)))
+          (if (absolute-file-name? #$listen-address)
+              (mkdir-p/perms (dirname #$listen-address) user #o755))))))
+
+(define miniflux-service-type
+  (service-type
+    (name 'miniflux)
+    (default-value (miniflux-configuration))
+    (extensions
+     (list (service-extension account-service-type
+			      miniflux-accounts)
+	   (service-extension postgresql-role-service-type
+			      miniflux-postgresql-role)
+	   (service-extension shepherd-root-service-type
+			      miniflux-shepherd-service)
+           (service-extension log-rotation-service-type
+                              miniflux-log-files)
+           (service-extension activation-service-type
+                              miniflux-activation-service-type)))
+    (description "Run Miniflux, minimalist feed reader")))

@@ -766,6 +766,8 @@ a local network link.")
            python-wheel))
     (propagated-inputs
      (list python-numpy soapysdr))
+    (arguments
+     (list #:tests? #f)) ; No tests
     (home-page "https://github.com/xmikos/simplesoapy")
     (synopsis "Python wrapper for SoapySDR")
     (description
@@ -820,7 +822,8 @@ devices that are supported by the SoapySDR library.")
            python-simplesoapy
            soapy-power))
     (arguments
-     (list #:phases
+     (list #:tests? #f ; No tests
+           #:phases
            #~(modify-phases %standard-phases
                (add-after 'install 'wrap-path
                  ;; Add the location of the default backend to PATH.
@@ -3367,9 +3370,9 @@ of devices than RTL-SDR.")
               (setenv "DISPLAY" ":0")
               (setenv "HOME" "/tmp"))))))
     (native-inputs
-     (list python-cython
+     (list python-cython-0
            python-pytest
-           python-wheel
+           python-setuptools
            xorg-server-for-tests))
     (inputs
      (list airspy

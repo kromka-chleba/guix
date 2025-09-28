@@ -80,14 +80,14 @@
 (define-public parallel
   (package
     (name "parallel")
-    (version "20250822")
+    (version "20250922")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://gnu/parallel/parallel-"
                           version ".tar.bz2"))
       (sha256
-       (base32 "0yhnr7xfd8si2jwrk4n6as209py0111kcjf433lzyz464a3k5781"))
+       (base32 "0ax3cm9bzr6krl575mzmlbx7867pnx5acnyygpcxqzgg4lqxqggf"))
       (snippet
        '(begin
           (use-modules (guix build utils))
@@ -425,7 +425,7 @@ cluster/resource management systems.")
               (when tests?
                 (invoke "python" "./pathos/tests/__main__.py")))))))
     (native-inputs
-     (list python-setuptools-next))
+     (list python-setuptools))
     (propagated-inputs
      (list python-dill
            python-multiprocess
@@ -464,7 +464,7 @@ execution environment.")
               (when tests?
                 (invoke "python" "./ppft/tests/__main__.py")))))))
     (native-inputs
-     (list python-setuptools-next))
+     (list python-setuptools))
     (home-page "https://pypi.org/project/ppft/")
     (synopsis "Fork of Parallel Python")
     (description
@@ -727,7 +727,7 @@ single-instruction multiple-data (SIMD) intrinsics.")
                 (("#define PMIX_CONFIGURE_CLI .*")
                  "#define PMIX_CONFIGURE_CLI \"[scrubbed]\"\n")))))))
     (inputs (list libevent `(,hwloc "lib") zlib))
-    (native-inputs (list perl python python-cython))
+    (native-inputs (list perl python python-cython-0))
     (synopsis "PMIx library")
     (description
      "PMIx is an application programming interface standard that provides

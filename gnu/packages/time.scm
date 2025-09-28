@@ -289,7 +289,12 @@ you will remove support for the pytz-specific interface.")
       (sha256
        (base32
         "13hpf2my8mgqkr38ch7s3rym9zz60m6pq87rcn7b46155az45ny2"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-backend #~'unittest
+           #:test-flags #~(list "discover" "pytz/tests")))
+    (native-inputs
+     (list python-setuptools))
     (home-page "http://pythonhosted.org/pytz")
     (synopsis "Python timezone library")
     (description "This library brings the Olson tz database into Python.  It
@@ -348,22 +353,21 @@ Pendulum instances.")
 (define-public python-dateutil
   (package
     (name "python-dateutil")
-    (version "2.8.2")
+    (version "2.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-dateutil" version))
-       (patches (search-patches "python-dateutil-pytest-compat.patch"))
        (sha256
-        (base32 "11iy7m4bp2lgfkcl0r6xzf34bvk7ppjmsyn2ygfikbi72v6cl8q1"))))
+        (base32 "02b7qqimar3p311m0y5z8b09v4qdd0qia037lpzj0nrzqqckxrvq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags '(list  ; avoid freezegun dependency
-                     "--ignore=dateutil/test/test_utils.py"
-                     "--ignore=dateutil/test/test_rrule.py"
-                     ;; XXX: Fails to get timezone from /etc/localtime.
-                     "--ignore=dateutil/test/test_tz.py")))
+      #:test-flags '(list ;avoid freezegun dependency
+                          "--ignore=tests/test_utils.py"
+                          "--ignore=tests/test_rrule.py"
+                          ;; XXX: Fails to get timezone from /etc/localtime.
+                          "--ignore=tests/test_tz.py")))
     (native-inputs
      (list python-pytest
            python-pytest-cov
@@ -383,6 +387,8 @@ datetime module, available in Python 2.3+.")
     (license (list bsd-3 asl2.0))))
 
 (define-public python-dateutils
+  ;; XXX: The last release was in 2021, no development on the master
+  ;; branch. consider to remove when nothing depends on it.
   (package
     (name "python-dateutils")
     (version "0.6.12")
@@ -393,8 +399,9 @@ datetime module, available in Python 2.3+.")
                (base32
                 "1wg3f3imjq3snvjccv64h5498pqv9xz664xhni7bsh8mnay91p83"))))
     (build-system pyproject-build-system)
+    (arguments (list #:tests? #f)) ;requires twine
     (propagated-inputs (list python-dateutil python-pytz))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/jmcantrell/python-dateutils")
     (synopsis "Various utilities for working with date and datetime objects")
     (description
@@ -632,19 +639,30 @@ value (in fractional seconds) of a clock which never goes backwards.")
 (define-public python-pyrfc3339
   (package
     (name "python-pyrfc3339")
-    (version "1.1")
+    (version "2.0.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyRFC3339" version))
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/kurtraschke/pyRFC3339")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "06jv7ar7lpvvk0dixzwdr3wgm0g1lipxs429s2z7knwwa7hwpf41"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytz))
+        (base32 "1q7kz8i8kp1hk40zswgm7dcyyd2xmjpgn1jdm6rlpv3ddjdxdg48"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TZ" "UTC")
+              (setenv "TZDIR"
+                      (search-input-directory inputs "share/zoneinfo")))))))
     (native-inputs
-     (list python-nose))
+     (list python-pytest
+           python-setuptools
+           tzdata-for-tests))
     (home-page "https://github.com/kurtraschke/pyRFC3339")
     (synopsis "Python timestamp library")
     (description "Python library for generating and parsing RFC 3339-compliant
@@ -654,31 +672,26 @@ timestamps.")
 (define-public python-arrow
   (package
     (name "python-arrow")
-    (version "1.2.3")
+    (version "1.3.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "arrow" version))
               (sha256
                (base32
-                "189knrgxb3x21lzvqac6qlpd32308hcmpccxdlvr5wmrl46b6d1r"))))
+                "11bssv25jix57igvfmvg2v8dmwk55b4dh6hgffazidccchbhcm6l"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags '(list "tests"
-                          ;; python-dateutil doesn't recognize America/Nuuk.
-                          ;; Remove when python-dateutil > 2.8.1.
-                          "-k" "not test_parse_tz_name_zzz")))
+    ;; Tests: 1837 passed, 2 xpassed.
     (native-inputs
-     (list python-chai
+     (list python-dateparser
+           python-flit-core
            python-pytest
            python-pytest-cov
            python-pytest-mock
            python-pytz
-           python-setuptools
-           python-simplejson
-           python-wheel))
+           python-simplejson))
     (propagated-inputs
-     (list python-dateutil))
+     (list python-dateutil
+           python-types-python-dateutil))
     (home-page "https://github.com/arrow-py/arrow")
     (synopsis "Dates and times for Python")
     (description
@@ -690,16 +703,19 @@ datetime type.")
 (define-public python-aniso8601
   (package
     (name "python-aniso8601")
-    (version "9.0.1")
+    (version "10.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "aniso8601" version))
        (sha256
-        (base32
-         "0wxry6riyqajl02mkad8g2q98sx5jr13zndj3fandpzfcxv13qvj"))))
-    (build-system python-build-system)
-    (home-page "https://bitbucket.org/nielsenb/aniso8601")
+        (base32 "0ib8s62d3zh7qy5rnlrisns2bbjixb0lmyal3yp2h5fxcf38yj15"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest
+                     #:test-flags #~(list "discover" "aniso8601")))
+    (native-inputs
+     (list python-setuptools))
+    (home-page "https://codeberg.org/nielsenb-jf/aniso8601")
     (synopsis "Python library for parsing ISO 8601 strings")
     (description
      "This package contains a library for parsing ISO 8601 datetime strings.")

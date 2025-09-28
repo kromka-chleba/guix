@@ -19,7 +19,7 @@
 
 (define-module (guix build pyproject-build-system)
   #:use-module ((guix build python-build-system) #:prefix python:)
-  #:use-module (guix build utils)
+  #:use-module ((guix build utils) #:hide (delete))
   #:use-module (guix build json)
   #:use-module (guix build toml)
   #:use-module (ice-9 match)
@@ -78,14 +78,17 @@
 
 ;; Raised when 'check cannot find a valid test system in the inputs.
 (define-condition-type &test-system-not-found &python-build-error
-                       test-system-not-found?)
+  test-system-not-found?)
 
 ;; Raised when multiple wheels are created by 'build.
 (define-condition-type &cannot-extract-multiple-wheels &python-build-error
-                       cannot-extract-multiple-wheels?)
+  cannot-extract-multiple-wheels?)
 
 ;; Raised, when no wheel has been built by the build system.
 (define-condition-type &no-wheels-built &python-build-error no-wheels-built?)
+
+;; Raised, when no installation candidate wheel has been found.
+(define-condition-type &no-wheels-found &python-build-error no-wheels-found?)
 
 (define* (build #:key outputs build-backend backend-path configure-flags #:allow-other-keys)
   "Build a given Python package."
@@ -102,8 +105,8 @@
                              pyproject.toml
                              '("build-system" "backend-path")))
          (use-backend-path (call-with-output-string
-                            (cut write-json
-                             (or backend-path auto-backend-path '()) <>)))
+                             (cut write-json
+                                  (or backend-path auto-backend-path '()) <>)))
          ;; There is no easy way to get data from Guile into Python via
          ;; s-expressions, but we have JSON serialization already, which Python
          ;; also supports out-of-the-box.
@@ -122,25 +125,25 @@
                                 auto-build-backend
                                 "setuptools.build_meta")))
     (format #t
-     (string-append
-      "Using '~a' to build wheels, auto-detected '~a', override '~a'.~%"
-      "Prepending '~a' to sys.path, auto-detected '~a', override '~a'.~%")
-     use-build-backend auto-build-backend build-backend
-     use-backend-path auto-backend-path backend-path)
+            (string-append
+             "Using '~a' to build wheels, auto-detected '~a', override '~a'.~%"
+             "Prepending '~a' to sys.path, auto-detected '~a', override '~a'.~%")
+            use-build-backend auto-build-backend build-backend
+            use-backend-path auto-backend-path backend-path)
     (mkdir-p wheel-dir)
     ;; Call the PEP 517 build function, which drops a .whl into wheel-dir.
     (invoke "python" "-c"
-     "import sys, importlib, json
+            "import sys, importlib, json
 backend_path = json.loads (sys.argv[1]) or []
 backend_path.extend (sys.path)
 sys.path = backend_path
 config_settings = json.loads (sys.argv[4])
 builder = importlib.import_module(sys.argv[2])
 builder.build_wheel(sys.argv[3], config_settings=config_settings)"
-     use-backend-path
-     use-build-backend
-     wheel-dir
-     config-settings)))
+            use-backend-path
+            use-build-backend
+            wheel-dir
+            config-settings)))
 
 (define* (check #:key tests? test-backend test-flags #:allow-other-keys)
   "Run the test suite of a given Python package."
@@ -150,18 +153,26 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
       (let* ((pytest (which "pytest"))
              (nosetests (which "nosetests"))
              (nose2 (which "nose2"))
+             (stestr (which "stestr"))
              (have-setup-py (file-exists? "setup.py"))
+             ;; unittest default pattern
+             ;; See https://docs.python.org/3/library/unittest.html\
+             ;; #cmdoption-unittest-discover-p
+             (tests-found (find-files "." "test.*\\.py$"))
              (use-test-backend
               (or test-backend
                   ;; Prefer pytest
                   (if pytest 'pytest #f)
+                  (if stestr 'stestr #f)
                   (if nosetests 'nose #f)
                   (if nose2 'nose2 #f)
-                  ;; But fall back to setup.py, which should work for most
-                  ;; packages. XXX: would be nice not to depend on setup.py here?
-                  ;; fails more often than not to find any tests at all.  Maybe
-                  ;; we can run `python -m unittest`?
-                  (if have-setup-py 'setup.py #f))))
+                  ;; Fall back to setup.py. The command is deprecated, but is
+                  ;; a superset of unittest, so should work for most packages.
+                  ;; Keep it until setuptools removes `setup.py test'.
+                  ;; See https://setuptools.pypa.io/en/latest/deprecated/\
+                  ;; commands.html#test-build-package-and-run-a-unittest-suite
+                  (if have-setup-py 'setup.py #f)
+                  (if tests-found 'unittest #f))))
         (format #t "Using ~a~%" use-test-backend)
         (match use-test-backend
           ('pytest
@@ -175,13 +186,20 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
                   (if (null? test-flags)
                       '("test" "-v")
                       test-flags)))
+          ('stestr
+           (apply invoke stestr "run" test-flags))
+          ('unittest
+           (apply invoke "python" "-m" "unittest" test-flags))
+          ('custom
+           (apply invoke "python" test-flags))
           ;; The developer should explicitly disable tests in this case.
           (else (raise (condition (&test-system-not-found))))))
       (format #t "test suite not run~%")))
 
 (define* (install #:key inputs outputs #:allow-other-keys)
-  "Install a wheel file according to PEP 427"
-  ;; See https://www.python.org/dev/peps/pep-0427/#installing-a-wheel-distribution-1-0-py32-none-any-whl
+  "Install a wheel file according to PEP 427."
+  ;; See <https://packaging.python.org/en/latest/specifications/\
+  ;; binary-distribution-format/#binary-distribution-format>.
   (let ((site-dir (site-packages inputs outputs))
         (python (assoc-ref inputs "python"))
         (out (assoc-ref outputs "out")))
@@ -190,25 +208,6 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
       ;; Use Python’s zipfile to avoid extra dependency
       (invoke "python" "-m" "zipfile" "-e" file site-dir))
 
-    (define python-hashbang
-      (string-append "#!" python "/bin/python"))
-
-    (define* (merge-directories source destination
-                                #:optional (post-move #f))
-      "Move all files in SOURCE into DESTINATION, merging the two directories."
-      (format #t "Merging directory ~a into ~a~%" source destination)
-      (for-each (lambda (file)
-                  (format #t "~a/~a -> ~a/~a~%"
-                          source file destination file)
-                  (mkdir-p destination)
-                  (rename-file (string-append source "/" file)
-                               (string-append destination "/" file))
-                  (when post-move
-                    (post-move file)))
-                (scandir source
-                         (negate (cut member <> '("." "..")))))
-      (rmdir source))
-
     (define (expand-data-directory directory)
       "Move files from all .data subdirectories to their respective\ndestinations."
       ;; Python’s distutils.command.install defines this mapping from source to
@@ -216,29 +215,33 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
       (let ((source (string-append directory "/scripts"))
             (destination (string-append out "/bin")))
         (when (file-exists? source)
-          (merge-directories source destination
-                             (lambda (f)
-                               (let ((dest-path (string-append destination
-                                                               "/" f)))
-                                 (chmod dest-path #o755)
-                                 ;; PEP 427 recommends that installers rewrite
-                                 ;; this odd shebang.
-                                 (substitute* dest-path
-                                   (("#!python")
-                                    python-hashbang)))))))
+          (copy-recursively source destination)
+          (delete-file-recursively source)
+          (for-each
+           (lambda (file)
+             (chmod file #o755)
+             ;; PEP 427 recommends that installers rewrite
+             ;; this odd shebang, but avoid the binary case.
+             (unless (elf-file? file)
+               (substitute* file
+                 (("#!python")
+                  (string-append "#!" python "/bin/python")))))
+           (find-files destination))))
       ;; Data can be contained in arbitrary directory structures.  Most
       ;; commonly it is used for share/.
       (let ((source (string-append directory "/data"))
             (destination out))
         (when (file-exists? source)
-          (merge-directories source destination)))
+          (copy-recursively source destination)
+          (delete-file-recursively source)))
       (let* ((distribution (car (string-split (basename directory) #\-)))
              (source (string-append directory "/headers"))
              (destination (string-append out "/include/python"
                                          (python-version python)
                                          "/" distribution)))
         (when (file-exists? source)
-          (merge-directories source destination))))
+          (copy-recursively source destination)
+          (delete-file-recursively source))))
 
     (define (list-directories base predicate)
       ;; Cannot use find-files here, because it’s recursive.
@@ -251,16 +254,21 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
 
     (let* ((wheel-output (assoc-ref outputs "wheel"))
            (wheel-dir (if wheel-output wheel-output "dist"))
-           (wheels (map (cut string-append wheel-dir "/" <>)
-                        (scandir wheel-dir
-                                 (cut string-suffix? ".whl" <>)))))
+           (wheels-found (or (scandir wheel-dir
+                                      (cut string-suffix? ".whl" <>))
+                             '()))
+           (wheels (map (cut string-append wheel-dir "/" <>) wheels-found)))
       (cond
-        ((> (length wheels) 1)
-         ;; This code does not support multiple wheels yet, because their
-         ;; outputs would have to be merged properly.
-         (raise (condition (&cannot-extract-multiple-wheels))))
-        ((= (length wheels) 0)
-         (raise (condition (&no-wheels-built)))))
+       ;; This can happen if the 'build phase has been changed or when using
+       ;; the install phase using an alternative build-system.
+       ((null? wheels-found)
+        (raise (condition (&no-wheels-found))))
+       ((> (length wheels) 1)
+        ;; This code does not support multiple wheels yet, because their
+        ;; outputs would have to be merged properly.
+        (raise (condition (&cannot-extract-multiple-wheels))))
+       ((= (length wheels) 0)
+        (raise (condition (&no-wheels-built)))))
       (for-each extract wheels))
     (let ((datadirs (map (cut string-append site-dir "/" <>)
                          (list-directories site-dir
@@ -343,7 +351,7 @@ and return write it to PATH/NAME."
 import sys
 import ~a as mod
 sys.exit (mod.~a ())~%" interpreter module function)))
-        (chmod file-path #o755)))
+      (chmod file-path #o755)))
 
   (let* ((site-dir (site-packages inputs outputs))
          (out (assoc-ref outputs "out"))

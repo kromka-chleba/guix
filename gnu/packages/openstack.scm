@@ -51,6 +51,7 @@
   #:use-module ((guix build-system python) #:select (pypi-uri))
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (srfi srfi-1))
@@ -67,13 +68,10 @@
         (base32 "0vd8b4lypkc65xb4cih2b4l9qkhxyj52xj078q63p8214xl5n7wc"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-coverage
-           python-fixtures
-           python-setuptools
-           python-sphinx-5
+     (list python-setuptools
+           python-sphinx
            python-stestr
-           python-testscenarios
-           python-wheel))
+           python-testscenarios))
     (propagated-inputs
      (list python-autopage
            python-cmd2
@@ -177,50 +175,6 @@ manner.")
 guidelines}.")
     (license license:asl2.0)))
 
-(define-public python-mox3
-  (package
-    (name "python-mox3")
-    (version "0.24.0")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "mox3" version))
-        (patches (search-patches "python-mox3-python3.6-compat.patch"))
-        (sha256
-          (base32 "0w58adwv7q9wzvmq9mlrk2asfk73myq9fpwy7mjkzsz3baa95zf5"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-fixtures python-pbr))
-    (native-inputs
-     (list python-openstackdocstheme
-           python-setuptools
-           python-sphinx
-           python-subunit
-           python-testrepository
-           python-testtools
-           python-wheel))
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-for-python-3.11
-            (lambda _
-              ;; The getargspec function has been removed in python 3.11.
-              (substitute* "mox3/mox.py"
-                (("self\\._args, varargs, varkw, defaults = inspect\\.getargspec\\(method\\)")
-                 "inspect_result = inspect.getfullargspec(method)
-            self._args = inspect_result.args
-            varargs = inspect_result.varargs
-            varkw = inspect_result.varkw
-            defaults = inspect_result.defaults")))))))
-    (home-page "https://www.openstack.org/")
-    (synopsis "Mock object framework for Python")
-    (description
-      "Mox3 is an unofficial port of the @uref{https://code.google.com/p/pymox/,
-Google mox framework} to Python 3.  It was meant to be as compatible
-with mox as possible, but small enhancements have been made.")
-    (license license:asl2.0)))
-
 (define-public python-openstackdocstheme
   (package
     (name "python-openstackdocstheme")
@@ -306,43 +260,49 @@ is for some reason not possible and local caching of the fetched data.")
       (list python-pbr-next python-setuptools python-wheel)))))
 
 (define-public python-os-testr
-  (package
-    (name "python-os-testr")
-    (version "3.0.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "os-testr" version))
-       (sha256
-        (base32 "0vik5sjl0qhz6xqqg6gnaf5jva31m7xykyc0azb53jfq7y57ladv"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "test-requirements.txt"
-                (("(coverage|hacking).*")
-                 "")))))))
-    (propagated-inputs
-     (list python-stestr))
-    (native-inputs
-     (list python-babel
-           python-ddt
-           python-oslotest
-           python-pbr
-           python-setuptools
-           python-testrepository
-           python-testscenarios
-           python-testtools
-           python-wheel))
-    (home-page "https://www.openstack.org/")
-    (synopsis "Testr wrapper to provide functionality for OpenStack projects")
-    (description
-      "Os-testr provides developers with a testr wrapper and an output filter
+  (let ((commit "0ba674d8c5d34890698e4e8ff9f71b24c389e109")
+        (revision "0"))
+    (package
+      (name "python-os-testr")
+      (version (git-version "3.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/openstack/os-testr")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1fd8n5fsq35ikak8by4z45sya2m1pmxpc4440579rfk3jjsq4vgc"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'relax-requirements
+              (lambda _
+                (substitute* "test-requirements.txt"
+                  (("(coverage|hacking).*")
+                   ""))))
+            (add-after 'unpack 'set-version
+              (lambda _
+                (setenv "PBR_VERSION" "3.0.0"))))))
+      (propagated-inputs (list python-stestr))
+      (native-inputs
+       (list python-babel
+             python-ddt
+             python-oslotest
+             python-pbr
+             python-setuptools
+             python-testrepository
+             python-testscenarios
+             python-testtools))
+      (home-page "https://github.com/openstack/os-testr")
+      (synopsis "Testr wrapper to provide functionality for OpenStack projects")
+      (description
+       "Os-testr provides developers with a testr wrapper and an output filter
   for subunit.")
-    (license license:asl2.0)))
+      (license license:asl2.0))))
 
 (define-public python-stevedore
   (package
@@ -600,13 +560,13 @@ for running external processes.")
 (define-public python-oslo-config
   (package
     (name "python-oslo-config")
-    (version "8.7.1")
+    (version "9.8.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "oslo.config" version))
+       (uri (pypi-uri "oslo_config" version))
        (sha256
-        (base32 "0q3v4yicqls9zsfxkmh5mrgz9dailaz3ir25p458gj6dg3bldhx0"))))
+        (base32 "1ah8knzcxkg28v9av19wp6bg91d1mfyxm2y56whngvmb0jah1a7f"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -633,7 +593,6 @@ for running external processes.")
      (list python-coverage
            python-docutils
            python-fixtures
-           python-mypy
            python-oslo-log-bootstrap
            python-oslotest-bootstrap
            python-pbr
@@ -642,8 +601,7 @@ for running external processes.")
            python-sphinx
            python-stestr
            python-testscenarios
-           python-testtools
-           python-wheel))
+           python-testtools))
     (home-page "https://launchpad.net/oslo")
     (synopsis "Oslo Configuration API")
     (description
@@ -869,40 +827,6 @@ in transmittable and storable formats, such as JSON and MessagePack.")
 and building documentation from them.")
     (license license:asl2.0)))
 
-(define-public python-oslosphinx
-  (package
-    (name "python-oslosphinx")
-    (version "4.18.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "oslosphinx" version))
-       (sha256
-        (base32 "1xm41857vzrzjmnyi6bqirg4i5qa61v7wxcsdc4q1nzgr3ndgz5k"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "test-requirements.txt"
-                (("(hacking|reno).*")
-                 "")))))))
-    (propagated-inputs
-     (list python-requests))
-    (native-inputs
-     (list python-openstackdocstheme
-           python-pbr
-           python-setuptools
-           python-sphinx
-           python-wheel))
-    (home-page "https://www.openstack.org/")
-    (synopsis "OpenStack sphinx extensions and theme")
-    (description "This package provides themes and extensions for Sphinx
-documentation from the OpenStack project.")
-    (license license:asl2.0)))
-
 (define-public python-oslotest
   (package
     (name "python-oslotest")
@@ -914,15 +838,24 @@ documentation from the OpenStack project.")
        (sha256
         (base32 "1vp85v81p2vx66j973hc7fa65shp0ilhaypyyny01jwcip94152s"))))
     (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-fixtures python-subunit python-testtools))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-sub-package
+            ;; error: Multiple top-level packages discovered in a flat-layout:
+            ;; ['oslotest', 'releasenotes'].
+            (lambda _
+              (delete-file-recursively "releasenotes"))))))
     (native-inputs
-     (list python-coverage
-           python-debtcollector
+     (list python-debtcollector
            python-oslo-config
            python-stestr
-           python-setuptools
-           python-wheel))
+           python-setuptools))
+    (propagated-inputs
+     (list python-fixtures
+           python-subunit
+           python-testtools))
     (home-page "https://launchpad.net/oslo")
     (synopsis "Oslo test framework")
     (description "The Oslo Test framework provides common fixtures, support
@@ -1218,29 +1151,39 @@ Gerrit for review, or fetching existing ones.")
     (version "1.4.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "requestsexceptions" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/openstack/requestsexceptions")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0r9hp9yzgj8r81q5gc6r8sgxldqc09xi6ax0b7a6dw0qfv3wp5dh"))))
+        (base32 "12c4bi2vm337sgbbl08i01v794glnk1fzgxdc11545dqdl57rslz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; XXX: There are some tests in tox.ini, but it leads nowhere.
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
             (lambda _
               (substitute* "test-requirements.txt"
                 (("hacking.*")
-                 "")))))))
-    (native-inputs (list python-pbr python-setuptools python-wheel))
-    (home-page "https://www.openstack.org/")
-    (synopsis "Import exceptions from potentially bundled packages in requests")
-    (description "The Python requests library bundles the urllib3 library,
-however, some software distributions modify requests to remove the bundled
-library.  This makes some operations difficult, such as suppressing the
-“insecure platform warning” messages that urllib emits.  This package is a
-simple library to find the correct path to exceptions in the requests library
-regardless of whether they are bundled or not.")
+                 ""))))
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "PBR_VERSION" #$version))))))
+    (native-inputs (list python-os-testr python-pbr python-setuptools))
+    (home-page "https://github.com/openstack/requestsexceptions")
+    (synopsis
+     "Import exceptions from potentially bundled packages in requests")
+    (description
+     "The Python requests library bundles the urllib3 library, however, some
+software distributions modify requests to remove the bundled library.  This
+makes some operations difficult, such as suppressing the “insecure platform
+warning” messages that urllib emits.  This package is a simple library to find
+the correct path to exceptions in the requests library regardless of whether
+they are bundled or not.")
     (license license:asl2.0)))
 
 (define-public python-openstacksdk

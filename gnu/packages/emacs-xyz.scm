@@ -9432,11 +9432,11 @@ inline PDF preview in Org buffers by using @command{pdf2svg}.")
     (license license:gpl3+)))
 
 (define-public emacs-org-rainbow-tags
-  ;; Upstream didn't tag version.
-  (let ((commit "c6040d228c5e8c5c6d33c7f81fc09d935ad1bcbd"))
+  (let ((commit "dfe36047bc9646b621452f3e2e97170e99e2b43f")
+        (revision "1"))
     (package
       (name "emacs-org-rainbow-tags")
-      (version "0.1-pre")
+      (version (git-version "0.1-pre" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -9445,7 +9445,7 @@ inline PDF preview in Org buffers by using @command{pdf2svg}.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "006nx01sby8k0fc9lf63ldf0sl94ihldyrvqr9r18fb1gpzvivl6"))))
+                  "1rhgvbhsbm999l5kg19747dxwscd5h5sl330d6a422f0dxvvxqrq"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/KaratasFurkan/org-rainbow-tags")
       (synopsis "Colorize Org tags automatically")
@@ -28052,6 +28052,30 @@ subs, classes, etc.), and REPL interaction.")
       (description
        "This package provides an Emacs library to manage tree widgets.")
       (license license:gpl3+))))
+
+(define-public emacs-treesit-auto
+  (let ((commit "016bd286a1ba4628f833a626f8b9d497882ecdf3")) ; version bump
+    (package
+      (name "emacs-treesit-auto")
+      (version "1.0.7")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/renzmann/treesit-auto")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "03bvam7cpxqp4idhd235n76qdqhsbgw7m2lphy8qqwslbmcq23m4"))))
+      (build-system emacs-build-system)
+      (arguments '(#:tests? #f)) ; no tests
+      (home-page "https://github.com/renzmann/treesit-auto")
+      (synopsis
+       "Automatically install and use tree-sitter major modes in Emacs 29+")
+      (description
+       "Install a tree-sitter major mode automatically.  If the tree-sitter
+version can't be used, fall back to the original major mode.")
+      (license license:gpl3))))
 
 (define-public emacs-md4rd
   (package

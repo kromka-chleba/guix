@@ -1,16 +1,17 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014 Danny Milosavljevic <dannym@friendly-machines.com>
+;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2016, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016, 2019, 2021-2025 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018 Pierre-Antoine Rouby <pierre-antoine.rouby@inria.fr>
 ;;; Copyright © 2019, 2021-2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2019, 2022 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2021 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2022 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2021, 2022 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
@@ -360,26 +361,33 @@ to Jupyter Server for their Python Web application backend.")
 (define-public python-jupyter-lsp
   (package
     (name "python-jupyter-lsp")
-    (version "2.2.5")
+    (version "2.3.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "jupyter-lsp" version))
+       (uri (pypi-uri "jupyter_lsp" version))
        (sha256
-        (base32 "00ahai7wp0m98glpqsrd1bymcllzkb8irvskzl4zhinlbah4fcbr"))))
+        (base32 "0i825shcn9d3f7a5zmvcj1p87s5wgpqn8cyphjvqz1nw769sb2j5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 63 passed, 8 skipped, 1 deselected, 20 warnings
       #:test-flags
-      ;; No R language server is present.
-      '(list "-k" "not test_r_package_detection")
+      ;; Network access is required or most tests failed.
+      #~(list "--ignore=jupyter_lsp/tests/test_listener.py"
+              "--ignore=jupyter_lsp/tests/test_session.py"
+              ;; No R language server is present.
+              "-k" "not test_r_package_detection")
       #:phases
-      '(modify-phases %standard-phases
-         ;; Some tests require a writable HOME
-         (add-before 'check 'set-HOME
-           (lambda _ (setenv "HOME" "/tmp"))))))
+      #~(modify-phases %standard-phases
+          ;; Some tests require a writable HOME
+          (add-before 'check 'set-HOME
+            (lambda _ (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-asyncio
+           python-setuptools))
     (propagated-inputs (list python-jupyter-server))
-    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://pypi.org/project/jupyter-lsp/")
     (synopsis "Multi-Language Server WebSocket proxy for Jupyter Notebook/Lab server")
     (description
@@ -500,6 +508,34 @@ Messaging Protocol}.")
 extensions.")
     (license license:bsd-4)))
 
+(define-public python-terminado
+  (package
+    (name "python-terminado")
+    (version "0.18.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "terminado" version))
+       (sha256
+        (base32
+         "0bpxag3n0148vsgmi6wh3ynmprykazzqys0lfxgpdr2xp32g42fy"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "-W" "default")))    ;taken from pyproject.toml
+    (native-inputs
+     (list python-hatchling
+           python-pytest
+           python-pytest-timeout))
+    (propagated-inputs
+     (list python-ptyprocess
+           python-tornado-6))
+    (home-page "https://github.com/jupyter/terminado")
+    (synopsis "Terminals served to term.js using Tornado websockets")
+    (description "This package provides a Tornado websocket backend for the
+term.js Javascript terminal emulator library.")
+    (license license:bsd-2)))
+
 (define-public xeus
   (package
     (name "xeus")
@@ -549,7 +585,7 @@ alternative Python kernel for Jupyter.")
 (define-public python-jupyterlab-pygments
   (package
     (name "python-jupyterlab-pygments")
-    (version "0.1.2")
+    (version "0.1.2") ;newer versions requires Node.js packages
     (source
      (origin
        (method url-fetch)
@@ -557,8 +593,10 @@ alternative Python kernel for Jupyter.")
        (sha256
         (base32
          "0ij14mmnc39nmf84i0av6j9glazjic7wzv1qyhr0j5966s3s1kfg"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments '(#:tests? #false)) ; there are no tests
+    (native-inputs
+     (list python-setuptools))
     (propagated-inputs
      (list python-pygments))
     (home-page "https://jupyter.org")
@@ -833,15 +871,17 @@ endpoints—to Jupyter web applications.")
 (define-public python-jupyterlab-widgets
   (package
     (name "python-jupyterlab-widgets")
-    (version "3.0.10")
+    ;; XXX: Newer version requires python-jupyterlab, see guix/guix#2073.
+    (version "3.0.11")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jupyterlab_widgets" version))
        (sha256
-        (base32
-         "1h04kln8hp56svdjjk2hbsb0z1mby71cv4gss3wy89v7jw2arwh4"))))
+        (base32 "09zfvqsw0svm6r3i2lhklnx44s7j4i60bvcvkkr9m5iwb5wwcnnx"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests in PyPI
     (native-inputs
      (list python-jupyter-packaging))
     (home-page "https://github.com/jupyter-widgets/ipywidgets")
@@ -1071,7 +1111,7 @@ version to the original file.")
 (define-public repo2docker
   (package
     (name "repo2docker")
-    (version "2024.03.0")
+    (version "2024.07.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1080,7 +1120,7 @@ version to the original file.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bcnl91j6p3315lk2mmn02jq6mjsn68m9rcw5rkln4c9fx1160rx"))))
+                "1fg71bldvfiln8h91sca4bjhwk7vdh80rhf0514qk6vqpikpx4cb"))))
     (outputs '("out" "doc"))
     (build-system pyproject-build-system)
     (arguments

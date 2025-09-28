@@ -185,7 +185,16 @@ frameworks.")
         (base32 "07cz2ghfq6amcljaxpdr5chbd64ph513y8zqmibfx2xwfp74xkhn"))))
     (build-system cmake-build-system)
     ;; Tests require downloading of test data.
-    (arguments (list #:tests? #false))
+    (arguments
+     (list
+      #:tests? #false
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'gcc-14-fix
+            (lambda _
+              (substitute* "src/args.cc"
+                (("#include <unordered_map>" all)
+                 (string-append all "\n#include <cstdint>"))))))))
     (home-page "https://github.com/facebookresearch/fastText")
     (synopsis "Library for fast text representation and classification")
     (description "fastText is a library for efficient learning of word
@@ -243,7 +252,7 @@ family of functions.")
                              python-tqdm))
     (native-inputs (list python-numpy
                          python-pytest
-                         python-setuptools-next))
+                         python-setuptools))
     (home-page "https://github.com/SYSTRAN/faster-whisper")
     (synopsis "Whisper transcription reimplementation")
     (description
@@ -291,7 +300,7 @@ CTranslate2, which is a inference engine for transformer models.")
                          python-pytest
                          python-requests
                          python-scipy
-                         python-setuptools-next
+                         python-setuptools
                          python-torchvision))
     (home-page "https://github.com/pyro-ppl/funsor")
     (synopsis "Tensor-like library for functions and distributions")
@@ -402,6 +411,15 @@ classification.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; TODO: Review tests.
+      #~(list
+         ;; Failed: 'yield' keyword is allowed in fixtures, but not in tests
+         ;; (test_scale2_models)
+         "--ignore=GPy/testing/test_likelihood.py"
+         ;; Failed: 'yield' keyword is allowed in fixtures, but not in
+         ;; tests (test_figure)
+         "--ignore=GPy/testing/test_plotting.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'compatibility
@@ -1134,6 +1152,7 @@ depend on language-specific pre- or post-processing.")
          (sha256
           (base32 "018ilrp41fcclmb5lsml3aijwbmhbq3m7wy65hr1fryj0avic8fr"))))
       (build-system pyproject-build-system)
+      (arguments (list #:test-backend #~'unittest))
       (native-inputs (list python-setuptools python-wheel))
       (home-page "https://github.com/sofiatolaosebikan/hopcroftkarp")
       (synopsis "Implementation of the Hopcroft-Karp algorithm")
@@ -1154,7 +1173,7 @@ cardinality matching from a bipartite graph.")
         (base32 "03d4kgakpgj54c3pl9dkqrkbmj6w13gmczkds5jagf3n85c1hgg1"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest python-setuptools-next))
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-deprecated
            python-hopcroftkarp
@@ -1419,7 +1438,7 @@ storing tensors safely.")
             (lambda _
               (chdir "python"))))))
     (native-inputs
-     (list pkg-config protobuf python-pytest python-setuptools-next))
+     (list pkg-config protobuf python-pytest python-setuptools))
     (propagated-inputs (list sentencepiece))
     (synopsis "SentencePiece python wrapper")
     (description "This package provides a Python wrapper for the SentencePiece
@@ -1736,7 +1755,7 @@ operators and standard data types.")
      (append
       (list cmake-minimal
             python-pytest
-            python-setuptools-next)
+            python-setuptools)
       (filter
        (lambda (pkg)
          (member (or (%current-target-system)
@@ -1874,7 +1893,7 @@ with a single function call.")
            python-pytest
            python-pytorch
            python-sentencepiece
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-coloredlogs
            python-flatbuffers
@@ -2035,7 +2054,7 @@ computing environments.")
 (define-public python-scikit-learn
   (package
     (name "python-scikit-learn")
-    (version "1.6.1")
+    (version "1.7.0")
     (source
      (origin
        (method git-fetch)
@@ -2044,7 +2063,7 @@ computing environments.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08z1b58n31grfvl42wi6rdwrfhrdhnzkkxhg19iag3zkvkcvxqjl"))))
+        (base32 "105bd5n3l4db59lw0cdi6w8x9qysams017rjrly2629nklhiqx1q"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2265,32 +2284,39 @@ for scientific computing and data science (e.g. BLAS and OpenMP).")
 (define-public python-hdbscan
   (package
     (name "python-hdbscan")
-    (version "0.8.33")
+    (version "0.8.40")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "hdbscan" version))
        (sha256
-        (base32 "03gr70ys1zrnp15pxzhichvrdj5bj88p6p5k0wj8vx251rgvryjp"))))
+        (base32 "05wask431fm78n1227dhvwsmlnys9d95vxjz0y8hbvmy2zzq7qy9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; XXX: Test files which fail during test collection.
+      #~(list "--ignore=hdbscan/tests/test_branches.py"
+              "--ignore=hdbscan/tests/test_hdbscan.py"
+              "--ignore=hdbscan/tests/test_rsl.py")
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (delete-file "hdbscan/tests/__init__.py")))
           (add-before 'check 'build-extensions
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs (list python-joblib
-                             python-numpy
-                             python-scikit-learn
-                             python-scipy))
-    (native-inputs (list python-cython
-                         python-nose
-                         python-pytest
-                         python-pandas
-                         python-networkx
-                         python-setuptools
-                         python-wheel))
+    (native-inputs
+     (list python-cython
+           python-numpy
+           python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-joblib
+           python-numpy
+           python-scikit-learn
+           python-scipy))
     (home-page "https://github.com/scikit-learn-contrib/hdbscan")
     (synopsis "High performance implementation of HDBSCAN clustering")
     (description "HDBSCAN - Hierarchical Density-Based Spatial Clustering of
@@ -2385,7 +2411,7 @@ visualizing high-dimensional data sets.")
     ;; python-scikit-learn
     (arguments '(#:tests? #f))
     (native-inputs
-     (list python-setuptools-next))
+     (list python-setuptools))
     (propagated-inputs
      (list python-numpy python-scipy python-scikit-learn python-joblib))
     (home-page "https://epistasislab.github.io/scikit-rebate/")
@@ -2498,7 +2524,7 @@ data by providing clean labels during training.")
                           (lambda* (#:key tests? #:allow-other-keys)
                             (when tests?
                               (invoke "python" "-m" "cma.test")))))))
-    (native-inputs (list python-pytest python-setuptools-next))
+    (native-inputs (list python-pytest python-setuptools))
     (propagated-inputs (list python-numpy))
     (home-page "https://github.com/CMA-ES/pycma")
     (synopsis "Python implementation of CMA-ES")
@@ -3592,7 +3618,7 @@ in a fast and accurate way.")
     (propagated-inputs
      (list python-ipython python-numpy python-pandas python-scipy))
     (native-inputs
-     (list python-nose python-setuptools-next))
+     (list python-nose python-setuptools))
     (home-page "https://github.com/interpretable-ml/iml")
     (synopsis "Interpretable Machine Learning (iML) package")
     (description "Interpretable ML (iML) is a set of data type objects,
@@ -4620,7 +4646,7 @@ PyTorch.")
            pocketfft-cpp
            python-expecttest
            python-pytest-flakefinder
-           python-pytest-rerunfailures-13
+           python-pytest-rerunfailures
            python-pytest-shard
            python-pytest-xdist
            python-hypothesis
@@ -5005,10 +5031,11 @@ AI services.")
                (base32
                 "1xg9cngdz9dsxwcpcmzf28q306i15hw58h54allhb41q4wzziqip"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;XXX: broken tests
     (native-inputs
      (list python-coverage
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (propagated-inputs
      (list python-importlib-metadata
            python-packaging
@@ -5085,7 +5112,7 @@ as torchvision, torchtext, and others.")
     (native-inputs
      (list python-pytest
            python-pytest-cov
-           python-setuptools-next))
+           python-setuptools))
     (home-page "https://github.com/magmax/python-readchar")
     (synopsis "Library to easily read single chars and key strokes")
     (description "This package provides a Python library to easily read single
@@ -5206,7 +5233,7 @@ feedback.")
              python-psutil
              python-requests-mock
              python-scikit-learn
-             python-setuptools-next))
+             python-setuptools))
       (home-page "https://lightning.ai/")
       (synopsis "Deep learning framework to train, deploy, and ship AI products")
       (description
@@ -5354,7 +5381,7 @@ and common image transformations for computer vision.")
                 (when tests?
                   (invoke "python3" "tests.py")))))))
       (propagated-inputs
-       (list python-numpy python-setuptools-next))
+       (list python-numpy python-setuptools))
       (home-page "https://github.com/bshillingford/python-torchfile")
       (synopsis "Torch7 binary serialized file parser")
       (description "This package enables you to deserialize Lua
@@ -5766,7 +5793,7 @@ algorithm for dense (LAPJV) or sparse (LAPMOD) matrices.")
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))      ;tests require launching the server
     (native-inputs
-     (list python-setuptools-next))
+     (list python-setuptools))
     (propagated-inputs
      (list python-jsonpatch
            python-networkx
@@ -6094,12 +6121,14 @@ simple speech recognition.")
       (build-system pyproject-build-system)
       (arguments
        (list
+        #:test-backend #~'custom
+        #:test-flags #~(list "../../tests/from_words_to_digits.py")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'chdir
               (lambda _
                 (chdir "package/python"))))))
-      (native-inputs (list python-setuptools python-wheel))
+      (native-inputs (list python-setuptools))
       (propagated-inputs (list python-vosk))
       (home-page "https://github.com/ideasman42/nerd-dictation")
       (synopsis "Offline speech-to-text for desktop Linux")
@@ -6444,15 +6473,23 @@ diverse set of reference environments (formerly Gym).")
 ;; better that way.
 (define-public python-dlib
   (package
-   (inherit dlib)
-   (name "python-dlib")
-   (build-system pyproject-build-system)
-   (arguments
-    `(#:phases
-      (modify-phases %standard-phases
-                     (add-after 'unpack 'subst
-                                (lambda _
-                                  (substitute* "tools/python/CMakeLists.txt"
-                                               (("add_subdirectory[(][.][.]/[.][.]/dlib/external/pybind11 pybind11_build[)]")
-                                                "find_package(pybind11 CONFIG)")))))))
-   (native-inputs (list python-setuptools python-wheel cmake-minimal perl pkg-config pybind11))))
+    (inherit dlib)
+    (name "python-dlib")
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'subst
+            (lambda _
+              (substitute* "tools/python/CMakeLists.txt"
+                (("\
+add_subdirectory[(][.][.]/[.][.]/dlib/external/pybind11 pybind11_build[)]")
+                 "find_package(pybind11 CONFIG)")))))))
+    (native-inputs
+     (list cmake-minimal
+           perl
+           pkg-config
+           pybind11
+           python-pytest
+           python-setuptools))))

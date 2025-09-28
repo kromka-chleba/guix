@@ -94,7 +94,6 @@
   #:use-module (gnu packages disk)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
-  #:use-module (gnu packages fcitx)
   #:use-module (gnu packages file)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gawk)
@@ -379,95 +378,6 @@ inappropriate content.")
      (list
       license:gpl2+
       license:lgpl2.1+))))
-
-(define-public maliit-framework
-  (package
-    (name "maliit-framework")
-    (version "2.3.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/maliit/framework")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1dkjxvfxg56hfy70j6ibfklfyv57jiha4vgc3ggl60r5kjx65s5b"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; The Ft_MIMPluginManager::testPluginDescriptions test fails
-                ;; with a QFATAL error: received signal 11, while
-                ;; ut_mimpluginmanager fails at least on powerpc64le with a
-                ;; subprocess aborted error (see:
-                ;; https://github.com/maliit/framework/issues/120).
-                (invoke "ctest" "-E"
-                        "(ft_mimpluginmanager|ut_mimpluginmanager)")))))))
-    (native-inputs (list extra-cmake-modules
-                         wayland-protocols
-                         pkg-config
-                         doxygen
-                         graphviz
-                         `(,glib "bin"))) ;for gdbus-codegen))
-    (inputs (list qtbase-5
-                  qtdeclarative-5
-                  qtwayland-5
-                  wayland
-                  libxkbcommon
-                  dbus
-                  eudev
-                  glib))
-    (home-page "https://github.com/maliit/framework")
-    (synopsis "Core libraries of Maliit")
-    (description "This package provides Maliit provides a flexible input
-method framework.")
-    (license license:lgpl2.1+)))
-
-(define-public maliit-keyboard
-  (package
-    (name "maliit-keyboard")
-    (version "2.3.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/maliit/keyboard")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0g89lckl4wzwamc89hs8871fbiyrsjwzk5b6ic4vhc4d1clyqzaw"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list #:tests? #f
-           #:phases #~(modify-phases %standard-phases
-                        (add-after 'install 'install-schemas
-                          (lambda* (#:key source outputs #:allow-other-keys)
-                            (with-directory-excursion (string-append #$output
-                                                       "/share/glib-2.0/schemas")
-                              (invoke "glib-compile-schemas" ".")))))))
-    (native-inputs (list extra-cmake-modules pkg-config gettext-minimal
-                         `(,glib "bin")))
-    (inputs (list hunspell
-                  glib
-                  libchewing
-                  libpinyin
-                  maliit-framework
-                  presage
-                  qtbase-5
-                  qtdeclarative-5
-                  qtmultimedia-5
-                  qtquickcontrols2-5))
-    (home-page "https://github.com/maliit/keyboard")
-    (synopsis "Maliit Keyboard")
-    (description
-     "This package provides virtual keyboard for Wayland and X11
-display servers.  It supports many different languages and emoji.")
-    (license license:gpl3+)))
 
 ;; Private package used by shared-mime-info.
 (define xdgmime
@@ -1372,40 +1282,33 @@ For information about libevdev, see:
 (define-public python-pyxdg
   (package
     (name "python-pyxdg")
-    (version "0.27")
+    (version "0.28")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyxdg" version))
        (sha256
         (base32
-         "19f5j5mxp7ff0vp33s32qbpdi65iiwha0bj641gl70pdwnm97gc0"))))
-    (build-system python-build-system)
+         "1d48bqwkbnpid80cpwz6h62i112laxl0ivpj58hdyd79fhqbnrrj"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "XDG_DATA_DIRS"
-                     (string-append (assoc-ref inputs "shared-mime-info")
-                                    "/share/"))
-             (substitute* "test/test-icon.py"
-               (("/usr/share/icons/hicolor/index.theme")
-                (string-append (assoc-ref inputs "hicolor-icon-theme")
-                               "/share/icons/hicolor/index.theme")))
-
-             ;; These two tests are known to fail in strange ways.
-             (substitute* "test/test-mime.py"
-               (("def test_get_type\\(self") "def _test_get_type(self")
-               (("def test_get_type2\\(self") "def _test_get_type2(self"))
-
-             ;; There are test files not shipped in the release tarball
-             (substitute* "test/test-icon.py"
-               (("def test_validate_icon_theme") "def _test_validate_icon_theme"))
-             (invoke "nosetests" "-v"))))))
+     (list
+      #:test-flags
+      ;; Tests failing with error: AssertionError: 'image' != 'inode'
+      #~(list "--deselect=test/test_mime.py::MimeTest::test_get_type"
+              "--deselect=test/test_mime.py::MimeTest::test_get_type2")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "XDG_DATA_DIRS"
+                      (string-append #$(this-package-native-input "shared-mime-info")
+                                     "/share/")))))))
     (native-inputs
-     ;; For tests.
-     (list shared-mime-info hicolor-icon-theme python-nose))
+     (list shared-mime-info
+           hicolor-icon-theme
+           python-pytest
+           python-setuptools))
     (home-page "https://www.freedesktop.org/wiki/Software/pyxdg")
     (synopsis "Implementations of freedesktop.org standards in Python")
     (description
@@ -2887,25 +2790,31 @@ encoding names are iconv-compatible.")
 
 (define-public python-cchardet
   (package
-  (name "python-cchardet")
-  (version "2.2.0a2")
-  (source
-    (origin
-      (method url-fetch)
-      (uri (pypi-uri "cchardet" version))
-      (sha256
-        (base32
-          "08wq5yfaafbjipabfc6kpyvivkk2394w7isv0mwx5agcf8cbnwnx"))))
-  (build-system pyproject-build-system)
-  (inputs
-   (list uchardet))
-  (native-inputs
-   (list python-setuptools python-wheel))
-  (home-page "https://github.com/PyYoshi/cChardet")
-  (synopsis "High-performance character encoding detection for Python")
-  (description "cChardet is a character encoding detector, written in
-Python, that binds to the C library @code{uchardet} to increase performance.")
-  (license license:gpl2+)))
+    (name "python-cchardet")
+    (version "2.2.0a2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cchardet" version))
+       (sha256
+        (base32 "08wq5yfaafbjipabfc6kpyvivkk2394w7isv0mwx5agcf8cbnwnx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; No test data in PyPI archive:
+      ;; '<...>/tests/samples/wikipediaJa_One_Thousand_and_One_Nights_SJIS.txt'
+      #~(list "--deselect=tests/test_1.py::TestCChardet::test_detector")))
+    (inputs
+     (list uchardet))
+    (native-inputs
+     (list python-pytest python-setuptools))
+    (home-page "https://github.com/PyYoshi/cChardet")
+    (synopsis "High-performance character encoding detection for Python")
+    (description
+     "cChardet is a character encoding detector, written in Python, that binds
+to the C library @code{uchardet} to increase performance.")
+    (license license:gpl2+)))
 
 (define-public udiskie
   (package

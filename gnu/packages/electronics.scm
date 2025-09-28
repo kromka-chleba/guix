@@ -20,6 +20,7 @@
 ;;; Copyright © 2023 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2022, 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -113,8 +114,88 @@
   #:use-module (gnu packages toolkits)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xml))
+
+(define-public aacircuit
+  ;; No release in PyPI or version tag on Git, use the latest commit.
+  (let ((commit "18635c846754b6219da1a2ceb8977714f70004d0")
+        (revision "0"))
+    (package
+      (name "aacircuit")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Blokkendoos/AACircuit")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "07agb7fbpbq74zm27j9b00imr46q6kpwhxzmmffw2s9scv80c1km"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:imported-modules `((guix build glib-or-gtk-build-system)
+                             ,@%pyproject-build-system-modules)
+        #:modules '(((guix build glib-or-gtk-build-system)
+                     #:prefix glib-or-gtk:)
+                    (guix build pyproject-build-system)
+                    (guix build utils))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'generate-gdk-pixbuf-loaders-cache-file
+              (assoc-ref glib-or-gtk:%standard-phases
+                         'generate-gdk-pixbuf-loaders-cache-file))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  ;; Delete develompent test file.
+                  (delete-file "tests/test_flake.py")
+                  ;; Exclude tests intended for visual review.
+                  (setenv "NOSE_EXCLUDE"
+                          (string-join '("test_export_pdf"
+                                         "test_import_aacircuit_export_pdf")
+                                       ","))
+                  (setenv "HOME" "/tmp")
+                  (invoke "xvfb-run" "./testrunner.sh"))))
+            (add-after 'wrap 'glib-or-gtk-wrap
+              (assoc-ref glib-or-gtk:%standard-phases
+                         'glib-or-gtk-wrap))
+            (add-after 'glib-or-gtk-wrap 'wrap-aacircuit
+              (lambda* (#:key outputs #:allow-other-keys)
+                (wrap-program (string-append (assoc-ref outputs "out")
+                                             "/bin/aacircuit")
+                  `("GDK_PIXBUF_MODULE_FILE" =
+                    (,(getenv "GDK_PIXBUF_MODULE_FILE")))
+                  `("GI_TYPELIB_PATH" ":" prefix
+                    (,(getenv "GI_TYPELIB_PATH")))))))))
+      (native-inputs
+       ;; XXX: Test runner may be migrated to Pytest
+       ;; <https://docs.pytest.org/en/7.1.x/how-to/nose.html> after report to
+       ;; the upstream to modify them, use deprecated Nose test runner for
+       ;; now.
+       (list python-nose
+             python-setuptools
+             python-wheel
+             xvfb-run))
+      (inputs
+       (list bash-minimal
+             gtk+
+             python-bresenham
+             python-platformdirs
+             python-pycairo
+             python-pyclip
+             python-pygobject
+             python-pypubsub))
+      (home-page "https://github.com/Blokkendoos/AACircuit")
+      (synopsis "Draw electronic circuits with ASCII characters")
+      (description
+       "This is a pythonized, kind of reverse engineered version of original
+AACircuit written by Andreas Weber in Borland Delphi.  The idea and GUI layout
+are also taken from the original.")
+      (license license:gpl3+))))
 
 (define-public abc
   (let ((commit "e29dcd9f3275874c8d31a2f781487efac1dabb7b")
@@ -1070,8 +1151,8 @@ editor, part of the RiNgDove EDA suite.")
 
 (define-public prjtrellis
   ;; The last release is 2 years old; use the latest commit for now.
-  (let ((commit "898329dddf6ce6463299973081f109d645b9c55f")
-        (revision "0"))
+  (let ((commit "92345b77edf775fe5668700dd9931e19db2d36b0")
+        (revision "1"))
     (package
       (name "prjtrellis")
       (version (git-version "1.4" revision commit))
@@ -1092,7 +1173,7 @@ editor, part of the RiNgDove EDA suite.")
              (for-each delete-file-recursively
                        '("pybind11"))))
          (sha256
-          (base32 "1qljgn7rxz114vki21rms70zi9rgr4gw7crdfihxx1n68zgv60gg"))))
+          (base32 "1yl5qw846jbnwzs8jv8bllz0zrzsg8amphvl9nskq5p5fz188q22"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -1326,7 +1407,7 @@ verification.")
      (list iverilog
            nvc
            python-pytest
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-find-libpython))
     (home-page "https://github.com/cocotb/cocotb")
@@ -1370,7 +1451,7 @@ and Verilog RTL using Python.")
        (list iverilog
              nvc
              python-pytest
-             python-setuptools-next))
+             python-setuptools))
       (propagated-inputs
        (list python-cocotb
              python-packaging
@@ -1408,7 +1489,7 @@ and reusable bus interfaces to be used with @code{cocotb}.")
                           "test_xcelium")
                     " and not "))))
     (native-inputs
-     (list python-pytest python-setuptools-next))
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-jinja2))
     (home-page "https://github.com/olofk/edalize/")
@@ -1444,7 +1525,7 @@ some tool-specific options are set.")
                                       (lambda _
                                         (chdir "testsuite"))))
                        #:test-flags #~(list "test_all.py")))
-      (native-inputs (list python-pytest python-setuptools-next))
+      (native-inputs (list python-pytest python-setuptools))
       (propagated-inputs (list python-networkx python-six))
       (home-page "https://ohwr.gitlab.io/project/hdl-make/")
       (synopsis "Generate multi-purpose makefiles for HDL projects")
@@ -1476,7 +1557,7 @@ and simulation Makefiles.")
       (build-system pyproject-build-system)
       (native-inputs
        (list python-pytest
-             python-setuptools-next))
+             python-setuptools))
       (propagated-inputs
        (list python-colorama))
       (home-page "https://m-labs.hk/gateware/migen/")
@@ -1515,7 +1596,7 @@ Python program.")
                   (invoke "make" "iverilog" "core")))))))
       (build-system pyproject-build-system)
       (native-inputs
-       (list iverilog python-setuptools-next python-pytest))
+       (list iverilog python-setuptools python-pytest))
       (home-page "http://www.myhdl.org/")
       (synopsis "Python as a Hardware Description Language")
       (description "This package provides a library to turn Python into
@@ -1619,7 +1700,7 @@ design.")
      (list python-pytest-cov
            python-pytest-html
            python-pytest-xdist
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-pyyaml))
     (home-page "https://github.com/jeremiah-c-leary/vhdl-style-guide/")
@@ -1656,17 +1737,28 @@ to enforce it.")
                  (string-append
                   ": \"llvm\",\n\tr\"static elaboration, LLVM JIT code "
                   "generator\": \"llvm-jit\",")))))
-          (add-after 'ensure-no-mtimes-pre-1980 'dosymlink
-            (lambda* (#:key inputs #:allow-other-keys)
-              (with-directory-excursion "vunit/vhdl/JSON-for-VHDL"
+          (add-after 'install 'unbundle
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((site-packages
+                     (string-append (site-packages inputs outputs)
+                                    "/vunit/vhdl/")))
+                (mkdir-p (string-append site-packages "JSON-for-VHDL"))
                 (symlink
-                 (search-input-directory inputs "/share/json-for-vhdl")
-                 "src"))
-              (with-directory-excursion "vunit/vhdl"
-                (delete-file-recursively "osvvm")
+                 (search-input-directory inputs "share/json-for-vhdl")
+                 (string-append site-packages "JSON-for-VHDL/src"))
                 (symlink
-                 (search-input-directory inputs "/share/osvvm/osvvm")
-                 "osvvm")))))
+                 (search-input-directory inputs "share/osvvm/osvvm")
+                 (string-append site-packages "osvvm")))))
+          (add-after 'check 'run-examples
+            ;; Run examples as an extra check.
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion "examples/vhdl"
+                (for-each
+                 (lambda (dir)
+                   (invoke "python3" (string-append dir "/run.py")))
+                 (list
+                  "array" "check" "composite_generics" "json4vhdl" "logging"
+                  "logging" "uart" "vhdl_configuration"))))))
       #:test-flags
       ;; Skip lint tests which require python-pycodestyle, python-pylint and
       ;; python-mypy to reduce closoure size; some lint test fails, see

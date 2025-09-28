@@ -461,7 +461,7 @@ broken iOS devices.")
     (inputs
      (list python))
     (native-inputs
-     (list autoconf automake libtool pkg-config python-cython)) ; to build Python bindings
+     (list autoconf automake libtool pkg-config python-cython-0)) ; to build Python bindings
     (home-page "https://libimobiledevice.org/")
     (synopsis "C library to handle Apple Property List files")
     (description "This package provides a small portable C library to handle
@@ -514,7 +514,7 @@ connections from and to iOS devices by connecting to a socket provided by a
     (inputs
      (list python))
     (native-inputs
-     (list pkg-config python-cython))
+     (list pkg-config python-cython-0))
     (home-page "https://libimobiledevice.org/")
     (synopsis "Protocol library and tools to communicate with Apple devices")
     (description "libimobiledevice is a software library that talks the

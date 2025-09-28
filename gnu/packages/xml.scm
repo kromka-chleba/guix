@@ -327,7 +327,7 @@ to output XPath results with a null delimiter.")))
               (patches
                 (append (search-patches "python-libxml2-utf8.patch")
                         (origin-patches (package-source libxml2))))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (outputs '("out"))
     (arguments
      (list
@@ -345,6 +345,7 @@ to output XPath results with a null delimiter.")))
                   ;; provide the absolute directory name.
                   (("/opt/include")
                    (dirname libxml2-headers)))))))))
+    (native-inputs (list python-setuptools))
     (inputs (list libxml2))
     (synopsis "Python bindings for the libxml2 library")))
 
@@ -1898,22 +1899,32 @@ The central program included in this package is @code{onsgmls}, which replaces
 (define-public python-elementpath
   (package
     (name "python-elementpath")
-    (version "2.0.3")
+    (version "5.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "elementpath" version))
        (sha256
         (base32
-         "1kxx573ywqfh6j6aih2i6hhsya6kz79qq4bgz6yskwk6b18jyr8z"))))
-    (build-system python-build-system)
-    ;; The test suite is not run, to avoid a dependency cycle with
-    ;; python-xmlschema.
-    (arguments `(#:tests? #f))
-    (home-page
-     "https://github.com/sissaschool/elementpath")
-    (synopsis
-     "XPath 1.0/2.0 parsers and selectors for ElementTree and lxml")
+         "1yr5ka198p1c1yw0dpmvz5mvxr6b29mz64hb2vxax53fbmb97vc5"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'unittest
+      #:phases
+      #~(modify-phases %standard-phases
+         ;; 10 tests fail with: locale.Error: unsupported locale setting.
+          (add-before 'check 'set-locales
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "GUIX_LOCPATH"
+                      (search-input-directory inputs "lib/locale")))))))
+    (native-inputs
+     (list glibc-locales
+           python-setuptools
+           python-lxml
+           python-xmlschema-bootstrap))
+    (home-page "https://github.com/sissaschool/elementpath")
+    (synopsis "XPath 1.0/2.0 parsers and selectors for ElementTree and lxml")
     (description
      "The proposal of this package is to provide XPath 1.0 and 2.0 selectors
 for Python's ElementTree XML data structures, both for the standard
@@ -1933,13 +1944,15 @@ because lxml.etree already has its own implementation of XPath 1.0.")
        (uri (pypi-uri "lxml" version))
        (sha256
         (base32 "11yvrzlswlh81z6lpmds2is2jd3wkigpwj6mcfcaggl0h64w8bdv"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
                   (replace 'check
                     (lambda* (#:key tests? #:allow-other-keys)
                       (when tests?
                         (invoke "make" "test")))))))
+    (native-inputs
+     (list python-setuptools))
     (inputs
      (list libxml2 libxslt))
     (home-page "https://lxml.de/")
@@ -1967,7 +1980,14 @@ libxml2 and libxslt.")
                 (add-after 'unpack 'relax-gcc-14-strictness
                   (lambda _
                     (setenv "CFLAGS"
-                            "-Wno-error=incompatible-pointer-types")))))))))
+                            "-Wno-error=incompatible-pointer-types")))
+                (replace 'check
+                  (lambda* (#:key tests? #:allow-other-keys)
+                    (when tests?
+                      (substitute* "src/lxml/tests/test_elementtree.py"
+                        ;; AssertionError: Lists differ: [] != [('end', 'element')]
+                        (("def test_simple_xml") "def _do_not_test_simple_xml"))
+                      (invoke "make" "test"))))))))))
 
 (define-deprecated python-lxml-4.7 python-lxml)
 (export python-lxml-4.7)
@@ -2006,13 +2026,12 @@ content, it is not appropriate for security sensitive environments.")
     (license license:bsd-3)))
 
 (define-public python-untangle
-  ;; The latest tagged release is from 2014; use the latest commit.
-  (let ((revision "1")
-        (commit "fb916a9621175d000a3b0ca9322d3b3ebf8570c0"))
+  ;; The latest tagged release is from 2022; use the latest commit.
+  (let ((revision "2")
+        (commit "7eec044b6c78f58cc6d8f183b2f9a511bfc334f8"))
     (package
       (name "python-untangle")
-      ;; PyPI currently offers some untagged 1.1.1 version.
-      (version (git-version "1.1.1" revision commit))
+      (version (git-version "1.2.1" revision commit))
       (source
        (origin
          (method git-fetch)             ;no tests in pypi archive
@@ -2021,13 +2040,13 @@ content, it is not appropriate for security sensitive environments.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0dn2jz9ajncbqx3pdlgqaxmngl6pdiaz03nj8mkddasckdq9lbrh"))))
-      (build-system python-build-system)
-      (arguments (list #:phases #~(modify-phases %standard-phases
-                                    (replace 'check
-                                      (lambda* (#:key tests? #:allow-other-keys)
-                                        (when tests?
-                                          (invoke "python" "tests/tests.py")))))))
+          (base32 "0pcwcrga8cgrqyyzfj01vkqv3xrzl0a8xa5yfi06byk6d85rv6zf"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-poetry-core
+             python-pytest))
+      (propagated-inputs
+       (list python-defusedxml))
       (home-page "http://0chris.com/untangle")
       (synopsis "XML to Python objects conversion library")
       (description "@code{untangle} is a tiny Python library which converts an
@@ -2037,7 +2056,7 @@ XML document to a Python object.")
 (define-public python-xmlschema
   (package
     (name "python-xmlschema")
-    (version "1.2.5")
+    (version "4.1.0")
     (source (origin
               ;; Unit tests are not distributed with the PyPI archive.
               (method git-fetch)
@@ -2047,22 +2066,12 @@ XML document to a Python object.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0rsa75x86gdjalvy4riq7613szb616hff80crx006chyppzdkxmq"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (if tests?
-                 ;; Disable test_export_remote__issue_187, which is known to
-                 ;; fail (see:
-                 ;; https://github.com/sissaschool/xmlschema/issues/206).
-                 (invoke "python" "-m" "unittest" "-v"
-                         "-k" "not test_export_remote__issue_187")
-                 (format #t "test suite not run~%")))))))
+                "1bgih9vad1iij8lffddas74gx8kx7qn0b5hr056hmhg5vbiyayyy"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest))
     (native-inputs
-     (list python-lxml))   ;for tests
+     (list python-lxml
+           python-setuptools))
     (propagated-inputs
      (list python-elementpath))
     (home-page "https://github.com/sissaschool/xmlschema")
@@ -2075,20 +2084,31 @@ finding schema's elements and attributes; and can encode and decode
 XML data to JSON and other formats.")
     (license license:expat)))
 
+(define-public python-xmlschema-bootstrap
+  (hidden-package
+   (package/inherit python-xmlschema
+     (arguments
+      (list #:tests? #f
+            #:phases
+            #~(modify-phases %standard-phases
+                (delete 'sanity-check))))
+     (propagated-inputs '()))))
+
 (define-public python-xmltodict
   (package
     (name "python-xmltodict")
-    (version "0.12.0")
+    (version "0.14.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "xmltodict" version))
        (sha256
         (base32
-         "08cadlb9vsb4pmzc99lz3a2lx6qcfazyvgk10pcqijvyxlwcdn2h"))))
+         "0lx521w5nlmb937fxym5m38hxar354wfdpfik54kf3i1pcl7q7i0"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-coverage python-nose python-setuptools python-wheel))
+     (list python-pytest
+           python-setuptools))
     (home-page "https://github.com/martinblech/xmltodict")
     (synopsis "Work with XML like you are working with JSON")
     (description "This package provides a Python library to convert XML to

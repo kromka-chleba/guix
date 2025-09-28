@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2023 Adam Faiz <adam.faiz@disroot.org>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,6 +20,7 @@
 
 (define-module (gnu packages books)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -29,15 +31,29 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages cpp)
+  #:use-module (gnu packages compression)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages gettext)
+  #:use-module (gnu packages glib)
+  #:use-module (gnu packages gtk)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages inkscape)
+  #:use-module (gnu packages icu4c)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages music)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages texlive)
-  #:use-module (gnu packages version-control))
+  #:use-module (gnu packages version-control)
+  #:use-module (gnu packages webkit)
+  #:use-module (gnu packages xml))
 
 (define-public book-sparc
   (package
@@ -139,3 +155,75 @@ book can be used to teach programming classes in colleges and to organize
 workshops in hackerspaces or other community-driven spaces.  Currently the book
 is available in Russian and English.")
     (license license:cc-by-sa4.0)))
+
+(define-public sword
+  (package
+    (name "sword")
+    (version "1.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://www.crosswire.org/ftpmirror/pub/sword/source/v"
+             (version-major+minor version) "/sword-" version ".tar.gz"))
+       (sha256
+        (base32 "12kb881w7p79is3ysy2w5bnzj8axfk05lb1ya8413brgvvrrqh22"))))
+    (build-system cmake-build-system)
+    (native-inputs (list curl icu4c-73 zlib))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DSWORD_BUILD_TESTS=Yes"
+              "-DSWORD_USE_INTERNAL_ZLIB=No")))
+    (home-page "https://www.crosswire.org/sword/")
+    (synopsis "Cross-platform open source tools for writing Bible software")
+    (description
+     "The SWORD Project is a free Bible software project used to create Bible
+software, with support for multiple texts and languages.")
+    (license license:gpl2+)))
+
+(define-public xiphos
+  (package
+    (name "xiphos")
+    (version "4.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/crosswire/xiphos")
+             (commit version)))
+       (sha256
+        (base32 "15p8ahbcd8vjm1ch0wahjfj20agd06va8rvgw1awnyzkcw2xsf8x"))
+       (patches (search-patches "xiphos-glib.patch"))
+       (file-name (git-file-name name version))))
+    (build-system cmake-build-system)
+    (native-inputs (list appstream
+                         appstream-glib
+                         atk
+                         biblesync
+                         desktop-file-utils ;for 'desktop-file-validate'
+                         (list glib "bin")
+                         gettext-minimal
+                         gsettings-desktop-schemas
+                         gtk+
+                         libgsf
+                         minizip
+                         pkg-config
+                         sword
+                         util-linux ;for 'uuidgen'
+                         (list util-linux "lib") ;for 'libuuid'
+                         webkitgtk-with-libsoup2
+                         yelp-tools
+                         zip))
+    (inputs (list dbus dbus-glib libxml2 python python-lxml))
+    (arguments
+     (list
+      #:tests? #f)) ;No tests
+    (home-page "https://xiphos.org/")
+    (synopsis "Open Source Bible Study Software")
+    (description
+     "Xiphos is a Bible study tool using GTK.  It uses Sword to
+display bibles, commentaries, dictionaries, and other texts and images.
+Xiphos includes features such as searching, biblesync, bookmarks,
+parallel study, and original language study.")
+    (license license:gpl2+)))

@@ -671,7 +671,7 @@ and a lot more.")
               "dcor/tests")))
     (native-inputs
      (list python-pytest
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-joblib
            python-numba
@@ -1100,19 +1100,19 @@ correlated samples from Markov Chain Monte Carlo (MCMC).")
               (uri (pypi-uri "hdmedians" version))
               (sha256
                (base32
-                "1mn2k8srnmfy451l7zvb2l4hn9701bc5awjm6q3vmqbicyqyqyml"))))
+                "1mn2k8srnmfy451l7zvb2l4hn9701bc5awjm6q3vmqbicyqyqyml"))
+       (patches (search-patches "python-hdmedians-replace-nose.patch"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-before 'check 'build-extensions
-           (lambda _
-             ;; Cython extensions have to be built before running the tests.
-             (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs (list python-cython python-numpy python-setuptools
-                             python-wheel))
-    (native-inputs (list python-nose))
+      #:test-flags #~(list "--pyargs" "hdmedians")))
+    (native-inputs
+     (list python-pytest))
+    (propagated-inputs
+     (list python-cython
+           python-numpy
+           python-setuptools
+           python-wheel))
     (home-page "http://github.com/daleroberts/hdmedians")
     (synopsis "High-dimensional medians")
     (description "Various definitions for a high-dimensional median exist and
@@ -1349,7 +1349,7 @@ Meier, Nelson Aalen and regression.")
                (base32
                 "1bkikqjya6gkds3n4qj6svvyz6czkwrc5s66ffb62l6wi4v2f89a"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pandas python-pytest python-setuptools-next
+    (native-inputs (list python-pandas python-pytest python-setuptools
                          python-wheel))
     (propagated-inputs (list python-numpy python-scikit-learn))
     (home-page "https://github.com/scikit-learn-contrib/MAPIE")
@@ -1404,7 +1404,7 @@ conformal prediction methods intervals.")
     (native-inputs
      (list python-cython-3
            python-matplotlib
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm))
     (home-page
      (string-append "https://www.statsmodels.org/v" version "/"))
@@ -3010,9 +3010,16 @@ completion.")
          (base32
           "10nmydlbmi0vyim7sx71isx3z2mnnfjmhf3248cicy9x1z1hizyv"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: ...trying to load module _rinterface_cffi_api: ERROR:
+          ;;
+          ;; See: <https://github.com/rpy2/rpy2/issues/1034>.
+          (delete 'sanity-check))))
     (propagated-inputs
      (list python-cffi
-           python-six
            python-jinja2
            python-numpy
            python-pandas
@@ -3033,14 +3040,8 @@ completion.")
            r-dbplyr
            zlib))
     (native-inputs
-     (list python-coverage
-           python-ipython
-           python-numpy
-           python-pandas
-           python-pytest
-           python-pytest-cov
-           python-setuptools
-           python-wheel))
+     (list python-pytest
+           python-setuptools))
     (home-page "https://rpy2.github.io")
     (synopsis "Python interface to the R language")
     (description "rpy2 is a redesign and rewrite of rpy.  It is providing a

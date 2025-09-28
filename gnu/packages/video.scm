@@ -203,6 +203,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -2695,14 +2696,7 @@ SVCD, DVD, 3ivx, DivX 3/4/5, WMV and H.264 movies.")
               (substitute* "player/lua/ytdl_hook.lua"
                 (("\"yt-dlp\",")
                  (string-append
-                  "\"" (search-input-file inputs "bin/yt-dlp") "\",")))))
-          (add-before 'configure 'build-reproducibly
-            (lambda _
-              ;; Somewhere in the build system library dependencies are enumerated
-              ;; and passed as linker flags, but the order in which they are added
-              ;; varies.  See <https://github.com/mpv-player/mpv/issues/7855>.
-              ;; Set PYTHONHASHSEED as a workaround for deterministic results.
-              (setenv "PYTHONHASHSEED" "1"))))
+                  "\"" (search-input-file inputs "bin/yt-dlp") "\","))))))
       #:configure-flags
       #~(list "-Dlibmpv=true"
               "-Dcdda=enabled"
@@ -3144,7 +3138,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.09.05")
+    (version "2025.09.26")
     (source
      (origin
        (method git-fetch)
@@ -3156,7 +3150,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
        (snippet #~(substitute* "pyproject.toml"
                     (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "0cjcii3d7pj0wbz3166jpcr81j8x8ggrjiciig9x915sb58qwbpp"))))
+        (base32 "0j6l2zskmsvqk8h3ialbymk75i0bfzn2qmc2gk6s1ybhnpryrv7y"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3202,7 +3196,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
                   python-certifi
                   python-mutagen
                   python-pycryptodomex
-                  python-requests-next ; TODO Remove this special package
+                  python-requests ; TODO Remove this special package
                   python-urllib3
                   python-websockets))
     (native-inputs
@@ -3372,7 +3366,7 @@ Both command-line and GTK2 interface are available.")
            python-wcwidth
            python-websockets
            python-urllib3
-           python-requests-next
+           python-requests
            python-pycryptodomex
            python-mutagen
            python-brotli
@@ -3773,7 +3767,7 @@ capabilities.")
     (native-inputs
      (list autoconf
            automake
-           python-cython
+           python-cython-0
            libtool
            pkg-config
            yasm))
@@ -6590,7 +6584,7 @@ can also directly record to WebM or MP4 if you prefer.")
      (list python-dbus
            python-pygobject
            python-pytest
-           python-setuptools-next
+           python-setuptools
            python-wheel))
     (propagated-inputs
      (list python-pylast

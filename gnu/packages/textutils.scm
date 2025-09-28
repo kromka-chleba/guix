@@ -1058,43 +1058,6 @@ Eclipse and NetBeans.  Completion information is typically specified in an XML
 file, but can even be dynamic.")
     (license license:bsd-3)))
 
-;; We use the sources from git instead of the tarball from pypi, because the
-;; latter does not include the Cython source file from which bycython.cpp is
-;; generated.
-(define-public python-editdistance
-  (let ((commit "3ea84a7dd3258c76aa3be851ef3d50e59c886846")
-        (revision "1"))
-    (package
-      (name "python-editdistance")
-      (version (string-append "0.3.1-" revision "." (string-take commit 7)))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/aflc/editdistance")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "1l43svsv12crvzphrgi6x435z6xg8m086c64armp8wzb4l8ccm7g"))))
-      (build-system python-build-system)
-      (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'build-cython-code
-             (lambda _
-               (with-directory-excursion "editdistance"
-                 (delete-file "bycython.cpp")
-                 (invoke "cython" "--cplus" "bycython.pyx")))))))
-      (native-inputs
-       (list python-cython))
-      (home-page "https://www.github.com/aflc/editdistance")
-      (synopsis "Fast implementation of the edit distance (Levenshtein distance)")
-      (description
-       "This library simply implements Levenshtein distance algorithm with C++
-and Cython.")
-      (license license:expat))))
-
 (define-public txt2tags
   (package
     (name "txt2tags")
@@ -1622,14 +1585,18 @@ such as ISO-2022-JP, Shift_JIS, EUC-JP, UTF-8, UTF-16 or UTF-32.")
 (define-public python-pandocfilters
   (package
     (name "python-pandocfilters")
-    (version "1.5.0")
+    (version "1.5.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pandocfilters" version))
        (sha256
-        (base32 "0f3sb8q85dbwliv46cc1yvpy4r00qp4by5x8751kn8vx6c1rarqb"))))
-    (build-system python-build-system)
+        (base32 "17lknixjja23jczlv8afgfky94m4gwl7wc36iczw1sz4brallaq0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;require pandoc to run tests
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/jgm/pandocfilters")
     (synopsis "Python module for writing Pandoc filters")
     (description "Pandoc is a powerful utility to transform various
@@ -1922,22 +1889,21 @@ Expressions, and being faster to type than grep.")
 (define-public python-panflute
   (package
     (name "python-panflute")
-    (version "2.3.0")
+    (version "2.3.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "panflute" version))
               (sha256
                (base32
-                "1jk5b2sp1h4drkjrg2ks77d0ca6j043n2myvacm77nfc93y9vzff"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-click python-pyyaml))
-    (native-inputs (list python-configparser
-                         python-coverage
-                         python-flake8
-                         python-pandocfilters
-                         python-pytest
-                         python-pytest-cov
-                         python-requests))
+                "07wg5md93jcdkpiqljwr3p1xzvm6nf7vbiay0bp84fgg6hmd06sz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;require pandoc to run tests
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-click
+           python-pyyaml))
     (home-page "http://scorreia.com/software/panflute/")
     (synopsis "Pythonic Pandoc filters")
     (description

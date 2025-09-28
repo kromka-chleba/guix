@@ -843,7 +843,7 @@ interface for those who are accustomed to the ircII way of doing things.")
            ;; this package.
            (lambda _ (delete-file "tests/test_parse.py"))))))
     (propagated-inputs (list python-docopt))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://github.com/DanielOaks/girc")
     (synopsis "IRC library for Python")
     (description
@@ -861,7 +861,10 @@ interface for those who are accustomed to the ircII way of doing things.")
        (sha256
         (base32 "1bn92bnk958c097jhwkas24i4a07h905hifix7bg111npc48536l"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list #:test-backend #~'custom
+           #:test-flags #~(list "example.py")))
+    (native-inputs (list python-setuptools))
     (home-page "https://pypi.org/project/ircmatch/")
     (synopsis "Library for matching IRC masks based on atheme")
     (description "This is a python extension which provides string comparison
@@ -883,10 +886,14 @@ performance when matching IRC hostmasks.")
        (sha256
         (base32 "0x0psq31f43d88b8jhaqwd9f1ykiqm4j13i8nxgcgkgp992cw002"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list #:test-backend #~'custom
+           #:test-flags #~(list "test.py")))
     (propagated-inputs (list python-pyyaml))
     (native-inputs
-     (list python-girc python-ircmatch
-           python-setuptools python-wheel))
+     (list python-girc
+           python-ircmatch
+           python-setuptools))
     (home-page "https://github.com/ircdocs/parser-tests")
     (synopsis "Tests for various IRC protocol parsers")
     (description
