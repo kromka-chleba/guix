@@ -30730,6 +30730,32 @@ behavior and not have to worry about the specific internal implementation
 decisions with any given backend.")
     (license license:bsd-3)))
 
+(define-public python-pathlib-abc
+  (package
+    (name "python-pathlib-abc")
+    ;; IMPORTANT: Check python-universal-pathlib requirements before updating
+    ;; the version of this package.
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/barneygale/pathlib-abc")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1f8m2b6pvz66ljl97ck2brzv79m642f10abdq6ndxxsjlcjcy8qz"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatchling python-pytest))
+    (home-page "https://github.com/barneygale/pathlib-abc")
+    (synopsis "Backport of pathlib ABCs")
+    (description
+     "This package is a preview of pathlib functionality planned for a future
+release of Python.  Specifically, it provides three ABCs that can be used to
+implement path classes for non-local filesystems, such as archive files and
+storage servers.")
+    (license license:psfl)))
+
 (define-public python-ilinkedlist
   (package
     (name "python-ilinkedlist")
