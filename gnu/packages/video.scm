@@ -1285,7 +1285,7 @@ on the Invidious instances only as a fallback method.")
 (define-public x265
   (package
     (name "x265")
-    (version "3.5")
+    (version "4.1")
     (outputs '("out" "static"))
     (source
       (origin
@@ -1293,7 +1293,7 @@ on the Invidious instances only as a fallback method.")
         (uri (string-append "https://bitbucket.org/multicoreware/x265_git"
                             "/downloads/x265_" version ".tar.gz"))
         (sha256
-         (base32 "1s6afxj61jdwfjnn70dwiql34fbqsvn6zv10785vmjyar8sk62p7"))
+         (base32 "0acgmzbpjhwapxggx0h40m4lppk5vykydrai055vf1lqm339j5m3"))
         (patches (search-patches "x265-arm-flags.patch"))
         (modules '((guix build utils)))
         (snippet '(begin
@@ -1392,6 +1392,21 @@ on the Invidious instances only as a fallback method.")
     (description "x265 is a H.265 / HEVC video encoder application library,
 designed to encode video or images into an H.265 / HEVC encoded bitstream.")
     (license license:gpl2+)))
+
+(define-public x265-3
+  (package
+    (inherit x265)
+    (version "3.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://bitbucket.org/multicoreware/x265_git"
+                           "/downloads/x265_" version ".tar.gz"))
+       (sha256
+        (base32 "1s6afxj61jdwfjnn70dwiql34fbqsvn6zv10785vmjyar8sk62p7"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (delete-file-recursively "source/compat/getopt")))))))
 
 (define-public libass
   (package
@@ -5001,7 +5016,7 @@ Content System specification.")
        ("libxml2" ,libxml2)
        ("libx264" ,libx264)
        ("speex" ,speex)
-       ("x265" ,x265)
+       ("x265" ,x265-3)
        ("zimg" ,zimg)
        ("zlib" ,zlib)))
     (arguments
