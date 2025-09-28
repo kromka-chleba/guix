@@ -890,3 +890,14 @@ which will be used as a snippet in origin."
    #:repository-url
    "https://github.com/neovim/tree-sitter-vimdoc"
    #:license license:expat))
+
+(define-public tree-sitter-query
+  (package
+    (inherit (tree-sitter-grammar "query"
+     "Query"
+     "0fbqwg7km4yqjq8p2fkj9hpy0sfnijnf1hsk34wsirlp3af3hc67"
+     "0.7.0"
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-query"))
+    (synopsis "Tree-sitter grammar for Tree-sitter's query language")
+    (description "This package provides Tree-sitter's query grammar.")))
