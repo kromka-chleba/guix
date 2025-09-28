@@ -6303,6 +6303,10 @@ alias cysdig=sudo csysdig --modern-bpf
                                           "fail2banclienttestcase.Fail2banServerTest"
                                           "servertestcase.ServerConfigReaderTests")))
                  ""))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "bin/fail2ban-testcases"))))
           (add-before 'build 'fix-default-config
             (lambda _
               (substitute* '("config/paths-common.conf"
