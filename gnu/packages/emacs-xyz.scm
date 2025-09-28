@@ -163,6 +163,7 @@
 ;;; Copyright @ 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright @ 2025 Nik Gaffney <nik@fo.am>
 ;;; Copyright © 2025 Untrusem <mysticmoksh@riseup.net>
+;;; Copyright © 2025 forgoty <forgoty13@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -42295,7 +42296,7 @@ using org mode; faster than org-roam.")
 (define-public emacs-org-mem
   (package
     (name "emacs-org-mem")
-    (version "0.18.1")
+    (version "0.20.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -42304,7 +42305,7 @@ using org mode; faster than org-roam.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1nm1avc0hbvhr43vkfw3jssiqyckd7ba6jw0qhvgcvk49df393wf"))))
+                "0yxmsh96zx41vr98qrxr93cnx92pwzbqdpa4hn52zdjb45vhk3gn"))))
     (build-system emacs-build-system)
     (arguments
      (list
