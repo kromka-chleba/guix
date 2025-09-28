@@ -881,3 +881,12 @@ which will be used as a snippet in origin."
    "0wr0sijh3vpka0gysbf0ki8zkvwfg8r5lvhi3xbwmkbyszjzgrqw"
    "0.7.0"
    #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-vim"))
+
+(define-public tree-sitter-vimdoc
+  (tree-sitter-grammar "vimdoc"
+   "Vimdoc"
+   "1gi16hmh4vk9hdfkg9kvwxd7m4rq8r6vymk7fgxqqrbyrks9f0mw"
+   "4.0.0"
+   #:repository-url
+   "https://github.com/neovim/tree-sitter-vimdoc"
+   #:license license:expat))
