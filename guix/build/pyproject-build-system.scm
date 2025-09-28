@@ -154,7 +154,6 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
              (nosetests (which "nosetests"))
              (nose2 (which "nose2"))
              (stestr (which "stestr"))
-             (have-setup-py (file-exists? "setup.py"))
              ;; unittest default pattern
              ;; See https://docs.python.org/3/library/unittest.html\
              ;; #cmdoption-unittest-discover-p
@@ -166,12 +165,6 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
                   (if stestr 'stestr #f)
                   (if nosetests 'nose #f)
                   (if nose2 'nose2 #f)
-                  ;; Fall back to setup.py. The command is deprecated, but is
-                  ;; a superset of unittest, so should work for most packages.
-                  ;; Keep it until setuptools removes `setup.py test'.
-                  ;; See https://setuptools.pypa.io/en/latest/deprecated/\
-                  ;; commands.html#test-build-package-and-run-a-unittest-suite
-                  (if have-setup-py 'setup.py #f)
                   (if tests-found 'unittest #f))))
         (format #t "Using ~a~%" use-test-backend)
         (match use-test-backend
@@ -181,11 +174,6 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
            (apply invoke nosetests "-v" test-flags))
           ('nose2
            (apply invoke nose2 "-v" "--pretty-assert" test-flags))
-          ('setup.py
-           (apply invoke "python" "setup.py"
-                  (if (null? test-flags)
-                      '("test" "-v")
-                      test-flags)))
           ('stestr
            (apply invoke stestr "run" test-flags))
           ('unittest
