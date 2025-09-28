@@ -29296,6 +29296,36 @@ close matches in Python.")
 in Python.  You can simply type pybtex instead of bibtex.")
     (license license:expat)))
 
+(define-public python-pybtex-apa-style
+  (package
+    (name "python-pybtex-apa-style")
+    (version "1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/naeka/pybtex-apa-style")
+             ;; Upstream no longer tags commits.
+             (commit "4040a6495a13ea8000ad21b7688a2069cc7711f5")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cmgcpcvs9jcw4yxhiy217hdngp9p9nlp5x6s2qmkwj0iwgd39iq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend
+      #~'custom
+      #:test-flags
+      #~(list "-c"
+              (string-append "import sys, pybtex.plugin;"
+               "sys.exit('apa' not in pybtex.plugin.enumerate_plugin_names('pybtex.style.labels'))"))))
+    (native-inputs (list python-pybtex python-setuptools))
+    (home-page "https://github.com/naeka/pybtex-apa-style")
+    (synopsis "APA style for pybtex")
+    (description
+     "This package provides support for the APA style within pybtex.")
+    (license license:expat)))
+
 (define-public python-onetimepass
   (package
     (name "python-onetimepass")
