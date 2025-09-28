@@ -123,6 +123,9 @@
                 "download_url" non-empty-string-or-false)
   (home-page    project-info-home-page            ;string | #f
                 "home_page" non-empty-string-or-false)
+  (project-home-page project-info-project-home-page ;string | #f
+                     "project_urls"
+                     (cut assoc-ref <> "Homepage"))
   (url          project-info-url "project_url")   ;string
   (release-url  project-info-release-url "release_url") ;string
   (version      project-info-version))            ;string
@@ -624,7 +627,8 @@ VERSION."
   (let* ((info (pypi-project-info pypi-package))
          (name (project-info-name info))
          (source (pypi-package->upstream-source pypi-package version))
-         (home-page (project-info-home-page info))
+         (home-page (or (project-info-home-page info)
+                        (project-info-project-home-page info)))
          (home-page (if (string-prefix? "http://" home-page)
                         (string-append "https" (string-drop home-page 4))
                         home-page)))
