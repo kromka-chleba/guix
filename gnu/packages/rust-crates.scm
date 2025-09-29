@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2025 Hilton Chain <hako@ultrarare.space>
+;;; Copyright © 2025 Evgenii Klimov <eugene.dev@lipklim.org
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2740,13 +2741,25 @@
   (crate-source "codspeed" "2.10.0"
                 "1x9anwlfzlfby794d5fcvp214bj8bp29br8pkksxwb7834djja6j"))
 
+(define rust-codspeed-2.10.1
+  (crate-source "codspeed" "2.10.1"
+                "0v3cg65nbh4m9p6vg63l5vgsjhbghaqypzpz07qw8jbwqblwrx4k"))
+
 (define rust-codspeed-criterion-compat-2.10.0
   (crate-source "codspeed-criterion-compat" "2.10.0"
                 "1jj7n8q4f80sgyp66fax09p76bhbwvlgsndd21l0ahw1xdckmdji"))
 
+(define rust-codspeed-criterion-compat-2.10.1
+  (crate-source "codspeed-criterion-compat" "2.10.1"
+                "09cp974b67fvnsb2358aglaqfcbsvn0q9jiq5nssm8i81a43vhn3"))
+
 (define rust-codspeed-criterion-compat-walltime-2.10.0
   (crate-source "codspeed-criterion-compat-walltime" "2.10.0"
                 "0jpl1hwyqcay8cffqd66swaw0mllq8avbpxxk09cgrp8cgw1z649"))
+
+(define rust-codspeed-criterion-compat-walltime-2.10.1
+  (crate-source "codspeed-criterion-compat-walltime" "2.10.1"
+                "1fwg5jj339gqdki24kim1a88kg7pkdlfmsb75brg8iz3cmrjy2kv"))
 
 (define rust-coitrees-0.2.1
   (crate-source "coitrees" "0.2.1"
@@ -8824,13 +8837,25 @@
   (crate-source "lexical-parse-float" "0.8.5"
                 "0py0gp8hlzcrlvjqmqlpl2v1as65iiqxq2xsabxvhc01pmg3lfv8"))
 
+(define rust-lexical-parse-float-1.0.6
+  (crate-source "lexical-parse-float" "1.0.6"
+                "0mpapd5cp4s5f1lsr46nq8d0fx5nkbwvbp1p06y51xfnzcrg5aaj"))
+
 (define rust-lexical-parse-integer-0.8.6
   (crate-source "lexical-parse-integer" "0.8.6"
                 "1sayji3mpvb2xsjq56qcq3whfz8px9a6fxk5v7v15hyhbr4982bd"))
 
+(define rust-lexical-parse-integer-1.0.6
+  (crate-source "lexical-parse-integer" "1.0.6"
+                "0d4v93wabi45vi759jhszrs2h6rw637grcnpdjcrrhdriygh6yls"))
+
 (define rust-lexical-util-0.8.5
   (crate-source "lexical-util" "0.8.5"
                 "1z73qkv7yxhsbc4aiginn1dqmsj8jarkrdlyxc88g2gz2vzvjmaj"))
+
+(define rust-lexical-util-1.0.7
+  (crate-source "lexical-util" "1.0.7"
+                "05zdvc2wfhm7ndszhdsvcpxbk707amhsdmhvbpxi6kxidc9ds116"))
 
 (define rust-lexiclean-0.0.1
   (crate-source "lexiclean" "0.0.1"
@@ -12791,6 +12816,11 @@
                 "0abjav5868avfgb8fjfvz2dbpm916zmhm8xvxzfgns5hhq033nhp"
                 #:snippet '(delete-file-recursively "branding")))
 
+(define rust-pyo3-0.26.0
+  (crate-source "pyo3" "0.26.0"
+                "10vkw1a27ymxbi5rrcp71k9q645ybbjdli20akk1w40j89zi383v"
+                #:snippet '(delete-file-recursively "branding")))
+
 (define rust-pyo3-build-config-0.15.2
   (crate-source "pyo3-build-config" "0.15.2"
                 "0414biclhrxv6y0bjm6s9fq9z6yah393ffkd8748pqdq83y3k4kp"))
@@ -12823,6 +12853,10 @@
   (crate-source "pyo3-build-config" "0.24.1"
                 "1hazmb2hm7qad5xcy9gajwj3231hqjnndfcb145014ypkf46awg2"))
 
+(define rust-pyo3-build-config-0.26.0
+  (crate-source "pyo3-build-config" "0.26.0"
+                "0pyzhzxsn7lhhbhjcm1nyjw53f5i3x1nbb1imali4zcl4jpxvijg"))
+
 (define rust-pyo3-ffi-0.16.6
   (crate-source "pyo3-ffi" "0.16.6"
                 "0pzpcmndak7y72p4rw494cki1bxh86diiqdzsw14gxammc1jg26a"))
@@ -12850,6 +12884,10 @@
 (define rust-pyo3-ffi-0.24.1
   (crate-source "pyo3-ffi" "0.24.1"
                 "1g5a5w7rsq2afb5zamz1jjx5834cnwlg4gig0qhb9xnvw4k0aa05"))
+
+(define rust-pyo3-ffi-0.26.0
+  (crate-source "pyo3-ffi" "0.26.0"
+                "01a137mrhpg442g1k5km3j80qh2alx24fvf3iaryyf47jb9p8m02"))
 
 (define rust-pyo3-macros-0.15.2
   (crate-source "pyo3-macros" "0.15.2"
@@ -12883,6 +12921,10 @@
   (crate-source "pyo3-macros" "0.24.1"
                 "0i2zrpazxwgfbpmzvrcqhdgg3j97l5i0q455b4rzdlx4d9lfag2w"))
 
+(define rust-pyo3-macros-0.26.0
+  (crate-source "pyo3-macros" "0.26.0"
+                "1vgx5z2csmznj371rj1g13rijz0yqi6c8xqvj6airzi2kx4fnr1f"))
+
 (define rust-pyo3-macros-backend-0.15.2
   (crate-source "pyo3-macros-backend" "0.15.2"
                 "15bhc1xib9yz4l1sd2lk3nc7scbqsjfvgvlr3mj0xq0jqh92i32s"))
@@ -12915,6 +12957,10 @@
   (crate-source "pyo3-macros-backend" "0.24.1"
                 "0m9q9zlwn5s0pa2819z3a13yn94pmq1q3swvx04fvc5z1jm6zkzl"))
 
+(define rust-pyo3-macros-backend-0.26.0
+  (crate-source "pyo3-macros-backend" "0.26.0"
+                "1kqg5q8563i754fq8g4syad5ci1k46lmb10v6isv807lxk04c0hh"))
+
 (define rust-pyproject-toml-0.11.0
   (crate-source "pyproject-toml" "0.11.0"
                 "0sm3ncm57hgcyladl55w59ycl39vq4crigjb9bya0n6b7c162w7g"))
@@ -12927,6 +12973,10 @@
 (define rust-python3-dll-a-0.2.13
   (crate-source "python3-dll-a" "0.2.13"
                 "1vfl9qpx1mj4fdzijkx1yb8z91gilc725l1ajj9r9kw8l8kl5zj9"))
+
+(define rust-python3-dll-a-0.2.14
+  (crate-source "python3-dll-a" "0.2.14"
+                "1n40cyv71pri995yrbbkiz95ran6fgklv2jzz6jls2z778qyz0fk"))
 
 (define rust-qcheck-1.0.0
   (crate-source "qcheck" "1.0.0"
@@ -16270,6 +16320,10 @@
 (define rust-target-lexicon-0.13.2
   (crate-source "target-lexicon" "0.13.2"
                 "16m6smfz533im9dyxfhnzmpi4af75g2iii36ylc4gfmqvf6gf0p5"))
+
+(define rust-target-lexicon-0.13.3
+  (crate-source "target-lexicon" "0.13.3"
+                "0355pbycq0cj29h1rp176l57qnfwmygv7hwzchs7iq15gibn4zyz"))
 
 (define rust-target-spec-3.4.2
   (crate-source "target-spec" "3.4.2"
@@ -38309,6 +38363,123 @@
                                           rust-wit-bindgen-rt-0.39.0
                                           rust-zerocopy-0.8.24
                                           rust-zerocopy-derive-0.8.24))
+                     (python-jiter =>
+                                   (list rust-ahash-0.8.12
+                                    rust-aho-corasick-1.1.3
+                                    rust-anes-0.1.6
+                                    rust-anstyle-1.0.11
+                                    rust-autocfg-1.5.0
+                                    rust-bitvec-1.0.1
+                                    rust-bumpalo-3.19.0
+                                    rust-cast-0.3.0
+                                    rust-cc-1.2.39
+                                    rust-cfg-if-1.0.3
+                                    rust-ciborium-0.2.2
+                                    rust-ciborium-io-0.2.2
+                                    rust-ciborium-ll-0.2.2
+                                    rust-clap-4.5.48
+                                    rust-clap-builder-4.5.48
+                                    rust-clap-lex-0.7.5
+                                    rust-codspeed-2.10.1
+                                    rust-codspeed-criterion-compat-2.10.1
+                                    rust-codspeed-criterion-compat-walltime-2.10.1
+                                    rust-colored-2.2.0
+                                    rust-criterion-plot-0.5.0
+                                    rust-crossbeam-deque-0.8.6
+                                    rust-crossbeam-epoch-0.9.18
+                                    rust-crossbeam-utils-0.8.21
+                                    rust-crunchy-0.2.4
+                                    rust-either-1.15.0
+                                    rust-equivalent-1.0.2
+                                    rust-find-msvc-tools-0.1.2
+                                    rust-funty-2.0.0
+                                    rust-getrandom-0.3.3
+                                    rust-half-2.6.0
+                                    rust-hashbrown-0.16.0
+                                    rust-heck-0.5.0
+                                    rust-hermit-abi-0.5.2
+                                    rust-indexmap-2.11.4
+                                    rust-indoc-2.0.6
+                                    rust-is-terminal-0.4.16
+                                    rust-itertools-0.10.5
+                                    rust-itoa-1.0.15
+                                    rust-js-sys-0.3.81
+                                    rust-lazy-static-1.5.0
+                                    rust-lexical-parse-float-1.0.6
+                                    rust-lexical-parse-integer-1.0.6
+                                    rust-lexical-util-1.0.7
+                                    rust-libc-0.2.176
+                                    rust-log-0.4.28
+                                    rust-memchr-2.7.6
+                                    rust-memoffset-0.9.1
+                                    rust-num-bigint-0.4.6
+                                    rust-num-integer-0.1.46
+                                    rust-num-traits-0.2.19
+                                    rust-once-cell-1.21.3
+                                    rust-oorandom-11.1.5
+                                    rust-paste-1.0.15
+                                    rust-plotters-0.3.7
+                                    rust-plotters-backend-0.3.7
+                                    rust-plotters-svg-0.3.7
+                                    rust-portable-atomic-1.11.1
+                                    rust-proc-macro2-1.0.101
+                                    rust-pyo3-0.26.0
+                                    rust-pyo3-build-config-0.26.0
+                                    rust-pyo3-ffi-0.26.0
+                                    rust-pyo3-macros-0.26.0
+                                    rust-pyo3-macros-backend-0.26.0
+                                    rust-python3-dll-a-0.2.14
+                                    rust-quote-1.0.40
+                                    rust-r-efi-5.3.0
+                                    rust-radium-0.7.0
+                                    rust-rayon-1.11.0
+                                    rust-rayon-core-1.13.0
+                                    rust-regex-1.11.3
+                                    rust-regex-automata-0.4.11
+                                    rust-regex-syntax-0.8.6
+                                    rust-rustversion-1.0.22
+                                    rust-ryu-1.0.20
+                                    rust-same-file-1.0.6
+                                    rust-serde-1.0.228
+                                    rust-serde-core-1.0.228
+                                    rust-serde-derive-1.0.228
+                                    rust-serde-json-1.0.145
+                                    rust-shlex-1.3.0
+                                    rust-smallvec-1.15.1
+                                    rust-syn-2.0.106
+                                    rust-tap-1.0.1
+                                    rust-target-lexicon-0.13.3
+                                    rust-tinytemplate-1.2.1
+                                    rust-unicode-ident-1.0.19
+                                    rust-unindent-0.2.4
+                                    rust-uuid-1.18.1
+                                    rust-version-check-0.9.5
+                                    rust-walkdir-2.5.0
+                                    rust-wasi-0.14.7+wasi-0.2.4
+                                    rust-wasip2-1.0.1+wasi-0.2.4
+                                    rust-wasm-bindgen-0.2.104
+                                    rust-wasm-bindgen-backend-0.2.104
+                                    rust-wasm-bindgen-macro-0.2.104
+                                    rust-wasm-bindgen-macro-support-0.2.104
+                                    rust-wasm-bindgen-shared-0.2.104
+                                    rust-web-sys-0.3.81
+                                    rust-winapi-util-0.1.11
+                                    rust-windows-link-0.2.0
+                                    rust-windows-sys-0.59.0
+                                    rust-windows-sys-0.61.1
+                                    rust-windows-targets-0.52.6
+                                    rust-windows-aarch64-gnullvm-0.52.6
+                                    rust-windows-aarch64-msvc-0.52.6
+                                    rust-windows-i686-gnu-0.52.6
+                                    rust-windows-i686-gnullvm-0.52.6
+                                    rust-windows-i686-msvc-0.52.6
+                                    rust-windows-x86-64-gnu-0.52.6
+                                    rust-windows-x86-64-gnullvm-0.52.6
+                                    rust-windows-x86-64-msvc-0.52.6
+                                    rust-wit-bindgen-0.46.0
+                                    rust-wyz-0.5.1
+                                    rust-zerocopy-0.8.27
+                                    rust-zerocopy-derive-0.8.27))
                      (python-libcst =>
                                     (list rust-aho-corasick-1.1.3
                                      rust-anes-0.1.6

@@ -172,6 +172,7 @@
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 Matthias Riße <matrss@0px.xyz>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
+;;; Copyright © 2025 Evgenii Klimov <eugene.dev@lipklim.org
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35201,6 +35202,59 @@ Screenflick.")
      "This package provides a command-line interface (CLI) to the Jinja2
 template engine.")
     (license license:bsd-3)))
+
+(define-public python-jiter
+  (package
+    (name "python-jiter")
+    (version "0.11.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jiter" version))
+       (sha256
+        (base32 "1r364917bbcg9s4ipsrpc334dy9smgjsdwk2clysdmn1z3m3g5hx"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+	  (add-after 'build 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
+          (replace 'install
+            (assoc-ref py:%standard-phases 'install))
+          (add-after 'install 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (add-after 'add-install-to-pythonpath 'check-python-module
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "pytest" "-vv")))))
+      #:install-source? #false))
+    (native-inputs (list maturin
+                         python-wrapper
+                         python-pytest
+                         python-dirty-equals))
+    (inputs (cargo-inputs 'python-jiter))
+    (home-page "https://github.com/pydantic/jiter/")
+    (synopsis "Iterable JSON parser")
+    (description "This package provides a standalone JSON parser extracted from
+@code{pydantic-core}.  It offers a single function,
+@code{from_json()}, that converts raw bytes into Python objects.  Use
+directly only when @code{pydantic} is not already in the dependency
+chain.  It provides features such as:
+
+@itemize
+@item Configurable behaviour for numbers
+@item Handling partial JSON
+@item Catching duplicate keys
+@item String caching
+@item Streaming input
+@end itemize")
+    (license license:expat)))
 
 (define-public python-readability
   (package
