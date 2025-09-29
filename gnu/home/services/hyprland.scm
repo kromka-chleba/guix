@@ -125,9 +125,10 @@
     (((? symbol? key) (? block-entries? value))
      (string-append
       (symbol->string key) " {\n"
-      (serialize-block-entries value tabs) "}"))))
+      (serialize-block-entries value (+ tabs 1)) "}"))
+    ((_) "\n")))
 
-(define block-entries? 
+(define block-entries?
   (list-of block-entry?))
 
 (define (serialize-block-entries entries level)
