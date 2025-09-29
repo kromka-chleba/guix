@@ -38,6 +38,7 @@
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
+;;; Copyright © 2025 Evgenii Klimov <eugene.dev@lipklim.org
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3595,6 +3596,37 @@ libraries.")
      "@code{re-assert} provides a helper class to make assertions of regexes
 simpler.")
     (license license:expat)))
+
+(define-public python-respx
+  (package
+    (name "python-respx")
+    (version "0.22.0")
+    (source
+     (origin
+       (method git-fetch) ;no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/lundberg/respx")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pl6vlyva837bnz3cy9mwmvvh8fq943rkrbq3mzj34bjf8swnw2g"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-httpx))
+    (native-inputs (list nss-certs-for-test
+                         python-flask
+                         python-pytest
+                         python-pytest-asyncio
+                         python-pytest-cov
+                         python-setuptools
+                         python-starlette
+                         python-trio))
+    (home-page "https://lundberg.github.io/respx")
+    (synopsis
+     "HTTPX/HTTP Core request mocking library")
+    (description
+     "This package provides an utility for mocking out the Python HTTPX and
+HTTP Core libraries.")
+    (license license:bsd-3)))
 
 (define-public python-robber
   (package
