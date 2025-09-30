@@ -318,6 +318,7 @@
   #:use-module (gnu packages virtualization)
   #:use-module (gnu packages web-browsers)
   #:use-module (gnu packages wget)
+  #:use-module (gnu packages crypto)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match))
@@ -32079,6 +32080,42 @@ To use, add @code{allow-emacs-pinentry} to @code{~/.gnupg/gpg-agent.conf},
 reload the configuration with @code{gpgconf --reload gpg-agent}, and start the
 server with @code{M-x pinentry-start}.")
       (license license:gpl3+))))
+
+(define-public emacs-keychain-environment
+  (package
+    (name "emacs-keychain-environment")
+    (version "2.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tarsius/keychain-environment")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wzs77nwal6apinc39d4arj3lralv2cb9aw9gkikk46fgk404hwj"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-exec-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "keychain-environment.el"
+                (("keychain")
+                 (search-input-file inputs "/bin/keychain"))))))))
+    (inputs (list keychain))
+    (home-page "https://github.com/tarsius/keychain-environment")
+    (synopsis "Load keychain environment variables into Emacs")
+    (description
+     "This package loads environment variables generated via @code{keychain}
+into Emacs.  Users need to first setup @code{keychain}
+package according to shells and add the
+@code{keychain-refresh-environment} function in there init file.  If
+keychain has not been run yet when you start Emacs you can also later
+call that function interactively.")
+    (license license:gpl3+)))
 
 (define-public emacs-so-long
   (package
