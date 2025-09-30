@@ -292,8 +292,8 @@ $(prefix)/etc/openrc\n")))
                     ,@(if (target-riscv64?)
                         `((add-after 'unpack 'use-correct-guile-version-for-tests
                             (lambda _
-                              (substitute* "tests/gexp.scm"
-                                (("2\\.0") "3.0")))))
+                              (substitute* "tests/packages.scm"
+                                (("/2\\.0") "/3.0")))))
                         '())
                     ,@(if (system-hurd?)
                           `((add-after 'unpack 'disable-tests/hurd
