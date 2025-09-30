@@ -1065,45 +1065,49 @@ to establish class invariants.")
 (define-public python-inline-snapshot
   (package
     (name "python-inline-snapshot")
-    (version "0.18.2")
+    (version "0.29.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "inline_snapshot" version))
        (sha256
-        (base32 "09pqgz4phal2pjkv03wg3gvj7jr89rrb93rfw4hd2x9v8px4mqqv"))))
+        (base32 "19x5j97i96p3xr9xyjvwh0mmpcnypf8g5hf2jjm6g82ghsv3rrqp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-hypothesis-cache
+            (lambda _
+              ;; Without this, Hypothesis writes
+              ;; .hypothesis/unicode_data/* into the test tempdir, which
+              ;; breaks the test_run_pytester check.
+              (setenv "HYPOTHESIS_STORAGE_DIRECTORY"
+                      "/tmp/hypothesis-cache")
+              #t)))
       #:test-flags
-      ;; Missing "freezer" fixture
-      '(list "--ignore=tests/test_external.py"
-             "--ignore=tests/test_pytest_plugin.py"
+      '(list "-n=auto"
              "-k"
-             (string-append
-              "not test_trailing_comma"
-              ;; Cannot use inline-snapshop when xdist is available.
-              " and not test_xdist"
-              " and not test_xdist_disabled"
-              " and not test_xdist_and_disable"
-              " and not test_typing"))))
-    (propagated-inputs (list python-asttokens
-                             python-black
-                             python-click
-                             python-executing
-                             python-mkdocs
-                             python-rich
-                             python-tomli
-                             python-typing-extensions))
+             (string-append "not test_typing_call[pyright]"
+                            " and not test_typing_args[pyright]"))))
+    (propagated-inputs
+     (list python-asttokens
+           python-executing
+           python-rich))
     (native-inputs
-     (list python-dirty-equals
+     (list python-black
+           python-dirty-equals
            python-freezegun
            python-hatchling
+           python-hypothesis
+           python-mypy
            python-pydantic
-           python-pytest
+           python-pytest-bootstrap
+           python-pytest-freezer
            python-pytest-mock
-           python-pytest-subtests))
-    (home-page "https://pypi.org/project/inline-snapshot/")
+           python-pytest-subtests
+           python-pytest-xdist))
+    (home-page "https://github.com/15r10nk/inline-snapshot/")
     (synopsis "Golden master/snapshot/approval testing library")
     (description
      "This package can be used for different things:
