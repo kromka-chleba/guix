@@ -28,7 +28,7 @@
 ;;; Copyright © 2024 Timothee Mathieu <timothee.mathieu@inria.fr>
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
-;;; Copyright © 2024 Andy Tai <atai@atai.org>
+;;; Copyright © 2024, 2025 Andy Tai <atai@atai.org>
 ;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
@@ -6355,6 +6355,68 @@ performance library of basic building blocks for deep learning applications.")
        (file-name (git-file-name (package-name oneapi-dnnl) version))
        (sha256
         (base32 "1zyw5rd8x346bb7gac9a7x3saviw3zvp6aqz2z1l9sv163vmjfz6"))))))
+
+(define-public mnn
+  (package
+    (name "mnn")
+    (version "3.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alibaba/MNN.git/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1z5m24zsxmms6ilr6l9y7mj430vfgrxwjl7ck8arwc9i1syn7nd4"))))
+    (build-system cmake-build-system)
+    (native-inputs (list googletest pkg-config))
+    (inputs (list fp16
+                  glew
+                  glu
+                  mesa
+                  mesa-headers
+                  mesa-opencl
+                  opencl-headers
+                  opencl-clhpp
+                  opencl-icd-loader
+                  opencv
+                  pthreadpool
+                  vulkan-headers
+                  vulkan-loader))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DMNN_USE_SYSTEM_LIB=ON"
+              "-DMNN_OPENMP=ON"
+              ;; "-DMNN_OPENGL=ON"  ; TO DO
+              "-DMNN_OPENCL=ON"
+              "-DMNN_VULKAN=ON"
+              "-DMNN_SUPPORT_BF16=ON"
+              "-DMNN_BUILD_TEST=ON"
+              "-DMNN_BUILD_AUDIO=ON"
+              "-DMNN_BUILD_OPENCV=ON"
+              "-DMNN_IMGCODECS=ON"
+              ;; "-DMNN_AUDIO_TEST=ON"  ; tests trying to fetch googletest and cannot build
+              ;; "-DMNN_OPENCV_TEST=ON" ; TO DO: remove the fetch in cmake and use system googletest
+              "-DMNN_OPENCV_BENCH=ON"
+              "-DMNN_BUILD_QUANTOOLS=ON"
+              "-DMNN_EVALUATION=ON"
+              "-DMNN_BUILD_BENCHMARK=ON"
+              "-DMNN_BUILD_TOOLS=ON"
+              "-DMNN_BUILD_CONVERTER=ON"
+              "-DMNN_USE_SSE=ON"
+              "-DMNN_AVX512=ON") ;TO DO: add Pytorch support
+      #:tests? #f)) ;tests not building yet, cannot run
+    
+    (home-page "http://www.mnn.zone/")
+    (synopsis "Fast, lightweight deep learning framework")
+    (description
+     "MNN is a highly efficient and lightweight deep learning framework.
+It supports inference and training of deep learning models and has
+industry-leading performance for inference and training on-device.")
+    (license license:asl2.0)))
+
 
 (define-public python-gguf
   (package
