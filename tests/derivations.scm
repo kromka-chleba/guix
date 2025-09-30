@@ -569,24 +569,35 @@
                                               16)
                               "-gplv3.txt")
                '(begin
-                  (use-modules (web client)
+                  (use-modules (guix build download)
+                               (web uri)
                                (srfi srfi-11)
                                (rnrs io ports))
 
                   ;; DNS working?
-                  (pk 'addr (getaddrinfo "www.gnu.org" "https"))
+                  (pk 'addr (getaddrinfo "ftpmirror.gnu.org" "https"))
 
                   ;; Neutralize 'set-port-encoding!' because
                   ;; guile-bootstrap cannot open iconv descriptors
                   ;; contrary to what 'read-response' expects.
                   (set! (@ (guile) set-port-encoding!) (const #t))
 
-                  (let-values (((response body)
-                                (http-get "http://www.gnu.org/licenses/gpl-3.0.txt"
-                                          #:decode-body? #f)))
+                  (let ((body (get-bytevector-all
+                               (http-fetch
+                                (string->uri
+                                 "http://ftpmirror.gnu.org/Licenses/gpl-3.0.txt")))))
                     (call-with-output-file %output
                       (lambda (port)
                         (put-bytevector port body)))))
+               #:modules '((guix build download)
+                           (guix base16)
+                           (guix base64)
+                           (guix ftp-client)
+                           (guix build utils)
+                           (guix progress)
+                           (guix memoization)
+                           (guix records)
+                           (guix profiling)) 
                #:hash-algo 'sha256
                #:hash (base32 "11k9nggwk1mgsrkdwgdjz65avrradxlpdgrdkc7ryjgn8jbxqwir"))))
     (build-derivations %store (list drv))))
