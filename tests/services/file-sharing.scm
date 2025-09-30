@@ -46,12 +46,12 @@
   "{820f816515d8969d058d07a1de018650619ee7ffCp.I5SWg"
   (transmission-password-hash "" "Cp.I5SWg"))
 
-(test-error "transmission-password-hash, salt value too short"
+(test-error "transmission-password-hash, salt value too short" #t
             (transmission-password-hash
              "transmission"
              (make-string (- %transmission-salt-length 1) #\a)))
 
-(test-error "transmission-password-hash, salt value too long"
+(test-error "transmission-password-hash, salt value too long" #t
             (transmission-password-hash
              "transmission"
              (make-string (+ %transmission-salt-length 1) #\a)))

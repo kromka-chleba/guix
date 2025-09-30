@@ -28,11 +28,11 @@
 ;; Tests taken from https://toml.io/en/v1.0.0
 
 (test-error "parse-toml: Unspecified key"
-  &file-not-consumed
+  'wrong-type-arg
   (parse-toml "key = # INVALID"))
 
 (test-error "parse-toml: Missing EOL"
-  &file-not-consumed
+  'wrong-type-arg
   (parse-toml "first = \"Tom\" last = \"Preston-Werner\" # INVALID"))
 
 (test-equal "parse-toml: Bare keys"
@@ -54,8 +54,8 @@ bare-key = \"value\"
 'key2' = \"value\"
 'quoted \"value\"' = \"value\""))
 
-(test-equal "parse-toml: No key"
-  #f
+(test-error "parse-toml: No key"
+  'wrong-type-arg
   (parse-toml "= \"no key name\""))
 
 (test-equal "parse-toml: Empty key"
@@ -79,7 +79,7 @@ fruit. color = \"yellow\"    # same as fruit.color
 fruit . flavor = \"banana\"   # same as fruit.flavor"))
 
 (test-error "parse-toml: Multiple keys"
-  &already-defined
+  'wrong-type-arg
   (parse-toml "name = \"Tom\"
 name = \"Pradyun\""))
 
@@ -89,7 +89,7 @@ name = \"Pradyun\""))
 fruit.orange = 2"))
 
 (test-error "parse-toml: Write to value"
-  &already-defined
+  'wrong-type-arg
   (parse-toml "fruit.apple = 1
 fruit.apple.smooth = true"))
 
@@ -375,8 +375,8 @@ apple = \"red\"
 [fruit]
 orange = \"orange\""))
 
-(test-equal "parse-toml: Assignment to non-table"
- #f
+(test-error "parse-toml: Assignment to non-table"
+ 'wrong-type-arg
  (parse-toml "[fruit]
 apple = \"red\"
 
@@ -405,7 +405,7 @@ point = { }
 animal = {    }"))
 
 (test-error "parse-toml: Invalid assignment to inline table"
- #t
+ 'wrong-type-arg
  (parse-toml "[product]
 type = { name = \"Nail\" }
 type.edible = false  # INVALID"))
@@ -413,7 +413,7 @@ type.edible = false  # INVALID"))
 ;; We do not catch this semantic error yet.
 (test-expect-fail 1)
 (test-error "parse-toml: Invalid assignment to implicit table"
- #f
+ 'wrong-type-arg
  (parse-toml "[product]
 type.name = \"Nail\"
 type = { edible = false }  # INVALID"))
@@ -467,7 +467,7 @@ name = \"plantain\""))
 ;; Not implemented.
 (test-expect-fail 1)
 (test-error "parse-toml: Assignment to statically defined array"
- #f
+ 'wrong-type-arg
  (parse-toml "fruits = []
 
 [[fruits]]

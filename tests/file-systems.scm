@@ -123,7 +123,7 @@
     (btrfs-store-subvolume-file-name (list %btrfs-root-subvolume
                                            %btrfs-store-subvolume))))
 
-(test-error "btrfs-store-subvolume-file-name (subvolid)"
+(test-error "btrfs-store-subvolume-file-name (subvolid)" #t
             (parameterize ((%store-prefix "/gnu/store"))
               (btrfs-store-subvolume-file-name (list %btrfs-root-subvolume
                                                      %btrfs-store-subvolid))))
