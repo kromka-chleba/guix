@@ -11950,18 +11950,24 @@ your FastAPI app, manage your FastAPI project, and more.")
   (package
     (name "python-pyactiveresource")
     (version "2.2.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pyactiveresource" version))
-              (sha256
-               (base32
-                "1n7xvzh1j8fxal0gx9bgg1ayrp3q9mb1a2vb12d6s86wa93880rg"))))
-    (build-system python-build-system)
-    (native-inputs (list python-dateutil python-pyyaml))
+    (source
+     (origin
+       ;; The PyPI release does not contain tests.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Shopify/pyactiveresource")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03pw6fwqjn09fbd6xmng0arlz75pp6ykw25c8d1snp4bxlzkrwqf"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-dateutil python-pytest python-pyyaml
+                         python-setuptools python-wheel))
     (propagated-inputs (list python-six))
     (home-page "https://github.com/Shopify/pyactiveresource/")
     (synopsis "ActiveResource for Python")
-    (description "This package provides a Python port of the ActiveResource
+    (description
+     "This package provides a Python port of the ActiveResource
 project.
 
 Active Resource attempts to provide a coherent wrapper object-relational
