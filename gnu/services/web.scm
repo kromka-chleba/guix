@@ -20,6 +20,7 @@
 ;;; Copyright © 2024 Leo Nikkilä <hello@lnikki.la>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Rodion Goritskov <rodion@goritskov.com>
+;;; Copyright © 2025 Nguyễn Gia Phong <cnx@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -335,6 +336,11 @@
             agate-configuration-log-file
 
             agate-service-type
+
+            scadere-configuration
+            scadere-configuration?
+            ;; TODO: record fields
+            scadere-service-type
 
             miniflux-configuration
             miniflux-configuration?
@@ -1385,6 +1391,7 @@ a webserver.")
      (stop #~(make-kill-destructor))
      (actions (list (shepherd-configuration-action config-file))))))
 
+
 (define hpcguix-web-service-type
   (service-type
    (name 'hpcguix-web)
@@ -2298,6 +2305,136 @@ root=/srv/gemini
    (default-value (agate-configuration))
    (description "Run Agate, a simple Gemini protocol server written in
 Rust.")))
+
+
+;;;
+;;; Scadere
+;;;
+
+(define (shepherd-calendar-event? x)
+  (or (string? x)
+      (gexp? x)))
+
+(define (port-number? x)
+  (and (integer? x)
+       (> x 0)
+       (< x (expt 2 16))))
+
+(define-configuration/no-serialization scadere-configuration
+  (package (package scadere)
+           "The scadere package to use.")
+  (user (string "scadere")
+        "The user to run scadere services.")
+  (group (string "scadere")
+         "The group to run scadere services.")
+  (check-schedule (shepherd-calendar-event #~(calendar-event #:hours '(19)))
+                  "The schedule for running @command{scadere-check}.")
+  (check-log-file (string "/var/log/scadere/check.log")
+                  "The path to @command{scadere-check}'s log.")
+  (listen-log-file (string "/var/log/scadere/listen.log")
+                   "The path to @command{scadere-listen}'s log.")
+  (state-file (string "/var/lib/scadere/certificates")
+              "The path to the certificate information.")
+  (netlocs (list-of-strings (configuration-missing-field 'scadere 'netlocs))
+           "The servers' colon-concatinated domain and port,
+or simply domain for port 443, to check TLS certificates against.")
+  (days (number 7)
+        "The TLS certificate expiration window, in days.")
+  (base-url (string (configuration-missing-field 'scadere 'base-url))
+            "The base URL at which @command{scadere-listen} serves.")
+  (listen-host (string "localhost")
+               "The host for the web server to listen on.")
+  (listen-port (port-number 44443)
+               "The port for the web server to listen on.")
+  (title (string (configuration-missing-field 'scadere 'title))
+         "The title of the served Atom feeds."))
+
+(define (scadere-accounts config)
+  (match-record config <scadere-configuration> (user group)
+    (list (user-group (name group)
+                      (system? #t))
+          (user-account (name user)
+                        (group group)
+                        (system? #t)
+                        (comment "Scadere user")
+                        (shell (file-append shadow "/sbin/nologin"))))))
+
+(define (scadere-activation config)
+  (match-record config <scadere-configuration>
+                (user state-file check-log-file listen-log-file)
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((pw (getpwnam #$user))
+                 (uid (passwd:uid pw))
+                 (gid (passwd:gid pw)))
+            (for-each (lambda (file)
+                        (let ((dir (dirname file)))
+                          (mkdir-p dir)
+                          (chown dir uid gid))
+                          (when (not (file-exists? file))
+                            (call-with-output-file file (const #t)))
+                          (chown file uid gid))
+                      (list #$check-log-file
+                            #$listen-log-file
+                            #$state-file)))))))
+
+(define (scadere-shepherd-service config)
+  (match-record config <scadere-configuration>
+                (package user group check-schedule
+                 check-log-file listen-log-file state-file
+                 netlocs days base-url listen-host listen-port title)
+    (list
+     (shepherd-service
+      (provision '(scadere-check))
+      (requirement '(user-processes networking))
+      (modules '((shepherd service timer)))
+      (start #~(make-timer-constructor
+                #$(if (string? check-schedule)
+                      #~(cron-string->calendar-event #$check-schedule)
+                      check-schedule)
+                (command
+                 (list #$(file-append package "/bin/scadere-check")
+                       (simple-format #f "--days=~A" #$days)
+                       (string-append "--output=" #$state-file)
+                       #$@netlocs)
+                 #:environment-variables '("SSL_CERT_DIR=/etc/ssl/certs")
+                 #:user #$user
+                 #:group #$group)
+                #:log-file #$check-log-file
+                #:wait-for-termination? #t))
+      (stop #~(make-timer-destructor))
+      (actions (list shepherd-trigger-action))
+      (documentation "Schedule the scadere TLS certificate checker."))
+     (shepherd-service
+      (provision '(scadere-listen))
+      (requirement '(user-processes networking))
+      (start #~(make-forkexec-constructor
+                (list #$(file-append package "/bin/scadere-listen")
+                      (string-append "--title=" #$title)
+                      #$state-file
+                      #$base-url
+                      (simple-format #f "~A:~A" #$listen-host #$listen-port))
+                #:user #$user
+                #:group #$group
+                #:log-file #$listen-log-file))
+      (stop #~(make-kill-destructor))
+      (documentation "Run the scadere web server.")))))
+
+(define scadere-service-type
+  (service-type
+   (name 'scadere)
+   (extensions
+    (list (service-extension account-service-type scadere-accounts)
+          (service-extension activation-service-type scadere-activation)
+          (service-extension shepherd-root-service-type
+                             scadere-shepherd-service)))
+   (description "Run the scadere TLS certificate renewal reminder.")))
+
+
+;;;
+;;; Miniflux
+;;;
 
 (define (serialize-string field-name val)
   (format #f "~a=~a\n" field-name val))

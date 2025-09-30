@@ -6,6 +6,7 @@
 ;;; Copyright © 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Rodion Goritskov <rodion@goritskov.com>
+;;; Copyright © 2025 Nguyễn Gia Phong <cnx@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -59,6 +60,7 @@
             %test-anonip
             %test-patchwork
             %test-agate
+            %test-scadere
             %test-miniflux-admin-string
             %test-miniflux-admin-file
             %test-miniflux-socket))
@@ -857,6 +859,67 @@ HTTP-PORT."
    (name "agate")
    (description "Connect to a running Agate service.")
    (value (run-agate-test name %agate-os %index.gmi-contents))))
+
+
+;;;
+;;; Scadere
+;;;
+
+(define %test-scadere
+  (system-test
+   (name "scadere")
+   (description "Connect to a running scadere service.")
+   (value (gexp->derivation (string-append name "-test")
+            (let* ((port 44443)
+                   (base-url (simple-format #f "http://localhost:~a/" port))
+                   (os (marionette-operating-system
+                        (simple-operating-system
+                         (service dhcpcd-service-type)
+                         ;; openssl req -x509 -newkey rsa:4096 -out server.pem -nodes -subj /CN=localhost/O=Test
+                         ;; openssl s_server -key privkey.pem
+                         (service scadere-service-type
+                                  (scadere-configuration
+                                   (netlocs '())
+                                   (base-url base-url)
+                                   (listen-port port)
+                                   (title "Test feed"))))))
+                   (vm (virtual-machine (operating-system os)
+                                        (port-forwardings
+                                         (list (cons port port))))))
+              (with-imported-modules '((gnu build marionette))
+                #~(begin
+                    (use-modules (gnu build marionette)
+                                 (srfi srfi-11)
+                                 (srfi srfi-64)
+                                 (web client)
+                                 (web response))
+                    (define marionette (make-marionette (list #$vm)))
+                    (test-runner-current (system-test-runner #$output))
+                    (test-begin #$name)
+                    (test-assert "server running"
+                      (wait-for-tcp-port #$port marionette))
+                    (test-equal "HTTP GET"
+                      200
+                      (let-values (((response _) (http-get #$base-url)))
+                        (response-code response)))
+                    (test-assert "scadere-listen's log"
+                      (marionette-eval
+                       '(begin
+                          (current-output-port (open-file "/dev/console" "w0"))
+                          (display
+                           (call-with-input-file "/var/lib/scadere/certificates"
+                                                 (@ (ice-9 textual-ports)
+                                                    get-string-all)))
+                          (display
+                           (call-with-input-file "/var/log/scadere/check.log"
+                                                 (@ (ice-9 textual-ports)
+                                                    get-string-all)))
+                          (display
+                           (call-with-input-file "/var/log/scadere/listen.log"
+                                                 (@ (ice-9 textual-ports)
+                                                    get-string-all))))
+                       marionette))
+                    (test-end))))))))
 
 
 ;;;

@@ -35905,6 +35905,84 @@ Extra configuration parameters as a list of strings.
 @end table
 @end deftp
 
+@subsubheading Scadere
+
+@cindex scadere
+@cindex TLS certificates
+
+@uref{https://chim.loan/scadere, Scadere} is a TLS certificate
+renewal reminder.  It checks for certificates that are about to expire
+and provides an Atom feed for notification.
+
+@defvar scadere-service-type
+The service schedules @command{scadere-check} chronically to update
+the TLS certificate data, based on which @command{scadere-listen},
+the web server, notifies its feed subscriber of upcoming expirations.
+
+The value for this service type is a @code{scadere-configuration} record.
+A simple example configuration is given below.
+
+@lisp
+(service scadere-service-type
+         (scadere-configuration
+          ;; 5 o'clock every morning
+          (check-schedule #~(calendar-events #:hours '(5)))
+          (netlocs '("example.com" "example.net"))
+          (base-url "https://scadere.example")
+          (title "TLS cert renewal")))
+@end lisp
+@end defvar
+
+The details for the @code{scadere-configuration} record type is given below.
+
+@deftp {Data Type} scadere-configuration
+Available @code{scadere-configuration} fields are:
+
+@table @asis
+@item @code{package} (default: @code{scadere}) (type: package)
+The scadere package to use.
+
+@item @code{user} (default: @code{"scadere"}) (type: string)
+The user to run scadere services.
+
+@item @code{group} (default: @code{"scadere"}) (type: string)
+The group to run scadere services.
+
+@item @code{check-schedule} (default: everyday at 19:00) (type: shepherd-calendar-event)
+The schedule for running @command{scadere-check}.
+
+@item @code{check-log-file} (default: @code{"/var/log/scadere/check.log"}) (type: string)
+The path to @command{scadere-check}'s log.
+
+@item @code{listen-log-file} (default: @code{"/var/log/scadere/listen.log"}) (type: string)
+The path to @command{scadere-listen}'s log.
+
+@item @code{state-file} (default: @code{"/var/lib/scadere/certificates"}) (type: string)
+The path to the certificate information.
+
+@item @code{netlocs} (type: list-of-strings)
+The servers' colon-concatinated domain and port, or simply domain for
+port 443, to check TLS certificates against.
+
+@item @code{days} (default: @code{7}) (type: number)
+The TLS certificate expiration window, in days.
+
+@item @code{base-url} (type: string)
+The base URL at which @command{scadere-listen} serves.
+
+@item @code{listen-host} (default: @code{"localhost"}) (type: string)
+The host for the web server to listen on.
+
+@item @code{listen-port} (default: @code{44443}) (type: port-number)
+The port for the web server to listen on.
+
+@item @code{title} (type: string)
+The title of the served Atom feeds.
+
+@end table
+
+@end deftp
+
 @node High Availability Services
 @subsection High Availability Services
 
