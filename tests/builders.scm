@@ -61,7 +61,8 @@
 
 (unless (network-reachable?) (test-skip 1))
 (test-assert "url-fetch"
-  (let* ((url      '("http://ftp.gnu.org/gnu/hello/hello-2.8.tar.gz"
+  (let* ((url      '("mirror://gnu/hello/hello-2.8.tar.gz"
+                     "http://ftp.gnu.org/gnu/hello/hello-2.8.tar.gz"
                      "ftp://ftp.gnu.org/gnu/hello/hello-2.8.tar.gz"))
          (hash     (nix-base32-string->bytevector
                     "0wqd8sjmxfskrflaxywc7gqw7sfawrfvdxd9skxawzfgyy0pzdz6"))
