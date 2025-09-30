@@ -75,6 +75,7 @@
 ;;; Copyright © 2025 VnPower <vnpower@loang.net>
 ;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2025 Camilo Q.S. (Distopico) <distopico@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1648,14 +1649,14 @@ operate properly.")
 (define-public ffmpeg-7
   (package
     (name "ffmpeg")
-    (version "7.0.2")
+    (version "7.1.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "12dkv17mrsdqrm70c30azjw7qi1lfxca7xisw81x6flacddm2il6"))))
+                "0163z5aybi5vl94pi1jmm8wyxcyws07m7zwlv72yqslxnl7wd6q8"))))
     (outputs '("out" "debug"))
     (build-system gnu-build-system)
     (inputs
@@ -1699,6 +1700,7 @@ operate properly.")
     (native-inputs
      (list bc
            perl
+           python
            pkg-config
            texinfo
            speex
@@ -1831,6 +1833,12 @@ operate properly.")
                           (("alGetError \\|\\|")
                            "alGetError \|\| true \|\|")))))
                  #~())
+          (add-after 'unpack 'disable-tmp-sanity-check
+            (lambda _
+              ;; Check for rw/noexec but not really required
+              (substitute* "configure"
+                (("die \"Sanity test failed.\"")
+                 ""))))
           (replace 'configure
             ;; configure does not work followed by "SHELL=..." and
             ;; "CONFIG_SHELL=..."; set environment variables instead
