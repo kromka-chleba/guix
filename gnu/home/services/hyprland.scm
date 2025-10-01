@@ -66,8 +66,6 @@
     (((? symbol? name) (? type? value))
      (format #f
              "~v/~a = ~a\n"
-             ;; (if block "~a {\n~a\n}\n"
-             ;;     "~v/~a = ~a\n")
              tabs
              (symbol->string name)
              (value->string value)))))
@@ -125,9 +123,11 @@
     (((? symbol?) (? boolean?))
      (serialize-boolean entry tabs))
     (((? symbol? key) (? block-entries? value))
-     (string-append
-      (symbol->string key) " {\n"
-      (serialize-block-entries value (+ tabs 1)) "}"))
+     (format #f "~v/~a {\n~a~v/}\n"
+             tabs
+             (symbol->string key)
+             (serialize-block-entries value (+ tabs 1))
+             tabs))
     ((_) "\n")))
 
 (define block-entries?
