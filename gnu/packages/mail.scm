@@ -3873,12 +3873,12 @@ which sends emails to HyperKitty, the official Mailman3 web archiver.")
     (name "python-hyperkitty")
     (version "1.3.12")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "hyperkitty" version))
-        (sha256
-         (base32
-          "078nrxkwdrv4d7ysdzp1c2dl5nm4fvxnpn6mq6lrxg65gs9q5dfy"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url "https://gitlab.com/mailman/hyperkitty.git") 
+                           (commit "9a008473fadb95370cd54b0782df9fb956e323c0")))
+       (sha256
+        (base32 "011mv6xn2cry0yr30qc1219k2xcjjilnb8mflvzlf77y83m4d1vb"))))
     (build-system pyproject-build-system)
     (arguments
      (list
