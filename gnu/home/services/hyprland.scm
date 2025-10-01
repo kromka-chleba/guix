@@ -72,7 +72,7 @@
              (symbol->string name)
              (value->string value)))))
 
-;; 
+;;
 
 (define (serialize-boolean entry tabs)
   (serialize-entry entry
@@ -106,12 +106,14 @@
 
 ;;
 
-(define (block-entry? value)
-  ;; TODO: Is there a way to avoid the write of the `value` field?
-  (or (string? value)
-      (number? value)
-      (boolean? value)
-      (block-entries? value)))
+(define block-entry?
+  (match-lambda? ((? symbol?)
+		   (or (? string?)
+		       (? number?)
+		       (? boolean?)
+		       (? pair-of-numbers?)
+		       (? block-entries?)))))
+
 
 (define (serialize-block-entry entry tabs)
   (match entry
@@ -234,7 +236,7 @@
 (define monitor-scale? string?)
 
 (define (serialize-monitor-scale _ scale)
-    (string-append 
+    (string-append
         "\tscale = " scale))
 
 ;;; Monitor resolution
@@ -262,7 +264,7 @@
                 auto-center-up auto-center-down))))
 
 (define (serialize-monitor-position _ p)
-  (string-append 
+  (string-append
       "\tposition = "
       (if (pair? p)
           (format #f "~ax~a" (car p) (cdr p))
@@ -856,11 +858,11 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                      (hyprland-extension
                       (exec-once
                        (flatten (map hyprland-extension-exec-once extensions)))
-                      (exec 
+                      (exec
                        (flatten (map hyprland-extension-exec extensions)))
                       (environment
                        (flatten (map hyprland-extension-environment extensions)))
-                      (bindings 
+                      (bindings
                        (flatten (map hyprland-extension-bindings extensions)))
                       (windowrule
                        (flatten (map hyprland-extension-windowrule extensions)))))))
@@ -894,7 +896,7 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                                          config))
                                        (hyprland-extension-bindings
                                         rules)))))
-                    (windowrule 
+                    (windowrule
                      (append (hyprland-configuration-windowrule
                               config)
                              (hyprland-extension-windowrule
