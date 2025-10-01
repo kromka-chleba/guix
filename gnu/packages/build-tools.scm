@@ -768,6 +768,9 @@ be reached via direct API calls.")
        (sha256
         (base32 "0f4x0gm5n1mr87dx3gzn5da16a1qhd2y3kz22dl5xsd9pd720l4w"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend ''unittest))
     (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs (list python-configparser))
     (home-page "https://github.com/Sarcasm/compdb")
