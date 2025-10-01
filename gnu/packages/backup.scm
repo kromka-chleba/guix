@@ -116,14 +116,11 @@
     (version "2.1.4")
     (source
      (origin
-      (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.com/duplicity/duplicity")
-             (commit (string-append "rel." version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (pypi-uri "duplicity" version))
        (sha256
-        (base32 "14x5brpq1l400i9l2hnyqmbn19cc1hnbmj5fn8cs8zzwzbgrfxng"))))
-    (build-system python-build-system)
+        (base32 "1raqf69a5gh5acshv9raagz6519x6baais0wq48n0abvaarqrglv"))))
+    (build-system pyproject-build-system)
     (native-inputs
      (list gettext-minimal ; for msgfmt
            gobject-introspection
@@ -148,8 +145,7 @@
            gnupg ; gpg executable needed
            util-linux))     ; for setsid
     (arguments
-     (list #:test-target "test"
-           #:phases
+     (list #:phases
            #~(modify-phases %standard-phases
                (add-before 'build 'use-store-file-names
                  (lambda* (#:key inputs #:allow-other-keys)
