@@ -60,10 +60,10 @@
 (define (entry? type?)
   (match-lambda? ((? symbol?) (? type?))))
 
-(define* (serialize-entry entry type? value->string tabs
+(define* (serialize-entry entry value->string tabs
                          #:key (block #f))
   (match entry
-    (((? symbol? name) (? type? value))
+    (((? symbol? name) value)
      (format #f
              "~v/~a = ~a\n"
              tabs
@@ -74,13 +74,11 @@
 
 (define (serialize-boolean entry tabs)
   (serialize-entry entry
-                   boolean?
                    (match-lambda (#t "true") (#f "false"))
                    tabs))
 
 (define (serialize-number entry tabs)
   (serialize-entry entry
-                   number?
                    number->string
                    tabs))
 
@@ -92,8 +90,7 @@
 
 (define (serialize-estring entry tabs)
   (serialize-entry entry
-                   string?
-                   (match-lambda ((? string? s) s))
+                   identity
                    tabs))
 
 (define-maybe boolean)
@@ -138,15 +135,6 @@
          (map (λ (e)
                 (serialize-block-entry e level)) entries)))
 
-;; (define (serialize-block-entries entry tabs)
-;;   (serialize-entry entry
-;;                    block-entries?
-;;                    (apply string-append
-;;                           (map (λ (e)
-;;                                  (serialize-block-entry e () tabs)) entries))
-;;                    tabs
-;;                    #:block #t))
-
 ;;; Commentary:
 ;;;
 ;;; A Guix Home service to configure Hyprland, an highly customizabile dynamic
@@ -164,10 +152,8 @@
 
 ;;; String serializers
 (define (serialize-string _ s) s)
-;; TODO: Use string
 
 (define (serialize-list-of-strings name l)
-  ;; TODO: Generalise the serialization of a list of entries?
   (string-join
    (map (λ (s) (string-append (symbol->string name) " = " s)) l) "\n"))
 
@@ -279,34 +265,6 @@
 
 (define-maybe monitor-color-management)
 
-;;; Monitor sub-configuration
-(define-configuration monitor
-  (name (monitor-name "") "Monitor's name")
-  (resolution (monitor-resolution 'preferred) "Monitor's resolution")
-  (position (monitor-position 'auto) "Monitor's position")
-  (scale (monitor-scale "auto") "Monitor's scale")
-  (disable? (boolean #f) "Disables the monitor" empty-serializer)
-  (color-management-preset (monitor-color-management 'auto)
-                           "Monitor color management preset")
-  (transform (monitor-transform 0) "Monitor's transform"))
-
-(define (serialize-monitor _ m)
-  #~(string-append "monitorv2 {\n"
-                   #$(if (monitor-disable? m)
-                         (string-append (monitor-name m)
-                                        "\n\tmode = disable\n")
-                         (serialize-joined m monitor-fields #:delimiter "\n"))
-                   "\n}\n"))
-
-;;; List of monitors definition
-(define list-of-monitors?
-  (list-of monitor?))
-
-(define (serialize-list-of-monitors name monitors)
-  #~(string-join (list #$@(map (cut serialize-monitor name <>)
-                               monitors))
-                 "\n"))
-
 ;; Addreserved field
 (define (addreserved? entry)
   ((entry? ((? integer?)
@@ -329,7 +287,7 @@
 
 ;; Bitdepth field
 (define (bitdepth? entry)
-  ((entry? 10) entry))
+  (eq? entry 10))
 
 (define (serialize-bitdepth name value)
   ;; TODO: Use serialize-entry?
@@ -339,7 +297,7 @@
 
 ;; VRR field
 ;; (define (vrr? entry)
-;;   ((entry? ))) ;; TODO: use memq (forse con cut) default 0
+;;   ((entry? )))
 ;; (define (vrr? x)
 ;;   (and (number? x)
 ;;        (<= x 3)
@@ -347,7 +305,7 @@
 
 ;; Monitorv2
 
-(define-configuration monitorv2
+(define-configuration monitor
   (output
    (monitor-name)
    "Monitor's name")
@@ -398,16 +356,16 @@
    (maybe-integer %unset-value)
    "Monitor's maximum luminance on average for a typical frame"))
 
-(define (serialize-monitorv2 _ m)
+(define (serialize-monitor _ m)
   ;; TODO: Use format
   #~(string-append "monitorv2 {\n"
-                   #$(serialize-joined m monitorv2-fields #:delimiter "\n")
+                   #$(serialize-joined m monitor-fields #:delimiter "\n")
                    "\n}\n"))
 
-(define list-of-monitorsv2? (list-of monitorv2?))
+(define list-of-monitors? (list-of monitor?))
 
-(define (serialize-list-of-monitorsv2 name monitors)
-  #~(string-join (list #$@(map (cut serialize-monitorv2 name <>)
+(define (serialize-list-of-monitors name monitors)
+  #~(string-join (list #$@(map (cut serialize-monitor name <>)
                                monitors))
                  "\n"))
 
@@ -542,8 +500,7 @@
 (define-configuration hyprland-configuration
   (package (package hyprland) "Hyprland package to use"
            empty-serializer)
-  (monitors (list-of-monitors (list (monitor))) "Monitors definition")
-  (monitorsv2 (list-of-monitorsv2 '()) "Monitors definition using v2 syntax")
+  (monitors (list-of-monitors '()) "Monitors definition")
   (exec-once (list-of-executables '()) "Command to exec once")
   (exec (list-of-executables '()) "Command to automatically exec")
   (general (block (block)) "General configuration variables")
