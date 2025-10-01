@@ -11449,6 +11449,7 @@ Mathics3.")
     (propagated-inputs (list python-django
                              python-mathics-scanner
                              python-mathics-core
+                             python-matplotlib
                              python-networkx
                              python-pygments
                              python-requests))
