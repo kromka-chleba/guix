@@ -535,6 +535,11 @@ For synthesis, the compiler generates netlists in the desired format.")
                  "build/texinfo/projecticestorm-figures"
                  (string-append #$output
                                 "/share/info/projecticestorm-figures")))))
+          ;; These examples are necessary for testing nextpnr.
+          (add-after 'install 'keep-examples
+            (lambda _
+              (copy-recursively
+               "examples" (string-append #$output "/examples"))))
           (delete 'configure))))
     (inputs
      (list libftdi))
