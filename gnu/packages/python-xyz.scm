@@ -13681,32 +13681,26 @@ your favourite programs.")
 (define-public python-pywal16
   (package
     (name "python-pywal16")
-    (version "3.8.9")
+    (version "3.8.10")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pywal16" version))
        (sha256
-        (base32 "1r1hcjhxiy2sai1al3i0p74d7iq9qfk5zl502jgbvpyvbwq5x5xy"))))
+        (base32 "0836ya6zw0dglh0yldd9apsfvh5f9cxvmy8nc7aw2w8s491yancf"))))
     (build-system pyproject-build-system)
     (native-inputs (list imagemagick
-                         python-setuptools
-                         python-wheel
-                         python-pytest))
+                         python-pytest
+                         python-setuptools))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'fix-home-directory
-           (lambda _
-             ;; Tests fail with "Permission denied: '/homeless-shelter'".
-             (setenv "HOME" "/tmp")
-             #t)))))
+     (list #:phases '(modify-phases %standard-phases
+                       (add-before 'check 'set-HOME
+                         (lambda _ (setenv "HOME" "/tmp"))))))
     (home-page "https://github.com/eylles/pywal16")
-    (synopsis "Color palette generator and applicator -- a 16 colors fork of pywal.")
-    (description
-     "Pywal is a tool that generates a color palette from the dominant colors
-in an image.  It then applies the colors system-wide and on-the-fly in all of
-your favourite programs.")
+    (synopsis "A 16 colors fork of @code{python-pywal}.")
+    (description "Pywal16 is a tool that generates a color palette from the dominant colors in an
+image. It then applies the colors system-wide and on-the-fly in all of your
+favorite programs.")
     (license license:expat)))
 
 (define-public python-click-didyoumean
