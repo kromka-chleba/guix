@@ -915,11 +915,14 @@ which allows one to install the M8 firmware on any Teensy.")
               "-DBUILD_GUI=ON"
               "-DUSE_OPENMP=ON"
               "-DBUILD_TESTS=ON"
+              ;; "-DHIMBAECHEL_UARCH=ng-ultra;gowin;gatemate"
               "-DHIMBAECHEL_UARCH=ng-ultra;gowin"
               "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
               "-DHIMBAECHEL_SPLIT=ON"
               (string-append "-DHIMBAECHEL_PRJBEYOND_DB="
                              #$(this-package-input "prjbeyond-db"))
+              ;; (string-append "-DHIMBAECHEL_PEPPERCORN_PATH="
+              ;;                #$(this-package-input "prjpeppercorn"))
               (string-append "-DEXPORT_BBA_FILES=" #$output "/bba-files")
               (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
               (string-append "-DICESTORM_INSTALL_PREFIX="
@@ -996,6 +999,7 @@ which allows one to install the M8 firmware on any Teensy.")
            eigen
            icestorm
            prjbeyond-db
+           prjpeppercorn
            prjtrellis
            pybind11
            python
