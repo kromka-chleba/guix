@@ -4049,7 +4049,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "31.1.2")
+    (version "32.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4059,7 +4059,7 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wiaiva2wh9781mcwmlkf3xfg805q0s8gz4q7n1vnmk27750i6j1"))
+                "10z2bqzcjfpq70316lxcswmgszwazyskmx0xv74c0471bmal1mgp"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)
@@ -4137,6 +4137,7 @@ be used for realtime video capture via Linux-specific APIs.")
       qtsvg
       qtwayland
       rnnoise
+      simde
       speexdsp
       v4l-utils
       uthash
