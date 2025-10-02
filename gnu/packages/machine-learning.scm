@@ -5325,6 +5325,12 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-ffmpeg-8.0
+            (lambda _
+              ;; FFmpeg 8.0 removed AVFrame.key_frame field.
+              (substitute* "torchvision/csrc/io/decoder/video_stream.cpp"
+                (("frame_->key_frame")
+                 "(frame_->flags & AV_FRAME_FLAG_KEY)"))))
           (add-after 'unpack 'setenv
             (lambda _
               (let ((jpegdir #$(this-package-input "libjpeg-turbo")))
