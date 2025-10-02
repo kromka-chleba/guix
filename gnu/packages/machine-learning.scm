@@ -1212,6 +1212,9 @@ It currently houses implementations of
         (base32 "0hk0dmjgnpwka0a7gyzrcq155wzlvzcrsav3qaizyg0wymzywi4n"))
        (snippet '(delete-file "ot/lp/emd_wrap.cpp"))))
     (build-system pyproject-build-system)
+    (arguments
+     ;; No 'test' command in setup.py.
+     (list #:tests? #f))
     (propagated-inputs
      (list python-autograd
            python-numpy
