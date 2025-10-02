@@ -4194,7 +4194,7 @@ and JACK.")
                (string-append
                 #$output
                 "/share/obs/obs-plugins/obs-advanced-masks/shaders")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/FiniteSingularity/obs-advanced-masks")
     (synopsis "Advanced masking plugin for OBS")
     (description "OBS Advanced Masks is a project designed to expand the
@@ -4254,7 +4254,7 @@ applied via a static image (.png, .jpeg, etc).
                (string-append
                 #$output
                 "/share/obs/obs-plugins/obs-composite-blur/shaders")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/FiniteSingularity/obs-composite-blur")
     (synopsis "Different blur algorithms for OBS")
     (description "Composite Blur Plugin is a comprehensive blur plugin that
@@ -4300,7 +4300,7 @@ masks.
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-gradient-source")
     (synopsis "Plugin for adding a gradient Source to OBS Studio")
     (description "This package provides a plugin for adding a gradient Source
@@ -4364,6 +4364,7 @@ to OBS Studio.")
            openssl
            sdl2
            sdl2-ttf
+           simde
            spice-protocol
            wayland
            wayland-protocols
@@ -4429,7 +4430,7 @@ Looking Glass.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-move-transition")
     (synopsis "Move transition for OBS Studio")
     (description "Plugin for OBS Studio to move source to a new position
@@ -4470,7 +4471,7 @@ during scene transition.")
                               "/obs-plugins/64bit/obs-multi-rtmp.so")
                (string-append #$output
                               "/lib/obs-plugins/obs-multi-rtmp.so")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/sorayuki/obs-multi-rtmp")
     (synopsis "Multi-site simultaneous broadcast plugin for OBS Studio")
     (description "This is a plugin to streaming to multiple RTMP servers
@@ -4501,7 +4502,7 @@ configuration (bitrate).")
                              #$(this-package-input "obs") "/lib")
               "-Wno-dev")))
     (native-inputs (list libconfig pkg-config))
-    (inputs (list obs pipewire))
+    (inputs (list obs pipewire simde))
     (home-page "https://obsproject.com/forum/resources/pipewire-audio-capture.1458/")
     (synopsis "Audio device and application capture for OBS Studio using PipeWire")
     (description "This plugin adds 3 sources for capturing audio outputs,
@@ -4548,7 +4549,7 @@ inputs and applications using PipeWire.")
                    #$output "/share/obs/obs-plugins/obs-shaderfilter/"
                    directory)))
                '("examples" "textures")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-shaderfilter")
     (synopsis "OBS filter for applying an arbitrary shader to a source")
     (description "Plugin for OBS Studio which is intended to allow users to
@@ -4581,7 +4582,7 @@ shader code.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-source-clone")
     (synopsis "Plugin for OBS Studio to clone sources")
     (description "Add source to OBS that lets you clone sources to allow
@@ -4610,7 +4611,7 @@ different filters than the original.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-source-copy")
     (synopsis "OBS plugin for copy and paste scenes, sources and filters")
     (description "This package provides an OBS plugin for copy and paste
@@ -4639,7 +4640,7 @@ scenes, sources and filters.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs))
+    (inputs (list obs simde))
     (home-page "https://github.com/exeldro/obs-source-record")
     (synopsis "OBS plugin for recording sources via a filter")
     (description "This package provides an OBS plugin for recording sources
@@ -4668,7 +4669,7 @@ via a filter.")
     (native-inputs
      (list pkg-config))
     (propagated-inputs `() )
-    (inputs (list obs
+    (inputs (list obs simde
                   `(,libx11 "out") wayland wayland-protocols))
     (home-page "https://hg.sr.ht/~scoopta/wlrobs")
     (synopsis "OBS plugin for Wayland (wlroots) screen capture")
@@ -4698,6 +4699,7 @@ Wayland compositors.")
                   obs
                   libx11
                   libxcb
+                  simde
                   vulkan-headers
                   vulkan-loader
                   wayland))
