@@ -24,16 +24,16 @@
 ;;;; Code:
 
 (define-module (gnu packages power)
+  #:use-module (guix gexp)
+  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix packages)
+  #:use-module (guix download)
+  #:use-module (guix build-system gnu)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages man)
   #:use-module (gnu packages pkg-config)
-  #:use-module (gnu packages python-xyz)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix download)
-  #:use-module (guix gexp)
-  #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages))
+  #:use-module (gnu packages python-xyz))
 
 (define-public apcupsd
   (package
