@@ -1223,6 +1223,44 @@ editor, part of the RiNgDove EDA suite.")
 chip database for NG-Ultra architecture from NanoXplore.")
       (license license:expat))))
 
+(define-public prjpeppercorn
+  (package
+    (name "prjpeppercorn")
+    (version "1.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/YosysHQ/prjpeppercorn/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lfvd3r1pnyc1mxsiiqqvmp8r5pw1bshgjrsrsnd20grvlv6wwcn"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                     ;no test suite
+      #:configure-flags
+      #~(list "-DBUILD_SHARED=ON"
+              "-DSTATIC_BUILD=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "libgm")))
+          (add-after 'install 'keep-delay
+            (lambda _
+              (copy-recursively
+               "../delay" (string-append #$output "/delay")))))))
+    (inputs
+     (list boost))
+    (synopsis "GateMate FPGAs bitstream tools and database")
+    (description
+     "@code{Prjpeppercorn} includes programming tools data needed to create
+@code{nextpnr} chip database for GateMate architecture from Cologne Chip.")
+    (home-page "https://github.com/YosysHQ/prjpeppercorn/")
+    (license license:isc)))
+
 (define-public prjtrellis
   ;; The last release is 2 years old; use the latest commit for now.
   (let ((commit "92345b77edf775fe5668700dd9931e19db2d36b0")
