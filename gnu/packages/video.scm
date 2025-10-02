@@ -6634,7 +6634,7 @@ package does not rely on the @code{YouTube} Data API v3.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list ffmpeg pulseaudio wayland wayland-protocols libx264))
+     (list ffmpeg-6 pulseaudio wayland wayland-protocols libx264))
     (home-page "https://github.com/ammen99/wf-recorder")
     (synopsis "Screen recorder for wlroots-based compositors")
     (description
