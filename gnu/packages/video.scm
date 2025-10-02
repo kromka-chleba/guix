@@ -4440,7 +4440,7 @@ during scene transition.")
 (define-public obs-multi-rtmp
   (package
     (name "obs-multi-rtmp")
-    (version "0.3.0.2-OBS29.1.1")
+    (version "0.7.3.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4449,7 +4449,7 @@ during scene transition.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "192zkihn3ahh93fn3mkpbx7apa04lmcxc637hpxwkivdjbq3nbk3"))))
+                "0ch5wrqbw4rkr9yjfya6iwa1dc5648rs2r1adwf2kzn9chp26lz6"))))
     (build-system cmake-build-system)
     (arguments
      (list
