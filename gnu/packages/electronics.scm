@@ -967,7 +967,26 @@ which allows one to install the M8 firmware on any Teensy.")
                    (cut invoke "make" "-C" <>)
                    ;; Other tests require unavailable tools.
                    (list "ecp5_evn" "tinyfpga_rev1"
-                         "tinyfpga_rev2" "versa5g")))))))))
+                         "tinyfpga_rev2" "versa5g"))))))
+          (add-after 'run-prjtrellis-examples 'run-apycula-examples
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "PATH"
+                        (string-append #$output "/bin:" (getenv "PATH")))
+                (setenv "NEXTPNR" "nextpnr-himbaechel-gowin")
+                ;; Tests need write access.
+                (copy-recursively
+                 (string-append
+                  #$(this-package-input "apycula") "/examples")
+                 "/tmp/apycula/examples")
+                (with-directory-excursion "/tmp/apycula/examples"
+                  ;; Remove call to proprietary tools.
+                  (substitute* "Makefile"
+                    (("gowin_pack")
+                     "# gowin_pack"))
+                  (for-each
+                   (cut invoke "make" "-C" <>)
+                   (scandir "." (negate (cut member <> '("." ".."))))))))))))
     (native-inputs
      (list googletest sanitizers-cmake))
     (inputs
