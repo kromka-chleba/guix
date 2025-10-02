@@ -53,6 +53,10 @@
   "Return the default composer-classloader package, resolved lazily."
   (@* (gnu packages php-xyz) composer-classloader))
 
+(define (default-guile-json)
+  "Return the default guile-json package, resolved-lazily."
+  (@* (gnu packages guile) guile-json-4))
+
 (define %composer-build-system-modules
   ;; Build-side modules imported by default.
   `((guix build composer-build-system)
@@ -91,7 +95,7 @@
 
 (define* (composer-build name inputs
                          #:key
-                         guile source
+                         source
                          (outputs '("out"))
                          (configure-flags ''())
                          (search-paths '())
@@ -110,15 +114,13 @@
                          (phases '(@ (guix build composer-build-system)
                                      %standard-phases))
                          (system (%current-system))
+                         (guile #f)
+                         (guile-json (default-guile-json))
                          (imported-modules %composer-build-system-modules)
                          (modules '((guix build composer-build-system)
                                     (guix build utils))))
   "Build SOURCE using PHP, and with INPUTS. This assumes that SOURCE provides
 a 'composer.json' file as its build system."
-  (define guile-json
-    (module-ref (resolve-interface '(gnu packages guile))
-                'guile-json-4))
-
   (define builder
     (with-extensions (list guile-json)
       (with-imported-modules imported-modules
