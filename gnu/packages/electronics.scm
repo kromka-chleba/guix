@@ -1262,8 +1262,13 @@ chip database for NG-Ultra architecture from NanoXplore.")
         #~(modify-phases %standard-phases
             (add-after 'unpack 'chdir
               (lambda _
-                (chdir "libtrellis"))))))
-      (native-inputs (list python))
+                (chdir "libtrellis")))
+            ;; These examples are necessary for testing nextpnr.
+            (add-after 'install 'keep-examples
+              (lambda _
+                (copy-recursively
+                 "../examples" (string-append #$output "/examples")))))))
+      (native-inputs (list python-minimal))
       (inputs (list openocd boost pybind11))
       (synopsis "Placement and routing for ECP5 FPGAs")
       (description
