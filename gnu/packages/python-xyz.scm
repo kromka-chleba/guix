@@ -4512,18 +4512,21 @@ and function call return values in a human-readable way.")
     (version "1.2.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "clyent" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Anaconda-Platform/clyent")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1r9987qmy1pz3hq54160bapqsywpq14waw4w9x3ly8hmq7kpgfbj"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-mock))
+        (base32 "0zg36v1fxvsv0z078gi6sg7lqn1vcb7r9bqm37r6pnb6r8j349gw"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest))
+    (native-inputs (list python-mock python-setuptools))
     (home-page "https://github.com/Anaconda-Platform/clyent")
     (synopsis "Command line client library")
-    (description "Clyent is a Python command line utility library.  It is used
-by @code{binstar}, @code{binstar-build}, and @code{chalmers}.")
+    (description
+     "Clyent is a Python command line utility library.  It is used by
+@code{binstar}, @code{binstar-build}, and @code{chalmers}.")
     (license license:bsd-3)))
 
 (define-public python-babel
