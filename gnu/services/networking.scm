@@ -585,6 +585,7 @@ discovers available Ethernet interfaces, that can be configured, automatically."
 @command{dhcpcd-run-hooks}).  If the list is empty, the @file{sbin} of
 @file{/run/current-system/profile} is included instead."
    empty-serializer)
+  (package (file-like dhcpcd) "The dhcpcd to use." empty-serializer)
 
   ;; The following defaults replicate the default dhcpcd configuration file.
   ;;
@@ -674,7 +675,7 @@ will depend on."
 
 (define (dhcpcd-shepherd-service config)
   (match-record config <dhcpcd-configuration>
-                (command-arguments hook-packages interfaces
+                (command-arguments hook-packages interfaces package
                  shepherd-provision shepherd-requirement)
     (let ((config-file (dhcpcd-config-file config)))
       (list (shepherd-service
@@ -684,7 +685,7 @@ will depend on."
              (actions (list (shepherd-configuration-action config-file)))
              (start
               #~(make-forkexec-constructor
-                 (list (string-append #$dhcpcd "/sbin/dhcpcd")
+                 (list (string-append #$package "/sbin/dhcpcd")
                        #$@command-arguments "-B" "-f" #$config-file
                        #$@interfaces)
                  #:environment-variables
