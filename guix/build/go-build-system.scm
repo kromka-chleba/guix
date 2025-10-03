@@ -169,6 +169,32 @@ dependencies, so it should be self-contained."
       (lambda (port)
         (format port "~a" (current-time)))))
 
+  ;; For reproducibility when using cgo.
+  ;;
+  ;; cgo passes -frandom-seed.
+  ;;
+  ;; Why this flag exists:
+  ;; If you compile the same C code twice, GCC might produce
+  ;; slightly different object files due to internal
+  ;; randomness (like hash seeds for internal tables).
+  ;;
+  ;; To fix this, the cgo tool tells GCC, "Don't use your
+  ;; own random seed; use this specific one I'm giving you."
+  ;; The seed it provides is derived from the Go package's
+  ;; build ID.
+  ;;
+  ;; The Go build process uses a temporary WORK directory
+  ;; with a random path (e.g., /tmp/go-build12345).
+  ;; When cgo calls the C compiler, this random path gets
+  ;; embedded into the resulting object files (.o), making
+  ;; them non-reproducible. This change in the .o files is
+  ;; the input that causes the Go build ID to change,
+  ;; which in turn changes the -frandom-seed for subsequent
+  ;; C compilations.
+  ;;
+  (mkdir-p "/tmp/go-work")
+  (setenv "GOTMPDIR" "/tmp/go-work")
+
   ;; Using the current working directory as GOPATH makes it easier for packagers
   ;; who need to manipulate the unpacked source code.
   (setenv "GOPATH" (getcwd))
