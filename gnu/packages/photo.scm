@@ -87,6 +87,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages qt)
@@ -107,85 +108,102 @@
 (define-public rapid-photo-downloader
   (package
     (name "rapid-photo-downloader")
-    (version "0.9.18")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://launchpad.net/rapid/pyqt/"
-                                  version "/+download/" name "-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "15p7sssg6vmqbm5xnc4j5dr89d7gl7y5qyq44a240yl5aqkjnybw"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list file intltool gobject-introspection))
-    (inputs
-     `(("bash" ,bash-minimal) ; for wrap-program
-       ("gdk-pixbuf" ,gdk-pixbuf)
-       ("gexiv2" ,gexiv2)
-       ("gst-libav" ,gst-libav)
-       ("gst-plugins-base" ,gst-plugins-base)
-       ("gst-plugins-good" ,gst-plugins-good)
-       ("gstreamer" ,gstreamer)
-       ("libgudev" ,libgudev)
-       ("libnotify" ,libnotify)
-       ("libmediainfo" ,libmediainfo)
-       ("usdisks" ,udisks)
-       ("python-pyqt" ,python-pyqt)
-       ("python-pygobject" ,python-pygobject)
-       ("python-gphoto2" ,python-gphoto2)
-       ("python-pyzmq" ,python-pyzmq)
-       ("python-tornado" ,python-tornado)
-       ("python-psutil" ,python-psutil)
-       ("python-pyxdg" ,python-pyxdg)
-       ("python-arrow" ,python-arrow)
-       ("python-dateutil" ,python-dateutil)
-       ("python-easygui" ,python-easygui)
-       ("python-colour" ,python-colour)
-       ("python-pymediainfo" ,python-pymediainfo)
-       ("python-sortedcontainers" ,python-sortedcontainers)
-       ("python-rawkit" ,python-rawkit)
-       ("python-requests" ,python-requests)
-       ("python-colorlog" ,python-colorlog)
-       ("python-pyprind" ,python-pyprind)
-       ("python-tenacity" ,python-tenacity)
-       ("perl-image-exiftool" ,perl-image-exiftool)))
+    (version "0.9.36")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/damonlynch/rapid-photo-downloader")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1x4hgsxyn6nf12whwmmaxh447n88diix5wazcwv4hqm6mip8hnbw"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-libmediainfo
-           (lambda _
-             (substitute* "raphodo/metadatavideo.py"
-               (("pymedia_library_file = 'libmediainfo.so.0'")
-                (string-append "pymedia_library_file = '"
-                               (assoc-ref %build-inputs "libmediainfo")
-                               "/lib/libmediainfo.so.0'")))
-             #t))
-         (add-after 'install 'wrap
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out               (assoc-ref outputs "out"))
-                   (path              (string-join
-                                       (list (string-append
-                                              (assoc-ref inputs "perl-image-exiftool")
-                                              "/bin"))
-                                       ":"))
-                   (gi-typelib-path   (getenv "GI_TYPELIB_PATH"))
-                   (python-path       (getenv "GUIX_PYTHONPATH")))
-               (for-each
-                (lambda (program)
-                  (wrap-program program
-                    `("PATH" ":" prefix (,path))
-                    `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))
-                    `("GUIX_PYTHONPATH"             ":" prefix (,python-path))))
-                (map (lambda (name)
-                       (string-append out "/bin/" name))
-                     '("analyze-pv-structure"
-                       "rapid-photo-downloader"))))
-             #t)))))
-    (home-page "https://www.damonlynch.net/rapid/")
+     (list
+      #:test-flags
+      #~(list
+         ;; XXX: KeyError: Preference key 'Extension' is invalid.
+         "-k" (string-join (list "not testLargePrefList"
+                                 "testPrefImageList"
+                                 "testPrefVideoList"
+                                 "testSequencesList"
+                                 "testBadDTConversion")
+                           " and not ")
+         ;; XXX: Test data is corrupted, and substitute* doesn't work
+         ;; for binary data: ModuleNotFoundError: No module named 'viewutils'
+         "--ignore=test_proximity.py"
+         ;; XXX: No tests are collected here.
+         "--ignore=test_thumbnail.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-libmediainfo
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "raphodo/metadata/metadatavideo.py"
+                (("libmediainfo.so.0" lib)
+                 (search-input-file inputs (string-append "lib/" lib))))))
+          (add-before 'check 'configure-check
+            (lambda _
+              (setenv "XDG_DATA_HOME" (getcwd))
+              (chdir "raphodo/tests")
+              (substitute* "test_generatenameconfig.py"
+                (("generatename\\.convert")
+                 "raphodo.generatename.convert")
+                (("([^.])(generatenameconfig\\.)" _ before module)
+                 (string-append before "raphodo." module))
+                (("import (generatename|generatenameconfig)" _ module)
+                 (string-append "import raphodo." module)))
+              (substitute* "test_thumbnail.py"
+                (("from (cache|interprocess|rpdfile|utilities)" _ module)
+                 (string-append "from raphodo." module)))))
+          (add-after 'wrap 'wrap-more
+            (lambda* (#:key inputs #:allow-other-keys)
+              (wrap-program (string-append #$output
+                                           "/bin/rapid-photo-downloader")
+                `("PATH" ":" prefix
+                  (,(dirname (search-input-file inputs "bin/exiftool"))))
+                `("GI_TYPELIB_PATH" ":" prefix
+                  (,(getenv "GI_TYPELIB_PATH")))
+                `("GUIX_PYTHONPATH" ":" prefix
+                  (,(getenv "GUIX_PYTHONPATH")))))))))
+    (native-inputs
+     (list file
+           intltool
+           gobject-introspection
+           python-pytest
+           python-setuptools))
+    (inputs
+     (list bash-minimal ;for wrap-program
+           gdk-pixbuf
+           gexiv2
+           gst-libav
+           gst-plugins-base
+           gst-plugins-good
+           gstreamer
+           libgudev
+           libnotify
+           libmediainfo
+           udisks
+           python-babel
+           python-show-in-file-manager
+           python-pyqt
+           python-pygobject
+           python-gphoto2
+           python-pyzmq
+           python-tornado
+           python-psutil
+           python-arrow
+           python-easygui
+           python-colour
+           python-pymediainfo
+           python-sortedcontainers
+           python-tenacity
+           perl-image-exiftool))
+    (home-page "https://github.com/damonlynch/rapid-photo-downloader")
     (synopsis "Import photos and videos from cameras, phones and memory cards")
-    (description "Import photos and videos from cameras, phones and memory
-cards and generate meaningful file and folder names.")
+    (description
+     "This package provides tools to import photos and videos from cameras,
+phones and memory cards and generate meaningful file and folder names.")
     (license license:gpl2+)))
 
 (define-public libraw
