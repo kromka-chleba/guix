@@ -978,7 +978,6 @@ AM_DISTCHECK_CONFIGURE_FLAGS =			\
 guix-binary.%.tar.xz:
 	$(AM_V_GEN)GUIX_PACKAGE_PATH=					\
 	tarball=`$(top_builddir)/pre-inst-env guix pack -C xz		\
-	  --fallback							\
 	  -s "$*" --localstatedir --profile-name=current-guix		\
 	  guix` ;					\
 	cp "$$tarball" "$@.tmp" ; mv "$@.tmp" "$@"
@@ -1152,7 +1151,7 @@ release: dist-with-updated-version all
 	git commit -m "gnu: guix: Update to $(PACKAGE_VERSION)."
 	$(top_builddir)/pre-inst-env guix build guix	\
 	      $(call system_flags,$(SUPPORTED_SYSTEMS))	\
-	      -v1 --no-grafts --fallback
+	      -v1 --no-grafts
 # Generate the binary release tarballs.
 	rm -f $(BINARY_TARBALLS)
 	$(MAKE) $(BINARY_TARBALLS)
@@ -1164,14 +1163,14 @@ release: dist-with-updated-version all
 	$(top_builddir)/pre-inst-env guix build				\
 	      -e '((@ (gnu packages package-management) current-guix))'	\
 	      $(call system_flags,$(GUIX_SYSTEM_INSTALLER_SYSTEMS))	\
-	      -v1 --no-grafts --fallback
+	      -v1 --no-grafts
 # Generate the ISO installation images.
 	for system in $(GUIX_SYSTEM_INSTALLER_SYSTEMS) ; do				\
 	  GUIX_DISPLAYED_VERSION="`git describe --match=v* | sed -'es/^v//'`" ;		\
 	  image=`$(top_builddir)/pre-inst-env						\
 	    guix system image -t iso9660						\
 	    --label="GUIX_$${system}_$(VERSION)"					\
-            --system=$$system --fallback						\
+            --system=$$system								\
 	    gnu/system/install.scm` ;							\
 	  if [ ! -f "$$image" ] ; then							\
 	    echo "failed to produce Guix installation image for $$system" >&2 ;		\
@@ -1187,7 +1186,7 @@ release: dist-with-updated-version all
 	  image=`$(top_builddir)/pre-inst-env						\
 	    guix system image -t qcow2 $(GUIX_SYSTEM_VM_IMAGE_FLAGS)			\
 	    --save-provenance								\
-	    --system=$$system --fallback						\
+	    --system=$$system								\
 	    gnu/system/examples/vm-image.tmpl` ;					\
 	  if [ ! -f "$$image" ] ; then							\
 	    echo "failed to produce Guix VM image for $$system" >&2 ;			\

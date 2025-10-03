@@ -810,7 +810,8 @@ encoding conversion errors."
       (getenv "USER"))))
 
 (define* (set-build-options server
-                            #:key keep-failed? keep-going? fallback?
+                            #:key keep-failed? keep-going?
+                            (fallback? #t)
                             (verbosity 0)
                             rounds                ;number of build rounds
                             max-build-jobs

@@ -167,7 +167,9 @@ options handled by 'set-build-options-from-command-line', and listed in
   (display (G_ "
   -n, --dry-run          do not build the derivations"))
   (display (G_ "
-      --fallback         fall back to building when the substituter fails"))
+      --fallback         fall back to building when the substituter fails (default behaviour)"))
+  (display (G_ "
+      --no-fallback      do not fall back to building when the substituter fails"))
   (display (G_ "
       --no-substitutes   build instead of resorting to pre-built substitutes"))
   (display (G_ "
@@ -272,8 +274,12 @@ talking to a remote daemon\n")))
                          rest)))
         (option '("fallback") #f #f
                 (lambda (opt name arg result . rest)
+                  (warning (G_ "'--fallback' is deprecated ; \
+it is now the default behaviour~%"))))
+        (option '("no-fallback") #f #f
+                (lambda (opt name arg result . rest)
                   (apply values
-                         (alist-cons 'fallback? #t
+                         (alist-cons 'fallback? #f
                                      (alist-delete 'fallback? result))
                          rest)))
         (option '("no-substitutes") #f #f
@@ -424,6 +430,7 @@ Try @option{--list-systems} to view available system types.~%")))
   `((build-mode . ,(build-mode normal))
     (graft? . #t)
     (substitutes? . #t)
+    (fallback? . #t)
     (offload? . #t)
     (print-build-trace? . #t)
     (print-extended-build-trace? . #t)

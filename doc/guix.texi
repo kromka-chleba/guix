@@ -4150,16 +4150,15 @@ etc.
 When substitutes are enabled and a substitute for a derivation is
 available, but the substitution attempt fails, Guix will attempt to
 build the derivation locally depending on whether or not
-@option{--fallback} was given (@pxref{fallback-option,, common build
-option @option{--fallback}}).  Specifically, if @option{--fallback} was
-omitted, then no local build will be performed, and the derivation is
-considered to have failed.  However, if @option{--fallback} was given,
-then Guix will attempt to build the derivation locally, and the success
-or failure of the derivation depends on the success or failure of the
-local build.  Note that when substitutes are disabled or no substitute
-is available for the derivation in question, a local build will
-@emph{always} be performed, regardless of whether or not
-@option{--fallback} was given.
+@option{--no-fallback} was given (@pxref{fallback-option,, common build
+option @option{--no-fallback}}).  Specifically, by default, Guix will
+attempt to build the derivation locally, and the success or failure of
+the derivation depends on the success or failure of the local build.
+However, if @option{--no-fallback} was given, then no local build will
+be performed, and the derivation is considered to have failed.  Note
+that when substitutes are disabled or no substitute is available for the
+derivation in question, a local build will @emph{always} be performed,
+regardless of whether or not @option{--no-fallback} was given.
 
 To get an idea of how many substitutes are available right now, you can
 try running the @command{guix weather} command (@pxref{Invoking guix
@@ -13373,8 +13372,8 @@ derivations has failed.
 Do not build the derivations.
 
 @anchor{fallback-option}
-@item --fallback
-When substituting a pre-built binary fails, fall back to building
+@item --no-fallback
+When substituting a pre-built binary fails, don't fall back to building
 packages locally (@pxref{Substitution Failure}).
 
 @item --substitute-urls=@var{urls}
