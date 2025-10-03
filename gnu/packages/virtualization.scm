@@ -36,7 +36,7 @@
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2024, 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
@@ -1516,7 +1516,8 @@ using simplestreams index files as the publishing mechanism
                            version ".tar.xz"))
        (sha256
         (base32
-         "1dn6pzv0gzkxrjvi60cdzdmyxqlcsvinbrbds91xm4v7wbn5g1dd"))))
+         "1dn6pzv0gzkxrjvi60cdzdmyxqlcsvinbrbds91xm4v7wbn5g1dd"))
+       (patches (search-patches "libosinfo-libxml2-fix.patch"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -1629,14 +1630,14 @@ It started as a side project of LXC but can be used by any run-time.")
 (define-public libvirt
   (package
     (name "libvirt")
-    (version "11.0.0")
+    (version "11.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://libvirt.org/sources/libvirt-"
                            version ".tar.xz"))
        (sha256
-        (base32 "0vl0lgzw3x4fkghhw7nfxk8fxj3bbn9f17y0hg7miba283zpd881"))
+        (base32 "08r4sxchhh639a8h346795971zz615j86v9z9vxf5q9q0pbbjqrb"))
        (patches (search-patches "libvirt-add-install-prefix.patch"
                                 "libvirt-respect-modules-path.patch"))))
     (build-system meson-build-system)
@@ -1775,7 +1776,7 @@ to integrate other virtualization mechanisms if needed.")
            `(,glib "bin") vala))
     (propagated-inputs
      ;; ‘Required:’ by the installed .pc files.
-     (list glib libvirt libxml2-next gobject-introspection))
+     (list glib libvirt libxml2 gobject-introspection))
     (home-page "https://libvirt.org")
     (synopsis "GLib wrapper around libvirt")
     (description "libvirt-glib wraps the libvirt library to provide a
@@ -1793,14 +1794,14 @@ three libraries:
 (define-public python-libvirt
   (package
     (name "python-libvirt")
-    (version "11.0.0")
+    (version "11.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://libvirt.org/sources/python/libvirt-python-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1y26104zgylz0v9d6xc0bm6m13is94shn9dlhjycaf347jjjbs6f"))))
+        (base32 "08xcnzmahmb72rv9cw8dxwnjmrdgmm5j4bbxpwsnhll9qsgdiak9"))))
     (build-system pyproject-build-system)
     (inputs
      (list libvirt))
@@ -1901,8 +1902,8 @@ virtualization library.")
            libosinfo
            libvirt
            libvirt-glib
+           libxml2
            python-minimal
-           python-libxml2
            python-libvirt
            python-pycairo
            python-pygobject
@@ -2965,7 +2966,7 @@ virtual machines.")
 (define-public bubblewrap
   (package
     (name "bubblewrap")
-    (version "0.10.0")
+    (version "0.11.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2974,7 +2975,7 @@ virtual machines.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0paahq4y8fmdnipahgymsshi3klmi60lvcqhhg1020z7n1gni0hx"))
+                "1rb7dih12s9liwq2lfjdm1br6jaxkmdwsqjr6zx9wfyy0cnwr07h"))
               (patches (search-patches "bubblewrap-fix-locale-in-tests.patch"))))
     (build-system meson-build-system)
     (arguments

@@ -261,6 +261,10 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/electronics.scm			\
   %D%/packages/elf.scm				\
   %D%/packages/elixir.scm			\
+  %D%/packages/elixir-databases.scm		\
+  %D%/packages/elixir-i18n.scm		\
+  %D%/packages/elixir-markup.scm		\
+  %D%/packages/elixir-web.scm			\
   %D%/packages/elixir-xyz.scm			\
   %D%/packages/elm.scm				\
   %D%/packages/embedded.scm			\
@@ -512,7 +516,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/openkinect.scm			\
   %D%/packages/onc-rpc.scm			\
   %D%/packages/opencl.scm			\
-  %D%/packages/openbox.scm			\
   %D%/packages/opencog.scm			\
   %D%/packages/openldap.scm			\
   %D%/packages/openpgp.scm			\
@@ -990,7 +993,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/antiword-CVE-2014-8123.patch			\
   %D%/packages/patches/antlr3-3_1-fix-java8-compilation.patch	\
   %D%/packages/patches/antlr3-3_3-fix-java8-compilation.patch	\
-  %D%/packages/patches/aoflagger-use-system-provided-pybind11.patch \
   %D%/packages/patches/apr-fix-atomics.patch			\
   %D%/packages/patches/apr-skip-getservbyname-test.patch	\
   %D%/packages/patches/aria-maestosa-scons-python3.patch	\
@@ -1030,6 +1032,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/barony-fix-textures.patch		\
   %D%/packages/patches/bash-completion-directories.patch	\
   %D%/packages/patches/bash-linux-pgrp-pipe.patch		\
+  %D%/packages/patches/basis-universal-unbundle-libs.patch	\
   %D%/packages/patches/bastet-change-source-of-unordered_set.patch	\
   %D%/packages/patches/bdb-4-5-configure.patch                  \
   %D%/packages/patches/bdb-5.3-atomics-on-gcc-9.patch		\
@@ -1121,7 +1124,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/containerd-fix-includes.patch            \
   %D%/packages/patches/cool-retro-term-wctype.patch		\
   %D%/packages/patches/coq-autosubst-1.8-remove-deprecated-files.patch		\
-  %D%/packages/patches/corectrl-polkit-install-dir.patch	\
+  %D%/packages/patches/corectrl-locate-polkit-with-pkg-config.patch	\
   %D%/packages/patches/corefx-mono-5.4.0-patches.patch		\
   %D%/packages/patches/corefx-mono-pre-5.8.0-patches.patch	\
   %D%/packages/patches/coreutils-gnulib-tests.patch		\
@@ -1136,7 +1139,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/csvkit-set-locale-for-tests.patch			\
   %D%/packages/patches/ctranslate2-local-build.patch		\
   %D%/packages/patches/cube-nocheck.patch			\
-  %D%/packages/patches/cups-minimal-Address-PPD-injection-issues.patch	\
+  %D%/packages/patches/cups-relax-root-ownership-check.patch		\
   %D%/packages/patches/cura-engine-gcc-14.patch			\
   %D%/packages/patches/curl-CVE-2024-8096.patch			\
   %D%/packages/patches/curl-use-ssl-cert-env.patch		\
@@ -1228,6 +1231,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-telega-path-placeholder.patch	\
   %D%/packages/patches/emacs-telega-test-env.patch		\
   %D%/packages/patches/emacs-wordnut-require-adaptive-wrap.patch	\
+  %D%/packages/patches/emacs-zoom-image-test-fix.patch	\
   %D%/packages/patches/enblend-enfuse-reproducible.patch	\
   %D%/packages/patches/enjarify-setup-py.patch			\
   %D%/packages/patches/enlightenment-fix-setuid-path.patch	\
@@ -1553,6 +1557,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gtk3-respect-GUIX_GTK3_PATH.patch	\
   %D%/packages/patches/gtk3-respect-GUIX_GTK3_IM_MODULE_FILE.patch \
   %D%/packages/patches/gtk-doc-respect-xml-catalog.patch	\
+  %D%/packages/patches/gtk-doc-mkhtml-test-fix.patch	\
   %D%/packages/patches/gtk4-respect-GUIX_GTK4_PATH.patch    	\
   %D%/packages/patches/gtkglext-disable-disable-deprecated.patch \
   %D%/packages/patches/gtksourceview-2-add-default-directory.patch \
@@ -1603,6 +1608,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/idris-test-ffi008.patch			\
   %D%/packages/patches/ilmbase-fix-tests.patch			\
   %D%/packages/patches/inferno-fix-crash.patch		\
+  %D%/packages/patches/inkscape-libxml2.patch		\
   %D%/packages/patches/instead-use-games-path.patch		\
   %D%/packages/patches/intltool-perl-compatibility.patch	\
   %D%/packages/patches/inetutils-hurd64.patch			\
@@ -1674,6 +1680,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/librewolf-use-system-wide-dir.patch	\
   %D%/packages/patches/libvirt-add-install-prefix.patch	\
   %D%/packages/patches/libvirt-respect-modules-path.patch	\
+  %D%/packages/patches/libzmf-doxygen-1.14.patch		\
   %D%/packages/patches/libziparchive-add-includes.patch		\
   %D%/packages/patches/lightdm-arguments-ordering.patch		\
   %D%/packages/patches/lightdm-vnc-ipv6.patch			\
@@ -1746,6 +1753,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libofa-ftbfs-1.diff		\
   %D%/packages/patches/libofa-curl.diff		\
   %D%/packages/patches/libofa-ftbfs-2.diff		\
+  %D%/packages/patches/libosinfo-libxml2-fix.patch		\
   %D%/packages/patches/libotr-test-auth-fix.patch		\
   %D%/packages/patches/libksieve-Fix-missing-link-libraries.patch \
   %D%/packages/patches/libmad-armv7-thumb-pt1.patch		\
@@ -1786,7 +1794,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libxcb-path-max.patch			\
   %D%/packages/patches/libxml2-xpath0-Add-option-xpath0.patch	\
   %D%/packages/patches/libwpd-gcc-compat.patch			\
-  %D%/packages/patches/libxslt-generated-ids.patch		\
   %D%/packages/patches/libxt-guix-search-paths.patch		\
   %D%/packages/patches/lierolibre-check-unaligned-access.patch	\
   %D%/packages/patches/lierolibre-is-free-software.patch	\
@@ -1867,6 +1874,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/mpc123-initialize-ao.patch		\
   %D%/packages/patches/mpg321-CVE-2019-14247.patch		\
   %D%/packages/patches/mpg321-gcc-10.patch			\
+  %D%/packages/patches/mpv-0.40.0-fix-ffmpeg-8.0.patch		\
   %D%/packages/patches/modglue-fix-build.patch		\
   %D%/packages/patches/modem-manager-fix-test-wrapper.patch	\
   %D%/packages/patches/module-init-tools-moduledir.patch	\
@@ -2095,7 +2103,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/perl-www-curl-fix-struct-void.patch	\
   %D%/packages/patches/perl-www-curl-remove-symbol.patch	\
   %D%/packages/patches/perl-xml-libxml-fix-function-prototypes.patch	\
-  %D%/packages/patches/perl-xml-libxslt-fix-configure.patch	\
   %D%/packages/patches/phoronix-test-suite-fsdg.patch		\
   %D%/packages/patches/picprog-non-intel-support.patch		\
   %D%/packages/patches/pidgin-add-search-path.patch		\
@@ -2177,6 +2184,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pytorch-system-libraries.patch	\
   %D%/packages/patches/python-pytorch-without-kineto.patch	\
   %D%/packages/patches/python-robotframework-sshlibrary-rf5-compat.patch \
+  %D%/packages/patches/python-scipy-i686.patch 			\
   %D%/packages/patches/python-vaex-core-fix-tsl-use.patch	\
   %D%/packages/patches/python-vega-datasets-remove-la-riots-code.patch	\
   %D%/packages/patches/python-versioneer-guix-support.patch	\
@@ -2226,8 +2234,10 @@ dist_patch_DATA =						\
   %D%/packages/patches/rtosc-0.3.1-fix-invalid-comparison-operator.patch	\
   %D%/packages/patches/racket-chez-scheme-bin-sh.patch		\
   %D%/packages/patches/racket-launcher-config-dir.patch		\
+  %D%/packages/patches/raptor2-libxml2.patch			\
   %D%/packages/patches/racket-rktio-bin-sh.patch		\
   %D%/packages/patches/re2c-Use-maximum-alignment.patch         \
+  %D%/packages/patches/readymedia-ffmpeg7.patch         \
   %D%/packages/patches/reduce-unbundle-libffi.patch             \
   %D%/packages/patches/remake-impure-dirs.patch			\
   %D%/packages/patches/restartd-update-robust.patch             \
@@ -2246,7 +2256,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/ruby-flores-fix-deprecations.patch	\
   %D%/packages/patches/ruby-latex-decode-fix-test.patch		\
   %D%/packages/patches/ruby-mustache-1.1.1-fix-race-condition-tests.patch \
-  %D%/packages/patches/ruby-nokogiri.patch			\
   %D%/packages/patches/ruby-pg-fix-connect-timeout.patch	\
   %D%/packages/patches/ruby-x25519-automatic-fallback-non-x86_64.patch \
   %D%/packages/patches/rust-1.64-fix-riscv64-bootstrap.patch	\
@@ -2261,6 +2270,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/sage-safeguard-sage-getargspec-cython.patch \
   %D%/packages/patches/sajson-for-gemmi-numbers-as-strings.patch	\
   %D%/packages/patches/sajson-build-with-gcc10.patch		\
+  %D%/packages/patches/sane-look-for-plugins-in-SANE_BACKEND_LIB_PATH.patch	\
   %D%/packages/patches/sbc-fix-build-non-x86.patch		\
   %D%/packages/patches/sbcl-fix-arm64-shared-lib.patch		\
   %D%/packages/patches/sbcl-aserve-add-HTML-5-elements.patch	\
@@ -2433,7 +2443,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/vtk-7-gcc-11-compat.patch		\
   %D%/packages/patches/vtk-7-hdf5-compat.patch			\
   %D%/packages/patches/vtk-7-python-compat.patch		\
+  %D%/packages/patches/vulkan-tools-wayland-1.24.patch          \
   %D%/packages/patches/warsow-qfusion-fix-bool-return-type.patch	\
+  %D%/packages/patches/warzone2100-unbundle-libs.patch		\
   %D%/packages/patches/wcstools-extend-makefiles.patch	\
   %D%/packages/patches/wdl-link-libs-and-fix-jnetlib.patch	\
   %D%/packages/patches/webkitgtk-adjust-bubblewrap-paths.patch	\
@@ -2459,7 +2471,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/xfig-Use-pkg-config-to-set-fontconfig-CFLAGS-and-LIBS.patch	\
   %D%/packages/patches/xfce4-settings-defaults.patch		\
   %D%/packages/patches/xgboost-use-system-dmlc-core.patch	\
-  %D%/packages/patches/xinit-startx-mcookie-path.patch		\
   %D%/packages/patches/xiphos-glib.patch                        \
   %D%/packages/patches/xmonad-dynamic-linking.patch		\
   %D%/packages/patches/xplanet-1.3.1-cxx11-eof.patch		\

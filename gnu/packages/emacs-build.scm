@@ -94,7 +94,7 @@ functions to ensure they are called with the right arguments during testing.")
 (define-public emacs-compat
   (package
     (name "emacs-compat")
-    (version "30.0.2.0")
+    (version "30.1.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -103,7 +103,7 @@ functions to ensure they are called with the right arguments during testing.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "020rn3l2sn0vzfhx30k47jd2cgvsddk0zfbizgb68hbajcxqfsl4"))))
+                "04kzp2m5qs1jyrj50yjz5l8azciyqkgkf4cbifcz4gngvxvgxdm4"))))
     (build-system emacs-build-system)
     (home-page "https://elpa.gnu.org/packages/compat.html")
     (synopsis "Emacs Lisp compatibility library")
@@ -524,64 +524,62 @@ Lisp.")
     (license license:expat)))
 
 (define-public makel
-  (let ((commit "2c831098c28a1f581b016532fa1f6e1c596b8ed1")
-        (revision "0"))
-    (package
-      (name "makel")
-      (version (git-version "0.8.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/DamienCassou/makel")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0lmfl27rqh1530j8g4z2k6y6mc25n54bjkqriqdkw3703kliyvry"))))
-      (build-system copy-build-system)
-      (arguments
-       (list
-        ;; Some tests are currently broken, see
-        ;; https://github.com/DamienCassou/makel/issues/6
-        #:tests? #f
-        #:modules
-        '((guix build copy-build-system)
-          (guix build utils)
-          (srfi srfi-1)
-          (srfi srfi-26)
-          (ice-9 ftw))
-         #:install-plan ''(("makel.mk" "include/")
-                           ("README.org" "share/docs/"))
-         #:phases
-         #~(modify-phases %standard-phases
-             (add-before 'install 'inject-deps
-               (lambda _
-                 (substitute* "makel.mk"
-                   (("^MAKEL_LOAD_PATH=(.*)$" all rest)
-                    (string-append
-                     "MAKEL_LOAD_PATH=-L "
-                     (string-join
-                      (filter-map
-                       (lambda (dir)
-                         (let ((path (scandir dir)))
-                           (and (eq? (length path) 3) ; removes emacs
-                                (string-append dir "/" (last path)))))
-                       (string-split (getenv "EMACSLOADPATH") #\:))
-                      " -L ")
-                     " " rest)))))
-             (add-before 'install 'check
-               (lambda* (#:key tests? #:allow-other-keys)
-                 (if tests?
-                     (with-directory-excursion "test"
-                       (invoke "bash" "run-tests.sh"))
-                     (format #f "Test suite not run.~%")))))))
-      (native-inputs (list bash-minimal emacs-minimal))
-      (inputs (list emacs-buttercup emacs-package-lint))
-      (home-page "https://github.com/DamienCassou/makel")
-      (synopsis "Makefile to help checking Emacs packages")
-      (description "This package provides a makefile to help checking Emacs
-packages.")
-      (license license:gpl3+))))
+  (package
+    (name "makel")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/DamienCassou/makel")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "143bdy4c81jbmp5sk1arnlmpc4dsw85n601x9rii2dgyn186l8si"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:modules
+      #~((guix build copy-build-system)
+         (guix build utils)
+         (srfi srfi-1)
+         (srfi srfi-26)
+         (ice-9 ftw))
+      #:install-plan
+      #~'(("makel.mk" "include/")
+          ("README.org" "share/docs/"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'inject-deps
+            (lambda _
+              (substitute* "makel.mk"
+                (("^MAKEL_LOAD_PATH=(.*)$" all rest)
+                 (string-append
+                  "MAKEL_LOAD_PATH=-L "
+                  (string-join
+                   (filter-map
+                    (lambda (dir)
+                      (let ((path (scandir dir)))
+                        (and (eq? (length path) 3) ; removes emacs
+                             (string-append dir "/" (last path)))))
+                    (string-split (getenv "EMACSLOADPATH") #\:))
+                   " -L ")
+                  " " rest)))))
+          (add-before 'install 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (if tests?
+                  (with-directory-excursion "test"
+                    (invoke "bash" "run-tests.sh"))
+                  (format #f "Test suite not run.~%")))))))
+    (native-inputs
+     (list bash-minimal emacs-minimal))
+    (inputs
+     (list emacs-buttercup emacs-package-lint))
+    (home-page "https://github.com/DamienCassou/makel")
+    (synopsis "Makefile to help checking Emacs packages")
+    (description
+     "This package provides a Makefile to help checking Emacs packages.")
+    (license license:gpl3+)))
 
 ;; This is an alternative version patches for internal Guix tests.
 ;; The user-facing version is in emacs-xyz.scm

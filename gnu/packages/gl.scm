@@ -12,7 +12,7 @@
 ;;; Copyright © 2019 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
-;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2020, 2021, 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2021 Ivan Gankevich <i.gankevich@spbu.ru>
 ;;; Copyright © 2021-2025 John Kehayias <john.kehayias@protonmail.com>
@@ -62,6 +62,7 @@
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages rust)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vulkan)
@@ -314,7 +315,7 @@ also known as DXTn or DXTC) for Mesa.")
 (define-public mesa
   (package
     (name "mesa")
-    (version "25.1.3")
+    (version "25.2.3")
     (source
      (origin
        (method url-fetch)
@@ -324,7 +325,7 @@ also known as DXTn or DXTC) for Mesa.")
                                  "mesa-" version ".tar.xz")))
        (sha256
         (base32
-         "0zxsvly6xjinaicgcf81ycljjjzy3mj0hqwf01b6sdgxnnnnrjzz"))))
+         "1y5lj9zy2hfvx9ji1rvsjapmzap7mpp5i3pf2yfcpmpica2v5mpj"))))
     (build-system meson-build-system)
     (propagated-inputs
      ;; The following are in the Requires.private field of gl.pc.
@@ -351,13 +352,12 @@ also known as DXTn or DXTC) for Mesa.")
     (native-inputs
      (append
       (list bison
-            clang-18
+            clang-18                    ;ensure rust-bindgen-cli uses the same
             flex
             gettext-minimal
             glslang
             libclc
             pkg-config
-            python-libxml2              ;for OpenGL ES 1.1 and 2.0 support
             python-mako
             python-ply
             python-pyyaml
@@ -406,13 +406,12 @@ panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
          "-Dglx=dri"               ;Thread Local Storage, improves performance
          ;; "-Dopencl=true"
          ;; "-Domx=true"
-         "-Dosmesa=true"
-         "-Dgallium-xa=enabled"
 
          ;; features required by wayland
          "-Dgles2=enabled"
          "-Dgbm=enabled"
          "-Dshared-glapi=enabled"
+         "--wrap-mode=nodownload"       ; XXX: disable
 
          #$@(cond
              ((target-x86-32?)
@@ -438,6 +437,9 @@ panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
 
          ;; Also enable the tests.
          "-Dbuild-tests=true"
+
+         ;; Re-enable X11 protocol support for the DRI2 extension.
+         "-Dlegacy-x11=dri2"
 
          "-Dllvm=enabled")              ; default is x86/x86_64 only
 
@@ -654,33 +656,38 @@ from software emulation to complete hardware acceleration for modern GPUs.")
               (inherit (package-source mesa))))
     (arguments
      (substitute-keyword-arguments (package-arguments mesa)
+       ((#:modules modules)
+        (cons '(ice-9 textual-ports) modules))
        ((#:configure-flags flags)
-        #~(cons "-Dgallium-opencl=standalone" #$flags))))))
-
-(define-public mesa-opencl-icd
-  (package/inherit mesa-opencl
-    (name "mesa-opencl-icd")
-    (arguments
-      (substitute-keyword-arguments (package-arguments mesa)
-        ((#:configure-flags flags)
-         #~(cons "-Dgallium-opencl=icd"
-                (delete "-Dgallium-opencl=standalone" #$flags)))
-        ((#:phases phases)
-         #~(modify-phases #$phases
-            (add-after 'install 'mesa-icd-absolute-path
+        #~(cons* "-Dgallium-rusticl=true"
+                 ;; Enable all drivers by default.
+                 (string-append "-Dgallium-rusticl-enable-drivers="
+                                "iris,llvmpipe,nouveau,panfrost,radeonsi,r600")
+                 #$flags))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-after 'install 'use-absolute-file-name-in-rusticl.icd
               (lambda _
-                ;; Use absolute path for OpenCL platform library.
-                ;; Otherwise we would have to set LD_LIBRARY_PATH=LIBRARY_PATH
-                ;; for ICD in our applications to find OpenCL platform.
-                (use-modules (guix build utils)
-                             (ice-9 textual-ports))
+                ;; Use absolute path for OpenCL platform library.  Otherwise
+                ;; we would have to set LD_LIBRARY_PATH=LIBRARY_PATH for
+                ;; Rusticl in our applications to find the OpenCL platform.
                 (let* ((out #$output)
-                       (mesa-icd (string-append out "/etc/OpenCL/vendors/mesa.icd"))
-                       (old-path (call-with-input-file mesa-icd get-string-all))
-                       (new-path (string-append out "/lib/" (string-trim-both old-path))))
+                       (rusticl.icd (string-append
+                                     out "/etc/OpenCL/vendors/rusticl.icd"))
+                       (old-path (call-with-input-file rusticl.icd
+                                   get-string-all))
+                       (new-path (string-append out "/lib/"
+                                                (string-trim-both old-path))))
                   (if (file-exists? new-path)
-                    (call-with-output-file mesa-icd
-                      (lambda (port) (format port "~a\n" new-path)))))))))))))
+                      (call-with-output-file rusticl.icd
+                        (lambda (port) (format port "~a\n" new-path)))))))))))
+    (native-inputs (modify-inputs (package-native-inputs mesa)
+                     (replace "rust-bindgen-cli" rust-bindgen-cli-next)))))
+
+;;; ICD was part of the Gallium (Clover) OpenCL driver, which was replaced
+;;; with Rusticl.
+(define-public mesa-opencl-icd
+  (deprecated-package "mesa-opencl-icd" mesa-opencl))
 
 (define-public mesa-headers
   (package/inherit mesa

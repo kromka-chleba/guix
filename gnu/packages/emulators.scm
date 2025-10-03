@@ -378,7 +378,7 @@ console.")
 (define-public melonds
   (package
    (name "melonds")
-   (version "1.0rc")
+   (version "1.0")
    (source (origin
             (method git-fetch)
             (uri (git-reference
@@ -387,13 +387,12 @@ console.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "1y8ilin758znizmxyq23plx1wnx2pc9zqd2qrvr1cgy0s2wzxr7z"))))
+              "0qrpqgiw678kcdvjl6hm9wi223m6igngppkvws3q86lmkwrhg039"))))
    (build-system cmake-build-system)
    (arguments ; no test suite
     '(#:tests? #f))
    (native-inputs
-    (list gcc-13
-          extra-cmake-modules
+    (list extra-cmake-modules
           pkg-config))
    (inputs
     (list enet
@@ -2950,7 +2949,7 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
      (list alsa-lib
            dbus
            eudev
-           ffmpeg
+           ffmpeg-6
            flac
            fontconfig
            freetype
@@ -4594,6 +4593,44 @@ cache visualization.  Developed at FEE CTU for computer architecture classes.")
       (description
        "This package provides an assembler and emulator for the Uxn
 stack-machine, written in ANSI C.  Graphical output is implemented using SDL2.")
+      (license license:expat))))
+
+(define-public uxn11
+  (let ((commit "9483266710832a200e2db98d0c6b071d0e72b249")
+        (revision "0"))
+    (package
+      (name "uxn11")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.sr.ht/~rabbits/uxn11")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14x939ri88kdr9cim2v29f71mfrfw7bxgffa4wcyisfy5jfgsx2c"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f ;no tests
+        #:make-flags
+        #~(list (string-append "PREFIX="
+                               (assoc-ref %outputs "out")))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'build
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "makefile"
+                  (("cc") #$(cc-for-target))))))))
+      (inputs (list libx11))
+      (home-page "https://100r.co/site/uxn.html")
+      (synopsis "Emulator for the Uxn stack-machine using X11")
+      (description
+       "This package provides an emulator for the Uxn
+stack-machine.  Graphical output is implemented using X11, and its Console
+device contains a @code{exec} port to interface with the host system.")
       (license license:expat))))
 
 (define-public python-keystone-engine

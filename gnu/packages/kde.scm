@@ -58,8 +58,8 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages code)
-  #:use-module (gnu packages cpp)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages djvu)
   #:use-module (gnu packages documentation)
@@ -76,9 +76,7 @@
   #:use-module (gnu packages gimp)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
-  #:use-module (gnu packages gperf)
   #:use-module (gnu packages gps)
-  #:use-module (gnu packages graphics)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
@@ -87,14 +85,10 @@
   #:use-module (gnu packages kde-plasma)
   ;; Including this module breaks the build.
   ;#:use-module ((gnu packages kde-systemtools) #:select (dolphin))
-  #:use-module (gnu packages libusb)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages markup)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages ncurses)
-  #:use-module (gnu packages mp3)
-  #:use-module (gnu packages ocr)
-  #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages photo)
@@ -104,10 +98,8 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
-  #:use-module (gnu packages samba)
   #:use-module (gnu packages scanner)
   #:use-module (gnu packages sdl)
-  #:use-module (gnu packages ssh)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages unicode)
@@ -141,38 +133,6 @@
     (description "Baloo is a framework for searching and managing metadata.
 This package contains GUI widgets for baloo.")
     (license license:lgpl2.0+)))
-
-(define-public crow-translate
-  (package
-    (name "crow-translate")
-    (version "3.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/crow-translate/" version
-                           "/crow-translate-v" version ".tar.gz"))
-       (sha256
-        (base32 "18f7i5sxrvqp6h7zj77sdxyy9rlbw0rv3w7akf1j14072ala9bwc"))))
-    (build-system qt-build-system)
-    (arguments '(#:tests? #f)) ; there are no tests.
-    (inputs
-     (list qtbase-5
-           qtx11extras
-           qtsvg-5
-           qtmultimedia-5
-           tesseract-ocr
-           kwayland-5))
-    (native-inputs
-     (list pkg-config
-           extra-cmake-modules
-           qttools-5))
-    (home-page "https://invent.kde.org/office/crow-translate")
-    (synopsis "Application for translating text")
-    (description
-     "Crow Translate is an application written in C++/Qt for translating
-and speaking text which relies on Mozhi to interface with various
-translation engines.")
-    (license license:gpl3+)))
 
 (define-public futuresql
   (package
@@ -355,91 +315,6 @@ browser for easy news reading.")
     (description
      "Gwenview is an image viewer for KDE.  It also provides image editing and
 annotating features.")
-    (license license:gpl2+)))
-
-(define-public kdenlive
-  (package
-    (name "kdenlive")
-    (version "25.07.80")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://invent.kde.org/multimedia/kdenlive")
-              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1mvd3sfwdihfw94s1wrlyp66a7z5m4d95bcsq7pszjqbj8pq10wq"))))
-    (build-system qt-build-system)
-    (arguments
-     ;; XXX otiotest seemingly freezes.  Additionally, tests/mixtest.cpp:818
-     ;; fails with an unexpected exception.
-     (list
-      #:qtbase qtbase
-      #:configure-flags #~(list "-DFETCH_OTIO=off")
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'install 'wrap-executable
-            (lambda _
-              (let* ((ffmpeg #$(this-package-input "ffmpeg"))
-                     (frei0r #$(this-package-input "frei0r-plugins"))
-                     (ladspa #$(this-package-input "ladspa"))
-                     (qtbase #$(this-package-input "qtbase")))
-                (wrap-program (string-append #$output "/bin/kdenlive")
-                  `("PATH" ":" prefix
-                    ,(list (string-append ffmpeg "/bin")))
-                  `("FREI0R_PATH" ":" =
-                    (,(string-append frei0r "/lib/frei0r-1")))
-                  `("LADSPA_PATH" ":" =
-                    (,(string-append ladspa "/lib/ladspa")))
-                  `("QT_QPA_PLATFORM_PLUGIN_PATH" ":" =
-                    (,(string-append qtbase "/lib/qt6/plugins/platforms")))
-                  `("MLT_PREFIX" ":" =
-                    (,#$(this-package-input "mlt"))))))))))
-    (native-inputs
-     (list extra-cmake-modules kdoctools pkg-config qttools))
-    (inputs
-     (list bash-minimal
-           breeze                       ; make dark theme available easily
-           breeze-icons                 ; recommended icon set
-           ffmpeg
-           frei0r-plugins
-           imath
-           karchive
-           kcrash
-           kdbusaddons
-           kdeclarative
-           kdoctools
-           kfilemetadata
-           kguiaddons
-           kiconthemes
-           kirigami
-           knewstuff
-           knotifications
-           knotifyconfig
-           kparts
-           kplotting
-           ktextwidgets
-           ladspa
-           mlt
-           opentimelineio
-           purpose
-           qqc2-desktop-style
-           qtbase
-           qtdeclarative
-           qtmultimedia
-           qtnetworkauth
-           qtsvg
-           shared-mime-info))
-    (home-page "https://kdenlive.org")
-    (synopsis "Non-linear video editor")
-    (description "Kdenlive is an acronym for KDE Non-Linear Video Editor.
-
-Non-linear video editing is much more powerful than beginner's (linear)
-editors, hence it requires a bit more organization before starting.  However,
-it is not reserved to specialists and can be used for small personal
-projects.")
     (license license:gpl2+)))
 
 (define-public analitza
@@ -726,86 +601,6 @@ illustrate project schedules.")
     (description "This package provides a ws-Discovery client library based on
 KDSoap.")
     (license license:gpl3+)))
-
-(define-public kio-extras
-  (package
-    (name "kio-extras")
-    (version "24.12.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/release-service/"
-                                  version "/src/" name "-"
-                                  version ".tar.xz"))
-              (sha256
-               (base32
-                "1insjmx4pyagjm67cz5kc39pny2fycls73d0dkw402l89dncnax9"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                   (setenv "HOME" (getcwd))
-                   (setenv "TMPDIR" (getcwd))
-                   (invoke "ctest" "-E"
-                           "(thumbnailtest|testkioarchive)"))))
-               (add-after 'install 'fix-kiod-path
-                 (lambda _
-                   (let* ((kio #$(this-package-input "kio"))
-                          (kf-version
-                           #$(version-major
-                              (package-version (this-package-input "kio")))))
-                     (substitute* (string-append #$output
-                                                 "/share/dbus-1/services/"
-                                                 "org.kde.kmtpd5.service")
-                       (("Exec=.*$")
-                        (string-append "Exec=" kio "/libexec/kf" kf-version
-                                       "/kiod" kf-version "\n")))))))))
-    (native-inputs (list extra-cmake-modules dbus kdoctools pkg-config qttools))
-    ;; TODO: libappimage
-    (inputs (list gperf
-                  imath
-                  plasma-activities
-                  plasma-activities-stats
-                  karchive
-                  kbookmarks
-                  kcmutils
-                  kconfig
-                  kconfigwidgets
-                  kcoreaddons
-                  kdnssd
-                  kdbusaddons
-                  kdsoap
-                  kdsoap-ws-discovery-client
-                  kguiaddons
-                  ktextwidgets
-                  ki18n
-                  kio
-                  ksyntaxhighlighting
-                  libimobiledevice
-                  libkexiv2
-                  libmtp
-                  libplist
-                  libssh
-                  libtirpc
-                  openexr
-                  phonon
-                  qtbase
-                  qt5compat
-                  qcoro-qt6
-                  qtsvg
-                  samba
-                  shared-mime-info
-                  solid
-                  taglib
-                  zlib))
-    (home-page "https://community.kde.org/Frameworks")
-    (synopsis "Additional components to increase the functionality of KIO")
-    (description
-     "This package provides additional components to increase
-the functionality of the KDE resource and network access abstractions.")
-    (license license:lgpl2.0+)))
 
 (define-public kirigami-addons
   (package
@@ -1417,7 +1212,7 @@ transport data and for performing public transport journey queries.")
      (list extra-cmake-modules))
     (inputs
      (list ki18n
-           sane-backends))
+           sane))
     (home-page "https://invent.kde.org/libraries/ksanecore")
     (synopsis "Library providing logic to interface scanners")
     (description
@@ -1480,97 +1275,6 @@ scanners.")
 Using a plugin system it is possible to create notifications with many
 different notification systems.")
     (license license:lgpl3)))
-
-(define-public kdeconnect
-  (package
-    (name "kdeconnect")
-    (version "25.08.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/"
-                           version "/src/kdeconnect-kde-"
-                           version ".tar.xz"))
-       (sha256
-        (base32
-         "07rmkm8gmfx1hs5n5rql2q9f539hdwv1l8wgjcmd2m5793f0nd4a"))))
-    (build-system qt-build-system)
-    (arguments
-     (list #:qtbase qtbase
-           #:configure-flags
-           #~(list (string-append "-DQtWaylandScanner_EXECUTABLE="
-                                  #$(this-package-native-input "qtwayland")
-                                  "/lib/qt6/libexec/qtwaylandscanner")
-                   "-DKDE_INSTALL_LIBEXECDIR=libexec"
-                   ;; So kdeconnect.so isn't installed to lib/plugins
-                   "-DPLUGIN_INSTALL_DIR=lib/qt6/plugins")
-           #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'fix-dbus-autostart
-                          (lambda _
-                            ;; 'dbus-daemon' requires an absolute Exec path.
-                            (substitute* "daemon/org.kde.kdeconnect.service.in"
-                              (("kdeconnectd")
-                               (string-append #$output "/bin/kdeconnectd"))))))
-           #:tests? #f)) ; tests fail hard in our build environment
-    (native-inputs
-     (list extra-cmake-modules
-           kdoctools
-           libxtst
-           pkg-config
-           python-wrapper
-           wayland-protocols
-           qtwayland))
-    (inputs
-     (list dbus
-           kcmutils
-           kconfigwidgets
-           kcrash
-           kdbusaddons
-           kguiaddons
-           ki18n
-           kiconthemes
-           kio
-           kirigami
-           kirigami-addons
-           kitemmodels
-           knotifications
-           kpackage
-           kpeople
-           kstatusnotifieritem
-           kwayland
-           libfakekey
-           openssl
-           plasma-wayland-protocols
-           pulseaudio-qt
-           qca-qt6
-           qqc2-desktop-style
-           qtbase
-           qtconnectivity
-           qtdeclarative
-           qtmultimedia
-           qtwayland
-           qtsvg
-           sonnet
-           wayland
-           modemmanager-qt
-           libxkbcommon))
-    (home-page "https://community.kde.org/KDEConnect")
-    (synopsis "Enable your devices to communicate with each other")
-    (description "KDE Connect is a project that enables all your devices to
-communicate with each other.  Here's a few things KDE Connect can do:
-@enumerate
-@item Receive your phone notifications on your desktop computer and reply to messages
-@item Control music playing on your desktop from your phone
-@item Use your phone as a remote control for your desktop
-@item Run predefined commands on your PC from connected devices
-@item Check your phones battery level from the desktop
-@item Ring your phone to help finding it
-@item Share files and links between devices
-@item Browse your phone from the desktop
-@item Control the desktop's volume from the phone
-@end enumerate")
-    (properties `((upstream-name . "kdeconnect-kde")))
-    (license (list license:gpl2 license:gpl3)))) ; dual licensed
 
 (define-public labplot
   (package
@@ -1954,35 +1658,6 @@ PostScript, PDF, RAW, Mobipocket, and Blender files.")
     (description "Libkexiv2 wraps the Exiv2 library, allowing to manipulate
 picture metadata as EXIF/IPTC and XMP.")
     (license license:gpl2+)))
-
-(define-public kio-zeroconf
-  (package
-    (name "kio-zeroconf")
-    (version "24.12.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/" version
-                           "/src/kio-zeroconf-" version ".tar.xz"))
-       (sha256
-        (base32 "1ngn1iz4nybix7wshjsddvlm69mdvj8pis63yiyk5p3aiv0h2axl"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules))
-    (inputs
-     (list kdbusaddons kdnssd ki18n kio))
-    (arguments (list #:qtbase qtbase
-                     #:tests? #f
-                     #:configure-flags
-                     #~(list "-DQT_MAJOR_VERSION=6")))
-    (home-page "https://apps.kde.org/kio_zeroconf/")
-    (synopsis "DNS-SD Service Discovery Monitor")
-    (description "Adds an entry to Dolphin's Network page to show local
-services such as printers which advertise themselves with DNSSD (called Avahi
-or Bonjour by other projects).")
-    (license ;; GPL for programs, LGPL for libraries, FDL for documentation
-     (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
-
 
 (define-public kuserfeedback
   ;; FIXME: Try to reduce data collection and ensure transmission i disabled by default.

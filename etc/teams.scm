@@ -620,7 +620,7 @@ ecosystem."
                       "guix/build-system/emacs.scm"
                       "guix/import/elpa.scm"
                       "guix/scripts/import/elpa.scm"
-                      "tests/elpa.scm")))
+                      "tests/import/elpa.scm")))
 
 (define-team embedded
   (team 'embedded
@@ -668,7 +668,7 @@ GLib/GIO, GTK, GStreamer and Webkit."
                       "guix/build/go-build-system.scm"
                       "guix/import/go.scm"
                       "guix/scripts/import/go.scm"
-                      "tests/go.scm")))
+                      "tests/import/go.scm")))
 
 (define-team haskell
   (team 'haskell
@@ -839,7 +839,7 @@ importer, and the ocaml-build-system."
               "guix/build-system/dune.scm"
               "guix/import/opam.scm"
               "guix/scripts/import/opam.scm"
-              "tests/opam.scm")))
+              "tests/import/opam.scm")))
 
 (define-team python
   (team 'python
@@ -858,7 +858,7 @@ importer, and the ocaml-build-system."
               "guix/build-system/python.scm"
               "guix/import/pypi.scm"
               "guix/scripts/import/pypi.scm"
-              "tests/pypi.scm")))
+              "tests/import/pypi.scm")))
 
 (define-team qt
   (team 'qt
@@ -883,7 +883,7 @@ and the r-build-system."
                       "guix/build-system/r.scm"
                       "guix/import/cran.scm"
                       "guix/scripts/import/cran.scm"
-                      "tests/cran.scm")))
+                      "tests/import/cran.scm")))
 
 (define-team racket
   (team 'racket
@@ -919,7 +919,7 @@ release."
                       "guix/build-system/ruby.scm"
                       "guix/import/gem.scm"
                       "guix/scripts/import/gem.scm"
-                      "tests/gem.scm")))
+                      "tests/import/gem.scm")))
 
 (define-team rust
   (team 'rust
@@ -932,7 +932,7 @@ release."
                       "guix/import/crate.scm"
                       "guix/import/crate/cargo-lock.scm"
                       "guix/scripts/import/crate.scm"
-                      "tests/crate.scm")))
+                      "tests/import/crate.scm")))
 
 (define-team science
   (team 'science
@@ -1016,7 +1016,7 @@ the \"texlive\" importer."
                       "guix/build-system/texlive.scm"
                       "guix/import/texlive.scm"
                       "guix/scripts/import/texlive.scm"
-                      "tests/texlive.scm")))
+                      "tests/import/texlive.scm")))
 
 (define-team translations
   (team 'translations
@@ -1305,7 +1305,7 @@ the \"texlive\" importer."
 
 (define-member (person "Nicolas Graves"
                        "ngraves@ngraves.fr"
-                       "ngraves")
+                       "nicolas-graves")
   javascript python ruby)
 
 (define-member (person "Yelninei"

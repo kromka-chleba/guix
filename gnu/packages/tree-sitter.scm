@@ -9,6 +9,8 @@
 ;;; Copyright © 2023, 2024 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2025 Evgenii Klimov <eugene.dev@lipklim.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -28,6 +30,7 @@
 (define-module (gnu packages tree-sitter)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages node)
@@ -39,6 +42,7 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
+  #:use-module (guix i18n)
   #:use-module (guix packages)
   #:use-module (guix utils))
 
@@ -530,6 +534,14 @@ which will be used as a snippet in origin."
      #:commit commit
      #:license license:asl2.0)))
 
+(define-public tree-sitter-janet
+  (tree-sitter-grammar
+   "janet" "Janet"
+   "1sg862gqxn5y86sqa4habyicsr1ax70i7w8ibnn2yyx1bzn99jqn"
+   "0.1.0"
+   #:repository-url "https://github.com/GrayJack/tree-sitter-janet"
+   #:license license:bsd-3))
+
 (define-public tree-sitter-java
   (tree-sitter-grammar
    "java" "Java"
@@ -879,3 +891,81 @@ which will be used as a snippet in origin."
    "1r9p7hhnc1zagwxzdxhs4p6rnqs9naddkgbfymi6pbw6cyg2ccwl"
    "1.1.2"
    #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-zig"))
+
+(define-public tree-sitter-vim
+  (tree-sitter-grammar "vim"
+   "Vimscript"
+   "0wr0sijh3vpka0gysbf0ki8zkvwfg8r5lvhi3xbwmkbyszjzgrqw"
+   "0.7.0"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-vim"))
+
+(define-public tree-sitter-vimdoc
+  (tree-sitter-grammar "vimdoc"
+   "Vimdoc"
+   "1gi16hmh4vk9hdfkg9kvwxd7m4rq8r6vymk7fgxqqrbyrks9f0mw"
+   "4.0.0"
+   #:repository-url
+   "https://github.com/neovim/tree-sitter-vimdoc"
+   #:license license:expat))
+
+(define-public tree-sitter-query
+  (package
+    (inherit (tree-sitter-grammar "query"
+     "Query"
+     "0fbqwg7km4yqjq8p2fkj9hpy0sfnijnf1hsk34wsirlp3af3hc67"
+     "0.7.0"
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-query"))
+    (synopsis "Tree-sitter grammar for Tree-sitter's query language")
+    (description "This package provides Tree-sitter's query grammar.")))
+
+(define* (python-tree-sitter-grammar pkg #:key tests?)
+  "Returns a package for Python bindings of a Tree-sitter grammar.  PKG is a
+package for a Tree-sitter grammar; its name will be used with python- prefix
+to generate the package name.  When TESTS? is true, tests are enabled."
+  (package
+    (inherit pkg)
+    (name (string-append "python-" (package-name pkg)))
+    (source (origin (inherit (package-source pkg))
+                    (snippet #f) (patches '())))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? tests?))
+    (build-system pyproject-build-system)
+    (native-inputs (append (if tests?
+                               (list python-pytest
+                                     python-tree-sitter)
+                               '())
+                           (list python-setuptools
+                                 python-wheel)))
+    (description (string-append (package-description pkg)
+                                (P_ "\n\nThis variant provides Python bindings.")))))
+
+(define-public python-tree-sitter-html
+  (python-tree-sitter-grammar
+   tree-sitter-html
+   ;; TODO: Enable tests once python-tree-sitter >= 0.22 is packaged
+   #:tests? #f))
+
+(define-public python-tree-sitter-javascript
+  (python-tree-sitter-grammar
+   tree-sitter-javascript
+   ;; TODO: Enable tests once python-tree-sitter >= 0.22 is packaged
+   #:tests? #f))
+
+(define-public python-tree-sitter-json
+  (python-tree-sitter-grammar
+   tree-sitter-json
+   ;; TODO: Enable tests once python-tree-sitter >= 0.22 is packaged
+   #:tests? #f))
+
+(define-public python-tree-sitter-python
+  (python-tree-sitter-grammar
+   tree-sitter-python
+   ;; TODO: Enable tests once python-tree-sitter >= 0.22 is packaged
+   #:tests? #f))
+
+(define-public python-tree-sitter-rust
+  (python-tree-sitter-grammar
+   tree-sitter-rust
+   ;; TODO: Enable tests once python-tree-sitter >= 0.22 is packaged
+   #:tests? #f))

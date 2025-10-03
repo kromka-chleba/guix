@@ -140,7 +140,7 @@ guix/build/emacs-utils\.scm                        @guix/emacs
 guix/build-system/emacs\.scm                       @guix/emacs
 guix/import/elpa\.scm                              @guix/emacs
 guix/scripts/import/elpa\.scm                      @guix/emacs
-tests/elpa\.scm                                    @guix/emacs
+tests/import/elpa\.scm                             @guix/emacs
 
 gnu/packages/bootloaders\.scm                      @guix/embedded
 gnu/packages/firmware\.scm                         @guix/embedded
@@ -172,7 +172,7 @@ guix/build-system/go\.scm                          @guix/go
 guix/build/go-build-system\.scm                    @guix/go
 guix/import/go\.scm                                @guix/go
 guix/scripts/import/go\.scm                        @guix/go
-tests/go\.scm                                      @guix/go
+tests/import/go\.scm                               @guix/go
 
 gnu/packages/dhall\.scm                            @guix/haskell
 gnu/packages/haskell(-.+|)\.scm$                   @guix/haskell
@@ -260,7 +260,7 @@ guix/build-system/ocaml\.scm                       @guix/ocaml
 guix/build-system/dune\.scm                        @guix/ocaml
 guix/import/opam\.scm                              @guix/ocaml
 guix/scripts/import/opam\.scm                      @guix/ocaml
-tests/opam\.scm                                    @guix/ocaml
+tests/import/opam\.scm                             @guix/ocaml
 
 gnu/packages/django\.scm                           @guix/python
 gnu/packages/jupyter\.scm                          @guix/python
@@ -273,7 +273,7 @@ guix/build/python-build-system\.scm                @guix/python
 guix/build-system/python\.scm                      @guix/python
 guix/import/pypi\.scm                              @guix/python
 guix/scripts/import/pypi\.scm                      @guix/python
-tests/pypi\.scm                                    @guix/python
+tests/import/pypi\.scm                             @guix/python
 
 gnu/packages/qt\.scm                               @guix/qt
 guix/build-system/qt\.scm                          @guix/qt
@@ -286,7 +286,7 @@ guix/build/r-build-system\.scm                     @guix/r
 guix/build-system/r\.scm                           @guix/r
 guix/import/cran\.scm                              @guix/r
 guix/scripts/import/cran\.scm                      @guix/r
-tests/cran\.scm                                    @guix/r
+tests/import/cran\.scm                             @guix/r
 
 gnu/packages/chez\.scm                             @guix/racket
 gnu/packages/racket\.scm                           @guix/racket
@@ -301,7 +301,7 @@ guix/build/ruby-build-system\.scm                  @guix/ruby
 guix/build-system/ruby\.scm                        @guix/ruby
 guix/import/gem\.scm                               @guix/ruby
 guix/scripts/import/gem\.scm                       @guix/ruby
-tests/gem\.scm                                     @guix/ruby
+tests/import/gem\.scm                              @guix/ruby
 
 gnu/packages/(crates|rust)(-.+|)\.scm$             @guix/rust
 gnu/packages/sequoia\.scm                          @guix/rust
@@ -311,7 +311,7 @@ guix/build-system/cargo\.scm                       @guix/rust
 guix/import/crate\.scm                             @guix/rust
 guix/import/crate/cargo-lock\.scm                  @guix/rust
 guix/scripts/import/crate\.scm                     @guix/rust
-tests/crate\.scm                                   @guix/rust
+tests/import/crate\.scm                            @guix/rust
 
 gnu/packages/fortran(-.+|)\.scm$                   @guix/science
 gnu/packages/algebra\.scm                          @guix/science
@@ -369,7 +369,7 @@ guix/build/texlive-build-system\.scm               @guix/tex
 guix/build-system/texlive\.scm                     @guix/tex
 guix/import/texlive\.scm                           @guix/tex
 guix/scripts/import/texlive\.scm                   @guix/tex
-tests/texlive\.scm                                 @guix/tex
+tests/import/texlive\.scm                          @guix/tex
 
 etc/news\.scm                                      @guix/translations
 po/                                                @guix/translations

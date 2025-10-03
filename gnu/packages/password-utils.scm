@@ -42,6 +42,7 @@
 ;;; Copyright © 2023 Christian Miller <christian.miller@dadoes.de>
 ;;; Copyright © 2024, 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -110,6 +111,7 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages nettle)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages opencl)
   #:use-module (gnu packages perl)
@@ -451,7 +453,7 @@ in an encrypted database, which is locked with a master key or key file.")
 (define-public pwsafe
   (package
     (name "pwsafe")
-    (version "3.60.0")
+    (version "3.69.0")
     (home-page "https://www.pwsafe.org/")
     (source
      (origin
@@ -460,31 +462,25 @@ in an encrypted database, which is locked with a master key or key file.")
              (url "https://github.com/pwsafe/pwsafe")
              (commit version)))
        (sha256
-        (base32 "064y78sqr8h9mq922spi4r13ga0a1j09mfh4kc4pn7j697nl6b5y"))
+        (base32 "0mny5jva2misv3h7frk3dyq3300wm04h4zca9bzj775qx9x12z2c"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DGTEST_BUILD=OFF")))
     (native-inputs
      (list gettext-minimal googletest perl zip))
-    (inputs (list curl
-                  file
-                  `(,util-linux "lib")
-                  libxt
-                  libxtst
-                  openssl
-                  qrencode
-                  wxwidgets
-                  xerces-c))
-    (arguments '(#:configure-flags (list "-DNO_GTEST=YES")
-                 #:phases (modify-phases %standard-phases
-                            (add-after 'unpack 'add-gtest
-                              (lambda* (#:key inputs #:allow-other-keys)
-                                (chmod "CMakeLists.txt" #o644)
-                                (let ((cmake-port (open-file "CMakeLists.txt"
-                                                             "a")))
-                                  (display "find_package(GTest)
-add_subdirectory(src/test)\n" cmake-port)
-                                  (close cmake-port)
-                                  #t))))))
+    (inputs
+     (list curl
+           file
+           `(,util-linux "lib")
+           libxt
+           libxtst
+           openssl
+           qrencode
+           wxwidgets
+           xerces-c))
     (synopsis "Password safe with automatic input and key generation")
     (description "pwsafe is a password manager originally designed by Bruce
 Schneier.  It offers a simple UI to manage passwords for different services.
@@ -493,8 +489,8 @@ platforms.")
     (license license:artistic2.0)))
 
 (define-public pwsafe-cli
-  (let ((commit "c49a0541b66647ad04d19ddb351d264054c67759")
-        (revision "0"))
+  (let ((commit "984fe38489c24602391e24150b450a37bfb866b7")
+        (revision "1"))
     (package
       (name "pwsafe-cli")
       (version (git-version "0.2.0" revision commit))
@@ -506,22 +502,19 @@ platforms.")
                (commit commit)))
          (sha256
           (base32
-           "0ak09r1l7k57m6pdx468hhzvz0szmaq42vyr575fvsjc8rbrp8qq"))
+           "1fx0rhvl9ijjs9z5psxs990752rgw0558g7acjc0myx67ffxhhmy"))
          (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
-       ;; FIXME: skip failing test suite (requires write access to /tmp),
-       ;; patching path does not help somehow.
-       `(#:tests? #f
-         #:phases
-         (modify-phases %standard-phases
-           (replace 'bootstrap
-             (lambda _
-               (invoke "aclocal")
-               (invoke "autoheader")
-               (invoke "automake" "--add-missing")
-               (invoke "autoconf")
-               #t)))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'bootstrap
+              (lambda _
+                (invoke "aclocal")
+                (invoke "autoheader")
+                (invoke "automake" "--add-missing")
+                (invoke "autoconf"))))))
       (native-inputs
        (list autoconf automake))
       (inputs
@@ -536,7 +529,7 @@ Counterpane's Passwordsafe.")
 (define-public otpclient
   (package
     (name "otpclient")
-    (version "4.0.2")
+    (version "4.1.1")
     (source
      (origin
        (method git-fetch)
@@ -545,7 +538,7 @@ Counterpane's Passwordsafe.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "061idzh9sz556nm7ahjrvcbnbmgvgfwmph1lfiy7bcvj1g3rf8cm"))))
+        (base32 "0nbfz4s85pikjbgcla3x9dncwjnbr4dradcdr3jg9a2crc6bmxya"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -589,37 +582,41 @@ client, supporting @acronym{TOTP, Time-based one time passwords} and
   (package
     (name "shroud")
     (version "0.1.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://files.dthompson.us/shroud/shroud-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1l2shrhvcwfzkar9qiwb75nhcqmx25iz55lzmz0c187nbjhqzi9p"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://files.dthompson.us/shroud/shroud-"
+                           version ".tar.gz"))
+       (sha256
+        (base32
+         "1l2shrhvcwfzkar9qiwb75nhcqmx25iz55lzmz0c187nbjhqzi9p"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:modules '((guix build gnu-build-system)
+                  (guix build utils)
+                  (ice-9 popen)
+                  (ice-9 rdelim))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-shroud
+            (lambda _
+              (let* ((effective
+                      (read-line
+                       (open-pipe*
+                        OPEN_READ
+                        (string-append #$(this-package-input "guile")
+                                       "/bin/guile")
+                        "-c" "(display (effective-version))")))
+                     (ccachedir (string-append #$output
+                                               "/lib/guile/" effective
+                                               "/site-ccache")))
+                (wrap-program (string-append #$output "/bin/shroud")
+                  `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,ccachedir)))))))))
+    (inputs
+     (list bash-minimal guile-2.2 gnupg xclip))
     (native-inputs
      (list pkg-config))
-    (arguments
-     `(#:modules ((guix build gnu-build-system)
-                    (guix build utils)
-                    (ice-9 popen)
-                    (ice-9 rdelim))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap-shroud
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out       (assoc-ref outputs "out"))
-                    (guile (assoc-ref inputs "guile"))
-                    (effective (read-line
-                                (open-pipe* OPEN_READ
-                                            (string-append guile "/bin/guile")
-                                            "-c" "(display (effective-version))")))
-                    (ccachedir (string-append out
-                                             "/lib/guile/" effective "/site-ccache"))
-                    (prog      (string-append out "/bin/shroud")))
-               (wrap-program prog
-                 `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,ccachedir)))))))))
-    (inputs (list bash-minimal guile-2.2 gnupg xclip))
     (synopsis "GnuPG-based secret manager")
     (description "Shroud is a simple secret manager with a command line
 interface.  The password database is stored as a Scheme s-expression and
@@ -633,7 +630,7 @@ applications, there is xclip integration." )
 (define-public ssh-to-age
   (package
     (name "ssh-to-age")
-    (version "1.1.7")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -642,7 +639,7 @@ applications, there is xclip integration." )
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "134gpbalyll238wvj9ci0rascgm4csayz863ci99cy5qq8266wrl"))))
+        (base32 "0f8s8k8sbdrifklspcc83rjp290v7mrqqp9jwg02dj2mm7iy2bfj"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/Mic92/ssh-to-age/cmd/ssh-to-age"
@@ -669,9 +666,10 @@ convert SSH @code{ed25519} keys to @code{age} keys.")
         (base32 "00k38n5vlxl73m11pp1v50fqf702lv86hzwgj0qca6qxqz4i3jjl"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list (string-append "--docdir=" (assoc-ref %outputs "out")
-                            "/share/doc/" ,name "-" ,version))))
+     (list
+      #:configure-flags
+      #~(list (string-append "--docdir=" #$output "/share/doc/"
+                             #$name "-" #$version))))
     (inputs
      (list argon2 ncurses openssl))
     (native-inputs
@@ -798,48 +796,46 @@ command-line programs (@command{pwqcheck}, @command{pwqfilter}, and
   (package
     (name "assword")
     (version "0.11")
-    (source (origin
-              (method url-fetch)
-              (uri (list
-                    (string-append
-                     "http://http.debian.net/debian/pool/main/a/assword/"
-                     "assword_" version ".orig.tar.gz")))
-              (sha256
-               (base32
-                "03gkb6kvsghznbcw5l7nmrc6mn3ixkjd5jcs96ni4zs9l47jf7yp"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (list
+             (string-append
+              "http://http.debian.net/debian/pool/main/a/assword/"
+              "assword_" version ".orig.tar.gz")))
+       (sha256
+        (base32
+         "03gkb6kvsghznbcw5l7nmrc6mn3ixkjd5jcs96ni4zs9l47jf7yp"))))
     (arguments
-     `(;; irritatingly, tests do run but not there are two problems:
-       ;;  - "import gtk" fails for unknown reasons here despite it the
-       ;;    program working (indeed, I've found I have to do a logout and log
-       ;;    back in in after an install order for some mumbo jumbo environment
-       ;;    variable mess to work with pygtk and assword... what's up with
-       ;;    that?)
-       ;;  - even when the tests fail, they don't return a nonzero status,
-       ;;    so I'm not sure how to programmatically get that information
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap-assword
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((prog            (string-append
-                                     (assoc-ref outputs "out")
-                                     "/bin/assword"))
-                   (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
-               (wrap-program prog
-                 `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))))))
-         (add-after 'install 'manpage
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "make" "assword.1")
-             (install-file
-              "assword.1"
-              (string-append (assoc-ref outputs "out") "/share/man/man1")))))))
+     (list
+      ;; irritatingly, tests do run but not there are two problems:
+      ;;  - "import gtk" fails for unknown reasons here despite it the
+      ;;    program working (indeed, I've found I have to do a logout and log
+      ;;    back in in after an install order for some mumbo jumbo environment
+      ;;    variable mess to work with pygtk and assword... what's up with
+      ;;    that?)
+      ;;  - even when the tests fail, they don't return a nonzero status,
+      ;;    so I'm not sure how to programmatically get that information
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-assword
+            (lambda _
+              (let ((gi-typelib-path (getenv "GI_TYPELIB_PATH")))
+                (wrap-program (string-append #$output "/bin/assword")
+                  `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))))))
+          (add-after 'install 'manpage
+            (lambda _
+              (invoke "make" "assword.1")
+              (install-file "assword.1"
+                            (string-append #$output "/share/man/man1")))))))
     (build-system python-build-system)
-    (native-inputs
-     (list txt2man))
     (inputs
      (list bash-minimal gtk+ python-xdo python-gpg python-pygobject))
     (propagated-inputs
      (list xclip))
+    (native-inputs
+     (list txt2man))
     (home-page "https://finestructure.net/assword/")
     (synopsis "Password manager")
     (description "assword is a simple password manager using GPG-wrapped
@@ -852,78 +848,78 @@ any X11 window.")
   (package
     (name "password-store")
     (version "1.7.4")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.zx2c4.com/password-store")
-                    (commit version)))
-              (sha256
-               (base32
-                "17zp9pnb3i9sd2zn9qanngmsywrb7y495ngcqs6313pv3gb83v53"))
-              (patches (search-patches "password-store-tree-compat.patch"))
-              (file-name (git-file-name name version))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.zx2c4.com/password-store")
+              (commit version)))
+       (sha256
+        (base32
+         "17zp9pnb3i9sd2zn9qanngmsywrb7y495ngcqs6313pv3gb83v53"))
+       (patches (search-patches "password-store-tree-compat.patch"))
+       (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (delete 'build)
-         (add-before 'install 'patch-system-extension-dir
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (extension-dir (string-append out "/lib/password-store/extensions")))
-               (substitute* "src/password-store.sh"
-                 (("^SYSTEM_EXTENSION_DIR=.*$")
-                  ;; lead with whitespace to prevent 'make install' from
-                  ;; overwriting it again
-                  (string-append " SYSTEM_EXTENSION_DIR=\""
-                                 "${PASSWORD_STORE_SYSTEM_EXTENSION_DIR:-"
-                                 extension-dir
-                                 "}\"\n"))))))
-         (add-before 'install 'patch-program-name
-           ;; Use pass not .pass-real in tmpdir and cmd_usage
-           (lambda _
-             (substitute* "src/password-store.sh"
-               (("^PROGRAM=.*$")
-                "PROGRAM=\"pass\"\n"))))
-         (add-before 'install 'patch-passmenu-path
-           ;; FIXME Wayland support requires ydotool and dmenu-wl packages
-           ;; We are ignoring part of the script that gets executed if
-           ;; WAYLAND_DISPLAY env variable is set, leaving dmenu-wl and ydotool
-           ;; commands as is.
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "contrib/dmenu/passmenu"
-               (("dmenu=dmenu\n")
-                (string-append "dmenu="
-                               (search-input-file inputs "/bin/dmenu")
-                               "\n"))
-               (("xdotool=\"xdotool")
-                (string-append "xdotool=\""
-                               (search-input-file inputs "/bin/xdotool"))))))
-         (add-after 'install 'install-passmenu
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin")))
-               (install-file "contrib/dmenu/passmenu" bin))))
-         (add-after 'install 'wrap-path
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (requisites '("getopt" "git" "gpg" "qrencode" "sed"
-                                  "tail" "tree" "which" "wl-copy" "xclip"))
-                    (path (map (lambda (pkg)
-                                 (dirname (search-input-file
-                                           inputs (string-append "/bin/" pkg))))
-                               requisites)))
-               (wrap-program (string-append out "/bin/pass")
-                 `("PATH" ":" prefix (,(string-join path ":"))))))))
-       #:make-flags (list "CC=gcc" (string-append "PREFIX=" %output)
-                          "WITH_ALLCOMP=yes"
-                          (string-append "BASHCOMPDIR="
-                                         %output "/etc/bash_completion.d"))
-       ;; Parallel tests may cause a race condition leading to a
-       ;; timeout in some circumstances.
-       #:parallel-tests? #f
-       #:test-target "test"))
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output)
+              "WITH_ALLCOMP=yes"
+              (string-append "BASHCOMPDIR=" #$output "/etc/bash_completion.d"))
+      ;; Parallel tests may cause a race condition leading to a
+      ;; timeout in some circumstances.
+      #:parallel-tests? #f
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (delete 'build)
+          (add-before 'install 'patch-system-extension-dir
+            (lambda _
+              (substitute* "src/password-store.sh"
+                (("^SYSTEM_EXTENSION_DIR=.*$")
+                 ;; lead with whitespace to prevent 'make install' from
+                 ;; overwriting it again
+                 (string-append
+                  " SYSTEM_EXTENSION_DIR=\""
+                  "${PASSWORD_STORE_SYSTEM_EXTENSION_DIR:-"
+                  (string-append #$output "/lib/password-store/extensions")
+                  "}\"\n")))))
+          (add-before 'install 'patch-program-name
+            ;; Use pass not .pass-real in tmpdir and cmd_usage
+            (lambda _
+              (substitute* "src/password-store.sh"
+                (("^PROGRAM=.*$")
+                 "PROGRAM=\"pass\"\n"))))
+          (add-before 'install 'patch-passmenu-path
+            ;; FIXME Wayland support requires ydotool and dmenu-wl packages
+            ;; We are ignoring part of the script that gets executed if
+            ;; WAYLAND_DISPLAY env variable is set, leaving dmenu-wl and ydotool
+            ;; commands as is.
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "contrib/dmenu/passmenu"
+                (("dmenu=dmenu\n")
+                 (string-append
+                  "dmenu=" (search-input-file inputs "/bin/dmenu") "\n"))
+                (("xdotool=\"xdotool")
+                 (string-append
+                  "xdotool=\"" (search-input-file inputs "/bin/xdotool"))))))
+          (add-after 'install 'install-passmenu
+            (lambda _
+              (install-file
+               "contrib/dmenu/passmenu" (string-append #$output "/bin"))))
+          (add-after 'install 'wrap-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((requisites '("getopt" "git" "gpg" "qrencode" "sed"
+                                   "tail" "tree" "which" "wl-copy" "xclip"))
+                     (path
+                      (map (lambda (pkg)
+                             (dirname (search-input-file
+                                       inputs (string-append "/bin/" pkg))))
+                           requisites)))
+                (wrap-program (string-append #$output "/bin/pass")
+                  `("PATH" ":" prefix (,(string-join path ":"))))))))))
     (native-search-paths
      (list (search-path-specification
             (variable "PASSWORD_STORE_SYSTEM_EXTENSION_DIR")
@@ -933,12 +929,12 @@ any X11 window.")
      (list bash-minimal
            coreutils
            dmenu
-           util-linux
            git
            gnupg
            qrencode
            sed
            tree
+           util-linux
            which
            wl-clipboard
            xclip
@@ -969,45 +965,44 @@ through the pass command.")
         (base32 "1ap2i08zjvacd2rllrsx9bw3zz5i99bk0i5yxrssvn6w60bwjqdl"))))
     (build-system copy-build-system)
     (arguments
-     '(#:modules
-       ((guix build copy-build-system)
-        (guix build utils)
-        (srfi srfi-26))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'rename-script
-           (lambda _
-             (rename-file "src/password-store.sh"
-                          "src/passage")))
-         (add-after 'install 'wrap-script
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (script (string-append out "/bin/passage")))
-               (substitute* script
-                 ;; Avoid ugly ‘.passage-real’ in --help output and elsewhere.
-                 (("^(PROGRAM=).*" _ program=)
-                  (string-append program= (basename script) "\n")))
-               (wrap-program script
-                 `("PATH" ":" prefix
-                   ,(map dirname
-                         (map (cut search-input-file inputs <>)
-                              (list "bin/age"
-                                    "bin/age-keygen"
-                                    "bin/cat"
-                                    "bin/getopt"
-                                    "bin/git"
-                                    "bin/pkill"
-                                    "bin/qrencode"
-                                    "bin/sed"
-                                    "bin/tree")))))))))
-       #:install-plan
-       '(("src/passage" "/bin/")
-         ("src/completion/pass.bash-completion"
-          "/etc/bash-completion.d/passage")
-         ("src/completion/pass.fish-completion"
-          "/share/fish/vendor_completions.d/passage")
-         ("src/completion/pass.zsh-completion"
-          "/share/zsh/site-functions/_passage"))))
+     (list
+      #:modules '((guix build copy-build-system)
+                  (guix build utils)
+                  (srfi srfi-26))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'rename-script
+            (lambda _
+              (rename-file "src/password-store.sh"
+                           "src/passage")))
+          (add-after 'install 'wrap-script
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((script (string-append #$output "/bin/passage")))
+                (substitute* script
+                  ;; Avoid ugly ‘.passage-real’ in --help output and elsewhere.
+                  (("^(PROGRAM=).*" _ program=)
+                   (string-append program= (basename script) "\n")))
+                (wrap-program script
+                  `("PATH" ":" prefix
+                    ,(map dirname
+                          (map (cut search-input-file inputs <>)
+                               (list "bin/age"
+                                     "bin/age-keygen"
+                                     "bin/cat"
+                                     "bin/getopt"
+                                     "bin/git"
+                                     "bin/pkill"
+                                     "bin/qrencode"
+                                     "bin/sed"
+                                     "bin/tree")))))))))
+      #:install-plan
+      #~'(("src/passage" "/bin/")
+          ("src/completion/pass.bash-completion"
+           "/etc/bash-completion.d/passage")
+          ("src/completion/pass.fish-completion"
+           "/share/fish/vendor_completions.d/passage")
+          ("src/completion/pass.zsh-completion"
+           "/share/zsh/site-functions/_passage"))))
     (inputs
      (list age coreutils-minimal git-minimal
            procps qrencode sed tree util-linux))
@@ -1033,30 +1028,31 @@ from the @code{password-store} package.  Files are encrypted with the
          "0rrs3iazq80dn0wbl20xkh270428jd8l99m5gd7hl93s4r4sc82p"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:make-flags
-       (let* ((out      (assoc-ref %outputs "out"))
-              (bashcomp (string-append out "/etc/bash_completion.d")))
-         (list (string-append "PREFIX=" %output)
-               (string-append "BASHCOMPDIR=" bashcomp)))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-after 'build 'patch-oath-path
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "otp.bash"
-               (("^OATH=.*$")
-                (string-append
-                 "OATH="
-                 (assoc-ref inputs "oath-toolkit")
-                 "/bin/oathtool\n"))
-               ;; courtesy: https://github.com/tadfisher/pass-otp/pull/172
-               (("&counter=[$]counter" all)
-                (format #f "~s" all))))))
-       #:test-target "test"))
-    (inputs
-     (list oath-toolkit))
+     (list
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output)
+              (string-append
+               "BASHCOMPDIR="
+               (string-append #$output "/etc/bash_completion.d")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'build 'patch-oath-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "otp.bash"
+                (("^OATH=.*$")
+                 (string-append
+                  "OATH="
+                  (assoc-ref inputs "oath-toolkit")
+                  "/bin/oathtool\n"))
+                ;; courtesy: https://github.com/tadfisher/pass-otp/pull/172
+                (("&counter=[$]counter" all)
+                 (format #f "~s" all))))))
+      #:test-target "test"))
     (native-inputs
      (list password-store expect git gnupg which))
+    (inputs
+     (list oath-toolkit))
     (home-page "https://github.com/tadfisher/pass-otp")
     (synopsis "Pass extension for managing one-time-password (OTP) tokens")
     (description
@@ -1408,8 +1404,8 @@ winner of the 2015 Password Hashing Competition.")
 
 (define-public secretsd
   ;; there are neither tags nor releases in the repository
-  (let ((commit "4ea56226b8f7c8739eea7fc8d1ffca8e18cf58c9")
-        (revision "0"))
+  (let ((commit "d12eefee00dbd4b0f756dcf7c52d31539dbcfc67")
+        (revision "1"))
     (package
       (name "secretsd")
       (version (git-version "1.0" revision commit))
@@ -1421,7 +1417,7 @@ winner of the 2015 Password Hashing Competition.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ka21vmvm25kal3sa8zmrifh4zac878hk24y7y3jj3ig8dkv0vfy"))
+          (base32 "1cr6vpb1mc48b60mjbnzalp58vx07sh7hg9r65j0cppk0n4gc0aj"))
          (modules '((guix build utils)))
          (snippet
           ;; don't install platform dependencies
@@ -1429,6 +1425,7 @@ winner of the 2015 Password Hashing Competition.")
       (build-system pyproject-build-system)
       (arguments
        (list
+        #:tests? #f ; no tests
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'create-entrypoints 'wrap-program
@@ -1437,7 +1434,7 @@ winner of the 2015 Password Hashing Competition.")
                   `("GI_TYPELIB_PATH" ":" prefix
                     (,(getenv "GI_TYPELIB_PATH")))))))))
       (inputs (list python-dbus python-platformdirs python-cryptography
-                    python-xdg python-pygobject))
+                    python-pygobject))
       (native-inputs (list bash-minimal python-setuptools python-wheel))
       (home-page "https://github.com/grawity/secretsd")
       (synopsis "Basic FreeDesktop.org Secret Service backend")
@@ -1453,7 +1450,7 @@ program.")
 (define-public pass-git-helper
   (package
     (name "pass-git-helper")
-    (version "3.3.0")
+    (version "4.0.0")
     (source
      (origin
        (method git-fetch)
@@ -1463,29 +1460,21 @@ program.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0nih6wxbpnasngdkbyh9df8wrm4b5inca8mshkqpmraqqmckzrk3"))))
+         "0g56jwh3ay6is8cm4579zhaj12kj8q23pnv5rbqaw19i0xv2f0s8"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'patch-pass-path
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let* ((password-store (assoc-ref inputs "password-store"))
-                    (pass (string-append password-store "/bin/pass")))
-               (substitute* '("passgithelper.py"
-                              "test_passgithelper.py")
-                 (("'pass'") (string-append "'" pass "'"))))))
-         (add-before 'check 'set-home
-           (lambda _
-             (setenv "HOME" (getcwd)))))))
-    (inputs
-     (list python-pyxdg password-store))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-home
+            (lambda _
+              (setenv "HOME" (getcwd)))))))
     (native-inputs
-     (list python-pytest
-           python-pytest-cov
+     (list python-pytest-cov
            python-pytest-mock
-           python-setuptools
-           python-wheel))
+           python-setuptools))
+    (inputs
+     (list password-store python-pyxdg))
     (home-page "https://github.com/languitar/pass-git-helper")
     (synopsis "Git credential helper interfacing with pass")
     (description "pass-git-helper is a git credential helper which
@@ -1598,41 +1587,41 @@ is the community-enhanced, \"jumbo\" version of John the Ripper.")
 (define-public fpm2
   (package
     (name "fpm2")
-    (version "0.79")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://als.regnet.cz/fpm2/download/fpm2-"
-                                  version ".tar.bz2"))
-              (sha256
-               (base32
-                "19sdy1lygfhkg5nxi2w9a4d9kwvw24nxp0ix0p0lz91qpvk9qpnm"))))
+    (version "0.90.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://als.regnet.cz/fpm2/download/fpm2-"
+                           version ".tar.xz"))
+       (sha256
+        (base32
+         "144mylycnkpzxbbfy30gas450iypgwx0bcd3nrimyws417kwb8qv"))))
     (build-system gnu-build-system)
-    (inputs `(("gtk2" ,gtk+-2)
-              ("gnupg" ,gnupg)
-              ("libxml2" ,libxml2)))
-    (native-inputs (list pkg-config intltool))
     (arguments
-     `(#:configure-flags '("CFLAGS=-O2 -g -fcommon")
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'pre-configure
-           ;; The file po/POTFILES.in ends up missing for some reason in
-           ;; both nix and guix builds. Adding the file with contents
-           ;; found during troubleshooting.
-           (lambda _
-             (call-with-output-file "po/POTFILES.in"
-               (lambda (port)
-                 (format port "data/fpm2.desktop.in
+     (list
+      #:configure-flags
+      #~(list "CFLAGS=-O2 -g -fcommon")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'pre-configure
+            ;; The file po/POTFILES.in ends up missing for some reason in
+            ;; both nix and guix builds. Adding the file with contents
+            ;; found during troubleshooting.
+            (lambda _
+              (call-with-output-file "po/POTFILES.in"
+                (lambda (port)
+                  (format port "data/fpm2.desktop.in
 data/fpm2.desktop.in.in
-fpm2.glade
 src/callbacks.c
 src/fpm.c
 src/fpm_file.c
 src/interface.c
 src/support.c
-fpm2.glade
-")))
-             #t)))))
+"))))))))
+    (inputs
+     (list gtk+ gnupg libxml2 nettle))
+    (native-inputs
+     (list pkg-config intltool))
     (synopsis "Manage, generate and store passwords encrypted")
     (description "FPM2 is GTK2 port from Figaro's Password Manager
 originally developed by John Conneely, with some new enhancements.
@@ -1733,34 +1722,34 @@ password cracking.")
      (list perl))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ;no tests
-       #:make-flags (list "CC=gcc"
-                          ;; Upstream bug(?): "make all" seems to remove the
-                          ;; Perl scripts from the source.
-                          "native")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'unpack
-           (lambda* (#:key source #:allow-other-keys)
-             (invoke "7z" "x" source)
-             (chdir (string-append "hashcat-utils-" ,version "/src"))
-             #t))
-         (delete 'configure)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (string-append (assoc-ref outputs "out") "/bin")))
-               (mkdir-p out)
-               (for-each
-                (lambda (file)
-                  (copy-file file (string-append out "/"
-                                                 (basename file ".bin"))))
-                (find-files "." "\\.bin$"))
-               (for-each
-                (lambda (file)
-                  (copy-file file (string-append out "/"
-                                                 (basename file ".pl"))))
-                (find-files "../bin" "\\.pl$"))
-               #t))))))
+     (list
+      #:tests? #f                      ;no tests
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              ;; Upstream bug(?): "make all" seems to remove the
+              ;; Perl scripts from the source.
+              "native")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source #:allow-other-keys)
+              (invoke "7z" "x" source)
+              (chdir (string-append #$name "-" #$version "/src"))))
+          (delete 'configure)
+          (replace 'install
+            (lambda _
+              (let ((out (string-append #$output "/bin")))
+                (mkdir-p out)
+                (for-each
+                 (lambda (file)
+                   (copy-file file (string-append out "/"
+                                                  (basename file ".bin"))))
+                 (find-files "." "\\.bin$"))
+                (for-each
+                 (lambda (file)
+                   (copy-file file (string-append out "/"
+                                                  (basename file ".pl"))))
+                 (find-files "../bin" "\\.pl$"))))))))
     (home-page "https://github.com/hashcat/hashcat-utils/")
     (synopsis "Small utilities that are useful in advanced password cracking")
     (description "Hashcat-utils are a set of small utilities that are useful
@@ -1810,24 +1799,27 @@ names.")
 (define-public hydra
   (package
     (name "hydra")
-    (version "9.5")
+    (version "9.6")
     (home-page "https://github.com/vanhauser-thc/thc-hydra")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url home-page)
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0pg4alaznygngdzn4k6p540g059w7mpiakchsp0526f1b9s33lw1"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "119ybvrs6yllycpwdlmmg4jsgfh7n2bq16vv8jcxlfmshs3wab8d"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ;no test suite
-       #:make-flags (list (string-append "CC="
-                                         ,(cc-for-target)))))
-    (native-inputs (list pkg-config))
-    (inputs (list freerdp gtk+ openssl zlib))
+     (list
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+      #:tests? #f)) ;no test suite
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list freerdp gtk+ openssl zlib))
     (synopsis "Gain access to a remote system by trying logins and passwords")
     (description
      "This package provides a tool to demonstrate how easy it is to gain
@@ -1909,12 +1901,14 @@ try every password contained in a file.")
       (inputs
        (list libxcrypt openssl))
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (delete 'configure))
-         #:make-flags (list "CC=gcc"
-                            (string-append "PREFIX=" (assoc-ref %outputs "out")))
-         #:tests? #f))  ;no tests
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure))
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "PREFIX=" #$output))
+        #:tests? #f))  ;no tests
       (synopsis "Generate (pseudo-)random passwords and hashes")
       (description
        "Makepasswd is a program that generates pseudo-random passwords of a
@@ -2006,24 +2000,26 @@ data inside a GPG encrypted file, which we'll call a coffin.")
     (name "xkcdpass")
     (version "1.19.4")
     (home-page "https://github.com/redacted/XKCD-password-generator")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url home-page)
-                    (commit (string-append "xkcdpass-" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1din4fqxgcj74vcjrsmn19sv81raards39x8pd75hmfxqqgggnd6"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "xkcdpass-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1din4fqxgcj74vcjrsmn19sv81raards39x8pd75hmfxqqgggnd6"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-manpage
-           (lambda* (#:key outputs #:allow-other-keys)
-             (install-file
-              "xkcdpass.1"
-              (string-append (assoc-ref outputs "out") "/share/man/man1")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-manpage
+            (lambda _
+              (install-file
+               "xkcdpass.1"
+               (string-append #$output "/share/man/man1")))))))
     (synopsis
      "Generate secure multiword passwords/passphrases, inspired by XKCD")
     (description

@@ -11,7 +11,7 @@
 ;;; Copyright © 2016-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016 Eric Bavier <bavier@member.fsf.org>
-;;; Copyright © 2016, 2017, 2020, 2021, 2022 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2016, 2017, 2020, 2021, 2022, 2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016, 2017 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2017,2019,2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
@@ -95,6 +95,7 @@
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages ragel)
@@ -1677,6 +1678,15 @@ and XMP metadata of images in various formats.")
     ;;   <https://launchpad.net/ubuntu/precise/+source/exiv2/+copyright>.
     (license license:gpl2+)))
 
+(define-public exiv2-static
+  (package
+    (inherit exiv2)
+    (arguments
+     (substitute-keyword-arguments (package-arguments exiv2)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (delete 'delete-static-libraries)))))))
+
 (define-public devil
   (package
     (name "devil")
@@ -2940,7 +2950,7 @@ Wacom-style graphics tablets.")
 (define-public phockup
   (package
     (name "phockup")
-    (version "1.9.2")
+    (version "1.13.0")
     (source
      (origin
        (method git-fetch)
@@ -2949,7 +2959,7 @@ Wacom-style graphics tablets.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j4mnsy12bhsmd80vgqknv004xbqd165y8gpalw87gp8i8xv172r"))))
+        (base32 "1kwz2qy8mx0j25g3gyda08qaz5rgwm6vycsrqhgkd5cqqz76bbmc"))))
     (build-system copy-build-system)
     (arguments
      `(#:install-plan '(("src" "share/phockup/")
@@ -2963,13 +2973,14 @@ Wacom-style graphics tablets.")
                (("'exiftool")
                 (string-append "'" (search-input-file inputs "bin/exiftool"))))))
          (add-before 'install 'check
-           (lambda _
-             ;; Test without PATH to make sure ‘exiftool’ is properly found.
-             (let ((path (getenv "PATH"))
-                   (pytest (which "pytest")))
-               (setenv "PATH" "")
-               (invoke pytest)
-               (setenv "PATH" path))))
+           (lambda* (#:key tests? #:allow-other-keys)
+             (when tests?
+               ;; Test without PATH to make sure ‘exiftool’ is properly found.
+               (let ((path (getenv "PATH"))
+                     (pytest (which "pytest")))
+                 (setenv "PATH" "")
+                 (invoke pytest)
+                 (setenv "PATH" path)))))
          (add-after 'install 'install-bin
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((out (assoc-ref outputs "out")))
@@ -2986,7 +2997,7 @@ Wacom-style graphics tablets.")
     (inputs
      (list bash-minimal perl-image-exiftool python python-tqdm))
     (native-inputs
-     (list python-pytest python-pytest-mock))
+     (list python-pytest python-pytest-mock python-pytest-socket))
     (home-page "https://github.com/ivandokov/phockup")
     (synopsis "Organize photos and videos in folders")
     (description "Phockup is a media sorting tool that uses creation date and

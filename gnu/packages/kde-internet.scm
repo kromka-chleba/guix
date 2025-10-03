@@ -22,6 +22,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages kde-internet)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system qt)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -32,23 +33,30 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages gperf)
+  #:use-module (gnu packages graphics)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages kde-pim)
   #:use-module (gnu packages libidn)
+  #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages markup)
   #:use-module (gnu packages messaging)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
+  #:use-module (gnu packages networking)
+  #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages rdesktop)
+  #:use-module (gnu packages samba)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages telephony)
@@ -59,12 +67,13 @@
   #:use-module (gnu packages web)
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xml)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg))
 
 (define-public falkon
   (package
     (name "falkon")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
@@ -72,7 +81,7 @@
                            "/src/falkon-" version ".tar.xz"))
        (sha256
         (base32
-         "1hhljgv5c0na4851r9klwzwgifygmq9xkrii7c8hvd7bnwc0jmwd"))))
+         "1049wwm46cd2dd96f9gwlnpz3sdrk8fs12fsp6qk0apmgzq3lf7x"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config qttools))
@@ -99,14 +108,14 @@
 (define-public kget
   (package
     (name "kget")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kget-" version ".tar.xz"))
        (sha256
-        (base32 "0pj7zrmdccbwd4bwrh76p23xfw40544vvqh4hdi7gvmcrkvris3n"))))
+        (base32 "0pg2cv1x04gd7wr1i9qw7p22hg16asarzn9sycq4xwifxg1fvbb7"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools pkg-config))
@@ -155,17 +164,229 @@ This package is part of the KDE networking module.")
     (license ;; GPL for programs, LGPL for libraries, FDL for documentation
      (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
 
+(define-public kdeconnect
+  (package
+    (name "kdeconnect")
+    (version "25.08.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kdeconnect-kde-"
+                           version ".tar.xz"))
+       (sha256
+        (base32
+         "07rmkm8gmfx1hs5n5rql2q9f539hdwv1l8wgjcmd2m5793f0nd4a"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:configure-flags
+           #~(list (string-append "-DQtWaylandScanner_EXECUTABLE="
+                                  #$(this-package-native-input "qtwayland")
+                                  "/lib/qt6/libexec/qtwaylandscanner")
+                   "-DKDE_INSTALL_LIBEXECDIR=libexec"
+                   ;; So kdeconnect.so isn't installed to lib/plugins
+                   "-DPLUGIN_INSTALL_DIR=lib/qt6/plugins")
+           #:phases #~(modify-phases %standard-phases
+                        (add-after 'unpack 'fix-dbus-autostart
+                          (lambda _
+                            ;; 'dbus-daemon' requires an absolute Exec path.
+                            (substitute* "daemon/org.kde.kdeconnect.service.in"
+                              (("kdeconnectd")
+                               (string-append #$output "/bin/kdeconnectd"))))))
+           #:tests? #f)) ; tests fail hard in our build environment
+    (native-inputs
+     (list extra-cmake-modules
+           kdoctools
+           libxtst
+           pkg-config
+           python-wrapper
+           wayland-protocols
+           qtwayland))
+    (inputs
+     (list dbus
+           kcmutils
+           kconfigwidgets
+           kcrash
+           kdbusaddons
+           kguiaddons
+           ki18n
+           kiconthemes
+           kio
+           kirigami
+           kirigami-addons
+           kitemmodels
+           knotifications
+           kpackage
+           kpeople
+           kstatusnotifieritem
+           kwayland
+           libfakekey
+           openssl
+           plasma-wayland-protocols
+           pulseaudio-qt
+           qca-qt6
+           qqc2-desktop-style
+           qtbase
+           qtconnectivity
+           qtdeclarative
+           qtmultimedia
+           qtwayland
+           qtsvg
+           sonnet
+           wayland
+           modemmanager-qt
+           libxkbcommon))
+    (home-page "https://community.kde.org/KDEConnect")
+    (synopsis "Enable your devices to communicate with each other")
+    (description "KDE Connect is a project that enables all your devices to
+communicate with each other.  Here's a few things KDE Connect can do:
+@enumerate
+@item Receive your phone notifications on your desktop computer and reply to messages
+@item Control music playing on your desktop from your phone
+@item Use your phone as a remote control for your desktop
+@item Run predefined commands on your PC from connected devices
+@item Check your phones battery level from the desktop
+@item Ring your phone to help finding it
+@item Share files and links between devices
+@item Browse your phone from the desktop
+@item Control the desktop's volume from the phone
+@end enumerate")
+    (properties `((upstream-name . "kdeconnect-kde")))
+    (license (list license:gpl2 license:gpl3)))) ; dual licensed
+
+(define-public kio-extras
+  (package
+    (name "kio-extras")
+    (version "25.08.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/release-service/"
+                                  version "/src/" name "-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "1n3cidj9rd77gjagdncp3f1s8351cf56h3mfwsv8z5vw5cppbi5a"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; Fix including libproxy.
+               '(substitute* "kcms/proxy/wpad-detector/main.cpp"
+                  (("libproxy\\/proxy\\.h") "proxy.h")))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:test-exclude
+           (string-append "("
+                          (string-join '("filenamesearchtest"
+                                         "thumbnailtest"
+                                         "testkioarchive")
+                                       "|")
+                          ")")
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? (test-exclude "") #:allow-other-keys)
+                   (when tests?
+                   (setenv "HOME" (getcwd))
+                   (setenv "TMPDIR" (getcwd))
+                   (invoke "ctest" "-E" test-exclude))))
+               (add-after 'install 'fix-kiod-path
+                 (lambda _
+                   (let* ((kio #$(this-package-input "kio"))
+                          (kf-version
+                           #$(version-major
+                              (package-version (this-package-input "kio")))))
+                     (substitute* (string-append #$output
+                                                 "/share/dbus-1/services/"
+                                                 "org.kde.kmtpd5.service")
+                       (("Exec=.*$")
+                        (string-append "Exec=" kio "/libexec/kf" kf-version
+                                       "/kiod" kf-version "\n")))))))))
+    (native-inputs (list extra-cmake-modules dbus kdoctools pkg-config qttools))
+    ;; TODO: libappimage
+    (inputs (list gperf
+                  imath
+                  plasma-activities
+                  plasma-activities-stats
+                  karchive
+                  kbookmarks
+                  kcmutils
+                  kconfig
+                  kconfigwidgets
+                  kcoreaddons
+                  kdnssd
+                  kdbusaddons
+                  kdsoap
+                  kdsoap-ws-discovery-client
+                  kguiaddons
+                  knotifications
+                  ktextwidgets
+                  ki18n
+                  kio
+                  ksyntaxhighlighting
+                  libimobiledevice
+                  libkexiv2
+                  libmtp
+                  libplist
+                  libproxy
+                  libssh
+                  libtirpc
+                  openexr
+                  phonon
+                  qtbase
+                  qt5compat
+                  qcoro-qt6
+                  qtsvg
+                  samba
+                  shared-mime-info
+                  solid
+                  taglib
+                  zlib))
+    (home-page "https://community.kde.org/Frameworks")
+    (synopsis "Additional components to increase the functionality of KIO")
+    (description
+     "This package provides additional components to increase
+the functionality of the KDE resource and network access abstractions.")
+    (license license:lgpl2.0+)))
+
+(define-public kio-zeroconf
+  (package
+    (name "kio-zeroconf")
+    (version "25.08.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kio-zeroconf-" version ".tar.xz"))
+       (sha256
+        (base32 "0w27hxmaccw74sycrxpchgh6qgkbqyclc6h7ijsrvvh4l2xhlmc0"))))
+    (build-system qt-build-system)
+    (native-inputs
+     (list extra-cmake-modules))
+    (inputs
+     (list kdbusaddons kdnssd ki18n kio))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f
+                     #:configure-flags
+                     #~(list "-DQT_MAJOR_VERSION=6")))
+    (home-page "https://apps.kde.org/kio_zeroconf/")
+    (synopsis "DNS-SD Service Discovery Monitor")
+    (description "Adds an entry to Dolphin's Network page to show local
+services such as printers which advertise themselves with DNSSD (called Avahi
+or Bonjour by other projects).")
+    (license ;; GPL for programs, LGPL for libraries, FDL for documentation
+     (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
+
 (define-public konversation
   (package
     (name "konversation")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konversation-" version ".tar.xz"))
        (sha256
-        (base32 "13gy4sgkw2i4cg3xwbm5mlp3ay95yqsd5r7mf92rp6kyk9iikcig"))))
+        (base32 "0flm9nhk9sv70by4z81kks4wchcrdy6nbgg3bnpi8gzz9j69zlaw"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools qttools))
@@ -232,21 +453,22 @@ Features are:
 (define-public krdc
   (package
     (name "krdc")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/krdc-" version ".tar.xz"))
        (sha256
-        (base32 "0kwsnmvnqyaj53njpd0424fsd7pkdcv5h162dym2binkq710mdvf"))))
+        (base32 "16vnh9aq8hlhi1bnyy0f0mscc025wp5fnd6vswx8h4dnhq0ink8k"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config kdoctools))
     (inputs
      (list breeze-icons ; default icon set
            kbookmarks
-           freerdp
+           freerdp-3
+           fuse
            kcmutils
            kcompletion
            kconfig
@@ -287,14 +509,14 @@ This package is part of the KDE networking module.")
 (define-public ktorrent
   (package
     (name "ktorrent")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ktorrent-" version ".tar.xz"))
        (sha256
-        (base32 "178mri9hjlriji43rf36h0bfp5zsy4ky8aczsnxxawrg25c8h2ma"))))
+        (base32 "0kvjxhhpzn1knvmmq60fjl5hfl6jpiyzzxfsjwmfvc5xavmc4s5l"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -377,14 +599,14 @@ management, IP blocking lists.")
 (define-public kunifiedpush
   (package
     (name "kunifiedpush")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "0hzhbn8rrlgkml47r6qqpcqg01az2za20kcsrasgmc5bf1cwclqw"))))
+        (base32 "1mx3kb2yxnvv6rzmhxkl4xqaxzmdkc6vj5a1rd27b5a36s3h3giz"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -401,7 +623,9 @@ management, IP blocking lists.")
            kcoreaddons
            ki18n
            kservice
-           qtwebsockets))
+           openssl
+           qtwebsockets
+           solid))
     (home-page "https://invent.kde.org/libraries/kunifiedpush")
     (synopsis "UnifiedPush client components")
     (description "KUnifiedPush is a @uref{https://unifiedpush.org/,
@@ -411,14 +635,14 @@ UnifiedPush} client library and distributor daemon.")
 (define-public neochat
   (package
     (name "neochat")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "00kj66kij8vsmfhzr8cc6vz2bh7vi6w7r5aa0nrcpdgnxi7g30lg"))))
+        (base32 "1dp9yng23vdzmhzrsvb3qh4l8z46pg8jbv51h6756a3zkckmvmws"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -454,9 +678,11 @@ UnifiedPush} client library and distributor daemon.")
            purpose
            qcoro-qt6
            qqc2-desktop-style
+           qthttpserver
            qtkeychain-qt6
            qtlocation
            qtmultimedia
+           qtspeech
            qtsvg
            qtwayland
            qtwebview
@@ -486,14 +712,14 @@ protocol, supporting end-to-end encryption.  Its features include:
 (define-public ruqola
   (package
     (name "ruqola")
-    (version "2.4.1")
+    (version "2.5.3")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://kde/stable/ruqola/ruqola-"
+              (uri (string-append "mirror://kde//stable/ruqola/ruqola-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0w05ww6dn1xfmz67i3avkzdlcrb575hjad2lnm2cxd0jds0b1bg5"))))
+                "18brrxwn5dh5xj20znmg3v2044m3bw2jyv8abfwa45qk32qjyzi9"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase

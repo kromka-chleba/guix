@@ -46,7 +46,6 @@
   #:use-module (gnu packages xml)
   #:use-module (guix build-system go)
   #:use-module (guix build-system pyproject)
-  #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -131,18 +130,17 @@ on @url{https://github.com/tulir/whatsmeow, whatsmeow}.")
     (version "0.3.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "matrix-client" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matrix-org/matrix-python-sdk")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1mgjd0ymf9mvqjkvgx3xjhxap7rzdmpa21wfy0cxbw2xcswcrqyw"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-requests))
-    (native-inputs
-     (list python-pytest python-pytest-runner python-responses))
-    (home-page
-     "https://github.com/matrix-org/matrix-python-sdk")
+        (base32 "01ppn2vxyd7c01ww9bicj7qlyycdyf89b2wbikdb9d2k1h03rfml"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-requests))
+    (native-inputs (list python-pytest python-responses python-setuptools))
+    (home-page "https://github.com/matrix-org/matrix-python-sdk")
     (synopsis "Client-Server SDK for Matrix")
     (description "This package provides client-server SDK for Matrix.")
     (license license:asl2.0)))
@@ -153,18 +151,22 @@ on @url{https://github.com/tulir/whatsmeow, whatsmeow}.")
     (version "0.1.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "matrix-synapse-ldap3" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matrix-org/matrix-synapse-ldap3")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "01bms89sl16nyh9f141idsz4mnhxvjrc3gj721wxh1fhikps0djx"))))
-    (build-system python-build-system)
+        (base32 "1p49h4k216iwap3axws7ffz94zn25j85f7kkv3wky1fvsb8i1r4h"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; tests require synapse, creating a circular dependency.
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases
-                  ;; Also, auth_provider.py attempts to import synapse.
-                  (delete 'sanity-check))))
+     (list
+      #:tests? #f     ; tests require synapse, creating a circular dependency.
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Also, auth_provider.py attempts to import synapse.
+          (delete 'sanity-check))))
+    (native-inputs (list python-setuptools))
     (propagated-inputs
      (list python-twisted python-ldap3 python-service-identity))
     (home-page "https://github.com/matrix-org/matrix-synapse-ldap3")
@@ -179,16 +181,19 @@ an LDAP server.")
   (package
     (name "synapse")
     (version "1.29.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "matrix-synapse" version))
-              (sha256
-               (base32
-                "0if2yhpz8psg0661401mvxznldbfhk2j9rhbs25jdaqm9jsv6907"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matrix-org/synapse")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m05fn5s0xfsnbvvv6089xkf7r8xmzvk9rp15hk9y3zk4fsqi5fw"))))
+    (build-system pyproject-build-system)
     ;; TODO Run tests with ‘PYTHONPATH=. trial3 tests’.
     (propagated-inputs
-     (list python-simplejson ; not attested but required
+     (list python-simplejson ;not attested but required
            ;; requirements (synapse/python_dependencies.py)
            python-jsonschema
            python-frozendict
@@ -219,7 +224,7 @@ an LDAP server.")
            python-bleach
            python-typing-extensions
            ;; conditional requirements (synapse/python_dependencies.py)
-           ;;("python-hiredis" ,python-hiredis)
+           ;; ("python-hiredis" ,python-hiredis)
            python-matrix-synapse-ldap3
            python-psycopg2
            python-jinja2
@@ -230,15 +235,15 @@ an LDAP server.")
            ;; sentry-sdk, jaeger-client, and opentracing could be included, but
            ;; all are monitoring aids and not essential.
            python-pyjwt))
-    (native-inputs
-     (list python-mock python-parameterized))
+    (native-inputs (list python-mock python-parameterized python-setuptools))
     (home-page "https://github.com/matrix-org/synapse")
     (synopsis "Matrix reference homeserver")
-    (description "Synapse is a reference \"homeserver\" implementation of
-Matrix from the core development team at matrix.org, written in
-Python/Twisted.  It is intended to showcase the concept of Matrix and let
-folks see the spec in the context of a codebase and let you run your own
-homeserver and generally help bootstrap the ecosystem.")
+    (description
+     "Synapse is a reference \"homeserver\" implementation of Matrix from the
+core development team at matrix.org, written in Python/Twisted.  It is
+intended to showcase the concept of Matrix and let folks see the spec in the
+context of a codebase and let you run your own homeserver and generally help
+bootstrap the ecosystem.")
     (license license:asl2.0)))
 
 (define-public python-matrix-nio
@@ -327,9 +332,14 @@ fledged batteries-included asyncio layer using aiohttp.")
          (file-name (git-file-name name version))
          (sha256
           (base32 "1i18mjlc143d2xwlha09i5ny06vipmy8fii05427zq5vjz8rysgx"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
       (arguments
        (list
+        #:test-flags
+        #~(list "tests"
+                ;; These tests hang.
+                "--ignore=tests/proxy_test.py"
+                "-k" "not test_start_loop")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'relax-requirements
@@ -344,21 +354,15 @@ fledged batteries-included asyncio layer using aiohttp.")
                   (let ((man (string-append #$output "/share/man")))
                     (install-file "panctl.1" (string-append man "/man1"))
                     (install-file "pantalaimon.5" (string-append man "/man5"))
-                    (install-file "pantalaimon.8" (string-append man "/man8"))))))
-            (replace 'check
-              (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-                (when tests?
-                  (add-installed-pythonpath inputs outputs)
-                  (invoke "pytest" "-vv" "tests"
-                          ;; These tests hang.
-                          "--ignore=tests/proxy_test.py"
-                          "-k" "not test_start_loop")))))))
+                    (install-file "pantalaimon.8"
+                                  (string-append man "/man8")))))))))
       (native-inputs
        (list python-aioresponses
              python-faker
              python-pytest
              python-pytest-aiohttp
-             python-pytest-asyncio))
+             python-pytest-asyncio
+             python-setuptools))
       (propagated-inputs
        (list python-aiohttp
              python-attrs

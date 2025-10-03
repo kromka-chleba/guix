@@ -42,11 +42,13 @@
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages ocr)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages serialization)
+  #:use-module (gnu packages speech)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages wm)
@@ -152,16 +154,102 @@ Advanced plugins:
 @end itemize")
     (license (list license:lgpl2.0+ license:gpl2+))))
 
+(define-public crow-translate
+  (package
+    (name "crow-translate")
+    (version "4.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/crow-translate/" version
+                           "/crow-translate-" version ".tar.gz"))
+       (sha256
+        (base32 "0lrpxdgicbg0wj2cf0lif99pz5kiqck53qkm5385vymzn1w8wjz2"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Delete bundled breeze-icons, espeak-ng and qhotkey.
+           (for-each delete-file-recursively
+                     '("data/icons/3rdparty/breeze-icons"
+                       "src/3rdparty/espeak-ng"
+                       "src/3rdparty/qhotkey"))
+           ;; Use system libraries instead.
+           (substitute* "CMakeLists.txt"
+             ((".*icon-theme\\.qrc.*$") "")
+             (("WITH_PIPER_TTS") "WITH_BUNDLED_ESPEAK_NG")
+             (("(.*WITH_BUNDLED_ESPEAK_NG.* )ON" all start)
+              (string-append start "OFF"))
+             (("Enable Piper neural TTS provider.*\"")
+              "Build bundled espeak-ng (requires onnxruntime)\"")
+             (("Piper TTS support disabled.*\"")
+              "Piper TTS support enabled with system espeak-ng\"")
+             (("add_subdirectory.*qhotkey.*")
+              (string-append "\nfind_package(PkgConfig)\n"
+                             "pkg_check_modules(eSpeak_NG REQUIRED espeak-ng)"
+                             "\nfind_package(QHotkey REQUIRED)\n"))
+             (("QHotkey::QHotkey") "qhotkey")
+             (("( *)Qt6::TextToSpeech" all indent)
+              (string-append all "\n" indent "espeak-ng")))
+           ;; Link Qt6::Widgets.
+           (substitute* "CMakeLists.txt"
+             (("Qt6::TextToSpeech" all) (string-append all "\n    Qt6::Widgets")))
+           ;; Include QGuiApplication in main.cpp.
+           (substitute* "src/main.cpp"
+             (("#include <QtCore>" all)
+              (string-append all "\n#include <QtGui/QGuiApplication>")))))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f ; no tests
+           #:configure-flags
+           #~(list (string-append "-DCMAKE_CXX_FLAGS=-isystem "
+                                  #$(this-package-input "qtbase")
+                                  "/include/qt6/QtWidgets"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'unbundle-singleapplication
+                 (lambda _
+                   (delete-file-recursively "src/3rdparty/singleapplication")
+                   (substitute* "CMakeLists.txt"
+                     (("add_subdirectory.*singleapplication.*$") "")
+                     (("SingleApplication::SingleApplication")
+                      (string-append #$(this-package-input
+                                        "single-application")
+                                     "/lib/libSingleApplication.a"))))))))
+    (inputs
+     (list breeze-icons
+           espeak-ng
+           kwayland
+           qhotkey
+           qtbase
+           qtsvg
+           qtmultimedia
+           qtscxml
+           qtspeech
+           single-application
+           tesseract-ocr))
+    (native-inputs
+     (list pkg-config
+           extra-cmake-modules
+           qttools))
+    (home-page "https://invent.kde.org/office/crow-translate")
+    (synopsis "Application for translating text")
+    (description
+     "Crow Translate is an application written in C++/Qt for translating
+and speaking text which relies on Mozhi to interface with various
+translation engines.")
+    (license license:gpl3+)))
+
 (define-public ghostwriter
   (package
     (name "ghostwriter")
-    (version "25.04.0")
+    (version "25.08.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/ghostwriter-" version ".tar.xz"))
               (sha256
-               (base32 "0vx6zd6js4anz2cmvljbp0dyq1gj58j28a1vx0fa7m01m8kxbsl6"))))
+               (base32 "0hlc039pkrn0l3k4vzvlvwnbzv46vnkacpaasn2lj5rfs3spxcmj"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -193,7 +281,7 @@ cmark processors if they are installed.")
 (define-public tellico
   (package
     (name "tellico")
-    (version "4.1.1")
+    (version "4.1.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -201,7 +289,7 @@ cmark processors if they are installed.")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "0jx512rgrbc8n8p2gnk543l3k53gf30a0zjixp8ly2z70w6qp2br"))
+               (base32 "0930jh6b9cl3jvhmfv00l6566vsnpwkf6shz5w0hn67j0vpvhk7s"))
               (modules '((guix build utils)))
               (snippet
                ;; Fix including QtPrintSupport.

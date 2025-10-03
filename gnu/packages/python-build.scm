@@ -36,6 +36,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix gexp)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix packages))
@@ -237,7 +238,8 @@ Included are implementations of:
 @end enumerate\n")
     (license license:psfl)))
 
-(define-public python-typing-extensions-next python-typing-extensions)
+(define-deprecated/public-alias python-typing-extensions-next
+  python-typing-extensions)            ;may be removed after 2025-12-01
 
 
 ;;;
@@ -349,7 +351,8 @@ facilitate packaging Python projects, where packaging includes:
     (native-inputs
      (list python-wheel-0.40))))
 
-(define-public python-setuptools-next python-setuptools)
+(define-deprecated/public-alias python-setuptools-next
+  python-setuptools)                   ;may be removed after 2025-12-01
 
 (define-public python-wheel
   (package
@@ -560,7 +563,8 @@ a light weight, fully compliant, self-contained package allowing PEP 517
 compatible build front-ends to build Poetry managed projects.")
     (license license:expat)))
 
-(define-public python-poetry-core-next python-poetry-core)
+(define-deprecated/public-alias python-poetry-core-next
+  python-poetry-core)                  ;may be removed after 2025-12-01
 
 ;;; This package exists to bootstrap python-tomli.
 (define-public python-flit-core-bootstrap
@@ -614,7 +618,8 @@ specified by PEP 517, @code{flit_core.buildapi}.")
        (delete "python-toml")
        (prepend python-tomli)))))
 
-(define-public python-flit-core-next python-flit-core)
+(define-deprecated/public-alias python-flit-core-next
+  python-flit-core)                    ;may be removed after 2025-12-01
 
 (define-public python-flit-scm
   (package
@@ -682,7 +687,8 @@ system, then @code{flit_core} to build the package.")
 them as the version argument or in a SCM managed file.")
     (license license:expat)))
 
-(define-public python-setuptools-scm-next python-setuptools-scm)
+(define-deprecated/public-alias python-setuptools-scm-next
+  python-setuptools-scm)               ;may be removed after 2025-12-01
 
 (define-public python-editables
   (package

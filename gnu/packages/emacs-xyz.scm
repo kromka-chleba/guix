@@ -691,7 +691,7 @@ e.g. emacs-geiser-guile for Guile.")
 (define-public emacs-gptel
   (package
     (name "emacs-gptel")
-    (version "0.9.8.5")
+    (version "0.9.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -700,7 +700,7 @@ e.g. emacs-geiser-guile for Guile.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ix0k9dv91mbibwih1s5wzx9hj5nkr3cz799m6gb52vpwf9gixg7"))))
+                "00f391gaf0pnin6qncpnxl5yj0j089d1rdblwgv5cf3mkid9w8gj"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -5287,6 +5287,33 @@ customizability and asynchronous upgrading.")
 listing type errors via Flycheck, as well as REPL support for Carp.")
       (license license:asl2.0))))
 
+(define-public emacs-cond-let
+  (package
+    (name "emacs-cond-let")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tarsius/cond-let/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hsxl42dysbrkmgnbd954zjv28cms73r7nask5ip4f07qzgaj1gi"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:test-command
+      #~(list "emacs" "--batch"
+              "-l" "cond-let-tests.el"
+              "-f" "ert-run-tests-batch-and-exit")))
+    (home-page "https://github.com/tarsius/cond-let/")
+    (synopsis "Additional and improved binding conditionals")
+    (description "This package implements binding conditionals @code{and-let}
+and @code{while-let*}, and the original @code{cond-let}, @code{cond-let*},
+@code{and$} and @code{and>}.")
+    (license license:gpl3+)))
+
 (define-public emacs-coterm
   (package
     (name "emacs-coterm")
@@ -8453,6 +8480,29 @@ and code formatting.")
      "The Ef themes are a collection of light and dark themes for GNU Emacs
 whose goal is to provide colorful yet legible options for users who want
 something with a bit more flair than the Modus themes.")
+    (license license:gpl3+)))
+
+(define-public emacs-doric-themes
+  (package
+    (name "emacs-doric-themes")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/protesilaos/doric-themes")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06kvv5hvqig1sngzzvpxfpb9wln9fv2b7krjmvb0n3kvp0s0bxmd"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;no tests
+    (home-page "https://github.com/protesilaos/doric-themes")
+    (synopsis "Highly readable minimalist Emacs themes")
+    (description
+     "This package provides a set of Emacs themes that conform with a
+minimalist aesthetic: they use few colours and appear monochromatic in many
+contexts")
     (license license:gpl3+)))
 
 (define-public emacs-eslint-flymake
@@ -34419,7 +34469,7 @@ from Emacs.")
 (define-public emacs-libmpdel
   (package
     (name "emacs-libmpdel")
-    (version "2.0.0")
+    (version "2.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -34428,10 +34478,20 @@ from Emacs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "03bavca89cf7dsjmg7hb48qnvca41ndiij33iw5yjjhbq1zyj8r4"))))
+                "1indy1y31g68i3a4j6nbx3idybn5b11bjvlx9vkibraf622s2bls"))))
     (build-system emacs-build-system)
+    (arguments
+     (list
+      ;; XXX: "check" includes "lint-package-lint", which raises errors.
+      #:test-command #~(list "make" "test")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'inject-makel
+            (lambda* (#:key inputs #:allow-other-keys)
+              (symlink (search-input-file inputs "/include/makel.mk")
+                       "makel.mk"))))))
     (native-inputs
-     (list emacs-ert-runner))
+     (list emacs-ert-runner makel))
     (home-page "https://github.com/mpdel/libmpdel")
     (synopsis "Emacs library to communicate with Music Player Daemon (MPD)")
     (description
@@ -34443,7 +34503,7 @@ music.")
 (define-public emacs-mpdel
   (package
     (name "emacs-mpdel")
-    (version "2.1.0")
+    (version "2.1.1")
     (source
      (origin
        (method git-fetch)
@@ -34453,19 +34513,19 @@ music.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "00ajjb9iawva3g7i1y6bz4d4ny3cv5rby6vgkwiy2xkprzxi8900"))))
+         "1i7ymg0ls984vjmzjz0sbg280i47c6j79vr725x94xdpj6ci35qr"))))
     (build-system emacs-build-system)
     (arguments
      (list
-      ;; XXX: ‘check’ includes ‘lint-package-lint’, which raises errors.
-      #:test-command #~(list "make" "test" "lint-checkdoc")
+      ;; XXX: "check" includes "lint-package-lint", which raises errors.
+      #:test-command #~(list "make" "test")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'inject-makel
             (lambda* (#:key inputs #:allow-other-keys)
               (symlink (search-input-file inputs "/include/makel.mk")
                        "makel.mk"))))))
-    (inputs (list makel))
+    (native-inputs (list makel))
     (propagated-inputs
      (list emacs-libmpdel emacs-navigel))
     (home-page "https://gitea.petton.fr/mpdel/mpdel")
@@ -36099,7 +36159,7 @@ commands (a prefix and a suffix) we prefer to call it just a \"transient\".")
 (define-public emacs-forge
   (package
     (name "emacs-forge")
-    (version "0.5.3")
+    (version "0.6.0")
     (source
      (origin
        (method git-fetch)
@@ -36108,28 +36168,30 @@ commands (a prefix and a suffix) we prefer to call it just a \"transient\".")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vr7qrrcj2vdh5h3w43jzqym33ax58218jq3idjrr8wnlh7vdj18"))))
+        (base32 "17x7rvlnpdk6f0c96x0m3lgd89znzysqc9184m442w9p9swp93j1"))))
     (build-system emacs-build-system)
     (arguments
-     `(#:tests? #f                     ;no tests
-       #:lisp-directory "lisp"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'build-info-manual
-           (lambda _
-             (with-directory-excursion ".."
-               (invoke "make" "info")
-               ;; Move the info file to lisp so that it gets installed by the
-               ;; emacs-build-system.
-               (rename-file "docs/forge.info" "lisp/forge.info")))))))
+     (list
+      #:tests? #f                     ;no tests
+      #:lisp-directory "lisp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'build-info-manual
+            (lambda _
+              (with-directory-excursion ".."
+                (invoke "make" "info")
+                ;; Move the info file to lisp so that it gets installed by the
+                ;; emacs-build-system.
+                (rename-file "docs/forge.info" "lisp/forge.info")))))))
     (native-inputs
      (list texinfo))
     (propagated-inputs
      (list emacs-closql
+           emacs-compat
+           emacs-cond-let
            emacs-emacsql
            emacs-ghub
            emacs-llama
-           emacs-let-alist
            emacs-magit
            emacs-markdown-mode
            emacs-yaml))

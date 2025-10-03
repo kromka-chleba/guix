@@ -139,6 +139,66 @@ a system that allows you to easily communicate between processes, and separate
 your project into different processes.")
     (license license:bsd-3)))
 
+(define-public python-crispy-bootstrap3
+  (package
+    (name "python-crispy-bootstrap3")
+    (version "2024.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/django-crispy-forms/crispy-bootstrap3")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ncf8hz3yf8h0asvyi1g54ds0glp46zfcr6sklhsynbqzmcqd463"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "PYTHONPATH" "."))))))
+    (propagated-inputs (list python-django python-django-crispy-forms))
+    (native-inputs (list python-pytest python-pytest-django python-setuptools))
+    (home-page "https://github.com/django-crispy-forms/crispy-bootstrap3")
+    (synopsis "Bootstrap3 template pack for django-crispy-forms")
+    (description
+     "This package provides a bootstrap3 template pack for
+@code{python-django-crispy-forms}.")
+    (license license:expat)))
+
+(define-public python-crispy-bootstrap4
+  (package
+    (name "python-crispy-bootstrap4")
+    (version "2025.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/django-crispy-forms/crispy-bootstrap4")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kyyyrg39ckqw3pmsq67g5xzgmcd7xjgz7vpsr97gaai1frnsvnr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "PYTHONPATH" "."))))))
+    (propagated-inputs (list python-django python-django-crispy-forms))
+    (native-inputs (list python-pytest python-pytest-django python-setuptools))
+    (home-page "https://github.com/django-crispy-forms/crispy-bootstrap4")
+    (synopsis "Bootstrap4 template pack for django-crispy-forms")
+    (description
+     "This package provides a bootstrap4 template pack for
+@code{python-django-crispy-forms}.")
+    (license license:expat)))
+
 (define-public python-django
   (package
     (name "python-django")
@@ -734,17 +794,27 @@ queries done via the Django ORM, SQLAlchemy generated queries are displayed.")
     (version "1.4.5")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "django-gravatar2" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/twaddington/django-gravatar")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0r03m1qkh56g92x136xdq8n92mj7gbi1fh0djarxhp9rbr35dfrd"))))
-    (build-system python-build-system)
+        (base32 "0brh1176gx758cimkz36g8v760a1hadxspqanp8kc59kvx50qvm0"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(;; TODO: The django project for the tests is missing from the release.
-       #:tests? #f))
-    (inputs
-     (list python-django))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "example_project"
+                  (invoke "python" "./manage.py" "test"
+                          "-k" "not test_has_gravatar"
+                          "django_gravatar"))))))))
+    (native-inputs (list python-setuptools))
+    (inputs (list python-django))
     (home-page "https://github.com/twaddington/django-gravatar")
     (synopsis "Gravatar support for Django, improved version")
     (description
@@ -947,20 +1017,27 @@ for Django sites.")
 (define-public python-django-contrib-comments
   (package
     (name "python-django-contrib-comments")
-    (version "1.9.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-contrib-comments" version))
-              (sha256
-               (base32
-                "0ccdiv784a5vnpfal36km4dyg12340rwhpr0riyy0k89wfnjn8yi"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-django python-six))
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/django/django-contrib-comments")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17mymw64bm5f19iq6dlpcbbycamy2a0wrnfzrbnw8diysc3fsnpr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "tests/runtests.py")))
+    (native-inputs (list python-setuptools tzdata-for-tests))
+    (propagated-inputs (list python-django))
     (home-page "https://github.com/django/django-contrib-comments")
     (synopsis "Comments framework")
     (description
-      "Django used to include a comments framework; since Django 1.6 it's been
+     "Django used to include a comments framework; since Django 1.6 it's been
 separated to a separate project.  This is that project.  This framework can be
 used to attach comments to any model, so you can use it for comments on blog
 entries, photos, book chapters, or anything else.")
@@ -1530,22 +1607,43 @@ a single block.")
 (define-public python-django-crispy-forms
   (package
     (name "python-django-crispy-forms")
-    (version "1.9.2")
+    (version "2.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "django-crispy-forms" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/django-crispy-forms/django-crispy-forms")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0fxlf233f49hjax786p4r650rd0ilvhnpyvw8hv1d1aqnkxy1wgj"))))
-    (build-system python-build-system)
+        (base32 "1xrrcsv534p989hh1jgy4nk6sxay7g913z6zxwgpgnadzr9dfpk1"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(;; No included tests
-       #:tests? #f))
-    (propagated-inputs
-     (list python-django))
-    (home-page
-     "http://github.com/maraujop/django-crispy-forms")
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "PYTHONPATH" "."))))))
+    (native-inputs
+     (append
+      ;; XXX: python-crispy-boostrap packages and this package have a
+      ;; circular dependency.  Get a bootstrap version for them.
+      (map (lambda (pkg)
+             (package/inherit pkg
+               (arguments
+                (list
+                 #:tests? #f
+                 #:phases
+                 #~(modify-phases %standard-phases
+                     (delete 'sanity-check))))
+               (propagated-inputs
+                (modify-inputs (package-propagated-inputs pkg)
+                  (delete "python-django-crispy-forms")))))
+           (list python-crispy-bootstrap3 python-crispy-bootstrap4))
+      (list python-pytest python-pytest-django python-setuptools)))
+    (propagated-inputs (list python-django))
+    (home-page "https://github.com/django-crispy-forms/django-crispy-forms")
     (synopsis "Tool to control Django forms without custom templates")
     (description
      "@code{django-crispy-forms} lets you easily build, customize and reuse
@@ -1660,27 +1758,27 @@ Amazon S3, Dropbox, local file storage or any Django storage.")
 (define-public python-django-override-storage
   (package
     (name "python-django-override-storage")
-    (version "0.3.0")
-    (home-page "https://github.com/danifus/django-override-storage")
+    (version "0.3.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url home-page)
+             (url "https://github.com/danifus/django-override-storage")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "081kzfk7mmybhihvc92d3hsdg0r2k20ydq88fs1fgd348sq1ax51"))))
-    (build-system python-build-system)
+        (base32 "1zxfzawhcm1lnxl0d025z6ipgfarvqr2jyl4cg7680gs73m5ikw5"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "python" "runtests.py"))))))
-    (native-inputs
-     (list python-mock))
-    (propagated-inputs
-     (list python-django))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "python" "runtests.py"))))))
+    (native-inputs (list python-mock python-setuptools))
+    (propagated-inputs (list python-django))
+    (home-page "https://github.com/danifus/django-override-storage")
     (synopsis "Django test helpers to manage file storage side effects")
     (description
      "This project provides tools to help reduce the side effects of using
@@ -1771,19 +1869,25 @@ backends in a single library.")
 (define-public python-django-logging-json
   (package
     (name "python-django-logging-json")
-    (version "1.15")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-logging-json" version))
-              (sha256
-               (base32
-                "06041a8icazzp73kg93c7k1ska12wvkq7fpcad0l0sm1qnxx5yx7"))))
-    (build-system python-build-system)
+    (version "1.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cipriantarta/django-logging")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1big7mv0274wgbr06v2qlq61pzh7h2rcn0la212shnh5b4fvhg56"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:tests? #f                      ;no tests
-       #:phases (modify-phases %standard-phases
-                  ;; Importing this module requires a Django project.
-                  (delete 'sanity-check))))
+     (list
+      #:tests? #f ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Importing this module requires a Django project.
+          (delete 'sanity-check))))
+    (native-inputs (list python-setuptools))
     (propagated-inputs
      (list python-certifi python-django python-elasticsearch python-six))
     (home-page "https://github.com/cipriantarta/django-logging")
@@ -1798,14 +1902,30 @@ to ElasticSearch.")
   (package
     (name "python-django-netfields")
     (version "1.3.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-netfields" version))
-              (sha256
-               (base32
-                "0q2s6b689hwql4qcw02m3zj2fwsx1w4ffhw81yvp71dq3dh46jg5"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))      ;XXX: Requires a running PostgreSQL server
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jimfunk/django-postgresql-netfields")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "176dmdlhd6bka4k6b4mlha3ags6mqf2qy3rxvpgnk9v5nncqm7l9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f                   ;XXX: Requires a running PostgreSQL server
+      ;; XXX: Requires rest_framework.
+      #:test-flags
+      #~(list "--ignore=test/tests/test_rest_framework_fields.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "DJANGO_SETTINGS_MODULE" "testsettings")
+              (setenv "PYTHONPATH" "."))))))
+    (native-inputs
+     (list python-pytest python-pytest-django python-setuptools))
     (propagated-inputs
      (list python-django python-netaddr python-psycopg2 python-six))
     (home-page "https://github.com/jimfunk/django-postgresql-netfields")
@@ -1819,48 +1939,46 @@ to ElasticSearch.")
   (package
     (name "python-django-url-filter")
     (version "0.3.15")
-    (home-page "https://github.com/miki725/django-url-filter")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference (url home-page) (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0r4zhqhs8y6cnplwyvcb0zpijizw1ifnszs38n4w8138657f9026"))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Patch for Django 4.0 compatibility, taken from upstream pull
-               ;; request: https://github.com/miki725/django-url-filter/pull/103
-               '(substitute* "url_filter/validators.py"
-                  ((" ungettext_lazy")
-                   " ngettext_lazy")))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/miki725/django-url-filter")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r4zhqhs8y6cnplwyvcb0zpijizw1ifnszs38n4w8138657f9026"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:tests? #f            ;FIXME: Django raises "Apps aren't loaded yet"!?
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'loosen-requirements
-                    (lambda _
-                      ;; Do not depend on compatibility package for old
-                      ;; Python versions.
-                      (substitute* "requirements.txt"
-                        (("enum-compat") ""))))
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (begin
-                            (setenv "DJANGO_SETTINGS_MODULE"
-                                    "test_project.settings")
-                            (invoke "pytest" "-vv" "--doctest-modules"
-                                    "tests/" "url_filter/"))
-                          (format #t "test suite not run~%")))))))
-    (propagated-inputs
-     (list python-cached-property python-django python-six))
+     (list
+      #:tests? #f ;FIXME: Django raises "Apps aren't loaded yet"!?
+      #:test-flags #~(list "--doctest-modules" "tests/" "url_filter/")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'loosen-requirements
+            (lambda _
+              ;; Do not depend on compatibility package for old
+              ;; Python versions.
+              (substitute* "requirements.txt"
+                (("enum-compat")
+                 ""))
+              ;; Patch for Django 4.0 compatibility, taken from upstream pull
+              ;; request: https://github.com/miki725/django-url-filter/pull/103
+              (substitute* "url_filter/validators.py"
+                ((" ungettext_lazy")
+                 " ngettext_lazy"))))
+          (add-before 'check 'configure-tests
+            (lambda _
+              (setenv "DJANGO_SETTINGS_MODULE" "test_project.settings"))))))
+    (native-inputs (list python-mock python-pytest python-setuptools python-sqlalchemy))
+    (propagated-inputs (list python-cached-property python-django python-six))
+    (home-page "https://github.com/miki725/django-url-filter")
     (synopsis "Filter data via human-friendly URLs")
     (description
      "The main goal of Django URL Filter is to provide an easy URL interface
 for filtering data.  It allows the user to safely filter by model attributes
-and also specify the lookup type for each filter (very much like
-Django's filtering system in ORM).")
+and also specify the lookup type for each filter (very much like Django's
+filtering system in ORM).")
     (license license:expat)))
 
 (define-public python-django-svg-image-form-field
@@ -1876,7 +1994,9 @@ Django's filtering system in ORM).")
        (file-name (git-file-name name version))
        (sha256
         (base32 "131m545khn8l20j4x2bvlvz36dlbnhj9pc98i2dw72s3bw8pgws0"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; No tests.
+    (native-inputs (list python-setuptools))
     (propagated-inputs
      (list python-defusedxml python-django python-pillow))
     (home-page "https://github.com/artrey/django-svg-image-form-field")

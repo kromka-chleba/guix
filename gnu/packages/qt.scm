@@ -2117,7 +2117,7 @@ Vulkan, OpenGL and other main graphic APIs.")
            vulkan-headers))
     (inputs
      (list alsa-lib
-           ffmpeg
+           ffmpeg-6
            glib
            libxkbcommon
            libxrandr
@@ -4144,7 +4144,7 @@ linux/libcurl_wrapper.h"
            curl
            dbus
            eudev
-           ffmpeg
+           ffmpeg-6
            fontconfig
            fxdiv
            harfbuzz
@@ -4372,9 +4372,9 @@ Python.")
     (arguments
      (list #:tests? #f))        ; No test system found.
     (native-inputs
-     (list python-setuptools-next python-setuptools-scm-next python-wheel))
+     (list python-setuptools python-setuptools-scm python-wheel))
     (propagated-inputs
-     (list python-packaging python-setuptools-next python-tomli))
+     (list python-packaging python-setuptools python-tomli))
     (home-page "https://www.riverbankcomputing.com/software/sip/intro")
     (synopsis "Python binding creator for C and C++ libraries")
     (description
@@ -4724,8 +4724,8 @@ set of three modules.")))
         (base32
          "1g40j5iyad8bw8113rsxxkbkdi7g1lcjj0lb1j7pma442i3fmpsn"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools-next
-                         python-setuptools-scm-next
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm
                          python-wheel))
     (inputs
      (list python-sip))
@@ -5939,6 +5939,35 @@ being fully customizable and easy to extend.")
 simple editor for binary data, just like @code{QPlainTextEdit} is for text
 data.")
     (license license:lgpl2.1)))
+
+(define-public qhotkey
+  (package
+    (name "qhotkey")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Skycoder42/QHotkey")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0glzh4l532xk4v9mphsdf96v1557pyvg5al3ha0vr3244bfh9hcf"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f ;no tests
+           #:configure-flags
+           #~(list "-DQT_DEFAULT_MAJOR_VERSION=6"
+                   "-DBUILD_SHARED_LIBS=ON"
+                   "-DQHOTKEY_EXAMPLES=ON")))
+    (inputs (list libx11 qtbase))
+    (home-page "https://github.com/Skycoder42/QHotkey")
+    (synopsis "Global shortcut key for Qt desktop applications")
+    (description
+     "This package provides @code{QHotKey} class that can be used to create
+hotkeys/global shortcuts, aka shortcuts that work everywhere, independent of
+the application state.")
+    (license license:bsd-3)))
 
 (define-public qthttpserver
   (package

@@ -21,7 +21,7 @@
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020, 2021, 2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
-;;; Copyright © 2020-2024 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2020-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
 ;;; Copyright © 2021 Antoine Côté <antoine.cote@posteo.net>
 ;;; Copyright © 2021 Andy Tai <atai@atai.org>
@@ -108,6 +108,7 @@
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ninja)
+  #:use-module (gnu packages opencl)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
@@ -461,7 +462,7 @@ objects!")
                           qt)))))))))
     (inputs
      (list expat
-           ffmpeg-for-friction ;version 4.2 is recommended; does not work with version 7+.
+           ffmpeg-6
            fontconfig
            freetype
            gperftools-for-friction
@@ -825,7 +826,20 @@ and export to various formats including the format used by Magicavoxel.")
                    (substitute* "test/CMakeLists.txt"
                      ;; Leave the test binary where ctest will look for it.
                      (("TARGET_USE_COMMON_OUTPUT_DIRECTORY\\(unit\\)")
-                      "")))))))
+                      ""))
+
+                   ;; Some tests fail on aarch64:
+                   ;; <https://github.com/assimp/assimp/issues/6246>.
+                   (when #$(target-aarch64?)
+                     (substitute* "test/unit/AssimpAPITest_aiMatrix3x3.cpp"
+                       (("aiMatrix3FromToTest")
+                        "DISABLED_aiMatrix3FromToTest"))
+                     (substitute* "test/unit/AssimpAPITest_aiMatrix4x4.cpp"
+                       (("aiMatrix4FromToTest")
+                        "DISABLED_aiMatrix4FromToTest"))
+                     (substitute* "test/unit/AssimpAPITest_aiQuaternion.cpp"
+                       (("aiQuaternionFromNormalizedQuaternionTest")
+                        "DISABLED_aiQuaternionFromNormalizedQuaternionTest"))))))))
     (build-system cmake-build-system)
     (inputs
      (list zlib))
@@ -1224,14 +1238,30 @@ basic geometries.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/typemytype/booleanOperations")
-             (commit version)))
+              (url "https://github.com/typemytype/booleanOperations")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0ahfgamyq1ndwbr9n8sdx8qhqc2195xnbahylgjpk877hbr2gxav"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; There are
+      #:modules '((guix build pyproject-build-system)
+                  (guix build utils)
+                  (ice-9 format))
+      ;; Some tests fail due to small differences in the expected result (see:
+      ;; <https://github.com/typemytype/booleanOperations/issues/69>).
+      #:test-flags #~(list "-k"
+                           (format #f "not ~{~a~^ and not ~}"
+                                   '("test_QTail_reversed_difference"
+                                     "test_QTail_reversed_intersection"
+                                     "test_QTail_reversed_union"
+                                     "test_QTail_reversed_xor"
+                                     "test_Q_difference"
+                                     "test_Q_intersection"
+                                     "test_Q_union"
+                                     "test_Q_xor")))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'set-version
@@ -1243,8 +1273,7 @@ basic geometries.")
            python-fontpens-bootstrap
            python-pytest
            python-setuptools
-           python-setuptools-scm
-           unzip))
+           python-setuptools-scm))
     (home-page "https://github.com/typemytype/booleanOperations")
     (synopsis "Boolean operations on paths")
     (description
@@ -3416,3 +3445,38 @@ environment.  It supports drawing freehand as well as basic shapes and text.
 It features cut-and-paste for irregular regions or polygons.")
     (home-page "https://www.gnu.org/software/gpaint/")
     (license license:gpl3+)))
+
+(define-public basis-universal
+  (package
+    (name "basis-universal")
+    (version "1.60")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/BinomialLLC/basis_universal")
+                     (commit (string-append "v"
+                               (string-replace-substring version "." "_")))))
+              (file-name (git-file-name name version))
+              (patches (search-patches "basis-universal-unbundle-libs.patch"))
+              (modules '((guix build utils)))
+              (snippet #~(for-each delete-file-recursively '("OpenCL" "zstd")))
+              (sha256
+                (base32
+                  "1s38fp3j9pp0s260s805lw2h4gqbx7d2cd0d96pjp5bfqndmmk8b"))))
+    (build-system cmake-build-system)
+    (arguments
+      (list #:phases
+            #~(modify-phases %standard-phases
+                (delete 'check)
+                (add-after 'install 'check
+                  (lambda _ (invoke (string-append #$output "/bin/basisu")
+                                    "-test_dir" "../source/test_files"
+                                    "-test"))))))
+    (inputs (list opencl-headers (list zstd "lib")))
+    (native-inputs (list pkg-config))
+    (home-page "https://github.com/BinomialLLC/basis_universal")
+    (synopsis "LDR/HDR compressed texture transcoder")
+    (description "Basis Universal is an LDR/HDR GPU compressed texture
+interchange system supporting transcoding to a large number of GPU texture
+formats.")
+    (license (list license:asl2.0 license:bsd-3 license:expat))))

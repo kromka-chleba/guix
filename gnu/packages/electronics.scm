@@ -827,7 +827,7 @@ supported devices, as well as input/output file format support.")
 (define-public m8c
   (package
     (name "m8c")
-    (version "2.1.0")
+    (version "2.2.0")
     (source
      (origin
        (method git-fetch)
@@ -836,7 +836,7 @@ supported devices, as well as input/output file format support.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vv0m4ry23nns5a47m2n9k6i3wly2jjc5n1j3l7sh1m480ga3d42"))))
+        (base32 "1mx4n5di1bsm4ill55sf4dfa5rldrch0mrr4mk83x0xqd2rfy2mp"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -921,6 +921,10 @@ which allows one to install the M8 firmware on any Teensy.")
               (string-append "-DTRELLIS_INSTALL_PREFIX="
                              #$(this-package-input "prjtrellis"))
               "-DUSE_IPO=OFF")
+      #:modules '((guix build qt-build-system)
+                  (guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26))
       #:phases
       #~(modify-phases %standard-phases
           ;; Required by himbaechel architecture, ng-ultra support.
@@ -947,10 +951,42 @@ which allows one to install the M8 firmware on any Teensy.")
                 (("\\$\\{CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake")
                  (string-append
                   #$(this-package-native-input "sanitizers-cmake")
-                  "/share/sanitizers-cmake/cmake"))))))))
+                  "/share/sanitizers-cmake/cmake")))))
+          (add-after 'install 'run-icestorm-examples
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "PATH"
+                        (string-append #$output "/bin:" (getenv "PATH")))
+                ;; Tests need write access.
+                (copy-recursively
+                 (string-append
+                  #$(this-package-native-input "icestorm") "/examples")
+                 "/tmp/icestorm/examples")
+                (with-directory-excursion "/tmp/icestorm/examples"
+                  (for-each
+                   (cut invoke "make" "-C" <>)
+                   (scandir "." (negate (cut member <> '("." "..")))))))))
+          (add-after 'run-icestorm-examples 'run-prjtrellis-examples
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "PATH"
+                        (string-append #$output "/bin:" (getenv "PATH")))
+                ;; Tests need write access.
+                (copy-recursively
+                 (string-append
+                  #$(this-package-native-input "prjtrellis") "/examples")
+                 "/tmp/prjtrellis/examples")
+                (with-directory-excursion "/tmp/prjtrellis/examples"
+                  (for-each
+                   (cut invoke "make" "-C" <>)
+                   ;; Other tests require unavailable tools.
+                   (list "ecp5_evn" "tinyfpga_rev1"
+                         "tinyfpga_rev2" "versa5g")))))))))
     (native-inputs
-     (list googletest
-           sanitizers-cmake))
+     `(("icestorm" ,(package-source icestorm))
+       ("googletest" ,googletest)
+       ("prjtrellis" ,(package-source prjtrellis))
+       ("sanitizers-cmake" ,sanitizers-cmake)))
     (inputs
      (list apycula
            boost
@@ -975,7 +1011,7 @@ which allows one to install the M8 firmware on any Teensy.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.17.2")
+    (version "1.18.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -984,7 +1020,7 @@ which allows one to install the M8 firmware on any Teensy.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hr5y9ys5kf096x18mh10wwqa0hbzlmdj7pyayc6szsjla1d3mk0"))))
+                "1b8bsmxv2p9v8g7yzdj8s22l5bx9n58kmbklgnj17gd362lai51y"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t
@@ -1000,9 +1036,17 @@ which allows one to install the M8 firmware on any Teensy.")
                    (string-append "--with-bash-completion=" #$output
                                   "/share/bash-completion/completions"))
            #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'clean-up
+                        (add-after 'unpack 'fix-autogen
                           (lambda _
-                            (delete-file "autogen.sh"))))))
+                            (substitute* "autogen.sh"
+                              (("cd") "# cd"))))
+                        ;; This scripts is necessary for testing osvvm.
+                        (add-after 'install 'keep-osvvm-tests
+                          (lambda _
+                            (mkdir-p (string-append #$output "/test"))
+                            (install-file
+                             "../source/test/test-osvvm.tcl"
+                             (string-append #$output "/test")))))))
     (native-inputs
      (list automake
            autoconf
@@ -1299,7 +1343,7 @@ GUI for sigrok.")
 (define-public osvvm
   (package
     (name "osvvm")
-    (version "2025.06")
+    (version "2025.06a")
     (source
      (origin
        (method git-fetch)
@@ -1311,7 +1355,7 @@ GUI for sigrok.")
               (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08mfh7pyrb26mp8wx3xjns79slb3yf1c78nf8y1awvxc1p8q1wq4"))))
+        (base32 "1dq56h51ydfpffd00qz9qkcg6sddlqixiixls9vvxczfkp9l21ws"))))
     (outputs
      '("out" "common" "scripts" "uart" "axi4"))
     (properties
@@ -1347,7 +1391,17 @@ GUI for sigrok.")
               ;; Default conflicts with read-only /gnu/store.
               (substitute* "osvvm/OsvvmVhdlSettings.pro"
                 (("\\[FindOsvvmSettingsDirectory\\]")
-                 " \"\" ")))))))
+                 " \"\" "))))
+          (add-after 'fix-scripts 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "OSVVM_DIR" (getcwd))
+                (setenv "OSVVM_MUST_BUILD" (getcwd))
+                (invoke "tclsh"
+                        (string-append #$(this-package-native-input "nvc")
+                                       "/test/test-osvvm.tcl"))))))))
+    (native-inputs
+     (list nvc tcl tcllib which))
     (native-search-paths
      (list (search-path-specification
              (variable "OSVVM")
@@ -1381,6 +1435,8 @@ verification.")
         (base32 "1kn18ibvm7bzdyw2d914284wriravyh5qwfarj06pb052x1yblyx"))))
     (arguments
      (substitute-keyword-arguments (package-arguments osvvm)
+       ((#:tests? _ #t)
+        #f)
        ((#:phases phases #~%standard-phases)
         #~(modify-phases #$phases
             (delete 'fix-scripts)))))))
@@ -1726,6 +1782,10 @@ to enforce it.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:modules '((guix build pyproject-build-system)
+                  (guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-ghdl-jit
@@ -1751,14 +1811,27 @@ to enforce it.")
                  (string-append site-packages "osvvm")))))
           (add-after 'check 'run-examples
             ;; Run examples as an extra check.
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (with-directory-excursion "examples/vhdl"
-                (for-each
-                 (lambda (dir)
-                   (invoke "python3" (string-append dir "/run.py")))
-                 (list
-                  "array" "check" "composite_generics" "json4vhdl" "logging"
-                  "logging" "uart" "vhdl_configuration"))))))
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "examples/vhdl"
+                  (for-each
+                   (lambda (dir)
+                     (invoke "python3" (string-append dir "/run.py"))
+                     (delete-file-recursively "vunit_out"))
+                   (scandir "."
+                            (negate
+                             (cut member <>
+                                  '("coverage"  ;unsupported feature in nvc
+                                    "data_types"  ;no run.py
+                                    "docker_runall.sh"  ;not a test
+                                    "vivado" ;requires external tool
+                                    ;; Fails with nvc
+                                    "array_axis_vcs"
+                                    "osvvm_log_integration"
+                                    "run"
+                                    "third_party_integration"
+                                    "user_guide"
+                                    "." ".."))))))))))
       #:test-flags
       ;; Skip lint tests which require python-pycodestyle, python-pylint and
       ;; python-mypy to reduce closoure size; some lint test fails, see

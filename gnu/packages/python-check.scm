@@ -1,9 +1,11 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015 Cyril Roelandt <tipecaml@gmail.com>
+;;; Copyright © 2015, 2017 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2015, 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2016 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2017 Muriithi Frederick Muriuki <fredmanglis@gmail.com>
+;;; Copyright © 2017 Thomas Danckaert <thomas.danckaert@gmail.com>
+;;; Copyright © 2018 Fis Trivial <ybbs.daans@hotmail.com>
 ;;; Copyright © 2018-2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019-2024 Maxim Cournoyer <maxim@guixotic.coop>
@@ -92,27 +94,30 @@
     (version "0.7.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "aioresponses" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pnuckowski/aioresponses")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "16p8mdyfirddrsay62ji7rwcrqmmzxzf2isdbfm9cj5p338rbr42"))))
-    (build-system python-build-system)
+        (base32 "0fcm1rl1h91c2ca446kl5r2q229a8cfad2xn9gmsmdvn29wm35kc"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke
-                "pytest" "-vv" "tests" "-k"
-                (string-append
-                 ;; These tests require network access.
-                 "not test_address_as_instance_of_url_combined_with_pass_through "
-                 "and not test_pass_through_with_origin_params"))))))))
-    (native-inputs
-     (list python-pbr python-ddt python-pytest))
-    (propagated-inputs
-     (list python-aiohttp python-setuptools))
+     (list
+      #:test-flags
+      #~(list
+         "tests" "-k"
+         (string-append
+          ;; These tests require network access.
+          "not test_address_as_instance_of_url_combined_with_pass_through "
+          "and not test_pass_through_with_origin_params"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-pbr-version
+            (lambda _
+              (setenv "PBR_VERSION" #$version))))))
+    (native-inputs (list python-pbr python-ddt python-pytest python-setuptools))
+    (propagated-inputs (list python-aiohttp))
     (home-page "https://github.com/pnuckowski/aioresponses")
     (synopsis "Mock out requests made by ClientSession from aiohttp package")
     (description
@@ -228,6 +233,38 @@ the implementation of that name.")
     (license (list license:asl2.0
                    license:lgpl3))))    ; only for setup_helpers.py
 
+(define-public python-autopep8
+  (package
+    (name "python-autopep8")
+    (version "2.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "autopep8" version))
+       (sha256
+        (base32 "0n0pjdk39n6vlddjqvbpkxd4a7q33dkf0k2yk6dbd5wijr7hli49"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-pycodestyle python-tomli))
+    (native-inputs
+     (list python-setuptools))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'prepare-check
+           (lambda _
+             (setenv "HOME" "/tmp"))))))
+    (home-page "https://github.com/hhatto/autopep8")
+    (synopsis "Format Python code according to the PEP 8 style guide")
+    (description
+     "@code{autopep8} automatically formats Python code to conform to
+the PEP 8 style guide.  It uses the pycodestyle utility to determine
+what parts of the code needs to be formatted.  @code{autopep8} is
+capable of fixing most of the formatting issues that can be reported
+by pycodestyle.")
+    (license (license:non-copyleft
+              "https://github.com/hhatto/autopep8/blob/master/LICENSE"))))
+
 (define-public python-avocado-framework
   (package
     (name "python-avocado-framework")
@@ -238,7 +275,7 @@ the implementation of that name.")
        (uri (pypi-uri "avocado-framework" version))
        (sha256
         (base32 "0zhz6423p0b5gqx2mvg7dmq8m9gbsay7wqjdwzirlwcg2v3rcz0m"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       ;; The test suite hangs, due to a serious bug in Python/Avocado (see:
@@ -284,7 +321,8 @@ the implementation of that name.")
                 (setenv "HOME" "/tmp")
                 (setenv "PYTHONPATH" (getcwd))
                 (invoke "./selftests/check.py" "--skip" "static-checks")))))))
-    (native-inputs (list bash-minimal coreutils-minimal perl sudo))
+    (native-inputs (list bash-minimal coreutils-minimal perl sudo
+                         python-setuptools))
     (inputs (list bash-minimal coreutils-minimal))
     (home-page "https://avocado-framework.github.io/")
     (synopsis "Tools and libraries to help with automated testing")
@@ -927,17 +965,21 @@ modules are patched within the contexts exposed.")
     (name "python-httmock")
     (version "1.3.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "httmock" version))
-        (sha256
-         (base32
-          "1zj1fcm0n6f0wr9mr0hmlqz9430fnr5cdwd5jkcvq9j44bnsrfz0"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/patrys/httmock")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dy7pjq4gz476jcnbbpzk8w8qxr9l8wwgw9x2c7lf6fzsgnf404q"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)); no tests
-    (propagated-inputs
-     (list python-requests))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "tests.py")))
+    (native-inputs (list python-setuptools))
+    (propagated-inputs (list python-requests))
     (home-page "https://github.com/patrys/httmock")
     (synopsis "Mocking library for requests")
     (description "This package provides a library for replying fake data to
@@ -1031,45 +1073,38 @@ to establish class invariants.")
 (define-public python-inline-snapshot
   (package
     (name "python-inline-snapshot")
-    (version "0.18.2")
+    (version "0.29.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "inline_snapshot" version))
        (sha256
-        (base32 "09pqgz4phal2pjkv03wg3gvj7jr89rrb93rfw4hd2x9v8px4mqqv"))))
+        (base32 "19x5j97i96p3xr9xyjvwh0mmpcnypf8g5hf2jjm6g82ghsv3rrqp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 518 passed, 88 skipped, 1 xfailed, 903 subtests passed
       #:test-flags
-      ;; Missing "freezer" fixture
-      '(list "--ignore=tests/test_external.py"
-             "--ignore=tests/test_pytest_plugin.py"
-             "-k"
-             (string-append
-              "not test_trailing_comma"
-              ;; Cannot use inline-snapshop when xdist is available.
-              " and not test_xdist"
-              " and not test_xdist_disabled"
-              " and not test_xdist_and_disable"
-              " and not test_typing"))))
-    (propagated-inputs (list python-asttokens
-                             python-black
-                             python-click
-                             python-executing
-                             python-mkdocs
-                             python-rich
-                             python-tomli
-                             python-typing-extensions))
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              ;; To prevent adding mypy and pyright.
+              "--ignore=tests/test_typing.py")))
     (native-inputs
-     (list python-dirty-equals
+     (list python-black         ;XXX: used in tests/conftest.py to self lint
+           python-dirty-equals
            python-freezegun
            python-hatchling
-           python-pydantic
-           python-pytest
+           python-hypothesis
+           python-pydantic-2
+           python-pytest-bootstrap
+           python-pytest-freezer
            python-pytest-mock
-           python-pytest-subtests))
-    (home-page "https://pypi.org/project/inline-snapshot/")
+           python-pytest-subtests
+           python-pytest-xdist))
+    (propagated-inputs
+     (list python-asttokens
+           python-executing
+           python-rich))
+    (home-page "https://github.com/15r10nk/inline-snapshot/")
     (synopsis "Golden master/snapshot/approval testing library")
     (description
      "This package can be used for different things:
@@ -1106,16 +1141,9 @@ updating the value you want to compare with.  The value is converted with
                 (sha256
                  (base32
                   "0b8kbjhk3j10rk0vcniy695m3h43yip6y93h1bd6jjh0cp7s09c7"))))
-      (build-system python-build-system)
-      (arguments
-       `(#:phases (modify-phases %standard-phases
-                    (replace 'check
-                      (lambda _
-                        (invoke "pytest" "-vv"))))))
-      (native-inputs
-       (list python-pytest))
-      (propagated-inputs
-       (list python-six))
+      (build-system pyproject-build-system)
+      (native-inputs (list python-pytest python-setuptools))
+      (propagated-inputs (list python-six))
       (synopsis "Create JUnit XML test results")
       (description
        "This package provides a Python module for creating JUnit XML test
@@ -1622,19 +1650,27 @@ flake8 to check PEP-8 naming conventions.")
 (define-public python-pycotap
   (package
     (name "python-pycotap")
-    (version "1.2.2")
+    (version "1.3.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pycotap" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/remko/pycotap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1v69fxial9i5wlap6wc4igq3hydvxbak7dlgb7cikk8wjgafqf7r"))))
-    (build-system python-build-system)
-    (home-page "https://el-tramo.be/pycotap")
+        (base32 "1xw3mrrsw7wc8yas9p2hnzj2m3mw7p1qxkj6l942gidngqphyhar"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; FIXME Unclear why tests fail.
+     (list #:tests? #f))
+    (native-inputs (list python-pytest python-setuptools))
+    (home-page "https://github.com/remko/pycotap")
     (synopsis "Tiny Python TAP test runner")
-    (description "This package provides a simple Python test runner for
-unittest that outputs Test Anything Protocol (TAP) results to standard
-output.  Contrary to other TAP runners for Python, pycotap...
+    (description
+     "This package provides a simple Python test runner for unittest that
+outputs Test Anything Protocol (TAP) results to standard output.  Contrary to
+other TAP runners for Python, pycotap...
 @itemize
 @item
 prints TAP (and only TAP) to standard output instead of to a separate file,
@@ -1798,6 +1834,31 @@ among others.")
      "This is a py.test plugin to facilitate the generation and comparison of
 data arrays produced during tests, in particular in cases where the arrays
 are too large to conveniently hard-code them in the tests.")
+    (license license:bsd-3)))
+
+(define-public python-pytest-asdf-plugin
+  (package
+    (name "python-pytest-asdf-plugin")
+    (version "0.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_asdf_plugin" version))
+       (sha256
+        (base32 "0bcfl1s7yrnr2rlpr3hswcg9jyq6gnj0ppmpzppw9xgj796ycfb5"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f         ;to avoid import astronomy module
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'sanity-check))))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (home-page "https://github.com/asdf-format/pytest-asdf-plugin")
+    (synopsis "Pytest plugin for testing ASDF schemas")
+    (description
+     "This package provides a Pytest plugin for testing ASDF schemas.")
     (license license:bsd-3)))
 
 (define-public python-pytest-astropy
@@ -2857,6 +2918,32 @@ The main usage is to use the @code{qtbot} fixture, responsible for handling
 interaction, like key presses and mouse clicks.")
     (license license:expat)))
 
+(define-public python-pytest-recording
+  (package
+    (name "python-pytest-recording")
+    (version "0.13.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_recording" version))
+       (sha256
+        (base32 "133nj8vha63gv226f0gvqn16gnazbn2rqh8amv2fx4jrm2r693an"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;XXX: more than 50% tets failed
+    (native-inputs
+     (list python-pytest-bootstrap
+           python-hatchling))
+    (propagated-inputs
+     (list  python-vcrpy))
+    (home-page "https://github.com/kiwicom/pytest-recording")
+    (synopsis "Pytest support for recording and replaying HTTP traffic")
+    (description
+     "This package provides a Pytest plugin powered by
+@url{https://vcrpy.readthedocs.io/en/latest/, VCR.py} to record and replay
+HTTP traffic.")
+    (license license:expat)))
+
 (define-public python-pytest-remotedata
   (package
     (name "python-pytest-remotedata")
@@ -2945,6 +3032,27 @@ times.")
     (description "This package provides a pytest plugin to re-run tests to
 eliminate flaky failures.")
     (license license:mpl2.0)))
+
+(define-public python-pytest-retry
+  (package
+    (name "python-pytest-retry")
+    (version "1.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_retry" version))
+       (sha256
+        (base32 "03zqgl2y16pcf0w0sn7z9n1gaqmkspl9xfhigks9v50yy0wj7mgq"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest-bootstrap
+           python-setuptools))
+    (home-page "https://github.com/str0zzapreti/pytest-retry")
+    (synopsis "Pytest plugin to retry flaky tests in CI environments")
+    (description
+     "This package provides a plugin for Pytest which adds the ability to retry
+flaky tests, thereby improving the consistency of the test suite results.")
+    (license license:expat)))
 
 ;; This is only used by python-sanic
 (define-public python-pytest-sanic
@@ -3724,7 +3832,7 @@ possibly work.")
     (native-inputs
      (list python-ddt
            python-iso8601
-           python-flit-core-next ;requires >=3.12
+           python-flit-core
            python-setuptools))
     (propagated-inputs
      (list python-cliff-bootstrap

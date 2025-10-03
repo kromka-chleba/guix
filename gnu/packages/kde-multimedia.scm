@@ -40,6 +40,7 @@
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages graphics)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gstreamer)
@@ -65,14 +66,14 @@
 (define-public audiocd-kio
   (package
     (name "audiocd-kio")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/audiocd-kio-" version ".tar.xz"))
        (sha256
-        (base32 "1dynq5qvfxfsf2acafdvprrq2mfvrw048l3w4pj6h9wjhgn569vi"))))
+        (base32 "0w60xh54cbgjw6f3lqjgwx35knwbin0zv9crsh2qf8jdzzgw2av7"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -106,19 +107,19 @@ This package is part of the KDE multimedia module.")
 (define-public dragon
   (package
     (name "dragon")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dragon-" version ".tar.xz"))
        (sha256
-        (base32 "07lk1i6r0ybyxhdsfkjbagrsd2lwlk6v9cma8i4p2mrhpcf527yj"))))
+        (base32 "07vpbxfxrawl9ybg48zcc0rb99pj630wqzf7mg76i5qyilckwvxz"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules kdoctools))
+     (list extra-cmake-modules kdoctools pkg-config))
     (inputs
-     (list bash-minimal
+     (list ffmpeg
            kconfig
            kconfigwidgets
            kcoreaddons
@@ -129,12 +130,12 @@ This package is part of the KDE multimedia module.")
            kjobwidgets
            knotifications
            kparts
+           kirigami
            kwidgetsaddons
            kwindowsystem
            kxmlgui
            breeze-icons ; default icon set
-           phonon
-           phonon-backend-vlc
+           qtmultimedia
            solid))
     (arguments
      (list #:qtbase qtbase
@@ -203,14 +204,14 @@ This package is part of the KDE multimedia module.")
 (define-public elisa
   (package
     (name "elisa")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/elisa-" version ".tar.xz"))
        (sha256
-        (base32 "1bwnfhm2mw0vs0hqnndzqhbxs8fh4kcr87fj79xy0y0g6y892jcn"))))
+        (base32 "1s14gxfiq51zchmi1xm89237i3gmgrkjkkwhagll6wxq1kfixfkb"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config dbus kdoctools
@@ -271,14 +272,14 @@ its own database.  You can build and play your own playlist.")
 (define-public ffmpegthumbs
   (package
     (name "ffmpegthumbs")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ffmpegthumbs-" version ".tar.xz"))
        (sha256
-        (base32 "0wzxajxgnn2d0cf3rbbvnq43xmjr56qrmlqjblmvbm6k50vkdr3g"))))
+        (base32 "1pyvjggjrhzvbiyafba9pcxbixg74ip6clbzr1wm2n4lcf1j6c1c"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config))
@@ -300,14 +301,14 @@ This package is part of the KDE multimedia module.")
 (define-public juk
   (package
     (name "juk")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/juk-" version ".tar.xz"))
        (sha256
-        (base32 "0mcikzh5zvg9f1zyh92jjblcrvqi2pvj8wv08s2d9xv5qwa28qip"))))
+        (base32 "1mwdsyqcvwiz7lcq9l6sywqnbsc7916racgd1sgrwwswmdf4p8ir"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -330,9 +331,8 @@ This package is part of the KDE multimedia module.")
            kwindowsystem
            kxmlgui
            breeze-icons ; default icon set
-           phonon
-           phonon-backend-vlc
            qtbase
+           qtmultimedia
            qtsvg
            taglib))
     (arguments (list #:qtbase qtbase))
@@ -353,25 +353,107 @@ Some of JuK's features include:
 This package is part of the KDE multimedia module.")
     (license license:gpl2+)))
 
+(define-public kdenlive
+  (package
+    (name "kdenlive")
+    (version "25.08.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kdenlive-" version ".tar.xz"))
+       (sha256
+        (base32 "1ysp86iq69mb08cxpp8vqqf19kdgkw4dj1y08bzi15dk1ll6vaac"))))
+    (build-system qt-build-system)
+    (arguments
+     ;; XXX otiotest seemingly freezes.  Additionally, tests/mixtest.cpp:818
+     ;; fails with an unexpected exception.
+     (list
+      #:qtbase qtbase
+      #:configure-flags #~(list "-DFETCH_OTIO=off")
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-executable
+            (lambda _
+              (let* ((ffmpeg #$(this-package-input "ffmpeg"))
+                     (frei0r #$(this-package-input "frei0r-plugins"))
+                     (ladspa #$(this-package-input "ladspa"))
+                     (qtbase #$(this-package-input "qtbase")))
+                (wrap-program (string-append #$output "/bin/kdenlive")
+                  `("PATH" ":" prefix
+                    ,(list (string-append ffmpeg "/bin")))
+                  `("FREI0R_PATH" ":" =
+                    (,(string-append frei0r "/lib/frei0r-1")))
+                  `("LADSPA_PATH" ":" =
+                    (,(string-append ladspa "/lib/ladspa")))
+                  `("QT_QPA_PLATFORM_PLUGIN_PATH" ":" =
+                    (,(string-append qtbase "/lib/qt6/plugins/platforms")))
+                  `("MLT_PREFIX" ":" =
+                    (,#$(this-package-input "mlt"))))))))))
+    (native-inputs
+     (list extra-cmake-modules kdoctools pkg-config qttools))
+    (inputs
+     (list bash-minimal
+           breeze                       ; make dark theme available easily
+           breeze-icons                 ; recommended icon set
+           ffmpeg
+           frei0r-plugins
+           imath
+           karchive
+           kcrash
+           kdbusaddons
+           kdeclarative
+           kdoctools
+           kfilemetadata
+           kguiaddons
+           kiconthemes
+           kirigami
+           knewstuff
+           knotifications
+           knotifyconfig
+           kparts
+           kplotting
+           ktextwidgets
+           ladspa
+           mlt
+           opentimelineio
+           purpose
+           qqc2-desktop-style
+           qtbase
+           qtdeclarative
+           qtmultimedia
+           qtnetworkauth
+           qtsvg
+           shared-mime-info))
+    (home-page "https://kdenlive.org")
+    (synopsis "Non-linear video editor")
+    (description "Kdenlive is an acronym for KDE Non-Linear Video Editor.
+
+Non-linear video editing is much more powerful than beginner's (linear)
+editors, hence it requires a bit more organization before starting.  However,
+it is not reserved to specialists and can be used for small personal
+projects.")
+    (license license:gpl2+)))
+
 (define-public kid3
   (package
     (name "kid3")
-    (version "3.9.6")
+    (version "3.9.7")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://invent.kde.org/multimedia/kid3.git/")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/kid3/" version
+                           "/kid3-" version ".tar.xz"))
        (sha256
-        (base32 "1gklqbvpvdllgn7h0pnskd2zf98jfr2w93vq2nmabh8xs9fw2sks"))))
+        (base32 "0q07f4fwh8lwbqi7qm2ga01a6hsqaarnr1vqi6npipnxskvyxkzr"))))
     (build-system qt-build-system)
     (arguments
      (list
       #:configure-flags
       #~(list
          "-DBUILD_WITH_QT6=ON"
+         "-DWITH_FFMPEG=ON"
          (string-append "-DDOCBOOK_XSL_DIR="
                         #$(this-package-native-input "docbook-xsl")))
       #:qtbase qtbase
@@ -386,13 +468,13 @@ This package is part of the KDE multimedia module.")
     (native-inputs
      (list docbook-xsl
            extra-cmake-modules
-           ffmpeg-4
            kdoctools
            libxslt
            python-minimal-wrapper
            qttools))
     (inputs
      (list chromaprint
+           ffmpeg-6
            flac
            id3lib
            kconfig
@@ -416,14 +498,14 @@ variety of formats.")
 (define-public k3b
   (package
     (name "k3b")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/k3b-" version ".tar.xz"))
        (sha256
-        (base32 "14rfgn8m476bvimz07lgag5spz7ff1fxqlmw3d6hm901rzc7487z"))))
+        (base32 "0dhmfbbpznf1axix1npnx46m3wqs1lxcjj167k9il2jz49bf1k47"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -467,7 +549,7 @@ variety of formats.")
            cdrdao
            cdrtools
            dvd+rw-tools
-           ffmpeg
+           ffmpeg-6
            flac
            karchive
            kauth
@@ -573,40 +655,36 @@ autoloading of subtitle files for use while playing video.")
 (define-public kamoso
   (package
     (name "kamoso")
-    (version "24.12.1")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kamoso-" version ".tar.xz"))
        (sha256
-        (base32 "0p180rj23f7fv3mamx1jmvarp2fiah00p7ph1yirnnsv8m28gwf4"))))
+        (base32 "0fsvmrsnbac9nsqds53zzrzanq776fn1zs45ihc9p6kq26qpnd65"))))
     (build-system qt-build-system)
     (native-inputs
      (list
       extra-cmake-modules
       `(,glib "bin")
-      kdoctools-5
+      kdoctools
       pkg-config))
     (inputs
      (list gstreamer
            gst-plugins-base
-           kconfig-5
-           ki18n-5
-           kio-5
-           kirigami-5
-           knotifications-5
-           kparts-5
+           kconfig
+           ki18n
+           kio
+           kirigami
+           knotifications
+           kparts
            breeze-icons ; default icon set
-           purpose-5
-           qtbase-5
-           qtdeclarative-5
-           qtgraphicaleffects
-           qtquickcontrols-5
-           qtquickcontrols2-5 ; not listed as dependency
-           qtx11extras))
+           purpose
+           qtdeclarative))
     (arguments
-     (list #:tests? #f)) ; test program gets built, but is not found
+     (list #:qtbase qtbase
+           #:tests? #f))
     (home-page "https://apps.kde.org/kamoso/")
     (synopsis "Take pictures and videos out of your webcam")
     (description "Kamoso is a simple and friendly program to use your
@@ -617,20 +695,17 @@ camera.  Use it to take pictures and make videos to share.")
 (define-public kasts
   (package
     (name "kasts")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://invent.kde.org/multimedia/kasts")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kasts-" version ".tar.xz"))
        (sha256
-        (base32 "0qzm89z1amw48kghdrp09l36djvvfmgrsy4wabblxvz05phbih8n"))))
+        (base32 "0fihb3kyml2asa96glz28vkiay2cjirrqy4py9vgz4jrb627y76j"))))
     (build-system qt-build-system)
     (native-inputs (list pkg-config extra-cmake-modules))
-    (inputs (list bash-minimal
-                  breeze-icons
+    (inputs (list breeze-icons
                   gstreamer
                   kcolorscheme
                   kcoreaddons
@@ -677,14 +752,14 @@ Its main features are:
 (define-public kmix
   (package
     (name "kmix")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmix-" version ".tar.xz"))
        (sha256
-        (base32 "1zxrj105zvmwbj0dcmhzmh7aj1rl56v5bai8a2lwbrrr8dvrnwnx"))))
+        (base32 "0046rmgi7bwy3chmhd7g9snj0y1fb5zhxydn9sz73ha4nfp6pvd3"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -722,14 +797,14 @@ This package is part of the KDE multimedia module.")
 (define-public kwave
   (package
     (name "kwave")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kwave-" version ".tar.xz"))
        (sha256
-        (base32 "0qssvgfv63wkspn3gzdz5jkjjx3siq94dpq9m6xlcq6rffwkqjl6"))))
+        (base32 "1cbw2f3yrm8iywjpj4873qxcbqgpzbc1np4v28cjvyxcna4yxyib"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules (librsvg-for-system) pkg-config kdoctools
@@ -806,14 +881,14 @@ Its features include:
 (define-public libkcddb
   (package
     (name "libkcddb")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkcddb-" version ".tar.xz"))
        (sha256
-        (base32 "10m4klkm7bz0d1qkpj53dhy0mp7haddpq4a5c8lq442ds09hrv0b"))))
+        (base32 "0vwd6cnfiwwx2kd32dqn1k3fk9csghpmqyllnq786fp5ik8f8hkh"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -839,14 +914,14 @@ Its features include:
 (define-public libkcompactdisc
   (package
     (name "libkcompactdisc")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkcompactdisc-" version ".tar.xz"))
        (sha256
-        (base32 "0l01yknl879vcd5q210wp0nl2g91mykzrgyr1a1yvl6nzx9fmqah"))))
+        (base32 "0718v5yff3saqqxlpqh68lpc64bq7dk0qlagkprgyv8h69bz9fff"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -867,3 +942,66 @@ applications using the KDE Platform to interface with the CD drives for audio
 CDs.")
     (license ;; GPL for programs, LGPL for libraries
      (list license:gpl2+ license:lgpl2.0+))))
+
+(define-public mpvqt
+  (package
+    (name "mpvqt")
+    (version "1.1.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://kde//stable/mpvqt/"
+                    name "-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0cix3ssvpw9wg8h06zr5x0jcm1f1p0c6524ac9zh3wwc6dlymldx"))))
+    (build-system qt-build-system)
+    (native-inputs
+     (list extra-cmake-modules pkg-config))
+    (inputs
+     (list qtdeclarative))
+    (propagated-inputs
+     (list mpv))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
+    (home-page "https://invent.kde.org/libraries/mpvqt")
+    (synopsis "libmpv wrapper for QtQuick2 and QML")
+    (description "This package provides a libmpv wrapper for QtQuick2 and QML.")
+    (license license:lgpl2.1+)))
+
+(define-public plasmatube
+  (package
+    (name "plasmatube")
+    (version "25.08.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/release-service/" version
+                                  "/src/plasmatube-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0bqd01qkc063jbcfdhn5mfq631hn9gpa7nkik749c457g3763b6s"))))
+    (build-system qt-build-system)
+    (native-inputs (list extra-cmake-modules pkg-config python-minimal))
+    (inputs
+     (list kconfig
+           kcoreaddons
+           kdbusaddons
+           kirigami
+           kirigami-addons
+           ki18n
+           kwindowsystem
+           mpvqt
+           purpose
+           qtdeclarative
+           qtmultimedia
+           qtsvg
+           qtkeychain-qt6
+           qtwayland
+           yt-dlp))
+    (arguments (list #:qtbase qtbase))
+    (home-page "https://apps.kde.org/plasmatube/")
+    (synopsis "Kirigami YouTube video player")
+    (description "This package provides YouTube video player based
+on QtMultimedia and @command{yt-dlp}.")
+    (license license:gpl3+)))

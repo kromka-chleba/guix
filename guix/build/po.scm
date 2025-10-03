@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019, 2021 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2023 Florian Pelz <pelzflorian@pelzflorian.de>
+;;; Copyright © 2023, 2025 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,9 +38,9 @@
   (and (* (or flags comment (ignore (* whitespace))))
        (ignore "msgid ") msgid (ignore (* whitespace))
        (ignore "msgstr ") msgstr))
-(define-peg-pattern escape body (or "\\\\" "\\\"" "\\n"))
-(define-peg-pattern str-chr body (or " " "!" (and (ignore "\\") "\"")
-                                     "\\n" (and (ignore "\\") "\\")
+(define-peg-pattern str-chr body (or " " "!"
+                                     "\\\\"
+                                     "\\\""
                                      (range #\# #\頋)))
 (define-peg-pattern msgid all content)
 (define-peg-pattern msgstr all content)
@@ -48,16 +48,47 @@
   (and (ignore "\"") (* str-chr) (ignore "\"")
        (? (and (ignore (* whitespace)) content))))
 
-(define (interpret-newline-escape str)
-  "Replace '\\n' sequences in STR with a newline character."
+(define (replace-escaped-backslashes str)
+  "Replace '\\\\' sequences in STR with a single '\\'."
   (let loop ((str str)
              (result '()))
-    (match (string-contains str "\\n")
+    (match (string-contains str "\\\\")
       (#f (string-concatenate-reverse (cons str result)))
       (index
        (let ((prefix (string-take str index)))
          (loop (string-drop str (+ 2 index))
-               (append (list "\n" prefix) result)))))))
+               (append (list "\\" prefix) result)))))))
+
+(define (final-character-escapes? str last-index)
+  "Check if STR ends in an incomplete escape sequence, that is ends in an uneven
+number of backslashes.  LAST-INDEX is the index of its last character."
+  (and (>= last-index 0)
+       (eqv? (string-ref str last-index) #\\)
+       (not (final-character-escapes? str (- last-index 1)))))
+
+(define (interpret-escape sequence replacement str)
+  "Replace backslash escape sequence SEQUENCE in STR with REPLACEMENT (a string)
+when SEQUENCE is not escaped itself.  For example, SEQUENCE '\\n' with a
+newline string as REPLACEMENT."
+  (let loop ((str str)
+             (result '()))
+    (match (string-contains str sequence)
+      (#f (string-concatenate-reverse (cons str result)))
+      (index
+       (let ((prefix (string-take str index)))
+         (loop (string-drop str (+ 2 index))
+               ;; Only add REPLACEMENT when the backslash is not escaped itself.
+               (if (final-character-escapes? str (- index 1))
+                   (cons (string-take str (+ 2 index)) result)
+                   (append (list replacement prefix) result))))))))
+
+(define (interpret-escape-sequences str)
+  "Unescape all escape sequences in STR."
+  (replace-escaped-backslashes
+   (interpret-escape "\\n" "\n"
+    (interpret-escape "\\\"" "\""
+     (interpret-escape "\\t" "\t"
+      str)))))
 
 (define (parse-tree->assoc parse-tree)
   "Converts a po PARSE-TREE to an association list, where the key is the msgid
@@ -93,18 +124,14 @@ and the value is the msgstr.  The result only contains non fuzzy strings."
        (('entry _ ('msgid msgid) 'msgstr)
         (parse-tree->assoc parse-tree))
        (('entry ('msgid msgid) ('msgstr msgstr))
-        (acons (interpret-newline-escape msgid)
-               (interpret-newline-escape msgstr)
-               (parse-tree->assoc parse-tree)))
-       (('entry ('msgid msgid) ('msgstr msgstr))
-        (acons (interpret-newline-escape msgid)
-               (interpret-newline-escape msgstr)
+        (acons (interpret-escape-sequences msgid)
+               (interpret-escape-sequences msgstr)
                (parse-tree->assoc parse-tree)))
        (('entry comments ('msgid msgid) ('msgstr msgstr))
         (if (member 'fuzzy (comments->flags comments))
             (parse-tree->assoc parse-tree)
-            (acons (interpret-newline-escape msgid)
-                   (interpret-newline-escape msgstr)
+            (acons (interpret-escape-sequences msgid)
+                   (interpret-escape-sequences msgstr)
                    (parse-tree->assoc parse-tree))))))))
 
 (define (read-po-file port)

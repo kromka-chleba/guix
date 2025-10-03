@@ -80,6 +80,7 @@
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
+;;; Copyright © 2025 Artur Wroblewski <wrobell@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -102,6 +103,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -122,6 +124,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages groff)
+  #:use-module (gnu packages iso-codes)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libidn)
@@ -249,7 +252,7 @@ SNS, Gotify, etc.")
 (define-public python-blacksheep
   (package
     (name "python-blacksheep")
-    (version "2.4.0")
+    (version "2.4.1")
     (source
      (origin
        (method git-fetch)
@@ -258,20 +261,16 @@ SNS, Gotify, etc.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1iwlj6vl0rnvddbn9zsdgpya88z0lifr86wz3ci1d67li7w5bjiq"))))
+        (base32 "0znkqj4cipdr1qdsdlbb48b82cpvj24dqiwi0nyiy50b8nd7g5np"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 1443 passed, 3 skipped
+      ;; tests: 1609 passed, 3 skipped
       ;;
-      ;; 1. Ignore integration tests.
-      ;; 2. Client tests use test fixture no longer available in
-      ;; pytest-asyncio,
-      ;;
-      ;; See: <https://github.com/Neoteroi/BlackSheep/issues/596>.
+      ;; Run all unit tests, but do not run integration tests from `itests`
+      ;; directory.
       #:test-flags
-      #~(list "--ignore=itests"
-              "--ignore=tests/client")
+      #~(list "tests")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'cythonize
@@ -281,7 +280,8 @@ SNS, Gotify, etc.")
                             (invoke "cython" "-3" file "-I" "."))
                           (find-files "." ".*\\.pyx$"))))))))
     (native-inputs
-     (list python-cython
+     (list nss-certs-for-test
+           python-cython
            python-flask
            python-jinja2
            python-pydantic
@@ -291,7 +291,6 @@ SNS, Gotify, etc.")
            python-setuptools))
     (propagated-inputs
      (list python-certifi
-           python-dateutil
            python-essentials-openapi
            python-guardpost
            python-itsdangerous))
@@ -1339,6 +1338,33 @@ feaatures are:
 @code{cgitb}.  They are slated to be removed from the Python standard library
 in Python 3.13 by PEP-594.")
     (license license:psfl)))
+
+(define-public python-pathy
+  (package
+    (name "python-pathy")
+    (version "0.11.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pathy" version))
+       (sha256
+        (base32 "0vbhcfg8g74g90bzmdgxr1jyvwhadvlr2w9wyvs6xxwb1dmhwgdv"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-mock
+           python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-pathlib-abc
+           python-smart-open-6
+           python-typer))
+    (home-page "https://github.com/justindujardin/pathy")
+    (synopsis "Path interface for local and cloud bucket storage")
+    (description "Pathy is a python package (with type annotations) for
+working with Cloud Bucket storage providers using a @code{pathlib} interface.
+It provides @code{pathlib.Path} subclasses for local and cloud bucket
+storage.")
+    (license license:asl2.0)))
 
 (define-public python-portend
   (package
@@ -3529,6 +3555,14 @@ and written in Python.")
                (base32
                 "195wgxls3df7djry9cz3p2k9644l6bfd66fczbaw55fsq0c48agr"))))
     (build-system python-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-configure-flags
+            (lambda _
+              (setenv "CFLAGS"
+                      "-Wno-error=implicit-function-declaration"))))))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -5594,7 +5628,8 @@ APIs.")
 than Python’s urllib2 library.")
     (license license:asl2.0)))
 
-(define-public python-requests-next python-requests)
+(define-deprecated/public-alias python-requests-next
+  python-requests)                     ;may be removed after 2025-12-01
 
 (define-public python-requests-kerberos
   (package
@@ -6015,7 +6050,8 @@ can reuse the same socket connection for multiple requests, it can POST files,
 supports url redirection and retries, and also gzip and deflate decoding.")
     (license license:expat)))
 
-(define-public python-urllib3-next python-urllib3)
+(define-deprecated/public-alias python-urllib3-next
+  python-urllib3)                      ;may be removed after 2025-12-01
 
 (define-public python-urllib3-1.25
   (package
@@ -6858,13 +6894,13 @@ Betamax that may possibly end up in the main package.")
 (define-public python-s3fs
   (package
     (name "python-s3fs")
-    (version "2025.7.0")
+    (version "2025.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "s3fs" version))
        (sha256
-        (base32 "0b82wqf70q1srsjb7xbbjhlzm08lbghzm1pbwdam2x6prb09wzsy"))))
+        (base32 "0c5w09ryyfwlrqbhxgn1yl2kl1ksmz2481vjs1l4k9lyy5z2ai3d"))))
     (build-system pyproject-build-system)
     ;; TODO: Many tests fail with "No such file or directory" raised by the
     ;; HTTP client.
@@ -7764,7 +7800,8 @@ for URL parsing and changing.")
                 "1gg6h2w4bajsis35p7l5r6bx54h5j2nq16r90wq8fbb0d3gz3f6q"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-arrow python-pytz python-requests))
-    (native-inputs (list python-requests-mock
+    (native-inputs (list python-pytest
+                         python-requests-mock
                          python-setuptools
                          python-urllib3-1.26
                          python-wheel))
@@ -8610,7 +8647,7 @@ for HTTP/2 is planned.")
      (list python-pytest
            python-setuptools))
     (propagated-inputs
-     (list python-charset-normalizer-3
+     (list python-charset-normalizer
            python-ruamel.yaml
            python-weblate-language-data))
     (home-page "https://weblate.org/")
@@ -10766,6 +10803,25 @@ library for Python.")
 GCS, Azure Blob Storage, gzip, bz2, etc.)")
     (license license:expat)))
 
+(define-public python-smart-open-6
+  (package
+    (inherit python-smart-open)
+    (name "python-smart-open")
+    (version "6.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/piskvorky/smart_open")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vpx37b6lsb6iwi59776ywjrqk1czv8arlhaf9073lrsbilqvj3x"))))
+    (arguments
+     (list
+      ;; XXX: Tests need some older native inputs, disable for now.
+      #:tests? #f))))
+
 (define-public python-w3lib
   (package
     (name "python-w3lib")
@@ -10829,19 +10885,44 @@ can be handled by the @code{colorsys} module in the Python standard library.")
     (license license:bsd-3)))
 
 (define-public python-woob
+  ;; TODO: woob requires backends which are currently installed on the fly in
+  ;; ~/.local/share/woob/modules/3.7/woob_modules/ , perhaps we should install
+  ;; them in the store instead. Many modules are included in the modules
+  ;; directory in the source tree, but it is unclear how to install them.
+  ;; Many modules require extra dependencies though, so maybe they should be
+  ;; packaged independently of woob itself.
   (package
     (name "python-woob")
-    (version "3.0")
+    (version "3.7")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "woob" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/woob/woob.git")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "09hpxy5zhn2b8li0xjf3zd7s46lawb0315p5mdcsci3bj3s4v1j7"))))
-    (build-system python-build-system)
-    ;; A small number of tests for optional applications fails due to missing
-    ;; inputs.
-    (arguments `(#:tests? #f))
+        (base32 "1sy0aykff56xs4dnc7ak6m8is2zgz9fprf3i1pk8n861xz1z748i"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Deselect tests that require DNS lookup.
+      #~(list
+         "--deselect=tests/browser/adapters.py::TestAdapter::test_ciphers"
+         "--deselect=tests/browser/browsers.py::TestBrowser::test_verify")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'relax-requirements
+            (lambda _
+              ;; "packaging ~= 23.0",
+              (substitute* "pyproject.toml"
+                (("\"packaging .*\",")
+                 "")))))))
+    (native-inputs
+     (list nss-certs-for-test
+           python-pytest
+           python-setuptools))
     (propagated-inputs
      (list python-babel
            python-colorama
@@ -10850,19 +10931,20 @@ can be handled by the @code{colorsys} module in the Python standard library.")
            python-feedparser
            python-html2text
            python-lxml
+           python-packaging
            python-pillow
            python-prettytable
-           python-pyqt
+           python-pycountry
            python-pyyaml
            python-requests
-           python-six
+           python-responses
+           python-rich
+           python-termcolor
            python-unidecode))
-    (native-inputs
-     (list python-coverage python-flake8 python-nose python-selenium
-           python-xunitparser))
     (home-page "https://woob.tech/")
     (synopsis "Woob, Web Outside Of Browsers")
-    (description "Woob is a collection of applications able to interact with
+    (description
+     "Woob is a collection of applications able to interact with
 websites, without requiring the user to open them in a browser.  It also
 provides well-defined APIs to talk to websites lacking one.")
     (license license:lgpl3+)))

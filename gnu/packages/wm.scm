@@ -1,11 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
+;;; Copyright © 2014 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2015 Siniša Biđin <sinisa@bidin.eu>
 ;;; Copyright © 2015, 2016, 2022 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2015 xd1le <elisp.vim@gmail.com>
 ;;; Copyright © 2015 Paul van der Walt <paul@denknerd.org>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
-;;; Copyright © 2016, 2019, 2020, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2019-2020, 2023-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Al McElrath <hello@yrns.org>
 ;;; Copyright © 2016 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2016 2019, 2021-2022 Ludovic Courtès <ludo@gnu.org>
@@ -81,6 +82,7 @@
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -243,7 +245,7 @@ the leaves of a full binary tree.")
     (native-inputs (list pkg-config scdoc
                          ;; for wayland-scanner
                          wayland))
-    (inputs (list wayland wlroots libxkbcommon))
+    (inputs (list wayland wlroots-0.18 libxkbcommon))
     (home-page "https://github.com/cage-kiosk/cage")
     (synopsis "Wayland kiosk")
     (description "This package provides a Wayland @dfn{kiosk}, which runs a
@@ -428,7 +430,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
            hyprland-qtutils
            hyprlang
            hyprutils
-           libinput-minimal-next
+           libinput-minimal
            libxcursor
            libxkbcommon
            mesa
@@ -706,6 +708,85 @@ status line from their output.  The generated line is meant to be displayed by
 the i3 window manager through its i3bar component, as an alternative to
 i3status.")
     (license license:gpl3+)))
+
+(define-public obconf
+  (package
+    (name "obconf")
+    (version "2.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://openbox.org/dist/" name
+                           "/" name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1fanjdmd8727kk74x5404vi8v7s4kpq48l583d12fsi4xvsfb8vi"))))
+    (inputs (list gtk+-2
+                  imlib2
+                  libglade
+                  libsm
+                  librsvg
+                  libxft
+                  openbox
+                  startup-notification))
+    (native-inputs (list gettext-minimal pkg-config))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+       #:configure-flags
+         #~(list "--enable-nls"
+                 "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
+    (home-page "https://openbox.org/obconf")
+    (synopsis "Openbox configuration tool")
+    (description
+     "Obconf is a tool for configuring the Openbox window manager.
+You can configure its appearance, themes, and much more.")
+    (license license:gpl2+)))
+
+(define-public openbox
+  (package
+    (name "openbox")
+    (version "3.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "http://openbox.org/dist/openbox/" name "-"
+             version ".tar.xz"))
+       (sha256
+        (base32
+         "0vg2y1qddsdxkjv806mzpvmkgzliab8ll4s7zm7ma5jnriamirxb"))
+       (patches (search-patches "openbox-add-fix-for-glib2-exposed-segfault.patch" "openbox-python3.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'force-reconfigure
+                 ;; This is made necessary by the openbox-python3 patch.
+                 (lambda _
+                   (delete-file "configure"))))))
+    (native-inputs (list autoconf automake gettext-minimal libtool pkg-config))
+    (propagated-inputs (list python-pyxdg))
+    (inputs (list imlib2
+                  libxml2
+                  (librsvg-for-system)
+                  libsm
+                  libxcursor
+                  libxinerama
+                  libxml2
+                  libxrandr
+                  libxft
+                  pango
+                  python-wrapper))
+    (synopsis "Box style window manager")
+    (description
+     "Openbox is a highly configurable, next generation window manager with
+extensive standards support.  The *box visual style is well known for its
+minimalistic appearance.  Openbox uses the *box visual style, while providing
+a greater number of options for theme developers than previous *box
+implementations.")
+    (home-page "http://openbox.org/wiki/Main_Page")
+    (license license:gpl2+)))
 
 (define-public papersway
   (package
@@ -990,6 +1071,65 @@ tools in a live programming environment.")
 and locate windows on all your workspaces, using an interactive dmenu
 prompt.")
       (license license:wtfpl2))))
+
+(define-public quicktile
+  ;; Latest release, 0.4.0, is 5 years old and does not use pyproject.toml yet.
+  (let ((commit "2c499beedf31d5906e86c482f70129d94e429350")
+        (revision "0"))
+    (package
+      (name "quicktile")
+      (version (git-version "0.4.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/ssokolow/quicktile")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "08kwilln32kx2cdg1sg7ffb214fkhacchx8jd64pyjbshmradgxr"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:test-flags
+        #~(list "tests")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'check 'pre-check
+              ;; tests/test_functional.py moves windows around and thus needs
+              ;; access to an X server.
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (setenv "HOME" "/tmp")
+                  (mkdir-p "/tmp/.config")
+                  (system "Xvfb :1 &")
+                  (setenv "DISPLAY" ":1")
+                  ;; First run creates /tmp/.config/quicktile.cfg.
+                  (invoke "./quicktile.sh")))))))
+      (native-inputs
+       (list openbox ;necessary for test_functional.py
+             python-pluggy
+             python-pytest
+             python-pytest-cov
+             python-setuptools
+             xorg-server-for-tests))
+      (inputs
+       (list gtk+
+             libwnck
+             python-xlib
+             python-pygobject
+             python-dbus-python))
+      ;; The actual home page https://ssokolow.com/quicktile/
+      ;; gives an SSL error.
+      (home-page "https://github.com/ssokolow/quicktile")
+      (synopsis "window-tiling hotkeys to any X11 desktop")
+      (description
+       "QuickTile is a simple utility, inspired by
+@url{https://github.com/dozius/winsplit-revolution, WinSplit Revolution} for
+Windows, which adds window-tiling keybindings to existing X11 window manager.
+It may be used as a standalone alternative to the keyboard related features of
+the Compiz Grid plugin.")
+      (license license:gpl2+))))
 
 (define-public i3lock-color
   (package
@@ -1472,7 +1612,7 @@ the XDG Autostart specification.")
            tllist
            scdoc))
     (inputs
-     (list wlroots wayland fcft dbus libpng))
+     (list wayland fcft dbus libpng))
     (home-page "https://codeberg.org/dnkl/fnott")
     (synopsis "Keyboard driven and lightweight Wayland notification daemon")
     (description "Fnott is a keyboard driven and lightweight notification daemon
@@ -1909,7 +2049,7 @@ started automatically on the first call via D-Bus.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list wlroots))
+     (list wlroots-0.18))
     (home-page "https://codeberg.org/dwl/dwl")
     (synopsis "Dynamic window manager for Wayland")
     (description
@@ -2104,7 +2244,7 @@ XDG-Output for wlclock to work.")
 (define-public wlroots
   (package
     (name "wlroots")
-    (version "0.18.2")
+    (version "0.19.1")
     (source
      (origin
        (method git-fetch)
@@ -2113,7 +2253,7 @@ XDG-Output for wlclock to work.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1l1c4m8m1h8rl00y9yi6qjma5m3lhai9hqv5578q69yg2dcwraxw"))))
+        (base32 "1w3nlrvy7625jh4f0l923f7irywzfdashcw5hbf8jq9kpjhpm323"))))
     (build-system meson-build-system)
     (arguments
      (list #:phases
@@ -2161,6 +2301,24 @@ Wayland compositor")
     (description "wlroots is a set of pluggable, composable, unopinionated
 modules for building a Wayland compositor.")
     (license license:expat)))  ; MIT license
+
+;; Allow packages refering to stable wlroots version, because
+;; wlroots updates are backward incompatible.
+(define-public wlroots-0.19 wlroots)
+
+(define-public wlroots-0.18
+  (package
+    (inherit wlroots)
+    (version "0.18.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/wlroots/wlroots")
+             (commit version)))
+       (file-name (git-file-name "wlroots" version))
+       (sha256
+        (base32 "1l1c4m8m1h8rl00y9yi6qjma5m3lhai9hqv5578q69yg2dcwraxw"))))))
 
 (define-public wlroots-0.17
   (package
@@ -2310,7 +2468,7 @@ narrow the items to those matching the tokens in the input.")
                   pcre2
                   swaybg
                   wayland
-                  wlroots))
+                  wlroots-0.18))
     (native-inputs
      (cons* linux-pam mesa pkg-config scdoc wayland-protocols
             (if (%current-target-system)
@@ -2349,7 +2507,7 @@ narrow the items to those matching the tokens in the input.")
                   scenefx
                   swaybg
                   wayland
-                  wlroots))
+                  wlroots-0.18))
     (home-page "https://github.com/WillPower3309/swayfx")
     (synopsis "Sway Fork with extra options and effects")
     (description
@@ -3796,7 +3954,7 @@ read and write, and compatible with JSON.")
 (define-public labwc
   (package
     (name "labwc")
-    (version "0.8.4")
+    (version "0.9.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3805,7 +3963,7 @@ read and write, and compatible with JSON.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wbza00y2xf2zn34q5c8g5k2dn2xjzbbqmsnjv6c90mh2bbk1q95"))))
+                "0p475vjn9gg314spf89di6i1l2lr9xx59mz4hq4shvbh64hr48pi"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config gettext-minimal scdoc))
@@ -3818,7 +3976,7 @@ read and write, and compatible with JSON.")
            libxcb
            libxml2
            pango
-           wlroots))
+           wlroots-0.19))
     (home-page "https://labwc.github.io")
     (synopsis "Window-stacking compositor for Wayland")
     (description
@@ -4484,7 +4642,7 @@ battery efficient---polling is only done when absolutely necessary.")
 (define-public wideriver
   (package
     (name "wideriver")
-    (version "1.2.0")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -4493,7 +4651,7 @@ battery efficient---polling is only done when absolutely necessary.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16i0mzgxn32nrh5ajn0kb4xdwmsjg03amhasxhwyvspar5y4flhg"))))
+        (base32 "1ljl1finfajinvrj073dbwk9vm352jwr6rm9vn5fkrqi296s1n8x"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4504,7 +4662,7 @@ battery efficient---polling is only done when absolutely necessary.")
       #:phases #~(modify-phases %standard-phases
                    (delete 'configure)))) ; no configure script
     (native-inputs (list pkg-config cmocka))
-    (inputs (list wayland wayland-protocols wlroots))
+    (inputs (list wayland wayland-protocols))
     (home-page "https://github.com/alex-courtis/wideriver")
     (synopsis "A set of riverWM layouts")
     (description
@@ -4555,7 +4713,7 @@ configure input, and customize Wayfire plugins.")
                   mesa
                   libxkbcommon
                   libdrm
-                  wlroots))
+                  wlroots-0.18))
     (home-page "https://github.com/wlrfx/scenefx")
     (synopsis "Drop-in replacement for the wlroots scene API")
     (description

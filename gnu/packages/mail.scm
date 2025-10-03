@@ -2840,27 +2840,36 @@ maintained.")
 (define-public khard
   (package
     (name "khard")
-    (version "0.19.1")
+    (version "0.20.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri name version))
               (sha256
                (base32
-                "1464j728hjjpzlc89v4rbml3p4b38zp1igjd9yq3xnn3lc6hmwsr"))))
-    (build-system python-build-system)
+                "1l5xkdi0f8krvy407q4qzm2n96nyhcjjhdp7v5f0n18wy36353qp"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-completions
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (zsh (string-append out "/share/zsh/site-functions")))
-               (copy-recursively "misc/zsh" zsh)))))))
+     (list
+       #:test-flags
+       #~(list "-k"
+               (string-join
+                 (list "not test_sorting_of_korean_names"
+                       "test_sort_order_for_accentuated_names"
+                       ;; These two only fail with pytest
+                       "test_edit_source_file_without_modifications"
+                       "test_simple_edit_without_modification")
+                 " and not "))
+       #:phases
+       #~(modify-phases %standard-phases
+           (add-after 'install 'install-completions
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let* ((out (assoc-ref outputs "out"))
+                      (zsh (string-append out "/share/zsh/site-functions")))
+                 (copy-recursively "misc/zsh" zsh)))))))
     (native-inputs
-     (list python-setuptools-scm))
+     (list python-pytest python-setuptools python-setuptools-scm))
     (inputs
-     (list python-atomicwrites python-configobj python-ruamel.yaml
-           python-unidecode python-vobject))
+     (list python-configobj python-ruamel.yaml python-vobject))
     (synopsis "Console address book using CardDAV")
     (description "Khard is an address book for the console.  It creates, reads,
 modifies and removes CardDAV address book entries at your local machine.  For
@@ -4743,11 +4752,15 @@ the RFC 8617 Authenticated Received Chain (ARC) protocol.")
          (base32
           "12hl93336w64iyqalpv4rma2ijigav68qy1xmgziibdi7inxr3hi"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; dns.resolver.NoResolverConfiguration: cannot open /etc/resolv.conf
+      #:test-flags #~(list "-k" "not test_authenticate_dmarc_psdsub")))
     (propagated-inputs
      (list python-authres python-dkimpy python-dnspython
            python-publicsuffix2))
     (native-inputs
-     (list python-setuptools python-wheel))
+     (list python-pytest python-setuptools))
     (home-page "https://github.com/ValiMail/authentication-headers")
     (synopsis "Library wrapping email authentication header verification and generation")
     (description
@@ -4760,38 +4773,40 @@ DKIM and ARC sign messages and output the corresponding signature headers.")
     (license (list license:zpl2.1 license:zlib license:mpl2.0))))
 
 (define-public python-aiosmtpd
-  (package
-    (name "python-aiosmtpd")
-    (version "1.4.6")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/aio-libs/aiosmtpd")
-             (commit (string-append "v" version))))
-       (sha256
-        (base32 "0b5y94zc8pq75sjwsifblzgjnliyclkwypi68b2zffrxcdnz27r2"))
-       (file-name (git-file-name name version))))
-    (build-system pyproject-build-system)
-    (arguments
-     ;; This QA test requires git.
-     (list #:test-flags ''("-k" "not test_ge_master")))
-    (native-inputs
-     (list python-pytest
-           python-pytest-asyncio
-           python-pytest-cov
-           python-pytest-mock
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-atpublic))
-    (home-page "https://aiosmtpd.readthedocs.io/")
-    (synopsis "Asyncio based SMTP server")
-    (description
-     "This project is a reimplementation of the Python stdlib @code{smtpd.py}
+  ;; Tests run fixed on not yet released version.
+  (let ((commit "98f578389ae86e5345cc343fa4e5a17b21d9c96d")
+        (revision "0"))
+    (package
+      (name "python-aiosmtpd")
+      (version (git-version "1.4.6" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/aio-libs/aiosmtpd")
+                (commit commit)))
+         (sha256
+          (base32 "1pmvlzxfcqjplvn2bzi9jd3m3941ff7nlgxxfwc7pzhmazlkqf8z"))
+         (file-name (git-file-name name version))))
+      (build-system pyproject-build-system)
+      (arguments
+       ;; This QA test requires git.
+       (list #:test-flags ''("-k" "not test_ge_master")))
+      (native-inputs
+       (list python-pytest
+             python-pytest-cov
+             python-pytest-mock
+             python-setuptools))
+      (propagated-inputs
+       (list python-atpublic
+             python-attrs))
+      (home-page "https://aiosmtpd.readthedocs.io/")
+      (synopsis "Asyncio based SMTP server")
+      (description
+       "This project is a reimplementation of the Python stdlib @code{smtpd.py}
 based on asyncio.")
-    (license (list license:asl2.0
-                   license:lgpl3))))    ; only for setup_helpers.py
+      (license (list license:asl2.0
+                     license:lgpl3)))))    ; only for setup_helpers.py
 
 (define-public python-imaplib2
   (package

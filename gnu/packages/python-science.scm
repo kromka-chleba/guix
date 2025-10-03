@@ -335,22 +335,34 @@ reduces the code overhead typically encountered when using a mostly
 object-oriented library such as @code{scikit-learn}.")
     (license license:bsd-3)))
 
+;; XXX: See: <https://codeberg.org/guix/guix/issues/3093>.
 (define-public python-aplus
-  (package
-    (name "python-aplus")
-    (version "0.11.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "aplus" version))
-       (sha256
-        (base32 "1rznc26nlp641rn8gpdngfp79a3fji38yavqakxi35mx2da04msg"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/xogeny/aplus")
-    (synopsis "Promises/A+ for Python")
-    (description "This package is an implementation of the Promises/A+
-specification and test suite in Python.")
-    (license license:expat)))
+  ;; PyPI release lacks the latest version, Git has no tags.
+  (let ((commit "1ab8ebec987fb7213766784aad02cbf4410d9036")
+        (revision "0"))
+    (package
+      (name "python-aplus")
+      (version (git-version "0.11.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/xogeny/aplus")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "02jcfj7dywvs0sd60c85pxwh0mwsj9p1q27445pba6j489x3dffj"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list #:tests? #f))      ;they depend on Nose test runner
+      (native-inputs
+       (list python-setuptools))
+      (home-page "https://github.com/xogeny/aplus")
+      (synopsis "Promises/A+ for Python")
+      (description
+       "This package is an implementation of the Promises/A+ specification and
+test suite in Python.")
+      (license license:expat))))
 
 (define-public python-apted
   ;; PyPI release lacks tests and there is no Git tag.
@@ -3096,6 +3108,15 @@ cross-validation.")
      (list
       #:phases
       #~(modify-phases %standard-phases
+          #$@(if (target-x86-32?)
+                 #~((add-after 'unpack 'apply-i686-patch
+                      (lambda _
+                        (let ((patch-file
+                               #$(local-file
+                                  (search-patch "python-scipy-i686.patch"))))
+                          (invoke "patch" "--force" "-p1" "-i"
+                                  patch-file)))))
+                 #~())
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
@@ -3930,19 +3951,25 @@ production-critical data pipelines or reproducible research settings.  With
     ;; marked turtle can be skipped using "-m" "not turtle".
     (arguments
      (list
-      #:test-flags '(list
-                     "-n" (number->string (parallel-job-count))
-                     ;; Tries to connect to the internet.
-                     "-k" (string-append "not test_is_connected"
-                                         ;; Test files are not included
-                                         " and not test_read_commandline_bad_cmd")
-                     ;; Test files are not included
-                     "--ignore=tests/io/test_read_csvs.py"
-                     ;; Polars has not been packaged yet.
-                     "--ignore=tests/polars"
-                     ;; PySpark has not been packaged yet.
-                     "--ignore=tests/spark/functions/test_clean_names_spark.py"
-                     "--ignore=tests/spark/functions/test_update_where_spark.py")
+      ;; tests: 1042 passed, 2 skipped, 2 deselected, 45 xfailed, 6 xpassed,
+      ;;        735 warnings
+      #:test-flags
+      ;; The tests take quite long, so consider adding the "-n" line and
+      ;; adding python-pytest-xdist to the native-inputs when testing.
+      ;; However, the tests are not deterministic when ran with -n, so
+      ;; disable again before committing.
+      #~(list ;; "-n" (number->string (parallel-job-count))
+              ;; Test files are not included.
+              "--ignore=tests/io/test_read_csvs.py"
+              ;; Polars has not been packaged yet.
+              "--ignore=tests/polars"
+              ;; PySpark has not been packaged yet.
+              "--ignore=tests/spark/functions/test_clean_names_spark.py"
+              "--ignore=tests/spark/functions/test_update_where_spark.py"
+              ;; Tries to connect to the internet.
+              "-k" (string-append "not test_is_connected"
+                                  ;; Test files are not included.
+                                  " and not test_read_commandline_bad_cmd"))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'set-env-ci
@@ -3950,20 +3977,22 @@ production-critical data pipelines or reproducible research settings.  With
               ;; Some tests are skipped if the JANITOR_CI_MACHINE
               ;; variable is not set.
               (setenv "JANITOR_CI_MACHINE" "1"))))))
+    ;; TODO: Remove python-requests and inject its target data to make the
+    ;; package behaviour reproducible.
     (propagated-inputs (list python-multipledispatch
                              python-natsort
                              python-pandas-flavor
+                             python-requests
                              python-scipy
                              ;; Optional imports.
                              python-biopython ;biology submodule
                              python-unyt)) ;engineering submodule
     (native-inputs (list python-pytest
-                         python-pytest-xdist
+                         ;;python-pytest-xdist ;only for -n when testing
+                         python-setuptools
                          ;; Optional imports. We do not propagate them due to
                          ;; their size.
                          python-numba ;speedup of joins
-                         python-setuptools
-                         python-wheel
                          rdkit)) ;chemistry submodule
     (home-page "https://github.com/pyjanitor-devs/pyjanitor")
     (synopsis "Tools for cleaning and transforming pandas DataFrames")
@@ -4123,6 +4152,8 @@ changed, it made sense to abstract away the nuisance of having to re-learn
 them.")
   (license license:bsd-3)))
 
+;; XXX: Not maintained since 2019. The project was archived by the owner on
+;; Nov 2, 2020. It is now read-only.
 (define-public python-fbpca
   (package
     (name "python-fbpca")
@@ -4133,7 +4164,10 @@ them.")
               (sha256
                (base32
                 "1lbjqhqsdmqk86lb86q3ywf7561zmdny1dfvgwqkyrkr4ij7f1hm"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags #~(list "fbpca.py")))
+    (native-inputs (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-numpy python-scipy))
     (home-page "https://fbpca.readthedocs.io/")

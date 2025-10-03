@@ -36,7 +36,7 @@
   #:use-module (guix deprecation)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
-  #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
@@ -62,6 +62,8 @@
   #:use-module (gnu packages parallel)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -528,36 +530,48 @@ only provides @code{MPI_THREAD_FUNNELED}.")))
 (define-public python-mpi4py
   (package
     (name "python-mpi4py")
-    (version "3.1.4")
+    (version "4.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "mpi4py" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mpi4py/mpi4py")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "101lz7bnm9l17nrkbg6497kxscyh53aah7qd2b820ck2php8z18p"))))
-    (build-system python-build-system)
+        (base32 "1r4n2d3nacpa6sq18jp0xk4a81ha0iipgvlsdv0bhfmdvgpv2vqy"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'mpi-setup
-           ,%openmpi-setup)
-         (add-before 'check 'pre-check
-           (lambda _
-             ;; Skip BaseTestSpawn class (causes error 'ompi_dpm_dyn_init()
-             ;; failed --> Returned "Unreachable"' in chroot environment).
-             (substitute* "test/test_spawn.py"
-               (("unittest.skipMPI\\('openmpi\\(<3.0.0\\)'\\)")
-                "unittest.skipMPI('openmpi')"))
-             #t)))))
-    (inputs
-     (list openmpi))
-    (properties
-     '((updater-extra-inputs . ("openmpi"))))
+     (list
+      #:test-flags
+      #~(list ;; MPI errors are unrecoverable.
+         "--ignore=test/test_spawn.py"
+         "--ignore=test/test_util_pool.py"
+         "--ignore=demo/futures/test_futures.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'mpi-setup #$%openmpi-setup)
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; Skip BaseTestSpawn class (causes error 'ompi_dpm_dyn_init()
+              ;; failed --> Returned "Unreachable"' in chroot environment).
+              (substitute* "test/test_spawn.py"
+                (("unittest.skipMPI\\('openmpi\\(<3.0.0\\)'\\)")
+                 "unittest.skipMPI('openmpi')"))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (if tests?
+                  (apply invoke "mpiexec" "pytest" "-vv" test-flags)
+                  (format #t "test suite not run~%")))))))
+    (native-inputs (list python-cython python-pytest python-setuptools))
+    (inputs (list openmpi))
+    (properties '((updater-extra-inputs "openmpi")))
     (home-page "https://github.com/mpi4py/mpi4py")
     (synopsis "Python bindings for the Message Passing Interface standard")
-    (description "MPI for Python (mpi4py) provides bindings of the Message
-Passing Interface (MPI) standard for the Python programming language, allowing
-any Python program to exploit multiple processors.
+    (description
+     "MPI for Python (mpi4py) provides bindings of the Message Passing
+Interface (MPI) standard for the Python programming language, allowing any
+Python program to exploit multiple processors.
 
 mpi4py is constructed on top of the MPI-1/MPI-2 specification and provides an
 object oriented interface which closely follows MPI-2 C++ bindings.  It

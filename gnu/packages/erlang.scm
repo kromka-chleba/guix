@@ -11,6 +11,7 @@
 ;;; Copyright © 2023 wrobell <wrobell@riseup.net>
 ;;; Copyright © 2023 Tim Johann <t1m@phrogstar.de>
 ;;; Copyright © 2024, 2025 Igor Goryachev <igor@goryachev.org>
+;;; Copyright © 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -197,6 +198,25 @@ built-in support for concurrency, distribution and fault tolerance.")
     (license (list license:asl2.0 license:bsd-2 license:bsd-3 license:expat
                    license:lgpl2.0+ license:tcl/tk license:zlib))))
 
+(define-public erlfmt
+  (package
+    (name "erlfmt")
+    (version "1.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hexpm-uri "erlfmt" version))
+       (sha256
+        (base32 "07wchl0mg27lmxryhhkv13g8yx8wf6hw5f6a33r2d7nsynk7v67v"))))
+    (build-system rebar-build-system)
+    (native-inputs
+     (list erlang-getopt))
+    (synopsis "Opinionated Erlang code formatter")
+    (description "This package provides @code{erlfmt}, an opinionated Erlang
+code formatter.")
+    (home-page "https://hexdocs.pm/erlfmt/")
+    (license license:asl2.0)))
+
 (define-public emacs-erlang
   (package
     (name "emacs-erlang")
@@ -251,13 +271,13 @@ Mustache template engine")
 (define-public erlang-certifi
   (package
     (name "erlang-certifi")
-    (version "2.13.0")
+    (version "2.15.0")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "certifi" version))
        (sha256
-        (base32 "1887qmxp7qmha4c8k4m4cw35iii15srrdmfmvypp0q7hl0rragcg"))))
+        (base32 "0q2ap7ax2wfcigr9vx1g3bv85hf1cm8hakyrvapjxmvirqifsixi"))))
     (build-system rebar-build-system)
     (arguments
      `(#:tests? #f)) ;; have not been updated for latest cert bundle
@@ -288,6 +308,40 @@ Mozilla's canonical set.")
     (description "This package provides a helper library for terminal colour
 printing extending the io:format syntax to add colours.")
     (license license:expat)))
+
+(define-public erlang-katana-code
+  (package
+    (name "erlang-katana-code")
+    (version "2.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hexpm-uri "katana_code" version))
+       (sha256
+        (base32 "0fhbkgs81ym7g6gnkvchls3r49bvgzg0rdfa60iciawxblxwdvsq"))))
+    (build-system rebar-build-system)
+    (synopsis "Functions useful for processing Erlang code.")
+    (description
+     "This package provides functions useful for processing Erlang code.")
+    (home-page "https://hexdocs.pm/katana_code/")
+    (license license:asl2.0)))
+
+(define-public erlang-zipper
+  (package
+    (name "erlang-zipper")
+    (version "1.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hexpm-uri "zipper" version))
+       (sha256
+        (base32 "0dbmxy5f86pmc85b1maassygnnf7n2bxapnbc2cc1wryx0xchi26"))))
+    (build-system rebar-build-system)
+    (synopsis "Generic Zipper implementation for Erlang")
+    (description "This package provides a generic Zipper implementation
+for Erlang.")
+    (home-page "https://hexdocs.pm/zipper/")
+    (license license:asl2.0)))
 
 (define-public erlang-yamerl
   (let ((commit "a24f448c0a8084f70b751dc38621047e56fb53cc")
@@ -736,6 +790,23 @@ of locations (git, hg, etc).")
 applications as a dependent libraries.")
     (license license:expat)))
 
+(define-public rebar3-ex-doc
+  (package
+    (name "rebar3-ex-doc")
+    (version "0.2.30")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hexpm-uri "rebar3_ex_doc" version))
+       (sha256
+        (base32 "0n415nq3dia63q9sywmkzm53j13pciw9ss3nd3bgbxr95r93ii3b"))))
+    (build-system rebar-build-system)
+    (synopsis "Rebar3 plugin for generating docs with ex_doc")
+    (description "This plugin provides support for generating docs with
+@code{ex_doc}.")
+    (home-page "https://hexdocs.pm/rebar3_ex_doc/")
+    (license license:asl2.0)))
+
 (define-public rebar3-git-vsn
   (package
     (name "rebar3-git-vsn")
@@ -765,6 +836,24 @@ applications as a dependent libraries.")
     (synopsis "Rebar3 plugin for generating the version from git")
     (description "This plugin adds support for generating the version from
 a git checkout.")
+    (license license:expat)))
+
+(define-public rebar3-hank
+  (package
+    (name "rebar3-hank")
+    (version "1.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hexpm-uri "rebar3_hank" version))
+       (sha256
+        (base32 "1mkhl725q8arzj7lm0j204z1ghxpy6b936ysnbfifc8wy5a0s6vn"))))
+    (build-system rebar-build-system)
+    (inputs (list erlang-katana-code))
+    (synopsis "Rebar3 plugin for dead code cleaning")
+    (description
+     "This package provides a rebar3 plugin for dead code cleaning.")
+    (home-page "https://hexdocs.pm/rebar3_hank/")
     (license license:expat)))
 
 (define-public rebar3-proper

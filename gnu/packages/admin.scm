@@ -3334,7 +3334,7 @@ provides the following commands:
     (native-search-paths
      ;; XXX: Attempting to use (package-native-search-paths python)
      ;; here would cause an error about python being an unbound
-     ;; variable in the tests/cpan.scm test.
+     ;; variable in the tests/import/cpan.scm test.
      (list (search-path-specification
             (variable "GUIX_PYTHONPATH")
             (files (list "lib/python3.11/site-packages")))))
@@ -3471,7 +3471,7 @@ limits.")
 (define-public corectrl
   (package
     (name "corectrl")
-    (version "1.4.5")
+    (version "1.5.1")
     (source
      (origin
        (method git-fetch)
@@ -3480,8 +3480,8 @@ limits.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gnqybf3s0bsm3qsbc6rd1spw09vxd417gn3hb6hflsj6377qfcb"))
-       (patches (search-patches "corectrl-polkit-install-dir.patch"))))
+        (base32 "0y2qjp73kl7m6sx99kc0myfvvlf0rjx2yb3hff7jr6l87ayan09p"))
+       (patches (search-patches "corectrl-locate-polkit-with-pkg-config.patch"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -3509,11 +3509,9 @@ limits.")
                 (("\"glxinfo\"")
                  (string-append
                   "\"" (search-input-file inputs "bin/glxinfo") "\""))))))))
-    ;; Text formatting only supported since C++20, which is available in gcc-13.
-    ;; https://en.cppreference.com/w/cpp/compiler_support#cpp_lib_format_201907L
     (native-inputs (list catch2-3.8
                          pkg-config
-                         qttools-5))
+                         qttools))
     (inputs (list dbus
                   botan
                   hwdata
@@ -3521,12 +3519,14 @@ limits.")
                   polkit
                   procps
                   pugixml
-                  qtcharts-5
-                  qtdeclarative-5
+                  qt5compat
+                  qtbase
+                  qtcharts
+                  qtdeclarative
                   qtquickcontrols2-5
-                  qtsvg-5
-                  qtwayland-5
-                  quazip-5
+                  qtsvg
+                  qtwayland
+                  quazip
                   spdlog
                   trompeloeil
                   units
@@ -6312,6 +6312,10 @@ alias cysdig=sudo csysdig --modern-bpf
                              "fail2ban/client/fail2banregex.py")
                 (("/etc/fail2ban")
                  (string-append #$output "/etc/fail2ban")))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (invoke "./bin/fail2ban-testcases"))))
           (add-after 'fix-default-config 'set-action-dependencies
             (lambda* (#:key inputs #:allow-other-keys)
               ;; deleting things that are not feasible to fix
@@ -6392,7 +6396,8 @@ alias cysdig=sudo csysdig --modern-bpf
                             "fail2ban-regex" "fail2ban-server"
                             "fail2ban-testcases"))
                 ((install-man "5") "jail.conf")))))))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-aiosmtpd
+                         python-setuptools))
     (inputs (list gawk
                   coreutils-minimal
                   curl

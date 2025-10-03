@@ -21,6 +21,7 @@
 # Copyright © 2023, 2024 Wilko Meyer <w@wmeyer.eu>
 # Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 # Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
+# Copyright © 2025 Florian Pelz <pelzflorian@pelzflorian.de>
 #
 # This file is part of GNU Guix.
 #
@@ -545,21 +546,13 @@ SCM_TESTS =					\
   tests/challenge.scm				\
   tests/channels.scm				\
   tests/combinators.scm			\
-  tests/composer.scm				\
   tests/containers.scm				\
-  tests/cpan.scm				\
   tests/cpio.scm				\
-  tests/cran.scm				\
-  tests/crate.scm				\
   tests/cve.scm				\
   tests/debug-link.scm				\
   tests/derivations.scm			\
   tests/discovery.scm				\
-  tests/egg.scm				\
-  tests/elm.scm				\
-  tests/elpa.scm				\
   tests/file-systems.scm			\
-  tests/gem.scm				\
   tests/gexp.scm				\
   tests/git.scm					\
   tests/git-authenticate.scm			\
@@ -568,35 +561,44 @@ SCM_TESTS =					\
   tests/grafts.scm				\
   tests/graph.scm				\
   tests/gremlin.scm				\
-  tests/hackage.scm				\
-  tests/hexpm.scm				\
+  tests/import/composer.scm			\
+  tests/import/cpan.scm				\
+  tests/import/cran.scm				\
+  tests/import/crate.scm			\
+  tests/import/egg.scm				\
+  tests/import/elm.scm				\
+  tests/import/elpa.scm				\
+  tests/import/gem.scm				\
+  tests/import/git.scm				\
+  tests/import/github.scm			\
+  tests/import/hackage.scm			\
+  tests/import/hexpm.scm			\
+  tests/import/luanti.scm			\
+  tests/import/npm-binary.scm			\
+  tests/import/opam.scm				\
+  tests/import/print.scm			\
+  tests/import/pypi.scm				\
+  tests/import/texlive.scm			\
+  tests/import/utils.scm			\
   tests/home-import.scm				\
   tests/home-services.scm			\
   tests/http-client.scm				\
-  tests/import-git.scm				\
-  tests/import-github.scm			\
-  tests/import-utils.scm			\
   tests/inferior.scm				\
   tests/ipfs.scm				\
   tests/lint.scm				\
-  tests/luanti.scm				\
   tests/machine/hetzner.scm                     \
   tests/machine/hetzner/http.scm                 \
   tests/modules.scm				\
   tests/monads.scm				\
   tests/nar.scm				\
-  tests/npm-binary.scm				\
   tests/networking.scm				\
-  tests/opam.scm				\
   tests/openpgp.scm				\
   tests/packages.scm				\
   tests/pack.scm				\
   tests/pki.scm				\
-  tests/print.scm				\
   tests/processes.scm				\
   tests/profiles.scm				\
   tests/publish.scm				\
-  tests/pypi.scm				\
   tests/read-print.scm				\
   tests/records.scm				\
   tests/rpm.scm					\
@@ -623,7 +625,6 @@ SCM_TESTS =					\
   tests/syscalls.scm				\
   tests/system.scm				\
   tests/style.scm				\
-  tests/texlive.scm				\
   tests/toml.scm				\
   tests/transformations.scm			\
   tests/ui.scm					\
@@ -634,9 +635,9 @@ SCM_TESTS =					\
   tests/workers.scm
 
 if HAVE_GUILE_LIB
-SCM_TESTS += tests/go.scm
+SCM_TESTS += tests/import/go.scm
 else
-EXTRA_DIST += tests/go.scm
+EXTRA_DIST += tests/import/go.scm
 endif
 
 if BUILD_DAEMON_OFFLOAD
@@ -1298,8 +1299,10 @@ WEBLATE_REPO = https://codeberg.org/guix/translations
 # Shallow clone the Git repository behind Weblate and copy files from it if
 # they contain at least one translation, and they are well-formed (Scheme
 # format only), warn otherwise.  Copied files are converted to a canonical
-# form.
-download-po:
+# form.  Note: The files will be minified to reduce file size, except the
+# guix domain, because they are comparatively small and it would need more
+# comprehensive PO file parsing abilities for plural forms.
+download-po: guix/build/po.go
 	dir=$$(mktemp -d); \
 	git clone --depth 1 "$(WEBLATE_REPO)" "$$dir/translations" && \
 	for domain in po/doc po/guix po/packages; do \
@@ -1312,8 +1315,15 @@ download-po:
 	        target="$$domain/$$target"; \
 	        msgfmt -c "$$po"; \
 	        if msgfmt -c "$$po" && [ "$$translated" != "0" ] && ([ "$$domain" != "po/doc" ] || [ "$$translated" -gt $$(($$total/10)) ] || [ -f $$target ]); then \
-	            msgfilter --no-wrap -i "$$po" cat > "$$po".tmp; \
-	            mv "$$po".tmp "$$target"; \
+	            if [ "$$domain" != "po/guix" ]; then \
+	              $(GUILE) -L "$(top_builddir)" -L "$(top_srcdir)" \
+	                --no-auto-compile \
+	                -s "$(top_srcdir)"/build-aux/keep-only-translated.scm \
+	                "$$po" > "$$po".tmp; \
+	            else ln -s "$$po" "$$po".tmp; fi; \
+	            msgconv --no-wrap -o "$$po".tmp2 "$$po".tmp; \
+	            rm "$$po".tmp; \
+	            mv "$$po".tmp2 "$$target"; \
 	            echo "copied $$target."; \
 	        else \
 	            echo "WARN: $$target ($$translated translated messages ($$((translated/total*100))%)) was not added/updated."; \

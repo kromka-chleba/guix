@@ -121,6 +121,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -4979,7 +4980,7 @@ in the audio domain.")
              python-xxhash))
       (native-inputs
        (list openssl
-             python-flit-core-next
+             python-flit-core
              python-pytest
              python-pytest-cov))
       (home-page "https://pyg.org")

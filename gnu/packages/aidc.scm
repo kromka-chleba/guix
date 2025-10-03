@@ -4,7 +4,9 @@
 ;;; Copyright © 2017 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2018, 2019, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
@@ -44,13 +46,87 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages video)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk))
+
+(define-public python-pyzbar
+  (package
+    (name "python-pyzbar")
+    (version "0.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/NaturalHistoryMuseum/pyzbar")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1df1dvr8i2wyr2vw5pq8rlz2wm4xqda0wbgja19bvql1m9im11ph"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'unittest
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-failing-test
+            (lambda _
+              ;; This tests if find_library was called once, but we remove
+              ;; the call in the stage below to make the library find libzbar.
+              (delete-file "pyzbar/tests/test_zbar_library.py")))
+          (add-before 'build 'set-library-file-name
+            (lambda _
+              (let ((libzbar #$(this-package-input "zbar")))
+                (substitute* "pyzbar/zbar_library.py"
+                  (("find_library\\('zbar'\\)")
+                   (string-append "'" libzbar "/lib/libzbar.so.0'")))))))))
+    (native-inputs
+     (list pkg-config python-numpy python-pillow python-setuptools))
+    (inputs
+     (list zbar))
+    (home-page "https://github.com/NaturalHistoryMuseum/pyzbar/")
+    (synopsis "Read one-dimensional barcodes and QR codes")
+    (description
+     "Read one-dimensional barcodes and QR codes using the zbar library.
+
+Features:
+
+@itemize
+@item Pure python
+@item Works with PIL / Pillow images, OpenCV / numpy ndarrays, and raw bytes
+@item Decodes locations of barcodes
+@item No dependencies, other than the zbar library itself
+@end itemize")
+    (license license:expat)))
+
+(define-public python-zbarlight
+  (package
+    (name "python-zbarlight")
+    (version "3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Polyconseil/zbarlight")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1radfpfhfhkx3xnz01bqr5l9pl2zv70zis6l2kw1gwqbfw65r6w6"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-pillow))
+    (inputs (list zbar))
+    (native-inputs (list python-pytest python-setuptools))
+    (home-page "https://github.com/Polyconseil/zbarlight")
+    (synopsis "Simple Python wrapper for the zbar barcode library")
+    (description "Zbarlight is a simple wrapper for the zbar library.  It can
+read all zbar supported codes.")
+    (license license:bsd-3)))
 
 (define-public zint
   (package
