@@ -254,7 +254,7 @@ SNS, Gotify, etc.")
 (define-public python-blacksheep
   (package
     (name "python-blacksheep")
-    (version "2.4.1")
+    (version "2.4.2")
     (source
      (origin
        (method git-fetch)
@@ -263,7 +263,7 @@ SNS, Gotify, etc.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0znkqj4cipdr1qdsdlbb48b82cpvj24dqiwi0nyiy50b8nd7g5np"))))
+        (base32 "0v9pkg3ffxxcdc8ynjjh5fgis5m49m65sbrgcrghmz0xkik5ny5w"))))
     (build-system pyproject-build-system)
     (arguments
      (list
