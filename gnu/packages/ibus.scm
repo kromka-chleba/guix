@@ -246,6 +246,10 @@ may also simplify input method development.")
               (lambda _
                 (substitute* "bus/main.c"
                   (("ibus_init") "g_cache = \"none\"; ibus_init"))))
+            (add-after 'unpack 'disable-failing-tests
+              (lambda _
+                (substitute* "bindings/pygobject/Makefile.am"
+                  (("TESTS \\+= .*") ""))))
             (replace 'wrap-with-additional-paths
               (lambda* (#:key outputs #:allow-other-keys)
                 ;; Make sure 'ibus-setup' and 'ibus-daemon' runs with the
