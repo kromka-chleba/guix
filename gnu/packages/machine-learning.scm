@@ -1938,7 +1938,7 @@ parts of speech and entities, do syntactic analysis, and more.")
 (define-public onnx
   (package
     (name "onnx")
-    (version "1.17.0")
+    (version "1.19.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1946,13 +1946,8 @@ parts of speech and entities, do syntactic analysis, and more.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "1i6bh4z2xzz1maykr0xmrwfybm6i3g38vnx7hsls8hr58rdr30zn"))
-              (file-name (git-file-name name version))
-              (patches (search-patches
-                        "onnx-shared-libraries.patch"
-                        "onnx-skip-model-downloads.patch"))
-              (modules '((guix build utils)))
-              (snippet '(delete-file-recursively "third_party"))))
+                "0796gmghsghv3y0gn9cyrf9s0zydn6rsbkr17allyd0sf3j3m34l"))
+              (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1964,37 +1959,26 @@ parts of speech and entities, do syntactic analysis, and more.")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'pass-cmake-arguments
-            (lambda* (#:key outputs tests? #:allow-other-keys)
-              ;; For derived package use
-              (substitute* "CMakeLists.txt"
-                (("set\\(ONNX_ROOT.*") "")
-                (("\\$\\{ROOT_DIR\\}(/tools.*)" _ rest)
-                 (string-append "${PROJECT_SOURCE_DIR}" rest)))
-              ;; Pass options to the CMake-based build process.
-              (define out
-                (assoc-ref outputs "out"))
-
+            (lambda _
               (define args
                 ;; Copy arguments from 'cmake-build-system', plus ask
                 ;; for shared libraries.
                 (list "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
-                      (string-append "-DCMAKE_INSTALL_PREFIX=" out)
+                      (string-append "-DCMAKE_INSTALL_PREFIX=" #$output)
                       "-DCMAKE_INSTALL_LIBDIR=lib"
                       "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE"
-                      (string-append "-DCMAKE_INSTALL_RPATH=" out
+                      (string-append "-DCMAKE_INSTALL_RPATH=" #$output
                                      "/lib")
                       "-DCMAKE_VERBOSE_MAKEFILE=ON"
-                      (string-append "-DONNX_BUILD_TESTS="
-                                     (if tests? "ON" "OFF"))
+                      "-DONNX_BUILD_TESTS=OFF" ;Tests requires static build
                       "-DBUILD_SHARED_LIBS=ON"
+                      "-DONNX_BUILD_PYTHON=ON"
                       "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
                       (string-append
                        "-DONNX_ROOT=" #$(package-source this-package))))
-
               ;; This environment variable is honored by 'setup.py',
               ;; which passes it down to 'cmake'.
               (setenv "CMAKE_ARGS" (string-join args))
-
               ;; This one is honored by 'setup.py' and passed to 'make -j'.
               (setenv "MAX_JOBS"
                       (number->string (parallel-job-count)))))
@@ -2022,8 +2006,7 @@ parts of speech and entities, do syntactic analysis, and more.")
             python-parameterized
             python-pytest
             python-pytest-runner
-            python-setuptools
-            python-wheel)
+            python-setuptools)
       (filter
        (lambda (pkg)
          (member (or (%current-target-system)
@@ -2031,9 +2014,9 @@ parts of speech and entities, do syntactic analysis, and more.")
                  (package-transitive-supported-systems pkg)))
        (list python-nbval))))
     (inputs
-     (list protobuf))
+     (list abseil-cpp protobuf-6))
     (propagated-inputs
-     (list python-numpy python-protobuf python-six python-tabulate
+     (list python-numpy python-protobuf-6 python-six python-tabulate
            python-typing-extensions))
     (home-page "https://onnx.ai/")
     (synopsis "Open Neural Network Exchange")
