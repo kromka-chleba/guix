@@ -1596,7 +1596,7 @@ files.")))
 Tree-sitter parsing library.")
     (license license:expat)))
 
-(define* (python-tree-sitter-grammar pkg #:key tests?)
+(define* (python-tree-sitter-grammar pkg #:key (tests? #t))
   "Returns a package for Python bindings of a Tree-sitter grammar.  PKG is a
 package for a Tree-sitter grammar; its name will be used with python- prefix
 to generate the package name.  When TESTS? is true, tests are enabled."
@@ -1612,8 +1612,7 @@ to generate the package name.  When TESTS? is true, tests are enabled."
                                (list python-pytest
                                      python-tree-sitter)
                                '())
-                           (list python-setuptools
-                                 python-wheel)))
+                           (list python-setuptools)))
     (description
      (string-append (package-description pkg)
                     (P_ "\n\nThis variant provides Python bindings.")))))
