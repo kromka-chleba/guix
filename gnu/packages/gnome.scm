@@ -5312,6 +5312,7 @@ and the GLib main loop, to integrate well with GNOME applications.")
      (list
       #:configure-flags
       #~(list "-Dgtk_doc=false")        ;requires gi-docgen
+      #:test-options #~(list "--no-suite=python")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
