@@ -34363,7 +34363,7 @@ equivalent schemata in the XML-based default RELAX NG syntax.")
 (define-public python-telethon
   (package
     (name "python-telethon")
-    (version "1.17.5")
+    (version "1.41.1")
     (source
      (origin
        (method git-fetch)
@@ -34372,20 +34372,22 @@ equivalent schemata in the XML-based default RELAX NG syntax.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0l9fhdrq576vllgi9aam45xzw5xi6jhgdv5zz8i4ygssdp7cm8jl"))))
-    (build-system python-build-system)
+        (base32 "0rbzqbxsihqm2w1zrvaaafvzwyqqyjx49wfffxrnsr9m32giwzsp"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "py.test" "-v"))
-             #t)))))
+     (list
+      #:test-flags
+      ;; 33 passed, 2 errors
+      ;; E       fixture 'event_loop' not found
+      #~(list "-m" "not asyncio"
+              "-k" "not test_sync_acontext")))
     (propagated-inputs
      (list python-rsa python-pyaes))
     (native-inputs
-     (list python-pytest python-pytest-asyncio python-pytest-trio))
+     (list python-setuptools
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-trio))
     (home-page "https://docs.telethon.dev")
     (synopsis "Full-featured Telegram client library for Python 3")
     (description "This library is designed to make it easy to write Python
