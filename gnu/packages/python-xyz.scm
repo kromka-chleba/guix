@@ -10746,13 +10746,13 @@ For some datatypes the overhead can be reduced by using khash by factor 4-8.")
   ;; TODO: Move to python-build.
   (package
     (name "python-cython")
-    (version "3.1.2")
+    (version "3.1.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cython" version))
        (sha256
-        (base32 "108k6gsn63qkz98xhnm4440ir9ab0lxmw0gcrpz2sxm67yapmgvb"))))
+        (base32 "10vnfzpjkgni2jmamjs6saigil74x8a9hy9imdk2s7ik67lfzvws"))))
     (build-system pyproject-build-system)
     (arguments
      (list
