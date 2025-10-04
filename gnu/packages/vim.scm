@@ -15,7 +15,8 @@
 ;;; Copyright © 2022, 2023 Luis Henrique Gomes Higino <luishenriquegh2701@gmail.com>
 ;;; Copyright © 2023 Charles Jackson <charles.b.jackson@protonmail.com>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
-;;; Copyright © 2023, 2024 Nguyễn Gia Phong <cnx@loang.net>
+;;; Copyright © 2023, 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2025, Luca Kredel <luca.kredel@web.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1810,3 +1811,35 @@ line of a file contains @@startuml.  Additionally the makeprg is set to plantuml
 assuming you have this executable in your path.")
       (home-page "https://github.com/aklt/plantuml-syntax")
       (license license:vim))))
+
+(define-public vim-selenized
+  (let ((commit "2b7b446eba1cbca66d4cbf2edf6f787a77fe41b2")
+        (version "1.0")
+        (revision "1"))
+    (package
+      (name "vim-selenized")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://codeberg.org/Phosphenius/selenized")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1mlm1pmlgk6iydqbyx7iykd9hr3dj5rjbrlm22wai3f6s5s8nbw1"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "selenized"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "editors/vim/"))))))
+      (synopsis "Selenized colors for vim")
+      (description
+       "Solarized redesigned: fine-tuned color palette for programmers
+       with focus on readability.")
+      (home-page "https://codeberg.org/Phosphenius/selenized")
+      (license license:expat))))
