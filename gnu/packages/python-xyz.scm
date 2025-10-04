@@ -11391,6 +11391,24 @@ color scales, and color space conversion easy.  It has support for:
 @end enumerate\n")
     (license license:expat)))
 
+(define-public python-pam
+  (package
+    (name "python-pam")
+    (version "2.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "python-pam" version))
+       (sha256
+        (base32 "0l6rnlgqpggx4b576wppfnr4jna512ahklb8h2pdp0lvp8sm48wp"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-six python-wheel))
+    (home-page "https://github.com/FirefighterBlu3/python-pam")
+    (synopsis "Python PAM module")
+    (description "This package provides a Python module to interface with
+@acronym{PAM, pluggable authentication modules}.")
+    (license license:expat)))
+
 (define-public python-pyspnego
   (package
     (name "python-pyspnego")
