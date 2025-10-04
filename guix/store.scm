@@ -2347,9 +2347,10 @@ valid inputs."
               base))))
 
 (define (store-path-package-name path)
-  "Return the package name part of PATH, a file name in the store."
+  "Return the package name part of PATH, a file name in the store, or #f
+if it could not be found."
   (let ((base (store-path-base path)))
-    (string-drop base (+ 32 1)))) ;32 hash part + 1 hyphen
+    (and base (string-drop base (+ 32 1))))) ;32 hash part + 1 hyphen
 
 (define (store-path-hash-part path)
   "Return the hash part of PATH as a base32 string, or #f if PATH is not a
