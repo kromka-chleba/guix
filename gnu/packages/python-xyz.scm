@@ -19030,16 +19030,16 @@ of complexity; for example, a byte stream of identical bytes will not generate
 a hash value.")
     (license license:asl2.0)))
 
-(define-public python-termcolor
+(define-public python-termcolor-3
   (package
     (name "python-termcolor")
-    (version "2.5.0")
+    (version "3.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "termcolor" version))
        (sha256
-        (base32 "0vwaxyr2vk8gi7s1slq74nb0ssbb0wcn208ziqp48j3dv8kqv3cr"))))
+        (base32 "0w2rwl4h7664illllkmicdh3fz3z3pznqxbaxkp0j6aqxvxxfvba"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-hatch-vcs
@@ -19052,9 +19052,21 @@ a hash value.")
      "This package provides ANSII Color formatting for output in terminals.")
     (license license:expat)))
 
+(define-public python-termcolor-2
+  (package
+    (inherit python-termcolor-3)
+    (name "python-termcolor")
+    (version "2.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "termcolor" version))
+       (sha256
+        (base32 "0vwaxyr2vk8gi7s1slq74nb0ssbb0wcn208ziqp48j3dv8kqv3cr"))))))
+
 (define-public python-termcolor-1
   (package
-    (inherit python-termcolor)
+    (inherit python-termcolor-3)
     (version "1.1.0")
     (source
      (origin
@@ -19068,6 +19080,8 @@ a hash value.")
     (native-inputs
      (list python-setuptools
            python-wheel))))
+
+(define-public python-termcolor python-termcolor-2)
 
 (define-public python-terminaltables
   (package
@@ -40287,7 +40301,7 @@ of several plugins.")
            python-pytest
            python-pytest-mock))
     (propagated-inputs
-     (list python-termcolor))
+     (list python-termcolor-3))
     (home-page "https://github.com/pavdmyt/yaspin")
     (synopsis "Yet Another Terminal Spinner")
     (description "Yaspin provides a terminal spinner to indicate the progress
