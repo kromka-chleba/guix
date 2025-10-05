@@ -25,6 +25,7 @@
   #:use-module (gnu packages elixir-markup)
   #:use-module (gnu packages elixir-xyz)
   #:use-module (guix build-system mix)
+  #:use-module (guix build utils)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix gexp)
@@ -303,7 +304,17 @@ purposes.  Its goal is to be as close as possible to
      (list
       #:test-flags
       ;; These tests require network access to badssl.com.
-      #~(list "--exclude" "network")))
+      #~(list "--exclude" "network")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'make-reproducible
+            (lambda _
+              ;; Buffer size has been increased in OTP 28+. For more info see:
+              ;; https://github.com/erlang/otp/issues/9722#issuecomment-2808683303
+              (substitute* "test/httpoison_test.exs"
+                (("stream/20") "stream/100")
+                (("<= expected_length") "<= expected_length * 1.1")
+                ((">= max_length") ">= max_length * 0.9")))))))
     (native-inputs
      (list erlang-cowboy
            elixir-earmark
