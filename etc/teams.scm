@@ -1333,6 +1333,11 @@ the \"texlive\" importer."
                        "Rutherther")
   release)
 
+(define-member (person "Danny Milosavljevic"
+                       "dannym@friendly-machines.com"
+                       "daym")
+  bootstrap hpc rust science)
+
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
