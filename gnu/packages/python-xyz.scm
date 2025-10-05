@@ -3440,20 +3440,34 @@ generator MkDocs.")
                   (guix build utils)
                   (ice-9 match))
       #:test-flags
-      ;; "from sklearn.datasets import load_boston" fails because it has been
-      ;; removed from scikit-learn since version 1.2.
-      '(list "--ignore=tests/conftest.py"
-             "--ignore=tests/test_tools.py"
-             "--ignore=tests/tree/test_regressor.py"
-             "--ignore=tests/ensemble/test_regressor.py"
-             ;; All tests fail with error: AttributeError: 'super' object has
-             ;; no attribute '__sklearn_tags__'
-             "--ignore=tests/tree/test_classifier.py"
-             "--ignore=tests/ensemble/test_classifier.py")
+      #~(list
+         ;; "from sklearn.datasets import load_boston" fails because it has been
+         ;; removed from scikit-learn since version 1.2.
+         "--ignore=tests/conftest.py"
+         "--ignore=tests/test_tools.py"
+         "--ignore=tests/tree/test_regressor.py"
+         "--ignore=tests/ensemble/test_regressor.py"
+         ;; All tests fail with error: AttributeError: 'super' object has
+         ;; no attribute '__sklearn_tags__'
+         "--deselect=tests/tree/test_classifier.py::TestRangerTreeClassifier::test_check_estimator"
+         "--deselect=tests/ensemble/test_classifier.py::TestRangerForestClassifier::test_check_estimator"
+         ;; Tests that use _get_tags() which has been removed approximately
+         ;; since scikit-learn 1.6.0.
+         "--deselect=tests/ensemble/test_survival.py::TestRangerForestSurvival::test_get_tags"
+         "--deselect=tests/tree/test_survival.py::TestRangerTreeSurvival::test_get_tags")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-tests
             (lambda _
+              ;; _validate_data() and _check_n_features() have moved.
+              ;; Reported upstream:
+              ;; https://github.com/crflynn/skranger/issues/158
+              (substitute* (find-files "skranger" "\\.py$")
+                (("self._check_n_features\\(") "_check_n_features\(self, ")
+                (("self._validate_data\\(") "validate_data\(self, ")
+                (("from sklearn.utils.validation import ")
+                 "from sklearn.utils.validation import _check_n_features, validate_data, "))
+              ;; Even though conftest.py is ignored, it is still imported.
               (substitute* "tests/conftest.py"
                 (("from sklearn.datasets import load_boston") "")
                 (("^_boston_X.*") "_boston_X, _boston_Y = (True, True)\n"))))
@@ -3478,7 +3492,6 @@ generator MkDocs.")
            python-pandas
            python-poetry-core
            python-setuptools
-           python-wheel
            python-pytest))
     (home-page "https://github.com/crflynn/skranger")
     (synopsis "Python bindings for C++ ranger random forests")
