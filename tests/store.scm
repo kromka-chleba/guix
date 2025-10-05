@@ -50,6 +50,8 @@
 
 ;; Test the (guix store) module.
 
+(sigaction SIGPIPE SIG_IGN)
+
 (define %store
   (open-connection-for-tests))
 
