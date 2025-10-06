@@ -11892,7 +11892,8 @@ a derivation is the @code{derivation} procedure:
   [#:system (%current-system)] [#:references-graphs #f] @
   [#:allowed-references #f] [#:disallowed-references #f] @
   [#:leaked-env-vars #f] [#:local-build? #f] @
-  [#:substitutable? #t] [#:properties '()]
+  [#:substitutable? #t] [#:distributable? #t] @
+  [#:properties '()]
 Build a derivation with the given arguments, and return the resulting
 @code{<derivation>} object.
 
@@ -11929,6 +11930,13 @@ When @var{substitutable?} is false, declare that substitutes of the
 derivation's output should not be used (@pxref{Substitutes}).  This is
 useful, for instance, when building packages that capture details of the
 host CPU instruction set.
+
+When @var{distributable?} is false, declare that substitutes of the
+derivation's output should not be used.  Unlike @var{substitutable?},
+additionally declare that when another derivation takes this derivation as an
+input, substitutes of it should not be used either.  This is useful, for
+instance, when packaging projects whose licensing terms do not permit binary
+redistribution.
 
 @var{properties} must be an association list describing ``properties'' of the
 derivation.  It is kept as-is, uninterpreted, in the derivation.

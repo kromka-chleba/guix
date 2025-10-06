@@ -1166,6 +1166,7 @@ derivations--e.g., code evaluated for its side effects."
                            allowed-references disallowed-references
                            leaked-env-vars
                            local-build? (substitutable? #t)
+                           (distributable? #t)
                            (properties '())
                            deprecation-warnings
                            (script-name (string-append name "-builder")))
@@ -1311,6 +1312,7 @@ The other arguments are as for 'derivation'."
                       #:leaked-env-vars leaked-env-vars
                       #:local-build? local-build?
                       #:substitutable? substitutable?
+                      #:distributable? distributable?
                       #:properties properties))))
 
 (define (fold/tree proc seed lst)

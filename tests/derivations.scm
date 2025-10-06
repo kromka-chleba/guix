@@ -437,6 +437,24 @@
              (derivation %store "foo" %bash '()
                          #:substitutable? #f)))))
 
+(test-assert "distributable-derivation?"
+  (let* ((foo (derivation %store "foo" %bash '()))
+         (bar (derivation %store "bar" %bash '() #:distributable? #f))
+         (bar-out (derivation->output-path bar))
+         (baz (derivation %store "baz"
+                          %bash '()
+                          #:env-vars `(("bar" . ,bar-out))
+                          #:inputs `(,(derivation-input bar))))
+         (baz-out (derivation->output-path baz))
+         (quux (derivation %store "quux"
+                           %bash '()
+                           #:env-vars `(("baz" . ,baz-out))
+                           #:inputs `(,(derivation-input baz)))))
+    (and (distributable-derivation? foo)
+         (not (distributable-derivation? bar))
+         (not (distributable-derivation? baz))
+         (not (distributable-derivation? quux)))))
+
 (test-assert "fixed-output-derivation?"
   (let* ((builder    (add-text-to-store %store "my-fixed-builder.sh"
                                         "echo -n hello > $out" '()))

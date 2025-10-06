@@ -85,6 +85,7 @@
             fixed-output-derivation?
             offloadable-derivation?
             substitutable-derivation?
+            distributable-derivation?
             derivation-input-fold
             substitution-oracle
             derivation-hash
@@ -304,6 +305,14 @@ result is the set of prerequisites of DRV not already in valid."
   (match (assoc "allowSubstitutes"
                 (derivation-builder-environment-vars drv))
     (("allowSubstitutes" . value)
+     (string=? value "1"))
+    (_ #t)))
+
+(define (distributable-derivation? drv)
+  "Return #t if DRV can be distributed."
+  (match (assoc "allowDistribution"
+                (derivation-builder-environment-vars drv))
+    (("allowDistribution" . value)
      (string=? value "1"))
     (_ #t)))
 
@@ -804,6 +813,7 @@ name of each input with that input's hash."
                      allowed-references disallowed-references
                      leaked-env-vars local-build?
                      (substitutable? #t)
+                     (distributable? #t)
                      (properties '())
                      (%deprecation-warning? #t))
   "Build a derivation with the given arguments, and return the resulting
@@ -833,6 +843,10 @@ derivations where the costs of data transfers would outweigh the benefits.
 
 When SUBSTITUTABLE? is false, declare that substitutes of the derivation's
 output should not be used.
+
+When DISTRIBUTABLE? is false, declare that substitutes of the derivation's
+output should not be made available. Unlike SUBSTITUTABLE?, this property is
+viral.
 
 PROPERTIES must be an association list describing \"properties\" of the
 derivation.  It is kept as-is, uninterpreted, in the derivation."
@@ -868,44 +882,6 @@ derivation.  It is kept as-is, uninterpreted, in the derivation."
                                env-vars)
                           #f)))))
 
-  (define (user+system-env-vars)
-    ;; Some options are passed to the build daemon via the env. vars of
-    ;; derivations (urgh!).  We hide that from our API, but here is the place
-    ;; where we kludgify those options.
-    (let ((env-vars `(,@(if local-build?
-                            `(("preferLocalBuild" . "1"))
-                            '())
-                      ,@(if (not substitutable?)
-                            `(("allowSubstitutes" . "0"))
-                            '())
-                      ,@(if allowed-references
-                            `(("allowedReferences"
-                               . ,(string-join allowed-references)))
-                            '())
-                      ,@(if disallowed-references
-                            `(("disallowedReferences"
-                               . ,(string-join disallowed-references)))
-                            '())
-                      ,@(if leaked-env-vars
-                            `(("impureEnvVars"
-                               . ,(string-join leaked-env-vars)))
-                            '())
-                      ,@(match properties
-                          (() '())
-                          (lst `(("guix properties"
-                                  . ,(object->string properties)))))
-                      ,@env-vars)))
-      (match references-graphs
-        (((file . path) ...)
-         (let ((value (map (cut string-append <> " " <>)
-                           file path)))
-           ;; XXX: This all breaks down if an element of FILE or PATH contains
-           ;; white space.
-           `(("exportReferencesGraph" . ,(string-join value " "))
-             ,@env-vars)))
-        (#f
-         env-vars))))
-
   (define (env-vars-with-empty-outputs env-vars)
     ;; Return a variant of ENV-VARS where each OUTPUTS is associated with an
     ;; empty string, even outputs that do not appear in ENV-VARS.
@@ -939,6 +915,52 @@ derivation.  It is kept as-is, uninterpreted, in the derivation."
       (_
        (warn-deprecation name)
        #f)))
+
+  (define (user+system-env-vars)
+    ;; Some options are passed to the build daemon via the env. vars of
+    ;; derivations (urgh!).  We hide that from our API, but here is the place
+    ;; where we kludgify those options.
+    (let* ((distributable-inputs?
+            (every distributable-derivation?
+                   (map derivation-input-derivation
+                        (filter-map input->derivation-input inputs))))
+           (env-vars `(,@(if local-build?
+                             `(("preferLocalBuild" . "1"))
+                             '())
+                       ,@(if (not substitutable?)
+                             `(("allowSubstitutes" . "0"))
+                             '())
+                       ,@(if (or (not distributable?)
+                                 (not distributable-inputs?))
+                             `(("allowDistribution" . "0"))
+                             '())
+                       ,@(if allowed-references
+                             `(("allowedReferences"
+                                . ,(string-join allowed-references)))
+                             '())
+                       ,@(if disallowed-references
+                             `(("disallowedReferences"
+                                . ,(string-join disallowed-references)))
+                             '())
+                       ,@(if leaked-env-vars
+                             `(("impureEnvVars"
+                                . ,(string-join leaked-env-vars)))
+                             '())
+                       ,@(match properties
+                           (() '())
+                           (lst `(("guix properties"
+                                   . ,(object->string properties)))))
+                       ,@env-vars)))
+      (match references-graphs
+        (((file . path) ...)
+         (let ((value (map (cut string-append <> " " <>)
+                           file path)))
+           ;; XXX: This all breaks down if an element of FILE or PATH contains
+           ;; white space.
+           `(("exportReferencesGraph" . ,(string-join value " "))
+             ,@env-vars)))
+        (#f
+         env-vars))))
 
   (define input->source
     (match-lambda
