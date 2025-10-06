@@ -490,7 +490,7 @@ that are useful for particular countries or cultures.")
     (native-inputs
      (list python-mock python-setuptools python-wheel))
     (propagated-inputs
-     (list python-django python-six))
+     (list python-django-4 python-six))
     (synopsis "Easy-to-use math field/widget captcha for Django forms")
     (description
      "A multi-value-field that presents a human answerable question,
