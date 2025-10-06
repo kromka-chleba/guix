@@ -5761,6 +5761,31 @@ overriding a method.")
 for the standard @code{argparse} library.")
     (license license:expat)))
 
+(define-public python-rich-argparse
+  (package
+    (name "python-rich-argparse")
+    (version "1.7.1")
+    (home-page "https://github.com/hamdanal/rich-argparse")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0wydhy1167yv7lm07iy3aysyhxyixc24ma1wdna36c06d24wbdc0"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-hatchling))
+    (propagated-inputs
+     (list python-rich))
+    (synopsis "Format argparse and optparse help using rich")
+    (description "This package improves the look and readability of argparse's
+help while requiring minimal changes to the code.")
+    (license license:expat)))
+
 (define-public python-bitstruct
   (package
     (name "python-bitstruct")
