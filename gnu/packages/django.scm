@@ -1665,7 +1665,7 @@ a single block.")
                   (delete "python-django-crispy-forms")))))
            (list python-crispy-bootstrap3 python-crispy-bootstrap4))
       (list python-pytest python-pytest-django python-setuptools)))
-    (propagated-inputs (list python-django))
+    (propagated-inputs (list python-django-4))
     (home-page "https://github.com/django-crispy-forms/django-crispy-forms")
     (synopsis "Tool to control Django forms without custom templates")
     (description
