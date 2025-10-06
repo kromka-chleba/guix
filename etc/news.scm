@@ -42,6 +42,14 @@
 (channel-news
  (version 0)
 
+ (entry (commit "XXX")
+        (title
+         (en "Fall back to local building on substitution error"))
+        (body
+         (en "When using @command{guix build} (or other commands triggering builds), Guix
+would fail on substitution error unless @command{--fallback} was given.  Now the
+default is to fall back to building derivations locally on substitution error.")))
+
  (entry (commit "8daae75de3670594dfcb63b6ae6f1603ca6f7971")
         (title
          (en "Fundraising to sustain and strengthen Guix")
