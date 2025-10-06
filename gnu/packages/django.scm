@@ -161,7 +161,7 @@ your project into different processes.")
           (add-before 'check 'pre-check
             (lambda _
               (setenv "PYTHONPATH" "."))))))
-    (propagated-inputs (list python-django python-django-crispy-forms))
+    (propagated-inputs (list python-django-4 python-django-crispy-forms))
     (native-inputs (list python-pytest python-pytest-django python-setuptools))
     (home-page "https://github.com/django-crispy-forms/crispy-bootstrap3")
     (synopsis "Bootstrap3 template pack for django-crispy-forms")
