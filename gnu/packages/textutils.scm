@@ -1957,7 +1957,7 @@ which it is heavily inspired.")
     (arguments
      (list
       #:install-source? #f
-      #:import-path "github.com/mikefarah/yq/v4"
+      #:import-path "github.com/mikefarah/yq"
       #:phases
       #~(modify-phases %standard-phases
           ;; Tests need this.
