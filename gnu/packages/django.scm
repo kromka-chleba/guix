@@ -365,7 +365,7 @@ with a @var{CACHE_URL} environment variable.")
                              (string-append ".:" (getenv "GUIX_PYTHONPATH")))
                      (invoke "django-cadmin" "test" "-v2")))))))
     (propagated-inputs
-     (list python-django))
+     (list python-django-4))
     (native-inputs
      (list python-dj-database-url
            python-dj-email-url
