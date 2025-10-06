@@ -2990,46 +2990,6 @@ with Intel @acronym{RAPL, Running Average Power Limit}.
 It provides the commands @code{powercap-info} and @code{powercap-set}.")
     (license license:bsd-3)))
 
-(define-public powerstat
-  (package
-    (name "powerstat")
-    (version "0.04.03")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ColinIanKing/powerstat")
-             (commit (string-append "V" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1a1fnw4rb8fx4wrcl0yc6dbjj49k6vagnq7diyw4fs4i5nin7mv3"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:tests? #f                      ; no test suite
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))         ; no configure script
-    (home-page "https://kernel.ubuntu.com/~cking/powerstat/")
-    (synopsis "Measure system power consumption")
-    (description
-     "Powerstat measures and reports your computer's power consumption in real
-time.  On mobile PCs, it uses ACPI battery information to measure the power
-drain of the entire system.
-
-Powerstat can also report @acronym{RAPL, Running Average Power Limit} power
-domain measurements.  These are available only on some hardware such as Intel
-Sandybridge and newer, and cover only part of the machine's components such as
-CPU, DRAM, and graphics.  However, they provide accurate and immediate readings
-and don't require a battery at all.
-
-The output is like @command{vmstat} but also shows power consumption statistics:
-at the end of a run, @command{powerstat} will calculate the average, standard
-deviation, and minimum and maximum values.  It can show a nice histogram too.")
-    (license license:gpl2)))
-
 (define-public psmisc
   (package
     (name "psmisc")
@@ -4594,68 +4554,6 @@ configuration and monitoring interfaces.")
      "iw is a new nl80211 based CLI configuration utility for wireless
 devices.  It replaces @code{iwconfig}, which is deprecated.")
     (license license:isc)))
-
-(define-public powertop
-  (package
-    (name "powertop")
-    (version "2.15")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/fenrus75/powertop")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "10vbk4vplmzp3p1mhwnhj81g6i5xvam9pdvmiy6cmd0xvnmdyy77"))))
-    (build-system gnu-build-system)
-    (arguments
-      (list
-        #:configure-flags #~(list "LDFLAGS=-pthread")
-        #:phases
-        #~(modify-phases %standard-phases
-          ;; TODO: Patch some hardcoded "wlan0" in calibrate/calibrate.cpp to
-          ;; allow calibrating the network interface in Guix System.
-          (add-after 'unpack 'patch-absolute-file-names
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let ((kmod (assoc-ref inputs "kmod")))
-                ;; Fix for using a more modern gettext.
-                (substitute* "autogen.sh"
-                  (("autoreconf")
-                   "autoreconf --force"))
-                (substitute* "configure.ac"
-                  (("^AM_GNU_GETTEXT_VERSION.*$")
-                   (string-append "AM_GNU_GETTEXT_VERSION(["
-                     #$(package-version (this-package-native-input "gettext-minimal"))
-                     "])\n")))
-                ;; Give the right 'modprobe' file name so that essential
-                ;; modules such as msr.ko can be loaded.
-                (substitute* (find-files "src" "\\.cpp$")
-                  (("/sbin/modprobe") (string-append kmod "/bin/modprobe"))
-                  ;; These programs are only needed to calibrate, so using
-                  ;; relative file names avoids adding extra inputs.  When they
-                  ;; are missing powertop gracefully handles it.
-                  (("/usr/s?bin/(hciconfig|hcitool|xset)" _ command)
-                   command
-                   command))))))))
-    (native-inputs
-     (list autoconf
-           autoconf-archive
-           automake
-           gettext-minimal
-           libtool
-           pkg-config))
-    (inputs
-     (list kmod libnl ncurses pciutils zlib))
-    (home-page "https://01.org/powertop/")
-    (synopsis "Analyze power consumption on x86-based laptops")
-    (description
-     "PowerTOP is a Linux tool to diagnose issues with power consumption and
-power management.  In addition to being a diagnostic tool, PowerTOP also has
-an interactive mode where the user can experiment various power management
-settings for cases where the operating system has not enabled these
-settings.")
-    (license license:gpl2)))
 
 (define-public aumix
   (package

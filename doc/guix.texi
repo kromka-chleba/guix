@@ -39148,7 +39148,7 @@ Available @code{powertop-configuration} fields are:
 
 @deftypevr {@code{powertop-configuration} parameter} package powertop
 The PowerTOP package.  Defaults to @code{powertop} in the @code{(gnu
-packages linux)} module
+packages power)} module.
 
 @end deftypevr
 
