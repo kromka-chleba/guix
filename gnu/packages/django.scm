@@ -870,7 +870,7 @@ templatetags and a full test suite.")
                (with-directory-excursion "testing"
                  (invoke "python" "runtests.py"))))))))
     (propagated-inputs
-     (list python-django python-jinja2 python-pytz python-django-pipeline))
+     (list python-django-4 python-jinja2 python-pytz python-django-pipeline))
     (native-inputs
      (list python-setuptools python-wheel tzdata-for-tests))
     (home-page "https://niwinz.github.io/django-jinja/latest/")
