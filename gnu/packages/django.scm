@@ -1056,7 +1056,7 @@ for Django sites.")
       #:test-backend #~'custom
       #:test-flags #~(list "tests/runtests.py")))
     (native-inputs (list python-setuptools tzdata-for-tests))
-    (propagated-inputs (list python-django))
+    (propagated-inputs (list python-django-4))
     (home-page "https://github.com/django/django-contrib-comments")
     (synopsis "Comments framework")
     (description
