@@ -39,6 +39,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix deprecation)
   #:use-module (guix search-paths)
+  #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
@@ -296,6 +297,22 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
     (properties `((cpe-name . "django")
                   ;; This CVE seems fixed since 4.2.1.
                   (lint-hidden-cve . ("CVE-2023-31047"))))))
+
+(define-public python-django-4
+  (package
+    (inherit python-django)
+    (name "python-django-4")
+    (version "4.2.23")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "django" version))
+        (sha256
+         (base32 "1r7sbhllc6d903di0ydqy737s28m223lgpk69y6xhjb4dsxfmza2"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-django)
+       ((#:phases phases)
+        #~(modify-phases #$phases (delete 'delete-sitecustomize)))))))
 
 (define-public python-django-cache-url
   (package
