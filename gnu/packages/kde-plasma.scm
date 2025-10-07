@@ -3305,6 +3305,7 @@ of a Plasma shell.")
                   krunner
                   plasma-workspace
                   qtdeclarative
+                  qtwayland
                   qtwebengine))
     (arguments (list #:qtbase qtbase
                      #:tests? #f))      ; no tests
