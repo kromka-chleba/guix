@@ -83,6 +83,7 @@
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;; Copyright © 2025 Artur Wroblewski <wrobell@riseup.net>
+;;; Copyright © 2025 Allan Adair <allan@adair.no>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -6381,7 +6382,7 @@ Services (AWS) API.")
            python-docutils
            python-jmespath
            python-jsonschema
-           python-prompt-toolkit
+           python-prompt-toolkit-3.0.50
            python-ruamel.yaml-0.16
            python-ruamel.yaml.clib
            python-urllib3))

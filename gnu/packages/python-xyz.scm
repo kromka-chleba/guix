@@ -172,6 +172,7 @@
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 Matthias Riße <matrss@0px.xyz>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
+;;; Copyright © 2025 Allan Adair <allan@adair.no>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -24253,6 +24254,17 @@ highlighting while typing, out-of-the-box multi-line input editing, advanced
 code completion, incremental search, support for Chinese double-width
 characters, mouse support, and auto suggestions.")
     (license license:bsd-3)))
+
+(define-public python-prompt-toolkit-3.0.50
+  (package
+    (inherit python-prompt-toolkit)
+    (version "3.0.50")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "prompt_toolkit" version))
+       (sha256
+        (base32 "1awvr1zqfy9z05cq6wn9qghx1wqlg9g7klnnbk5269hahvrlhisl"))))))
 
 (define-public python-proselint
   (package
