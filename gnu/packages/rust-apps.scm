@@ -1554,13 +1554,13 @@ with other physical backends.")
 (define-public just
   (package
     (name "just")
-    (version "1.40.0")
+    (version "1.43.0")
     (source (origin
               (method url-fetch)
               (uri (crate-uri "just" version))
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
-               (base32 "03k9ifgxwxvx41f7xc9hv09h0w6j9k46cazfdxzynq56dly3kl7c"))))
+               (base32 "139l2pqnzhlmmn4frcp4j4a81vnv42w2470sf23rrsilid11dd6i"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-test-flags
