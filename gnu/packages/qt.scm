@@ -3726,6 +3726,9 @@ and binaries removed, and adds modular support for using system libraries.")
                   (srfi srfi-1)
                   (srfi srfi-26)
                   (guix build utils)))
+       ;; This is only needed until 6.10, where it arrived upstream.
+       ;; https://codereview.qt-project.org/c/qt/qtwebengine/+/675112
+       (patches (search-patches "qtwebengine-revert-egl.patch"))
        (snippet
         #~(begin
             ;; Note: Anything under a 'third_party/' directory that needs to
