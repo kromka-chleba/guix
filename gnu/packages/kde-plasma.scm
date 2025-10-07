@@ -3105,7 +3105,8 @@ hardware management, and a high degree of customizability.")
            kwidgetsaddons
            kwindowsystem
            libplasma
-           qtdeclarative))
+           qtdeclarative
+           qtwayland))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f))
