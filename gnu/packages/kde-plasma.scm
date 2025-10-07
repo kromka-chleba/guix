@@ -2758,7 +2758,8 @@ vaults.")
                   kitemmodels
                   libksysguard
                   qqc2-desktop-style
-                  qtdeclarative))
+                  qtdeclarative
+                  qtwayland))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f))
