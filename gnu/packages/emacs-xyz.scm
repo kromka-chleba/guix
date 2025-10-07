@@ -15551,6 +15551,38 @@ though currently Obby (for use with the Gobby editor) is the only
 fully-functional one.")
     (license license:gpl3+)))
 
+(define-public emacs-wakatime-mode
+  ;; No release since May 5, 2015.
+  (let ((commit "1c5b2254dd72f2ff504d6a6189a8c10be03a98d1")
+        (revision "0"))
+    (package
+      (name "emacs-wakatime-mode")
+      (version (git-version "1.0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/wakatime/wakatime-mode/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "00qv6b756qiaqrmfg1w03psnsdj0iaz3sp50ib4kmdm2g9vgxl1s"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ;no tests
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; 'patch-el-files errors at "/bin/%s"
+            (delete 'patch-el-files))))
+      (home-page "https://wakatime.com/emacs/")
+      (synopsis "Automatic time tracking extension for Emacs using WakaTime")
+      (description
+       "@code{wakatime-mode} is an Emacs plugin for automatic time tracking
+and metrics generated from your programming activity.")
+      (license license:gpl3+))))
+
 (define-public emacs-wakib-keys
   (package
     (name "emacs-wakib-keys")
