@@ -2808,7 +2808,8 @@ sensors, process information and other system resources.")
            networkmanager-qt
            libplasma
            qtdeclarative
-           qtsvg))
+           qtsvg
+           qtwayland))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f))
