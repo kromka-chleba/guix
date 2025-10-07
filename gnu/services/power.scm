@@ -1,4 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
+;;; Copyright © 2024 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -92,7 +93,10 @@
             apcupsd-event-handlers-remotedown
             apcupsd-event-handlers-runlimit
             apcupsd-event-handlers-startselftest
-            apcupsd-event-handlers-timeout))
+            apcupsd-event-handlers-timeout
+
+            powertop-configuration
+            powertop-service-type))
 
 (define-configuration/no-serialization apcupsd-event-handlers
   (modules
@@ -666,3 +670,37 @@ file, 0 disables.")
                      (service-extension pam-root-service-type
                                         apcupsd-pam-extensions)))
    (default-value (apcupsd-configuration))))
+
+
+
+;;;
+;;; powertop
+;;;
+;;; Calls `powertop --auto-tune' to reduce energy consumption.
+
+(define-configuration powertop-configuration
+  (powertop (package powertop) "PowerTOP package to use."))
+
+(define powertop-shepherd-service
+  (match-lambda
+    (($ <powertop-configuration> powertop)
+     (shepherd-service
+      (documentation "Tune kernel power settings at boot.")
+      (provision '(powertop powertop-auto-tune))
+      (requirement '(user-processes))
+      (one-shot? #t)
+      (start #~(lambda _
+                 (zero? (system* #$(file-append powertop "/sbin/powertop")
+                                 "--auto-tune"))))))))
+
+(define powertop-service-type
+  (service-type
+   (name 'powertop)
+   (extensions
+    (list
+     (service-extension shepherd-root-service-type
+                        (compose list powertop-shepherd-service))))
+   (compose concatenate)
+   (default-value (powertop-configuration))
+   (description "Tune power-related kernel parameters to reduce energy
+ consumption.")))
