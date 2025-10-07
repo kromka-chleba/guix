@@ -159,6 +159,7 @@
              qtnetworkauth
              qtscxml
              qtsvg
+             qtwayland
              qtwebengine
              ruby
              sane-backends
