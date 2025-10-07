@@ -2657,7 +2657,8 @@ PulseAudio.")
                   kcoreaddons
                   kcontacts
                   qtdeclarative
-                  qtsvg))
+                  qtsvg
+                  qtwayland))
     (home-page "https://plasma-mobile.org/")
     (synopsis "Phonebook for Plasma Mobile devices")
     (description "This package provides contacts application which allows
