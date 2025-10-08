@@ -30,6 +30,7 @@
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
+;;; Copyright © 2025 iamawacko <iamawacko@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -81,6 +82,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages rust-crates)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages search)
@@ -105,6 +107,25 @@
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
+
+(define-public oniongen-rs
+  (package
+    (name "oniongen-rs")
+    (version "0.6.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "oniongen-rs" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "17jr1k2ga0wpama87hr9xdnhz8nj12cmhzvpvm42yrgfckkampbz"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'oniongen-rs))
+    (home-page "https://gitlab.com/iamawacko-oss/oniongen-rs")
+    (synopsis "A v3 .onion vanity URL generator written in Rust")
+    (description
+     "This package provides a v3 .onion vanity URL generator written in Rust.")
+    (license license:expat)))
 
 (define-public crc32c
   (package
