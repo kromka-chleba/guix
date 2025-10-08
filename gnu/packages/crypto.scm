@@ -124,7 +124,7 @@
     (home-page "https://gitlab.com/iamawacko-oss/oniongen-rs")
     (synopsis "A v3 .onion vanity URL generator written in Rust")
     (description
-     "This package provides a v3 .onion vanity URL generator written in Rust.")
+     "This package provides a v3 .onion vanity URL generator written in Rust. Regex can be used to filter URL's. The thread count and output directory can be specified. It's only moderately fash at generating the addresses and their associated hashes.")
     (license license:expat)))
 
 (define-public crc32c
