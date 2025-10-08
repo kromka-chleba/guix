@@ -61,6 +61,7 @@
   #:use-module (guix cache)
   #:use-module (guix ui)
   #:use-module (guix scripts)
+  #:use-module (guix derivations)
   #:use-module ((guix utils)
                 #:select (with-atomic-file-output compressed-file?))
   #:use-module ((guix build utils)
@@ -409,8 +410,14 @@ References: ~a~%"
 advertise it as the maximum validity period (in seconds) via the
 'Cache-Control' header.  This allows 'guix substitute' to cache it for an
 appropriate duration.  NAR-PATH specifies the prefix for nar URLs."
-  (let ((store-path (hash-part->path store hash)))
-    (if (string-null? store-path)
+  (let* ((store-path (hash-part->path store hash))
+         (derivations (if (string-null? store-path)
+                          '()
+                          (map read-derivation-from-file
+                               (valid-derivers store store-path))))
+         (distributable? (or (null? derivations)
+                             (any distributable-derivation? derivations))))
+    (if (or (string-null? store-path) (not distributable?))
         (not-found request #:phrase "" #:ttl negative-ttl)
         (values `((content-type . (application/x-nix-narinfo))
                   ,@(if ttl
@@ -548,8 +555,14 @@ requested using POOL."
          (cached       (and (not (string-null? item))
                             (narinfo-cache-file cache item
                                                 #:compression
-                                                (first compressions)))))
-    (cond ((string-null? item)
+                                                (first compressions))))
+         (derivations (if (string-null? item)
+                          '()
+                          (map read-derivation-from-file
+                               (valid-derivers store item))))
+         (distributable? (or (null? derivations)
+                             (any distributable-derivation? derivations))))
+    (cond ((or (string-null? item) (not distributable?))
            (not-found request #:ttl negative-ttl))
           ((stat cached #f)
            =>

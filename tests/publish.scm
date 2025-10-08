@@ -425,6 +425,23 @@ FileSize: ~a~%"
         (display "This file is not a valid store item." port)))
     (response-code (http-get (publish-uri (string-append "/nar/invalid"))))))
 
+(test-equal "non-distributable derivation"
+  404
+  (let* ((non-distributable
+          (run-with-store %store
+            (gexp->derivation "non-distributable"
+                              #~(begin
+                                  (mkdir #$output)
+                                  (chdir #$output)
+                                  (call-with-output-file "foo.txt"
+                                    (lambda (port)
+                                      (display "bar" port))))
+                              #:distributable? #f)))
+         (item (derivation->output-path non-distributable))
+         (path (string-append "/" (store-path-hash-part item) ".narinfo")))
+    (build-derivations %store `(,non-distributable))
+    (response-code (http-get (publish-uri path)))))
+
 (test-equal "/file/NAME/sha256/HASH"
   "Hello, Guix world!"
   (let* ((data "Hello, Guix world!")
