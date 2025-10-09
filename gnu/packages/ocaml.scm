@@ -5945,7 +5945,6 @@ since the start of the Unix epoch.")
      `(#:tests? #f)) ;see home page README for further information
     (propagated-inputs
      (list ocaml-base
-           ocaml-migrate-parsetree
            ocaml-compiler-libs
            ocaml-sexplib0
            ocaml-stdio
@@ -6251,7 +6250,7 @@ Atom.")
 (define-public ocaml-lsp-server
   (package
     (name "ocaml-lsp-server")
-    (version "1.17.0")
+    (version "1.23.1")
     (home-page "https://github.com/ocaml/ocaml-lsp")
     (source (origin
               (method git-fetch)
@@ -7433,7 +7432,7 @@ useful errors on failure.")
 (define-public ocaml-ppx-expect
   (package
     (name "ocaml-ppx-expect")
-    (version "0.15.0")
+    (version "0.17.3")
     (source
      (origin
        (method git-fetch)
@@ -7443,7 +7442,7 @@ useful errors on failure.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "134dl5qhjxsj2mcmrx9f3m0iys0n5mjfpz9flj8zn8d2jir43776"))))
+         "1knjg29hawci3hicv3wn2hlws88xn8rgbywqwrspg32qf6kpg1kr"))))
     (build-system dune-build-system)
     (arguments
      ;; Cyclic dependency with ocaml-ppx-jane
@@ -7454,7 +7453,6 @@ useful errors on failure.")
            ocaml-ppx-inline-test
            ocaml-stdio
            ocaml-ppxlib
-           ocaml-migrate-parsetree
            ocaml-re))
     (properties `((upstream-name . "ppx_expect")
                   (ocaml5.0-variant . ,(delay ocaml5.0-ppx-expect))))
