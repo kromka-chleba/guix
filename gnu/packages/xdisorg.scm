@@ -70,6 +70,7 @@
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 iamawacko <iamawacko@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
