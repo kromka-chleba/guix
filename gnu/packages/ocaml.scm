@@ -2232,7 +2232,7 @@ module of this library is parameterised by the type of S-expressions.")
     (propagated-inputs
      `(("ocaml-result" ,ocaml5.0-result)))))
 
-(define-public ocaml-migrate-parsetree
+(define-public ocaml4.14-migrate-parsetree
   (package
     (name "ocaml-migrate-parsetree")
     (version "2.4.0")
@@ -6787,7 +6787,7 @@ OCaml AST in the OCaml syntax;
      ;; (see https://github.com/janestreet/ppx_compare/issues/10)
      '(#:tests? #f))
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_compare")))
     (home-page "https://github.com/janestreet/ppx_compare")
     (synopsis "Generation of comparison functions from types")
@@ -6809,7 +6809,7 @@ by making sure that you only compare comparable values.")
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ; No tests
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "fieldslib")))
     (home-page "https://github.com/janestreet/fieldslib")
     (synopsis "Syntax extension to record fields")
@@ -6830,7 +6830,7 @@ of a record and create new record values.")
      ;; No tests
      `(#:tests? #f))
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "variantslib")))
     (home-page "https://github.com/janestreet/variantslib")
     (synopsis "OCaml variants as first class values")
@@ -6855,8 +6855,7 @@ standard library.")
          "094wsnw7fcwgl9xg6vkjb0wbgpn9scsp847yhdd184sz9v1amz14"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-base ocaml-fieldslib ocaml-migrate-parsetree
-           ocaml-ppxlib))
+     (list ocaml-base ocaml-fieldslib ocaml-ppxlib))
     (properties `((upstream-name . "ppx_fields_conv")))
     (synopsis "Generation of accessor and iteration functions for ocaml records")
     (description "Ppx_fields_conv is a ppx rewriter that can be used to define
@@ -6905,8 +6904,7 @@ definitions.")
          "1dh0bw9dn246k00pymf59yjkl6x6bxd76lkk9b5xpq2692wwlc3s"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-base ocaml-variantslib ocaml-migrate-parsetree
-           ocaml-ppxlib))
+     (list ocaml-base ocaml-variantslib ocaml-ppxlib))
     (properties
      `((upstream-name . "ppx_variants_conv")))
     (home-page
@@ -6934,8 +6932,7 @@ variant types.")
          "1k8nmq6kwqz2wpkm9ymq749dz1vd8lxrjc711knp1wyz5935hnsv"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-base ocaml-ppx-sexp-conv ocaml-migrate-parsetree
-           ocaml-ppxlib))
+     (list ocaml-base ocaml-ppx-sexp-conv ocaml-ppxlib))
     (properties `((upstream-name . "ppx_custom_printf")))
     (synopsis "Printf-style format-strings for user-defined string conversion")
     (description "Extensions to printf-style format-strings for user-defined
@@ -7087,7 +7084,7 @@ currently provides SHA1, SHA256 and SHA512 hash functions.")
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-ppx-compare ocaml-ppx-sexp-conv
-           ocaml-migrate-parsetree ocaml-ppxlib))
+           ocaml-ppxlib))
     (properties `((upstream-name . "ppx_hash")))
     (home-page "https://github.com/janestreet/ppx_hash")
     (synopsis "Generation of hash functions from type expressions and definitions")
@@ -7107,7 +7104,7 @@ hash functions from type exrpessions and definitions.")
     (arguments
      `(#:tests? #f)) ; no test suite
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_enumerate")))
     (home-page "https://github.com/janestreet/ppx_enumerate")
     (synopsis "Generate a list containing all values of a finite type")
@@ -7152,7 +7149,7 @@ many values).")
      ;; broken tests
      `(#:tests? #f))
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_here")))
     (home-page "https://github.com/janestreet/ppx_here")
     (synopsis "Expands [%here] into its location")
@@ -7313,7 +7310,7 @@ literal of the  form 1.0v to conversion functions currently in scope.")
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ; No tests
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_optional")))
     (home-page "https://github.com/janestreet/ppx_optional")
     (synopsis "Pattern matching on flat options")
@@ -7356,7 +7353,7 @@ size, the version of the compiler, ...")
                         "0m9niyiiv3qzv5x8hw0ifxjjzshnmx40dchka9d93mmnx88jqx34"))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-ppxlib ocaml-ppx-here))
+     (list ocaml-base ocaml-ppxlib ocaml-ppx-here))
     (properties `((upstream-name . "ppx_let")))
     (home-page "https://github.com/janestreet/ppx_let")
     (synopsis "Monadic let-bindings")
@@ -7420,7 +7417,6 @@ https://github.com/ocaml/ocaml/issues/8563.")
            ocaml-ppx-compare
            ocaml-ppx-here
            ocaml-ppx-sexp-conv
-           ocaml-migrate-parsetree
            ocaml-ppxlib))
     (properties `((upstream-name . "ppx_assert")))
     (home-page "https://github.com/janestreet/ppx_assert")
@@ -7504,7 +7500,7 @@ to denote the expected output.")
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ; No tests
     (propagated-inputs
-     (list ocaml-base ocaml-migrate-parsetree ocaml-octavius ocaml-ppxlib))
+     (list ocaml-base ocaml-octavius ocaml-ppxlib))
     (properties `((upstream-name . "ppx_js_style")))
     (home-page "https://github.com/janestreet/ppx_js_style")
     (synopsis "Code style checker for Jane Street Packages")
@@ -7596,7 +7592,6 @@ conversion functions between almost identical types.")
            ocaml-ppx-hash
            ocaml-ppx-js-style
            ocaml-ppx-sexp-conv
-           ocaml-migrate-parsetree
            ocaml-ppxlib))
     (properties `((upstream-name . "ppx_base")))
     (home-page "https://github.com/janestreet/ppx_base")
@@ -8326,7 +8321,6 @@ then run the Bisect_ppx report tool on the generated visitation files.")
           ocaml-fmt
           ocaml-fpath
           ocaml-logs
-          ocaml-migrate-parsetree
           ocaml-odoc-parser
           ocaml-re
           ocaml-result
