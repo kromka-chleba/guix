@@ -71,33 +71,45 @@
              (value->string value)))))
 
 ;;
+(define (serialize-boolean _ value)
+  (if value "true" "false"))
 
-(define (serialize-boolean entry tabs)
-  (serialize-entry entry
-                   (match-lambda (#t "true") (#f "false"))
-                   tabs))
-
-(define (serialize-number entry tabs)
-  (serialize-entry entry
-                   number->string
-                   tabs))
+(define (serialize-number _ value)
+  (number->string value))
 
 (define serialize-integer serialize-number)
 
 (define serialize-real serialize-number)
 
-(define estring? string?)
+(define (serialize-boolean-entry _ value)
+  (serialize-entry value
+                   (match-lambda (#t "true") (#f "false"))
+                   1))
 
-(define (serialize-estring entry tabs)
-  (serialize-entry entry
+(define (serialize-number-entry _ value)
+  (serialize-entry value
+                   number->string
+                   1))
+
+(define serialize-integer-entry serialize-number-entry)
+(define serialize-real-entry serialize-number-entry)
+
+(define (serialize-string-entry _ value)
+  (serialize-entry value
                    identity
-                   tabs))
+                   1))
 
 (define-maybe boolean)
 (define-maybe number)
 (define-maybe integer)
 (define-maybe real)
-(define-maybe estring)
+(define-maybe string)
+
+(define-maybe boolean-entry)
+(define-maybe number-entry)
+(define-maybe integer-entry)
+(define-maybe real-entry)
+(define-maybe string-entry)
 
 ;;
 
@@ -114,11 +126,13 @@
   (match entry
     (() "")
     (((? symbol?) (? string?))
-     (serialize-estring entry tabs))
+     (serialize-entry entry identity tabs))
     (((? symbol?) (? number?))
-     (serialize-number entry tabs))
+     (serialize-entry entry number->string tabs))
     (((? symbol?) (? boolean?))
-     (serialize-boolean entry tabs))
+     (serialize-entry entry
+                      (match-lambda (#t "true") (#f "false"))
+                      tabs))
     (((? symbol? key) (? block-entries? value))
      (format #f "~v/~a {\n~a~v/}\n"
              tabs
@@ -174,13 +188,15 @@
 ;;; An executable (a target for the exec action) can be a string or a gexp
 (define (executable? value)
   (or (string? value)
+      (symbol? value)
       (gexp? value)))
 
 ;;; Gexp executables will be serialized on a program-file
 (define (serialize-executable name value)
   (if (string? value) value
-      (program-file (symbol->string name) value
-                    #:module-path %load-path)))
+      (if (symbol? value) (symbol->string value)
+          (program-file (symbol->string name) value
+                        #:module-path %load-path))))
 
 ;;; A list of valid executables
 (define list-of-executables?
@@ -325,7 +341,7 @@
    (maybe-addreserved %unset-value)
    "A reserved area is an area that remains unoccupied by tiled windows.")
   (mirror
-   (maybe-estring %unset-value)
+   (maybe-string-entry %unset-value)
    "Mirror a display.")
   (bitdepth
    (maybe-bitdepth %unset-value)
@@ -335,25 +351,25 @@
    "Change default sRGB output preset.")
   ;; TODO: Add VRR
   (supports_wide_color
-   (maybe-boolean %unset-value)
+   (maybe-boolean-entry %unset-value)
    "Force wide color gamut support.")
   (supports_hdr
-   (maybe-boolean %unset-value)
+   (maybe-boolean-entry %unset-value)
    "Force HDR support. Requires wide color gamut.")
   (sdr_min_luminance
-   (maybe-real %unset-value)
+   (maybe-real-entry %unset-value)
    "SDR minimum lumninace used for SDR → HDR mapping.")
   (sdr_max_luminance
-   (maybe-integer %unset-value)
+   (maybe-integer-entry %unset-value)
    "SDR maximum luminance. Can be used to adjust overall SDR → HDR brightness.")
   (min_luminance
-   (maybe-real %unset-value)
+   (maybe-real-entry %unset-value)
    "Monitor's minimum luminance")
   (max_luminance
-   (maybe-integer %unset-value)
+   (maybe-integer-entry %unset-value)
    "Monitor's maximum possible luminance")
   (max_avg_luminance
-   (maybe-integer %unset-value)
+   (maybe-integer-entry %unset-value)
    "Monitor's maximum luminance on average for a typical frame"))
 
 (define (serialize-monitor _ m)
@@ -365,9 +381,11 @@
 (define list-of-monitors? (list-of monitor?))
 
 (define (serialize-list-of-monitors name monitors)
-  #~(string-join (list #$@(map (cut serialize-monitor name <>)
-                               monitors))
-                 "\n"))
+  #~(string-append
+     "monitor=,preferred,auto,auto\n\n"
+     (string-join (list #$@(map (cut serialize-monitor name <>)
+                                monitors))
+                  "\n")))
 
 ;;; Environment variable
 (define-configuration env
@@ -418,6 +436,44 @@
      (list #$@(map (λ (v) (serialize-executable name v))
                    (if (list? values) values (list values))))
      ", "))
+
+;;; Gestures sub-configuration
+(define (gesture-direction? x)
+  (memq x '(swipe horizontal vertical
+                  left right up down
+                  pinch pinchin pinchout)))
+
+(define (serialize-gesture-direction name d)
+  (symbol->string d))
+
+(define (gesture-action? x)
+  (memq x '(dispatcher workspace move
+                       resize special
+                       close fullscreen
+                       float)))
+
+(define (serialize-gesture-action name a)
+  (symbol->string a))
+
+(define-configuration gesture
+  (fingers (number) "Number of fingers")
+  (direction (gesture-direction) "Gesture direction")
+  (action (gesture-action) "Gesture action")
+  (args (arguments '()) "Gesture action's args"))
+
+(define (serialize-gesture name g)
+  #~(string-append "gesture = "
+                   #$(serialize-joined g gesture-fields #:delimiter ",")))
+
+(define (list-of-gestures? x)
+  (every gesture? x))
+
+(define (serialize-list-of-gestures name gestures)
+  #~(string-append
+     (string-join
+      (list #$@(map (λ (g) (serialize-gesture name g)) gestures))
+      "\n")
+     "\n")
 
 ;;; Binding sub-configuration
 (define-configuration binding
@@ -513,6 +569,7 @@
   (misc (block '()) "Misc settings")
   (input (block '()) "Input settings")
   (gestures (block '()) "Gestures settings")
+  (gestures-definitions (list-of-gestures '()) "Gestures definitions")
   (group (block '()) "Group settings")
   (binds (block '()) "Binds settings")
   (xwayland (block '()) "XWayland settings")
@@ -600,7 +657,8 @@
     (animation "fadeLayersOut, 1, 1.39, almostLinear")
     (animation "workspaces, 1, 1.94, almostLinear, fade")
     (animation "workspacesIn, 1, 1.21, almostLinear, fade")
-    (animation "workspacesOut, 1, 1.94, almostLinear, fade")))
+    (animation "workspacesOut, 1, 1.94, almostLinear, fade")
+    (animation "zoomFactor, 1, 7, quick")))
 
 (define-public %default-hyprland-misc
   '((force_default_wallpaper -1)
@@ -619,8 +677,10 @@
     (sensitivity 0)
     (touchpad ((natural_scroll #f)))))
 
-(define-public %default-hyprland-gestures
-  '((workspace_swipe #f)))
+(define-public %default-hyprland-gestures-definitions
+  (list (gesture (fingers 3)
+                 (direction 'horizontal)
+                 (action 'workspace))))
 
 (define-public %default-hyprland-bindings
   (bindings (main-mod 'super)
@@ -746,7 +806,8 @@
                           (misc %default-hyprland-misc)
                           (input %default-hyprland-input)
                           (dwindle %default-hyprland-dwindle)
-                          (gestures %default-hyprland-gestures)
+                          (gestures-definitions
+                           %default-hyprland-gestures-definitions)
                           (bindings %default-hyprland-bindings)))
 
 ;;;
