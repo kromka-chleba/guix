@@ -495,20 +495,21 @@ word (e.g. cats) into its lemma \"cat\" and the grammatical information
 (define-public apertium
   (package
     (name "apertium")
-    (version "3.5.2")
+    (version "3.9.12")
     (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/apertium/apertium/releases/download/v"
-             version "/apertium-" version ".tar.gz"))
-       (sha256
-        (base32
-         "0lrx58ipx2kzh1pd3xm1viz05dqyrq38jbnj9dnk92c9ckkwkp4h"))
-       (file-name (string-append name "-" version ".tar.gz"))))
+       (origin
+        (method git-fetch)
+        (file-name (git-file-name name version))
+        (uri
+         (git-reference
+          (url "https://github.com/apertium/apertium")
+          (commit (string-append "v" version))))
+        (sha256 (base32 "1wkb8dqcamk42y67plj77n8d27g5qlsnpkgxnkvm0wv2pr35gmzw"))))
     (build-system gnu-build-system)
     (inputs
-     (list libxml2 libxslt lttoolbox pcre))
+     (list libxml2 libxslt lttoolbox pcre
+           icu4c utfcpp-2 zip unzip
+          (libc-utf8-locales-for-target)));; tests require UTF-8
     (native-inputs
      `(("apertium-get"
         ,(origin
@@ -519,10 +520,15 @@ word (e.g. cats) into its lemma \"cat\" and the grammatical information
            (sha256
             (base32
              "0kgp68azvds7yjwfz57z8sa5094fyk5yr0qxzblrw7bisrrihnav"))))
+       ("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
        ("flex" ,flex)
        ("pkg-config" ,pkg-config)
        ;; python is only required for running the test suite
-       ("python" ,python)))
+       ("python" ,python)
+       ("python-lxml" ,python-lxml) ;; as is this
+       ("libzip" ,libzip))) ;; and this
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -533,7 +539,35 @@ word (e.g. cats) into its lemma \"cat\" and the grammatical information
            (lambda* (#:key inputs #:allow-other-keys)
              (copy-recursively (assoc-ref inputs "apertium-get")
                                "apertium/apertium-get")
-             #t)))))
+             #t))
+         (add-after 'unpack 'reconf
+              (lambda _
+               (invoke "autoreconf" "-vfi")))
+         (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "apertium/Makefile.am"
+                (("xmllint") (search-input-file inputs "/bin/xmllint")))
+              (substitute* "apertium/apertium-header.sh"
+                (("locale -a")
+                 (string-append (search-input-file inputs "/bin/locale") " -a"))
+                ;; 'locale -a' does not report properly in guix;
+                ;; a  `guix shell -C glibc glibc-locales - locale -a`
+                ;; will still only list C and POSIX
+                ;; alternatively we could replace the `locale -a` invocations
+                ;; with something along the lines of `{ locale -a ; echo $LC_ALL }`
+                ;; or `{ locale -a; locale | grep LC_CTYPE | cut -d= -f2 | tr -d '"' }.`
+                (("^locale_utf8\n$")
+                 "# locale_utf8 # disabled by guix \n" )
+                ;; replace in everywhere but the shebang
+                (("bash([^\n])" _ suffix)
+                 (string-append (search-input-file inputs "/bin/bash") suffix))
+                (("\\b(grep|head|cat|rm|unzip|zip|gawk|awk|find|xmllint|lt-tmxproc)\\b" _ program)
+                 (search-input-file inputs (format #f "/bin/~a" program))))))
+         ;; we want the shebang to be patched so that the invocation during tests
+        ;; does not need /usr/bin/env
+         (add-after 'build 'patch-apertium-shebang
+             (lambda _
+               (patch-shebang "apertium/apertium"))))))
     (home-page "https://www.apertium.org/")
     (synopsis "Rule based machine translation system")
     (description "Apertium is a rule based machine translation system
@@ -542,7 +576,8 @@ system makes translations fast (translating tens of thousands of words per
 second on ordinary desktop computers) and, in spite of the errors, reasonably
 intelligible and easily correctable.")
     (license (list license:gpl2 ; main license
-                   license:expat)))) ; utf8/*
+                   license:expat))))
+ ; utf8/*
 
 (define-public sdcv
   (package
