@@ -35996,6 +35996,10 @@ activation.  This option is particularly useful to allow @code{nginx} to
 start before @code{certbot} has run, because @code{certbot} relies on
 @code{nginx} running to perform HTTP challenges.
 
+@item @code{user} (default: @code{#f})
+Unless false, this represents the name of the user that will own this
+certificate.
+
 @end table
 @end deftp
 

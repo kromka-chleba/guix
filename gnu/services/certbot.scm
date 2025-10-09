@@ -8,6 +8,7 @@
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2024 Carlo Zancanaro <carlo@zancanaro.id.au>
+;;; Copyright © 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -68,6 +69,8 @@
                        (default #f))
   (dry-run?            certbot-configuration-dry-run?
                        (default #f))
+  (user                certificate-configuration-user
+                       (default #f))
   (start-self-signed?  certificate-configuration-start-self-signed?
                        (default #t)))
 
@@ -93,13 +96,13 @@
                           (body
                            (list "return 301 https://$host$request_uri;"))))))
 
-(define (certbot-deploy-hook name deploy-hook-script)
+(define (certbot-deploy-hook name user deploy-hook-script)
   "Returns a gexp which creates symlinks for privkey.pem and fullchain.pem
 from /etc/certs/NAME to /etc/letsenctypt/live/NAME.  If DEPLOY-HOOK-SCRIPT is
 not #f then it is run after the symlinks have been created.  This wrapping is
 necessary for certificates with start-self-signed? set to #t, as it will
 overwrite the initial self-signed certificates upon the first successful
-deploy."
+deploy. If USER is not false, it will be set as the owner of the certificate."
   (program-file
    (string-append name "-deploy-hook")
    (with-imported-modules '((gnu services herd)
@@ -125,6 +128,18 @@ deploy."
          (rename-file #$(string-append "/etc/certs/" name "/fullchain.pem.new")
                       #$(string-append "/etc/certs/" name "/fullchain.pem"))
 
+         (when #$user
+           (let* ((user (getpwnam #$user))
+                  (uid (passwd:uid user))
+                  (gid (passwd:gid user)))
+             (map (lambda (cert)
+                    (chown cert uid gid)
+                    (chmod cert #o640))
+                  '(#$(string-append "/etc/certs/" name "/fullchain.pem")
+                    #$(string-append "/etc/certs/" name "/privkey.pem")
+                    #$(string-append "/etc/letsencrypt/live/" name "/fullchain.pem")
+                    #$(string-append "/etc/letsencrypt/live/" name "/privkey.pem")))))
+
          ;; With the new certificates in place, tell nginx to reload them.
          (with-shepherd-action 'nginx ('reload) result result)
 
@@ -144,7 +159,7 @@ deploy."
                 (($ <certificate-configuration> custom-name domains challenge
                                                 csr authentication-hook
                                                 cleanup-hook deploy-hook
-                                                dry-run?)
+                                                dry-run? user)
                  (append
                   (let ((name (or custom-name (car domains))))
                     (if challenge
@@ -165,7 +180,7 @@ deploy."
                              '())
                          (if cleanup-hook `("--manual-cleanup-hook" ,cleanup-hook) '())
                          (list "--deploy-hook"
-                               (certbot-deploy-hook name deploy-hook)))
+                               (certbot-deploy-hook name user deploy-hook)))
                         (append
                          (list name certbot "certonly" "-n" "--agree-tos"
                                "--webroot" "-w" webroot
@@ -178,7 +193,7 @@ deploy."
                          (if server `("--server" ,server) '())
                          (if rsa-key-size `("--rsa-key-size" ,rsa-key-size) '())
                          (list "--deploy-hook"
-                               (certbot-deploy-hook name deploy-hook)))))
+                               (certbot-deploy-hook name user deploy-hook)))))
                   ;; Common options.
                   (if dry-run? '("--dry-run") '()))))
               certificates)))
