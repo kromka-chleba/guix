@@ -564,16 +564,18 @@ depend: $(STDLIB_MLIS) $(STDLIB_DEPS)"))
 (define-public ocamlbuild
   (package
     (name "ocamlbuild")
-    (version "0.14.2")
+    (version "0.16.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/ocaml/ocamlbuild")
-             (commit version)))
+              (url "https://github.com/ocaml/ocamlbuild")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16q8s22msyfq66i1sbz99wj04a9x9ad95x458ixxacxsv0qqh2j0"))))
+        (base32
+         "148r0imzsalr7c3zqncrl4ji29wpb5ls5zkqxy6xnh9q99gxb4a6"
+         ))))
     (build-system ocaml-build-system)
     (arguments
      `(#:make-flags
@@ -585,7 +587,7 @@ depend: $(STDLIB_MLIS) $(STDLIB_DEPS)"))
        #:phases
        (modify-phases %standard-phases
          (delete 'configure))
-       ; some failures because of changes in OCaml's error message formatting
+                                        ; some failures because of changes in OCaml's error message formatting
        #:tests? #f))
     (home-page "https://github.com/ocaml/ocamlbuild")
     (synopsis "OCaml build tool")
