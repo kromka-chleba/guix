@@ -816,7 +816,7 @@
 
 ;;; Obtained with string-hash-ci on the default hyprland.conf
 ;;; Maintainers can find the hash upgrades on home service logs too
-(define %default-configuration-hash 415437361418070137)
+(define %default-configuration-hash 1306026798983552676)
 
 ;;; Reload the first instance of hyprland to automatically load the new
 ;;; configuration. If the package's default configuration changes, display a
