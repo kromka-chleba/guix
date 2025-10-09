@@ -6615,11 +6615,18 @@ is now @code{Ocaml_common.Ast_helper}.")
 (define-public ocaml-stdio
   (package
     (name "ocaml-stdio")
-    (version "0.15.0")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/stdio")
     (source
-     (janestreet-origin "stdio" version
-                        "0jsyg4jlp76d9gx1fngms6nfs7dcpsysdsvkywjq9a663n994wn3"))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1l3da9qri8d04440ps51j9ffh6bpk8j11mda4lidcndkmr94r19p"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-sexplib0))
