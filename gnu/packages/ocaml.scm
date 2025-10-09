@@ -6503,7 +6503,7 @@ rules than the default pretty printer in Sexplib.")
 (define-public ocaml-base
   (package
     (name "ocaml-base")
-    (version "0.15.0")
+    (version "0.17.3")
     (home-page "https://github.com/janestreet/base")
     (source
       (origin
@@ -6514,7 +6514,7 @@ rules than the default pretty printer in Sexplib.")
         (file-name (git-file-name name version))
         (sha256
          (base32
-          "1qyycqqr4dijvxm4hhy79c964wd91kpsfvb89kna1qwgllg0hrpj"))))
+          "0yyd9cs6qf8bzk4cpga6hh0iiarhyl2kn15ar3jgqgfmg3p6bcyb"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-sexplib0))
@@ -6531,6 +6531,39 @@ Base aims to be usable in any context.  As a result system dependent
 features such as I/O are not offered by Base.  They are instead
 provided by companion libraries such as
 @url{https://github.com/janestreet/stdio, ocaml-stdio}.")
+    (license license:expat)))
+
+(define-public ocaml-intrinsics-kernel
+  (package
+    (name "ocaml-intrinsics-kernel")
+    (version "0.17.1")
+    (home-page "https://github.com/janestreet/ocaml_intrinsics_kernel")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/janestreet/ocaml_intrinsics_kernel")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1a85l2cns5g8vnxri1pxrx1zhs2r04bjl2sj2vfpcv9vs8k6pw6r"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml-sexplib0))
+    (properties `((ocaml5.3-variant . ,(delay ocaml5.3-base))))
+    (synopsis
+     "Full standard library replacement for OCaml")
+    (description
+     "
+ocaml_intrinsics_kernel - a library of intrinsics for OCaml
+
+The ocaml_intrinsics_kernel library provides an OCaml interface to operations that have dedicated hardware instructions on some micro-architectures. Currently, it provides the following operations:
+
+    conditional select
+
+See ocaml_intrinsics for details. Unlike ocaml_intrinsics, ocaml_intrinsics_kernel can be used by programs compiled to javascript."
+     )
     (license license:expat)))
 
 (define-public ocaml5.0-base
