@@ -9357,24 +9357,29 @@ tunnels in the background, using Python.")
 (define-public python-robotframework-sshtunnellibrary
   (package
     (name "python-robotframework-sshtunnellibrary")
-    (version "1.0.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/C-Squad/robotframework-sshtunnellibrary")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1vkkmkb8iql13xpbyj4hvnnmfgzqlr8rffgryp2082cadb3w7xrd"))))
-    (build-system python-build-system)
+    (properties '((commit . "1b4ed494a0ea67f5c0a3051f779a9ff071f1cf80")
+                  (revision . "0")))
+    (version (git-version "1.0.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "\
+https://github.com/C-Squad/robotframework-sshtunnellibrary")
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18yik7g48v36kgak7qd8k1wn9xxf13s74xnxjzrx82af2fv3nhbr"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (invoke "python" "-m" "unittest"
-                                      "discover" "-s" "test")))))))
+     (list
+      ;; XXX: Could not establish session to SSH gateway
+      #:tests? #f
+      #:test-backend #~'unittest
+      #:test-flags #~(list "discover" "-s" "test")))
+    (native-inputs (list python-setuptools))
     (propagated-inputs (list python-robotframework python-sshtunnel))
     (home-page "https://github.com/C-Squad/robotframework-sshtunnellibrary")
     (synopsis "Alternative RobotFramework library for SSH tunnels")
