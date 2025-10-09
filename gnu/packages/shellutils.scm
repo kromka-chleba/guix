@@ -55,6 +55,13 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages music)
+  #:use-module (gnu packages mail)
+  #:use-module (gnu packages photo)
+  #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gtk)
+  #:use-module (gnu packages pdf)
+  #:use-module (gnu packages glib)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
@@ -1134,6 +1141,40 @@ with Guix Home:
                                      \"source \" liquidprompt \"/share/liquidprompt/themes/powerline/powerline.theme\"))))))
 @end example\n")
     (license license:agpl3+)))
+
+(define-public mat2
+  (package
+    (name "mat2")
+    (version "0.13.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mat2" version))
+       (sha256
+        (base32 "06gyj6zjw59c36xzvgc4dn40fqhc3ll1jygravb8pkygy3qc9ryp"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (propagated-inputs (list gdk-pixbuf
+                             perl-image-exiftool
+                             python-mutagen
+                             python-pycairo
+                             python-pygobject
+                             librsvg
+                             python-setuptools
+                             poppler
+                             mailcap))
+    (native-inputs (list python-pytest))
+    (home-page "https://0xacab.org/jvoisin/mat2")
+    (synopsis
+     "CLI metadata removal tool, written in Python with wide compatibility")
+    (description
+     "mat2 is a metadata removal tool, supporting a wide range of commonly used file
+formats, written in python3: at its core, it's a library, used by an eponymous
+command-line interface, as well as several file manager extensions.")
+    (license license:lgpl3)))
+
 
 (define-public fzf-tab
   (package
