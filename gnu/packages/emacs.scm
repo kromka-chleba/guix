@@ -668,7 +668,7 @@ editor (with wide ints)" )
 
 (define-public emacs-next-minimal
   (let ((commit "9663c959c73d6cca0c56f833d80ff1d9e9708b70")
-        (revision "1"))
+        (revision "2"))
   (package
     (inherit emacs-minimal)
     (name "emacs-next-minimal")
@@ -693,7 +693,30 @@ editor (with wide ints)" )
                         "emacs-pgtk-super-key-fix.patch"
                         ;; XXX This commit should already be on 31.0 but
                         ;; without this emacs-next will fail a test.
-                        "emacs-zoom-image-test-fix.patch")))))))
+                        "emacs-zoom-image-test-fix.patch"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments emacs-minimal)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'install-c-source
+              (lambda _
+                (let ((dest (string-append #$output:doc
+                                           "/share/emacs/c-source"))
+                      (lisp-dir (string-append #$output:doc
+                                               "/share/emacs/site-lisp")))
+                  (mkdir-p dest)
+                  (copy-recursively "src" dest)
+                  (mkdir-p lisp-dir)
+                  (with-output-to-file (string-append lisp-dir
+                                                      "/guix-emacs-c-source.el")
+                    (lambda ()
+                      (display
+                       (string-append
+                        ";; -*- lexical-binding: t; -*- "
+                        "\n\n"
+                        "(setq find-function-C-source-directory \"" dest "\")"
+                        "\n\n"
+                        "(provide 'guix-emacs-c-source)"))))))))))))))
 
 (define* (emacs->emacs-next emacs #:optional name
                             #:key (version (package-version emacs-next-minimal))
@@ -706,7 +729,30 @@ editor (with wide ints)" )
                                   (string-drop (package-name emacs)
                                                (string-length "emacs"))))))
     (version version)
-    (source source)))
+    (source source)
+    (arguments
+     (substitute-keyword-arguments (package-arguments emacs)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'install-c-source
+              (lambda _
+                (let ((dest (string-append #$output:doc
+                                           "/share/emacs/c-source"))
+                      (lisp-dir (string-append #$output:doc
+                                               "/share/emacs/site-lisp")))
+                  (mkdir-p dest)
+                  (copy-recursively "src" dest)
+                  (mkdir-p lisp-dir)
+                  (with-output-to-file (string-append lisp-dir
+                                                      "/guix-emacs-c-source.el")
+                    (lambda ()
+                      (display
+                       (string-append
+                        ";; -*- lexical-binding: t; -*- "
+                        "\n\n"
+                        "(setq find-function-C-source-directory \"" dest "\")"
+                        "\n\n"
+                        "(provide 'guix-emacs-c-source)")))))))))))))
 
 (define-public emacs-next (emacs->emacs-next emacs))
 (define-public emacs-next-pgtk (emacs->emacs-next emacs-pgtk))
