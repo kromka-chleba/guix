@@ -85,7 +85,8 @@
             gitile-configuration-port
             gitile-configuration-database
             gitile-configuration-repositories
-            gitile-configuration-git-base-url
+            gitile-configuration-git-owner-validation?
+            gitile-configuration-base-git-url
             gitile-configuration-index-title
             gitile-configuration-intro
             gitile-configuration-footer
@@ -498,6 +499,8 @@ provide a web interface to view selected repositories.")))
             (default "/var/lib/gitile/gitile-db.sql"))
   (repositories gitile-configuration-repositories
                 (default "/var/lib/gitolite/repositories"))
+  (git-owner-validation? gitile-configuration-git-owner-validation?
+                         (default #t))
   (base-git-url gitile-configuration-base-git-url)
   (index-title gitile-configuration-index-title
                (default "Index"))
@@ -507,7 +510,8 @@ provide a web interface to view selected repositories.")))
           (default '()))
   (nginx gitile-configuration-nginx))
 
-(define (gitile-config-file host port database repositories base-git-url
+(define (gitile-config-file host port database repositories
+                            git-owner-validation? base-git-url
                             index-title intro footer)
   (define build
     #~(write `(config
@@ -515,6 +519,7 @@ provide a web interface to view selected repositories.")))
                 (host #$host)
                 (database #$database)
                 (repositories #$repositories)
+                (git-owner-validation? #$git-owner-validation?)
                 (base-git-url #$base-git-url)
                 (index-title #$index-title)
                 (intro #$intro)
@@ -526,7 +531,7 @@ provide a web interface to view selected repositories.")))
 (define gitile-nginx-server-block
   (match-lambda
     (($ <gitile-configuration> package host port database repositories
-        base-git-url index-title intro footer nginx)
+        git-owner-validation? base-git-url index-title intro footer nginx)
      (list (nginx-server-configuration
              (inherit nginx)
              (locations
@@ -552,7 +557,7 @@ provide a web interface to view selected repositories.")))
 (define gitile-shepherd-service
   (match-lambda
     (($ <gitile-configuration> package host port database repositories
-        base-git-url index-title intro footer nginx)
+        git-owner-validation? base-git-url index-title intro footer nginx)
      (list (shepherd-service
              (provision '(gitile))
              (requirement '(loopback))
@@ -562,6 +567,7 @@ provide a web interface to view selected repositories.")))
                               `(,#$gitile "-c" #$(gitile-config-file
                                                    host port database
                                                    repositories
+                                                   git-owner-validation?
                                                    base-git-url index-title
                                                    intro footer))
                               #:user "gitile"
