@@ -559,7 +559,7 @@ depend: $(STDLIB_MLIS) $(STDLIB_DEPS)"))
        ("perl" ,perl)
        ("pkg-config" ,pkg-config)))))
 
-(define-public ocaml ocaml-4.14)
+(define-public ocaml ocaml-5.3)
 
 (define-public ocamlbuild
   (package
