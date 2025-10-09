@@ -2652,32 +2652,18 @@ dates and times.")
 (define-public ocaml-cmdliner
   (package
     (name "ocaml-cmdliner")
-    (version "1.1.1")
+    (version "2.0.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://erratique.ch/software/cmdliner/releases/"
                                   "cmdliner-" version ".tbz"))
               (sha256
                (base32
-                "1yxm4x34cbi06bfld601ds9drlbnyx0797ym3n6yyh4rlz1qgbm1"))))
-    (build-system ocaml-build-system)
-    (inputs
+                "10l56xl7ibhbjljvfbz9fji3py5k9rrdffqdyvgsmyrn3iiplm2f"))))
+    (build-system dune-build-system)
+    (propagated-inputs
      (list ocaml-result))
-    (native-inputs
-     (list ocamlbuild))
-    (arguments
-     `(#:tests? #f
-       #:make-flags ,#~(list (string-append "LIBDIR=" #$output
-                                            "/lib/ocaml/site-lib/cmdliner"))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'build 'fix-source-file-order
-           (lambda _
-             (substitute* "build.ml"
-               (("Sys.readdir dir")
-                "let a = Sys.readdir dir in Array.sort String.compare a; a"))
-             #t)))))
+    (arguments `(#:tests? #f))
     (home-page "https://erratique.ch/software/cmdliner")
     (synopsis "Declarative definition of command line interfaces for OCaml")
     (description "Cmdliner is a module for the declarative definition of command
@@ -5297,7 +5283,7 @@ and 4 (random based) according to RFC 4122.")
 (define-public ocaml-graph
   (package
     (name "ocaml-graph")
-    (version "2.0.0")
+    (version "2.2.0")
     (home-page "https://github.com/backtracking/ocamlgraph/")
     (source (origin
               (method git-fetch)
@@ -5307,7 +5293,7 @@ and 4 (random based) according to RFC 4122.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gjrsyyamvvn2rd9n9yjx6hsglhw0dbm4cgazq0dpx0bbr4inwc3"))))
+                "02f4iyrnnhi7kam7qrnny76vbdh1q68748bcrq02cy8wa79chp3r"))))
     (build-system dune-build-system)
     (arguments `(#:package "ocamlgraph"))
     (propagated-inputs (list ocaml-stdlib-shims))
@@ -6753,7 +6739,7 @@ the OCaml code.")
 (define-public ocaml-ppxlib
   (package
     (name "ocaml-ppxlib")
-    (version "0.28.0")
+    (version "0.36.2")
     (home-page "https://github.com/ocaml-ppx/ppxlib")
     (source
      (origin
@@ -6764,7 +6750,7 @@ the OCaml code.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0alwn1bnc228z6ivj7dpcszrylbg1z3img8vrcihaa9crbx3xxcb"))))
+         "15p3qdkgplhkbj22lxlbhn8lfmvxrqibsjdid1cmk3xzw2cg5fb9"))))
     (build-system dune-build-system)
     (arguments
      `(#:phases
