@@ -990,6 +990,22 @@ which allows one to install the M8 firmware on any Teensy.")
       (home-page "https://github.com/YosysHQ/nextpnr/")
       (license license:isc))))
 
+(define-public nextpnr-cli
+  (package
+    (inherit nextpnr)
+    (name "nextpnr-cli")
+    (version (package-version nextpnr))
+    (build-system cmake-build-system)
+    (arguments
+     (substitute-keyword-arguments (package-arguments nextpnr)
+       ((#:configure-flags flags '())
+        #~(delete! "-DBUILD_GUI=ON" #$flags))))
+    (inputs
+     (modify-inputs (package-inputs nextpnr)
+       (delete "qtbase-5" "qtwayland-5" "qtimgui")))
+    (synopsis
+     (string-append (package-synopsis nextpnr) " Cli only version."))))
+
 (define-public nextpnr-ice40
   (deprecated-package "nextpnr-ice40" nextpnr))
 
