@@ -473,7 +473,7 @@
      (string-join
       (list #$@(map (λ (g) (serialize-gesture name g)) gestures))
       "\n")
-     "\n")
+     "\n"))
 
 ;;; Binding sub-configuration
 (define-configuration binding
