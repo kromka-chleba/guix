@@ -6388,7 +6388,7 @@ exclusion algorithms are typical examples of such systems.")
 (define-public ocaml-sexplib0
   (package
     (name "ocaml-sexplib0")
-    (version "0.15.1")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/sexplib0")
     (source (origin
               (method git-fetch)
@@ -6398,7 +6398,7 @@ exclusion algorithms are typical examples of such systems.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "05m93g4m4jhj1v8pazg3s2ydcfymr3h4476yjhdca5fm4sn35bg8"))))
+                "1s6bc7hj7zwrrz7m5c994h0zjx69af9lvx5ayjpg7dsy2h9g17a3"))))
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ;no tests
     (synopsis "Library containing the definition of S-expressions and some
@@ -6517,8 +6517,8 @@ rules than the default pretty printer in Sexplib.")
           "0yyd9cs6qf8bzk4cpga6hh0iiarhyl2kn15ar3jgqgfmg3p6bcyb"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-sexplib0))
-    (properties `((ocaml5.0-variant . ,(delay ocaml5.0-base))))
+     (list ocaml-sexplib0 ocaml-intrinsics-kernel))
+    (properties `((ocaml5.3-variant . ,(delay ocaml5.3-base))))
     (synopsis
      "Full standard library replacement for OCaml")
     (description
