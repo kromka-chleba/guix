@@ -22426,8 +22426,9 @@ effective when applied to the signal dataset.")
         '(delete-file-recursively "ont_fast5_api/vbz_plugin"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
          (add-after 'unpack 'copy-plugin
            (lambda* (#:key inputs #:allow-other-keys)
              (mkdir-p "ont_fast5_api/vbz_plugin/")
@@ -22440,8 +22441,7 @@ effective when applied to the signal dataset.")
     (propagated-inputs
      (list python-numpy python-h5py python-packaging python-progressbar33))
     (native-inputs
-     (list python-setuptools
-           python-wheel))
+     (list python-pytest python-setuptools))
     (home-page "https://github.com/nanoporetech/ont_fast5_api")
     (synopsis "Interface to HDF5 files of the Oxford Nanopore fast5 file format")
     (description
