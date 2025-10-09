@@ -989,6 +989,10 @@
   (crate-source "atspi-proxies" "0.9.0"
                 "073msx1xrf0xjy56kifvpqrny7ndw6ah4vzxpk82cvz7wywvrvnj"))
 
+(define rust-atty-0.2.13
+  (crate-source "atty" "0.2.13"
+                "140sswp1bwqwc4zk80bxkbnfb3g936hgrb77g9g0k1zcld3wc0qq"))
+
 (define rust-atty-0.2.14
   (crate-source "atty" "0.2.14"
                 "1s7yslcs6a28c5vz7jwj63lkfgyx8mx99fdirlhi9lbhhzhrpcyr"))
@@ -1020,6 +1024,10 @@
 (define rust-autocfg-0.1.8
   (crate-source "autocfg" "0.1.8"
                 "0y4vw4l4izdxq1v0rrhvmlbqvalrqrmk60v1z0dqlgnlbzkl7phd"))
+
+(define rust-autocfg-1.0.1
+  (crate-source "autocfg" "1.0.1"
+                "0jj6i9zn4gjl03kjvziqdji6rwx8ykz8zk2ngpc331z2g3fk3c6d"))
 
 (define rust-autocfg-1.1.0
   (crate-source "autocfg" "1.1.0"
@@ -1361,6 +1369,10 @@
   (crate-source "bitfield" "0.17.0"
                 "1q4n13japrj852yzidhjfcq702yxkvrpv5mhmacsliz5az8x567p"))
 
+(define rust-bitflags-1.2.1
+  (crate-source "bitflags" "1.2.1"
+                "14qnd5nq8p2almk79m4m8ydqhd413yaxsyjp5xd19g3mikzf47fg"))
+
 (define rust-bitflags-1.3.2
   (crate-source "bitflags" "1.3.2"
                 "12ki6w8gn1ldq7yz9y680llwk5gmrhrzszaa17g1sbrw2r2qvwxy"))
@@ -1559,6 +1571,10 @@
 (define rust-bracoxide-0.1.5
   (crate-source "bracoxide" "0.1.5"
                 "0alnn0lkfyfk5i1dd0ykqpw4zli6az7bdkslh98xga8s90f9jlkz"))
+
+(define rust-bright-0.4.1
+  (crate-source "bright" "0.4.1"
+                "0x271bnwjq50mqidqvrdbn1wspj8hmms2l0irqp19z8qbi42gsnd"))
 
 (define rust-brotli-7.0.0
   (crate-source "brotli" "7.0.0"
@@ -2937,6 +2953,10 @@
   (crate-source "console-subscriber" "0.4.1"
                 "00badn9pjwbfd985vc7ngl7ai6mc3q58c3q43i5izlscdafalfb5"))
 
+(define rust-const-fn-0.4.5
+  (crate-source "const_fn" "0.4.5"
+                "19plqg6q4i2a1grphpzl68030sffdq1w8zyigbwjrqj9gzgddf98"))
+
 (define rust-const-format-0.2.34
   (crate-source "const_format" "0.2.34"
                 "1pb3vx4k0bl3cy45fmba36hzds1jhkr8y9k3j5nnvm4abjb9fvqj"))
@@ -3246,6 +3266,10 @@
   (crate-source "crossbeam-channel" "0.5.8"
                 "004jz4wxp9k26z657i7rsh9s7586dklx2c5aqf1n3w1dgzvjng53"))
 
+(define rust-crossbeam-deque-0.8.2
+  (crate-source "crossbeam-deque" "0.8.2"
+                "1z6ifz35lyk0mw818xcl3brgss2k8islhgdmfk9s5fwjnr982pki"))
+
 (define rust-crossbeam-deque-0.8.3
   (crate-source "crossbeam-deque" "0.8.3"
                 "1vqczbcild7nczh5z116w8w46z991kpjyw7qxkf24c14apwdcvyf"))
@@ -3257,6 +3281,10 @@
 (define rust-crossbeam-deque-0.8.6
   (crate-source "crossbeam-deque" "0.8.6"
                 "0l9f1saqp1gn5qy0rxvkmz4m6n7fc0b3dbm6q1r5pmgpnyvi3lcx"))
+
+(define rust-crossbeam-epoch-0.9.1
+  (crate-source "crossbeam-epoch" "0.9.1"
+                "17anyfg5azjpmcfidq6wn4phj9h0a0zqcxksi33w44akz4wsgam1"))
 
 (define rust-crossbeam-epoch-0.9.15
   (crate-source "crossbeam-epoch" "0.9.15"
@@ -3281,6 +3309,10 @@
 (define rust-crossbeam-utils-0.8.21
   (crate-source "crossbeam-utils" "0.8.21"
                 "0a3aa2bmc8q35fb67432w16wvi54sfmb69rk9h5bhd18vw0c99fh"))
+
+(define rust-crossbeam-utils-0.8.8
+  (crate-source "crossbeam-utils" "0.8.8"
+                "0f6b3xrbyc3yx0qa1digmy48mxmh58359kv34qy6ws5p433j9w8b"))
 
 (define rust-crossfont-0.8.0
   (crate-source "crossfont" "0.8.0"
@@ -6940,6 +6972,10 @@
   (crate-source "glob" "0.2.11"
                 "1ysvi72slkw784fcsymgj4308c3y03gwjjzqxp80xdjnkbh8vqcb"))
 
+(define rust-glob-0.3.0
+  (crate-source "glob" "0.3.0"
+                "0x25wfr7vg3mzxc9x05dcphvd3nwlcmbnxrvwcvrrdwplcrrk4cv"))
+
 (define rust-glob-0.3.1
   (crate-source "glob" "0.3.1"
                 "16zca52nglanv23q5qrwd5jinw3d3as5ylya6y1pbx47vkxvrynj"))
@@ -8892,6 +8928,10 @@
 (define rust-libc-0.2.176
   (crate-source "libc" "0.2.176"
                 "0x7ivn80h7nz2l46vra7bxx36s6r8d0lkax14dx97skjsss2kyaq"))
+
+(define rust-libc-0.2.70
+  (crate-source "libc" "0.2.70"
+                "03wdk33dmmnipr8zab377ms4z278zarw437shz37iv3g38295aiv"))
 
 (define rust-libc-stdhandle-0.1.0
   (crate-source "libc-stdhandle" "0.1.0"
@@ -14316,6 +14356,10 @@
   (crate-source "salsa20" "0.10.2"
                 "04w211x17xzny53f83p8f7cj7k2hi8zck282q5aajwqzydd2z8lp"))
 
+(define rust-same-file-1.0.5
+  (crate-source "same-file" "1.0.5"
+                "08a4zy10pjindf2rah320s6shgswk13mqw7s61m8i1y1xpf8spjq"))
+
 (define rust-same-file-1.0.6
   (crate-source "same-file" "1.0.6"
                 "00h5j1w87dmhnvbv9l8bic3y7xxsnjmssvifw2ayvgx9mb1ivz4k"))
@@ -14405,6 +14449,10 @@
 (define rust-scopeguard-0.3.3
   (crate-source "scopeguard" "0.3.3"
                 "09sy9wbqp409pkwmqni40qmwa99ldqpl48pp95m1xw8sc19qy9cl"))
+
+(define rust-scopeguard-1.1.0
+  (crate-source "scopeguard" "1.1.0"
+                "1kbqm85v43rq92vx7hfiay6pmcga03vrjbbfwqpyj3pwsg3b16nj"))
 
 (define rust-scopeguard-1.2.0
   (crate-source "scopeguard" "1.2.0"
@@ -17698,6 +17746,10 @@
   (crate-source "unicode-width" "0.1.14"
                 "1bzn2zv0gp8xxbxbhifw778a7fc93pa6a1kj24jgg9msj07f7mkx"))
 
+(define rust-unicode-width-0.1.8
+  (crate-source "unicode-width" "0.1.8"
+                "1qxizyi6xbcqyi4z79p523ywvmgsfcgfqb3zv3c8i6x1jcc5jdwk"))
+
 (define rust-unicode-width-0.2.0
   (crate-source "unicode-width" "0.2.0"
                 "1zd0r5vs52ifxn25rs06gxrgz8cmh4xpra922k0xlmrchib1kj0z"))
@@ -18116,6 +18168,10 @@
 (define rust-waker-fn-1.2.0
   (crate-source "waker-fn" "1.2.0"
                 "1dvk0qsv88kiq22x8w0qz0k9nyrxxm5a9a9czdwdvvhcvjh12wii"))
+
+(define rust-walkdir-2.3.2
+  (crate-source "walkdir" "2.3.2"
+                "0mnszy33685v8y9js8mw6x2p3iddqs8vfj7n2dhqddnlbirz5340"))
 
 (define rust-walkdir-2.3.3
   (crate-source "walkdir" "2.3.3"
@@ -18922,6 +18978,10 @@
   (crate-source "win32job" "2.0.3"
                 "070r3fhg2m26c4r7pd7plcnbxlpwn1ldh6v9m1a43wzvrhj6fslc"))
 
+(define rust-winapi-0.3.8
+  (crate-source "winapi" "0.3.8"
+                "1ii9j9lzrhwri0902652awifzx9fpayimbp6hfhhc296xcg0k4w0"))
+
 (define rust-winapi-0.3.9
   (crate-source "winapi" "0.3.9"
                 "06gl025x418lchw1wxj64ycr7gha83m44cjr5sarhynd9xkrm0sw"))
@@ -18942,6 +19002,10 @@
 (define rust-winapi-util-0.1.11
   (crate-source "winapi-util" "0.1.11"
                 "08hdl7mkll7pz8whg869h58c1r9y7in0w0pk8fm24qc77k0b39y2"))
+
+(define rust-winapi-util-0.1.2
+  (crate-source "winapi-util" "0.1.2"
+                "1j839dc6y8vszvrsb7yk0qvs0w6asnahxzbyans37vnsw6vbls3i"))
 
 (define rust-winapi-util-0.1.5
   (crate-source "winapi-util" "0.1.5"
@@ -31654,6 +31718,33 @@
                                     rust-zerovec-0.10.4
                                     rust-zerovec-derive-0.10.3
                                     rust-zune-inflate-0.2.54))
+                     (lok =>
+                          (list rust-ansi-term-0.12.1
+                                rust-atty-0.2.13
+                                rust-autocfg-1.0.1
+                                rust-bitflags-1.2.1
+                                rust-bright-0.4.1
+                                rust-cfg-if-1.0.0
+                                rust-clap-2.34.0
+                                rust-const-fn-0.4.5
+                                rust-crossbeam-deque-0.8.2
+                                rust-crossbeam-epoch-0.9.1
+                                rust-crossbeam-utils-0.8.8
+                                rust-glob-0.3.0
+                                rust-lazy-static-1.4.0
+                                rust-libc-0.2.70
+                                rust-memoffset-0.6.5
+                                rust-same-file-1.0.5
+                                rust-scopeguard-1.1.0
+                                rust-strsim-0.8.0
+                                rust-textwrap-0.11.0
+                                rust-unicode-width-0.1.8
+                                rust-vec-map-0.8.2
+                                rust-walkdir-2.3.2
+                                rust-winapi-0.3.8
+                                rust-winapi-i686-pc-windows-gnu-0.4.0
+                                rust-winapi-util-0.1.2
+                                rust-winapi-x86-64-pc-windows-gnu-0.4.0))
                      (lsd =>
                           (list rust-aho-corasick-1.1.3
                                 rust-android-tzdata-0.1.1

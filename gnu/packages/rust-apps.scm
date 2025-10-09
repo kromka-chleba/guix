@@ -40,6 +40,7 @@
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
+;;; Copyright © 2025 iamawacko <iamawacko@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1742,6 +1743,24 @@ more.")
      "This package provides An ls command with a lot of pretty colors
 and some other stuff.")
     (license license:asl2.0)))
+
+(define-public lok
+  (package
+    (name "lok")
+    (version "0.2.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "lok" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1nh2vj64djbwqf62wl3wjb38li4gnrhxznxmh7lpv33sljl78paj"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'lok))
+    (home-page "https://github.com/wyhaya/lok")
+    (synopsis "Count the number of codes")
+    (description "This package counts the number of lines of code of a large variety of programming languages.")
+    (license license:expat)))
 
 (define-public macchina
   (package
