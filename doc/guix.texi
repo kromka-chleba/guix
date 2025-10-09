@@ -44682,6 +44682,10 @@ Pass @code{#f} to not install Podman.
 The name of the group that will own /sys/fs/cgroup resources.  Users that
 want to use rootless Podman have to be in this group.
 
+@item @code{root-shared-mount?} (default: @code{#f}) (type: boolean)
+Whether or not to to make @code{/} a shared mount.  If set to @code{#f} mind
+that this could cause issues or missing mounts with rootless containers.
+
 @item @code{containers-registries} (type: lowerable)
 A string or a gexp evaluating to the path of Podman's
 @code{containers/registries.conf} configuration file.

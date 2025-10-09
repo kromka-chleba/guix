@@ -50,6 +50,7 @@
             rootless-podman-configuration-fields
             rootless-podman-configuration-podman
             rootless-podman-configuration-group-name
+            rootless-podman-configuration-root-shared-mount?
             rootless-podman-configuration-containers-registries
             rootless-podman-configuration-containers-storage
             rootless-podman-configuration-containers-policy
@@ -203,6 +204,10 @@
    (string "cgroup")
    "The name of the group that will own /sys/fs/cgroup resources.  Users that
 want to use rootless Podman have to be in this group.")
+  (root-shared-mount?
+   (boolean #t)
+   "Whether or not to to make @code{/} a shared mount.  If set to @code{#f} mind
+that this could cause issues or missing mounts with rootless containers.")
   (containers-registries
    (lowerable
     (plain-file "registries.conf"
@@ -325,10 +330,12 @@ pids.")
                     (stop
                      #~(make-kill-destructor))))
 
-(define rootless-podman-shared-root-fs-entrypoint
+(define (rootless-podman-shared-root-fs-entrypoint shared?)
   (program-file "rootless-podman-shared-root-fs-entrypoint"
-                #~(system*
-                   "/run/privileged/bin/mount" "--make-shared" "/")))
+                (if shared?
+                    #~(system*
+                       "/run/privileged/bin/mount" "--make-shared" "/")
+                    #~(system* "echo" "root-shared-mount? set to false, nothing to do."))))
 
 (define (rootless-podman-shared-root-fs-service config)
   (shepherd-service (provision '(rootless-podman-shared-root-fs))
@@ -341,7 +348,9 @@ to be shared.  This service sets it so.")
                     (start
                      #~(make-forkexec-constructor
                         (list
-                         #$rootless-podman-shared-root-fs-entrypoint)))
+                         #$(rootless-podman-shared-root-fs-entrypoint
+                            (rootless-podman-configuration-root-shared-mount?
+                             config)))))
                     (stop
                      #~(make-kill-destructor))))
 
