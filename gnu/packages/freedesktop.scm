@@ -1809,6 +1809,10 @@ Analysis and Reporting Technology) functionality.")
               (string-append "--with-html-dir=" #$output:doc
                              "/share/doc/udisks/html")
               (string-append "--with-udevdir=" #$output "/lib/udev"))
+      #:make-flags
+      ;; system.d files are installed in /share by default here, but our dbus
+      ;; service expects them in /etc.
+      #~(list (string-append "dbusconfdir=" #$output "/etc/dbus-1/system.d"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-commands
