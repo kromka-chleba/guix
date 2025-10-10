@@ -1832,7 +1832,15 @@ Analysis and Reporting Technology) functionality.")
                 (("girdir = .*")
                  "girdir = $(datadir)/gir-1.0\n")
                 (("typelibsdir = .*")
-                 "typelibsdir = $(libdir)/girepository-1.0\n")))))))
+                 "typelibsdir = $(libdir)/girepository-1.0\n"))))
+          (add-after 'install 'wrap-udisksd
+            (lambda _
+              ;; Let udisksd find system-installed mkfs executables.
+              (wrap-program (string-append
+                             #$output "/libexec/udisks2/udisksd")
+                '("PATH" ":" prefix
+                  ("/run/current-system/profile/bin"
+                   "/run/current-system/profile/sbin"))))))))
     (home-page "https://www.freedesktop.org/wiki/Software/udisks/")
     (synopsis "Disk manager service")
     (description
