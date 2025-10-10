@@ -1935,7 +1935,7 @@ full_split, cut, rcut, etc..")
 (define-public dune-bootstrap
   (package
     (name "dune")
-    (version "3.19.1")
+    (version "3.20.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1944,7 +1944,7 @@ full_split, cut, rcut, etc..")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01ys792jnld5yihhyirwkk4jlqm59bk0vrqjvvk5xjn8pp26vryq"))))
+                "1z4ji0jwwwxsx0ffw0klnkvaql8m2mqyi9h308y23waaf8dr3g94"))))
     (build-system ocaml-build-system)
     (arguments
      `(#:tests? #f; require odoc
@@ -3988,7 +3988,7 @@ without a complete in-memory representation of the data.")
 (define-public ocaml-ocp-indent
   (package
     (name "ocaml-ocp-indent")
-    (version "1.8.2")
+    (version "1.9.0")
     (source
       (origin
         (method git-fetch)
@@ -3998,7 +3998,7 @@ without a complete in-memory representation of the data.")
         (file-name (git-file-name name version))
         (sha256
          (base32
-          "1dvcl108ir9nqkk4mjm9xhhj4p9dx9bmg8bnms54fizs1x3x8ar3"))))
+          "1zrf8sbh7m828bkj299kb0k3qknhafj7gnpiclc67qrwqxkmnmzg"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-cmdliner))
