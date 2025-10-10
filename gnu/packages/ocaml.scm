@@ -6894,7 +6894,7 @@ new record values.")
 (define-public ocaml-ppx-sexp-conv
   (package
     (name "ocaml-ppx-sexp-conv")
-    (version "0.15.1")
+    (version "0.17.1")
     (home-page "https://github.com/janestreet/ppx_sexp_conv")
     (source
      (origin
@@ -6905,13 +6905,14 @@ new record values.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "163kn5gv1va84s1ysa1fm40fw3hm9xm3788qsvxmm4l3gij2g29m"))))
+         "0b6nkxz7mwfvgfmpcvd3gha6rkdr24c79wiz42030jyd1yw6a0n9"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-ppxlib))
+    ;; todo: should depend on ocaml-ppxlib-jane (v0.17.4+) when available
     (properties `((upstream-name . "ppx_sexp_conv")))
-    (synopsis "Generation of S-expression conversion functions from type definitions")
-    (description "This package generates S-expression conversion functions from type
+    (synopsis "generation of s-expression conversion functions from type definitions")
+    (description "this package generates s-expression conversion functions from type
 definitions.")
     (license license:asl2.0)))
 
@@ -7104,13 +7105,15 @@ currently provides SHA1, SHA256 and SHA512 hash functions.")
 (define-public ocaml-ppx-hash
   (package
     (name "ocaml-ppx-hash")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin "ppx_hash" version
                 "048pim0xicj8j9whd5lnchf62788sk3w89h12aybbalk1xm6dfs5"))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-base ocaml-ppx-compare ocaml-ppx-sexp-conv
+     (list
+      ocaml-base ocaml-ppx-compare
+      ocaml-ppx-sexp-conv
            ocaml-ppxlib))
     (properties `((upstream-name . "ppx_hash")))
     (home-page "https://github.com/janestreet/ppx_hash")
@@ -7349,7 +7352,7 @@ else expression.")
 (define-public ocaml-ppx-optcomp
   (package
     (name "ocaml-ppx-optcomp")
-    (version "0.15.0")
+    (version "0.17.1")
     (home-page "https://github.com/janestreet/ppx_optcomp")
     (source
      (origin
@@ -7360,7 +7363,7 @@ else expression.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ypivfipi8fcr9pqyvl2ajpcivmr1irdwwv248i4x6mggpc2pl0b"))))
+         "0z7nmjyd7qjyvap97cxqbxs8y28pjf0xk1ai4cncx4c68lrmhbws"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-stdio ocaml-ppxlib))
@@ -7513,7 +7516,7 @@ to denote the expected output.")
 (define-public ocaml-ppx-js-style
   (package
     (name "ocaml-ppx-js-style")
-    (version "0.15.0")
+    (version "0.17.1")
     (source
      (origin
        (method git-fetch)
@@ -7523,7 +7526,7 @@ to denote the expected output.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0q2p9pvmlncgv0hprph95xiv7s6q44ynvp4yl4dckf1qx68rb3ba"))))
+         "13hkdvb92c9ll3mq7mvksj8pndbxhmyhghlpwk9rcm8nmziqcqb0"))))
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ; No tests
     (propagated-inputs
@@ -7606,7 +7609,7 @@ conversion functions between almost identical types.")
 (define-public ocaml-ppx-base
   (package
     (name "ocaml-ppx-base")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin
       "ppx_base" version
@@ -7733,7 +7736,7 @@ nodes for lazily rendering log messages.")
 (define-public ocaml-ppx-jane
   (package
     (name "ocaml-ppx-jane")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -7835,7 +7838,7 @@ cryptographic-quality randomness in favor of performance.")
 (define-public ocaml-base-quickcheck
   (package
     (name "ocaml-base-quickcheck")
-    (version "0.15.0")
+    (version "0.17.1")
     (source
       (origin
         (method git-fetch)
