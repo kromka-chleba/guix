@@ -2799,14 +2799,14 @@ most of the POSIX and GNU conventions.")
 (define-public ocaml-fmt
   (package
     (name "ocaml-fmt")
-    (version "0.9.0")
+    (version "0.11.0")
     (source
       (origin
         (method url-fetch)
         (uri (string-append "http://erratique.ch/software/fmt/releases/fmt-"
                             version ".tbz"))
         (sha256 (base32
-                  "0q8j2in2473xh7k4hfgnppv9qy77f2ih89yp6yhpbp92ba021yzi"))))
+                  "06va6zalm61g2zkyqns37fyx2g0p8ig6dqmkv6f44ljblm3zsz45"))))
     (build-system ocaml-build-system)
     (native-inputs
      (list ocamlbuild ocaml-topkg))
@@ -3735,21 +3735,27 @@ ocaml lwt.")
 (define-public ocaml-logs
   (package
     (name "ocaml-logs")
-    (version "0.7.0")
+    (version "0.9.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://erratique.ch/software/logs/releases/"
+              (uri (string-append "https://erratique.ch/software/logs/releases/"
                                   "logs-" version ".tbz"))
               (sha256
                 (base32
-                  "1jnmd675wmsmdwyb5mx5b0ac66g4c6gpv5s4mrx2j6pb0wla1x46"))))
+                  "1m861xfcd80y2g298wxdcmhz43jfximkqid9vqcqzqhwlidhd5zf"))))
     (build-system ocaml-build-system)
     (arguments
      `(#:tests? #f
-       #:build-flags (list "build" "--with-js_of_ocaml" "false")
+       #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)
+         (add-after 'unpack 'disable-browser-support
+           (lambda _
+             ;; Disable js_of_ocaml browser support to avoid dependency
+             (substitute* "pkg/pkg.ml"
+               (("let jsoo = Conf.with_pkg \"js_of_ocaml-compiler\"")
+                "let jsoo = Conf.const false"))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              ;; Use ocamlfind install to avoid circular dependency on opam-installer
