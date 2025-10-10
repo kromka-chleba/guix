@@ -914,6 +914,30 @@ the opam file format.")
     ;; With static-linking exception
     (license license:lgpl2.1+)))
 
+(define-public ocaml-swhid-core
+  (package
+    (name "ocaml-swhid-core")
+    (version "0.1")
+    (build-system dune-build-system)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/ocamlpro/swhid_core")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0h3zndyk94lf2lakc3cb8b7a00jqh0y1m8xk6mg61gj2kdpdbfdq"))))
+    (arguments
+     `(#:tests? #f))
+    ;; (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/ocamlpro/swhid_core")
+    (synopsis "Software Heritage IDS")
+    (description "
+swhid_core is an OCaml library to work with persistent identifiers used by Software Heritage, also known as swhid. This is the core library, for most use cases you should use the swhid library instead.
+")
+    (license license:isc)))
+
 (define-public ocaml-patch
   (package
     (name "ocaml-patch")
@@ -975,6 +999,9 @@ The test-based infered specification implemented in this library is the followin
            ocaml-patch
            ocaml-uutf
            ocaml-cppo
+           ocaml-swhid-core
+           ocaml-jsonm
+           ocaml-sha
            ))
     (inputs (list bubblewrap ocaml-patch ocaml-uutf))
     (home-page "https://opam.ocamlpro.com/")
@@ -2750,9 +2777,7 @@ most of the POSIX and GNU conventions.")
                   "0q8j2in2473xh7k4hfgnppv9qy77f2ih89yp6yhpbp92ba021yzi"))))
     (build-system ocaml-build-system)
     (native-inputs
-     (list ocamlbuild
-           opam-installer
-           ocaml-topkg))
+     (list ocamlbuild ocaml-topkg))
     (propagated-inputs
      (list ocaml-cmdliner
            ocaml-stdlib-shims
@@ -2762,7 +2787,23 @@ most of the POSIX and GNU conventions.")
                                      "--with-cmdliner" "true")
                  #:phases
                  (modify-phases %standard-phases
-                   (delete 'configure))))
+                   (delete 'configure)
+                   (replace 'install
+                     (lambda* (#:key outputs #:allow-other-keys)
+                       ;; Use ocamlfind install to avoid circular dependency on opam-installer
+                       (let ((lib (string-append (assoc-ref outputs "out")
+                                                 "/lib/ocaml/site-lib")))
+                         (mkdir-p lib)
+                         (with-directory-excursion "_build"
+                           (invoke "ocamlfind" "install" "fmt"
+                                   "../pkg/META"
+                                   "src/fmt.a"
+                                   "src/fmt.cma"
+                                   "src/fmt.cmxa"
+                                   "src/fmt.cmxs"
+                                   "src/fmt.cmx"
+                                   "src/fmt.cmi"
+                                   "src/fmt.mli"))))))))
     (home-page "https://erratique.ch/software/fmt")
     (synopsis "OCaml Format pretty-printer combinators")
     (description "Fmt exposes combinators to devise Format pretty-printing
@@ -2782,15 +2823,29 @@ functions.")
                   "1ykhg9gd3iy7zsgyiy2p9b1wkpqg9irw5pvcqs3sphq71iir4ml6"))))
     (build-system ocaml-build-system)
     (native-inputs
-     (list ocamlbuild
-           opam-installer
-           ocaml-topkg))
+     (list ocamlbuild ocaml-topkg))
     (arguments
      `(#:tests? #f
        #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "astring"
+                         "../pkg/META"
+                         "src/astring.a"
+                         "src/astring.cma"
+                         "src/astring.cmxa"
+                         "src/astring.cmxs"
+                         "src/astring.cmx"
+                         "src/astring.cmi"
+                         "src/astring.mli"))))))))
     (home-page "https://erratique.ch/software/astring")
     (synopsis "Alternative String module for OCaml")
     (description "Astring exposes an alternative String module for OCaml.  This
@@ -3696,9 +3751,25 @@ message report is decoupled from logging and is handled by a reporter.")
        #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "fpath"
+                         "../pkg/META"
+                         "src/fpath.a"
+                         "src/fpath.cma"
+                         "src/fpath.cmxa"
+                         "src/fpath.cmxs"
+                         "src/fpath.cmx"
+                         "src/fpath.cmi"
+                         "src/fpath.mli"))))))))
     (native-inputs
-     (list ocamlbuild opam-installer))
+     (list ocamlbuild))
     (propagated-inputs
      `(("topkg" ,ocaml-topkg)
        ("astring" ,ocaml-astring)))
@@ -3726,9 +3797,25 @@ file system and is independent from any system library.")
        #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "bos"
+                         "../pkg/META"
+                         "src/bos.a"
+                         "src/bos.cma"
+                         "src/bos.cmxa"
+                         "src/bos.cmxs"
+                         "src/bos.cmx"
+                         "src/bos.cmi"
+                         "src/bos.mli"))))))))
     (native-inputs
-     (list ocamlbuild opam-installer))
+     (list ocamlbuild))
     (propagated-inputs
      `(("topkg" ,ocaml-topkg)
        ("astring" ,ocaml-astring)
@@ -3919,9 +4006,16 @@ and consumable.")
        #:build-flags (list "native=true" "native-dynlink=true")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
-    ;; (native-inputs
-    ;;  (list ocamlbuild opam-installer))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; For OCaml >= 4.03, uchar is built-in, just install stub META
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib/uchar")))
+               (mkdir-p lib)
+               (copy-file "pkg/META.empty" (string-append lib "/META"))))))))
+    (native-inputs
+     (list ocamlbuild))
     (home-page "https://github.com/ocaml/uchar")
     (synopsis "Compatibility library for OCaml's Uchar module")
     (description "The uchar package provides a compatibility library for the
@@ -3965,7 +4059,7 @@ and consumable.")
     (native-inputs
      (list ocamlbuild ocaml-topkg))
     (propagated-inputs
-     (list ocaml-cmdliner))  ; Uchar is built-in to OCaml >= 4.03
+     (list ocaml-uchar ocaml-cmdliner))  ; uchar needed for old topkg packages' build scripts
     (home-page "https://erratique.ch/software/uutf")
     (synopsis "Non-blocking streaming Unicode codec for OCaml")
     (description "Uutf is a non-blocking streaming codec to decode and encode
@@ -4046,11 +4140,25 @@ without a complete in-memory representation.")
        #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "jsonm"
+                         "../pkg/META"
+                         "src/jsonm.a"
+                         "src/jsonm.cma"
+                         "src/jsonm.cmxa"
+                         "src/jsonm.cmxs"
+                         "src/jsonm.cmx"
+                         "src/jsonm.cmi"
+                         "src/jsonm.mli"))))))))
     (native-inputs
-     (list ocamlbuild
-           opam-installer
-           ocaml-topkg))
+     (list ocamlbuild ocaml-topkg))
     (propagated-inputs
      `(("uutf" ,ocaml-uutf)
        ("cmdliner" ,ocaml-cmdliner)))
@@ -5343,9 +5451,25 @@ tool and piqi-ocaml.")
        (list "build" "--tests" "true" "--with-cmdliner" "true")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "uuidm"
+                         "../pkg/META"
+                         "src/uuidm.a"
+                         "src/uuidm.cma"
+                         "src/uuidm.cmxa"
+                         "src/uuidm.cmxs"
+                         "src/uuidm.cmx"
+                         "src/uuidm.cmi"
+                         "src/uuidm.mli"))))))))
     (native-inputs
-     (list ocamlbuild opam-installer))
+     (list ocamlbuild))
     (propagated-inputs
      `(("cmdliner" ,ocaml-cmdliner)
        ("topkg" ,ocaml-topkg)))
@@ -7163,14 +7287,14 @@ a service while using the wrong protocol.")
 (define-public ocaml-sha
   (package
     (name "ocaml-sha")
-    (version "1.15.2")
+    (version "1.15.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/djs55/ocaml-sha/releases/download/"
                                   version "/sha-" version ".tbz"))
               (sha256
                (base32
-                "1dzzhchknnbrpp5s81iqbvmqp4s0l75yrq8snj70ch3wkarmgg9z"))))
+                "1cgiy6y572rzhpr8ni4xgia2lv4865d8miscvzlrr6di74hv3rbd"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-stdlib-shims ocaml-odoc))
     (native-inputs (list ocaml-ounit2))
