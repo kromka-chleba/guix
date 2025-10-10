@@ -277,6 +277,20 @@ functional, imperative and object-oriented styles of programming.")
                (base32
                 "05jhy9zn53v12rn3sg3vllqf5blv1gp7f06803npimc58crxy6rv"))))))
 
+(define-public ocaml-5.4
+  (package
+    (inherit ocaml-5.0)
+    (version "5.4.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ocaml/ocaml")
+                    (commit version)))
+              (file-name (git-file-name "ocaml" version))
+              (sha256
+               (base32
+                "1xfay0q47kckxy6c7y7qx8lqs7x8hw6sjqyq0sx8x7q1lwggcgry"))))))
+
 (define-public ocaml-4.14
   (package
     (name "ocaml")
@@ -559,7 +573,7 @@ depend: $(STDLIB_MLIS) $(STDLIB_DEPS)"))
        ("perl" ,perl)
        ("pkg-config" ,pkg-config)))))
 
-(define-public ocaml ocaml-5.3)
+(define-public ocaml ocaml-5.4)
 
 (define-public ocamlbuild
   (package
@@ -916,7 +930,7 @@ the opam file format.")
                 "0fpxkc84g98ar321dl1fzr4cqbz990acj03n80pwg9y62x9mx2aq"))))
     (arguments
      `(#:tests? #f))
-    (native-inputs (list ocaml-alcotest))
+    ;; (native-inputs (list ocaml-alcotest))
     (home-page "https://github.com/hannesm/patch")
     (synopsis "Patch - apply your unified diffs in pure OCaml")
     (description "Patch - apply your unified diffs in pure OCaml
@@ -957,7 +971,8 @@ The test-based infered specification implemented in this library is the followin
     (propagated-inputs
      (list ocaml-graph
            ocaml-re
-           ocaml-cppo))
+           ocaml-cppo
+           ))
     (inputs (list bubblewrap))
     (home-page "https://opam.ocamlpro.com/")
     (synopsis "Package manager for OCaml")
@@ -986,6 +1001,8 @@ Git-friendly development workflow.")
     (inherit ocaml-opam-core)
     (name "opam-installer")
     (native-inputs (list ocaml-opam-format
+                         ;; ocaml-patch
+                         ;; ocaml-uutf
                          ocaml-cmdliner))
     (inputs '())
     (propagated-inputs '())
@@ -1000,7 +1017,7 @@ OPAM.")
     (properties
      ;; opam-installer is used as a tool and not as a library, we can use the
      ;; OCaml 4.14 compiled opam until opam is compatible with OCaml 5.0.
-     `((ocaml5.0-variant . ,(delay opam-installer))))))
+     `((ocaml5.3-variant . ,(delay opam-installer))))))
 
 (define ocaml-opam-repository
   (package
@@ -3895,14 +3912,14 @@ and consumable.")
 (define-public ocaml-uutf
   (package
     (name "ocaml-uutf")
-    (version "1.0.3")
+    (version "1.0.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://erratique.ch/software/uutf/releases/"
+              (uri (string-append "https://erratique.ch/software/uutf/releases/"
                                   "uutf-" version ".tbz"))
               (sha256
                 (base32
-                  "0s05r8ggp1g97zq4rnvbxzj22pv8ld0k5wsdw662jw0y7mhsawl7"))))
+                  "1a4wc6209gqblgksrjf6d5x96rc5kisv9qqq9s4shjcimzk7i9d7"))))
     (build-system ocaml-build-system)
     (arguments
      `(#:tests? #f
