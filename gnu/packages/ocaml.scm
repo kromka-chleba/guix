@@ -125,6 +125,17 @@
                               ".tar.gz"))
           (sha256 (base32 hash))))
 
+(define (github-tag-origin name home-page version hash)
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url (string-append home-page ".git"))
+          (commit (string-append "v" version))))
+    (file-name (git-file-name name version))
+    (sha256
+     (base32
+      hash))))
+
 (define-public camlboot
   (let ((commit "45045d0afa82f7e9b7ea07314aab08be2d3cd64b")
         (revision "1"))
@@ -2903,7 +2914,7 @@ immutability.")
 (define-public ocaml-alcotest
   (package
     (name "ocaml-alcotest")
-    (version "1.7.0")
+    (version "1.9.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2912,18 +2923,10 @@ immutability.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0v01vciihd12r30pc4dai70s15p38gy990b4842sn16pvl0ab1az"))))
+                "04jv75jkcxynz61bp0hwsk2147ydlgrgg3dc4xj99klm3xqad4bk"))))
     (build-system dune-build-system)
     (arguments
-     `(#:package "alcotest"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-test-format
-           (lambda _
-             ;; cmdliner changed the format and the tests fail
-             (substitute* "test/e2e/alcotest/failing/unknown_option.expected"
-               (("`") "'")
-               (("\\.\\.\\.") "…")))))))
+     `(#:package "alcotest"))
     (native-inputs
      (list ocamlbuild))
     (propagated-inputs
@@ -5506,14 +5509,14 @@ tool and piqi-ocaml.")
 (define-public ocaml-uuidm
   (package
     (name "ocaml-uuidm")
-    (version "0.9.8")
+    (version "0.9.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://erratique.ch/software/uuidm/"
                                   "releases/uuidm-" version ".tbz"))
               (sha256
                (base32
-                "1cr6xlzla9fmd587lfhzac0icifspjnqi9f4cdafshj3jn85nrpw"))))
+                "0mz9fyrdpqbh5yhldabnlqq71n64fn4ccbkhwqr2jcynhx55jrci"))))
     (build-system ocaml-build-system)
     (arguments
      `(#:build-flags
@@ -6161,19 +6164,19 @@ packages.")
 (define-public ocaml-time-now
   (package
     (name "ocaml-time-now")
-    (version "0.15.0")
+    (version "0.17.0")
+    (home-page
+     "https://github.com/janestreet/time_now")
     (source
-     (janestreet-origin
-      "time_now" version
-      "1a6b1f55mwci1bd8w8vji0qn6wbs60jbwixvwgy4klx2blq57cqk"))
+     (github-tag-origin
+      name home-page version
+      "1abn5fqqixlj1jbqb6vwysn48m0fv9cp7jyw5nfkkyxivw9xccvd"))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs
      (list ocaml-base ocaml-jane-street-headers ocaml-jst-config
            ocaml-ppx-base ocaml-ppx-optcomp))
     (properties `((upstream-name . "time_now")))
-    (home-page
-     "https://github.com/janestreet/time_now")
     (synopsis "Reports the current time")
     (description
      "Provides a single function to report the current time in nanoseconds
@@ -6183,7 +6186,7 @@ since the start of the Unix epoch.")
 (define-public ocaml-ppx-inline-test
   (package
     (name "ocaml-ppx-inline-test")
-    (version "0.15.0")
+    (version "0.17.1")
     (home-page "https://github.com/janestreet/ppx_inline_test")
     (source
      (origin
@@ -6194,7 +6197,7 @@ since the start of the Unix epoch.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1a0gaj9p6gbn5j7c258mnzr7yjlq0hqi3aqqgyj1g2dbk1sxdbjz"))))
+         "1y7lkj20r0kv8pziwny314yq4xirmqa6sjklxjy3an8ysmsc7l60"))))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #f)) ;see home page README for further information
@@ -9726,7 +9729,7 @@ testing by using the @code{afl-fuzz} tool.")
 (define-public ocaml-pprint
   (package
     (name "ocaml-pprint")
-    (version "20220103")
+    (version "20230830")
     (home-page "https://github.com/fpottier/pprint")
     (source
      (origin
@@ -9737,7 +9740,7 @@ testing by using the @code{afl-fuzz} tool.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "09y6nwnjldifm47406q1r9987njlk77g4ifqg6qs54dckhr64vax"))))
+         "1802ziwlwi1as97xcv7d41s08z1p9mql7fy3ad6bs210y3bgpxva"))))
     (build-system dune-build-system)
     (synopsis "OCaml pretty-printing combinator library and rendering
 engine")
@@ -9751,7 +9754,7 @@ document and by the text width.")
 (define-public ocaml-crowbar
   (package
     (name "ocaml-crowbar")
-    (version "0.2.1")
+    (version "0.1")
     (home-page "https://github.com/stedolan/crowbar")
     (source
      (origin
@@ -9762,7 +9765,7 @@ document and by the text width.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "11f3kiw58g8njx15akx16xcplzvzdw9y6c4jpyfxylkxws4g0f6j"))))
+         "1w6a52p5ccbj2gn30la37v5dsakf3qp719w01d3rkhf0qsm9bki2"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-ocplib-endian
@@ -9793,7 +9796,7 @@ QuickCheck-style property-based testing and the magical bug-finding powers of
 (define-public ocaml-eqaf
   (package
     (name "ocaml-eqaf")
-    (version "0.9")
+    (version "0.10")
     (home-page "https://github.com/mirage/eqaf")
     (source
      (origin
@@ -9804,7 +9807,7 @@ QuickCheck-style property-based testing and the magical bug-finding powers of
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "16ics56wiqyng70dy2hqikicm8ag1mv5w1h7hkiwvydw1x2j2rsl"))))
+         "1pwj69j0nrmshngxa9xilj8k0v17r72jjsx8ch92npnhgfi1ij6w"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-cstruct))
     (native-inputs (list ocaml-alcotest ocaml-crowbar))
@@ -9816,7 +9819,7 @@ constant-time to avoid timing-attack with crypto stuff.")
 (define-public ocaml-digestif
   (package
     (name "ocaml-digestif")
-    (version "1.1.3")
+    (version "1.3.0")
     (home-page "https://github.com/mirage/digestif")
     (source
      (origin
@@ -9827,7 +9830,7 @@ constant-time to avoid timing-attack with crypto stuff.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0x5iskavqkclr5mk2q6jvh5h1v81krqi4v353rj4xsmdqb33s0f1"))))
+         "0qwyihi5bdqfy39m00db3v4simm6b0nbglav0zcdd00jpv6mgnc2"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-eqaf))
     (native-inputs
@@ -9849,11 +9852,11 @@ SHA384, SHA512, Blake2b, Blake2s and RIPEMD160.")
 (define-public ocaml-bibtex2html
   (package
     (name "ocaml-bibtex2html")
-    (version "1.99")
+    (version "1.99-1")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://www.lri.fr/~filliatr/ftp/bibtex2html/"
+       (uri (string-append "https://github.com/backtracking/bibtex2html/releases/download/v-1-99/"
                            "bibtex2html-"  version ".tar.gz"))
        (sha256
         (base32
