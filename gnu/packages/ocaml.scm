@@ -6831,17 +6831,22 @@ OCaml AST in the OCaml syntax;
 (define-public ocaml-ppx-compare
   (package
     (name "ocaml-ppx-compare")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
-     (janestreet-origin "ppx_compare" version
-                        "11bkw7fgzfay8ws0piwphqip3y2lk2c9s2gil3zisnbvka92h1va"))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/janestreet/ppx_compare")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "13g1g0f8z40yjiipwp07rsi6wp2mhq5hhdn0z5jq1l6sqvsw21dq"))))
     (build-system dune-build-system)
     (arguments
-     ;; Tests are currently failing
-     ;; (see https://github.com/janestreet/ppx_compare/issues/10)
-     '(#:tests? #f))
+     `(#:tests? #f))  ; Tests require additional dependencies
     (propagated-inputs
-     (list ocaml-base ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib ocaml-ppxlib-jane))
     (properties `((upstream-name . "ppx_compare")))
     (home-page "https://github.com/janestreet/ppx_compare")
     (synopsis "Generation of comparison functions from types")
@@ -7462,10 +7467,17 @@ https://github.com/ocaml/ocaml/issues/8563.")
 (define-public ocaml-ppx-assert
   (package
     (name "ocaml-ppx-assert")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
-     (janestreet-origin "ppx_assert" version
-                        "0rsr1yz2rs12w6qw0dz09dg3k2x2pfgd014fgp6nj993hhznapsf"))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/janestreet/ppx_assert")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1h0gynscd3d9vdx1rf6cf281cn8sw3gxp6z5vl4smypsa5sb1p53"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base
@@ -7922,7 +7934,7 @@ cryptographic-quality randomness in favor of performance.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0q73kfr67cz5wp4qn4rq3lpa922hqmvwdiinnans0js65fvlgqsi"))))
+          (base32 "1sa3adxp9milapmm6vbm0p4mn64mqwmjbfghisagc5mndfq39knj"))))
     (build-system dune-build-system)
     (propagated-inputs
       (list ocaml-base
