@@ -6778,6 +6778,7 @@ the OCaml code.")
      (list ocaml-compiler-libs
            ocaml-ppx-derivers
            ocaml-sexplib0
+           ocaml-cmdliner
            ocaml-stdlib-shims))
     (native-inputs
      (list ocaml-stdio
@@ -8230,7 +8231,7 @@ that can later be used to manipulate time in core_kernel or core.")
     (arguments
      `(#:package "markup"))
     (propagated-inputs
-     (list ocaml-bisect-ppx ocaml-uchar ocaml-uutf ocaml-lwt))
+     (list ocaml-uchar ocaml-uutf ocaml-lwt))
     (native-inputs
      (list ocaml-ounit2 pkg-config))
     (synopsis "Error-recovering functional HTML5 and XML parsers and writers")
@@ -8342,7 +8343,6 @@ then run the Bisect_ppx report tool on the generated visitation files.")
                (("#!/bin/sh") (string-append "#!" (which "sh")))))))))
     (inputs
     (list ocaml-astring
-          ocaml-bisect-ppx
           ocaml-cmdliner
           ocaml-fmt
           ocaml-fpath
@@ -9008,7 +9008,7 @@ defined in OCaml 4.12.0.")
             ocaml-uutf))
     (native-inputs
       (list git-minimal/pinned                     ;for tests
-            ocaml-alcotest ocaml-ocp-indent ocaml-bisect-ppx))
+            ocaml-alcotest ocaml-ocp-indent))
     (home-page "https://github.com/ocaml-ppx/ocamlformat")
     (synopsis "Auto-formatter for OCaml code")
     (description "OCamlFormat is a tool to automatically format OCaml code in
