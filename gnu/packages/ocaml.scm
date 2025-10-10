@@ -899,10 +899,37 @@ the opam file format.")
     ;; With static-linking exception
     (license license:lgpl2.1+)))
 
+(define-public ocaml-patch
+  (package
+    (name "ocaml-patch")
+    (version "v3.0.0")
+    (build-system dune-build-system)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/hannesm/patch"
+                          )
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0fpxkc84g98ar321dl1fzr4cqbz990acj03n80pwg9y62x9mx2aq"))))
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/hannesm/patch")
+    (synopsis "Patch - apply your unified diffs in pure OCaml")
+    (description "Patch - apply your unified diffs in pure OCaml
+
+The loosely specified diff file format is widely used for transmitting differences of line-based information. The motivating example is opam, which is able to validate updates being cryptographically signed (e.g. conex) by providing a unified diff.
+
+The test-based infered specification implemented in this library is the following grammar.")
+    (license license:isc)))
+
 (define ocaml-opam-core
   (package
     (name "ocaml-opam-core")
-    (version "2.1.5")
+    (version "2.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -911,7 +938,7 @@ the opam file format.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ckd87rcmcz11iyhhm5qnmy27jbdffx6n1fr06hvrqqrzi00jljh"))))
+                "0php0b31cwyabhds477abk8qyz4whl3kncpbka4dynzpaf9xnqsm"))))
     (build-system dune-build-system)
     (arguments `(#:package "opam-core"
                  ;; tests are run with the opam package
