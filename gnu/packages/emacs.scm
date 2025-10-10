@@ -670,7 +670,7 @@ editor (with wide ints)" )
 
 (define-public emacs-next-minimal
   (let ((commit "9663c959c73d6cca0c56f833d80ff1d9e9708b70")
-        (revision "3"))
+        (revision "4"))
   (package
     (inherit emacs-minimal)
     (name "emacs-next-minimal")
@@ -692,10 +692,7 @@ editor (with wide ints)" )
                         "emacs-native-comp-driver-options.patch"
                         "emacs-next-native-comp-fix-filenames.patch"
                         "emacs-native-comp-pin-packages.patch"
-                        "emacs-pgtk-super-key-fix.patch"
-                        ;; XXX This commit should already be on 31.0 but
-                        ;; without this emacs-next will fail a test.
-                        "emacs-zoom-image-test-fix.patch"))))
+                        "emacs-pgtk-super-key-fix.patch"))))
     (arguments
      (substitute-keyword-arguments (package-arguments emacs-minimal)
        ((#:phases phases)
