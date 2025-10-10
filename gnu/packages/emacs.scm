@@ -669,8 +669,8 @@ editor (with wide ints)" )
         #~(cons "--with-wide-int" #$flags))))))
 
 (define-public emacs-next-minimal
-  (let ((commit "9663c959c73d6cca0c56f833d80ff1d9e9708b70")
-        (revision "5"))
+  (let ((commit "17ef2d64e4a61f86bff695e0a28ded92c27f86e6")
+        (revision "6"))
   (package
     (inherit emacs-minimal)
     (name "emacs-next-minimal")
@@ -684,7 +684,7 @@ editor (with wide ints)" )
              (commit commit)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a03j9zdn1fl181xcqsw4vg3v8a3sbv1r3d49ld6ysldvfkwiz39"))
+        (base32 "0hjvi6gm6z5jr6ywfm22s34qc1kyff91r00mgmam4xz4ra0wdw82"))
        (patches
         (search-patches "emacs-next-disable-jit-compilation.patch"
                         "emacs-next-exec-path.patch"
