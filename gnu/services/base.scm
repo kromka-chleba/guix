@@ -23,6 +23,7 @@
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2025 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -107,7 +108,9 @@
   #:re-export (user-processes-service-type        ;backwards compatibility
                %default-substitute-urls)
   #:export (fstab-service-type
+            root-file-system-configuration
             root-file-system-service
+            root-file-system-service-type
             file-system-service-type
             file-system-utilities
             swap-service
@@ -344,7 +347,13 @@
                  "Populate the @file{/etc/fstab} based on the given file
 system objects.")))
 
-(define %root-file-system-shepherd-service
+(define-record-type* <root-file-system-configuration>
+  root-file-system-configuration make-root-file-system-configuration
+  root-file-system-configuration?
+  (re-mount-read-only? root-file-system-configuration-re-mount-read-only? ;Boolean
+                       (default #t)))
+
+(define (root-file-system-shepherd-service config)
   (shepherd-service
    (documentation "Take care of the root file system.")
    (provision '(root-file-system))
@@ -366,9 +375,10 @@ system objects.")))
                (let loop ((n 10))
                  (unless (catch 'system-error
                            (lambda ()
-                             (mount #f "/" #f
-                                    (logior MS_REMOUNT MS_RDONLY)
-                                    #:update-mtab? #f)
+                             (when #$(root-file-system-configuration-re-mount-read-only? config)
+                               (mount #f "/" #f
+                                      (logior MS_REMOUNT MS_RDONLY)
+                                      #:update-mtab? #f))
                              #t)
                            (const #f))
                    (unless (zero? n)
@@ -383,7 +393,7 @@ system objects.")))
 
 (define root-file-system-service-type
   (shepherd-service-type 'root-file-system
-                         (const %root-file-system-shepherd-service)
+                         root-file-system-shepherd-service
                          (description "Take care of syncing the root file
 system and of remounting it read-only when the system shuts down.")))
 
@@ -393,7 +403,7 @@ system upon shutdown (aka. cleanly \"umounting\" root.)
 
 This service must be the root of the service dependency graph so that its
 'stop' action is invoked when shepherd is the only process left."
-  (service root-file-system-service-type #f))
+  (service root-file-system-service-type (root-file-system-configuration)))
 
 (define (file-system->shepherd-service-name file-system)
   "Return the symbol that denotes the service mounting and unmounting

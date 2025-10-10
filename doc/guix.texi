@@ -48767,6 +48767,32 @@ This does not actually load modules at bootup, only adds it to the
 kernel profile so that it @emph{can} be loaded by other means.
 @end defvar
 
+@defvar root-file-system-service-type
+The service type for the root file system.  This service is responsible
+for managing the root file system during system shutdown, including
+optionally remounting it as read-only.
+
+The service can be configured using
+@code{<root-file-system-configuration>} records.  For example, to
+disable remounting the root file system as read-only during shutdown:
+
+@lisp
+(essential-services
+ (modify-services (operating-system-essential-services %my-os)
+   (root-file-system-service-type
+    config =>
+    (root-file-system-configuration
+     (re-mount-read-only? #f)))))
+@end lisp
+
+This is particularly useful in container environments where remounting
+the root file system as read-only may be unnecessary or cause issues,
+since container file systems are typically managed by the host system.
+
+The default configuration remounts the root file system as read-only to
+ensure data integrity during normal system shutdown.
+@end defvar
+
 @node Shepherd Services
 @subsection Shepherd Services
 
