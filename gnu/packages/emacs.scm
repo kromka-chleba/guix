@@ -28,6 +28,7 @@
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 John Kehayias <john@guixotic.coop>
+;;; Copyright © 2025 Runciter <runciter@whispers-vpn.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -90,6 +91,7 @@
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu packages python)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
@@ -668,7 +670,7 @@ editor (with wide ints)" )
 
 (define-public emacs-next-minimal
   (let ((commit "9663c959c73d6cca0c56f833d80ff1d9e9708b70")
-        (revision "2"))
+        (revision "3"))
   (package
     (inherit emacs-minimal)
     (name "emacs-next-minimal")
@@ -716,7 +718,10 @@ editor (with wide ints)" )
                         "\n\n"
                         "(setq find-function-C-source-directory \"" dest "\")"
                         "\n\n"
-                        "(provide 'guix-emacs-c-source)"))))))))))))))
+                        "(provide 'guix-emacs-c-source)")))))))))))
+    ;; Put python in $PATH for test python-shell--convert-file-name-to-send-1
+    (native-inputs (modify-inputs (package-native-inputs emacs-minimal)
+                     (prepend python-3.11))))))
 
 (define* (emacs->emacs-next emacs #:optional name
                             #:key (version (package-version emacs-next-minimal))
@@ -752,7 +757,12 @@ editor (with wide ints)" )
                         "\n\n"
                         "(setq find-function-C-source-directory \"" dest "\")"
                         "\n\n"
-                        "(provide 'guix-emacs-c-source)")))))))))))))
+                        "(provide 'guix-emacs-c-source)")))))))))))
+    ;; Put python in $PATH for test python-shell--convert-file-name-to-send-1;
+    ;; The return package object does not inherit its native inputs from
+    ;; emacs-next-minimal
+    (native-inputs (modify-inputs (package-native-inputs emacs)
+                     (prepend python-3.11)))))
 
 (define-public emacs-next (emacs->emacs-next emacs))
 (define-public emacs-next-pgtk (emacs->emacs-next emacs-pgtk))
