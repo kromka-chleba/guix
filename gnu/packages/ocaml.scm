@@ -6908,8 +6908,7 @@ new record values.")
          "0b6nkxz7mwfvgfmpcvd3gha6rkdr24c79wiz42030jyd1yw6a0n9"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-base ocaml-ppxlib))
-    ;; todo: should depend on ocaml-ppxlib-jane (v0.17.4+) when available
+     (list ocaml-base ocaml-ppxlib ocaml-ppxlib-jane))
     (properties `((upstream-name . "ppx_sexp_conv")))
     (synopsis "generation of s-expression conversion functions from type definitions")
     (description "this package generates s-expression conversion functions from type
@@ -7776,6 +7775,55 @@ nodes for lazily rendering log messages.")
             ocaml-ppxlib))
     (properties `((upstream-name . "ppx_jane")))
     (home-page "https://github.com/janestreet/ppx_jane")
+    (synopsis "Standard Jane Street ppx rewriters")
+    (description "This package installs a ppx-jane executable, which is a ppx
+driver including all standard Jane Street ppx rewriters.")
+    (license license:expat)))
+
+(define-public ocaml-ppxlib-jane
+  (package
+    (name "ocaml-ppxlib-jane")
+    (version "0.17.4")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/janestreet/ppxlib_jane")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+          (base32 "1vc0hi73b3hsfkrl83jgz777hz4whyb0z4y4qr8ynvif7mlpp8bj"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list
+      ;; ocaml-base-quickcheck
+            ;; ocaml-ppx-assert
+            ;; ocaml-ppx-base
+            ;; ocaml-ppx-bench
+            ;; ocaml-ppx-bin-prot
+            ;; ocaml-ppx-custom-printf
+            ;; ocaml-ppx-disable-unused-warnings
+            ;; ocaml-ppx-expect
+            ;; ocaml-ppx-fields-conv
+            ;; ocaml-ppx-fixed-literal
+            ;; ocaml-ppx-here
+            ;; ocaml-ppx-ignore-instrumentation
+            ;; ocaml-ppx-inline-test
+            ;; ocaml-ppx-let
+            ;; ocaml-ppx-log
+            ;; ocaml-ppx-module-timer
+            ;; ocaml-ppx-optcomp
+            ;; ocaml-ppx-optional
+            ;; ocaml-ppx-pipebang
+            ;; ocaml-ppx-sexp-message
+            ;; ocaml-ppx-sexp-value
+            ;; ocaml-ppx-stable
+            ;; ocaml-ppx-string
+            ;; ocaml-ppx-typerep-conv
+            ;; ocaml-ppx-variants-conv
+            ocaml-ppxlib))
+    (properties `((upstream-name . "ppxlib_jane")))
+    (home-page "https://github.com/janestreet/ppxlib_jane")
     (synopsis "Standard Jane Street ppx rewriters")
     (description "This package installs a ppx-jane executable, which is a ppx
 driver including all standard Jane Street ppx rewriters.")
