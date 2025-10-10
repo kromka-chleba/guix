@@ -8,6 +8,7 @@
 ;;; Copyright © 2023 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2024 Leo Nikkilä <hello@lnikki.la>
 ;;; Copyright © 2024 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2025 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -179,7 +180,17 @@ containerized OS.  EXTRA-FILE-SYSTEMS is a list of file systems to add to OS."
                                          (inherit value)
                                          (chroot? #f))))
                               (else s))))
-                           (operating-system-user-services os))))
+                 (operating-system-user-services os))))
+      (essential-services
+       (filter-map (lambda (s)
+                     (let ((kind (service-kind s))
+                           (value (service-value s)))
+                       (cond ((eq? root-file-system-service-type kind)
+                              (service root-file-system-service-type
+                                       (root-file-system-configuration
+                                        (re-mount-read-only? #f))))
+                             (else s))))
+                   (operating-system-essential-services os)))
       (file-systems (append (map mapping->fs
                                  (if shared-network?
                                      (append %network-file-mappings mappings)

@@ -48789,6 +48789,10 @@ This is particularly useful in container environments where remounting
 the root file system as read-only may be unnecessary or cause issues,
 since container file systems are typically managed by the host system.
 
+Note that @code{containerized-operating-system} automatically configures
+the root file system service to disable read-only remounting, as this
+behavior is more appropriate for containerized environments.
+
 The default configuration remounts the root file system as read-only to
 ensure data integrity during normal system shutdown.
 @end defvar
