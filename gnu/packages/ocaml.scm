@@ -32,6 +32,7 @@
 ;;; Copyright © 2023 Arnaud DABY-SEESARAM <ds-ac@nanein.fr>
 ;;; Copyright © 2024 Sören Tempel <soeren@soeren-tempel.net>
 ;;; Copyright © 2025 Jussi Timperi <jussi.timperi@iki.fi>
+;;; Copyright © 2025 John Hester <hesterj@etableau.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -971,9 +972,11 @@ The test-based infered specification implemented in this library is the followin
     (propagated-inputs
      (list ocaml-graph
            ocaml-re
+           ocaml-patch
+           ocaml-uutf
            ocaml-cppo
            ))
-    (inputs (list bubblewrap))
+    (inputs (list bubblewrap ocaml-patch ocaml-uutf))
     (home-page "https://opam.ocamlpro.com/")
     (synopsis "Package manager for OCaml")
     (description
@@ -2512,7 +2515,7 @@ adaptive parsers) as well as extensible lexers for the parsers it produces.")
                 "11ycfk0prqvifm9jca2308gw8a6cjb1hqlgfslbji2cqpan09kpq"))))
     (build-system ocaml-build-system)
     (native-inputs
-     (list opam-installer ocamlbuild))
+     (list ocamlbuild))
     (propagated-inputs
      `(("result" ,ocaml-result)))
     (arguments
@@ -2520,7 +2523,23 @@ adaptive parsers) as well as extensible lexers for the parsers it produces.")
        #:build-flags '("build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "topkg"
+                         "../pkg/META"
+                         "src/topkg.a"
+                         "src/topkg.cma"
+                         "src/topkg.cmxa"
+                         "src/topkg.cmxs"
+                         "src/topkg.cmx"
+                         "src/topkg.cmi"
+                         "src/topkg.mli"))))))))
     (home-page "https://erratique.ch/software/topkg")
     (synopsis "Transitory OCaml software packager")
     (description "Topkg is a packager for distributing OCaml software. It
@@ -3901,8 +3920,8 @@ and consumable.")
        #:phases
        (modify-phases %standard-phases
          (delete 'configure))))
-    (native-inputs
-     (list ocamlbuild opam-installer))
+    ;; (native-inputs
+    ;;  (list ocamlbuild opam-installer))
     (home-page "https://github.com/ocaml/uchar")
     (synopsis "Compatibility library for OCaml's Uchar module")
     (description "The uchar package provides a compatibility library for the
@@ -3926,14 +3945,27 @@ and consumable.")
        #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "uutf"
+                         "../pkg/META"
+                         "src/uutf.a"
+                         "src/uutf.cma"
+                         "src/uutf.cmxa"
+                         "src/uutf.cmxs"
+                         "src/uutf.cmx"
+                         "src/uutf.cmi"
+                         "src/uutf.mli"))))))))
     (native-inputs
-     (list ocamlbuild
-           opam-installer
-           ocaml-topkg))
+     (list ocamlbuild ocaml-topkg))
     (propagated-inputs
-     `(("uchar" ,ocaml-uchar)
-       ("cmdliner" ,ocaml-cmdliner)))
+     (list ocaml-cmdliner))  ; Uchar is built-in to OCaml >= 4.03
     (home-page "https://erratique.ch/software/uutf")
     (synopsis "Non-blocking streaming Unicode codec for OCaml")
     (description "Uutf is a non-blocking streaming codec to decode and encode
@@ -6154,7 +6186,7 @@ to a Yojson.Safe value.")
 (define-public ocaml-merlin-lib
   (package
     (name "ocaml-merlin-lib")
-    (version "5.6-503")
+    (version "5.6-504")
     (source
      (origin
        (method git-fetch)
@@ -6164,7 +6196,7 @@ to a Yojson.Safe value.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "164mcl6rlaj8y6ia9l2zfc9pwq6x8kv3q62vkidjxm313lyq858k"))))
+         "0nxi4zbs6djfsk649dm5rax5bgw0v3bywj4vkzfpi3lpc1h0mn3g"))))
     (build-system dune-build-system)
     (arguments '(#:package "merlin-lib"
                  #:tests? #f))          ; no tests
@@ -6783,7 +6815,7 @@ the OCaml code.")
 (define-public ocaml-ppxlib
   (package
     (name "ocaml-ppxlib")
-    (version "0.36.2")
+    (version "0.37")
     (home-page "https://github.com/ocaml-ppx/ppxlib")
     (source
      (origin
@@ -6794,7 +6826,7 @@ the OCaml code.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "15p3qdkgplhkbj22lxlbhn8lfmvxrqibsjdid1cmk3xzw2cg5fb9"))))
+         "1ca4ivcl9j65c610s8gzx6xjhc13c0875wrbij577lqzsgjsbc98"))))
     (build-system dune-build-system)
     (arguments
      `(#:phases
