@@ -3754,8 +3754,8 @@ ocaml lwt.")
            (lambda _
              ;; Disable js_of_ocaml browser support to avoid dependency
              (substitute* "pkg/pkg.ml"
-               (("let jsoo = Conf.with_pkg \"js_of_ocaml-compiler\"")
-                "let jsoo = Conf.const false"))))
+               (("let jsoo = Conf.value c jsoo in")
+                "let jsoo = false in"))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              ;; Use ocamlfind install to avoid circular dependency on opam-installer
