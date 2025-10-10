@@ -2822,20 +2822,31 @@ most of the POSIX and GNU conventions.")
                    (delete 'configure)
                    (replace 'install
                      (lambda* (#:key outputs #:allow-other-keys)
-                       ;; Use ocamlfind install to avoid circular dependency on opam-installer
-                       (let ((lib (string-append (assoc-ref outputs "out")
-                                                 "/lib/ocaml/site-lib")))
-                         (mkdir-p lib)
+                       ;; Use ocamlfind install with subdirs for sub-packages
+                       (let* ((out (assoc-ref outputs "out"))
+                              (lib (string-append out "/lib/ocaml/site-lib/fmt")))
                          (with-directory-excursion "_build"
-                           (invoke "ocamlfind" "install" "fmt"
-                                   "../pkg/META"
-                                   "src/fmt.a"
-                                   "src/fmt.cma"
-                                   "src/fmt.cmxa"
-                                   "src/fmt.cmxs"
-                                   "src/fmt.cmx"
-                                   "src/fmt.cmi"
-                                   "src/fmt.mli"))))))))
+                           ;; Install main library
+                           (invoke "ocamlfind" "install" "fmt" "../pkg/META"
+                                   "src/fmt.a" "src/fmt.cma" "src/fmt.cmxa"
+                                   "src/fmt.cmxs" "src/fmt.cmx"
+                                   "src/fmt.cmi" "src/fmt.mli")
+                           ;; Manually create subdirectories and install sub-libraries
+                           (mkdir-p (string-append lib "/tty"))
+                           (mkdir-p (string-append lib "/cli"))
+                           (mkdir-p (string-append lib "/top"))
+                           ;; Copy tty files
+                           (for-each (lambda (f)
+                                       (copy-file f (string-append lib "/tty/" (basename f))))
+                                     (find-files "src/tty" "\\.(cma|cmxa|a|cmxs|cmx|cmi|mli)$"))
+                           ;; Copy cli files
+                           (for-each (lambda (f)
+                                       (copy-file f (string-append lib "/cli/" (basename f))))
+                                     (find-files "src/cli" "\\.(cma|cmxa|a|cmxs|cmx|cmi|mli)$"))
+                           ;; Copy top files
+                           (for-each (lambda (f)
+                                       (copy-file f (string-append lib "/top/" (basename f))))
+                                     (find-files "src/top" "\\.(cma|cmxa|cmx|ml)$")))))))))
     (home-page "https://erratique.ch/software/fmt")
     (synopsis "OCaml Format pretty-printer combinators")
     (description "Fmt exposes combinators to devise Format pretty-printing
@@ -3758,20 +3769,24 @@ ocaml lwt.")
                 "let jsoo = false in"))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
-             ;; Use ocamlfind install to avoid circular dependency on opam-installer
-             (let ((lib (string-append (assoc-ref outputs "out")
-                                       "/lib/ocaml/site-lib")))
-               (mkdir-p lib)
+             ;; Use ocamlfind install with subdirs for sub-packages
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib/ocaml/site-lib/logs")))
                (with-directory-excursion "_build"
-                 (invoke "ocamlfind" "install" "logs"
-                         "../pkg/META"
-                         "src/logs.a"
-                         "src/logs.cma"
-                         "src/logs.cmxa"
-                         "src/logs.cmxs"
-                         "src/logs.cmx"
-                         "src/logs.cmi"
-                         "src/logs.mli"))))))))
+                 ;; Install main library
+                 (invoke "ocamlfind" "install" "logs" "../pkg/META"
+                         "src/logs.a" "src/logs.cma" "src/logs.cmxa"
+                         "src/logs.cmxs" "src/logs.cmx"
+                         "src/logs.cmi" "src/logs.mli")
+                 ;; Manually create subdirectories and install sub-libraries
+                 (for-each (lambda (sublib)
+                             (let ((dir (string-append lib "/" sublib)))
+                               (mkdir-p dir)
+                               (for-each (lambda (f)
+                                           (copy-file f (string-append dir "/" (basename f))))
+                                         (find-files (string-append "src/" sublib)
+                                                     "\\.(cma|cmxa|a|cmxs|cmx|cmi|mli)$"))))
+                           '("fmt" "cli" "lwt" "threaded" "top")))))))))
     (native-inputs
      (list ocamlbuild))
     (propagated-inputs
