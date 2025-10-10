@@ -2588,7 +2588,7 @@ creation and publication procedures.")
                 "0h2mjyzhay1p4k7n0mzaa7hlc7875kiy6m1i3r1n03j6hddpzahi"))))
     (build-system ocaml-build-system)
     (native-inputs
-     (list opam-installer ocamlbuild))
+     (list ocamlbuild))
     (propagated-inputs
      `(("topkg" ,ocaml-topkg)))
     (arguments
@@ -2596,7 +2596,23 @@ creation and publication procedures.")
        #:build-flags '("build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "rresult"
+                         "../pkg/META"
+                         "src/rresult.a"
+                         "src/rresult.cma"
+                         "src/rresult.cmxa"
+                         "src/rresult.cmxs"
+                         "src/rresult.cmx"
+                         "src/rresult.cmi"
+                         "src/rresult.mli"))))))))
     (home-page "https://erratique.ch/software/rresult")
     (synopsis "Result value combinators for OCaml")
     (description "Handle computation results and errors in an explicit and
@@ -2676,7 +2692,7 @@ manipulate such data.")
                 "1ss4w3qxsfp51d88r0j7dzqs05dbb1xdx11hn1jl9cvd03ma0g9z"))))
     (build-system ocaml-build-system)
     (native-inputs
-     (list ocamlbuild opam-installer))
+     (list ocamlbuild))
     (propagated-inputs
      `(("topkg" ,ocaml-topkg)))
     (arguments
@@ -2684,7 +2700,23 @@ manipulate such data.")
        #:build-flags (list "build")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "mtime"
+                         "../pkg/META"
+                         "src/mtime.a"
+                         "src/mtime.cma"
+                         "src/mtime.cmxa"
+                         "src/mtime.cmxs"
+                         "src/mtime.cmx"
+                         "src/mtime.cmi"
+                         "src/mtime.mli"))))))))
     (home-page "https://erratique.ch/software/mtime")
     (synopsis "Monotonic wall-clock time for OCaml")
     (description "Access monotonic wall-clock time.  It measures time
@@ -3717,9 +3749,25 @@ ocaml lwt.")
        #:build-flags (list "build" "--with-js_of_ocaml" "false")
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Use ocamlfind install to avoid circular dependency on opam-installer
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "logs"
+                         "../pkg/META"
+                         "src/logs.a"
+                         "src/logs.cma"
+                         "src/logs.cmxa"
+                         "src/logs.cmxs"
+                         "src/logs.cmx"
+                         "src/logs.cmi"
+                         "src/logs.mli"))))))))
     (native-inputs
-     (list ocamlbuild opam-installer))
+     (list ocamlbuild))
     (propagated-inputs
      `(("fmt" ,ocaml-fmt)
        ("lwt" ,ocaml-lwt)
@@ -7296,7 +7344,7 @@ a service while using the wrong protocol.")
                (base32
                 "1cgiy6y572rzhpr8ni4xgia2lv4865d8miscvzlrr6di74hv3rbd"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-stdlib-shims ocaml-odoc))
+    (propagated-inputs (list ocaml-odoc))
     (native-inputs (list ocaml-ounit2))
     (home-page "https://github.com/djs55/ocaml-sha")
     (synopsis "OCaml binding to the SHA cryptographic functions")
@@ -8584,7 +8632,7 @@ then run the Bisect_ppx report tool on the generated visitation files.")
 (define-public ocaml-odoc
   (package
     (name "ocaml-odoc")
-    (version "2.2.0")
+    (version "3.1.0")
     (source
      (origin
        (method git-fetch)
@@ -8593,7 +8641,7 @@ then run the Bisect_ppx report tool on the generated visitation files.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19mww1lyrdi705aw3lwql6xc7p11fcq5gprmhyxpb4x80gnvlzrh"))))
+        (base32 "1rvx6j1dw8x5xwlbggxg5i2y7fipwqgqs0fkd53j85dr4hwp669j"))))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #f; not compatible with current version of ocaml-yojson
