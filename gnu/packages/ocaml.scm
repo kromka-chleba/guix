@@ -1280,7 +1280,7 @@ name = Guix Builder")
      ;; networking access.
      '(#:tests? #f))
     ;; TODO: not entirely clear if these should be native, test cross-building
-    (native-inputs (list ocaml-odoc
+    (native-inputs (list
                          pkg-config))
     ;; (propagated-inputs lablgtk3) optional and is currently failing to build
     (home-page "https://github.com/tarides/opam-monorepo")
@@ -1791,7 +1791,7 @@ other XUnit testing frameworks.")
                     (lambda _
                       (invoke "dune" "subst") #t)))))
     (properties `((upstream-name . "junit")))
-    (propagated-inputs (list ocaml-ounit ocaml-ptime ocaml-tyxml ocaml-odoc))
+    (propagated-inputs (list ocaml-ounit ocaml-ptime ocaml-tyxml))
     (synopsis "JUnit XML reports generation library")
     (description "Ocaml-junit is a package for the creation of JUnit XML
 reports.  It provides a typed API to produce valid reports.  They are supposed
@@ -1803,7 +1803,7 @@ to be accepted by Jenkins.")
   (package
     (inherit ocaml-junit)
     (name "ocaml-junit-alcotest")
-    (propagated-inputs (list ocaml-odoc ocaml-alcotest ocaml-junit))
+    (propagated-inputs (list ocaml-alcotest ocaml-junit))
     (build-system dune-build-system)
     (arguments
      `(#:package "junit_alcotest"
@@ -1932,7 +1932,7 @@ for speed and space economy.")
            (lambda _
              (for-each make-file-writable (find-files "." ".")))))))
     (native-inputs
-     (list ocaml-menhir ocaml-odoc))
+     (list ocaml-menhir))
     (properties `((upstream-name . "FrontC")))
     (home-page "https://www.irit.fr/FrontC")
     (synopsis "C parser and lexer library")
@@ -2167,7 +2167,6 @@ config.h files for instance.  Among other things, dune-configurator allows one t
                (base32
                 "1gfd6hrb031qzb54v2zhlfxs54x0vnbaj6a8as07pvpwx7qznyss"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-odoc))
     (native-inputs (list ocaml-ppx-expect))
     (home-page "https://github.com/ocaml-dune/pp")
     (synopsis "Pretty-printing library")
@@ -2364,7 +2363,6 @@ functions to the next and/or previous version.")
     (arguments
      ;; No tests
      `(#:tests? #f))
-    (propagated-inputs (list ocaml-odoc))
     (home-page "https://github.com/ocaml-community/ocaml-linenoise")
     (synopsis "Lightweight readline alternative")
     (description "This package is a line-reading library for OCaml that aims
@@ -2673,7 +2671,7 @@ library.")
          "1ksm0a490315sf0yy8lmva5f3bgr0jnllffanyq89431grpj6x15"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list dune-configurator ocaml-odoc))
+     (list dune-configurator))
     (native-inputs
      (list ocaml-ppx-inline-test pkg-config sqlite))
     (home-page "https://mmottl.github.io/sqlite3-ocaml")
@@ -3050,7 +3048,7 @@ layer.")
         (base32 "1cxcqgvyl4ykyl86mf2d4ka6frnq51m1yqy0z5v6vdxkixllf9jd"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-ppxlib ocaml-ppx-deriving ocaml-yaml
-                             ocaml-odoc))
+                            ))
     (native-inputs (list ocaml-alcotest ocaml-bos ocaml-mdx ocaml-ezjsonm))
     (properties `((upstream-name . "ppx_deriving_yaml")))
     (synopsis "Yaml PPX Deriver")
@@ -3100,7 +3098,7 @@ interface files.")
          "0x5gnfap9f7kmgh8j725vxlbkvlplwzbpn8jdx2ywfa3dd6bn6xl"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-odoc))
+     (list))
     (home-page "https://github.com/rdicosmo/parmap")
     (synopsis "Parallel map and fold primitives for OCaml")
     (description
@@ -3326,7 +3324,7 @@ to which allows adding and looking up bindings in a type safe manner.")
                              ocaml-fmt
                              ocaml-hmap
                              ocaml-mtime
-                             ;; ocaml-odoc
+                             ;;
                              ))
     (native-inputs (list ocaml-astring
                          ocaml-crowbar
@@ -3686,7 +3684,7 @@ encoded in a resizable array.")
                    (when tests?
                      (invoke "dune" "runtest" "--no-buffer" "--force")))))))
     (inputs (list libuv))
-    (propagated-inputs (list ocaml-ctypes ocaml-odoc))
+    (propagated-inputs (list ocaml-ctypes))
     (native-inputs (list ocaml-base ocaml-alcotest))
     (home-page "https://github.com/aantron/luv")
     (synopsis "Binding to libuv: cross-platform asynchronous I/O")
@@ -3985,7 +3983,7 @@ representation of the data.")
     (arguments
      `(#:package "gen"))
     (propagated-inputs
-     (list ocaml-odoc ocaml-seq))
+     (list ocaml-seq))
     (native-inputs
      (list ocaml-qtest ocaml-qcheck))
     (home-page "https://github.com/c-cube/gen/")
@@ -5823,7 +5821,7 @@ function that follows the prototype of POSIX's wcwidth.")
            ocaml-uutf
            ocaml-uucp
            ocaml-uuseg
-           ocaml-odoc))
+          ))
     (synopsis "Abstract engine for text edition in OCaml")
     (description
      "This module provides an abstract engine for text edition.  It can be
@@ -5855,7 +5853,7 @@ capabilities, Zed provides macro recording and cursor management facilities.")
            ocaml-lwt
            ocaml-lwt-react
            ocaml-mew-vi
-           ocaml-odoc
+          
            ocaml-react
            ocaml-zed))
     (synopsis "Terminal manipulation library for OCaml")
@@ -6537,7 +6535,7 @@ Atom.")
                              ocaml-pp
                              ocaml-csexp
                              ocamlformat-rpc-lib
-                             ocaml-odoc
+                            
                              ocaml-merlin-lib))
     (native-inputs (list ocaml-ppx-expect ocamlformat))
     (properties `((upstream-name . "ocaml-lsp-server")))
@@ -7370,7 +7368,6 @@ a service while using the wrong protocol.")
                (base32
                 "1cgiy6y572rzhpr8ni4xgia2lv4865d8miscvzlrr6di74hv3rbd"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-odoc))
     (native-inputs (list ocaml-ounit2))
     (home-page "https://github.com/djs55/ocaml-sha")
     (synopsis "OCaml binding to the SHA cryptographic functions")
@@ -8216,7 +8213,6 @@ types provided by Base.")
                (base32
                 "16aq5z3mq5lkpryfs4w0748b2w9v061myml0hn7nhh6r6i329w7a"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-odoc))
     (native-inputs (list ocaml-ppx-expect))
     (home-page "https://github.com/janestreet/spawn")
     (synopsis "Spawning sub-processes")
@@ -8916,7 +8912,6 @@ variants.")
            ocaml-cmdliner
            ocaml-re
            ;; ocaml-result
-           ocaml-odoc
            ocaml-odoc-parser
            ocaml-version))
     (native-inputs
@@ -9200,7 +9195,7 @@ that involve memoization and recursion.")
        ;; No separate test suite from dune.
        #:tests? #f))
     (propagated-inputs
-     (list ocaml-odoc))
+     (list))
     (synopsis "Embed build information inside an executable")
     (description "This package allows one to access information about how the
 executable was built, such as the version of the project at which it was built
@@ -9217,7 +9212,6 @@ get an precise reference of when the executable was built.")))
      '(#:package "xdg"
        ;; Tests have a cyclic dependency on stdune
        #:tests? #f))
-    (propagated-inputs (list ocaml-odoc))
     (synopsis "XDG Base Directory Specification library for ocaml")
     (description
      "This ocaml library returns user XDG directories such as XDG_CONFIG_HOME,
@@ -9238,7 +9232,7 @@ get an precise reference of when the executable was built.")))
                              ocaml-xdg
                              dune-stdune
                              ocaml-pp
-                             ocaml-odoc))
+                            ))
     (synopsis "Communicate with ocaml dune using rpc")
     (description "Library to connect and control a running dune instance.")))
 
@@ -9251,7 +9245,7 @@ get an precise reference of when the executable was built.")))
      '(#:package "ocamlc-loc"
        ;; Tests have a cyclic dependency on stdune
        #:tests? #f))
-    (propagated-inputs (list dune-dyn ocaml-odoc))
+    (propagated-inputs (list dune-dyn))
     (synopsis "Parse ocaml compiler output into structured form")
     (description
      "This library parses ocaml compiler output and returns it as ocaml values.
@@ -9266,7 +9260,6 @@ This library offers no backwards compatibility guarantees.")))
      '(#:package "chrome-trace"
        ;; Tests have a cyclic dependency on stdune
        #:tests? #f))
-    (propagated-inputs (list ocaml-odoc))
     (synopsis "Chrome trace event generation library for ocaml")
     (description
      "Output trace data to a file in Chrome's trace_event format. This format is
@@ -9292,7 +9285,7 @@ This library offers no backwards compatibility guarantees.")))
     (arguments
      '(#:package "fiber"))
     (propagated-inputs (list dune-stdune dune-dyn))
-    (native-inputs (list ocaml-odoc ocaml-ppx-expect))
+    (native-inputs (list ocaml-ppx-expect))
     (synopsis "Structured concurrency library")
     (description
      "This library implements structured concurrency for ocaml.
@@ -9358,7 +9351,7 @@ defined in OCaml 4.12.0.")
             ocaml-fix
             ocaml-fpath
             ocaml-menhir
-            ocaml-odoc
+           
             ocaml-ppxlib
             ocaml-re
             ocaml-odoc-parser
@@ -9380,7 +9373,7 @@ a uniform style.")
     (name "ocamlformat-rpc-lib")
     (arguments
      '(#:package "ocamlformat-rpc-lib"))
-    (propagated-inputs (list ocaml-csexp ocaml-odoc))
+    (propagated-inputs (list ocaml-csexp))
     (synopsis "Auto-formatter for OCaml code in RPC mode")
     (description
      "OCamlFormat is a tool to automatically format OCaml code in a uniform style.
@@ -9932,10 +9925,10 @@ bibliography files in BibTeX format, a bibliography in HTML format.")
      (list ocaml-sexplib
            ocaml-ctypes
            ocaml-stdio
-           ocaml-odoc))
+          ))
     (inputs (list guile-3.0 libffi))
     (native-inputs
-     (list ocaml-odoc
+     (list
            pkg-config))
     (synopsis "Bindings to GNU Guile Scheme for OCaml")
     (description
