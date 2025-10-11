@@ -2717,14 +2717,14 @@ manipulate such data.")
 (define-public ocaml-mtime
   (package
     (name "ocaml-mtime")
-    (version "2.0.0")
+    (version "2.1.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://erratique.ch/software/mtime/releases/"
                                   "mtime-" version ".tbz"))
               (sha256
                (base32
-                "1ss4w3qxsfp51d88r0j7dzqs05dbb1xdx11hn1jl9cvd03ma0g9z"))))
+                "122dhf4qmba4kfpzljcllgqf5ii8b8ylh6rfazcyl09p5s0b4z09"))))
     (build-system ocaml-build-system)
     (native-inputs
      (list ocamlbuild))
@@ -2806,7 +2806,7 @@ most of the POSIX and GNU conventions.")
 
 (define-public ocaml-cmdliner-1.3
   (package
-    (inherit ocaml-cmdliner)
+    (name "ocaml-cmdliner-1.3")
     (version "1.3.0")
     (source (origin
               (method url-fetch)
@@ -2814,34 +2814,20 @@ most of the POSIX and GNU conventions.")
                                   "cmdliner-" version ".tbz"))
               (sha256
                (base32
-                "12df8mzggvizzw4c51a2fziq6ah8g95i4lq9ad3m07sw5l0kz8l"))))
-    (build-system ocaml-build-system)
-    (native-inputs
-     (list ocamlbuild ocaml-topkg))
-    (propagated-inputs
-     (list ocaml-result))
-    (arguments
-     `(#:tests? #f
-       #:build-flags (list "build")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((lib (string-append (assoc-ref outputs "out")
-                                       "/lib/ocaml/site-lib")))
-               (mkdir-p lib)
-               (with-directory-excursion "_build"
-                 (invoke "ocamlfind" "install" "cmdliner"
-                         "../pkg/META"
-                         "src/cmdliner.a"
-                         "src/cmdliner.cma"
-                         "src/cmdliner.cmxa"
-                         "src/cmdliner.cmxs"
-                         "src/cmdliner.cmx"
-                         "src/cmdliner.cmi"
-                         "src/cmdliner.mli"))))))))
-    (license license:isc)))
+                "1fwc2rj6xfyihhkx4cn7zs227a74rardl262m2kzch5lfgsq10cf"))))
+    (build-system dune-build-system)
+    ;; (propagated-inputs
+    ;;  (list ocaml-result))
+    (arguments `(#:tests? #f))
+    (home-page "https://erratique.ch/software/cmdliner")
+    (synopsis "Declarative definition of command line interfaces for OCaml")
+    (description "Cmdliner is a module for the declarative definition of command
+line interfaces.  It provides a simple and compositional mechanism to convert
+command line arguments to OCaml values and pass them to your functions.  The
+module automatically handles syntax errors, help messages and UNIX man page
+generation. It supports programs with single or multiple commands and respects
+most of the POSIX and GNU conventions.")
+    (license license:bsd-3)))
 
 (define-public ocaml-fmt
   (package
@@ -9814,7 +9800,7 @@ document and by the text width.")
 (define-public ocaml-crowbar
   (package
     (name "ocaml-crowbar")
-    (version "0.1")
+    (version "0.2.1")
     (home-page "https://github.com/stedolan/crowbar")
     (source
      (origin
@@ -9824,8 +9810,8 @@ document and by the text width.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1w6a52p5ccbj2gn30la37v5dsakf3qp719w01d3rkhf0qsm9bki2"))))
+        (base32 "11f3kiw58g8njx15akx16xcplzvzdw9y6c4jpyfxylkxws4g0f6j"
+                ))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-ocplib-endian
