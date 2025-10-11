@@ -125,12 +125,14 @@
                               ".tar.gz"))
           (sha256 (base32 hash))))
 
-(define (github-tag-origin name home-page version hash)
+(define* (github-tag-origin name home-page version hash #:key (tag-prefix "v"))
+  "Create an origin for a GitHub repository using a version tag.
+TAG-PREFIX defaults to \"v\" but can be customized or set to \"\" for no prefix."
   (origin
     (method git-fetch)
     (uri (git-reference
           (url (string-append home-page ".git"))
-          (commit (string-append "v" version))))
+          (commit (string-append tag-prefix version))))
     (file-name (git-file-name name version))
     (sha256
      (base32
@@ -1424,7 +1426,7 @@ written in Objective Caml.")
 (define-public ocaml-num
   (package
     (name "ocaml-num")
-    (version "1.4")
+    (version "1.6")
     (source
      (origin
        (method git-fetch)
@@ -1433,7 +1435,7 @@ written in Objective Caml.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vzdnvpj5dbj3ifx03v25pj2jj1ccav072v4d29pk1czdba2lzfc"))))
+        (base32 "1m0jvsjxar16bvmq0h3ad3cwnmjxn1wnjhqljya9hahv3dcg8s95"))))
     (build-system dune-build-system)
     (arguments
      `(#:phases
@@ -2273,8 +2275,8 @@ executables and libraries")))
            (lambda _
              (for-each (lambda (file) (chmod file #o644)) (find-files "." ".*"))
              #t)))))
-    (propagated-inputs
-     (list ocaml-result))
+    ;; (propagated-inputs
+    ;;  (list ocaml-result))
     (properties `((ocaml4.09-variant . ,(delay ocaml4.09-csexp))
                   (ocaml5.0-variant . ,(delay ocaml5.0-csexp))))
     (home-page "https://github.com/ocaml-dune/csexp")
@@ -2302,8 +2304,9 @@ module of this library is parameterised by the type of S-expressions.")
        #:findlib ,ocaml4.09-findlib
        ,@(substitute-keyword-arguments (package-arguments ocaml-csexp)
            ((#:dune _) ocaml4.09-dune-bootstrap))))
-    (propagated-inputs
-     `(("ocaml-result" ,ocaml4.09-result)))))
+    ;; (propagated-inputs
+    ;;  `(("ocaml-result" ,ocaml4.09-result)))
+    ))
 
 (define-public ocaml5.0-csexp
   (package
@@ -2314,8 +2317,9 @@ module of this library is parameterised by the type of S-expressions.")
        #:findlib ,ocaml5.0-findlib
        ,@(substitute-keyword-arguments (package-arguments ocaml-csexp)
            ((#:dune _) ocaml5.0-dune-bootstrap))))
-    (propagated-inputs
-     `(("ocaml-result" ,ocaml5.0-result)))))
+    ;; (propagated-inputs
+    ;;  `(("ocaml-result" ,ocaml5.0-result)))
+    ))
 
 (define-public ocaml4.14-migrate-parsetree
   (package
@@ -2335,7 +2339,7 @@ module of this library is parameterised by the type of S-expressions.")
     (build-system dune-build-system)
     (arguments `(#:tests? #f))
     (propagated-inputs
-     (list ocaml-ppx-derivers ocamlbuild ocaml-result))
+     (list ocaml-ppx-derivers ocamlbuild))
     (properties `((upstream-name . "ocaml-migrate-parsetree")))
     (synopsis "OCaml parsetree converter")
     (description "This library converts between parsetrees of different OCaml
@@ -2360,7 +2364,7 @@ functions to the next and/or previous version.")
     (arguments
      ;; No tests
      `(#:tests? #f))
-    (propagated-inputs (list ocaml-result ocaml-odoc))
+    (propagated-inputs (list ocaml-odoc))
     (home-page "https://github.com/ocaml-community/ocaml-linenoise")
     (synopsis "Lightweight readline alternative")
     (description "This package is a line-reading library for OCaml that aims
@@ -2423,44 +2427,65 @@ bitsrings in Erlang style as primitives to the language.")))
   (package
     (name "ocaml-result")
     (version "1.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/janestreet/result")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "166laj8qk7466sdl037c6cjs4ac571hglw4l5qpyll6df07h6a7q"))))
+    (home-page
+     "https://github.com/janestreet/result")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1abn5fqqixlj1jbqb6vwysn48m0fv9cp7jyw5nfkkyxivw9xccvd"
+      #:tag-prefix ""
+      ))
     (build-system dune-build-system)
-    (arguments
-     `(#:dune ,dune-bootstrap))
-    (properties `((ocaml4.09-variant . ,(delay ocaml4.09-result))
-                  (ocaml5.0-variant . ,(delay ocaml5.0-result))))
-    (home-page "https://github.com/janestreet/result")
-    (synopsis "Compatibility Result module")
-    (description "Uses the new result type defined in OCaml >= 4.03 while
-staying compatible with older version of OCaml should use the Result module
-defined in this library.")
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs
+     (list ocaml-jane-street-headers
+           ocaml-ppx-base ocaml-ppx-optcomp ocaml-jst-config))
+    (properties `((upstream-name . "result")))
+    (synopsis "Compatibility result module")
+    (description "Projects that want to use the new result type defined in OCaml >= 4.03 while staying compatible with older version of OCaml should use the Result module defined in this library.")
     (license license:bsd-3)))
+;; (define-public ocaml-result
+;;   (package
+;;     (name "ocaml-result")
+;;     (version "1.5")
+;;     (source (origin
+;;               (method git-fetch)
+;;               (uri (git-reference
+;;                      (url "https://github.com/janestreet/result")
+;;                      (commit version)))
+;;               (file-name (git-file-name name version))
+;;               (sha256
+;;                (base32
+;;                 "166laj8qk7466sdl037c6cjs4ac571hglw4l5qpyll6df07h6a7q"))))
+;;     (build-system dune-build-system)
+;;     (arguments
+;;      `(#:dune ,dune-bootstrap))
+;;     (properties `((ocaml4.09-variant . ,(delay ocaml4.09-result))
+;;                   (ocaml5.0-variant . ,(delay ocaml5.0-result))))
+;;     (home-page "https://github.com/janestreet/result")
+;;     (synopsis "Compatibility Result module")
+;;     (description "Uses the new result type defined in OCaml >= 4.03 while
+;; staying compatible with older version of OCaml should use the Result module
+;; defined in this library.")
+;;     (license license:bsd-3)))
 
-(define-public ocaml4.09-result
-  (package
-    (inherit ocaml-result)
-    (name "ocaml4.09-result")
-    (arguments
-     `(#:dune ,ocaml4.09-dune-bootstrap
-       #:ocaml ,ocaml-4.09
-       #:findlib ,ocaml4.09-findlib))))
+;; (define-public ocaml4.09-result
+;;   (package
+;;     (inherit ocaml-result)
+;;     (name "ocaml4.09-result")
+;;     (arguments
+;;      `(#:dune ,ocaml4.09-dune-bootstrap
+;;        #:ocaml ,ocaml-4.09
+;;        #:findlib ,ocaml4.09-findlib))))
 
-(define-public ocaml5.0-result
-  (package
-    (inherit ocaml-result)
-    (name "ocaml5.0-result")
-    (arguments
-     `(#:dune ,ocaml5.0-dune-bootstrap
-       #:ocaml ,ocaml-5.0
-       #:findlib ,ocaml5.0-findlib))))
+;; (define-public ocaml5.0-result
+;;   (package
+;;     (inherit ocaml-result)
+;;     (name "ocaml5.0-result")
+;;     (arguments
+;;      `(#:dune ,ocaml5.0-dune-bootstrap
+;;        #:ocaml ,ocaml-5.0
+;;        #:findlib ,ocaml5.0-findlib))))
 
 (define-public ocaml-iso8601
   (package
@@ -2554,8 +2579,8 @@ adaptive parsers) as well as extensible lexers for the parsers it produces.")
     (build-system ocaml-build-system)
     (native-inputs
      (list ocamlbuild))
-    (propagated-inputs
-     `(("result" ,ocaml-result)))
+    ;; (propagated-inputs
+    ;;  `(("result" ,ocaml-result)))
     (arguments
      `(#:tests? #f
        #:build-flags '("build")
@@ -2735,52 +2760,25 @@ spans without being subject to operating system calendar time adjustments.")
     (license license:isc)))
 
 (define-public ocaml-calendar
-  ;; No tags.
-  ;; Commit from 2019-02-03.
-  (let ((commit "a447a88ae3c1e9873e32d2a95d3d3e7c5ed4a7da")
-        (revision "0"))
-    (package
-      (name "ocaml-calendar")
-      ;; Makefile.in says 2.04.
-      (version (git-version "2.04" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/ocaml-community/calendar")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "09d9gyqm3zkf3z2m9fx87clqihx6brf8rnzm4yq7c8kf1p572hmc"))))
-      (build-system gnu-build-system)
-      (arguments
-       '(#:test-target "tests"
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'make-deterministic
-             (lambda _
-               (substitute* "Makefile.in"
-                 (("`date`") "no date for reproducibility"))))
-           (add-before 'install 'set-environment-variables
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out")))
-                 (setenv "OCAMLFIND_DESTDIR"
-                         (string-append out "/lib/ocaml/site-lib"))
-                 (setenv "OCAMLFIND_LDCONF" "ignore")
-                 (mkdir-p (string-append
-                           out "/lib/ocaml/site-lib/calendar"))))))))
-      (native-inputs
-       (list autoconf automake))
-      (propagated-inputs
-       `(("ocaml" ,ocaml)
-         ("ocamlfind" ,ocaml-findlib)))
-      (home-page "https://github.com/ocaml-community/calendar")
+  (package
+    (name "ocaml-calendar")
+    (version "3.0.0")
+    (home-page
+     "https://github.com/ocaml-community/calendar")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0jw8sdz1kl53fzdyxixd8ljfr25vvn4f2z4lspasqcj4ma5k6m7r"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-re))
+    (properties `((upstream-name . "time_now")))
       (synopsis "OCaml library for handling dates and times")
       (description "This package provides types and operations over
 dates and times.")
       ;; With linking exception.
-      (license license:lgpl2.1+))))
+      (license license:lgpl2.1+)
+    ))
 
 (define-public ocaml-cmdliner
   (package
@@ -2794,8 +2792,8 @@ dates and times.")
                (base32
                 "10l56xl7ibhbjljvfbz9fji3py5k9rrdffqdyvgsmyrn3iiplm2f"))))
     (build-system dune-build-system)
-    (propagated-inputs
-     (list ocaml-result))
+    ;; (propagated-inputs
+    ;;  (list ocaml-result))
     (arguments `(#:tests? #f))
     (home-page "https://erratique.ch/software/cmdliner")
     (synopsis "Declarative definition of command line interfaces for OCaml")
@@ -3302,10 +3300,10 @@ values with arbitrary types.  Keys witness the type of the value they are bound
 to which allows adding and looking up bindings in a type safe manner.")
     (license license:isc)))
 
-(define ocaml-eio
+(define-public ocaml-eio
   (package
     (name "ocaml-eio")
-    (version "0.8.1")
+    (version "1.3")
     (home-page "https://github.com/ocaml-multicore/eio")
     (source
      (origin
@@ -3315,7 +3313,7 @@ to which allows adding and looking up bindings in a type safe manner.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256 (base32
-                "02q9i5wbb2497vd4ypc9d9p4zi3lmx0rsv8faiy7h8dnnzbjjf4z"))))
+                "05s3zs416y4284bcj20c7w2vdz4in1iaplgjnxmm9n3f1wyk2jqv"))))
     (build-system dune-build-system)
     (arguments `(#:package "eio"))
     (propagated-inputs (list ocaml-bigstringaf
@@ -3477,7 +3475,7 @@ accesses to the store.")
     (inputs
      (list glib))
     (propagated-inputs
-     (list ocaml-mmap ocaml-ocplib-endian ocaml-result ocaml-seq libev))
+     (list ocaml-mmap ocaml-ocplib-endian ocaml-seq libev))
     (home-page "https://github.com/ocsigen/lwt")
     (synopsis "Cooperative threads and I/O in monadic style")
     (description "Lwt provides typed, composable cooperative threads.  These
@@ -3687,7 +3685,7 @@ encoded in a resizable array.")
                    (when tests?
                      (invoke "dune" "runtest" "--no-buffer" "--force")))))))
     (inputs (list libuv))
-    (propagated-inputs (list ocaml-ctypes ocaml-result ocaml-odoc))
+    (propagated-inputs (list ocaml-ctypes ocaml-odoc))
     (native-inputs (list ocaml-base ocaml-alcotest))
     (home-page "https://github.com/aantron/luv")
     (synopsis "Binding to libuv: cross-platform asynchronous I/O")
@@ -3796,7 +3794,7 @@ ocaml lwt.")
      `(("fmt" ,ocaml-fmt)
        ("lwt" ,ocaml-lwt)
        ("mtime" ,ocaml-mtime)
-       ("result" ,ocaml-result)
+       ;; ("result" ,ocaml-result)
        ("cmdliner" ,ocaml-cmdliner)
        ("topkg" ,ocaml-topkg)))
     (home-page "https://erratique.ch/software/logs")
@@ -4504,7 +4502,7 @@ applications built with MirageOS")
        ;; TODO again, wants opam, other tests seem to pass
        ;; look for a way to disable tests that want network access
        #:tests? #f))
-    (propagated-inputs (list ocaml-cmdliner ocaml-rresult ocaml-result
+    (propagated-inputs (list ocaml-cmdliner ocaml-rresult
                              ocaml-astring ocaml-fmt ocaml-logs ocaml-bos
                              ocaml-fpath ocaml-emile ocaml-uri))
     (native-inputs (list ocaml-alcotest ocaml-functoria-runtime))
@@ -4647,7 +4645,7 @@ epoch.")
                            "true")
        #:phases (modify-phases %standard-phases
                   (delete 'configure))))
-    (propagated-inputs (list ocaml-result js-of-ocaml))
+    (propagated-inputs (list js-of-ocaml))
     (native-inputs (list ocaml-findlib ocamlbuild ocaml-topkg opam-installer))
     (home-page "https://erratique.ch/software/ptime")
     (synopsis "POSIX time for OCaml")
@@ -5792,7 +5790,7 @@ library is currently designed for Unicode Standard 3.2.")
                   "04gil5hxm2jax9paw3i24d8zyzhyl5cphzfyryvy2lcrm3c485q0"))))
       (build-system dune-build-system)
       (propagated-inputs
-       (list ocaml-result ocaml-camomile))
+       (list ocaml-camomile))
       (native-inputs
        (list ocaml-ppx-expect))
       (properties
@@ -5819,7 +5817,7 @@ function that follows the prototype of POSIX's wcwidth.")
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-react
-           ocaml-result
+           ;; ocaml-result
            ocaml-uchar
            ocaml-uutf
            ocaml-uucp
@@ -6669,8 +6667,10 @@ that was developed by Jane Street, the largest industrial user of OCaml.")
 (define-public ocaml-parsexp
   (package
     (name "ocaml-parsexp")
-    (version "0.15.0")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/parsexp")
+    ;; (source
+    ;;  (github-tag-origin name home-page version "000"))
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6679,7 +6679,7 @@ that was developed by Jane Street, the largest industrial user of OCaml.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1grzpxi39318vcqhwf723hqh11k68irh59zb3dyg9lw8wjn7752a"))))
+                "1mfw44f41kiy3jxbrina3vqrgbi8hdw6l6xsjy8sfcybf3lxkal8"))))
     (build-system dune-build-system)
     (inputs
      (list ocaml-sexplib0 ocaml-base))
@@ -6912,7 +6912,7 @@ a more consistent API.")
          "1wqcnw4wi6pfjjhixpakckm03dpj990259za432804471a6spm2j"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-ppx-derivers ocaml-ppxlib ocaml-result))
+     (list ocaml-ppx-derivers ocaml-ppxlib))
     (native-inputs
      (list ocaml-cppo ocaml-ounit2))
     (properties `((upstream-name . "ppx_deriving")))
@@ -6967,7 +6967,7 @@ as part of the same ocaml-migrate-parsetree driver.")
     (build-system dune-build-system)
     (propagated-inputs
       (list ocaml-yojson
-            ocaml-result
+            ;; ocaml-result
             ocaml-ppx-deriving
             ocaml-ppxlib))
     (native-inputs (list ocaml-ounit))
@@ -8653,6 +8653,26 @@ Usage is simple - add package bisect_ppx when building tests, run your tests,
 then run the Bisect_ppx report tool on the generated visitation files.")
     (license license:mpl2.0)))
 
+(define-public ocaml-crunch
+  (package
+    (name "ocaml-crunch")
+    (version "4.0.0")
+    (home-page "https://github.com/mirage/ocaml-crunch")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0qmsdry5l20fnfh8wrvpqq0dh8kaswsvbkgpri333q4gkp1b3d9j"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-cmdliner ocaml-ptime))
+    ;; (propagated-inputs
+    ;;  (list ocaml-base ocaml-jane-street-headers ocaml-jst-config
+    ;;        ocaml-ppx-base ocaml-ppx-optcomp))
+    (properties `((upstream-name . "ocaml-crunch")))
+    (synopsis "ocaml-crunch — convert a filesystem into a static OCaml module")
+    (description "ocaml-crunch takes a directory of files and compiles them into a standalone OCaml module which serves the contents directly from memory. This can be convenient for libraries that need a few embedded files (such as a web server) and do not want to deal with all the trouble of file configuration.")
+    (license license:isc)))
+
 (define-public ocaml-odoc
   (package
     (name "ocaml-odoc")
@@ -8684,7 +8704,9 @@ then run the Bisect_ppx report tool on the generated visitation files.")
           ocaml-logs
           ocaml-odoc-parser
           ocaml-re
-          ocaml-result
+          ;; ocaml-result
+          ocaml-menhir
+          ocaml-sexplib
           ocaml-tyxml))
   (native-inputs
     (list ocaml-alcotest
@@ -8724,7 +8746,7 @@ complexity of the OCaml module system.")
            "1x48kf051xs98rd6cri591bk1ccp9hyp93n1rlf6qnxic55jw683"))))
     (build-system dune-build-system)
     (propagated-inputs
-      (list ocaml-astring ocaml-camlp-streams ocaml-result))
+      (list ocaml-astring ocaml-camlp-streams))
     (native-inputs
       (list ocaml-ppx-expect))
     (home-page "https://github.com/ocaml-doc/odoc-parser")
@@ -8891,7 +8913,7 @@ variants.")
            ocaml-logs
            ocaml-cmdliner
            ocaml-re
-           ocaml-result
+           ;; ocaml-result
            ocaml-odoc
            ocaml-odoc-parser
            ocaml-version))
@@ -9461,7 +9483,7 @@ OCaml.")
         (base32 "0417xsghj92v3xa5q4dk4nzf2r4mylrx2fd18i7cg3nzja65nia2"))))
     (build-system dune-build-system)
     (propagated-inputs
-     (list ocaml-result ocaml-trie))
+     (list ocaml-trie))
     (native-inputs
      (list ocaml-ppx-expect))
     (synopsis "General modal editing engine generator")
