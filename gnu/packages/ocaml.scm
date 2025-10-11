@@ -1014,6 +1014,7 @@ The test-based infered specification implemented in this library is the followin
            ocaml-cppo
            ocaml-swhid-core
            ocaml-jsonm
+           ocaml-cmdliner-1.3
            ocaml-sha
            ))
     (inputs (list bubblewrap ocaml-patch ocaml-uutf))
@@ -1046,7 +1047,7 @@ Git-friendly development workflow.")
     (native-inputs (list ocaml-opam-format
                          ;; ocaml-patch
                          ;; ocaml-uutf
-                         ocaml-cmdliner))
+                         ocaml-cmdliner-1.3))
     (inputs '())
     (propagated-inputs '())
     (arguments `(#:package "opam-installer"
@@ -1945,7 +1946,7 @@ GNU CC attributes.  It provides also a C pretty printer as an example of use.")
 (define-public ocaml-qcheck
   (package
     (name "ocaml-qcheck")
-    (version "0.20")
+    (version "0.26")
     (source
      (origin
        (method git-fetch)
@@ -1954,7 +1955,7 @@ GNU CC attributes.  It provides also a C pretty printer as an example of use.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r0m5p1dd06lbgfxqdpl1ya4vb8252z7hqkvdi9k444g4rx2ay3p"))))
+        (base32 "05jb99ijpf06d0ws5xjkkk78xmbj93bsza1szahx8vcbxmlzv5h1"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-alcotest ocaml-ounit ocaml-ppxlib))
@@ -2802,6 +2803,45 @@ module automatically handles syntax errors, help messages and UNIX man page
 generation. It supports programs with single or multiple commands and respects
 most of the POSIX and GNU conventions.")
     (license license:bsd-3)))
+
+(define-public ocaml-cmdliner-1.3
+  (package
+    (inherit ocaml-cmdliner)
+    (version "1.3.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://erratique.ch/software/cmdliner/releases/"
+                                  "cmdliner-" version ".tbz"))
+              (sha256
+               (base32
+                "12df8mzggvizzw4c51a2fziq6ah8g95i4lq9ad3m07sw5l0kz8l"))))
+    (build-system ocaml-build-system)
+    (native-inputs
+     (list ocamlbuild ocaml-topkg))
+    (propagated-inputs
+     (list ocaml-result))
+    (arguments
+     `(#:tests? #f
+       #:build-flags (list "build")
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((lib (string-append (assoc-ref outputs "out")
+                                       "/lib/ocaml/site-lib")))
+               (mkdir-p lib)
+               (with-directory-excursion "_build"
+                 (invoke "ocamlfind" "install" "cmdliner"
+                         "../pkg/META"
+                         "src/cmdliner.a"
+                         "src/cmdliner.cma"
+                         "src/cmdliner.cmxa"
+                         "src/cmdliner.cmxs"
+                         "src/cmdliner.cmx"
+                         "src/cmdliner.cmi"
+                         "src/cmdliner.mli"))))))))
+    (license license:isc)))
 
 (define-public ocaml-fmt
   (package
@@ -8851,7 +8891,7 @@ and SVG file output.")
 (define-public ocaml-version
   (package
     (name "ocaml-version")
-    (version "3.5.0")
+    (version "4.0.3")
     (source
      (origin
        (method git-fetch)
@@ -8861,7 +8901,7 @@ and SVG file output.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1pnw2ym021j48zknhbi1kdiyfv9si8p2l04rdzbv4g51fclsqs92"))))
+         "1js5w68srirnsng7h2qfjqg9mfldc9z50166r1kz8d23n157605k"))))
     (build-system dune-build-system)
     (arguments `(#:tests? #f))          ; no tests
     (properties '((upstream-name . "ocaml-version")))
@@ -8878,33 +8918,38 @@ variants.")
 (define-public ocaml-mdx
   (package
     (name "ocaml-mdx")
-    (version "2.1.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/realworldocaml/mdx")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1w1givvhwv9jzj9zbg4mmlpb35sqi75w83r99p2z50bdr69fdf57"))))
+    (version "2.5.1")
+    (home-page
+     "https://github.com/realworldocaml/mdx")
+    ;; (source (origin
+    ;;           (method git-fetch)
+    ;;           (uri (git-reference
+    ;;                 (url "https://github.com/realworldocaml/mdx")
+    ;;                 (commit version)))
+    ;;           (file-name (git-file-name name version))
+    ;;           (sha256
+    ;;            (base32
+    ;;             "1w1givvhwv9jzj9zbg4mmlpb35sqi75w83r99p2z50bdr69fdf57"
+    ;; ))))
+    (source (github-tag-origin name home-page version "1rhj00gsj1zz8yd99wkcpsgf0ym1fg940zk2jq29fysk4zd1g7m3" #:tag-prefix ""
+                               ))
     (build-system dune-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-test-format
-           (lambda _
-             ;; cmdliner changed the format and the tests fail
-             (substitute* '("test/bin/mdx-test/misc/no-such-file/test.expected"
-                            "test/bin/mdx-test/misc/no-such-prelude/test.expected")
-               (("`") "'")
-               (("COMMAND") "[COMMAND]")
-               (("\\.\\.\\.") "…"))))
-         (add-after 'fix-test-format 'fix-egrep
-           (lambda _
-             ;; egrep is obsolescent; using grep -E
-             (substitute* "test/bin/mdx-test/expect/padding/test-case.md"
-               (("egrep") "grep -E")))))))
+    ;; (arguments
+    ;;  `(#:phases
+    ;;    (modify-phases %standard-phases
+    ;;      (add-after 'unpack 'fix-test-format
+    ;;        (lambda _
+    ;;          ;; cmdliner changed the format and the tests fail
+    ;;          (substitute* '("test/bin/mdx-test/misc/no-such-file/test.expected"
+    ;;                         "test/bin/mdx-test/misc/no-such-prelude/test.expected")
+    ;;            (("`") "'")
+    ;;            (("COMMAND") "[COMMAND]")
+    ;;            (("\\.\\.\\.") "…"))))
+    ;;      (add-after 'fix-test-format 'fix-egrep
+    ;;        (lambda _
+    ;;          ;; egrep is obsolescent; using grep -E
+    ;;          (substitute* "test/bin/mdx-test/expect/padding/test-case.md"
+    ;;            (("egrep") "grep -E")))))))
     (propagated-inputs
      (list ocaml-fmt
            ocaml-astring
@@ -8916,8 +8961,6 @@ variants.")
            ocaml-version))
     (native-inputs
      (list ocaml-cppo ocaml-lwt ocaml-alcotest))
-    (home-page
-     "https://github.com/realworldocaml/mdx")
     (synopsis
      "Executable code blocks inside markdown files")
     (description
