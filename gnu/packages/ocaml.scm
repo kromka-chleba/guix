@@ -1461,16 +1461,17 @@ the OCaml core distribution.")
 (define-public emacs-tuareg
   (package
     (name "emacs-tuareg")
-    (version "3.0.1")
+    (version "3.0.1-1.f0cb55f")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/ocaml/tuareg")
-             (commit version)))
+             (commit "f0cb55f2177f6fc978d98d018910fe5b1890fe0c")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1p3xpk78i8ywgdmc59w05wjjy9dg6gm5gicm08szmrlnx08v2ihm"))))
+        (base32 "0f131fq2zgdzjvdy61wfi27laga3dl9fqdi0xv1v7qr8cqjnbfln")))
+     )
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4714,22 +4715,21 @@ epoch.")
 (define-public ocaml-ptime
   (package
     (name "ocaml-ptime")
-    ;; TODO 1.1.0 has some issues, so for now we are stuck with 0.8.5
-    (version "0.8.5")
+    (version "1.2.0")
     (source (origin
               (method url-fetch)
               (uri
-               "https://erratique.ch/software/ptime/releases/ptime-0.8.5.tbz")
+               "https://erratique.ch/software/ptime/releases/ptime-1.2.0.tbz")
               (sha256
                (base32
-                "1fxq57xy1ajzfdnvv5zfm7ap2nf49znw5f9gbi4kb9vds942ij27"))))
+                "1c1swx6h794gcck358nqfzshlfhyw1zb5ji4h1pc63j9vxzp85ln"))))
     (build-system ocaml-build-system)
     (arguments
-     `(#:build-flags (list "build" "--with-js_of_ocaml" "true" "--tests"
-                           "true")
+     `(#:build-flags (list "build")
+       #:tests? #f  ; tests not built
        #:phases (modify-phases %standard-phases
                   (delete 'configure))))
-    (propagated-inputs (list js-of-ocaml))
+    ;; (propagated-inputs (list js-of-ocaml))
     (native-inputs (list ocaml-findlib ocamlbuild ocaml-topkg opam-installer))
     (home-page "https://erratique.ch/software/ptime")
     (synopsis "POSIX time for OCaml")
@@ -6412,7 +6412,7 @@ than yojson), with 25-35% space savings.")
 (define-public ocaml-yojson
   (package
     (name "ocaml-yojson")
-    (version "2.0.2")
+    (version "3.0.0")
     (home-page "https://github.com/ocaml-community/yojson")
     (source
      (origin
@@ -6423,7 +6423,7 @@ than yojson), with 25-35% space savings.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1habsh00ihjhk1g1csxqg3hj8izk5zvgc7wm579wyjw35vzcmwr1"))))
+         "1q655y2j8b7j28ri2ffdqmv8lfgzb9dx62rz3a1p3sw7305bdan5"))))
     (build-system dune-build-system)
     (arguments
      `(#:package "yojson"))
@@ -9749,7 +9749,7 @@ libraries.")
 (define-public js-of-ocaml
   (package
     (name "js-of-ocaml")
-    (version "4.1.0")
+    (version "6.2.0")
     (source
      (origin
        (method git-fetch)
@@ -9758,7 +9758,7 @@ libraries.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14ig69iyc9yzniclfsc6cz9g9zqp96bs66y6dy4rzrm78s81w6i1"))))
+        (base32 "0xsz4dj0gh2rpbixqdqwb78r10pj5c2gbiqfzpjz16l2g8fgqmp3"))))
     (build-system dune-build-system)
     (arguments
      ;;tests assume ocaml 4.13
