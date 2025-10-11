@@ -26,6 +26,7 @@
   #:use-module ((guix licenses) #:select (lgpl2.0 lgpl2.0+))
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages image)
   #:use-module (gnu packages xorg)
@@ -147,7 +148,7 @@ UI builder called FLUID that can be used to create applications in minutes.")
     (inputs
      `(("libjpeg" ,libjpeg-turbo)
        ("glu" ,glu)
-       ("waf" ,python-waf)))
+       ("waf" ,waf)))
     ;; ntk.pc lists "x11" and "xft" in Requires.private, and "cairo" in
     ;; Requires.
     (propagated-inputs

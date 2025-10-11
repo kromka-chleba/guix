@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Mark H Weaver <mhw@netris.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -665,13 +665,15 @@ to thunked values.  Raise a syntax violation when the field is not found."
 
 (define-syntax match-record
   (syntax-rules ()
-    "Bind each FIELD of a RECORD of the given TYPE to it's FIELD name.
+    "Bind each FIELD of a RECORD of the given TYPE to its FIELD name.
 The order in which fields appear does not matter.  A syntax error is raised if
 an unknown field is queried."
     ((_ record type (fields ...) body ...)
      (if (eq? (struct-vtable record) type)
          (match-record-inner record type (fields ...) body ...)
-         (throw 'wrong-type-arg record)))))
+         (throw 'wrong-type-arg "match-record"
+                "Wrong type (expecting a ~a record): ~S"
+                (list 'type record) (list record))))))
 
 (define-syntax match-record-lambda
   (syntax-rules ()
@@ -680,8 +682,7 @@ FIELD will be bound to its FIELD name within the returned procedure.  A syntax e
 is raised if an unknown field is queried."
     ((_ type (field ...) body ...)
      (lambda (record)
-       (if (eq? (struct-vtable record) type)
-           (match-record-inner record type (field ...) body ...)
-           (throw 'wrong-type-arg record))))))
+       (match-record record type (field ...)
+         body ...)))))
 
 ;;; records.scm ends here

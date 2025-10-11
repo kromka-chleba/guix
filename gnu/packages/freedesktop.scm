@@ -1313,7 +1313,7 @@ Python.")
 (define-public hyprland-protocols
   (package
     (name "hyprland-protocols")
-    (version "0.6.4")
+    (version "0.7.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1322,7 +1322,7 @@ Python.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0njqyl6vsqlb8dv4wdn5h34dk67yqzc99gvwa13j252cv3n0bpya"))))
+                "10mnr5sni5cnc0n5q4jhp197gh8d32pjwlx7dgz0rwsyl2f1b8gq"))))
     (build-system meson-build-system)
     (home-page "https://github.com/hyprwm/hyprland-protocols")
     (synopsis "Wayland protocol extensions for Hyprland")
@@ -1432,23 +1432,6 @@ add completely new functionality, or extend the functionality of some other
 protocol either in Wayland core, or some other protocol in wayland-protocols.")
     (home-page "https://wayland.freedesktop.org")
     (license license:expat)))
-
-;; TODO: Remove this package when wayland-protocols >= 1.45.
-;; This package is currently only used by hyprland.
-;; It will be removed on the next mesa-updates merge.
-(define-public wayland-protocols-next
-  (package/inherit wayland-protocols
-    (name "wayland-protocols")
-    (version "1.45")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://gitlab.freedesktop.org/wayland/wayland-protocols")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1d2fv41vq75pvgkd3ykjypnp8zv0afv71p36cd91h19lbmwaia8h"))))))
 
 (define-public wayland-protocols-1.42
   (package

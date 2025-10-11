@@ -56,7 +56,7 @@ Copyright @copyright{} 2017 Andy Wingo@*
 Copyright @copyright{} 2017, 2018, 2019, 2020, 2023, 2024, 2025 Arun Isaac@*
 Copyright @copyright{} 2017 nee@*
 Copyright @copyright{} 2018 Rutger Helling@*
-Copyright @copyright{} 2018, 2021, 2023 Oleg Pykhalov@*
+Copyright @copyright{} 2018, 2021, 2023, 2025 Oleg Pykhalov@*
 Copyright @copyright{} 2018 Mike Gerwitz@*
 Copyright @copyright{} 2018 Pierre-Antoine Rouby@*
 Copyright @copyright{} 2018, 2019 Gábor Boskovits@*
@@ -13204,6 +13204,16 @@ Lower @var{object} and build it if it's not already built, returning its
 output file name(s).
 @end deffn
 
+@deffn {REPL command} build-options @var{options}
+Set build options for rest of the REPL commands to @var{options}.  Must
+be a list of keywords with values accepted by procedure
+@code{(@@ (guix store) set-build-options)}.  An example would be:
+
+@example
+,build-options '(#:offload? #f)
+@end example
+@end deffn
+
 @deffn {REPL command} lower @var{object}
 Lower @var{object} into a derivation or store file name and return it.
 @end deffn
@@ -18783,6 +18793,27 @@ this option can have a negative security impact because it can make
 file system level operations visible on the physical device.  For more
 information, refer to the description of the @code{--allow-discards}
 option in the @code{cryptsetup-open(8)} man page.
+
+@item #:extra-options
+List of additional command-line options for the @code{cryptsetup open}
+command.  See the @code{cryptsetup-open(8)} man page for a list of
+supported options.
+
+For example, here is how you could specify the
+@option{--perf-no_read_workqueue} and @option{--perf-no_write_workqueue}
+options, along with @option{--allow-discards}:
+
+@lisp
+(mapped-device
+  (source "/dev/sdb1")
+  (target "data")
+  (type luks-device-mapping)
+  (arguments '(#:allow-discards? #t
+               #:extra-options
+               ("--perf-no_read_workqueue"
+                "--perf-no_write_workqueue")))))
+@end lisp
+
 @end table
 @end defvar
 
@@ -21525,10 +21556,10 @@ be a @code{log-rotation-configuration} record, as discussed below.
 Available @code{log-rotation-configuration} fields are:
 
 @table @asis
-@item @code{provision} (default: @code{'(log-rotation)}) (type: list-of-symbols)
+@item @code{provision} (default: @code{(log-rotation)}) (type: list-of-symbols)
 The name(s) of the log rotation Shepherd service.
 
-@item @code{requirement} (default: @code{'(user-processes)}) (type: list-of-symbols)
+@item @code{requirement} (default: @code{(user-processes)}) (type: list-of-symbols)
 Dependencies of the log rotation Shepherd service.
 
 @item @code{calendar-event} (type: gexp)
@@ -21539,9 +21570,11 @@ on calendar events.
 @item @code{external-log-files} (default: @code{()}) (type: list-of-strings)
 List of file names, external log files that should also be rotated.
 
-@item @code{compression} (default: @code{zstd}) (type: symbol)
+@item @code{compression} (default: @code{zstd}) (type: gexp-or-symbol)
 The compression method used for rotated log files, one of @code{'none},
-@code{'gzip}, and @code{'zstd}.
+@code{'gzip}, and @code{'zstd}.  Alternatively, it can be a gexp that
+evaluates to a procedure; that procedure gets called with the file to be
+rotated.
 
 @item @code{expiry} (type: gexp-or-integer)
 Age in seconds after which a log file is deleted.
@@ -39607,6 +39640,12 @@ Libvirt package.
 @item @code{qemu} (default: @code{qemu}) (type: file-like)
 The QEMU package to use.
 
+@item @code{dmidecode} (default: @code{dmidecode}) (type: file-like)
+The Dmidecode package to use.
+
+@item @code{requirement} (default: @code{'()}) (type: list-of-symbols)
+Shepherd services dependencies to the provisioned Shepherd service.
+
 @item @code{firmwares} (default: @code{(ovmf-x86-64)}) (type: list-of-file-likes)
 List of UEFI/BIOS firmware packages to make available.  Each firmware
 package should contain a @file{share/qemu/firmware/@var{NAME}.json} QEMU
@@ -49849,6 +49888,7 @@ services)}.
 * Mail: Mail Home Services.     Services for managing mail.
 * Messaging: Messaging Home Services.  Services for managing messaging.
 * Media: Media Home Services.   Services for managing media.
+* Niri: Niri window manager.    Setting up the Niri.
 * Sway: Sway window manager.    Setting up the Sway configuration.
 * Networking: Networking Home Services.  Networking services.
 * Miscellaneous: Miscellaneous Home Services.  More services.
@@ -52380,6 +52420,35 @@ object @code{%unset-value} (from @code{(gnu services configuration)}).
 @code{zimg-threads}.
 
 @end deffn
+
+@node Niri window manager
+@subsection Niri window manager
+
+@cindex niri, Home Service
+@cindex niri, configuration
+@cindex Wayland compositor
+@cindex scrollable tiling window manager
+The @code{(gnu home services niri)} module provides the
+@code{home-niri-service-type} service, which installs and configures
+@uref{https://github.com/YaLTeR/niri, Niri}, a scrollable tiling Wayland
+compositor. Niri combines traditional tiling window management with
+smooth scrolling between workspaces.
+
+This service starts Niri as a user-level desktop session with proper
+environment variables configured for Wayland compatibility, including
+@code{XDG_CURRENT_DESKTOP}, @code{XDG_SESSION_DESKTOP}, and
+@code{DESKTOP_SESSION}.
+
+Here is a minimal example service declaration for your
+@code{home-environment} configuration:
+
+@example
+(service home-niri-service-type)
+@end example
+
+For more advanced configurations, you can customize the service with a
+@code{niri-configuration} record to specify additional environment
+variables.
 
 @node Sway window manager
 @subsection Sway window manager

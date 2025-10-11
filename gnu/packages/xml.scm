@@ -249,7 +249,9 @@ hierarchical form with variable field lengths.")
                   (("^old_library='libxml2.a'") "old_library=''"))))))))
     (home-page "http://www.xmlsoft.org/")
     (synopsis "C parser for XML")
-    (inputs (list xz))
+    ;; TODO: Remove python, xz and zlib when upgrading.
+    ;; See https://codeberg.org/guix/guix/pulls/3161#issuecomment-7521193
+    (inputs (list python-minimal xz))
     (propagated-inputs (list zlib)) ; libxml2.la says '-lz'.
     (native-inputs (append (if (target-loongarch64?)
                                (list config)
@@ -1937,13 +1939,13 @@ libxml2 and libxslt.")
 (define-public python-lxml-html-clean
   (package
     (name "python-lxml-html-clean")
-    (version "0.4.2")
+    (version "0.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "lxml_html_clean" version))
        (sha256
-        (base32 "1cxwrrv4kdkxwkwm12a6rh38xmb415257g31yjmk0m5rbmxiwaci"))))
+        (base32 "134xppqi8y8qfl54vxfgx8852mw2mix15axy0z43dy00bf993py9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1958,7 +1960,7 @@ libxml2 and libxslt.")
                         "tests/test_clean.txt"
                         "tests/test_autolink.txt")))))))
     (propagated-inputs (list python-lxml))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/fedora-python/lxml_html_clean/")
     (synopsis "Remove superfluous content from HTML files")
     (description "This package provides a Cleaner for cleaning up HTML pages.

@@ -11,10 +11,11 @@
 ;;; Copyright © 2015 Florian Paul Schmidt <mista.tapas@gmx.net>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016, 2018 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016-2021, 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2016-2025 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2017, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016 Petter <petter@mykolab.ch>
+;;; Copyright © 2017 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2017 Mekeor Melire <mekeor.melire@gmail.com>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2017–2021, 2024 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -249,7 +250,7 @@ command line, without displaying a keyboard at all.")
 (define-public aquamarine
   (package
     (name "aquamarine")
-    (version "0.9.4")
+    (version "0.9.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -258,7 +259,7 @@ command line, without displaying a keyboard at all.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01z6acbj76szxb6s2wlh6v2cp9bkcaxpswqdr138wld5x6nqzrrw"))))
+                "1lxna15f46739wmz5h3iyz8xrmg63cly9a9p3k5jr4cznlfdip2h"))))
     (build-system cmake-build-system)
     (arguments
      (list ;; TODO: Figure out what's expected in the test environment.
@@ -2833,6 +2834,85 @@ both binary and text data.")
 the X11 clipboard")
     (license license:bsd-3)))
 
+(define-public python-wmctrl
+  (package
+    (name "python-wmctrl")
+    (version "0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "wmctrl" version))
+       (sha256
+        (base32 "0qp9adzsabcbjgm864m4dc8x5knvfb1mskih4byxdqp9dxms6fbq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ;XXX: all tests fail, require some set up
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda _
+              (substitute* "wmctrl.py"
+                (("'wmctrl")
+                 (string-append "'" #$(this-package-input "wmctrl")
+                                "/bin/wmctrl"))))))))
+    (native-inputs
+     (list python-setuptools))
+    (inputs
+     (list wmctrl))
+    (propagated-inputs
+     (list python-attrs))
+    (home-page "https://github.com/antocuni/wmctrl")
+    (synopsis "Tool to programmatically control Xorg windows")
+    (description
+     "This package provides a library for programmatically controlling Xorg
+windows using Python.  The library relies on the @command{wmctrl} to do so.")
+    (license license:expat)))
+
+(define-public python-xdo
+  (package
+    (name "python-xdo")
+    (version "0.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "http://http.debian.net/debian/pool/main/p/python-xdo/"
+                    "python-xdo_" version ".orig.tar.gz"))
+              (sha256
+               (base32
+                "109fm7crafkjwbnx6k01vy8xiyisgadi6fln4w0yc9s8b4ifb3qc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f  ; no tests provided
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-libxdo-path
+            ;; Hardcode the path of dynamically loaded libxdo library.
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((libxdo (string-append
+                             (assoc-ref inputs "xdotool")
+                             "/lib/libxdo.so"))
+                    (libc (string-append
+                           (assoc-ref inputs "libc")
+                           "/lib/libc.so.6")))
+                (substitute* "xdo/_xdo.py"
+                  (("find_library\\(\"xdo\"\\)")
+                   (simple-format #f "\"~a\"" libxdo))
+                  (("ctypes\\.util\\.find_library\\('libc'\\)")
+                   (simple-format #f "\"~a\"" libc)))))))))
+    (native-inputs
+     (list python-setuptools))
+    (inputs
+     (list xdotool
+           libx11))
+    (home-page "https://tracker.debian.org/pkg/python-xdo")
+    (synopsis "Python library for simulating X11 keyboard/mouse input")
+    (description "Provides bindings to libxdo for manipulating X11 via simulated
+input.  (Note that this is mostly a legacy library; you may wish to look at
+python-xdo for newer bindings.)")
+    (license license:bsd-3)))
+
 (define-public numlockx
   (package
     (name "numlockx")
@@ -3888,7 +3968,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprsunset
   (package
     (name "hyprsunset")
-    (version "0.3.2")
+    (version "0.3.3")
     (source
      (origin
        (method git-fetch)
@@ -3897,7 +3977,7 @@ This package is the fork of hsetroot by Hyriand.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09kv81j3vwxyr8myiyc3zdyp59aaqc5zxvid0k56cndjjrjfv0kr"))))
+        (base32 "1k2gzbin4k18n81a0jpj8gbfphnib6kz4bbhbyhygb4p607sfkk2"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f)) ;No tests.
@@ -3926,7 +4006,7 @@ reduce percieved brightness below the monitor's minimum.")
 (define-public hyprlock
   (package
    (name "hyprlock")
-   (version "0.9.1")
+   (version "0.9.2")
    (source
     (origin
      (method git-fetch)
@@ -3935,7 +4015,7 @@ reduce percieved brightness below the monitor's minimum.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "1njqa6l01qdr4n3azs1wq18qg0d8cdznr5wdh286m24fkgmwjx44"))))
+      (base32 "1mf8587f83kpip0sv3r7niv30mw5zprgh67g2hbjy9z1rl5pkhmr"))))
    (build-system cmake-build-system)
    (arguments
     `(#:phases

@@ -37,6 +37,7 @@
 ;;; Copyright © 2025 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2025 Arnaud Lechevallier <arnaud.lechevallier@free.fr>
 ;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2025 Simen Endsjø <contact@simendsjo.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1743,6 +1744,13 @@ bugfixes and enhancements, and a new governance model.")
                       (search-input-file (or native-inputs inputs)
                                          "/bin/cython"))
               (setenv "RENPY_DEPS_INSTALL" (string-join (map cdr inputs) ":"))))
+          (add-before 'build 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS" (string-join
+                                (list "-g" "-O2"
+                                      "-Wno-error=incompatible-pointer-types"
+                                      "-Wno-error=implicit-function-declaration")
+                                " "))))
           (replace 'build
             (lambda* (#:key inputs outputs #:allow-other-keys #:rest args)
               ;; The "module" subdirectory contains a python (really cython)
@@ -1769,9 +1777,9 @@ bugfixes and enhancements, and a new governance model.")
                                   (string-append out site "/renpy"))
                 (delete-file-recursively (string-append out site
                                                         "/renpy/common"))))))))
-    (native-inputs (list python-cython))
+    (native-inputs (list python-cython-0))
     (inputs
-     (list ffmpeg
+     (list ffmpeg-6
            freetype
            fribidi
            glew
@@ -2382,7 +2390,7 @@ scripted in a Python-like language.")
 (define-public godot
   (package
     (name "godot")
-    (version "4.4.1")
+    (version "4.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2391,7 +2399,10 @@ scripted in a Python-like language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fdq69jisrvihmdir2pg6wf4mfqgqg3c0szc58mgci2lqlm4l684"))
+                "0s9ymgy9cwnk4v35qpn9fm993pn64h1i5k9khpd7mqs6023hl8i4"))
+              ;; TODO: Remove this patch on next update as it was merged post
+              ;; 4.5 release.
+              (patches (search-patches "godot-libjpeg-turbo-unbundle.patch"))
               (modules '((guix build utils)
                          (ice-9 ftw)
                          (srfi srfi-1)))
@@ -2403,6 +2414,7 @@ scripted in a Python-like language.")
                   (with-directory-excursion "thirdparty"
                     (let* ((preserved-files
                             '("README.md"
+                              "accesskit"
                               "amd-fsr"
                               "amd-fsr2"
                               "assimp"
@@ -2424,6 +2436,9 @@ scripted in a Python-like language.")
                               ;; which is no longer in the glslang output
                               ;; after the most recent update.
                               "glslang"
+                              ;; This is part of the simdjson package though
+                              ;; modified by Godot.
+                              "grisu2"
                               "jolt_physics"
                               "jpeg-compressor"
                               "libktx"
@@ -2442,6 +2457,7 @@ scripted in a Python-like language.")
                               "pvrtccompressor"
                               "recastnavigation"
                               "rvo2"
+                              "smaa"
                               "spirv-reflect"
                               "squish"
                               "stb_rect_pack"
@@ -2449,7 +2465,7 @@ scripted in a Python-like language.")
                               "tinyexr"
                               "ufbx"
                               "vhacd"
-                              "volk"
+                              ;; Godot uses a specific (patched) version.
                               "vulkan"
                               "xatlas")))
                       (for-each delete-file-recursively
@@ -2460,9 +2476,6 @@ scripted in a Python-like language.")
     (arguments
      (list
       #:scons-flags #~`("platform=linuxbsd" "target=editor" "production=yes"
-                        ;; XXX: There may be advantages to enabling volk,
-                        ;; requiring unbundling and patching to use our input.
-                        "use_volk=no"
                         ;; Avoid using many of the bundled libs.
                         ;; Note: These options can be found in the SConstruct file.
                         "builtin_brotli=no"
@@ -2475,6 +2488,7 @@ scripted in a Python-like language.")
                         "builtin_graphite=no"
                         "builtin_harfbuzz=no"
                         "builtin_icu4c=no"
+                        "builtin_libjpeg_turbo=no"
                         "builtin_libogg=no"
                         "builtin_libpng=no"
                         "builtin_libtheora=no"
@@ -2483,6 +2497,7 @@ scripted in a Python-like language.")
                         "builtin_mbedtls=no"
                         "builtin_pcre2=no"
                         "builtin_pcre2_with_jit=no"
+                        "builtin_sdl=no"
                         "builtin_wslay=no"
                         "builtin_zlib=no"
                         "builtin_zstd=no")
@@ -2504,7 +2519,6 @@ scripted in a Python-like language.")
                              "drivers/pulseaudio/pulse-so_wrap.c"
                              "platform/linuxbsd/dbus-so_wrap.c"
                              "platform/linuxbsd/fontconfig-so_wrap.c"
-                             "platform/linuxbsd/libudev-so_wrap.c"
                              "platform/linuxbsd/speechd-so_wrap.c"
                              "platform/linuxbsd/wayland/dynwrappers/libdecor-so_wrap.c"
                              "platform/linuxbsd/wayland/dynwrappers/wayland-client-core-so_wrap.c"
@@ -2518,14 +2532,11 @@ scripted in a Python-like language.")
                              "platform/linuxbsd/x11/dynwrappers/xlib-so_wrap.c"
                              "platform/linuxbsd/x11/dynwrappers/xrandr-so_wrap.c"
                              "platform/linuxbsd/x11/dynwrappers/xrender-so_wrap.c"
-                             "platform/linuxbsd/xkbcommon-so_wrap.c"
-                             "thirdparty/volk/volk.c"
-                             "thirdparty/volk/volk.c"))
+                             "platform/linuxbsd/xkbcommon-so_wrap.c"))
                     (libs '("libasound.so.2"
                             "libpulse.so.0"
                             "libdbus-1.so.3"
                             "libfontconfig.so.1"
-                            "libudev.so.1"
                             "libspeechd.so.2"
                             "libdecor-0.so.0"
                             "libwayland-client.so.0"
@@ -2539,9 +2550,7 @@ scripted in a Python-like language.")
                             "libX11.so.6"
                             "libXrandr.so.2"
                             "libXrender.so.1"
-                            "libxkbcommon.so.0"
-                            "libvulkan.so.1"
-                            "libvulkan.so")))
+                            "libxkbcommon.so.0")))
                 (for-each (lambda (file lib)
                             (substitute* file
                               (((string-append "dlopen\\(\"" lib "\""))
@@ -2581,7 +2590,14 @@ scripted in a Python-like language.")
                   #$(this-package-input "wayland-protocols") "/share/wayland-protocols"))
                 (("#thirdparty/wayland")
                  (string-append
-                    #$(this-package-input "wayland") "/share/wayland")))))
+                  #$(this-package-input "wayland") "/share/wayland")))))
+          (add-after 'unbundle-wayland 'unbundle-volk
+            (lambda _
+              (let ((volk-dir "thirdparty/volk"))
+                (mkdir-p volk-dir)
+                (copy-recursively (string-append #$(this-package-input "vulkan-volk")
+                                                 "/include")
+                                  volk-dir))))
           (replace 'install
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((zenity (search-input-file inputs "bin/zenity")))
@@ -2631,6 +2647,7 @@ scripted in a Python-like language.")
            harfbuzz
            icu4c
            libdecor
+           libjpeg-turbo-3
            libtheora
            libvorbis
            libvpx
@@ -2647,8 +2664,9 @@ scripted in a Python-like language.")
            opusfile
            pcre2
            pulseaudio
+           sdl3
            speech-dispatcher
-           vulkan-loader
+           vulkan-volk
            wayland
            wayland-protocols
            wslay
@@ -3656,6 +3674,8 @@ progresses the level, or you may regenerate tiles as the world changes.")
                (add-after 'install 'install-api-files
                  ;; For generating bindings.
                  (lambda _
+                   (install-file (string-append #$source "/src/rcamera.h")
+                                 (string-append #$output "/include"))
                    (copy-recursively
                     (string-append #$source "/parser/output")
                     (string-append #$output "/share/raylib")))))))
@@ -3667,6 +3687,56 @@ progresses the level, or you may regenerate tiles as the world changes.")
   abstract away platform and graphics details, allowing you to focus on
   writing your game.")
     (home-page "https://www.raylib.com/")
+    (license license:zlib)))
+
+(define-public raygui
+  (package
+    (name "raygui")
+    (version "4.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/raysan5/raygui/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "13s606dxnypg6n2pbn13d2d407pxkb7bxqbk5swlfvrcjs2w5afn"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'bootstrap)
+          (add-after 'unpack 'use-raygui-header
+            (lambda _
+              (rename-file "src/raygui.h" "src/raygui.c")))
+          (delete 'configure)
+          (replace 'build
+            (lambda _
+              (invoke #$(cc-for-target)
+                      "-o" "libraygui.so"
+                      "src/raygui.c"
+                      "-DRAYGUI_IMPLEMENTATION"
+                      "-shared" "-fpic"
+                      "-lraylib"
+                      "-lGL" "-lm" "-lpthread" "-ldl" "-lrt" "-lX11")))
+          (delete 'check)
+          (replace 'install
+            (lambda _
+              (let ((src (string-append #$source "/src"))
+                    (inc (string-append #$output "/include"))
+                    (lib (string-append #$output "/lib")))
+                (install-file (string-append src "/raygui.h") inc)
+                (install-file "libraygui.so" lib)))))))
+    (inputs (list mesa raylib))
+    (synopsis "Simple and easy-to-use immediate-mode gui library")
+    (description "Originally inspired by Unity IMGUI (immediate mode GUI API).
+
+Designed as an auxiliary module for raylib to create simple GUI interfaces using
+raylib graphic style (simple colors, plain rectangular shapes, wide borders...)
+but it can be adapted to other engines/frameworks.")
+    (home-page "https://www.raylib.com")
     (license license:zlib)))
 
 (define-public tic80

@@ -7694,6 +7694,128 @@ compatible object storage.")
            go-golang-org-x-crypto
            go-golang-org-x-net))))
 
+(define-public go-github-com-moby-ipvs
+  (package
+    (name "go-github-com-moby-ipvs")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/moby/ipvs")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gi7cjxs5s1db7nssj3r46fp44x94j5mlcrzng3ma663sbpmsrj2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/ipvs"
+      ;; Failed to enter netns: operation not permitted
+      #:test-flags #~(list "-skip" "TestService|TestDestination|TestTimeouts")))
+    (propagated-inputs
+     (list go-github-com-sirupsen-logrus
+           go-github-com-vishvananda-netlink
+           go-github-com-vishvananda-netns
+           go-golang-org-x-sys))
+    (home-page "https://github.com/moby/ipvs")
+    (synopsis "Networking for containers")
+    (description
+     "ipvs provides a native Go implementation for communicating with
+@url{https://en.wikipedia.org/wiki/IP_Virtual_Server, IPVS} kernel module
+using a netlink socket.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-moby-moby-api
+  (package
+    (name "go-github-com-moby-moby-api")
+    (version "1.52.0-beta.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/moby/moby")
+              (commit (go-version->git-ref version
+                                           #:subdir "api"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dzvs6byzn29qk06kpvr0gwdkznmjl6z4jd52xjwlxhj473gdj3f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/moby/moby/api"
+      #:unpack-path "github.com/moby/moby"))
+    (native-inputs
+     (list go-github-com-google-go-cmp
+           go-gotest-tools-v3
+           go-pgregory-net-rapid))
+    (propagated-inputs
+     (list go-github-com-docker-go-connections
+           go-github-com-docker-go-units
+           go-github-com-moby-docker-image-spec
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec
+           go-golang-org-x-time))
+    (home-page "https://github.com/moby/moby")
+    (synopsis "Docker Engine API")
+    (description
+     "The Docker Engine API is an HTTP API used by the command-line client to
+communicate with the daemon.  It can also be used by third-party software to
+control the daemon.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-moby-moby-client
+  (package
+    (name "go-github-com-moby-moby-client")
+    (version "0.1.0-beta.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/moby/moby")
+              (commit (go-version->git-ref version
+                                           #:subdir "client"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1624z57hqqw1b473arfa5m936rsrhc8h3hs2jg4645b3dykfyawn"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "client")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/moby/client"
+      #:unpack-path "github.com/moby/moby"))
+    (native-inputs
+     (list go-gotest-tools-v3))
+    (propagated-inputs
+     (list go-github-com-containerd-errdefs
+           go-github-com-containerd-errdefs-pkg
+           go-github-com-distribution-reference
+           go-github-com-docker-go-connections
+           go-github-com-docker-go-units
+           ;; go-github-com-microsoft-go-winio ; for Windows only
+           go-github-com-moby-moby-api
+           go-github-com-moby-term
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec
+           go-go-opentelemetry-io-contrib-instrumentation-net-http-otelhttp
+           go-go-opentelemetry-io-otel-trace))
+    (home-page "https://github.com/moby/moby")
+    (synopsis "Go client for the Docker Engine API")
+    (description "Package client is a Go client for the Docker Engine API.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-muhlemmer-httpforwarded
   (package
     (name "go-github-com-muhlemmer-httpforwarded")

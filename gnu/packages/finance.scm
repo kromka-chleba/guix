@@ -154,7 +154,7 @@
   ;; <https://bitcoincore.org/en/lifecycle/#schedule>.
   (package
     (name "bitcoin-core")
-    (version "28.2")
+    (version "29.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -162,62 +162,59 @@
                               version "/bitcoin-" version ".tar.gz"))
               (sha256
                (base32
-                "0l23ff0z25v6fgxnldb7bgzhbd9z9kq3fgh86i7wv4w7spwxlxsr"))))
-    (build-system gnu-build-system)
+                "0sx0rzx1vk7n9l1nfki08yk52cwjk30dgzsl2mddic3kw9564zq6"))))
+    (build-system qt-build-system)
     (native-inputs
-     (list autoconf
-           automake
-           libtool
+     (list bash ; provides the sh command for system_tests
+           coreutils ; provides the cat, echo and false commands for system_tests
            pkg-config
            python ; for the tests
-           util-linux ; provides the hexdump command for tests
+           python-pyzmq ; for the tests
            qttools-5))
     (inputs
      (list bdb-4.8 ; 4.8 required for compatibility
            boost
            libevent
-           miniupnpc
+           qrencode
            qtbase-5
-           sqlite))
+           sqlite
+           zeromq))
     (arguments
-     `(#:configure-flags
-       (list
-        ;; Boost is not found unless specified manually.
-        (string-append "--with-boost="
-                       (assoc-ref %build-inputs "boost"))
-        ;; XXX: The configure script looks up Qt paths by
-        ;; `pkg-config --variable=host_bins Qt5Core`, which fails to pick
-        ;; up executables residing in 'qttools-5', so we specify them here.
-        (string-append "ac_cv_path_LRELEASE="
-                       (assoc-ref %build-inputs "qttools")
-                       "/bin/lrelease")
-        (string-append "ac_cv_path_LUPDATE="
-                       (assoc-ref %build-inputs "qttools")
-                       "/bin/lupdate"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'make-qt-deterministic
-           (lambda _
-             ;; Make Qt deterministic.
-             (setenv "QT_RCC_SOURCE_DATE_OVERRIDE" "1")
-             #t))
-         (add-before 'build 'set-no-git-flag
-           (lambda _
-             ;; Make it clear we are not building from within a git repository
-             ;; (and thus no information regarding this build is available
-             ;; from git).
-             (setenv "BITCOIN_GENBUILD_NO_GIT" "1")
-             #t))
-         (add-before 'check 'set-home
-           (lambda _
-             (setenv "HOME" (getenv "TMPDIR")) ; tests write to $HOME
-             #t))
-         (add-after 'check 'check-functional
-           (lambda _
-             (invoke
-              "python3" "./test/functional/test_runner.py"
-              (string-append "--jobs=" (number->string (parallel-job-count))))
-             #t)))))
+     (list #:configure-flags
+           #~(list
+              "-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=TRUE"
+              "-DBUILD_GUI=ON"
+              "-DBUILD_BENCH=ON"
+              "-DWITH_BDB=ON"
+              "-DWITH_ZMQ=ON")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'make-qt-deterministic
+                 (lambda _
+                   ;; Make Qt deterministic.
+                   (setenv "QT_RCC_SOURCE_DATE_OVERRIDE" "1")))
+               (add-before 'build 'set-no-git-flag
+                 (lambda _
+                   ;; Make it clear we are not building from within a git repository
+                   ;; (and thus no information regarding this build is available
+                   ;; from git).
+                   (setenv "BITCOIN_GENBUILD_NO_GIT" "1")))
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (if tests?
+                       (invoke "ctest"
+                               "--parallel" (number->string (parallel-job-count))
+                               "--output-on-failure")
+                       (format #t "test suite not run~%"))))
+               (add-before 'check 'set-home
+                 (lambda _
+                   ;; Tests write to $HOME.
+                   (setenv "HOME" (getenv "TMPDIR"))))
+               (add-after 'check 'check-functional
+                 (lambda _
+                   (invoke
+                    "python3" "./test/functional/test_runner.py"
+                    (string-append "--jobs=" (number->string (parallel-job-count)))))))))
     (home-page "https://bitcoincore.org/")
     (synopsis "Bitcoin peer-to-peer client")
     (description
@@ -851,7 +848,7 @@ blockchain.")
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.18.4.2")
+    (version "0.18.4.3")
     (source
      (origin
        (method git-fetch)
@@ -869,7 +866,7 @@ blockchain.")
             delete-file-recursively
             '("external/miniupnp" "external/rapidjson"))))
        (sha256
-        (base32 "1285kigw9j633ghvp4apld9ddrvw7hjgjv23yabjvl7l2gc6hlv6"))))
+        (base32 "0p2lf8cysr3f6zpcb18jvj4v9hg7hs6121dvvfwlljzy8rak7vrj"))))
     (build-system cmake-build-system)
     (native-inputs
      (list doxygen
@@ -956,7 +953,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.18.4.2")
+    (version "0.18.4.3")
     (source
      (origin
        (method git-fetch)
@@ -972,7 +969,7 @@ the Monero command line client and daemon.")
            ;; See the 'extract-monero-sources' phase.
            (delete-file-recursively "monero")))
        (sha256
-        (base32 "0sa90shh82k6pzj1xr1f6x13q1q4mif4v00zahq96i7iglqpn4b6"))))
+        (base32 "0z8ggg4qqjzkps2rn460vah3w48bz6qwx7z0a31bfn9pqgdz0lzw"))))
     (build-system qt-build-system)
     (native-inputs
      `(,@(package-native-inputs monero)
@@ -2533,7 +2530,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.10.1")
+    (version "4.11")
     (source
      (origin
        (method git-fetch)
@@ -2542,7 +2539,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0xbynjw70ydsia2jzw08bq8yrbxi3byvfg7cr49fp288ia1325d3"))
+       (sha256 (base32 "1hkni6lxm4f58i5br4p7gpc5r51xx6npx77pz22ig1isqb0gp35a"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively

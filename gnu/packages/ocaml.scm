@@ -75,6 +75,7 @@
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages node)
+  #:use-module (gnu packages parallel)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -216,16 +217,25 @@ This package produces a native @command{ocamlc} and a bytecode @command{ocamllex
             (files (list "lib/ocaml/site-lib/stubslibs"
                          "lib/ocaml/site-lib/stublibs")))))
     (native-inputs
-     (list perl pkg-config))
+     (list parallel perl pkg-config))
     (inputs
      (list libx11 libiberty ;needed for objdump support
            zlib))                       ;also needed for objdump support
     (arguments
      `(#:configure-flags '("--enable-ocamltest")
        #:test-target "tests"
+       ;; This doesn't have the desired effect and makes test runs less
+       ;; stable. See https://codeberg.org/guix/guix/pulls/2933.
+       #:parallel-tests? #f
        #:make-flags '("defaultentry")
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'enable-parallel-tests
+           (lambda _
+             ;; Patch the `tests` build target to enable a special parallel
+             ;; execution mode based on GNU Parallel.
+             (substitute* "Makefile"
+               (("-C testsuite all") "-C testsuite parallel"))))
          (add-after 'unpack 'patch-/bin/sh-references
            (lambda* (#:key inputs #:allow-other-keys)
              (let* ((sh (search-input-file inputs "/bin/sh"))
@@ -253,6 +263,19 @@ functional, imperative and object-oriented styles of programming.")
     ;; distributed under lgpl2.0.
     (license (list license:qpl license:lgpl2.0))))
 
+(define-public ocaml-5.3
+  (package
+    (inherit ocaml-5.0)
+    (version "5.3.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ocaml/ocaml")
+                    (commit version)))
+              (file-name (git-file-name "ocaml" version))
+              (sha256
+               (base32
+                "05jhy9zn53v12rn3sg3vllqf5blv1gp7f06803npimc58crxy6rv"))))))
 
 (define-public ocaml-4.14
   (package

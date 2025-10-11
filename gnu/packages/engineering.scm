@@ -5,6 +5,7 @@
 ;;; Copyright © 2016 David Thompson <davet@gnu.org>
 ;;; Copyright © 2016-2019, 2021, 2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016, 2017, 2018 Theodoros Foradis <theodoros@foradis.org>
+;;; Copyright © 2016 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2017 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
@@ -44,6 +45,7 @@
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1114,7 +1116,7 @@ Emacs).")
 (define-public kicad
   (package
     (name "kicad")
-    (version "9.0.4")
+    (version "9.0.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1122,7 +1124,7 @@ Emacs).")
                     (commit version)))
               (sha256
                (base32
-                "0736hhf8rs4g8cyhy3xyamyr4iszlvf18a1hwfpcv6qxy0hcbdcv"))
+                "0wmnkiyqv32c5nz4nvz94dld3rk5ir49nh71cycig6clvjvy11r5"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -1231,7 +1233,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00cnras41sp5kpvaqqymygis08q5kmsix18bi8hlhhw6yk525vnp"))))
+                "006gfryibmlhmj7vhv8kf13jp84pnxd59m678f20zxrl363b9hnz"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DBUILD_FORMATS=html")
@@ -1262,7 +1264,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0qm1zq8bq6r7l1pssb9isnm5a03kixf5p3x7670ap4xwligdn3wg"))))
+                "0msgq8p3zlfc3glqr1h8n0a1agk4hjdqxqdiny5b4d0hgiy6hhmx"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no tests exist
@@ -1291,7 +1293,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15kdg661pq79npwb4j28hllqrvwygsz5rblzbdishiikysrba8wl"))))
+                "179y7xmz7mwsfsv4dcw2dx689xfzqk8y38d21s69yiaalyxflhh1"))))
     (synopsis "Official KiCad footprint libraries")
     (description "This package contains the official KiCad footprint libraries.")))
 
@@ -1308,7 +1310,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ngf0k5f0a073k5v4q78zk6gj6xjjxzbb6551qf9k9wy8bsmgr2k"))))
+                "1y7yhynrr87q80gcb8qlkyrdccz1sllsxqymrnghhxbfk4wbwwn8"))))
     (synopsis "Official KiCad 3D model libraries")
     (description "This package contains the official KiCad 3D model libraries.")))
 
@@ -1576,6 +1578,31 @@ use on a given system.")
      "GNU LibreDWG is a C library to handle DWG files.  It aims to be a free
 replacement for the OpenDWG libraries.")
     (license license:gpl3+)))
+
+(define-public microcom
+  (package
+    (name "microcom")
+    (version "2023.09.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.pengutronix.de/git/tools/microcom.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18qr9rwn3b82h042jrz1syfiiqyf3cbpdr8vv0s5p5f51f2l3vj7"))))
+    (build-system gnu-build-system)
+    (inputs (list readline))
+    (native-inputs (list automake autoconf))
+    (home-page  "https://git.pengutronix.de/cgit/tools/microcom")
+    (synopsis "Minimalistic serial line terminal program")
+    (description
+     "Microcom is a minimalistic terminal program for accessing devices
+via a serial connection.  It features connection via RS232 serial interfaces
+(including setting of transfer rates) as well as in @code{telnetmode} as
+specified in rfc2217 and a (Linux specific) CAN mode.")
+    (license license:gpl2+)))
 
 (define-public minicom
   (package
@@ -3016,7 +3043,7 @@ ontinuous-time and discret-time expressions.")
          (sha256
           (base32 "1cga32b65wbap59nmw37f75ys3gj9bk09nqzq7949x9kqlal13mx"))
          (file-name (git-file-name name version))))
-      (build-system cmake-build-system)
+      (build-system qt-build-system)
       (arguments
        (list
         ;; OpenSCAD doesn't cope well with out-of-source builds.
@@ -3181,7 +3208,7 @@ models in the STL and OFF file formats.")
          ((#:configure-flags flags)
           #~(begin
               (use-modules (srfi srfi-1))
-              (append 
+              (append
                (remove (lambda (flag)
                          (or (string-prefix? "-DOPENSCAD_VERSION=" flag)
                              (string-prefix? "-DOPENSCAD_COMMIT=" flag)))
@@ -3213,7 +3240,7 @@ models in the STL and OFF file formats.")
                                     "/share/sanitizers-cmake/cmake")))))))))
       (inputs (modify-inputs (package-inputs openscad)
                 (append curl libfive)))
-      (synopsis "Script-based 3D modeling app whith Python support")
+      (synopsis "Script-based 3D modeling app with Python support")
       (description
        "PythonSCAD is a programmatic 3D modeling application.  It allows you
 to turn simple code into 3D models suitable for 3D printing.  It is a fork of

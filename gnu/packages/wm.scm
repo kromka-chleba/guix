@@ -369,7 +369,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
 (define-public hyprland
   (package
     (name "hyprland")
-    (version "0.51.0")
+    (version "0.51.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/hyprwm/Hyprland"
@@ -386,7 +386,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
                               "subprojects"))))
               (sha256
                (base32
-                "1dvzqk78a6x33lklhkypwz3mqzlq98g4k7zi6s5nya119zggq0kg"))))
+                "0cb1wrqf9796pad6gi49xz3asmjspgbs9qvqjsylm4y9xz8vhqpm"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;No tests.
@@ -439,7 +439,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
            re2-next
            udis86
            wayland
-           wayland-protocols-next
+           wayland-protocols
            xcb-util-errors
            xcb-util-wm
            xorg-server-xwayland))
@@ -2431,7 +2431,7 @@ narrow the items to those matching the tokens in the input.")
 (define-public sway
   (package
     (name "sway")
-    (version "1.10.1")
+    (version "1.11")
     (source
      (origin
        (method git-fetch)
@@ -2440,7 +2440,7 @@ narrow the items to those matching the tokens in the input.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "175px3446mkm8015dhs1c4ia4a275hyfpvr6jnyghnx1rf9m06xq"))))
+        (base32 "1a7f7jgf87dm4hxg9nylqsyy7cc7dk49c800pjkl30p9a32xxjn4"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -2468,7 +2468,7 @@ narrow the items to those matching the tokens in the input.")
                   pcre2
                   swaybg
                   wayland
-                  wlroots-0.18))
+                  wlroots))
     (native-inputs
      (cons* linux-pam mesa pkg-config scdoc wayland-protocols
             (if (%current-target-system)

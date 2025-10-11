@@ -843,29 +843,32 @@ this package in a more convenient interface, and should be preferred where
 they exist.")
     (license license:asl2.0)))
 
+;; XXX: This project was archived by the owner on Apr 15, 2025. It is now
+;; read-only.
 (define-public python-prisma
   (package
     (name "python-prisma")
-    (version "0.12.0")
+    (version "0.15.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "prisma" version))
        (sha256
-        (base32 "1y9m3bailnvid59dl4vx31vysaqbcg6gsppskyymaxg3m96808pc"))))
+        (base32 "01x1ki99k2ps2jis73vzzrqw8zsf810205f17zdja9ijm0m41mjw"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;no tests in PyPI
+    (native-inputs
+     (list python-setuptools))
     (propagated-inputs
-     (list python-cached-property
-           python-click
+     (list python-click
            python-dotenv
            python-httpx
            python-jinja2
            python-nodeenv
            python-pydantic-2
-           python-strenum
            python-tomlkit
            python-typing-extensions))
-    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/RobertCraigie/prisma-client-py")
     (synopsis "Fully type-safe database client")
     (description
@@ -883,7 +886,7 @@ client.")
        (uri (pypi-uri "pylibmc" version))
        (sha256
         (base32 "1q06696lxpqn155sydg3z6dksimks6n35q72zdjsvarpal8ldypf"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      '(#:phases
        (modify-phases %standard-phases
@@ -892,7 +895,7 @@ client.")
            (lambda _
              (invoke "memcached" "-d"))))))
     (native-inputs
-     (list memcached python-pytest))
+     (list memcached python-pytest python-setuptools))
     (inputs
      (list libmemcached zlib cyrus-sasl))
     (home-page "https://sendapatch.se/projects/pylibmc/")
@@ -978,27 +981,21 @@ auto-completion and syntax highlighting.")
 (define-public python-sqlitedict
   (package
     (name "python-sqlitedict")
-    (version "2.0.0")
+    (version "2.1.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "sqlitedict" version))
               (sha256
                (base32
-                "05sxy016k3p5sjjhdg0ad9z15i6vm3rq4cr9m8nrc7jfdx0p18r3"))))
-    (build-system python-build-system)
+                "134y1ya74ah3g1pd3g9iqjlrcjr2y5b2iny2skqrcab0dnwwzn83"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv"
-                        "-k"
-                        ;; No idea why these fail.
-                        (string-append "not test_py24_error"
-                                       " and not test_tablenames"))))))))
-    (native-inputs (list python-pytest))
+      #:test-flags
+     ;; assert os.system('env PYTHONPATH=. %s tests/autocommit.py' %
+     ;; sys.executable) == 0
+      #~(list "--deselect=tests/test_autocommit.py::test")))
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://github.com/piskvorky/sqlitedict")
     (synopsis "Persistent dict backed up by sqlite3 and pickle")
     (description
@@ -1403,6 +1400,13 @@ Language.")
      "MariaDB is a multi-user and multi-threaded SQL database server, designed
 as a drop-in replacement of MySQL.")
     (license license:gpl2)))
+
+(define-public mariadb-embedded
+  (package/inherit mariadb
+    (arguments
+     (substitute-keyword-arguments (package-arguments mariadb)
+       ((#:configure-flags flags)
+        #~(append '("-DWITH_EMBEDDED_SERVER=ON") #$flags))))))
 
 (define-public mariadb-connector-c
   (package
@@ -3657,13 +3661,18 @@ on another machine, accessed via TCP/IP.")
     (version "3.18.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "peewee" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/coleifer/peewee")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "184n97vc9xy0whl8w54431fc4h5ij7mjwggnfbmg5bv1xdil59bp"))))
+        (base32 "1qd57cd33mf48q0xfmnld58xn5jpbgqrj1bnqlkjmk87y3g9i0q4"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f))                    ; fails to import test data
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "runtests.py")))
     (inputs
      (list sqlite))
     (native-inputs
@@ -4189,20 +4198,24 @@ and web services platform functionality.")
 (define-public python-ccm
   (package
     (name "python-ccm")
-    (version "2.1.6")
+    (version "3.1.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ccm" version))
        (sha256
         (base32
-         "177dfxsmk3k4cih6fh6v8d91bh4nqx7ns6pc07w7m7i3cvdx3c8n"))))
-    (build-system python-build-system)
+         "0v1jahchm9czcdhynfy76mca52k6jbvngm60jqdwxlhnf6iw0z7h"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; TODO: tests require a complex setup, see <.github/workflows/main.yml>.
+     (list #:tests? #f)) 
+    (native-inputs
+     (list python-pbr))
     (propagated-inputs
      (list python-pyyaml
-           ;; Not listed in setup.py, but used in ccmlib/node.py for full
-           ;; functionality
-           python-psutil python-six))
+           python-psutil
+           python-six)) ;XXX: hard dependency
     (home-page "https://github.com/pcmanus/ccm")
     (synopsis "Cassandra Cluster Manager for Apache Cassandra clusters on
 localhost")

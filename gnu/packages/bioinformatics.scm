@@ -2768,7 +2768,7 @@ specifying the usage of each program for each cell in the data.")
 (define-public python-cyvcf2
   (package
     (name "python-cyvcf2")
-    (version "0.31.1")
+    (version "0.31.2")
     (source
      (origin
        (method git-fetch)
@@ -2777,7 +2777,7 @@ specifying the usage of each program for each cell in the data.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02x7ic2q4x3sfwx9n2sxg0a79iifjal0a68fqp9ljsfvdx4b7nq5"))
+        (base32 "19jv2502644qjv278yjllqqakwhghmfbaa4h08rayak5mp130i70"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete bundled library
@@ -2809,8 +2809,7 @@ specifying the usage of each program for each cell in the data.")
     (native-inputs
      (list python-cython
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (propagated-inputs
      (list python-click
            python-coloredlogs
@@ -3109,8 +3108,10 @@ varies in similar way among cells which are nearby in the given metric.")
              (base32
               "111q4pzkav26aa3hkgh948wqlyrq7dq6sjml9z63n3blw8s6b0c4"))))
    (build-system pyproject-build-system)
+   (arguments
+    (list #:tests? #f)) ;they depend on Nose test runner
    (native-inputs
-    (list python-setuptools-scm python-setuptools python-wheel))
+    (list python-setuptools-scm python-setuptools))
    (propagated-inputs
     (list python-humanize python-requests python-six))
    (home-page "https://pypi.org/project/htsget/")
@@ -3217,18 +3218,24 @@ framework enables the use of any LR method with any resources.")
 (define-public python-logomaker
   (package
     (name "python-logomaker")
-    (version "0.8")
+    (version "0.8.7")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "logomaker" version))
               (sha256
                (base32
-                "0v9z3ml1s7imk28hqyhrqjqg3sq0j29lx975d36n2ybdgld51iyq"))))
+                "00ikzh7cv3yi1aj5v3hrpia6w7xrw559rqhwy3qxcja4wbk3qy33"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; All tests are marked as skipped in logomaker/tests, this is taken
+      ;; form GitHub Actions file .github/workflows/daily-tests.yml.
+      #:test-backend #~'custom
+      #:test-flags #~(list "-c" "import logomaker")))
     (propagated-inputs
      (list python-matplotlib python-numpy python-pandas))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://logomaker.readthedocs.io")
+    (native-inputs (list python-hatchling))
+    (home-page "https://github.com/jbkinney/logomaker")
     (synopsis "Package for making Sequence Logos")
     (description "Logomaker is a Python package for generating
 publication-quality sequence logos.  Logomaker can generate both standard and
@@ -3323,22 +3330,10 @@ and gene expression visualization.")
                              python-scipy
                              python-threadpoolctl
                              python-umap-learn))
-    (native-inputs (list python-black
-                         python-bumpversion
-                         python-flake8
-                         python-isort
-                         python-mypy
-                         python-mypy-extensions
-                         python-pandas-stubs
-                         python-pylint
-                         python-pytest
-                         python-pytest-cov
+    (native-inputs (list python-pytest
                          python-setuptools
                          python-sphinx
-                         python-sphinx-rtd-theme
-                         python-tox
-                         python-twine
-                         python-wheel))
+                         python-sphinx-rtd-theme))
     (home-page "https://github.com/tanaylab/metacells.git")
     (synopsis "Single-cell RNA Sequencing Analysis")
     (description "The metacells package implements the improved metacell
@@ -3749,33 +3744,32 @@ the managed genomes, STAR indexing and mapping and more.")
     (version "0.2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pybiomart" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jrderuiter/pybiomart")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1znq4msa0ibjxk1yirbrfd09w9zfn0jrgna6qrq0d0i1p46w5sp9"))))
+        (base32 "1x5rd33sa0gwj4nizn02lsc675bbzsspz74f38mp0fbxdp7qnxv8"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Attempts to access the web.
+      #~(list "--ignore=tests/test_dataset.py")))
     (propagated-inputs
      (list python-future
            python-pandas
            python-requests
            python-requests-cache))
     (native-inputs
-     (list python-bumpversion
-           python-pytest
-           python-pytest-cov
+     (list python-pytest
            python-pytest-helpers-namespace
            python-pytest-mock
-           python-coveralls
            python-setuptools
            python-sphinx
            python-sphinx-autobuild
-           python-sphinx-rtd-theme
-           python-wheel))
-    (arguments
-     (list
-      #:test-flags
-      ;; Attempts to access the web.
-      #~(list "--ignore=tests/test_dataset.py")))
+           python-sphinx-rtd-theme))
     (home-page "https://github.com/jrderuiter/pybiomart")
     (synopsis "A simple pythonic interface to biomart")
     (description
@@ -5830,7 +5824,7 @@ off-target reads for a capture method that targets CpG-rich region.")
 (define-public python-bx-python
   (package
     (name "python-bx-python")
-    (version "0.13.0")
+    (version "0.14.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5839,7 +5833,7 @@ off-target reads for a capture method that targets CpG-rich region.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "13318a3lydyg8fxawdb7anrny9a1j1sc1q4nd6pjg8ki5zr9r713"))))
+                "1031ddndi5anxk76h1irdwa6nwr5sy20p816zn5jz50010zc562r"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5853,12 +5847,12 @@ off-target reads for a capture method that targets CpG-rich region.")
          (add-after 'unpack 'disable-cython-doctests
            (lambda _ (substitute* "pytest.ini" (("--doctest-cython") "")))))))
     (propagated-inputs
-     (list python-numpy))
+     (list python-numpy
+           python-pyparsing))
     (inputs
      (list zlib))
     (native-inputs
-     (list python-cython python-lzo python-pytest python-setuptools
-           python-wheel))
+     (list python-cython python-lzo python-pytest python-setuptools))
     (home-page "https://github.com/bxlab/bx-python")
     (synopsis "Tools for manipulating biological data")
     (description
@@ -7027,7 +7021,14 @@ doublets in single-cell RNA-seq data.")
         (base32
          "0agkz2w86k91rc9m5vx5hsqi5nm6fcmzkng6j99hjapz0r9233ql"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list
+      #:test-flags
+      ;; Assert fails to compare large files.
+      #~(list "--deselect=tests/test_battery.py::test_formatting_battery")))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
     (propagated-inputs
      (list python-importlib-resources
            python-ruamel.yaml))
@@ -8164,7 +8165,7 @@ and random access tool.")
            (lambda _
              (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
     (propagated-inputs
-     (list python-anndata
+     (list python-anndata-0.11
            python-bamnostic
            python-h5py
            python-intervaltree
@@ -8424,45 +8425,6 @@ ChIP-Seq, and analysis of metagenomic data.")
 variety of diversity measures including those that make use of phylogenetic
 similarity of community members.")
    (license license:gpl3+)))
-
-(define-public fast5
-  (package
-    (name "fast5")
-    (version "0.6.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/mateidavid/fast5")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1dsq3x1662ck1bcmcmqhblnhmypfppgysblgj2xr4lr6fl4si4pk"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:tests? #f                       ;There are no tests.
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'use-system-hdf5
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (setenv "HDF5_INCLUDE_DIR"
-                      (string-append #$(this-package-input "hdf5") "/include"))
-              (setenv "HDF5_LIB_DIR"
-                      (string-append #$(this-package-input "hdf5") "/lib"))))
-          (add-after 'unpack 'chdir
-            (lambda _
-              (chdir "python"))))))
-    (inputs (list hdf5-1.10))
-    (propagated-inputs
-     (list python-dateutil))
-    (native-inputs
-     (list python-cython python-setuptools python-wheel))
-    (home-page "https://github.com/mateidavid/fast5")
-    (synopsis "Library for accessing Oxford Nanopore sequencing data")
-    (description "This package provides a lightweight C++ library for accessing
-Oxford Nanopore Technologies sequencing data.")
-    (license license:expat)))
 
 (define-public fasttree
   (package
@@ -10199,7 +10161,7 @@ experiments.")
            (lambda _ (setenv "HOME" "/tmp"))))))
     ;; Propagate these for use of macs as a library.
     (propagated-inputs
-     (list python-cython python-numpy))
+     (list python-cython-0 python-numpy))
     (native-inputs
      (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/macs3-project/MACS")
@@ -23537,6 +23499,9 @@ alignments, trees and genomic annotations.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; Failed: 'yield' keyword is allowed in fixtures, but not in tests
+      ;; (test_region)
+      #:test-flags #~(list "--ignore=gffutils/test/test_1.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-HOME
@@ -23862,7 +23827,7 @@ coordinates between different assemblies.")
 (define-public python-cgatcore
   (package
     (name "python-cgatcore")
-    (version "0.6.15")
+    (version "0.6.16")
     ;; The version of pypi does not include test data.
     (source (origin
               (method git-fetch)
@@ -23872,12 +23837,15 @@ coordinates between different assemblies.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "103hpdnkqr3a34blbicshk56j36g652s0g1zi9isppc5dngn0s18"))))
+                "0kvfb6fpfncdfb8wjmn7n2vmqk3wd7sdrfw1rhlihfdxbfzb5fa8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-k"
+      ;; Failed: 'yield' keyword is allowed in fixtures, but not in tests
+      ;; (test_import)
+      '(list "--ignore=tests/test_import.py"
+             "-k"
              (string-append
               ;; This test actually does what it should, but the check fails with
               ;; TypeError: cannot unpack non-iterable Namespace object
@@ -23906,12 +23874,11 @@ coordinates between different assemblies.")
                (("import sys" m)
                 (string-append "import apsw\n" m))))))))
     (native-inputs
-     (list python-pytest
+     (list inetutils
            lsof
-           inetutils
            openssl
-           python-setuptools
-           python-wheel))
+           python-pytest
+           python-setuptools))
     (inputs (list time))
     (propagated-inputs
      (list python-apsw

@@ -129,32 +129,47 @@ locally for later listening.")
 (define-public libmygpo-qt
   (package
     (name "libmygpo-qt")
-    (version "1.1.0")
+    (version "1.2.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://stefan.derkits.at/files/"
+              (uri (string-append "https://stefan.derkits.at/files/"
                                   "libmygpo-qt/libmygpo-qt." version ".tar.gz"))
               (sha256
                (base32
-                "1kg18qrq2rsswgzhl65r3mlyx7kpqg4wwnbp4yiv6svvmadmlxl2"))
-              (patches (search-patches "libmygpo-qt-fix-qt-5.11.patch"
-                                       "libmygpo-qt-missing-qt5-modules.patch"))))
+                "1rpallrgfdpvdw2npjizw0gj7lidb8hxs7ak16jkryq2yijpzkjh"))))
     (build-system cmake-build-system)
     (native-inputs
      (list pkg-config))
     (inputs
-     (list qtbase-5))
+     (list qtbase))
     (arguments
-     '(#:configure-flags '("-DMYGPO_BUILD_TESTS=ON")
-       ;; TODO: Enable tests when https://github.com/gpodder/gpodder/issues/446
-       ;; is fixed.
-       #:tests? #f))
+     (list #:configure-flags
+           #~(list "-DBUILD_WITH_QT6=ON")
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     ;; TODO: Enable JsonCreatorTest-test when
+                     ;; https://github.com/gpodder/gpodder/issues/446 is fixed.
+                     (invoke "ctest" "-E" "JsonCreatorTest-test")))))))
     (home-page "https://gpodder.github.io")
     (synopsis "Qt/C++ library wrapping the gpodder web service")
     (description "@code{libmygpo-qt} is a Qt/C++ library wrapping the
 @url{https://gpodder.net} APIs.  It allows applications to discover, manage
 and track podcasts.")
     (license license:lgpl2.1+)))
+
+(define-public libmygpo-qt5
+  (package/inherit libmygpo-qt
+    (name "libmygpo-qt5")
+    (inputs
+     (modify-inputs (package-inputs libmygpo-qt)
+       (replace "qtbase" qtbase-5)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments libmygpo-qt)
+       ((#:configure-flags flags)
+        #~(delete "-DBUILD_WITH_QT6=ON" #$flags))))))
 
 (define-public python-mygpoclient
   (package

@@ -16,6 +16,7 @@
 ;;; Copyright © 2022 Simon Streit <simon@netpanic.org>
 ;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,6 +39,7 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
@@ -173,6 +175,144 @@ are easy to read, write, and modify.
 The library is small, thread safe, and written in portable ANSI C with no
 external dependencies.")
     (license license:x11)))
+
+(define-public nss-wrapper
+  (package
+    (name "nss-wrapper")
+    (version "1.1.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.samba.org/nss_wrapper.git/")
+              (commit (string-append "nss_wrapper-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kwlylml18f65drwrph6w90ilp66c20dywjssxscmwhf2jwwfpya"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; XXX: There are two failing tests, most likely because they need
+      ;; some networking abilities (getaddinfo_[service|null]).
+      ;; Disabled tests completely because there's not easy way to disable
+      ;; specific tests using CMocka.
+      #:tests? #f
+      #:configure-flags #~(list "-DUNIT_TESTING=OFF")))
+    (native-inputs (list cmocka libxcrypt uid-wrapper))
+    (home-page "https://cwrap.org/nss_wrapper.html")
+    (synopsis "Wrapper for the user, group and hosts NSS API")
+    (description
+     "There are projects that need to be able to create, modify, and delete
+Unix users.  Others just switch user IDs to interact with the system on behalf
+of another user (e.g. a user space file server).  To be able to test
+applications like these, one needs to grant privileges to modify the passwd
+and group files.  With this package it is possible to define your own passwd
+and group files to be used the software while it is under test.  It also
+allows you to create a hosts file to set up name resolution for the addresses
+you use with @code{socket_wrapper}.  It provides the following features:
+@itemize
+@item Provides information for user and group accounts.
+@item Network name resolution using a hosts file.
+@item Loading and testing of NSS modules.
+@end itemize")
+    (license license:bsd-3)))
+
+(define-public pam-wrapper
+  (package
+    (name "pam-wrapper")
+    (version "1.1.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.samba.org/pam_wrapper.git/")
+              (commit (string-append "pam_wrapper-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h1n6bgzcvc6zhpi79g76zrl3fypd7q25bc2kdx18x014p9wdr4r"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DUNIT_TESTING=ON"
+              (string-append "-DPYTHON_INSTALL_SITEARCH="
+                             #$output "/lib/python"
+                             #$(version-major+minor
+                                (package-version
+                                 (this-package-native-input "python")))
+                             "/site-packages/pypamtest/"))))
+    (native-inputs (list cmocka python))
+    (inputs (list linux-pam))
+    (home-page "https://cwrap.org/pam_wrapper.html")
+    (synopsis "Tool to test PAM applications and PAM modules")
+    (description
+     "This package provides tools to test your PAM application or module.  For
+testing PAM applications, a simple PAM module called @code{pam_matrix} is
+provided.  For testing PAM modules, see the @code{pamtest} library.  One can
+combine it with the CMocka unit testing framework or use the provided Python
+bindings to write tests for modules in Python.")
+    (license license:bsd-3)))
+
+(define-public priv-wrapper
+  (package
+    (name "priv-wrapper")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.samba.org/priv_wrapper.git/")
+              (commit (string-append "priv_wrapper-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04ycb3fckcz3ck1wbg9gh6x63ydkpjyc1v4340l6sdw90w7rlr66"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DUNIT_TESTING=ON")))
+    (native-inputs (list cmocka))
+    (home-page "https://cwrap.org/priv_wrapper.html")
+    (synopsis "Library to drop privileges")
+    (description
+     "This package provides a library to disable resource limits and other
+privilege dropping, i.e. disabling @code{chroot}, @code{prctl},
+@code{pledge} and @code{setrlmit} system calls.  This package aims to help
+running processes which are dropping privileges or are restricting resources
+in test environments.  A disabled call always succeeds (i.e. returns 0) and
+does nothing.")
+    (license license:bsd-3)))
+
+(define-public resolv-wrapper
+  (package
+    (name "resolv-wrapper")
+    (version "1.1.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.samba.org/resolv_wrapper.git/")
+              (commit (string-append "resolv_wrapper-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18xarq1hmz7n911hjrfvp5fcgsh9kzxa2v28zgv6afx1a2djqcd9"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DUNIT_TESTING=ON")))
+    (native-inputs (list cmocka socket-wrapper))
+    (home-page "https://cwrap.org/resolv_wrapper.html")
+    (synopsis "Wrapper for DNS name resolving or DNS faking")
+    (description
+     "This package makes it possible on most UNIX platforms to contact your
+own DNS implementation in your test environment.  It requires socket_wrapper to
+be able to contact the server.  Alternatively, the wrapper is able to fake DNS
+queries and return valid responses to your application.  It provides the
+following features:
+@itemize
+@item Redirects name queries to the nameservers specified in your resolv.conf.
+@item Can fake DNS queries using a simple formatted DNS hosts file.
+@end itemize")
+    (license license:bsd-3)))
 
 (define-public samba/pinned
   (hidden-package
@@ -522,6 +662,76 @@ and IPV6 and the protocols layered above them, such as TCP and UDP.")
                    license:bsd-4
                    license:gpl2+
                    license:public-domain))))
+
+(define-public socket-wrapper
+  (package
+    (name "socket-wrapper")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.samba.org/socket_wrapper.git/")
+              (commit (string-append "socket_wrapper-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0554pmcjrzq0fz35mhmlybc681m4igxyjc7gcwk353a3q49wk4ki"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DUNIT_TESTING=ON")))
+    (native-inputs (list cmocka))
+    (home-page "https://cwrap.org/socket_wrapper.html")
+    (synopsis "Library passing socket communications through unix sockets")
+    (description
+     "This package aims to help client/server software development teams
+willing to gain full functional test coverage.  It makes possible to run
+several instances of the full software stack on the same machine and perform
+locally functional testing of complex network configurations.  It provides the
+following features:
+@itemize
+@item Redirects all network communication to happen over unix sockets.
+@item Support for IPv4 and IPv6 socket and addressing emulation.
+@item Ability to capture network traffic in pcap format.
+@end itemize")
+    (license license:bsd-3)))
+
+(define-public uid-wrapper
+  (package
+    (name "uid-wrapper")
+    (version "1.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.samba.org/uid_wrapper.git/")
+              (commit (string-append "uid_wrapper-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1921vw95v7wv8c7zf6q5dqvbnkgbhsx37f8a0jswqd0qpp3zvvsy"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DUNIT_TESTING=ON")))
+    (native-inputs (list cmocka))
+    (home-page "https://cwrap.org/uid_wrapper.html")
+    (synopsis "Testing tool to fake privilege separation")
+    (description
+     "Some projects, such as a file server, need privilege separation to be
+able to switch to the user who owns the files and do file operations on their
+behalf.  This package convincingly lies to the application, letting it believe
+it is operating as root and even switching between UIDs and GIDs as
+needed.  You can start any application making it believe it is running as
+root.  This package provides the following features :
+@itemize
+@item Allows uid switching as a normal user.
+@item Start any application making it believe it is running as root.
+@item Support for user/group changing in the local thread using the syscalls
+(like glibc).
+@item Intercepts @code{seteuid} and related calls and simulates them in a way
+transparent to the application.
+@end itemize")
+    (license license:bsd-3)))
 
 (define-public wsdd
   (package

@@ -118,6 +118,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/messaging.scm		\
   %D%/home/services/mpv.scm     		\
   %D%/home/services/music.scm			\
+  %D%/home/services/niri.scm			\
   %D%/home/services/pm.scm			\
   %D%/home/services/shells.scm			\
   %D%/home/services/shepherd.scm		\
@@ -411,6 +412,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/kde-office.scm			\
   %D%/packages/kde-pim.scm			\
   %D%/packages/kde-plasma.scm			\
+  %D%/packages/kde-sdk.scm			\
   %D%/packages/kde-systemtools.scm		\
   %D%/packages/kde-utils.scm			\
   %D%/packages/kerberos.scm			\
@@ -477,7 +479,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/messaging.scm			\
   %D%/packages/minetest.scm			\
   %D%/packages/mingw.scm			\
-  %D%/packages/microcom.scm			\
   %D%/packages/mold.scm				\
   %D%/packages/motti.scm			\
   %D%/packages/monitoring.scm			\
@@ -1131,6 +1132,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/corrosion-honor-CARGO_BUILD_TARGET.patch	\
   %D%/packages/patches/cppcheck-fix-basedir-test.patch	\
   %D%/packages/patches/cppdap-add-CPPDAP_USE_EXTERNAL_GTEST_PACKAGE.patch\
+  %D%/packages/patches/cproc-extra-linkflags.patch	\
   %D%/packages/patches/cpulimit-with-glib-2.32.patch		\
   %D%/packages/patches/crawl-upgrade-saves.patch		\
   %D%/packages/patches/crc32c-unbundle-googletest.patch		\
@@ -1510,6 +1512,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/go-github-com-warpfork-go-wish-fix-tests.patch \
   %D%/packages/patches/go-github-com-wraparound-wrap-free-fonts.patch \
   %D%/packages/patches/go-skip-gc-test.patch			\
+  %D%/packages/patches/godot-libjpeg-turbo-unbundle.patch	\
   %D%/packages/patches/gourmet-sqlalchemy-compat.patch		\
   %D%/packages/patches/gpaste-fix-paths.patch			\
   %D%/packages/patches/gpm-glibc-2.26.patch			\
@@ -1764,8 +1767,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libmp4v2-c++11.patch			\
   %D%/packages/patches/libmpeg2-arm-private-symbols.patch	\
   %D%/packages/patches/libmpeg2-global-symbol-test.patch	\
-  %D%/packages/patches/libmygpo-qt-fix-qt-5.11.patch		\
-  %D%/packages/patches/libmygpo-qt-missing-qt5-modules.patch	\
   %D%/packages/patches/liblinphone-jsoncpp.patch		\
   %D%/packages/patches/libphonenumber-reproducible-build.patch	\
   %D%/packages/patches/libqalculate-3.8.0-libcurl-ssl-fix.patch	\
@@ -1773,6 +1774,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libsecret-fix-test-paths.patch		\
   %D%/packages/patches/libsepol-versioned-docbook.patch		\
   %D%/packages/patches/libskk-fix-invalid-escape.patch		\
+  %D%/packages/patches/libspatialite-libxml2-2.14.patch		\
   %D%/packages/patches/libtar-CVE-2013-4420.patch 		\
   %D%/packages/patches/libtar-CVE-2021-33643-CVE-2021-33644.patch	\
   %D%/packages/patches/libtar-CVE-2021-33645-CVE-2021-33646.patch	\
@@ -2082,6 +2084,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/smalltalk-multiplication-overflow.patch	\
   %D%/packages/patches/soci-mysql-ddl-types.patch		\
   %D%/packages/patches/sqlite-hurd.patch			\
+  %D%/packages/patches/stepmania-ffmpeg-compat.patch			\
   %D%/packages/patches/stk-5.0.1-fix-typo.patch			\
   %D%/packages/patches/strace-readlink-tests.patch		\
   %D%/packages/patches/sunxi-tools-remove-sys-io.patch	\
@@ -2160,6 +2163,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-angr-check-exec-deps.patch	\
   %D%/packages/patches/python-3-reproducible-build.patch	\
   %D%/packages/patches/python-cross-compile.patch		\
+  %D%/packages/patches/python-colour-remove-d2to1.patch		\
   %D%/packages/patches/python-configobj-setuptools.patch	\
   %D%/packages/patches/python-debugpy-unbundle-pydevd.patch	\
   %D%/packages/patches/python-docopt-pytest6-compat.patch	\
@@ -2437,6 +2441,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/vinagre-newer-freerdp.patch             \
   %D%/packages/patches/vinagre-newer-rdp-parameters.patch      \
   %D%/packages/patches/vsearch-unbundle-cityhash.patch		\
+  %D%/packages/patches/vst3sdk-3.7.7-allow-winelib-compilation.patch	\
   %D%/packages/patches/vte-CVE-2012-2738-pt1.patch			\
   %D%/packages/patches/vte-CVE-2012-2738-pt2.patch			\
   %D%/packages/patches/vtk-7-gcc-10-compat.patch		\
@@ -2479,11 +2484,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/xplanet-1.3.1-xpUtil-Add2017LeapSecond.cpp.patch	\
   %D%/packages/patches/xpra-6.0-systemd-run.patch		\
   %D%/packages/patches/xpra-6.1-install_libs.patch		\
-  %D%/packages/patches/xsane-fix-memory-leak.patch		\
-  %D%/packages/patches/xsane-fix-pdf-floats.patch		\
-  %D%/packages/patches/xsane-fix-snprintf-buffer-length.patch	\
-  %D%/packages/patches/xsane-support-ipv6.patch			\
-  %D%/packages/patches/xsane-tighten-default-umask.patch	\
   %D%/packages/patches/xterm-370-explicit-xcursor.patch		\
   %D%/packages/patches/xygrib-fix-finding-data.patch		\
   %D%/packages/patches/xygrib-newer-proj.patch			\

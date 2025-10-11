@@ -42,6 +42,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix utils)
   #:use-module (gnu packages)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages compression)
@@ -357,7 +358,7 @@ except ImportError:
     (inputs
      (list gtk+ wxwidgets))
     (native-inputs
-     (list pkg-config python-setuptools python-waf))
+     (list pkg-config python-setuptools waf))
     (propagated-inputs
      (list python-numpy python-pillow python-six))
     (home-page "https://wxpython.org/")

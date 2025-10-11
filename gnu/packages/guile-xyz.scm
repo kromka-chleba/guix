@@ -58,6 +58,7 @@
 ;;; Copyright © 2025 Noé Lopez <noelopez@free.fr>
 ;;; Copyright © 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2025 Andy Tai <atai@atai.org>
+;;; Copyright © 2025 Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -102,6 +103,7 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
+  #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
@@ -2299,6 +2301,73 @@ format.")
        ((#:make-flags make-flags '())
         #~(cons "guile_effective_version=2.2"
                 #$make-flags))))))
+
+(define-public guile-extensible-match
+  (package
+    (name "guile-extensible-match")
+    (version "0.75.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://codeberg.org/dpk/extensible-match")
+          ;; This commit is 1 commit ahead of tag v0.75.1,
+          ;; includes a patch remove SRFI-151 dependency, which
+          ;; is not packaged in Guix.
+          (commit "d2d32e0e09d37c78dbdd4fedd1af1c6dd3663bb6")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1b2a7cl2fax6ysb5dj7ssy89w4w8xbn3iwc9ffb0p7948sxw7xgx"))))
+    (build-system guile-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'adjust-files-for-guile
+            (lambda _args
+              ;; This is not needed for us.
+              (delete-file-recursively "impl-lib")
+
+              ;; Delete test files.
+              (delete-file "extensible-match-test.sls")
+              (delete-file "extensible-match/internal-tests.sls")
+
+              ;; Rename all file with *.sls to *.scm, if there's Guile's
+              ;; specific implementation (*.guile.sls), make it override the
+              ;; generic one.
+              (rename-file "extensible-match/pattern-syntax.guile.sls"
+                           "extensible-match/pattern-syntax.sls")
+              (for-each
+               (lambda (sls)
+                 (rename-file sls (string-append
+                                   (string-drop-right sls 3)
+                                   "scm")))
+               (find-files "." ".*\\.sls$"))
+
+              ;; Missing SRFI-244, but it's too trivial to be a single package.
+              (substitute* "extensible-match/match.scm"
+                (("\\(srfi :244 define-values\\)")
+                 "(only (guile) define-values)"))))
+
+          (add-after 'adjust-files-for-guile 'fix-srfi-naming
+            (lambda _arg
+              (substitute* (find-files "srfi" ".*\\.scm$")
+                (("\\(srfi :262") "(srfi srfi-262"))
+
+              (rename-file "srfi/:262.scm" "srfi/srfi-262.scm")
+              (rename-file "srfi/:262" "srfi/srfi-262"))))))
+    (native-inputs (list guile-3.0))
+    (propagated-inputs (list guile-srfi-133))
+    (home-page "https://codeberg.org/dpk/extensible-match")
+    (synopsis
+     "Extensible patter-matching library")
+    (description
+     "Guile-extensible-match is an implementation of SRFI-262.  It provides
+user extensible pattern matching syntax. This implementation use a range
+of optimizations to generate efficient matching code.")
+    (license license:expat)))
 
 (define-public guile-newra
   ;; There has been no release let.
@@ -7426,6 +7495,30 @@ HTTP handler to implement a HTTP GraphQL endpoint.")
     (synopsis "Guile bindings for libnotify")
     (description "Provides bindings for GNOME's libnotify C library to Guile")
     (home-page "https://github.com/ekaitz-zarraga/guile-libnotify")
+    (license license:gpl3+)))
+
+(define-public guile-rope
+  (package
+    (name "guile-rope")
+    (version "0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://codeberg.org/annoyingusername/"
+                           "guile-rope/releases/download/v0.1/"
+                           "guile-rope-" version ".tar.gz"))
+       (sha256
+        (base32 "1mnic4pglm2wxlgkhw77c3ig6ysxfl7cgk0lm9mz1c90apvh0zcf"))))
+    (build-system gnu-build-system)
+    (native-inputs (list graphviz pkg-config))
+    (inputs (list guile-3.0))
+    (synopsis "The rope data structure for GNU Guile")
+    (description
+     "This library implements immutable ropes for GNU Guile. A rope is a data
+structure that represents text strings.  It is useful for text editing, because
+text can be inserted at an arbitrary point without requiring the moving of a lot
+of data.")
+    (home-page "https://annoyingusername.codeberg.page/guile-rope")
     (license license:gpl3+)))
 
 (define-public lokke

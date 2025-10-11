@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017, 2018, 2023 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2017, 2019, 2021, 2022 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2017, 2018, 2023 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2017, 2018, 2019, 2021, 2022, 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2017 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2018-2020, 2022, 2023 Efraim Flashner <efraim@flashner.co.il>
@@ -357,23 +357,25 @@ filter for executable binaries.
 pybcj provides Python bindings to a BCJ implementation in C.")
     (license license:lgpl2.1+)))
 
+;; XXX: Project is archived and not maintained since 2021.
 (define-public python-bcj-cffi
   (package
     (name "python-bcj-cffi")
-    (version "0.5.0")
+    (version "0.5.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "bcj-cffi" version))
        (sha256
-        (base32
-         "1jcczrb8zgg6w7v76w1wpz3nw75fghk3xwxkn09ll7kck7sdf68d"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-cffi python-toml python-setuptools-scm))
+        (base32 "1k6h9x8j65hssbgmvhl71sdjj9aq8d81drdibrdflaz7a895sjib"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools python-coverage python-pytest
-           python-pytest-cov))
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-cffi))
     (home-page "https://github.com/miurahr/bcj-cffi")
     (synopsis "Branch / Call /Jump CFFI library in Python")
     (description "This package provides an implementation of the Branch / Call /
@@ -457,13 +459,13 @@ compression algorithm.")
 (define-public python-isal
   (package
     (name "python-isal")
-    (version "1.1.0")
+    (version "1.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "isal" version))
        (sha256
-        (base32 "01914gwfrb95dagz9sqnsmvc0hssg2pb6aj204fdamss4piz8r0k"))
+        (base32 "1d7j30922v547vnif171yhk1jml9cv14izda0w506qhslglk6hhj"))
        ;; Remove bundled isa-l source code
        (modules '((guix build utils)))
        (snippet
@@ -471,14 +473,17 @@ compression algorithm.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-backend #~'unittest
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-dynamic-linking
             (lambda _
               (setenv "PYTHON_ISAL_LINK_DYNAMIC" "1"))))))
     (inputs (list isa-l))
-    (native-inputs (list python-cython python-setuptools python-wheel))
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-setuptools
+           python-setuptools-scm))
     (home-page "https://github.com/pycompression/python-isal")
     (synopsis "Python bindings for the ISA-L compression library")
     (description
@@ -536,6 +541,7 @@ compression algorithm variation H and I.2.  It provides an API similar to
 Python's zlib/bz2/lzma modules.")
     (license license:lgpl2.1+)))
 
+;; XXX: Project is archived and not maintained since 2022.
 (define-public python-ppmd-cffi
   (package
     (name "python-ppmd-cffi")
@@ -547,15 +553,18 @@ Python's zlib/bz2/lzma modules.")
        (sha256
         (base32
          "0vprpl29fkflqx0m6anfpx7q7i4cw0d0qxcdm91k4pl82dcad81g"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; AssertionError: assert False
+      #:test-flags #~(list "--deselect=tests/test_cli.py::test_cli_help")))
     (propagated-inputs
      (list python-cffi))
     (native-inputs
-     (list python-hypothesis
-           python-setuptools-scm
-           python-coverage
-           python-pytest
-           python-pytest-cov))
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm))
     (home-page "https://github.com/miurahr/ppmd")
     (synopsis "Prediction by Partial Matching compression library")
     (description "PPMd is a compression algorithm library using the Prediction
@@ -643,30 +652,28 @@ Python strings.")
 (define-public python-lz4
   (package
     (name "python-lz4")
-    (version "4.3.2")
+    (version "4.4.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "lz4" version))
        (sha256
         (base32
-         "1nmc36j5xnk7mvwwpm0nb1sddjk5iv77h877fdkkxcngm621shz1"))
+         "1nmb757fx3k30zsjiaz7nj6cgp4zxl44w28s4l8k0ff4grid03q7"))
        (modules '((guix build utils)))
        (snippet '(begin
                    ;; Remove bundled copy of lz4.
                    (delete-file-recursively "lz4libs")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     ;; Taken from tox.ini (excludes experimental tests).
-                     (invoke "pytest" "-vv" "tests/block" "tests/frame")))))))
+     ;; Taken from tox.ini (excludes experimental tests).
+     (list #:test-flags #~(list "tests/block" "tests/frame")))
     (native-inputs
-     (list pkg-config python-pytest python-pkgconfig python-setuptools-scm
-           ;; For tests.
+     (list pkg-config
+           python-pytest
+           python-pkgconfig
+           python-setuptools
+           python-setuptools-scm
            python-psutil))
     (inputs
      (list lz4))
@@ -689,8 +696,13 @@ the LZ4 frame format.")
        (sha256
         (base32 "18ly9pppy2yspxzw7k1b23wk77k7m44rz2g0271bqgqrk3jn3yhs"))))
     (build-system pyproject-build-system)
+    (arguments
+     ;; No tests in PyPI, this project is a fork of
+     ;; <https://github.com/eduardtomasek/lz-string-python> and doesn't provide
+     ;; tags.
+     (list #:tests? #f))
     (native-inputs
-     (list python-setuptools python-wheel))
+     (list python-setuptools))
     (propagated-inputs
      (list python-future))
     (home-page "https://github.com/gkovacs/lz-string-python")
@@ -704,25 +716,21 @@ the LZ4 frame format.")
     ;; packages. To avoid a name collision in Guix, we use the variable name
     ;; `python-python-snappy' for the package called `python-snappy' on PyPI.
     (name "python-python-snappy")
-    (version "0.6.1")
+    (version "0.7.3")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-snappy" version))
+       (uri (pypi-uri "python_snappy" version))
        (sha256
-        (base32 "0amv12w0ybn6n1lk36x70a3l8bdjv4mn7iflb59wqsi00smhg8dn"))))
-    (build-system python-build-system)
+        (base32 "1qyfhsaagpzgrw5n2zklx670zi0f3lm1djqyg2n3hbgvmldnq8a0"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        (invoke "pytest" "-vv" "-k"
-                                ;; CFFI is only supported for PyPy builds.
-                                (string-append "not test_snappy_cffi_enum "
-                                               "and not test_snappy_all_cffi"))))))))
-    (inputs (list snappy))
-    (native-inputs (list python-pytest))
+     (list #:test-backend #~'unittest))
+    (native-inputs
+     (list python-cramjam
+           python-setuptools))
+    (inputs
+     (list snappy))
     (home-page "https://github.com/andrix/python-snappy")
     (synopsis "Python bindings for the Snappy compression library")
     (description
@@ -731,47 +739,52 @@ can be used to compress and decompress files and streams.  It can also be used
 directly from the command line.")
     (license license:bsd-3)))
 
-(define-public bitshuffle
+(define-public python-bitshuffle
   (package
-    (name "bitshuffle")
-    (version "0.3.5")
+    (name "python-bitshuffle")
+    (version "0.5.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "bitshuffle" version))
               (sha256
                (base32
-                "1823x61kyax4dc2hjmc1xraskxi1193y8lvxd03vqv029jrj8cjy"))
+                "139xz3m2m8sal8riicvmb9i0sq4085s2hc6c148bwhmzpnvky3nw"))
               (modules '((guix build utils)))
               (snippet
                '(begin
+                  ;; TODO Remove bundled libraries: lz4, lzf, and zstd.
                   ;; Remove generated Cython files.
                   (delete-file "bitshuffle/h5.c")
-                  (delete-file "bitshuffle/ext.c")
-                  #t))))
-    (build-system python-build-system)
+                  (delete-file "bitshuffle/ext.c")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f             ; fail: https://github.com/h5py/h5py/issues/769
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-neon-detection
-           ;; Neon is only for aarch64 ATM
-           ;; see: https://github.com/kiyo-masui/bitshuffle/pull/73
-           (lambda _
-             (substitute* "src/bitshuffle_core.c"
-               (("#define USEARMNEON")
-                "#ifdef __aarch64__\n#define USEARMNEON\n#endif"))
-             #t))
-         (add-after 'unpack 'dont-build-native
-           (lambda _
-             (substitute* "setup.py"
-               (("'-march=native', ") ""))
-             #t)))))
-    (inputs
-     `(("numpy" ,python-numpy)
-       ("h5py" ,python-h5py)
-       ("hdf5" ,hdf5)))
+     (list
+      #:test-flags
+      ;; FileNotFoundError: [Errno 2] Unable to synchronously open file
+      ;; (unable to open file: name =
+      ;; '/tmp/<...>/tests/data/regression_0.1.3.h5', errno = 2, error message
+      ;; = 'No such file or directory', flags = 0, o_flags = 0)
+      #~(list "--deselect=tests/test_regression.py::TestAll::test_regression")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'pre-build
+            ;; TODO: Check how to build on other architectures.
+            ;; Taken form .github/workflows/wheels.yml.
+            (lambda _
+              #$@(if (target-x86-64?)
+                     '((setenv "BITSHUFFLE_ARCH" "haswell")
+                       (setenv "CIBW_SKIP" "pp* *musllinux* cp311-macosx*")
+                       (setenv "CIBW_ARCHS" "x86_64"))
+                     '())
+              (setenv "HDF5_DIR" #$(this-package-input "hdf5")))))))
     (native-inputs
-     `(("cython" ,python-cython)))
+     (list python-cython
+           python-pytest
+           python-setuptools))
+    (inputs
+     (list python-numpy
+           python-h5py
+           hdf5))
     (home-page "https://github.com/kiyo-masui/bitshuffle")
     (synopsis "Filter for improving compression of typed binary data")
     (description "Bitshuffle is an algorithm that rearranges typed, binary data
@@ -779,20 +792,23 @@ for improving compression, as well as a python/C package that implements this
 algorithm within the Numpy framework.")
     (license license:expat)))
 
+(define-public bitshuffle
+  (deprecated-package "bitshuffle" python-bitshuffle))
+
 (define-public bitshuffle-for-snappy
-  (package/inherit bitshuffle
+  (package/inherit python-bitshuffle
     (name "bitshuffle-for-snappy")
     (build-system gnu-build-system)
     (arguments
-     (substitute-keyword-arguments (package-arguments bitshuffle)
-       ((#:tests? _ #f) #f)
-       ((#:phases phases)
-        `(modify-phases %standard-phases
-           (replace 'configure
-             (lambda* (#:key outputs #:allow-other-keys)
-               (with-output-to-file "Makefile"
-                 (lambda _
-                   (format #t "\
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (with-output-to-file "Makefile"
+                (lambda _
+                  (format #t "\
 libbitshuffle.so: src/bitshuffle.o src/bitshuffle_core.o src/iochain.o lz4/lz4.o
 \tgcc -O3 -ffast-math -std=c99 -o $@ -shared -fPIC $^
 
@@ -811,8 +827,7 @@ install: libbitshuffle.so
 \tinstall -m644 src/bitshuffle_core.h $(INCLUDEDIR)
 \tinstall -m644 src/iochain.h $(INCLUDEDIR)
 \tinstall -m644 lz4/lz4.h $(INCLUDEDIR)
-" (assoc-ref outputs "out"))))
-               #t))))))
+" #$output))))))))
     (inputs '())
     (native-inputs '())))
 
@@ -921,6 +936,37 @@ wrapper.  It provides a backport of the @code{Path} object.")
     (synopsis "Python wrapper for @code{libdeflate}")
     (description "This package contains a very thin Python wrapper for
 @code{libdeflate}.")
+    (license license:expat)))
+
+(define-public python-xopen
+  (package
+    (name "python-xopen")
+    ;; TODO: Newer versions require zlib-ng:
+    ;; <https://github.com/zlib-ng/zlib-ng>,
+    ;; <https://github.com/pycompression/python-zlib-ng>.
+    (version "1.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "xopen" version))
+       (sha256
+        (base32 "0h08wpd5zwnlzwnbbbhahbcs69kzsfbaaigqw0viq6ri8n4zrh00"))))
+    (build-system pyproject-build-system)
+    ;; tests: 343 passed, 5 skipped
+    (native-inputs
+     (list python-pytest
+           python-pytest-timeout
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list pigz python-isal))
+    (home-page "https://github.com/marcelm/xopen/")
+    (synopsis "Open compressed files transparently")
+    (description "This module provides an @code{xopen} function that works
+like Python's built-in @code{open} function, but can also deal with compressed
+files.  Supported compression formats are gzip, bzip2 and, xz, and are
+automatically recognized by their file extensions.  The focus is on being as
+efficient as possible on all supported Python versions.")
     (license license:expat)))
 
 (define-public python-zipstream-ng

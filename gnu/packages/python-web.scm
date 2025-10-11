@@ -13,7 +13,7 @@
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2015, 2016, 2017, 2019 Leo Famulari <leo@famulari.name>
-;;; Copyright © 2016, 2019, 2022 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2016, 2019, 2022, 2025 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2016–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2015, 2017 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2015, 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
@@ -25,8 +25,10 @@
 ;;; Copyright © 2017 Mark Meyer <mark@ofosos.org>
 ;;; Copyright © 2018 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2018, 2019, 2021, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2018 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2018, 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2018 swedebugia <swedebugia@riseup.net>
 ;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2019 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2019 Pierre Langlois <pierre.langlois@gmx.com>
@@ -252,7 +254,7 @@ SNS, Gotify, etc.")
 (define-public python-blacksheep
   (package
     (name "python-blacksheep")
-    (version "2.4.1")
+    (version "2.4.2")
     (source
      (origin
        (method git-fetch)
@@ -261,11 +263,11 @@ SNS, Gotify, etc.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0znkqj4cipdr1qdsdlbb48b82cpvj24dqiwi0nyiy50b8nd7g5np"))))
+        (base32 "0v9pkg3ffxxcdc8ynjjh5fgis5m49m65sbrgcrghmz0xkik5ny5w"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 1609 passed, 3 skipped
+      ;; tests: 1675 passed, 3 skipped
       ;;
       ;; Run all unit tests, but do not run integration tests from `itests`
       ;; directory.
@@ -917,7 +919,7 @@ formats (PDF/XML/CSV).")
 (define-public python-guardpost
   (package
     (name "python-guardpost")
-    (version "1.0.2")
+    (version "1.0.3")
     (source
      (origin
        (method git-fetch)
@@ -926,7 +928,7 @@ formats (PDF/XML/CSV).")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cwxxxhazpaphhcysgpivk51vp76zdf7hrryc1vr6vlp2zzgwsxd"))))
+        (base32 "1q09w953d4cjjvp8pp3kkkhw0y9kq2jgj6fihdz9np55pwxkfd15"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1339,6 +1341,125 @@ feaatures are:
 in Python 3.13 by PEP-594.")
     (license license:psfl)))
 
+(define-public python-opentelemetry-api
+  (package
+    (name "python-opentelemetry-api")
+    (version "1.37.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "opentelemetry_api" version))
+       (sha256
+        (base32 "19yr3hfwdc9sv8df4vydxcsxnpld3xi57siq4w8xanrm42qka1sl"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-importlib-metadata
+                             python-typing-extensions))
+    (native-inputs (list python-hatchling
+                         python-opentelemetry-test-utils-bootstrap))
+    (home-page "https://opentelemetry.io/docs/languages/python/")
+    (synopsis "OpenTelemetry Python API")
+    (description "@code{OpenTelemetry} Python API.")
+    (license license:asl2.0)))
+
+(define-public python-opentelemetry-api-bootstrap
+  (hidden-package
+   (package/inherit python-opentelemetry-api
+     (name "python-opentelemetry-api-bootstrap")
+     (arguments
+      (list
+       #:tests? #f))
+     (native-inputs (list python-hatchling)))))
+
+(define-public python-opentelemetry-sdk
+  (package
+    (name "python-opentelemetry-sdk")
+    (version "1.37.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "opentelemetry_sdk" version))
+       (sha256
+        (base32 "19fx8vf35kcss43i17zqngqhmglb36dnddasbdvfsgcm22f0i3nc"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-opentelemetry-api
+                             python-opentelemetry-semantic-conventions
+                             python-typing-extensions))
+    (native-inputs (list python-hatchling
+                         python-opentelemetry-test-utils-bootstrap
+                         python-pytest))
+    (home-page "https://opentelemetry.io/docs/languages/python/")
+    (synopsis "OpenTelemetry Python SDK")
+    (description "@code{OpenTelemetry} Python SDK.")
+    (license license:asl2.0)))
+
+(define-public python-opentelemetry-sdk-bootstrap
+  (hidden-package
+   (package/inherit python-opentelemetry-sdk
+     (name "python-opentelemetry-sdk-bootstrap")
+     (arguments (list #:tests? #f))
+     (propagated-inputs (list python-opentelemetry-api-bootstrap
+                         python-opentelemetry-semantic-conventions-bootstrap))
+     (native-inputs (list python-hatchling)))))
+
+(define-public python-opentelemetry-semantic-conventions
+  (package
+    (name "python-opentelemetry-semantic-conventions")
+    (version "0.58b0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "opentelemetry_semantic_conventions" version))
+       (sha256
+        (base32 "098czakcawikaspl46vy6vickw80mm2bnrspflrw8ya24r8nzm3b"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-opentelemetry-api python-typing-extensions))
+    (native-inputs (list python-hatchling))
+    (home-page "https://opentelemetry.io/docs/languages/python/")
+    (synopsis "OpenTelemetry Semantic Conventions")
+    (description "@code{OpenTelemetry} Semantic Conventions.")
+    (license license:asl2.0)))
+
+(define-public python-opentelemetry-semantic-conventions-bootstrap
+  (hidden-package
+   (package/inherit python-opentelemetry-semantic-conventions
+     (name "python-opentelemetry-semantic-conventions-bootstrap")
+     (arguments
+      (list
+       #:tests? #f))
+     (propagated-inputs (list python-opentelemetry-api-bootstrap
+                              python-typing-extensions)))))
+
+(define-public python-opentelemetry-test-utils
+  (package
+    (name "python-opentelemetry-test-utils")
+    (version "0.58b0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "opentelemetry_test_utils" version))
+       (sha256
+        (base32 "0xjp04zjn7m79xsda9wp79rqyzy2c10347s967vp7xvmndwwa0ds"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-asgiref python-opentelemetry-api
+                             python-opentelemetry-sdk))
+    (native-inputs (list python-hatchling))
+    (home-page "https://opentelemetry.io/docs/languages/python/")
+    (synopsis "Test utilities for OpenTelemetry unit tests")
+    (description "Test utilities for @code{OpenTelemetry} unit tests.")
+    (license license:asl2.0)))
+
+(define-public python-opentelemetry-test-utils-bootstrap
+  (hidden-package
+   (package/inherit python-opentelemetry-test-utils
+     (name "python-opentelemetry-test-utils-bootstrap")
+     (arguments
+      (list
+       #:tests? #f))
+     (propagated-inputs (list python-asgiref
+                              python-opentelemetry-api-bootstrap
+                              python-opentelemetry-sdk-bootstrap))
+     (native-inputs (list python-hatchling)))))
+
 (define-public python-pathy
   (package
     (name "python-pathy")
@@ -1728,6 +1849,26 @@ Callback Hell.
 @item Web-server has middlewares and pluggable routing.
 @end itemize")
     (license license:asl2.0)))
+
+(define-public python-aiohttp-oauthlib
+  (package
+    (name "python-aiohttp-oauthlib")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aiohttp-oauthlib" version))
+       (sha256
+        (base32 "1dwk0gby27xm7384qyz2p7zw9dqhjx7m8fhfk172w36xknjx2g49"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; none included
+    (propagated-inputs (list python-aiohttp python-oauthlib))
+    (native-inputs (list python-setuptools python-setuptools-scm))
+    (home-page "https://git.sr.ht/~whynothugo/aiohttp-oauthlib")
+    (synopsis "OAuthlib authentication support for aiohttp")
+    (description "Aiohttp-oauthlib uses the Python aiohttp and OAuthlib libraries to
+provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients.")
+    (license license:isc)))
 
 (define-public python-aiohttp-client-cache
   (package
@@ -2999,16 +3140,20 @@ JWE, JWK, JWA, and JWT.")
 (define-public python-jwcrypto
   (package
     (name "python-jwcrypto")
-    (version "1.5.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "jwcrypto" version))
-              (sha256
-               (base32
-                "138bh6x1yy0qpk63bxa7mxnd97gfdm1fkpwm8wrdz3g3z0fca79c"))))
+    (version "1.5.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jwcrypto" version))
+       (sha256
+        (base32 "0fdhn5jrsdxqr1yr6rmh585q4j08z1aajn392vk1l20c59v8f6kp"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-cryptography python-deprecated))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-cryptography
+           python-deprecated))
     (home-page "https://github.com/latchset/jwcrypto")
     (synopsis "Implementation of JOSE Web standards")
     (description
@@ -3128,6 +3273,9 @@ object graph to and from JSON.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; Unclear why test fails.
+      #~(list "-k" "not test_select_form_associated_elements")
       ;; The following dependencies are not directly required, the developer
       ;; only pinned versions because of vulnerabilities.  They also break
       ;; sanity-check because it checks for a python-certifi version which is
@@ -3743,6 +3891,31 @@ desired
 @end itemize")
     (license license:expat)))
 
+(define-public python-waitress
+  (package
+    (name "python-waitress")
+    (version "3.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "waitress" version))
+       (sha256
+        (base32
+         "07y3xyx2006f2ni5d55byh3y7w4kcg9xww7vmfjasi0cmzralak8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; https://github.com/Pylons/waitress/issues/443
+     (list #:test-flags #~(list "-k" "not test_service_port")))
+    (native-inputs
+     (list python-coverage python-pytest python-pytest-cov
+           python-setuptools python-wheel))
+    (home-page "https://github.com/Pylons/waitress")
+    (synopsis "Waitress WSGI server")
+    (description
+     "Waitress is meant to be a production-quality pure-Python WSGI server
+with very acceptable performance.")
+    (license license:zpl2.1)))
+
 (define-public python-webencodings
   (package
     (name "python-webencodings")
@@ -4302,6 +4475,50 @@ set out in RFC 7540 Section 5.3 (Stream Priority).")
      "This package provides language definitions used by
 @url{https://weblate.org/, Weblate}i.")
     (license license:expat)))
+
+;; XXX: See: <https://codeberg.org/guix/guix/issues/3321>.
+(define-public python-wget
+  (package
+    (name "python-wget")
+    (version "3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "wget" version ".zip"))
+       (sha256
+        (base32
+         "0qb0y7ipby42m4m7h0ipazpdyc3bn9xi46lvifcwwl5albn31rim"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f)) ;no tests
+    (native-inputs (list python-setuptools unzip))
+    (home-page "https://bitbucket.org/techtonik/python-wget/")
+    (synopsis "Pure Python download utility")
+    (description "The python-wget library provides an API to download files
+with features similar to the @command{wget} utility.")
+    (license license:unlicense)))
+
+(define-public python-wikidata
+  (package
+    (name "python-wikidata")
+    (version "0.8.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/dahlia/wikidata")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06zg74h249phszn1znfcjdz6c3lz350fiabdzn7iqb2xg4xh69a5"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-setuptools))
+    (home-page "https://github.com/dahlia/wikidata")
+    (synopsis "Wikidata client library")
+    (description
+     "This package provides a Python interface to @url{https://www.wikidata.org/,
+Wikidata}.")
+    (license license:gpl3+)))
 
 (define-public python-wsproto
   (package
@@ -5853,6 +6070,8 @@ protocol, both client and server for Python asyncio module.
       (arguments
        (list #:test-flags #~(list "mohawk/tests.py")))
       (native-inputs (list python-pytest python-setuptools))
+      (propagated-inputs (list python-six)) ;TODO: remove python-mohawk when
+                                            ;python-six is removed?
       (home-page "https://github.com/kumar303/mohawk")
       (synopsis "Library for Hawk HTTP authorization")
       (description
@@ -6086,16 +6305,18 @@ supports url redirection and retries, and also gzip and deflate decoding.")
 (define-public python-awscrt
   (package
     (name "python-awscrt")
-    (version "0.23.0")
+    (version "0.26.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "awscrt" version))
        (sha256
-        (base32 "0a669xxfmgw3g6xpcnm64pbmlrbxw5wf3jcrivixscl2glapdxgx"))))
+        (base32 "0plkc0i0gc6z8fqnyy8kbg43sv3jnv8shcavcz0wb134riykmmm8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-backend #~'unittest
+      #:test-flags #~(list "discover" "--verbose")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'disable-broken-tests
@@ -6138,36 +6359,18 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
                                   bundle "')\n"))))))
           (add-after 'unpack 'use-system-libraries
             (lambda _
-              (setenv "AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO" "1")))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "python3" "-m" "unittest"
-                        "discover" "--verbose")))))))
+              (setenv "AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO" "1"))))))
     (inputs (list openssl))
     (native-inputs (list cmake-minimal
-                         python-setuptools
-                         python-wheel
-                         ;; For tests only
                          nss-certs-for-test
                          python-boto3
+                         python-setuptools
                          python-websockets))
     (home-page "https://github.com/awslabs/aws-crt-python")
     (synopsis "Common runtime for AWS Python projects")
     (description
      "This package provides a common runtime for AWS Python projects.")
     (license license:asl2.0)))
-
-(define-public python-awscrt-for-awscli
-  (package
-    (inherit python-awscrt)
-    (version "0.22.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "awscrt" version))
-       (sha256
-        (base32 "0w6pw42jbznrxh92cd97p96dg2nz698mcbfy7md3zw18jfsb18jc"))))))
 
 (define-public awscli
   (package
@@ -6239,8 +6442,11 @@ Services (AWS) API.")
 (define-public awscli-2
   (package
     (inherit awscli)
+    ;; Note: updating awscli-2 typically requires updating python-awscrt.
     (name "awscli")
-    (version "2.20.0")
+    ;; Upstream practices a very rapid (1h-1d) release cycles try to select
+    ;; any fresh one compatible with current state of dependencies in Guix.
+    (version "2.28.0")
     (source
      (origin
        (method git-fetch)
@@ -6250,24 +6456,30 @@ Services (AWS) API.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0hyr9gmcfk7nzkgs0v6wgkh8k15dyhknqzfymbc9a9sa2dblc40q"))))
+         "1a1jzvdm434x46yh7ir11lw0nzc64ns4qvxhp5wfra3rh5ykf36j"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; When updating and checking locally be very patient as build phase may
+      ;; hang for 6-8 minutes but eventually passes through.
+      ;;
+      ;; tests: 4189 passed, 1 skipped, 2 warnings
       #:test-flags
-      '(list ;; This version of prompt-toolkit has issues with awscli-2, see
-             ;; <https://github.com/aws/aws-cli/issues/9453#issuecomment-2822186530>.
-             "--ignore=functional/autoprompt/test_prompttoolkit.py"
-             ;; The resource leak tests use ps to check for memory consumption.
-             "--ignore=functional/botocore/leak/test_resource_leaks.py"
-             ;; These tests complain about unavailable TLS certs.
-             "--ignore=functional/ec2instanceconnect/test_opentunnel.py"
-             ;; These seem to require Internet access.
-             "--ignore=unit/botocore/test_awsrequest.py"
+      '(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+             ;; Full test suite contains more than 70k tests; ignore network
+             ;; dependent, slow and compute intense tests, keep just unit
+             ;; tests.
+             "--ignore=tests/backends"
+             "--ignore=tests/dependencies"
+             "--ignore=tests/functional"
+             "--ignore=tests/integration"
+             "--ignore=tests/unit/botocore"
              ;; Flaky, something to do with PATH disappearing from os.environ?
              ;; Passes when run on its own, so maybe something else is
              ;; modifying this during the test run.
-             "--ignore=unit/customizations/emr/test_emr_utils.py")
+             "--ignore=tests/unit/customizations/emr/test_emr_utils.py"
+             ;; TypeError: 'Mock' object is not subscriptable
+             "-k" "not test_no_groff_or_mandoc_exists")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'ignore-deprecations
@@ -6282,44 +6494,26 @@ Services (AWS) API.")
                  (string-append "cmdline = ['"
                                 (search-input-file inputs "bin/groff")
                                 "'")))))
-          (replace 'check
-            (lambda* (#:key tests? test-flags #:allow-other-keys)
-              (when tests?
-                (let ((skip-args
-                       (string-append
-                        "-k" "\""
-                        ;; No idea why this fails.
-                        "not test_no_groff_or_mandoc_exists"
-                        ;; Needs $HOME
-                        " and not test_attach_history_handler"
-                        ;; Complains about TLS certs.
-                        " and not test_command_returns_shutdown_exception"
-                        "\"")))
-                  (substitute* "scripts/ci/run-tests"
-                    (("--numprocesses=auto" m)
-                     (string-join (cons* m skip-args test-flags) " "))))
-                (invoke "python" "scripts/ci/run-tests")))))))
+          (add-before 'check 'pre-check
+            (lambda _ (setenv "HOME" "/tmp"))))))
     (inputs
      (list groff
+           ;; less
            nss-certs-for-test
-           python-awscrt-for-awscli
+           python-awscrt
            python-colorama
-           python-botocore
-           python-cryptography
            python-dateutil
+           python-distro
            python-docutils
            python-jmespath
-           python-jsonschema
            python-prompt-toolkit
-           python-ruamel.yaml-0.16
+           python-ruamel.yaml
            python-ruamel.yaml.clib
            python-urllib3))
     (native-inputs
-     (list python-distro
-           python-flit
+     (list python-flit-core
            python-pytest
-           python-pytest-xdist
-           python-wheel))))
+           python-pytest-xdist))))
 
 ;; This is not an official release of awscli version 2, so it should not be
 ;; named awscli.
@@ -7240,10 +7434,67 @@ jspacker or CSS tidy.  It also supports URL rewriting in CSS files.")
     (description "Python port of the YUI CSS Compressor.")
     (license (list license:expat license:bsd-3))))
 
+(define-public python-elastic-transport
+  (package
+    (name "python-elastic-transport")
+    (version "9.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "elastic_transport" version))
+       (sha256
+        (base32 "0g879z8rqrfbwkxsm6xcycjha1swl7gdgs6m0y0j1zmh4m5f940m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Deselect failing tests (mostly due to network not reachable)
+      #~(list "-k"
+              (string-append
+               "not .badssl.com"
+               " and not test_assert_fingerprint_in_cert_chain_failure"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; Drop test coverage requirements.
+              (substitute* "setup.cfg"
+                (("--cov(-[^ ]*)?=[^ ]*") "\n")))))))
+    (propagated-inputs (list python-certifi python-urllib3))
+    (native-inputs (list nss-certs-for-test
+                         python-aiohttp
+                         ;; python-furo
+                         python-httpx
+                         python-opentelemetry-api
+                         python-opentelemetry-sdk
+                         python-orjson
+                         python-pytest
+                         python-pytest-asyncio
+                         ;; python-pytest-cov
+                         python-pytest-httpbin
+                         python-pytest-httpserver
+                         python-pytest-mock
+                         python-requests
+                         python-respx ;test
+                         python-setuptools
+                         ;; python-sphinx
+                         ;; python-sphinx-autodoc-typehints
+                         python-trustme
+                         python-wheel))
+    (home-page "https://github.com/elastic/elastic-transport-python")
+    (synopsis "Common library for Python Elastic client libraries")
+    (description
+     "This library was lifted from @code{elasticsearch-py} and then transformed to
+be used across all Elastic services rather than only Elasticsearch.  It
+provides transport classes and utilities shared among Python Elastic client
+libraries.")
+    ;; Apache-2.0 in setup.py and LICENSE file.
+    (license license:asl2.0)))
+
 (define-public python-elasticsearch
   (package
     (name "python-elasticsearch")
-    (version "7.17.12")
+    (version "9.1.1")
     (source
      (origin
        (method git-fetch)               ; no tests in PyPI release
@@ -7252,35 +7503,30 @@ jspacker or CSS tidy.  It also supports URL rewriting in CSS files.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0v3azgxh1nd0jyqhnb1w28ky3nfx8sjq5vlx2gp33v6vxmvqy1qr"))))
+        (base32 "015x73y84nyigcyg00lh32p2pfrqf834fr7clfnzymgzrrxa73jf"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; Requiring network config.
-      #~(list "--ignore=test_elasticsearch/test_connection.py"
-              ;; All tests failed.
-              "--ignore=test_elasticsearch/test_async")))
     (native-inputs
-     (list python-aiohttp
+     (list nss-certs-for-test
+           python-aiohttp
            python-dateutil
            python-mock
+           python-orjson
            python-pytest
            python-pytest-asyncio
            python-pytest-cov
+           python-pytz
            python-pyyaml
            python-requests
-           python-setuptools
-           python-wheel))
+           python-hatchling))
     (propagated-inputs
      (list python-certifi
-           python-urllib3-1.26))
+           python-elastic-transport))
     (home-page "https://github.com/elastic/elasticsearch-py")
     (synopsis "Low-level client for Elasticsearch")
     (description "Official low-level client for Elasticsearch.  Its goal is to
 provide common ground for all Elasticsearch-related code in Python; because of
 this it tries to be opinion-free and very extendable.")
-    ;; Apache-2.0 in setup.py and LICENSE file for 11 years.
+    ;; Apache-2.0 in setup.py and LICENSE file.
     (license license:asl2.0)))
 
 (define-public python-engineio
@@ -12170,3 +12416,30 @@ hardware on Grid'5000 or via OpenStack, to Vagrant, Chameleon, and more.")
      "This package provides a library and a command-line tool that lets
 you download the entire Wayback Machine archive for a given URL.")
     (license license:expat)))
+
+(define-public python-xyzservices
+  (package
+    (name "python-xyzservices")
+    (version "2025.4.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "xyzservices" version))
+        (sha256
+          (base32 "1n096zg9bd4n6w6axcm16m9sxdkc6qy1mipva0scbyj86rqn9rvg"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "-m" "not request")))
+    (native-inputs
+     (list python-pytest
+           python-mercantile
+           python-requests
+           python-setuptools
+           python-setuptools-scm))
+    (home-page "https://github.com/geopandas/xyzservices")
+    (synopsis "Source of XYZ tiles providers")
+    (description "@code{xyzservices} is a lightweight library providing a
+repository of available XYZ services offering raster basemap tiles.  The
+repository is provided via Python API and as a compressed JSON file.")
+    (license license:bsd-3)))

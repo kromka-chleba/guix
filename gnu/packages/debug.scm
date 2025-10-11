@@ -6,7 +6,7 @@
 ;;; Copyright © 2019 Pkill -9 <pkill9@runbox.com>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020, 2021 Morgan Smith <Morgan.J.Smith@outlook.com>
-;;; Copyright © 2020 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2020, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2021 Foo Chuan Wei <chuanwei.foo@hotmail.com>
 ;;; Copyright © 2022 Michael Rohleder <mike@rohleder.de>
@@ -15,6 +15,7 @@
 ;;; Copyright © 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2024 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -40,6 +41,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system linux-module)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module (guix gexp)
@@ -774,75 +776,99 @@ error reporting, better tracing, profiling, and a debugger.")
     (license license:gpl3+)))
 
 (define-public rr
-  (package
-    (name "rr")
-    (version "5.9.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/mozilla/rr")
-                    (commit version)))
-              (sha256
-               (base32
-                "18bahi9b7pz8s7vq8r52fg4pdnj62ymx4yyqjkiwnxlp06pdgqd3"))
-              (file-name (git-file-name name version))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:configure-flags
-       ;; The 'rr_exec_stub' is a static binary, which leads CMake to fail
-       ;; with ‘file RPATH_CHANGE could not write new RPATH: ...’.
-       ;; Clear CMAKE_INSTALL_RPATH to avoid that problem.
-       (list "-DCMAKE_INSTALL_RPATH="
-             ;; Satisfy the ‘validate-runpath’ phase.  This isn't a direct
-             ;; consequence of clearing CMAKE_INSTALL_RPATH.
-             (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
-                            (assoc-ref %build-inputs "capnproto")
-                            "/lib,-rpath=" (assoc-ref %build-inputs "zlib")
-                            "/lib,-rpath=" (assoc-ref %build-inputs "zstd")
-                            "/lib")
-             ,@(if (and (not (%current-target-system))
-                        (member (%current-system)
-                                '("x86_64-linux" "aarch64-linux")))
-                   ;; The toolchain doesn't support '-m32'.
-                   '("-Ddisable32bit=ON")
-                   '()))
+  ;; Use a newer commit, which contains unreleased fixes to the
+  ;; zen-pmu-workaround.c kernel module, among others.
+  (let ((commit "7fe1e367c2b4e0df7647e020c20d66827badfad3")
+        (revision "0"))
+    (package
+      (name "rr")
+      (version (git-version "5.9.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/mozilla/rr")
+                       (commit commit)))
+                (sha256
+                 (base32
+                  "1zgxk4blwwq0bigi0g8dafgl330aid3kw9ym426825flc3pp1c3m"))
+                (file-name (git-file-name name version))))
+      (build-system cmake-build-system)
+      (arguments
+       `(#:configure-flags
+         ;; The 'rr_exec_stub' is a static binary, which leads CMake to fail
+         ;; with ‘file RPATH_CHANGE could not write new RPATH: ...’.
+         ;; Clear CMAKE_INSTALL_RPATH to avoid that problem.
+         (list "-DCMAKE_INSTALL_RPATH="
+               ;; Satisfy the ‘validate-runpath’ phase.  This isn't a direct
+               ;; consequence of clearing CMAKE_INSTALL_RPATH.
+               (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
+                              (assoc-ref %build-inputs "capnproto")
+                              "/lib,-rpath=" (assoc-ref %build-inputs "zlib")
+                              "/lib,-rpath=" (assoc-ref %build-inputs "zstd")
+                              "/lib")
+               ,@(if (and (not (%current-target-system))
+                          (member (%current-system)
+                                  '("x86_64-linux" "aarch64-linux")))
+                     ;; The toolchain doesn't support '-m32'.
+                     '("-Ddisable32bit=ON")
+                     '()))
 
-       ;; XXX: Most tests fail with:
-       ;;
-       ;;  rr needs /proc/sys/kernel/perf_event_paranoid <= 1, but it is 2.
-       ;;
-       ;; This setting cannot be changed from the build environment, so skip
-       ;; the tests.
-       #:tests? #f
+         ;; XXX: Most tests fail with:
+         ;;
+         ;;  rr needs /proc/sys/kernel/perf_event_paranoid <= 1, but it is 2.
+         ;;
+         ;; This setting cannot be changed from the build environment, so skip
+         ;; the tests.
+         #:tests? #f
 
-       #:phases (modify-phases %standard-phases
-                  (add-before 'check 'set-home
-                    (lambda _
-                      ;; Some tests expect 'HOME' to be set.
-                      (setenv "HOME" (getcwd))
-                      #t)))))
-    (native-inputs
-     (list lldb pkg-config which))
-    (inputs
-     (list gdb
-           capnproto
-           python
-           python-pexpect
-           zlib
-           `(,zstd "lib")))
+         #:phases (modify-phases %standard-phases
+                    (add-before 'check 'set-home
+                      (lambda _
+                        ;; Some tests expect 'HOME' to be set.
+                        (setenv "HOME" (getcwd)))))))
+      (native-inputs
+       (list lldb pkg-config which))
+      (inputs
+       (list gdb
+             capnproto
+             python
+             python-pexpect
+             zlib
+             `(,zstd "lib")))
 
-    ;; List of supported systems according to 'src/preload/raw_syscall.S'.
-    (supported-systems '("x86_64-linux" "i686-linux" "aarch64-linux"))
+      ;; List of supported systems according to 'src/preload/raw_syscall.S'.
+      (supported-systems '("x86_64-linux" "i686-linux" "aarch64-linux"))
 
-    (home-page "https://rr-project.org/")
-    (synopsis "Record and replay debugging framework")
-    (description
-     "rr is a lightweight tool for recording, replaying and debugging
+      (home-page "https://rr-project.org/")
+      (synopsis "Record and replay debugging framework")
+      (description
+       "rr is a lightweight tool for recording, replaying and debugging
 execution of applications (trees of processes and threads).  Debugging extends
 GDB with very efficient reverse-execution, which in combination with standard
 GDB/x86 features like hardware data watchpoints, makes debugging much more
 fun.")
-    (license license:expat)))
+      (license license:expat))))
+
+(define-public rr-zen-pmu-workaround
+  (package
+    (name "rr-zen-pmu-workaround")
+    (version (package-version rr))
+    (source (package-source rr))
+    (build-system linux-module-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'cd
+            (lambda _
+              (chdir "third-party/zen-pmu-workaround"))))))
+    (home-page "https://github.com/rr-debugger/rr/wiki/Zen")
+    (synopsis "AMD Zen workaround kernel module for rr")
+    (description "This is a Linux kernel module that implements
+ workarounds needed for using the @command{rr} debugger with AMD Zen
+@acronym{CPU, Central Processing Unit}.")
+    (license license:gpl2)))            ;GPLv2 only, like the kernel
 
 (define-public libbacktrace
   ;; There are no releases nor tags.

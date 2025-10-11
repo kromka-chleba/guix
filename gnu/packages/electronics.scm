@@ -198,8 +198,8 @@ are also taken from the original.")
       (license license:gpl3+))))
 
 (define-public abc
-  (let ((commit "e29dcd9f3275874c8d31a2f781487efac1dabb7b")
-        (revision "6"))
+  (let ((commit "c8eac7595d094dd45402133497d645fb74e545f0")
+        (revision "7"))
     (package
       (name "abc")
       (version (git-version "0.0" revision commit))
@@ -211,7 +211,7 @@ are also taken from the original.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "18g4i1kdsxvp25p5z3wja4jkxppgrp6ybxal9y2p2d2qvlafiw5z"))))
+                  "14k2j54fwr2a3nmb637fclzdf22a16jw5fsmhr3cf42yd924yn71"))))
       (build-system gnu-build-system)
       (inputs
        (list readline))
@@ -236,7 +236,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.57")
+    (version "0.58")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -254,7 +254,7 @@ formal verification.  This is the Yosyshq fork of ABC.")
 (define-public apycula
   (package
     (name "apycula")
-    (version "0.25")
+    (version "0.27")
     ;; The pypi tar.gz file includes the necessary .pickle files, not available
     ;; in the home-page repository.
     (source
@@ -262,7 +262,7 @@ formal verification.  This is the Yosyshq fork of ABC.")
        (method url-fetch)
        (uri (pypi-uri "apycula" version))
        (sha256
-        (base32 "0pdq6mi8f2ablc1m85ip6sr6ih5ysm2d1k6kcsh6r62vwrxdrfh8"))))
+        (base32 "15ndyjfpikn1hhgwp2l43pzlnjg3jg7zc86zr6vk5qr6jxpzm6j1"))))
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))      ;requires Gowin EDA tools
     (inputs (list python-crc))
@@ -864,146 +864,130 @@ which allows one to install the M8 firmware on any Teensy.")
                    license:zlib))))
 
 (define-public nextpnr
-  (package
-    (name "nextpnr")
-    (version "0.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/YosysHQ/nextpnr/")
-              (commit (string-append "nextpnr-" version))
-              ;; XXX: Fetch some bundled libraries such as QtPropertyBrowser,
-              ;; json11 and python-console, which have custom modifications or
-              ;; no longer have their original upstream.
-              (recursive? #t)))
-       (file-name (git-file-name name version))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
-       (snippet
-        '(begin
-           ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-           (define (delete-all-but directory . preserve)
-             (with-directory-excursion directory
-               (let* ((pred (negate (cut member <>
-                                         (cons* "." ".." preserve))))
-                      (items (scandir "." pred)))
-                 (for-each (cut delete-file-recursively <>) items))))
-           (delete-all-but "3rdparty"
-                           ;; The following sources have all been patched, so
-                           ;; cannot easily be unbundled.
-                           "QtPropertyBrowser"
-                           "json11"
-                           "python-console"
-                           "oourafft")))
-       (patches (search-patches "nextpnr-gtest.patch"
-                                "nextpnr-imgui.patch"))
-       (sha256
-        (base32 "1wrlk0f4y29znd1zgl531lw4s0rfm5w8kx4hlwwdaj7b9vv3v65f"))))
-    (build-system qt-build-system)
-    (arguments
-     (list
-      #:cmake cmake                     ;CMake 3.25 or higher is required.
-      #:configure-flags
-      ;; TODO: enable more architectures?
-      #~(list "-DARCH=generic;ice40;ecp5;himbaechel"
-              "-DBUILD_GUI=ON"
-              "-DUSE_OPENMP=ON"
-              "-DBUILD_TESTS=ON"
-              "-DHIMBAECHEL_UARCH=ng-ultra;gowin"
-              "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
-              "-DHIMBAECHEL_SPLIT=ON"
-              "-DHIMBAECHEL_PRJBEYOND_DB=/tmp/prjbeyond-db"
-              (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
-              (string-append "-DICESTORM_INSTALL_PREFIX="
-                             #$(this-package-input "icestorm"))
-              (string-append "-DTRELLIS_INSTALL_PREFIX="
-                             #$(this-package-input "prjtrellis"))
-              "-DUSE_IPO=OFF")
-      #:modules '((guix build qt-build-system)
-                  (guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26))
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Required by himbaechel architecture, ng-ultra support.
-          (add-after 'unpack 'get-prjbeyond-db
-            (lambda _
-              (copy-recursively
-               #$(origin
-                   (method git-fetch)
-                   (uri (git-reference
-                          (url "https://github.com/yosyshq-GmbH/prjbeyond-db/")
-                          ;; We take latest commit, as indicated in nextpnr’s
-                          ;; README.md file
-                          (commit "06d3b424dd0e52d678087c891c022544238fb9e3")))
-                   (sha256
-                    (base32
-                     "17dd3cgms2fy6xvz7magdmvv92km4cqh2kz9dyjrvz5y8caqav4y")))
-               "/tmp/prjbeyond-db")))
-          (add-after 'unpack 'unbundle-sanitizers-cmake
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                ;; Use the system sanitizers-cmake module.  This is made
-                ;; necessary 'sanitizers-cmake' installing a FindPackage
-                ;; module but no CMake config file.
-                (("\\$\\{CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake")
-                 (string-append
-                  #$(this-package-native-input "sanitizers-cmake")
-                  "/share/sanitizers-cmake/cmake")))))
-          (add-after 'install 'run-icestorm-examples
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (setenv "PATH"
-                        (string-append #$output "/bin:" (getenv "PATH")))
-                ;; Tests need write access.
-                (copy-recursively
-                 (string-append
-                  #$(this-package-native-input "icestorm") "/examples")
-                 "/tmp/icestorm/examples")
-                (with-directory-excursion "/tmp/icestorm/examples"
-                  (for-each
-                   (cut invoke "make" "-C" <>)
-                   (scandir "." (negate (cut member <> '("." "..")))))))))
-          (add-after 'run-icestorm-examples 'run-prjtrellis-examples
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (setenv "PATH"
-                        (string-append #$output "/bin:" (getenv "PATH")))
-                ;; Tests need write access.
-                (copy-recursively
-                 (string-append
-                  #$(this-package-native-input "prjtrellis") "/examples")
-                 "/tmp/prjtrellis/examples")
-                (with-directory-excursion "/tmp/prjtrellis/examples"
-                  (for-each
-                   (cut invoke "make" "-C" <>)
-                   ;; Other tests require unavailable tools.
-                   (list "ecp5_evn" "tinyfpga_rev1"
-                         "tinyfpga_rev2" "versa5g")))))))))
-    (native-inputs
-     `(("icestorm" ,(package-source icestorm))
-       ("googletest" ,googletest)
-       ("prjtrellis" ,(package-source prjtrellis))
-       ("sanitizers-cmake" ,sanitizers-cmake)))
-    (inputs
-     (list apycula
-           boost
-           corrosion
-           eigen
-           icestorm
-           prjtrellis
-           pybind11
-           python
-           qtbase-5
-           qtwayland-5
-           qtimgui
-           yosys))
-    (synopsis "Place-and-Route tool for FPGAs")
-    (description "Nextpnr is a portable FPGA place and route tool.")
-    (home-page "https://github.com/YosysHQ/nextpnr/")
-    (license license:isc)))
+  (let ((commit "ad76625d4d828cb093b55aa9f5aae59b7ba9724f")
+        (revision "0"))
+    (package
+      (name "nextpnr")
+      (version (git-version "0.9" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/YosysHQ/nextpnr/")
+                (commit commit)
+                ;; XXX: Fetch some bundled libraries such as QtPropertyBrowser,
+                ;; json11 and python-console, which have custom modifications or
+                ;; no longer have their original upstream.
+                (recursive? #t)))
+         (file-name (git-file-name name version))
+         (modules '((guix build utils)
+                    (ice-9 ftw)
+                    (srfi srfi-26)))
+         (snippet
+          '(begin
+             ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+             (define (delete-all-but directory . preserve)
+               (with-directory-excursion directory
+                 (let* ((pred (negate (cut member <>
+                                           (cons* "." ".." preserve))))
+                        (items (scandir "." pred)))
+                   (for-each (cut delete-file-recursively <>) items))))
+             (delete-all-but "3rdparty"
+                             ;; The following sources have all been patched, so
+                             ;; cannot easily be unbundled.
+                             "QtPropertyBrowser"
+                             "json11"
+                             "python-console"
+                             "oourafft")))
+         (patches (search-patches "nextpnr-gtest.patch"
+                                  "nextpnr-imgui.patch"))
+         (sha256
+          (base32 "1zjxvkycg5xx605d4ark8gd10w4xni1wd10chmhv983dvyv875br"))))
+      (build-system qt-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DARCH=generic;ice40;ecp5;himbaechel"
+                "-DBUILD_GUI=ON"
+                "-DUSE_OPENMP=ON"
+                "-DBUILD_TESTS=ON"
+                "-DHIMBAECHEL_UARCH=ng-ultra;gowin;gatemate"
+                "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
+                "-DHIMBAECHEL_SPLIT=ON"
+                (string-append "-DHIMBAECHEL_PRJBEYOND_DB="
+                               (search-input-directory
+                                %build-inputs "share/prjbeyond-db"))
+                (string-append "-DHIMBAECHEL_PEPPERCORN_PATH="
+                               (search-input-directory
+                                %build-inputs "share/prjpeppercorn"))
+                (string-append "-DEXPORT_BBA_FILES=" #$output "/bba-files")
+                (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
+                (string-append "-DICESTORM_INSTALL_PREFIX="
+                               #$(this-package-native-input "icestorm"))
+                (string-append "-DTRELLIS_INSTALL_PREFIX="
+                               #$(this-package-native-input "prjtrellis")))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'unbundle-sanitizers-cmake
+              (lambda _
+                (substitute* "CMakeLists.txt"
+                  ;; Use the system sanitizers-cmake module.  This is made
+                  ;; necessary 'sanitizers-cmake' installing a FindPackage
+                  ;; module but no CMake config file.
+                  (("\\$\\{CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake")
+                   (string-append
+                    #$(this-package-native-input "sanitizers-cmake")
+                    "/share/sanitizers-cmake/cmake")))))
+            (add-after 'install 'run-tests
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (setenv "PATH"
+                          (string-append #$output "/bin:" (getenv "PATH")))
+                  ;; ice40
+                  (invoke "./nextpnr-ice40-test")
+                  (chdir "../source")
+                  (setenv "NEXTPNR" "nextpnr-ice40")
+                  (with-directory-excursion "ice40/smoketest/attosoc"
+                    (invoke "./smoketest.sh"))
+                  (with-directory-excursion "tests/ice40/regressions"
+                    (invoke "make" (string-append
+                                    "NPNR=" #$output "/bin/nextpnr-ice40")))
+                  ;; generic
+                  (setenv "NPNR" "nextpnr-generic")
+                  (invoke "nextpnr-generic" "--uarch" "example" "--test")
+                  (with-directory-excursion "tests/generic/flow/bel-pin"
+                    (invoke "./run.sh"))
+                  ;; ecp5
+                  (invoke "nextpnr-ecp5"
+                          "--um5g-25k" "--package" "CABGA381" "--test")
+                  (with-directory-excursion "tests/ecp5/regressions"
+                    (invoke "make"
+                            (string-append
+                             "NPNR=" #$output "/bin/nextpnr-ecp5")))))))))
+      (native-inputs
+       (list icestorm
+             iverilog
+             googletest
+             gzip
+             prjbeyond-db
+             prjpeppercorn
+             prjtrellis
+             sanitizers-cmake
+             yosys))
+      (inputs
+       (list apycula
+             boost
+             corrosion
+             eigen
+             pybind11
+             python
+             qtbase-5
+             qtwayland-5
+             qtimgui))
+      (synopsis "Place-and-Route tool for FPGAs")
+      (description "Nextpnr is a portable FPGA place and route tool.")
+      (home-page "https://github.com/YosysHQ/nextpnr/")
+      (license license:isc))))
 
 (define-public nextpnr-ice40
   (deprecated-package "nextpnr-ice40" nextpnr))
@@ -1192,6 +1176,79 @@ such as:
     (description "@code{Pcb-rnd} is a @acronym{Printed Circuit Board} layout
 editor, part of the RiNgDove EDA suite.")
     (license license:gpl2+)))
+
+(define prjbeyond-db
+  ;; Projects doesn’t include any tag or release.
+  (let ((commit "f49f66be674d9857c657930353b867ba94bcbdd7")
+        (revision "0"))
+    (package
+      (name "prjbeyond-db")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/yosyshq-GmbH/prjbeyond-db/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1q5dfg0s21q8aw63fz28h0av958g0vcgi179yacgvs9f0cm6dx87"))))
+      (build-system copy-build-system)
+      (arguments
+       (list
+        #:install-plan
+        #~'(("NG-ULTRA" "share/prjbeyond-db/")
+            ("devices.json" "share/prjbeyond-db/"))))
+      (home-page "https://github.com/yosyshq-GmbH/prjbeyond-db/")
+      (synopsis "Chip database for FPGA NG-Ultra architecture")
+      (description "This package includes data needed to create @code{nextpnr}
+chip database for NG-Ultra architecture from NanoXplore.")
+      (license license:expat))))
+
+(define-public prjpeppercorn
+  (package
+    (name "prjpeppercorn")
+    (version "1.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/YosysHQ/prjpeppercorn/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lfvd3r1pnyc1mxsiiqqvmp8r5pw1bshgjrsrsnd20grvlv6wwcn"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no test suite
+      #:configure-flags
+      #~(list "-DBUILD_SHARED=ON"
+              "-DSTATIC_BUILD=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "libgm")))
+          (add-before 'chdir 'install-db-files
+            (lambda _
+              (let ((datadir
+                     (string-append #$output "/share/prjpeppercorn")))
+                (mkdir-p datadir)
+                (copy-recursively "delay" (string-append datadir "/delay"))
+                (copy-recursively "gatemate"
+                                  (string-append datadir "/gatemate"))
+                (copy-recursively "tools"
+                                  (string-append datadir "/tools"))))))))
+    (inputs
+     (list boost))
+    (synopsis "GateMate FPGAs bitstream tools")
+    (description
+     "@code{Prjpeppercorn} includes programming tools for GateMate
+architecture from Cologne Chip.  It also provides data needed to produce a
+@code{nextpnr} chip database Cologne Chip's GateMate architecture.")
+    (home-page "https://github.com/YosysHQ/prjpeppercorn/")
+    (license license:isc)))
 
 (define-public prjtrellis
   ;; The last release is 2 years old; use the latest commit for now.
@@ -1476,8 +1533,8 @@ and Verilog RTL using Python.")
 (define-public python-cocotb-bus
   ;; XXX: The latest tagged release (2.6.1) was placed on <2023-07-01>, switch
   ;; to tag when the fresh release is available.
-  (let ((commit "c3541f15c43c914d8cf3e57ecf92c5d256c97e6c")
-        (revision "1"))
+  (let ((commit "f5578a4d451ef6bc1efdd4919de5facdb381b781")
+        (revision "2"))
     (package
       (name "python-cocotb-bus")
       ;; Version from src/cocotb_bus/_version.py
@@ -1490,12 +1547,11 @@ and Verilog RTL using Python.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1xx0w9g8psn4f8qlv7jzdwwr2ivvlaxi3flgp1v0qybzzhz6l1k3"))))
+          (base32 "13zdqalzhzrfv1lcn6l71zhi4hns89y093hvz9swkcr2kzwfn08r"))))
       (build-system pyproject-build-system)
       ;; TODO: Build documentation from <docs>.
       (arguments
        (list
-        #:tests? #f                     ;not compatible with cocotb 2.0
         #:phases
         #~(modify-phases %standard-phases
             (replace 'check
@@ -2139,7 +2195,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.57")
+    (version "0.58")
     (source
      (origin
        (method git-fetch)
@@ -2148,7 +2204,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w95svb9vgvfqbbvqaq6jkia5jldbai9l7r8nrx93wcfrm82r36x"))))
+        (base32 "0fja71y1wkqdwc3cwwk9ifaf33hhnxr8khlj9fhadbcc66rg1s56"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2361,7 +2417,7 @@ support for ESD sources.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.57")
+    (version "0.58")
     (source
      (origin
        (method git-fetch)
@@ -2369,7 +2425,7 @@ support for ESD sources.")
               (url "https://github.com/YosysHQ/yosys")
               (commit (string-append "v" version))))
        (sha256
-        (base32 "0bix5zlv9zp9fxqpn9l9bdw65xrgih5w0csq1xkkhm2c7p3vqjbb"))
+        (base32 "13095d587dvnj6n1fhw5whda7qhafmmng0qz6qa52cdxriz63kka"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

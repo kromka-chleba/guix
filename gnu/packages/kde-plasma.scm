@@ -226,14 +226,14 @@ Breeze is the default theme for the KDE Plasma desktop.")
 (define-public calindori
   (package
     (name "calindori")
-    (version "24.12.1")
+    (version "25.08.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/calindori-" version ".tar.xz"))
               (sha256
                (base32
-                "1sz9bsbxwvhccbbk9h4ydravh10ba0g98m9wy5kcjaq16agwbakb"))))
+                "1pmpvaihkxpjkw198w3z3ly3zd4rim5266pgmr2s02a1xvq1xhxf"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules python-minimal))
     (inputs (list kconfig
@@ -997,47 +997,6 @@ computer's hardware.")
      "Koi is a program designed to provide the KDE Plasma Desktop functionality
 to automatically switch between light and dark themes.")
     (license license:lgpl3)))
-
-(define-public kongress
-  (package
-    (name "kongress")
-    (version "24.12.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/release-service/" version
-                                  "/src/kongress-" version ".tar.xz"))
-              (sha256
-               (base32
-                "06xhlr39wglnis9nbxgvkp5sz74g5hms0cahlvm8pmphvd5aygnv"))))
-    (build-system qt-build-system)
-    (native-inputs (list extra-cmake-modules python-minimal))
-    ;; NOTE: Reporting bugs is linked to web browser, better not link it and let
-    ;; it reslove through xdg-open in the run time
-    (inputs (list kirigami
-                  kirigami-addons
-                  kcrash
-                  kdbusaddons
-                  ki18n
-                  kcalendarcore
-                  kconfigwidgets
-                  kwindowsystem
-                  kcoreaddons
-                  kcontacts
-                  kitemmodels
-                  knotifications
-                  kosmindoormap
-                  kxmlgui
-                  kiconthemes
-                  qtdeclarative
-                  qtsvg))
-    (arguments
-     (list #:qtbase qtbase
-           #:tests? #f))
-    (home-page "https://apps.kde.org/kongress/")
-    (synopsis "Companion application for conferences")
-    (description "This application provides list of upcoming conferences with
-the schedule and venue information.")
-    (license license:gpl3+)))
 
 (define-public kpipewire
   (package

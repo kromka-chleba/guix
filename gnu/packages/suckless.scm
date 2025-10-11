@@ -139,39 +139,37 @@ other applications, i.e., st, uzbl, urxvt and xterm.")
       license:x11))))
 
 (define-public slstatus
-  ;; No release tarballs yet.
-  (let ((commit "84a2f117a32f0796045941260cdc4b69852b41e0")
-        (revision "0"))
-    (package
-      (name "slstatus")
-      (version (git-version "0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri
-          (git-reference
-           (url "git://git.suckless.org/slstatus.git")
-           (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "063a4fnvsjbc61alnbfdpxy0nwhh9ql9j6s9hkdv12713kv932ds"))))
-      (build-system gnu-build-system)
-      (arguments
-       `(#:tests? #f                    ;no test suite
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'patch
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (substitute* "config.mk"
-                 (("/usr/local") (assoc-ref outputs "out"))
-                 (("/usr/X11R6") (assoc-ref inputs "x11"))
-                 (("CC = cc") (string-append "CC = " ,(cc-for-target))))))
-           (delete 'configure))))       ;no configure script
-      (inputs
-       `(("x11" ,libx11)))
-      (home-page "https://tools.suckless.org/slstatus/")
-      (synopsis "Status monitor for window managers")
-      (description "SlStatus is a suckless status monitor for window managers
+  (package
+    (name "slstatus")
+    (version "1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "git://git.suckless.org/slstatus")
+          (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bxmhvagmlqjyi9ws8i71r0k7fd6fg8286zv2b5zkcjhkayyh41i"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f                    ;no test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "config.mk"
+                (("/usr/local") #$output)
+                (("/usr/X11R6") #$(this-package-input "libx11"))
+                (("CC = cc")
+                 (string-append "CC = " #$(cc-for-target))))))
+          (delete 'configure))))       ;no configure script
+    (inputs (list libx11))
+    (home-page "https://tools.suckless.org/slstatus/")
+    (synopsis "Status monitor for window managers")
+    (description "SlStatus is a suckless status monitor for window managers
 that use WM_NAME or stdin to fill the status bar.
 It provides the following features:
 @itemize
@@ -198,7 +196,7 @@ It provides the following features:
 @item Volume percentage
 @item WiFi signal percentage and ESSID
 @end itemize")
-      (license license:isc))))
+    (license license:isc)))
 
 (define-public blind
   (package
@@ -343,14 +341,17 @@ numbers of user-defined menu items efficiently.")
 (define-public slock
   (package
     (name "slock")
-    (version "1.5")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://dl.suckless.org/tools/slock-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0k8fvf9g27yyaqpyhk6apbkq6r4vjwxhff1qb9ignxx2yvxy7qdf"))))
+    (version "1.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.suckless.org/slock/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0pzsk13g6irfs7cgsg4h4vv2529nsyrpn04aq5fpvswxh48cp30h"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                      ; no tests
@@ -411,7 +412,7 @@ drawing.")
   (package
     (inherit st)
     (name "xst")
-    (version "0.8.4.1")
+    (version "0.10.0")
     (source
      (origin
        (method git-fetch)
@@ -420,7 +421,7 @@ drawing.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1q64x7czpbcg0v509qchn5v96zdnx7jmvy0zxhjmkk3d10x5rqlw"))))
+        (base32 "186kqvrn0rksmvz0yhllsrxqsvsxwwcdr417jxs1fk5d9psx35fs"))))
     (home-page "https://github.com/gnotclub/xst")
     (synopsis "Fork of st that uses Xresources")
     (description
@@ -440,12 +441,12 @@ drawing.")
                    license:expat))))
 
 (define-public lukesmithxyz-st
-  (let ((commit "e053bd6036331cc7d14f155614aebc20f5371d3a")
-        (revision "0"))
+  (let ((commit "62ebf677d3ad79e0596ff610127df5db034cd234")
+        (revision "1"))
     (package
       (inherit st)
       (name "lukesmithxyz-st")
-      (version "0.8.4")
+      (version (git-version "0.8.4" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -454,7 +455,7 @@ drawing.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "12avzzapkkj4mvd00zh8b6gynk6jysh84jcwlkliyyd82lvyw22v"))))
+          (base32 "1cqnl8zlxccqg0901gx21h06j9wk3ja6lr8wp4k85ni4msf4m09g"))))
       (arguments
        (substitute-keyword-arguments (package-arguments st)
          ((#:phases phases)
@@ -835,30 +836,33 @@ environment variable.")
 (define-public fortify-headers
   (package
     (name "fortify-headers")
-    (version "1.1")
+    (version "2.3.3")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://dl.2f30.org/releases/"
-                           "fortify-headers-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.2f30.org/fortify-headers/")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1dhz41jq1azcf7rbvga8w6pnx19l1j9r6jwj8qrlrfnjl9hdi9bb"))))
+        (base32 "1w2jrscncq1jrg4wnsrr3a00p6h9mvkk3g1qkh1jdw1m747yjsci"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))         ; no configure script
+     (list
+      #:tests? #f                      ; no tests
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))         ; no configure script
     (home-page "https://git.2f30.org/fortify-headers/")
     (synopsis "Standalone fortify-source implementation")
     (description
      "This is a standalone implementation of fortify source.  It provides
 compile time buffer checks.  It is libc-agnostic and simply overlays the
-system headers by using the @code{#include_next} extension found in GCC.  It was
-initially intended to be used on musl-based Linux distributions.
+system headers by using the @code{#include_next} extension found in GCC.  It
+was initially intended to be used on musl-based Linux distributions.
 
 @itemize
 @item It is portable, works on *BSD, Linux, Solaris and possibly others.
@@ -940,10 +944,10 @@ utilities to handle strings according to the Unicode standard.")
 ;; done by the same developer.
 (define-public libutf
   (let ((revision "1")
-        (commit "ff4c60635e1f455b0a0b4200f8183fbd5a88225b"))
+        (commit "ee5074db68f498a5c802dc9f1645f396c219938a"))
     (package
       (name "libutf")
-      (version (git-version "0.0.0" revision commit))
+      (version (git-version "0.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -953,16 +957,17 @@ utilities to handle strings according to the Unicode standard.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1ih5vjavilzggyr1j1z6w1z12c2fs5fg77cfnv7ami5ivsy3kg3d"))))
+           "1112azq05xhssqny4a2kqwiw8zdqhdgf18xwfs6z5p4cq2csh256"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:tests? #f                    ; no tests
-         #:make-flags
-         (list (string-append "CC=" ,(cc-for-target))
-               (string-append "PREFIX=" %output))
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure))))       ; no configure script
+       (list
+        #:tests? #f                    ; no tests
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "PREFIX=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure))))       ; no configure script
       (inputs
        (list gawk))
       (home-page "https://github.com/cls/libutf")
@@ -984,52 +989,42 @@ as -1, to be used instead of U+FFFD.
 @end itemize\n")
       (license license:expat))))
 
-;; No release tarballs so far.
 (define-public lchat
-  (let ((revision "4")
-        (commit "e3b64e67b9b9d832462382246474ce1e7d92217c"))
-    (package
-      (name "lchat")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/younix/lchat")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1qcjqbgmsskc04j2r6xl3amkwj05n520sq1wv2mqyqncz42qrxm0"))))
-      (build-system gnu-build-system)
-      (arguments
-       `(#:test-target "test"
-         #:make-flags
-         (list (string-append "CC=" ,(cc-for-target))
-               (string-append "PREFIX=" %output))
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure)          ; no configure script
-           (add-before 'build 'libbsd
-             (lambda _
-               (substitute* "Makefile"
-                 (("-lutf") "-lutf -lbsd"))))
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out  (assoc-ref outputs "out"))
-                      (bin  (string-append out "/bin"))
-                      (man1 (string-append out "/share/man/man1")))
-                 (install-file "lchat" bin)
-                 (install-file "lchat.1" man1)
-                 #t))))))
-      (inputs
-       (list grep ncurses libutf libbsd))
-      (home-page "https://github.com/younix/lchat")
-      (synopsis "Line chat is a frontend for the irc client ii from suckless")
-      (description
-       "Lchat (line chat) is the little and small brother of cii.
-It is a front end for ii-like chat programs.  It uses @code{tail -f} to get the
-chat output in the background.")
-      (license license:isc))))
+  (package
+    (name "lchat")
+    (version "1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.suckless.org/lchat/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0829dqa8vgq0rdcjb04hzaxnbc3mqgn5mzmcibrggzrgw110gv5k"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:test-target "test"
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                           (string-append "PREFIX=" #$output))
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure)          ; no configure script
+                   (replace 'install
+                     (lambda _
+                       (let ((bin (string-append #$output "/bin"))
+                             (man (string-append #$output "/share/man/man1")))
+                         (install-file "lchat" bin)
+                         (install-file "lchat.1" man)))))))
+    (inputs
+     (list grep libbsd libgrapheme libutf ncurses))
+    (home-page "https://tools.suckless.org/lchat/")
+    (synopsis "Line chat is a frontend for the irc client ii from suckless")
+    (description
+     "Lchat (line chat) is the little and small brother of cii.
+It is a front end for ii-like chat programs.  It uses @code{tail -f} to get
+the chat output in the background.")
+    (license license:isc)))
 
 (define-public snooze
   (package
@@ -1064,37 +1059,34 @@ running a command.")
     (license license:cc0)))
 
 (define-public sbase
-  ;; There are no tagged releases.
-  (let ((commit "2c2a7f54ab55a022a617e510b6e00c3e2736fabd")
-        (revision "0"))
-    (package
-      (name "sbase")
-      (version (git-version "0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri
-          (git-reference
-           (url "https://git.suckless.org/sbase/")
-           (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "119v1lpgsx8bx9h57wg454ddhzz2awqavl3wrn35a704vifg28g0"))))
-      (build-system gnu-build-system)
-      (arguments
-       (list
-        #:tests? #f                     ;no test suite
-        #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
-                             (string-append "PREFIX=" #$output))
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'configure))))
-      (home-page "https://core.suckless.org/sbase/")
-      (synopsis "Collection of UNIX tools")
-      (description "@command{sbase} is a collection of UNIX tools similar to those of GNU
+  (package
+    (name "sbase")
+    (version "0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://git.suckless.org/sbase/")
+          (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sbn258s06rl9prflkpif3hfgllxszf0nq7zdkxr5dj3248zgvmz"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f                     ;no test suite
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                           (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))
+    (home-page "https://core.suckless.org/sbase/")
+    (synopsis "Collection of UNIX tools")
+    (description "@command{sbase} is a collection of UNIX tools similar to those of GNU
 Coreutils, containing utilities commands such as @command{grep}, @command{cp},
 @command{rm}, etc.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public scron
   (package
@@ -1126,37 +1118,41 @@ support.")
     (license license:expat)))
 
 (define-public sfm
-  (package
-    (name "sfm")
-    (version "0.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-         (url "git://git.afify.dev/sfm.git")
-         (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0g6k884mggryld0k054sjcj6kpkbca9cvr50w98klszym73yw0sp"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:tests? #f                      ;no check target
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))         ;no configure script
-    (home-page "https://github.com/afify/sfm")
-    (synopsis "Simple file manager")
-    (description "sfm is a simple file manager.")
-    (license license:isc)))
+  ;; Latest release is from 2021.
+  (let ((commit "f1f1197142421d3f727dc109a5910129d0bcb0b0")
+        (revision "0"))
+    (package
+      (name "sfm")
+      (version (git-version "0.4" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+            (url "https://github.com/afify/sfm")
+            (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0c4fll79dd4flp3rdr20vh2w2vsy5h6qrkic806r5mn9i4xl85zn"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f                      ;no check target
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "PREFIX=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure))))         ;no configure script
+      (home-page "https://github.com/afify/sfm")
+      (synopsis "Simple file manager")
+      (description "sfm is a simple file manager.")
+      (license license:isc))))
 
 (define-public sfeed
   (package
     (name "sfeed")
-    (version "2.1")
+    (version "2.2")
     (source
      (origin
        (method git-fetch)
@@ -1166,7 +1162,7 @@ support.")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jkcy7qkcn8s6wjy4vk5pyfhnd1yw9v23vvymyaj7hz44ia6qmi9"))))
+        (base32 "12m471mlrjvr696zbs6w85vl5by58gg2a5xxd0abnxjkhijric2h"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1262,30 +1258,34 @@ a nice format.")
 (define-public svkbd
   (package
     (name "svkbd")
-    (version "0.4.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://dl.suckless.org/tools/svkbd-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0nhgmr38pk1a8zrcrxd1ygh0m843a3bdchkv8phl508x7vy63hpv"))))
+    (version "0.4.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.suckless.org/svkbd/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "186q9k6b5fhwnq65ch22fxqs64zyxz0vb7rwdyanx3qpcmb48byf"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:tests? #f
-           #:make-flags
-           #~(list (string-append "CC=" #$(cc-for-target))
-                   (string-append "PREFIX=" #$output))
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch
-                 (lambda* (#:key inputs outputs #:allow-other-keys)
-                   (substitute* "config.mk"
-                     (("/usr/local") #$output)
-                     (("/usr/X11R6") #$libx11)
-                     (("/usr/include/freetype2") (string-append #$freetype
-                                                  "/include/freetype2")))))
-               (delete 'configure)))) ;no configure script
+     (list
+      #:tests? #f
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "config.mk"
+                (("/usr/local") #$output)
+                (("/usr/X11R6") #$libx11)
+                (("/usr/include/freetype2")
+                 (string-append #$freetype "/include/freetype2")))))
+          (delete 'configure)))) ;no configure script
     (native-inputs (list pkg-config))
     (inputs (list freetype libx11 libxft libxtst libxinerama))
     (propagated-inputs (list (libc-utf8-locales-for-target)))

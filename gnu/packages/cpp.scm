@@ -33,7 +33,7 @@
 ;;; Copyright © 2022-2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2022, 2023, 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
-;;; Copyright © 2023 Sughosha <Sughosha@proton.me>
+;;; Copyright © 2023, 2025 Sughosha <Sughosha@disroot.org>
 ;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2023 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
@@ -104,6 +104,7 @@
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
   #:use-module (gnu packages libevent)
@@ -913,7 +914,7 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
 (define-public hyprgraphics
   (package
     (name "hyprgraphics")
-    (version "0.1.5")
+    (version "0.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -924,14 +925,18 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
               (snippet #~(substitute* "CMakeLists.txt" (("libjxl_cms") "")))
               (sha256
                (base32
-                "0q7bpywn8ljsj3dymvv19cm7n0r51vg5hj1jsapdl5bwpwf7bf41"))))
+                "1xr2pbawwnnwjwzkgsy9s4wq1j85x4qhj3m4s2pwb9wp6g69da2g"))))
     (build-system cmake-build-system)
     (native-inputs (list gcc-15 pkg-config))
     (inputs (list cairo
                   hyprutils
                   libjpeg-turbo
                   libjxl
+                  ;; Note: The current librsvg-2.40 for non-Rust architectures
+                  ;; is too old.
+                  (librsvg-for-system)
                   libwebp
+                  pango
                   pixman
                   spng))
     (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprgraphics/")
@@ -978,7 +983,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.8.4")
+    (version "0.10.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -987,7 +992,7 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0rzx0anwb68qxrjinxrw1pvlzmjk2bsp79wgnkvg95sdmabxw451"))))
+                "0l4gdingspjv3fh7zkmdin37bjjxgxnxycn8agv4cr3n0kn9smxg"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -3294,6 +3299,70 @@ but implemented for C++11, C++14, C++17 or C++20.")
     (home-page "https://github.com/gulrak/filesystem")
     (license license:expat)))
 
+(define-public bitsery
+  (package
+    (name "bitsery")
+    (version "5.2.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/fraillt/bitsery")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0s628p6qayajan4v8arsmbvzsml8zhc56k01zhmnlakbl7v0vwip"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "-DBITSERY_BUILD_TESTS=ON"
+                   "-DCMAKE_CXX_FLAGS=-Wno-error=maybe-uninitialized")))
+    (native-inputs (list googletest))
+    (synopsis "Header only C++ binary serialization library")
+    (description "This package provides header only C++ binary serialization
+library.  It is designed around the networking requirements for real-time data
+delivery, especially for games.")
+    (home-page "https://github.com/fraillt/bitsery")
+    (license license:expat)))
+
+(define-public function2
+  (package
+    (name "function2")
+    (version "4.2.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Naios/function2")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0sn760zk79hfbf21v9qvf67mrrlnmw6a2rhrp5l440b6f4f3xbzr"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; Unbundle googletest.
+               '(begin
+                  (delete-file-recursively "test")
+                  (substitute* "CMakeLists.txt"
+                    (("add_subdirectory\\(test\\)") ""))))))
+    (build-system cmake-build-system)
+    ;; The test size_match_layout fails on i586/i686. For more info:
+    ;; https://github.com/Naios/function2/issues/57
+    (arguments
+     (list #:tests? #f))
+    (synopsis "Improved implementations of std::function")
+    (description "This package provides the following implementations of
+std::function:
+@itemize
+@item copyable @code{fu2::function}
+@item move-only @code{fu2::unique_function} (capable of holding move only
+ types)
+@item non-owning @code{fu2::function_view} (capable of referencing callables in
+ a non owning way)
+@end itemize")
+    (home-page "https://naios.github.io/function2/")
+    (license license:boost1.0)))
+
 (define-public cpp-mustache
   (package
     (name "cpp-mustache")
@@ -3670,78 +3739,84 @@ uint80_t, or uint1536_t.  The provided types can be used in much the same
 way as basic integer types.")
     (license license:boost1.0))))
 
-(define-public wdl
-  ;; No tag is available.
-  (let ((commit "da86a62d11e46e4ecd8b16f9775cb5188340a0e2")
+(define-public swell
+  (let ((commit "3024ec8e000f769454b5ee4ac927dc5cecfc6a6b")
         (revision "0"))
     (package
-      (name "wdl")
-      (version (git-version "0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/justinfrankel/WDL")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                ;; This patch fixes error of undefined functions, due to not
-                ;; linking libraries, and invalid object.
-                (patches
-                 (search-patches "wdl-link-libs-and-fix-jnetlib.patch"))
-                (sha256
-                 (base32
-                  "0hdb604szkbrlyffiw94rz8wx4nvmk3zdkycfirqgjs7mh0l6vbq"))
-                (modules '((guix build utils)))
-                ;; Unbundle third party libraries which are not needed.
-                (snippet
-                 '(with-directory-excursion "WDL"
-                    (for-each delete-file-recursively
-                              (list "cmath"
-                                    "libpng"
-                                    "lice/glew"
-                                    "giflib"
-                                    "jpeglib"
-                                    "zlib"))))))
+      (name "swell")
+      (version (git-version "0" revision commit)) ;no tags
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/justinfrankel/WDL")
+               (commit commit)))
+         (file-name (git-file-name "wdl" version))
+         (sha256
+          (base32
+           "1ssp5rwn224g01jj9k273q80w2q1qfj1vzgqvk3lfjrjga0jaj4w"))
+         (modules '((guix build utils)))
+         (snippet
+          '(with-directory-excursion "WDL"
+             ;; Delete 3rd party libraries and sample projects.
+             (for-each delete-file-recursively
+                       (list "cmath"
+                             "giflib"
+                             "jpeglib"
+                             "libpng"
+                             "zlib"))
+             ;; Fix including headers from the system.
+             (substitute* (find-files "." "\\.(h|cpp)")
+               (("\\\".*giflib\\/gif_lib\\.h\\\"") "<gif_lib.h>")
+               (("\\\".*jpeglib\\/jpeglib\\.h\\\"") "<jpeglib.h>")
+               (("\\\".*jnetlib\\/asyncdns\\.h\\\"") "<jnetlib/asyncdns.h>")
+               (("\\\".*jnetlib\\/connection\\.h\\\"")
+                "<jnetlib/connection.h>")
+               (("\\\".*jnetlib\\/httpget\\.h\\\"") "<jnetlib/httpget.h>")
+               (("\\\".*jnetlib\\/jnetlib\\.h\\\"") "<jnetlib/jnetlib.h>")
+               (("\\\".*jnetlib\\/netinc\\.h\\\"") "<jnetlib/netinc.h>")
+               (("\\\".*libpng\\/png\\.h\\\"") "<png.h>")
+               (("\\\"\\.\\.\\/plush2\\/plush\\.h\\\"") "<plush2/plush.h>")
+               (("\\\".*zlib\\.h\\\"") "<zlib.h>"))
+             ;; Fix building jnetlib.
+             (substitute* "jnetlib/Makefile"
+               ;; Link the missing library.
+               (("-pthread") "-pthread -lstdc++")
+               ;; Remove the unavailable object.
+               ((" sercon\\.o") "")
+               ;; Add webserver.
+               (("util\\.o") "util.o webserver.o "))
+             ;; Fix building eel2.
+             (substitute* "eel2/Makefile"
+               ;; Do not build swell objects.
+               ((" \\$\\(SWELL_OBJS\\)") "")
+               ;; Do not depend again on the dependencies of swell.
+               (("(-lX11 -lXi|\\$\\(shell pkg-config.*\\))") "")
+               ;; Link swell.
+               (("-lGL") "-lGL -lSwell"))))))
       (build-system gnu-build-system)
       (arguments
-       (list
-        #:test-target "test"
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'chdir
-              (lambda _ (chdir "WDL/swell")))
-            (delete 'configure)
-            (replace 'build
-              (lambda _
-                (with-directory-excursion ".."
-                  (invoke "make" "-Ceel2")     ;build eel2
-                  (invoke "make" "-Cjnetlib")) ;build jnetlib
-                (invoke "make" "SWELL_SUPPORT_GTK=true")
-                (invoke "make" "libSwell.colortheme")))
-            (replace 'install
-              (lambda _
-                (chdir "..")
-
-                ;; Do not install these directories
-                (delete-file-recursively "lice/test")
-                (delete-file-recursively "swell/sample_project")
-
-                ;; Install headers.
-                (let ((include (string-append #$output "/include/WDL")))
-                  (for-each
-                   (lambda (file)
-                     (install-file file
-                                   (string-append include "/"
-                                                  (dirname file))))
-                   (find-files "." "\\.h$")))
-                (install-file "swell/libSwell.so"
-                              (string-append #$output "/lib"))
-                (install-file "swell/libSwell.colortheme"
-                              (string-append #$output "/share/WDL"))
-                (install-file "eel2/loose_eel"
-                              (string-append #$output "/libexec"))
-                (install-file "jnetlib/jnl.a"
-                              (string-append #$output "/lib")))))))
-      (native-inputs (list pkg-config nasm))
+       (list #:tests? #f ;test object does not exist
+             #:test-target "test"
+             #:make-flags #~'("SWELL_SUPPORT_GTK=1")
+             #:phases
+             #~(modify-phases %standard-phases
+                 (delete 'configure) ;no configure script
+                 (add-after 'unpack 'change-directory
+                   (lambda _ (chdir "WDL/swell")))
+                 ;; No install rule.
+                 (replace 'install
+                   (lambda _
+                     (install-file "libSwell.so"
+                                   (string-append #$output "/lib"))
+                     (for-each
+                      (lambda (file)
+                        (when (not (string-contains file "/sample_project"))
+                              (install-file file
+                                            (string-append #$output
+                                                           "/include/SWELL"))))
+                      (find-files "." "\\.h$")))))))
+      (native-inputs (list perl pkg-config))
       (inputs
        (list cairo
              fontconfig
@@ -3754,26 +3829,107 @@ way as basic integer types.")
              mesa
              zlib))
       (home-page "https://www.cockos.com/wdl/")
-      (synopsis "Modestly reusable C++ libraries")
+      (synopsis "Windows emulation layer")
       (description
-       "WDL is a modestly reusable C++ library that offers the following:
+       "SWELL is a Windows emulation Layer.  It provides a set of common APIs,
+common controls and win32-style extensions.")
+    (license license:zlib))))
+
+(define-public swell-colortheme
+  (package
+    (inherit swell)
+    (name "swell-colortheme")
+    (arguments
+     (substitute-keyword-arguments (package-arguments swell)
+       ((#:make-flags flags)
+        #~(append #$flags '("libSwell.colortheme")))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'install
+              (lambda _
+                (install-file "libSwell.colortheme"
+                                   (string-append #$output
+                                                  "/share/SWELL"))))))))
+    (native-inputs
+     (list pkg-config
+           gtk+)) ;only for compilation
+    (inputs '())
+    (synopsis "SWELL colortheme sample")
+    (description
+     "This package provides the default @code{libSwell.colortheme} file for
+programs that use @code{swell}.")))
+
+(define-public jnetlib
+  (package
+    (inherit swell)
+    (name "jnetlib")
+    (arguments
+     (substitute-keyword-arguments (package-arguments swell)
+       ((#:tests? _ #t) #t)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+               (replace 'change-directory
+                 (lambda _ (chdir "WDL/jnetlib")))
+               (replace 'install
+                 (lambda _
+                   (install-file "jnl.a" (string-append #$output "/lib"))
+                   (for-each (lambda (file)
+                               (install-file file (string-append #$output
+                                                                 "/include"
+                                                                 "/jnetlib")))
+                             (find-files "." "\\.h"))))))))
+    (native-inputs '())
+    (inputs '())
+    (synopsis "C++ asynchronous network abstraction layer")
+    (description
+     "JNetLib is a portable C++ asynchronous network abstraction layer.  It
+features:
 @itemize
-@item Inline classes for cleanly managing memory allocations, lists,
-queues, resource pools, strings, etc.
-@item File reading/writing wrappers
-@item Directory scanning API
-@item SHA-1 implementation
-@item Mergesort implementation
-@item Blowfish implementation
-@item Fast FFT implementation (based on DJBFFT)
-@item Audio tools
-@item LICE - Lightweight Image Compositing Engine
-@item WDL Virtual Window system
-@item Plush2 - Portable, lightweight software 3d rendering engine
-@item SWELL - Simple Windows Emulation Layer
-@item And more.
-@end itemize")
-      (license license:zlib))))
+@item TCP connections support,
+@item listening sockets support,
+@item asynchronous DNS support,
+@item HTTP serving and getting support,
+@item Completely asynchronous love for single threaded apps.
+@end itemize")))
+
+(define-public eel2
+  (package
+    (inherit swell)
+    (name "eel2")
+    (arguments
+     (substitute-keyword-arguments (package-arguments swell)
+       ((#:tests? _ #t) #f) ;no tests
+       ;; FIXME: Remove this flag when this issue will be fixed:
+       ;; https://github.com/justinfrankel/WDL/issues/32.
+       ((#:make-flags _ '()) #~'("NO_GFX=1"))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'change-directory
+              (lambda _ (chdir "WDL/eel2")))
+            (replace 'install
+              (lambda _
+                ;; Install executable files.
+                (for-each (lambda (file)
+                            (install-file file
+                                          (string-append #$output "/bin")))
+                          '("eel_pp" "loose_eel"))
+                ;; Install headers.
+                (for-each (lambda (file)
+                            (install-file file
+                                          (string-append #$output
+                                                         "/include/EEL2")))
+                            (find-files "." "\\.h$"))
+                ;; Install scripts.
+                (copy-recursively "scripts"
+                                  (string-append #$output
+                                                 "/share/EEL2/scripts"))))))))
+    (native-inputs (list nasm))
+    (inputs (list jnetlib))
+    (home-page "https://www.cockos.com/EEL2/")
+    (synopsis "Expression evaluation library")
+    (description
+     "EEL2 is an expression evaluation library and realtime compiler based on
+@uref{http://1014.org/code/nullsoft/avs/, AVS's EEL}.")))
 
 (define-public juce
   (package

@@ -196,9 +196,31 @@ them as it goes.")
               (for-each delete-file
                         (find-files
                          "." "Feat(Parser|Lexer).*\\.(h|cpp|interp|tokens)$")))))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list
+         "--dist" "loadfile" "-n"
+         (number->string (parallel-job-count))
+         "-k" (string-join
+               ;; This test fails because of a different date
+               ;; in the copyright header of an expected file
+               ;; since an update to ffmpeg.
+               '("not test_alt_missing_glyph"
+                 ;; AssertionError: assert False
+                 "test_build_font_and_check_messages"
+                 "test_duplicate_warning_messages_bug751"
+                 "test_cli_numerics"
+                 ;; The test_decimals_ufo and
+                 ;; test_type1_supported_hint started failing in
+                 ;; 4.0.2, due to small variations compared to the
+                 ;; expected output, likely caused by our newer
+                 ;; python-fonttools (see:
+                 ;; <https://github.com/adobe-type-tools/afdko/issues/1805>).
+                 "test_decimals_ufo"
+                 "test_type1_supported_hint")
+               " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-c++17
@@ -253,22 +275,6 @@ them as it goes.")
           ;; The test suite expects the commands to be Python rather than
           ;; shell scripts, so move the wrap phase after the tests.
           (delete 'wrap)
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (setenv "HOME" "/tmp")
-                (invoke "pytest" "-vv" "--dist" "loadfile" "-n"
-                        (number->string (parallel-job-count))
-                        "-k" (string-join
-                              ;; This test fails because of a different date
-                              ;; in the copyright header of an expected file
-                              ;; since an update to ffmpeg.
-                              (list "not test_alt_missing_glyph"
-                                    ;; AssertionError: assert False
-                                    "test_build_font_and_check_messages"
-                                    "test_duplicate_warning_messages_bug751"
-                                    "test_cli_numerics")
-                              " and not ")))))
           (add-after 'check 'wrap
             (assoc-ref %standard-phases 'wrap))
           (add-before 'wrap 'wrap-PATH
@@ -1071,13 +1077,13 @@ paths (intersection, union, difference, xor).")
 (define-public python-ufoprocessor
   (package
     (name "python-ufoprocessor")
-    (version "1.9.0")
+    (version "1.14.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "ufoProcessor" version ".zip"))
+       (uri (pypi-uri "ufoprocessor" version ".tar.gz"))
        (sha256
-        (base32 "0ns11aamgavgsfj8qf5kq7dvzmgl0mhr1cbych2f075ipfdvva5s"))))
+        (base32 "08bkci1fwpx2jfgh3rw48qangs84ngn8lqpqk5fhrgs43hjwpki1"))))
     (build-system python-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -1093,7 +1099,7 @@ paths (intersection, union, difference, xor).")
            python-fontparts
            python-fonttools-minimal
            python-mutatormath))
-    (native-inputs (list python-setuptools-scm unzip))
+    (native-inputs (list python-setuptools-scm))
     (home-page "https://github.com/LettError/ufoProcessor")
     (synopsis "Process and generate @acronym{UFO, Unified Font Object} files")
     (description "This Python package processes and generates instances for
@@ -1114,7 +1120,7 @@ tools can generate partial instances.
 (define-public python-ufonormalizer
   (package
     (name "python-ufonormalizer")
-    (version "0.6.2")
+    (version "0.6.3")
     (source
      (origin
        (method git-fetch)
@@ -1123,7 +1129,7 @@ tools can generate partial instances.
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1dc2ibk4bgdwhrv9pwmvvgsny4gyf80ncrhakvixd14pz08inafx"))))
+        (base32 "17r72m5gy5fbng3f4vh3z63xjy84q5rdzj5cyvrvwgj33yl6b18k"))))
     (build-system pyproject-build-system)
     (arguments
      (list

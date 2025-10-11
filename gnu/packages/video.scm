@@ -76,6 +76,8 @@
 ;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2025 John Kehayias <john@guixotic.coop>
+;;; Copyright © 2025 Julian Flake <flake@uni-koblenz.de>
+;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1946,44 +1948,6 @@ audio/video codec library.")
         #~(cons "--enable-avresample"
                 (fold delete #$flags '("--enable-libshaderc"))))))))
 
-(define-public ffmpeg-for-stepmania
-  (hidden-package
-   (package
-     (inherit ffmpeg-4)
-     (version "2.1.3")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-              (url "https://github.com/stepmania/ffmpeg")
-              (commit "eda6effcabcf9c238e4635eb058d72371336e09b")))
-        (sha256
-         (base32 "1by8rmbva8mfrivdbbkr2gx4kga89zqygkd4cfjl76nr8mdcdamb"))
-        (file-name (git-file-name "ffmpeg" version))
-        (patches (search-patches "ffmpeg-4-binutils-2.41.patch"))))
-     (arguments
-      (substitute-keyword-arguments (package-arguments ffmpeg-4)
-        ((#:configure-flags flags)
-         #~(list "--disable-programs"
-                 "--disable-doc"
-                 "--disable-debug"
-                 "--disable-avdevice"
-                 "--disable-swresample"
-                 "--disable-postproc"
-                 "--disable-avfilter"
-                 "--disable-shared"
-                 "--enable-static"))
-        ((#:phases phases)
-         #~(modify-phases #$phases
-             (add-after 'configure 'relax-gcc-14-strictness
-               (lambda _
-                 (substitute* "config.mak"
-                   (("CFLAGS *=" all)
-                    (string-append all
-                                   " -Wno-error=incompatible-pointer-types"
-                                   " -Wno-error=int-conversion ")))))))))
-     (inputs '()))))
-
 ;;; Custom ffmpeg package used by Jami, which incorporates custom patches.
 (define-public ffmpeg-jami
   (let ((ffmpeg ffmpeg-6))
@@ -2893,7 +2857,7 @@ Jellyfin.  It has support for various media files without transcoding.")
 (define-public gallery-dl
   (package
     (name "gallery-dl")
-    (version "1.30.2")
+    (version "1.30.8")
     (source
      (origin
        (method git-fetch)
@@ -2902,13 +2866,14 @@ Jellyfin.  It has support for various media files without transcoding.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15sgvk81s61v4yzzv1s5ksr4z77qhmv7ynyn34zrx5x41g72hgpz"))))
+        (base32 "1hl1nyaah4l03kg4q382jqdznmlywzwnb4dj71qd40mh6895zswd"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       ;; XXX: A lot of those require network.
       #:test-flags #~(list "--ignore=test/test_results.py")))
-    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel nss-certs-for-test))
     (inputs (list python-requests ffmpeg))
     (home-page "https://github.com/mikf/gallery-dl")
     (synopsis "Command-line program to download images from several sites")
@@ -4049,7 +4014,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "31.1.2")
+    (version "32.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4059,7 +4024,7 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wiaiva2wh9781mcwmlkf3xfg805q0s8gz4q7n1vnmk27750i6j1"))
+                "10z2bqzcjfpq70316lxcswmgszwazyskmx0xv74c0471bmal1mgp"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)
@@ -4103,7 +4068,7 @@ be used for realtime video capture via Linux-specific APIs.")
             (separator #f)                         ;single entry
             (files '("share/obs/obs-plugins")))))
     (native-inputs
-     (list cmocka pkg-config swig))
+     (list cmocka pkg-config swig extra-cmake-modules))
     (inputs
      (list
       alsa-lib
@@ -4111,7 +4076,6 @@ be used for realtime video capture via Linux-specific APIs.")
       bash-minimal
       curl
       eudev
-      extra-cmake-modules
       ffmpeg
       fontconfig
       freetype
@@ -4137,6 +4101,7 @@ be used for realtime video capture via Linux-specific APIs.")
       qtsvg
       qtwayland
       rnnoise
+      simde
       speexdsp
       v4l-utils
       uthash
@@ -4193,7 +4158,7 @@ and JACK.")
                (string-append
                 #$output
                 "/share/obs/obs-plugins/obs-advanced-masks/shaders")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/FiniteSingularity/obs-advanced-masks")
     (synopsis "Advanced masking plugin for OBS")
     (description "OBS Advanced Masks is a project designed to expand the
@@ -4253,7 +4218,7 @@ applied via a static image (.png, .jpeg, etc).
                (string-append
                 #$output
                 "/share/obs/obs-plugins/obs-composite-blur/shaders")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/FiniteSingularity/obs-composite-blur")
     (synopsis "Different blur algorithms for OBS")
     (description "Composite Blur Plugin is a comprehensive blur plugin that
@@ -4299,7 +4264,7 @@ masks.
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-gradient-source")
     (synopsis "Plugin for adding a gradient Source to OBS Studio")
     (description "This package provides a plugin for adding a gradient Source
@@ -4363,6 +4328,7 @@ to OBS Studio.")
            openssl
            sdl2
            sdl2-ttf
+           simde
            spice-protocol
            wayland
            wayland-protocols
@@ -4428,7 +4394,7 @@ Looking Glass.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-move-transition")
     (synopsis "Move transition for OBS Studio")
     (description "Plugin for OBS Studio to move source to a new position
@@ -4469,7 +4435,7 @@ during scene transition.")
                               "/obs-plugins/64bit/obs-multi-rtmp.so")
                (string-append #$output
                               "/lib/obs-plugins/obs-multi-rtmp.so")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/sorayuki/obs-multi-rtmp")
     (synopsis "Multi-site simultaneous broadcast plugin for OBS Studio")
     (description "This is a plugin to streaming to multiple RTMP servers
@@ -4500,7 +4466,7 @@ configuration (bitrate).")
                              #$(this-package-input "obs") "/lib")
               "-Wno-dev")))
     (native-inputs (list libconfig pkg-config))
-    (inputs (list obs pipewire))
+    (inputs (list obs pipewire simde))
     (home-page "https://obsproject.com/forum/resources/pipewire-audio-capture.1458/")
     (synopsis "Audio device and application capture for OBS Studio using PipeWire")
     (description "This plugin adds 3 sources for capturing audio outputs,
@@ -4547,7 +4513,7 @@ inputs and applications using PipeWire.")
                    #$output "/share/obs/obs-plugins/obs-shaderfilter/"
                    directory)))
                '("examples" "textures")))))))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-shaderfilter")
     (synopsis "OBS filter for applying an arbitrary shader to a source")
     (description "Plugin for OBS Studio which is intended to allow users to
@@ -4580,7 +4546,7 @@ shader code.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-source-clone")
     (synopsis "Plugin for OBS Studio to clone sources")
     (description "Add source to OBS that lets you clone sources to allow
@@ -4609,7 +4575,7 @@ different filters than the original.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs qtbase-5))
+    (inputs (list obs qtbase-5 simde))
     (home-page "https://github.com/exeldro/obs-source-copy")
     (synopsis "OBS plugin for copy and paste scenes, sources and filters")
     (description "This package provides an OBS plugin for copy and paste
@@ -4638,7 +4604,7 @@ scenes, sources and filters.")
                              #$(this-package-input "obs") "/lib")
               "-DBUILD_OUT_OF_TREE=On"
               "-Wno-dev")))
-    (inputs (list obs))
+    (inputs (list obs simde))
     (home-page "https://github.com/exeldro/obs-source-record")
     (synopsis "OBS plugin for recording sources via a filter")
     (description "This package provides an OBS plugin for recording sources
@@ -4667,7 +4633,7 @@ via a filter.")
     (native-inputs
      (list pkg-config))
     (propagated-inputs `() )
-    (inputs (list obs
+    (inputs (list obs simde
                   `(,libx11 "out") wayland wayland-protocols))
     (home-page "https://hg.sr.ht/~scoopta/wlrobs")
     (synopsis "OBS plugin for Wayland (wlroots) screen capture")
@@ -4697,6 +4663,7 @@ Wayland compositors.")
                   obs
                   libx11
                   libxcb
+                  simde
                   vulkan-headers
                   vulkan-loader
                   wayland))
@@ -6620,7 +6587,7 @@ package does not rely on the @code{YouTube} Data API v3.")
 (define-public wf-recorder
   (package
     (name "wf-recorder")
-    (version "0.3.0")
+    (version "0.5.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6629,12 +6596,12 @@ package does not rely on the @code{YouTube} Data API v3.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18csvix8fdqir52q729rgcy355xy2ngvmr05l1abflpbvsklbn52"))))
+                "0a805kfbgpg7898gbb218n7krbvn9r96xydhibvrphy08wxd1xzg"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config))
     (inputs
-     (list ffmpeg pulseaudio wayland wayland-protocols libx264))
+     (list ffmpeg-6 pipewire pulseaudio wayland wayland-protocols libx264 mesa))
     (home-page "https://github.com/ammen99/wf-recorder")
     (synopsis "Screen recorder for wlroots-based compositors")
     (description
@@ -6646,28 +6613,26 @@ wlroots-based compositors.  More specifically, those that support
 (define-public guvcview
   (package
     (name "guvcview")
-    (version "2.0.8")
+    (version "2.2.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/guvcview/source/guvcview-"
                                   "src-" version ".tar.bz2"))
               (sha256
                (base32
-                "108c4g0ns9i1wnxyalmpjqbhlflmrj855vxgggr6qrl6h924w7x2"))))
-    (build-system gnu-build-system)
-    (arguments
-     ;; There are no tests and "make check" would fail on an intltool error.
-     '(#:tests? #f))
+                "1bz5mpvs590dwfvjwgigs6948l31mldm2sz1qd9yhq99fv7cgbfj"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))  ;There are no tests
     (native-inputs
      (list pkg-config intltool))
     (inputs
-     (list bdb
-           gtk+
+     (list gtk+
            eudev
-           libjpeg-turbo
            libusb
            v4l-utils                    ;libv4l2
-           ffmpeg                       ;libavcodec, libavutil
+           ;; Gentoo patch for ffmpeg-8 reported upstream:
+           ;; https://sourceforge.net/p/guvcview/tickets/79/
+           ffmpeg-6                     ;libavcodec, libavutil
            sdl2
            gsl
            portaudio
@@ -6679,8 +6644,6 @@ wlroots-based compositors.  More specifically, those that support
 webcam accessible with Video4Linux (V4L2) and to capture videos and images.
 It provides control over precise settings of the webcam such as exposure,
 brightness, contrast, and frame rate.")
-
-    ;; 'COPYING' is GPLv3 but source headers say GPLv2+.
     (license license:gpl2+)))
 
 (define-public get-iplayer

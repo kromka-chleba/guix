@@ -9,7 +9,7 @@
 ;;; Copyright © 2018-2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019-2024 Maxim Cournoyer <maxim@guixotic.coop>
-;;; Copyright © 2019, 2021 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2019, 2021, 2025 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020, 2022 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
@@ -38,6 +38,7 @@
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
+;;; Copyright © 2025 Zheng Junjie <z572@z572.online> 
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -59,12 +60,14 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages django)
   #:use-module (gnu packages jupyter)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages python-build)
@@ -770,6 +773,30 @@ test itself.")
 being used as variables or parameters.")
     (license license:gpl2)))
 
+(define-public python-flake8-class-newline
+  (package
+    (name "python-flake8-class-newline")
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/AlexanderVanEck/flake8-class-newline")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15fw0iw2c3a3n2aarfgq7147406489xd8nk0kkj9k2x98fkwwnyh"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest))
+    (propagated-inputs (list python-flake8))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/AlexanderVanEck/flake8-class-newline")
+    (synopsis "Flake8 lint for newline after class definitions")
+    (description
+     "This package provides a flake8 extension to lint for newline after class
+definitions.")
+    (license license:expat)))
+
 (define-public python-flake8-comprehensions
   (package
     (name "python-flake8-comprehensions")
@@ -825,6 +852,55 @@ list/set/dict comprehensions.")
      "This flake8 plugin helps you keep up with method deprecations by
 providing hints about what deprecated methods should be replaced with.")
     (license license:gpl2)))
+
+(define-public python-flake8-docstrings
+  (package
+    (name "python-flake8-docstrings")
+    (version "1.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pycqa/flake8-docstrings")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a9cx11rz9asb4xkz7dg65kx8mpa74xqh5qp3lsiy74y4idwp9qi"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f)) ;there are no tests
+    (propagated-inputs (list python-flake8 python-pydocstyle))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/pycqa/flake8-docstrings")
+    (synopsis "Extension for flake8 which uses pydocstyle to check docstrings")
+    (description
+     "This package provides a extension for flake8 which uses pydocstyle to
+check docstrings.")
+    (license license:expat)))
+
+(define-public python-flake8-import-order
+  (package
+    (name "python-flake8-import-order")
+    (version "0.19.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8_import_order" version))
+       (sha256
+        (base32 "1cmhpiaj9bgh64mg4y93hcbsifvqa2lriz3la0iy8cbn95akqfqk"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-pytest
+           python-pylama))
+    (propagated-inputs
+     (list python-pycodestyle))
+    (home-page "https://github.com/PyCQA/flake8-import-order")
+    (synopsis
+     "Flake8 and pylama plugin that checks the ordering of import statements")
+    (description
+     "This package provieds a flake8 and pylama plugin that checks the ordering
+of import statements.")
+    (license license:lgpl3)))
 
 (define-public python-flexmock
   (package
@@ -3670,6 +3746,48 @@ libraries.")
 simpler.")
     (license license:expat)))
 
+(define-public python-respx
+  (package
+    (name "python-respx")
+    (version "0.22.0")
+    (source
+     (origin
+       ;; There are no tests in the PyPI tarball.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lundberg/respx/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pl6vlyva837bnz3cy9mwmvvh8fq943rkrbq3mzj34bjf8swnw2g"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; Drop test coverage requirements.
+              (substitute* "setup.cfg"
+                (("--cov(-[^ ]*)?=[^ ]*")
+                 "\n")
+                (("--cov-fail-under [^ ]*")
+                 "\n")))))))
+    (propagated-inputs (list python-httpx))
+    (native-inputs (list nss-certs-for-test
+                         python-starlette
+                         python-flask
+                         python-pytest
+                         python-pytest-asyncio
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://lundberg.github.io/respx/")
+    (synopsis "Mocking for Python libraries HTTPX and HTTPCore")
+    (description
+     "This package provides a utility for mocking out the Python libraries HTTPX and
+HTTPCore.")
+    (license license:bsd-3)))
+
 (define-public python-robber
   (package
     (name "python-robber")
@@ -4282,6 +4400,41 @@ dynamic nature, static code analyzers like Vulture are likely to miss some
 dead code.  Also, code that is only called implicitly may be reported as
 unused.")
     (license license:expat)))
+
+(define-public python-xdoctest
+  (package
+    (name "python-xdoctest")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "xdoctest" version))
+       (sha256
+        (base32 "1m69yvc3bl9jj5av89p9jl08w9lsn0k3lqclpdbiq0g67fdbjb7r"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; A writable HOME is needed by the 'import_module_from_path'
+              ;; test.
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list cmake-minimal
+           ninja
+           pybind11
+           python-pytest-bootstrap
+           python-scikit-build
+           python-setuptools))
+    (home-page "https://github.com/Erotemic/xdoctest")
+    (synopsis "Rewrite of the Python builtin doctest module")
+    (description
+     "This package provides a rewrite of the builtin doctest module which
+ leverages the Python @acronym{AST, Abstract Syntax Tree} instead of
+@acronym{REGEXPs, regular expressions}.")
+    (license license:asl2.0)))
 
 (define-public python-xunitparser
   (package

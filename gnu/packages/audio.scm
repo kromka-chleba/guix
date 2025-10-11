@@ -159,6 +159,7 @@
   #:use-module (gnu packages vim) ;xxd
   #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
+  #:use-module (gnu packages wine)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xiph)
@@ -3279,6 +3280,44 @@ plugins and exposes their ports as JACK ports, essentially making any LV2
 plugin function as a JACK application.")
     (license license:isc)))
 
+(define-public clap
+  (package
+    (name "clap")
+    (version "1.2.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/free-audio/clap")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1ryg21qm4262n9hv259lfhlg25c8k3i2qgqav37r10q55jx2w8j3"))))
+    (build-system cmake-build-system)
+    (arguments
+     ;; FIXME: With "-DCLAP_BUILD_TESTS=ON" the test executables do not build.
+     (list #:tests? #f))
+    (synopsis "Audio Plugin API")
+    (description
+     "CLAP stands for CLever Audio Plugin.  It is an audio plugin ABI which
+defines a standard for Digital Audio Workstations and audio plugins to work
+together.")
+    (home-page "https://cleveraudio.org/")
+    (license license:expat)))
+
+(define-public clap-1.1
+  (package/inherit clap
+    (version "1.1.10")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/free-audio/clap")
+                    (commit version)))
+              (file-name (git-file-name "clap" version))
+              (sha256
+               (base32
+                "0skn3cvh7zs173v3i6ywdmddqzrhxvivwdisvmqc6hvq594f8z80"))))))
+
 (define-public ladspa
   (package
     (name "ladspa")
@@ -3922,10 +3961,10 @@ software.")
       `(modify-phases %standard-phases
          (add-before 'configure 'setup-waf
            (lambda* (#:key inputs #:allow-other-keys)
-             (let ((waf (assoc-ref inputs "python-waf")))
+             (let ((waf (assoc-ref inputs "waf")))
                (copy-file (string-append waf "/bin/waf") "waf")))))))
     (inputs (list boost))
-    (native-inputs (list python-waf))
+    (native-inputs (list waf))
     (home-page "https://github.com/lvtk/ttl2c")
     (synopsis "Turtle to C header conversion utility for LV2 plugins")
     (description
@@ -4033,10 +4072,10 @@ lv2-c++-tools.")
         `(modify-phases %standard-phases
            (add-before 'configure 'setup-waf
              (lambda* (#:key inputs #:allow-other-keys)
-               (let ((waf (assoc-ref inputs "python-waf")))
+               (let ((waf (assoc-ref inputs "waf")))
                  (copy-file (string-append waf "/bin/waf") "waf")))))))
       (inputs (list boost gtkmm-2 lv2))
-      (native-inputs (list pkg-config python-waf))
+      (native-inputs (list pkg-config waf))
       (home-page "https://github.com/lvtk/lvtk")
       (synopsis "C++ libraries for LV2 plugins")
       (description
@@ -4298,7 +4337,7 @@ background file post-processing.")
 (define-public supercollider
   (package
     (name "supercollider")
-    (version "3.13.1")
+    (version "3.14.0")
     (source
      (origin
        (method git-fetch)
@@ -4310,7 +4349,7 @@ background file post-processing.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ii3nczg46f2hzgj2fkd418wgkbal54yhh90sza9vr66l1kxlp2s"))
+         "1qp163c6mg1d8c59ar3v1yixryr1paa9bs8pkz6yd3c86qz24n0h"))
        (modules '((guix build utils)
                   (ice-9 ftw)))
        (snippet
@@ -4332,7 +4371,7 @@ background file post-processing.")
 AbletonLinkConfig\\.cmake\\)")
                "find_package(AbletonLink NAMES AbletonLink ableton-link \
 link REQUIRED)"))))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (outputs
      '("out"                            ;core language
        "ide"))                          ;qt ide
@@ -4346,7 +4385,7 @@ link REQUIRED)"))))))
               "-DFORTIFY=ON"
               "-DLIBSCSYNTH=ON"
               "-DSC_EL=OFF")      ;scel is packaged individually as emacs-scel
-      #:modules '((guix build cmake-build-system)
+      #:modules '((guix build qt-build-system)
                   ((guix build gnu-build-system) #:prefix gnu:)
                   (guix build utils))
       #:phases
@@ -4367,15 +4406,6 @@ link REQUIRED)"))))))
                      "SC_Filesystem::instance\\(\\)\\.getDirectory"
                      "\\(DirName::Resource\\) / CLASS_LIB_DIR_NAME"))
                    (string-append "Path(\"" scclass-dir "\")"))))))
-          (add-after 'patch-scclass-dir 'fix-struct-SOUNDFILE-tag
-            (lambda _
-              (substitute* "include/plugin_interface/SC_SndBuf.h"
-                (("SNDFILE_tag")
-                 "sf_private_tag"))))
-          (add-before 'build 'prepare-x
-            (lambda _
-              (system "Xvfb &")
-              (setenv "DISPLAY" ":0")))
           (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-before 'install 'install-ide
             (lambda _
@@ -4385,8 +4415,8 @@ link REQUIRED)"))))))
                               (string-append ide "/bin"))
                 (delete-file scide)))))))
     (native-inputs
-     (list ableton-link pkg-config qttools-5 xorg-server-for-tests))
-    (inputs (list jack-1
+     (list ableton-link pkg-config qttools))
+    (inputs (list jack-2
                   libsndfile
                   fftw
                   libxt
@@ -4400,13 +4430,12 @@ link REQUIRED)"))))))
                   yaml-cpp
                   python-wrapper        ;there were warnings in the build process
                   ruby                  ;there were warnings in the build process
-                  qtbase-5
-                  qtdeclarative-5
-                  qtsvg-5
-                  qtwebchannel-5
-                  qtwebsockets-5))
+                  qtdeclarative
+                  qtsvg
+                  qtwebchannel
+                  qtwebsockets))
     (propagated-inputs                  ;to get native-search-path
-     (list qtwebengine-5))
+     (list qtwebengine))
     (home-page "https://github.com/supercollider/supercollider")
     (synopsis "Synthesis engine and programming language")
     (description "SuperCollider is a synthesis engine (@code{scsynth} or
@@ -6693,6 +6722,152 @@ default and preferred audio driver but also supports native drivers like ALSA.")
          (file-name (git-file-name name version))
          (sha256
           (base32 "0cnj2sgr60f5h6wdfmihc214wf3n74686sipl3iyzmylqrcyhbjn")))))))
+
+;; This source is a fork of vst3sdk with the documentation and VSTGUI
+;; submodules removed and a dummy `meson.build` file that just lists all
+;; source files.
+(define vst3sdk
+  (let ((version "3.7.7_build_19-patched"))
+    (origin
+      (method git-fetch)
+      (uri
+       (git-reference
+         (url "https://github.com/robbert-vdh/vst3sdk")
+         (commit (string-append "v" version))
+         ;; Required for vst3_base, vst3_pluginterfaces, and vst3_public_sdk.
+         (recursive? #t)))
+    (file-name (git-file-name "vst3sdk" version))
+    (sha256
+     (base32 "09axvpshwbf5061kcbl26v74dcmwxmgmlxb15b75bnqbh0zcghrf"))
+    (patches
+     (search-patches "vst3sdk-3.7.7-allow-winelib-compilation.patch")))))
+
+(define-public yabridge
+  (package
+    (name "yabridge")
+    (version "5.1.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/robbert-vdh/yabridge")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0r7q72jmd44wynxphwhgm17wkfgm6zfdrpfnhsj8b53406ykgq71"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(append (list "-Dsystem-asio=true"
+                           (string-append "--cross-file=" #$source
+                                          "/cross-wine.conf"))
+                     ;; On 32bit system, without this flag it does not build
+                     ;; yabridge-host-32.exe and yabridge-host-32.exe.so.  On
+                     ;; 64bit system do not enable it since gcc does not
+                     ;; support multilib.
+                     (if (not #$(target-64bit?)) "-Dbitbridge=true" '()))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'copy-vst3sdk
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (copy-recursively #$vst3sdk
+                                     "subprojects/vst3")))
+               (add-after 'copy-vst3sdk 'patch-paths
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/chainloader/utils.cpp"
+                     (("(.*)\"\\/usr\\/lib\"," all indent)
+                      (string-append indent "\"" #$output "/lib\","))
+                     ((".*\\/usr.*$") ""))))
+               (add-after 'patch-paths 'fix-dependencies
+                 (lambda _
+                   (substitute* "meson.build"
+                     ;; FIXME: gurlrak-filesystem does not provide
+                     ;; ghc_filesystem-config-version.cmake.
+                     (("(ghc_filesystem_dep .*)version :.*(\\))" all start end)
+                      (string-append start end)))))
+               (replace 'install
+                 (lambda _
+                   (for-each
+                     (lambda (file)
+                       (install-file file (string-append #$output "/bin")))
+                       (find-files "." "-host(-32|)\\.exe(|\\.so)$"))
+                   (for-each
+                     (lambda (file)
+                       (install-file file (string-append #$output "/lib")))
+                       (find-files "." "libyabridge.*\\.so$"))))
+               (add-after 'install 'patch-appdir
+                 (lambda _
+                   (substitute* (find-files #$output "-host(-32|)\\.exe$")
+                     (("`dirname \"\\$0\"`")
+                      (string-append #$output "/bin")))))
+               (add-after 'patch-appdir 'wrap-program
+                 (lambda _
+                   (with-directory-excursion (string-append #$output "/bin")
+                     (wrap-program (if #$(target-64bit?)
+                                       "yabridge-host.exe"
+                                       "yabridge-host-32.exe")
+                       `("PATH" ":" prefix
+                         (,(string-append (or #$(this-package-input "wine64")
+                                              #$(this-package-input "wine"))
+                                          "/bin"))))))))))
+    (native-inputs
+     (list cmake-minimal pkg-config))
+    (inputs
+     (list bash-minimal
+           asio
+           bitsery
+           clap-1.1
+           dbus
+           function2
+           gulrak-filesystem
+           libxcb
+           tomlplusplus
+           (wine-for-system)))
+    (home-page "https://github.com/robbert-vdh/yabridge")
+    (synopsis "Implementation of Windows VST2, VST3 and CLAP plugin APIs")
+    (description
+     "@code{yabridge} is Yet Another way to use Windows audio plugins.  It
+supports using Windows VST2, VST3, and CLAP plugins in plugin hosts as if they
+were native plugins, with optional support for plugin groups to enable
+inter-plugin communication for VST2 plugins and quick startup times.")
+    (license license:gpl3+)))
+
+(define-public yabridgectl
+  (package
+    (inherit yabridge)
+    (name "yabridgectl")
+    (build-system cargo-build-system)
+    (arguments
+     (list #:install-source? #f
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'change-directory
+                (lambda _
+                  (chdir "tools/yabridgectl")))
+               (add-after 'change-directory 'patch-paths
+                 (lambda _
+                   (with-directory-excursion "src"
+                     (substitute* '("config.rs" "main.rs")
+                       (("\"\\/usr\\/lib\"")
+                        (string-append "\""
+                                       #$(this-package-input "yabridge")
+                                       "/lib\""))
+                       ((".*\\/usr\\/(lib(\\/|64)|local).*") ""))
+                     (substitute* "util.rs"
+                       (("libdbus-1\\.so" all)
+                        (string-append #$(this-package-input "dbus")
+                                       "/lib/" all))))))
+               (add-after 'patch-paths 'use-guix-vendored-dependencies
+                 (lambda _
+                   (substitute* "Cargo.toml"
+                     ;; Use reflink from the inputs.
+                     (("git.*, rev.*}") "version = \"*\"}")))))))
+    (native-inputs '())
+    (inputs
+     (cons* dbus yabridge (cargo-inputs 'yabridgectl)))
+    (synopsis "Utility to set up and update yabridge")
+    (description
+     "@command{yabridgectl} is a tool to setup and update @code{yabridge}.")))
 
 (define-public ecasound
   (package
