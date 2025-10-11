@@ -12374,8 +12374,7 @@ tabs, and it supports drag and drop re-ordering of terminals.")
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags
-           #~(list "-Dglade_catalog=enabled"
-                   ;; XXX: Generating the documentation fails because the
+           #~(list ;; XXX: Generating the documentation fails because the
                    ;; libhandy.devhelp2 document cannot be created. This seems
                    ;; to be caused by a problem during the XSL transformation.
                    "-Dgtk_doc=false")
@@ -12386,7 +12385,7 @@ tabs, and it supports drag and drop re-ordering of terminals.")
                    ;; Tests require a running X server.
                    (system "Xvfb :1 &")
                    (setenv "DISPLAY" ":1"))))))
-    (inputs (list gtk+ glade3))
+    (inputs (list gtk+))
     (native-inputs
      (list gobject-introspection        ; for g-ir-scanner
            `(,glib "bin")
