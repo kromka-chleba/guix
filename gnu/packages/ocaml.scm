@@ -2730,6 +2730,11 @@ manipulate such data.")
      (list ocamlbuild))
     (propagated-inputs
      `(("topkg" ,ocaml-topkg)))
+    (home-page "https://erratique.ch/software/mtime")
+    (synopsis "Monotonic wall-clock time for OCaml")
+    (description "Access monotonic wall-clock time.  It measures time
+spans without being subject to operating system calendar time adjustments.")
+    (license license:isc)
     (arguments
      `(#:tests? #f
        #:build-flags (list "build")
@@ -2738,11 +2743,13 @@ manipulate such data.")
          (delete 'configure)
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
-             ;; Use ocamlfind install to avoid circular dependency on opam-installer
-             (let ((lib (string-append (assoc-ref outputs "out")
-                                       "/lib/ocaml/site-lib")))
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib/ocaml/site-lib"))
+                    (mtime-lib (string-append lib "/mtime"))
+                    (clock-lib (string-append mtime-lib "/clock")))
                (mkdir-p lib)
                (with-directory-excursion "_build"
+                 ;; Install main library
                  (invoke "ocamlfind" "install" "mtime"
                          "../pkg/META"
                          "src/mtime.a"
@@ -2751,12 +2758,16 @@ manipulate such data.")
                          "src/mtime.cmxs"
                          "src/mtime.cmx"
                          "src/mtime.cmi"
-                         "src/mtime.mli"))))))))
-    (home-page "https://erratique.ch/software/mtime")
-    (synopsis "Monotonic wall-clock time for OCaml")
-    (description "Access monotonic wall-clock time.  It measures time
-spans without being subject to operating system calendar time adjustments.")
-    (license license:isc)))
+                         "../src/mtime.mli"))
+               ;; Install clock sublibrary manually
+               (mkdir-p clock-lib)
+               (for-each
+                (lambda (file)
+                  (install-file file clock-lib))
+                (find-files "_build/src/clock"
+                            "\\.(cma|cmxa|a|cmxs|cmi|cmx|so)$"))
+               ;; Install .mli from source
+               (install-file "src/clock/mtime_clock.mli" clock-lib)))))))))
 
 (define-public ocaml-calendar
   (package
@@ -3324,6 +3335,53 @@ values with arbitrary types.  Keys witness the type of the value they are bound
 to which allows adding and looking up bindings in a type safe manner.")
     (license license:isc)))
 
+(define-public ocaml-thread-table
+  (package
+    (name "ocaml-thread-table")
+    (version "1.0.0")
+    (home-page
+     "https://github.com/ocaml-multicore/thread-table")
+    (source
+     (github-tag-origin
+      name home-page version
+      "05sla96m4lbfrnrjczj4xl1zbcwypir6krp4y16x50hz24ai12pc"
+      #:tag-prefix ""
+      ))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    ;; (propagated-inputs (list ocaml-re))
+    (properties `((upstream-name . "thread-table")))
+      (synopsis "OCaml library for thread tables")
+      (description
+       "Lock free thread safe integer keyed hash table")
+      ;; With linking exception.
+      (license license:isc)
+    ))
+
+(define-public ocaml-domain-local-await
+  (package
+    (name "ocaml-domain-local-await")
+    (version "1.0.1")
+    (home-page
+     "https://github.com/ocaml-multicore/domain-local-await")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0h60sxzd9p14ilpg004d47y3zd89pswffr0wvqa9cykpn8qgdfcm"
+      #:tag-prefix ""
+      ))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-thread-table))
+    (properties `((upstream-name . "domain-local-await")))
+      (synopsis "OCaml library for local domain await")
+      (description "A low level mechanism intended for writing higher level libraries that need to block in a scheduler friendly manner.
+
+A library that needs to suspend and later resume the current thread of execution may simply call prepare_for_await to obtain a pair of await and release operations for the purpose.")
+      ;; With linking exception.
+      (license license:isc)
+    ))
+
 (define-public ocaml-eio
   (package
     (name "ocaml-eio")
@@ -3350,6 +3408,7 @@ to which allows adding and looking up bindings in a type safe manner.")
                              ocaml-fmt
                              ocaml-hmap
                              ocaml-mtime
+                             ocaml-domain-local-await
                              ;;
                              ))
     (native-inputs (list ocaml-astring
@@ -8917,8 +8976,8 @@ variants.")
     ;;            (base32
     ;;             "1w1givvhwv9jzj9zbg4mmlpb35sqi75w83r99p2z50bdr69fdf57"
     ;; ))))
-    (source (github-tag-origin name home-page version "1rhj00gsj1zz8yd99wkcpsgf0ym1fg940zk2jq29fysk4zd1g7m3" #:tag-prefix ""
-                               ))
+    (source (github-tag-origin name home-page version
+      "1rhj00gsj1zz8yd99wkcpsgf0ym1fg940zk2jq29fysk4zd1g7m3" #:tag-prefix ""))
     (build-system dune-build-system)
     ;; (arguments
     ;;  `(#:phases
