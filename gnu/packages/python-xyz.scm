@@ -29849,7 +29849,7 @@ a mypy plugin that smooths over some limitations in the basic type hints.
 (define-public python-trio-websocket
   (package
     (name "python-trio-websocket")
-    (version "0.11.1")
+    (version "0.12.2")
     (source
      (origin
        (method git-fetch)               ;no tests in pypi archive
@@ -29858,7 +29858,7 @@ a mypy plugin that smooths over some limitations in the basic type hints.
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sw85r8gikd86zc8jaqv0vmgcf2k62v6zjzxiv8xr6zm8ridplkm"))))
+        (base32 "1lm712gakpskcn3adna22kj8m1hspz9l68pmlziklr0ycphmyqac"))))
     (build-system pyproject-build-system)
     (arguments
      (list
