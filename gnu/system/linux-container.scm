@@ -8,6 +8,7 @@
 ;;; Copyright © 2023 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2024 Leo Nikkilä <hello@lnikki.la>
 ;;; Copyright © 2024 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -230,6 +231,7 @@ that will be shared with the host system."
         #~(begin
             (use-modules (gnu build linux-container)
                          (gnu system file-systems) ;spec->file-system
+                         (guix build syscalls)
                          (guix build utils)
                          (guix i18n)
                          (guix diagnostics)
@@ -247,6 +249,8 @@ Run the container with the given options."))
               (display (G_ "
       --expose=SPEC      expose host file system directory as read-only
                          according to SPEC"))
+              (display (G_ "
+      --privileged       inherit the Linux capabilities of the host"))
               (newline)
               (display (G_ "
   -h, --help             display this help and exit"))
@@ -258,6 +262,11 @@ Run the container with the given options."))
                             (lambda args
                               (show-help)
                               (exit 0)))
+                    (option '("privileged") #f #f
+                            (lambda (opt name arg result)
+                              (alist-cons 'privileged
+                                          #t
+                                          result)))
                     (option '("share") #t #f
                             (lambda (opt name arg result)
                               (alist-cons 'file-system-mapping
@@ -301,7 +310,8 @@ Run the container with the given options."))
                                              (file-exists? (file-system-device fs)))
                                          fs)))
                                 (append (map file-system-mapping->bind-mount mappings)
-                                        (map spec->file-system '#$specs)))))
+                                        (map spec->file-system '#$specs))))
+                   (privileged? (assoc-ref opts 'privileged)))
               (call-with-container file-systems
                 (lambda ()
                   (setenv "HOME" "/root")
@@ -322,7 +332,11 @@ Run the container with the given options."))
                 #:lock-mounts? #f
 
                 #:writable-root? #t
-                #:process-spawned-hook explain)))))
+                #:process-spawned-hook explain
+                #:capabilities (and privileged?
+                                    (call-with-values capget
+                                      (lambda (eff perm inh)
+                                        eff))))))))
 
     (gexp->script "run-container" script)))
 
