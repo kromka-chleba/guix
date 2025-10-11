@@ -5,7 +5,7 @@
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2021 Mathieu Othacehe <othacehe@gnu.org>
 ;;; Copyright © 2022 Kaelyn Takata <kaelyn.alexi@protonmail.com>
-;;; Copyright © 2022, 2024 dan <i@dan.games>
+;;; Copyright © 2022, 2024, 2025 dan <i@dan.games>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
@@ -50,7 +50,9 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages wine)
+  #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg))
 
 (define-public spirv-headers
@@ -820,3 +822,76 @@ license.")
                              (commit commit)))
          (file-name (git-file-name (package-name base) version))
          (sha256 (base32 "0c7l2xdsbr132ga2nyqjhz9xa42dxvhh9idjxnl673mz5kab1j6h")))))))
+
+(define-public directx-shader-compiler
+  (package
+    (name "directx-shader-compiler")
+    (version "1.8.2505.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/microsoft/DirectXShaderCompiler")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10qls84x76ksglqjqylj1pamvk0cmaqng5bmfy4qhjqf2fqrjp0v"))
+       (patches (search-patches "directx-shader-compiler-fix-unicode-conversion.patch"))
+       (modules '((guix build utils)))
+       (snippet #~(begin
+                    (substitute* "CMakeLists.txt"
+                      (("add_subdirectory\\(external\\)")
+                       "find_package(SPIRV-Tools REQUIRED)
+find_package(SPIRV-Tools-opt CONFIG REQUIRED)"))
+                    ;; Latest spirv-val already merged the fix, this test case
+                    ;; should pass now.
+                    (substitute*
+                        "tools/clang/test/CodeGenSPIRV/meshshading.ext.cullprimative.hlsl"
+                      (("XFAIL")
+                       "PASS"))))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:build-type "Release"
+      #:configure-flags
+      #~(list "-C"
+              "../source/cmake/caches/PredefinedParams.cmake"
+              "-DSPIRV_BUILD_TESTS=ON"
+              "-DLLVM_BUILD_TOOLS=OFF"
+              "-DHLSL_OFFICIAL_BUILD=ON"
+              ;; Build would fail when enabling LTO.
+              "-DLLVM_ENABLE_LTO=OFF"
+              (string-append "-DSPIRV_HEADER_INCLUDE_DIR="
+                             #$(this-package-native-input "spirv-headers")
+                             "/include")
+              (string-append "-DSPIRV_TOOLS_INCLUDE_DIR="
+                             #$(this-package-input "spirv-tools")
+                             "/include")
+              (string-append "-DDIRECTX_HEADER_INCLUDE_DIR="
+                             #$(this-package-native-input "directx-headers")
+                             "/include"))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The tests need to execute dxc, which requires libdxcompiler.so to
+          ;; be present in the output directory, so we move the check phase
+          ;; after the install phase.
+          (delete 'check)
+          (replace 'install
+            (lambda* (#:key make-flags outputs #:allow-other-keys)
+              (apply invoke "make" "install-distribution" make-flags)))
+          (add-after 'install 'check
+            (lambda* (#:key tests? make-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "make" "check-all" make-flags)))))))
+    (inputs (list libxml2 spirv-tools))
+    (native-inputs (list directx-headers-1.4 git python spirv-headers))
+    (home-page "https://github.com/microsoft/DirectXShaderCompiler")
+    (synopsis
+     "Compiler and related tools for @acronym{HLSL, High-Level Shader Language}")
+    (description
+     "The DirectX Shader Compiler project includes a compiler and related
+tools used to compile @acronym{HLSL, High-Level Shader Language} programs into
+@acronym{DXIL, DirectX Intermediate Language} representation and SPIR-V.
+Applications that make use of DirectX for graphics, games, and computation can
+use it to generate shader programs.")
+    (license license:ncsa)))
