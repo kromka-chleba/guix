@@ -3189,7 +3189,7 @@ some form of information without getting in the user's way.")
     (build-system meson-build-system)
     (arguments
      (list
-      #:configure-flags #~'("-Dvapi=true" "-Dgtk_doc=true")
+      #:configure-flags #~'("-Dvapi=true" "-Dgtk_doc=true" "-Dpython3=false")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'start-xserver
@@ -3203,10 +3203,7 @@ some form of information without getting in the user's way.")
                                 (search-input-file inputs "bin/Xvfb")
                                 disp))))))))
     (inputs
-     (list gtk+
-           glade3
-           python
-           python-pygobject))
+     (list gtk+))
     (native-inputs
      (list pkg-config
            gettext-minimal
@@ -3249,11 +3246,9 @@ API.")
     (inputs
      (list gtk
            gjs
-           glade3
            ;; lua-5.1
            ;; lua5.1-lgi
-           python
-           python-pygobject))))
+           ))))
 
 (define-public gtkglext
   (package
