@@ -2432,7 +2432,7 @@ bitsrings in Erlang style as primitives to the language.")))
     (source
      (github-tag-origin
       name home-page version
-      "1abn5fqqixlj1jbqb6vwysn48m0fv9cp7jyw5nfkkyxivw9xccvd"
+      "166laj8qk7466sdl037c6cjs4ac571hglw4l5qpyll6df07h6a7q"
       #:tag-prefix ""
       ))
     (build-system dune-build-system)
@@ -3326,7 +3326,8 @@ to which allows adding and looking up bindings in a type safe manner.")
                              ocaml-fmt
                              ocaml-hmap
                              ocaml-mtime
-                             ocaml-odoc))
+                             ;; ocaml-odoc
+                             ))
     (native-inputs (list ocaml-astring
                          ocaml-crowbar
                          ocaml-alcotest
@@ -6515,7 +6516,8 @@ Atom.")
                 (commit version)))
               (sha256
                (base32
-                "1w1m2mi7va3wcwgvgzqd3af6hrhx5zzyr3hqa228pcimp44w6f0h"))))
+                "1h02bgf3glf6d6mghk32ds8xm6a7h575f1zf9qkgr6y946rh0760"
+                ))))
     (build-system dune-build-system)
     (arguments '(#:tests? #f)) ; tests are failing for v1.17
     (propagated-inputs (list
@@ -8746,7 +8748,7 @@ complexity of the OCaml module system.")
            "1x48kf051xs98rd6cri591bk1ccp9hyp93n1rlf6qnxic55jw683"))))
     (build-system dune-build-system)
     (propagated-inputs
-      (list ocaml-astring ocaml-camlp-streams))
+      (list ocaml-astring ocaml-camlp-streams ocaml-result))
     (native-inputs
       (list ocaml-ppx-expect))
     (home-page "https://github.com/ocaml-doc/odoc-parser")
