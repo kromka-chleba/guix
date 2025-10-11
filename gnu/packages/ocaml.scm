@@ -6590,7 +6590,7 @@ Atom.")
 (define-public ocaml-lsp-server
   (package
     (name "ocaml-lsp-server")
-    (version "1.23.1")
+    (version "1.24.0")
     (home-page "https://github.com/ocaml/ocaml-lsp")
     (source (origin
               (method git-fetch)
@@ -6598,8 +6598,7 @@ Atom.")
                 (url home-page)
                 (commit version)))
               (sha256
-               (base32
-                "1h02bgf3glf6d6mghk32ds8xm6a7h575f1zf9qkgr6y946rh0760"
+               (base32 "068kg2n5nlm0jhg62x306pyhghblyy0wvyhm7nraq5bj7y6130a8"
                 ))))
     (build-system dune-build-system)
     (arguments '(#:tests? #f)) ; tests are failing for v1.17
@@ -7848,7 +7847,7 @@ useful errors on failure.")
            ocaml-ppxlib
            ocaml-re))
     (properties `((upstream-name . "ppx_expect")
-                  (ocaml5.0-variant . ,(delay ocaml5.0-ppx-expect))))
+                  (ocaml5.4-variant . ,(delay ocaml5.4-ppx-expect))))
     (home-page "https://github.com/janestreet/ppx_expect")
     (synopsis "Cram like framework for OCaml")
     (description "Expect-test is a framework for writing tests in OCaml, similar
@@ -9317,10 +9316,10 @@ get an precise reference of when the executable was built.")))
     (propagated-inputs (list ocaml-csexp
                              dune-ordering
                              dune-dyn
+                             ocamlc-loc
                              ocaml-xdg
                              dune-stdune
-                             ocaml-pp
-                            ))
+                             ocaml-pp))
     (synopsis "Communicate with ocaml dune using rpc")
     (description "Library to connect and control a running dune instance.")))
 
@@ -9371,7 +9370,10 @@ This library offers no backwards compatibility guarantees.")))
                 "085v1dfxrb4wnkgysghj5q4vr4nx3nxr84rqmy874dr3pk30740n"))))
     (build-system dune-build-system)
     (arguments
-     '(#:package "fiber"))
+     '(#:package "fiber"
+       ;; Tests require ppx_expect.common which was removed in ppx_expect v0.17.
+       ;; Fiber 3.7.0 requires ppx_expect <v0.17, but Guix has v0.17.3.
+       #:tests? #f))
     (propagated-inputs (list dune-stdune dune-dyn))
     (native-inputs (list ocaml-ppx-expect))
     (synopsis "Structured concurrency library")
@@ -9406,7 +9408,7 @@ defined in OCaml 4.12.0.")
 (define-public ocamlformat
   (package
     (name "ocamlformat")
-    (version "0.24.1")
+    (version "0.27.0")
     (source
       (origin
         (method git-fetch)
@@ -9416,24 +9418,34 @@ defined in OCaml 4.12.0.")
         (file-name (git-file-name name version))
         (sha256
           (base32
-            "0y1j5mwwrliy6a78cmpi6j8gw425shghqg9ylyl3qw5fx4b088pp"))))
+            "0wdzv54s31lckkkwf776j7npcd7i2sscdy9asiaxy50vgi4y7kbx"))
+        (modules '((guix build utils)))
+        (snippet
+         #~(begin
+             ;; Add out_width field for OCaml 5.4 compatibility
+             (substitute* "lib/bin_conf/Bin_conf.ml"
+               (("      ; out_indent= \\(fun _ -> \\(\\)\\) \\} \\)")
+                "      ; out_indent= (fun _ -> ())\n      ; out_width= (fun _ ~pos ~len -> 80) } )"))))))
     (build-system dune-build-system)
     (arguments
-     '(#:package "ocamlformat"
-       #:phases
-       (modify-phases %standard-phases
-         ;; Tests related to other packages
-         (add-after 'unpack 'remove-unrelated-tests
-           (lambda _
-             (delete-file-recursively "test/rpc")))
-         (add-after 'unpack 'fix-test-format
-           (lambda _
-             (substitute* "test/cli/repl_file_errors.t/run.t"
-               ((" ;;") ";;")))))))
+     ;; Tests fail due to cmdliner version mismatch with ocaml-alcotest
+     '(#:tests? #f))
+    ;; (arguments
+    ;;  '(#:package "ocamlformat"
+    ;;    #:phases
+    ;;    (modify-phases %standard-phases
+    ;;      ;; Tests related to other packages
+    ;;      (add-after 'unpack 'remove-unrelated-tests
+    ;;        (lambda _
+    ;;          (delete-file-recursively "test/rpc")))
+    ;;      (add-after 'unpack 'fix-test-format
+    ;;        (lambda _
+    ;;          (substitute* "test/cli/repl_file_errors.t/run.t"
+    ;;            ((" ;;") ";;")))))))
     (propagated-inputs
       (list ocaml-version
             ocaml-base
-            ocaml-cmdliner
+            ocaml-cmdliner-1.3
             ocaml-dune-build-info
             ocaml-either
             ocaml-fix
