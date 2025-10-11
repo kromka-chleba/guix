@@ -333,7 +333,8 @@ Run the container with the given options."))
                          (mappings '())
                          (mounts '())
                          (namespaces %namespaces)
-                         (guest-uid 0) (guest-gid 0))
+                         (guest-uid 0) (guest-gid 0)
+                         capabilities)
   "Evaluate EXP, a gexp, in a new process executing in separate namespaces as
 listed in NAMESPACES.  Add MOUNTS, a list of <file-system>, and MAPPINGS, a
 list of <file-system-mapping>, to the set of directories visible in the
@@ -342,7 +343,10 @@ GUEST-GID.  Return the process' exit status as a monadic value.
 
 This is useful to implement processes that, unlike derivations, are not
 entirely pure and need to access the outside world or to perform side
-effects."
+effects.
+
+CAPABILITIES may be a list of capabilities names (e.g., '(cap_chown)) or
+values (e.g., (list CAP_OWNER)) to pass to `run-container'."
   (mlet %store-monad ((lowered (lower-gexp exp)))
     (define inputs
       (cons (lowered-gexp-guile lowered)
@@ -383,4 +387,5 @@ effects."
                   #:populate-file-system populate-file-system
                   #:namespaces namespaces
                   #:guest-uid guest-uid
-                  #:guest-gid guest-gid))))))
+                  #:guest-gid guest-gid
+                  #:capabilities capabilities))))))
