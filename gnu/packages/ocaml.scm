@@ -2790,6 +2790,60 @@ dates and times.")
       (license license:lgpl2.1+)
     ))
 
+(define-public ocaml-int-repr
+  (package
+    (name "ocaml-int-repr")
+    (version "0.17.0")
+    (home-page
+     "https://github.com/janestreet/int_repr")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/janestreet/int_repr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "008gmlc5bw7gi15kgijmcrx9wkq9gh6rch0gldq1vk3r1z7q1rn9"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Remove [@@deriving globalize] annotations
+            (substitute* (find-files "." "\\.(ml|mli)$")
+              (("\\[@@deriving globalize\\]") "")
+              ((", globalize") ""))))))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-base ocaml-ppx-jane))
+    (properties `((upstream-name . "int_repr")))
+    (synopsis "Integers of various widths")
+    (description "Integers of various widths.")
+    (license license:expat)))
+
+(define-public ocaml-ppx-helpers
+  (package
+    (name "ocaml-ppx-helpers")
+    (version "0.0.0-1.21ca9e2")
+    (home-page "https://github.com/janestreet/ppx_helpers")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/janestreet/ppx_helpers")
+             (commit "21ca9e2")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fw602infxk9jwzi9sl5n3fx2z7b7nrcpk1z9cysg7f3d8flz0kk"
+         ))))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-ppxlib ocaml-ppxlib-jane))
+    (synopsis "Helper functions for ppx rewriters")
+    (description "This library provides helper functions for writing ppx rewriters.")
+    (license license:expat)))
+
 (define-public ocaml-ppx-globalize
   (package
     (name "ocaml-ppx-globalize")
@@ -6523,7 +6577,7 @@ recommend using this package directly.")
 (define-public ocaml-jane-street-headers
   (package
     (name "ocaml-jane-street-headers")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin
       "jane-street-headers" version
@@ -7498,7 +7552,7 @@ by making sure that you only compare comparable values.")
 (define-public ocaml-fieldslib
   (package
     (name "ocaml-fieldslib")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (janestreet-origin
              "fieldslib" version
              "083izf854vzmi5zj63r7ipjf09y1dqf7iy8n6r4663444xrzs2h5"))
@@ -7517,7 +7571,7 @@ of a record and create new record values.")
 (define-public ocaml-variantslib
   (package
     (name "ocaml-variantslib")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin "variantslib" version
               "12dssx4by6rgjzfrvksz83hkcpmsq0brn87dh22pv1rrwhw79n75"))
@@ -7614,7 +7668,7 @@ variant types.")
 (define-public ocaml-ppx-custom-printf
   (package
     (name "ocaml-ppx-custom-printf")
-    (version "0.15.0")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/ppx_custom_printf")
     (source
      (origin
@@ -7625,7 +7679,8 @@ variant types.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1k8nmq6kwqz2wpkm9ymq749dz1vd8lxrjc711knp1wyz5935hnsv"))))
+         "17kaghmdfsmwh0br0m7v9b31lcfk1psq034ajnh2l508sdph6n0c"
+         ))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-ppx-sexp-conv ocaml-ppxlib))
@@ -7638,7 +7693,7 @@ string conversion.")
 (define-public ocaml-ppx-stable-witness
   (package
     (name "ocaml-ppx-stable-witness")
-    (version "0.16.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -7647,7 +7702,9 @@ string conversion.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "1ppmazy1vw0j44z1p60ln6fddz414zmyrqkpi54w6cr93giqsl2v"))))
+         (base32
+          "07af14w3xh9vy57gh31nrxaq9pg753jhlx4fwwi1ngccyd3nx3lk"
+          ))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_stable_witness")))
@@ -7662,7 +7719,7 @@ different versions of the code to safely communicate.")
 (define-public ocaml-bin-prot
   (package
     (name "ocaml-bin-prot")
-    (version "0.16.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -7671,7 +7728,9 @@ different versions of the code to safely communicate.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "1ybs0152ilgr8sa1hqnc2jj0gbvg855ixl3c5b2pjbnk7blhqnd8"))))
+         (base32
+          "1f3a2a3fwiy2c8cydza9nkjry979dh58j2zk2g6qiybf4zq8l1z5"
+          ))))
     (build-system dune-build-system)
     (propagated-inputs
       (list ocaml-base
@@ -7696,7 +7755,7 @@ storage of large amounts of data.")
 (define-public ocaml-protocol-version-header
   (package
     (name "ocaml-protocol-version-header")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7706,7 +7765,8 @@ storage of large amounts of data.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0s638cwf1357gg754rc4306654hhrhzqaqm2lp3yv5vj3ml8p4qy"))))
+                "1pkj6b2hhvbqs4dbjchdb214bwk1qlxnzibgyfl3x6k6m2yvib2q"
+                ))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-core ocaml-ppx-jane))
     (properties `((upstream-name . "protocol_version_header")))
@@ -7792,7 +7852,7 @@ hash functions from type exrpessions and definitions.")
 (define-public ocaml-ppx-enumerate
   (package
     (name "ocaml-ppx-enumerate")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin
       "ppx_enumerate" version
@@ -7834,7 +7894,7 @@ many values).")
 (define-public ocaml-ppx-here
   (package
     (name "ocaml-ppx-here")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin "ppx_here" version
                         "1pyaw31j9n6r98ar947n3j2qj6rrszbdxr8jghk96j4ajdy05g65"))
@@ -7998,7 +8058,7 @@ literal of the  form 1.0v to conversion functions currently in scope.")
 (define-public ocaml-ppx-optional
   (package
     (name "ocaml-ppx-optional")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (janestreet-origin
       "ppx_optional" version
@@ -8085,7 +8145,7 @@ position.")
 (define-public ocaml-ppx-cold
   (package
     (name "ocaml-ppx-cold")
-    (version "0.15.0")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/ppx_cold")
     (source
      (janestreet-origin "ppx_cold" version
@@ -8516,7 +8576,7 @@ driver including all standard Jane Street ppx rewriters.")
 (define-public ocaml-base-bigstring
   (package
     (name "ocaml-base-bigstring")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
      (origin
        (method git-fetch)
@@ -8525,7 +8585,9 @@ driver including all standard Jane Street ppx rewriters.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1hv3hw2fwqmkrxms1g6rw3c18mmla1z5bva3anx45mnff903iv4q"))))
+        (base32
+         "1qb02dzc7zhdmhzcw735is6hq8mbbfdw2y626srl3mwlaf8ysq5l"
+         ))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-base ocaml-int-repr ocaml-ppx-jane))
     (properties `((upstream-name . "base_bigstring")))
@@ -8602,10 +8664,62 @@ Haskell's Quickcheck library, with support for built-in types as well as
 types provided by Base.")
     (license license:expat)))
 
+(define-public ocaml-gel
+  (package
+    (name "ocaml-gel")
+    (version "0.17.0")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/janestreet/gel")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "0j614lb2blb2zn8pqx51jx19pwhd8vv8ki3fm3sp0da8nb2yaq6c"
+          ))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-base ocaml-ppx-jane))
+    (home-page "https://github.com/janestreet/ppx_diff")
+    (synopsis
+      "A library to mark non-record fields global")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-ppx-diff
+  (package
+    (name "ocaml-ppx-diff")
+    (version "0.17.1")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/janestreet/ppx_diff")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "07lypj65xhnxyx4ymf6skh68kndzvwpgnfb4rxhwqdg3hc8fav3r"
+          ))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml-ppx-enumerate ocaml-ppx-compare ocaml-ppx-jane ocaml-gel
+            ))
+    (home-page "https://github.com/janestreet/ppx_diff")
+    (synopsis
+      "ppx for ldiffable")
+    (description "Generation of diffs and update functions for ocaml types.
+
+ppx_diff is a ppx rewriter that generates the implementation of [Diffable.S]. The [Diff.t] type represents differences between two values. The [Diff.get] and [Diff.apply_exn] functions compute and apply the differences."
+      )
+    (license license:expat)))
+
 (define-public ocaml-spawn
   (package
     (name "ocaml-spawn")
-    (version "0.15.1")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8614,7 +8728,8 @@ types provided by Base.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "16aq5z3mq5lkpryfs4w0748b2w9v061myml0hn7nhh6r6i329w7a"))))
+                "0wxp4yl8hjw1g68j6gii84agd3n31gcc99nrfxbnrfxrn4nic510"
+                ))))
     (build-system dune-build-system)
     (native-inputs (list ocaml-ppx-expect))
     (home-page "https://github.com/janestreet/spawn")
@@ -8641,7 +8756,7 @@ thousands of times faster than fork.
 (define-public ocaml-core
   (package
     (name "ocaml-core")
-    (version "0.15.1")
+    (version "0.17.1")
     (source
       (origin
         (method git-fetch)
@@ -8650,7 +8765,9 @@ thousands of times faster than fork.
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "17vc2i5qb53dr0civ8pkrnnsn2nkydlq44ash7fhh93yb4sffy28"))))
+         (base32
+          "1m1nkpd412skknd3lj2gr74v0p3rz7xbsrk2kpar4m15z1r02h2y"
+          ))))
     (build-system dune-build-system)
     (arguments
      `(#:package "core"
@@ -8665,6 +8782,7 @@ thousands of times faster than fork.
             ocaml-jst-config
             ocaml-ppx-assert
             ocaml-ppx-base
+            ocaml-ppx-diff
             ocaml-ppx-hash
             ocaml-ppx-inline-test
             ocaml-ppx-jane
@@ -8684,30 +8802,40 @@ standard library that was developed by Jane Street.")
     ;; by OCaml's license for consortium members (see THIRD-PARTY.txt).
     (license license:expat)))
 
-(define-public ocaml-int-repr
-  (package
-    (name "ocaml-int-repr")
-    (version "0.17.0")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/janestreet/int_repr")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "008gmlc5bw7gi15kgijmcrx9wkq9gh6rch0gldq1vk3r1z7q1rn9"
-          ))))
-    (build-system dune-build-system)
-    (arguments
-     `(#:tests? #f)) ;no tests
-    (propagated-inputs (list ocaml-base ocaml-ppx-jane ocaml-ppx-globalize))
-    (properties `((upstream-name . "int_repr")))
-    (home-page "https://github.com/janestreet/int_repr")
-    (synopsis "Integers of various widths")
-    (description "Integers of various widths.")
-    (license license:expat)))
+;; (define-public ocaml-int-repr
+;;   (package
+;;     (name "ocaml-int-repr")
+;;     (version "0.17.0")
+;;     (source
+;;       (origin
+;;         (method git-fetch)
+;;         (uri (git-reference
+;;                (url "https://github.com/janestreet/int_repr")
+;;                (commit (string-append "v" version))))
+;;         (file-name (git-file-name name version))
+;;         (sha256
+;;          (base32
+;;           "008gmlc5bw7gi15kgijmcrx9wkq9gh6rch0gldq1vk3r1z7q1rn9"))
+;;         (modules '((guix build utils)))
+;;         (snippet
+;;          #~(begin
+;;              ;; Remove globalize from [@@deriving ...] annotations
+;;              (substitute* (find-files "." "\\.mli?$")
+;;                (("\\[@@deriving ([^\\]]*), globalize([^\\]]*)\\]")
+;;                 "[@@deriving \\1\\2]")
+;;                (("\\[@@deriving globalize, ([^\\]]*)\\]")
+;;                 "[@@deriving \\1]")
+;;                (("\\[@@deriving globalize\\]")
+;;                 ""))))))
+;;     (build-system dune-build-system)
+;;     (arguments
+;;      `(#:tests? #f)) ;no tests
+;;     (propagated-inputs (list ocaml-base ocaml-ppx-jane ocaml-ppx-sexp-conv))
+;;     (properties `((upstream-name . "int_repr")))
+;;     (home-page "https://github.com/janestreet/int_repr")
+;;     (synopsis "Integers of various widths")
+;;     (description "Integers of various widths.")
+;;     (license license:expat)))
 
 (define-public ocaml-core-kernel
   (package
