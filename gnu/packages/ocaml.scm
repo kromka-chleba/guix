@@ -3423,6 +3423,50 @@ to which allows adding and looking up bindings in a type safe manner.")
       (license license:bsd-2)
     ))
 
+(define-public ocaml-ke
+  (package
+    (name "ocaml-ke")
+    (version "0.6")
+    (home-page
+     "https://github.com/mirage/ke")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1fv23ys53p66xk1gjx9kdkv967jylwnjrscw2mfvi51b7gmzrsry"
+      "v"
+      ))
+    (build-system dune-build-system)
+    ;; (arguments
+    ;;  '(#:tests? #f))
+    ;; (propagated-inputs (list ))
+    (propagated-inputs (list ocaml-fmt ocaml-alcotest ocaml-bigstringaf))
+    (synopsis "Fast implementation of a queue")
+      (description
+       "Queue or FIFO is one of the most famous data-structure used in several algorithms. Ke provides some implementations of it in a functional or imperative way."
+       )
+      (license license:expat)
+    ))
+
+(define-public ocaml-magic-mime
+  (package
+    (name "ocaml-magic-mime")
+    (version "1.3.1")
+    (home-page
+     "https://github.com/mirage/ocaml-magic-mime")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1yi681s1bbbnjz11bfah5g93jcl18varhs5m346bq4c2m4njw8x9"
+      "v"
+      ))
+    (build-system dune-build-system)
+    ;; (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl))
+    (synopsis "Convert file extensions to MIME types")
+      (description "This library contains a database of MIME types that maps filename extensions into MIME types suitable for use in many Internet protocols such as HTTP or e-mail. It is generated from the mime.types file found in Unix systems, but has no dependency on a filesystem since it includes the contents of the database as an ML datastructure."
+       )
+      (license license:isc)
+    ))
+
 (define-public ocaml-piaf
   (package
     (name "ocaml-piaf")
@@ -3437,7 +3481,7 @@ to which allows adding and looking up bindings in a type safe manner.")
     (build-system dune-build-system)
     ;; (arguments
     ;;  '(#:tests? #f))
-    (propagated-inputs (list ocaml-either ocaml-uutf ocaml-gen ocaml-iter ocaml-eio))
+    (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl ocaml-magic-mime))
     (synopsis "Web library for OCaml with support for HTTP/1.X / HTTP/2")
       (description
        "Containers is an extension of OCaml's standard library (under BSD license) focused on data structures, combinators and iterators, without dependencies on unix, str or num. Every module is independent and is prefixed with 'CC' in the global namespace. Some modules extend the stdlib (e.g. CCList provides safe map/fold_right/append, and additional functions on lists). Alternatively, open Containers will bring enhanced versions of the standard modules into scope."
@@ -7840,10 +7884,7 @@ size, the version of the compiler, ...")
 (define-public ocaml-ppx-let
   (package
     (name "ocaml-ppx-let")
-    (version "0.15.0")
-    (source
-     (janestreet-origin "ppx_let" version
-                        "0m9niyiiv3qzv5x8hw0ifxjjzshnmx40dchka9d93mmnx88jqx34"))
+    (version "0.17.1")
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-ppxlib ocaml-ppx-here))
@@ -7852,6 +7893,12 @@ size, the version of the compiler, ...")
     (synopsis "Monadic let-bindings")
     (description "A ppx rewriter for monadic and applicative let bindings,
 match expressions, and if expressions.")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0q84b60y8v6yf7xpkpz3d2g8yyzbw2d3x037ndcl990c8z8vll73"
+      "v"
+      ))
     (license license:asl2.0)))
 
 (define-public ocaml-ppx-fail
