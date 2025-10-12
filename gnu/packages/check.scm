@@ -1557,6 +1557,28 @@ better plugin api, being easier for users to configure, and simplifying internal
 interfaces and processes.")
     (license license:bsd-2)))
 
+(define-public python-pynose
+  (package
+    (name "python-pynose")
+    (version "1.5.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mdmintz/pynose")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04zv3gncxn9d047a931dapzj2g5gw78ccca8dggq0973h8bhl5bx"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/mdmintz/pynose")
+    (synopsis "Python testing library")
+    (description
+     "This package fixes @code{python-nose} and extends the unittest library
+to make testing easier.")
+    (license license:lgpl2.0)))
+
 (define-public python-pytest
   (package
     (name "python-pytest")
