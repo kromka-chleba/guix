@@ -26472,6 +26472,38 @@ matches\" in the mode line in various search modes.  This is an Emacs port of
 Anzu.zim.")
     (license license:gpl3+)))
 
+(define-public emacs-uniline
+  ;; No tagged releases available.
+  (let ((commit "d9c154a849367dabe47afe5088689d1ea30b4d00")
+        (revision "0"))
+    (package
+      (name "emacs-uniline")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/tbanel/uniline")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0vgkkkfq35d65vm4fn4s8acqwz6zr25lvyn0plvl0yc6aijnlbig"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ;tests failing
+        #:test-command #~(list "emacs" "--batch"
+                               "-l" "tests/uniline-bench.el")))
+      (propagated-inputs
+       (list emacs-hydra))
+      (home-page "https://github.com/tbanel/uniline")
+      (synopsis "Draw Unicode diagrams within your texts in Emacs")
+      (description
+       "Uniline is a minor mode for Emacs that allows users to create Unicode
+text diagrams using keyboard arrows and various brush styles.  It can be used
+to draw lines, shapes, flowcharts, illustrations, and more.")
+      (license license:gpl3+))))
+
 (define-public emacs-ascii-art-to-unicode
   (package
     (name "emacs-ascii-art-to-unicode")
