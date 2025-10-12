@@ -275,6 +275,39 @@ security standards.
 This package tracks the Extended Support Release (ESR) channel.")
     (license license:mpl2.0)))
 
+(define-public nss-next
+  (package
+   (inherit nss)
+   (name "nss-next")
+   (version "3.112.2")
+   (source
+    (origin
+      (inherit (package-source nss))
+      (uri (let ((version-with-underscores
+                  (string-join (string-split version #\.) "_")))
+             (string-append
+              "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
+              "releases/NSS_" version-with-underscores "_RTM/src/"
+              "nss-" version ".tar.gz")))
+      (sha256
+       (base32 "1mbi0awkb93yq2g0ahvq0jfs2lgby0d82q63bwwsxvpd1fyvh690"))
+      (patches
+       (search-patches "nss-3.56-pkgconfig.patch"
+                       "nss-getcwd-nonnull.patch"
+                       "nss-increase-test-timeout.patch"
+                       "nss-3.115-disable-pkix-ocsp-tests.patch"))))
+
+   (synopsis "Network Security Services (ESR)")
+   (description
+    "Network Security Services (@dfn{NSS}) is a set of libraries designed to
+support cross-platform development of security-enabled client and server
+applications.  Applications built with NSS can support SSL v2 and v3, TLS,
+PKCS #5, PKCS #7, PKCS #11, PKCS #12, S/MIME, X.509 v3 certificates, and other
+security standards.
+
+This package is the current upstream Extended Support Release channel and ought
+to replace our current nss.")))
+
 ;; nss-rapid tracks the rapid release channel.  Unless your package requires a
 ;; newer version, you should prefer the `nss' package, which tracks the ESR
 ;; channel.
