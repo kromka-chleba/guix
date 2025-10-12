@@ -3059,7 +3059,7 @@ simple (yet expressive) query language to select the tests to run.")
 (define-public ocaml-expect-test-helpers-core
   (package
     (name "ocaml-expect-test-helpers-core")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6578,13 +6578,14 @@ recommend using this package directly.")
   (package
     (name "ocaml-jane-street-headers")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/jane-street-headers")
     (source
-     (janestreet-origin
-      "jane-street-headers" version
-      "1r27r0bxxa0iaah5rm84lwhrmh784vfpmb6056hpv0p34rxs7r1l"))
+     (github-tag-origin
+      name home-page version
+      "0hq29ip8k7vyjrjm5hq9bq6b5cmssqlzcsaqi350sp39xg9bhilw"
+      "v"))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
-    (home-page "https://github.com/janestreet/jane-street-headers")
     (synopsis "Jane Street C header files")
     (description "C header files shared between the various Jane Street
 packages.")
@@ -7279,7 +7280,7 @@ See ocaml_intrinsics for details. Unlike ocaml_intrinsics, ocaml_intrinsics_kern
     (package
       (inherit ocaml-base)
       (name "ocaml-base")
-      (version (git-version "0.15.0" revision commit))
+      (version (git-version "0.17.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -7553,15 +7554,17 @@ by making sure that you only compare comparable values.")
   (package
     (name "ocaml-fieldslib")
     (version "0.17.0")
-    (source (janestreet-origin
-             "fieldslib" version
-             "083izf854vzmi5zj63r7ipjf09y1dqf7iy8n6r4663444xrzs2h5"))
+    (home-page "https://github.com/janestreet/fieldslib")
+    (source
+     (github-tag-origin
+      name home-page version
+      "09ba8z37ipyhb3mmhgf1pq4icviyi677dljr9rc3d1m0ckgxryb5"
+      "v"))
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ; No tests
     (propagated-inputs
      (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "fieldslib")))
-    (home-page "https://github.com/janestreet/fieldslib")
     (synopsis "Syntax extension to record fields")
     (description "Syntax extension to define first class values representing
 record fields, to get and set record fields, iterate and fold over all fields
@@ -7572,9 +7575,12 @@ of a record and create new record values.")
   (package
     (name "ocaml-variantslib")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/variantslib")
     (source
-     (janestreet-origin "variantslib" version
-              "12dssx4by6rgjzfrvksz83hkcpmsq0brn87dh22pv1rrwhw79n75"))
+     (github-tag-origin
+      name home-page version
+      "1prfwpmj544lvsx5sgxc3l690y8f09imlyxk0xn52hnfqgbppymz"
+      "v"))
     (build-system dune-build-system)
     (arguments
      ;; No tests
@@ -7582,7 +7588,6 @@ of a record and create new record values.")
     (propagated-inputs
      (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "variantslib")))
-    (home-page "https://github.com/janestreet/variantslib")
     (synopsis "OCaml variants as first class values")
     (description "The Core suite of libraries is an alternative to OCaml's
 standard library.")
@@ -7833,9 +7838,12 @@ currently provides SHA1, SHA256 and SHA512 hash functions.")
   (package
     (name "ocaml-ppx-hash")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_hash")
     (source
-     (janestreet-origin "ppx_hash" version
-                "048pim0xicj8j9whd5lnchf62788sk3w89h12aybbalk1xm6dfs5"))
+     (github-tag-origin
+      name home-page version
+      "0zxb1n9zx4k44hilibdgasrq45y965ywx7h8pij3c6knh4pc400q"
+      "v"))
     (build-system dune-build-system)
     (propagated-inputs
      (list
@@ -7843,7 +7851,6 @@ currently provides SHA1, SHA256 and SHA512 hash functions.")
       ocaml-ppx-sexp-conv
            ocaml-ppxlib))
     (properties `((upstream-name . "ppx_hash")))
-    (home-page "https://github.com/janestreet/ppx_hash")
     (synopsis "Generation of hash functions from type expressions and definitions")
     (description "This package is a collection of ppx rewriters that generate
 hash functions from type exrpessions and definitions.")
@@ -7853,17 +7860,18 @@ hash functions from type exrpessions and definitions.")
   (package
     (name "ocaml-ppx-enumerate")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_enumerate")
     (source
-     (janestreet-origin
-      "ppx_enumerate" version
-      "16yhk3xk2hskmlspb6mikmdp60qaypyiqgq9p17kxpial6fgpdfy"))
+     (github-tag-origin
+      name home-page version
+      "1vkn3ii16974p68n97187wz062ksp9al3nmxy1jdsywzkp36p832"
+      "v"))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #f)) ; no test suite
     (propagated-inputs
-     (list ocaml-base ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib ocaml-ppxlib-jane))
     (properties `((upstream-name . "ppx_enumerate")))
-    (home-page "https://github.com/janestreet/ppx_enumerate")
     (synopsis "Generate a list containing all values of a finite type")
     (description "Ppx_enumerate is a ppx rewriter which generates a definition
 for the list of all values of a type (for a type which only has finitely
@@ -7895,9 +7903,12 @@ many values).")
   (package
     (name "ocaml-ppx-here")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_here")
     (source
-     (janestreet-origin "ppx_here" version
-                        "1pyaw31j9n6r98ar947n3j2qj6rrszbdxr8jghk96j4ajdy05g65"))
+     (github-tag-origin
+      name home-page version
+      "1hr6ymfkz5xhsciia8bi23mnlx94h4345njp9r7k9f1nzxr0xg69"
+      "v"))
     (build-system dune-build-system)
     (arguments
      ;; broken tests
@@ -7905,7 +7916,6 @@ many values).")
     (propagated-inputs
      (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_here")))
-    (home-page "https://github.com/janestreet/ppx_here")
     (synopsis "Expands [%here] into its location")
     (description
       "Part of the Jane Street's PPX rewriters collection.")
@@ -7937,7 +7947,7 @@ many values).")
 (define-public ocaml-ppx-sexp-value
   (package
     (name "ocaml-ppx-sexp-value")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -7960,7 +7970,7 @@ building s-expressions from ocaml values.")
 (define-public ocaml-ppx-sexp-message
   (package
     (name "ocaml-ppx-sexp-message")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -7985,7 +7995,7 @@ context such as function arguments.")
 (define-public ocaml-ppx-pipebang
   (package
     (name "ocaml-ppx-pipebang")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8008,7 +8018,7 @@ context such as function arguments.")
 (define-public ocaml-ppx-module-timer
   (package
     (name "ocaml-ppx-module-timer")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8033,7 +8043,7 @@ to record their startup time.")
 (define-public ocaml-ppx-fixed-literal
   (package
     (name "ocaml-ppx-fixed-literal")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8059,16 +8069,17 @@ literal of the  form 1.0v to conversion functions currently in scope.")
   (package
     (name "ocaml-ppx-optional")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_optional")
     (source
-     (janestreet-origin
-      "ppx_optional" version
-      "0af7ayhfc1jc01mxs4k253gq49yss2ymkmjsy6fpcz39zhci7fvj"))
+     (github-tag-origin
+      name home-page version
+      "00gprmppf1w875r4r3bq9hfx333rarsnyxk1rmym66x53v73cz28"
+      "v"))
     (build-system dune-build-system)
     (arguments `(#:tests? #f)) ; No tests
     (propagated-inputs
-     (list ocaml-base ocaml-ppxlib))
+     (list ocaml-base ocaml-ppxlib ocaml-ppxlib-jane))
     (properties `((upstream-name . "ppx_optional")))
-    (home-page "https://github.com/janestreet/ppx_optional")
     (synopsis "Pattern matching on flat options")
     (description
       "A ppx rewriter that rewrites simple match statements with an if then
@@ -8148,8 +8159,10 @@ position.")
     (version "0.17.0")
     (home-page "https://github.com/janestreet/ppx_cold")
     (source
-     (janestreet-origin "ppx_cold" version
-                        "13gqmfw2sq80anag9bwpm35600l1fnfn7mh9cbj1291k84rsx7wb"))
+     (github-tag-origin
+      name home-page version
+      "1l0gg8dyjawb71nz6w4r3svi0jbjk0qlmw9r3bzb0jylqsanlmkw"
+      "v"))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-ppxlib))
@@ -8235,7 +8248,7 @@ to denote the expected output.")
      (package
        (inherit ocaml-ppx-expect)
        (name "ocaml-ppx-expect")
-       (version (git-version "0.15.0" revision commit))
+       (version (git-version "0.17.0" revision commit))
        (source
         (origin
           (method git-fetch)
@@ -8300,7 +8313,7 @@ from type definitions.")
 (define-public ocaml-ppx-string
   (package
     (name "ocaml-ppx-string")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8348,21 +8361,23 @@ conversion functions between almost identical types.")
   (package
     (name "ocaml-ppx-base")
     (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_base")
     (source
-     (janestreet-origin
-      "ppx_base" version
-      "181w7y2has8jsrqdsvd08q5nhnkx523vwsk3lg0cjix55qssvfyn"))
+     (github-tag-origin
+      name home-page version
+      "14lvhy842fjjm2qwqhxkqig4mc5s439rbkd87mlys86byzrdrkpy"
+      "v"))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-ppx-compare
            ocaml-ppx-cold
            ocaml-ppx-enumerate
            ocaml-ppx-hash
+           ocaml-ppx-globalize
            ocaml-ppx-js-style
            ocaml-ppx-sexp-conv
            ocaml-ppxlib))
     (properties `((upstream-name . "ppx_base")))
-    (home-page "https://github.com/janestreet/ppx_base")
     (synopsis "Base set of ppx rewriters")
     (description "Ppx_base is the set of ppx rewriters used for Base.
 
@@ -8400,7 +8415,7 @@ functions from type definitions.")
 (define-public ocaml-ppx-ignore-instrumentation
   (package
     (name "ocaml-ppx-ignore-instrumentation")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8425,7 +8440,7 @@ PPXs or compiler features not yet upstreamed.")
 (define-public ocaml-ppx-log
   (package
     (name "ocaml-ppx-log")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8453,7 +8468,7 @@ nodes for lazily rendering log messages.")
 (define-public ocaml-ppx-disable-unused-warnings
   (package
     (name "ocaml-ppx-disable-unused-warnings")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8840,7 +8855,7 @@ standard library that was developed by Jane Street.")
 (define-public ocaml-core-kernel
   (package
     (name "ocaml-core-kernel")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -8900,7 +8915,7 @@ core_kernel.")
 (define-public ocaml-async-kernel
   (package
     (name "ocaml-async-kernel")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8924,7 +8939,7 @@ JavaScript using @code{Async_js}.")
 (define-public ocaml-async-unix
   (package
     (name "ocaml-async-unix")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8950,7 +8965,7 @@ system calls run in.")
 (define-public ocaml-async-rpc-kernel
   (package
     (name "ocaml-async-rpc-kernel")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9010,7 +9025,7 @@ external entity (like a human or another program).")
 (define-public ocaml-textutils-kernel
   (package
     (name "ocaml-textutils-kernel")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9033,7 +9048,7 @@ javascript.")
 (define-public ocaml-textutils
   (package
     (name "ocaml-textutils")
-    (version "0.15.0")
+    (version "0.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9059,7 +9074,7 @@ javascript.")
 (define-public ocaml-timezone
   (package
     (name "ocaml-timezone")
-    (version "0.15.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -10089,7 +10104,7 @@ OCaml compilers.")
 (define-public ocaml-angstrom
   (package
     (name "ocaml-angstrom")
-    (version "0.15.0")
+    (version "0.16.1")
     (home-page "https://github.com/inhabitedtype/angstrom")
     (source
      (origin
