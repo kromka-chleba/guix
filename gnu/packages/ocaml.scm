@@ -3372,7 +3372,6 @@ to which allows adding and looking up bindings in a type safe manner.")
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs (list ocaml-ppxlib))
-    (properties `((upstream-name . "thread-table")))
       (synopsis "Simple profiling library")
       (description
        "Landmarks is a simple profiling library for OCaml. It provides primitives to delimit portions of code and measure the performance of instrumented code at runtime.")
@@ -3392,12 +3391,33 @@ to which allows adding and looking up bindings in a type safe manner.")
       "05jvz6vphjp229ap24xakxqgw3xymqff80q08pfnh5vr2lyb0hxm" "v"
       ))
     (build-system dune-build-system)
-    ;; (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs (list ocaml-mdx ocaml-ounit2 ocaml-qcheck))
-    (properties `((upstream-name . "thread-table")))
       (synopsis "Clean and efficient loop fusion for all your iterating needs!")
       (description
        "Iter is a simple abstraction over iter functions intended to iterate efficiently on collections while performing some transformations. Common operations supported by Iter include filter, map, take, drop, append, flat_map, etc. Iter is not designed to be as general-purpose or flexible as Seq. Rather, it aims at providing a very simple and efficient way of iterating on a finite number of values, only allocating (most of the time) one intermediate closure to do so. For instance, iterating on keys, or values, of a Hashtbl.t, without creating a list. Similarly, the code above is turned into a single optimized for loop with flambda."
+       )
+      ;; With linking exception.
+      (license license:bsd-2)
+    ))
+
+(define-public ocaml-containers
+  (package
+    (name "ocaml-containers")
+    (version "3.16")
+    (home-page
+     "https://github.com/c-cube/ocaml-containers")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0n8vng4g7rmwalp5ag1pl19f5zx1v2yxmj5gdma44s7329jw18ar" "v"
+      ))
+    (build-system dune-build-system)
+    (arguments
+     '(#:tests? #f))  ; CBOR tests fail on NaN comparison (NaN != NaN in IEEE 754)
+    (propagated-inputs (list ocaml-either ocaml-uutf ocaml-gen ocaml-iter))
+      (synopsis "A lightweight, modular standard library extension, string library, and interfaces to various libraries (unix, threads, etc.) BSD license.")
+      (description
+       "Containers is an extension of OCaml's standard library (under BSD license) focused on data structures, combinators and iterators, without dependencies on unix, str or num. Every module is independent and is prefixed with 'CC' in the global namespace. Some modules extend the stdlib (e.g. CCList provides safe map/fold_right/append, and additional functions on lists). Alternatively, open Containers will bring enhanced versions of the standard modules into scope."
        )
       ;; With linking exception.
       (license license:bsd-2)
