@@ -138,6 +138,21 @@ TAG-PREFIX defaults to \"v\" but can be customized or set to \"\" for no prefix.
      (base32
       hash))))
 
+;; (define-public ocaml-pack-template
+;;   (package
+;;     (name "ocaml-pack-template")
+;;     (version "0.2.0")
+;;     (home-page
+;;      "https://github.com/anmonteiro/httpun")
+;;     (source
+;;      (github-tag-origin
+;;       name home-page version
+;;       "056q1qm49xfhkkjyyxbrp5njqzgwlh2ngzql4cwqcg9f6h04gvpx"
+;;       ""
+;;       ))
+;;     (build-system dune-build-system)
+;;     ))
+
 (define-public camlboot
   (let ((commit "45045d0afa82f7e9b7ea07314aab08be2d3cd64b")
         (revision "1"))
@@ -3641,23 +3656,111 @@ to which allows adding and looking up bindings in a type safe manner.")
 (define-public ocaml-faraday
   (package
     (name "ocaml-faraday")
-    (version "0.8.0")
+    (version "0.8.2")
     (home-page
      "https://github.com/inhabitedtype/faraday")
     (source
      (github-tag-origin
-      name home-page version
-      "0chwr6jmvf86rrcn04mh7lqhkl4z3c04lwy03mfx8yzig8k87vr1"
+      name home-page version "00kca7f1qhcfps3fxn3rxrsiiir1ziqpbbhv5p7dvmhihw7287n1"
       ""
       ))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-bigstringaf ocaml-lwt))
+    (propagated-inputs (list ocaml-bigstringaf ocaml-lwt ocaml-async ocaml-alcotest
+                             ))
     (synopsis
      "Serialization library built for speed and memory efficiency"
      )
     (description "Faraday is a library for writing fast and memory-efficient serializers. Its core type and related operation gives the user fine-grained control over copying and allocation behavior while serializing user-defined types, and presents the output in a form that makes it possible to use vectorized write operations, such as the writev system call, or any other platform or application-specific output APIs."
        )
       (license license:bsd-3)
+    ))
+
+(define-public ocaml-mirage-mtime
+  (package
+    (name "ocaml-mirage-mtime")
+    (version "5.2.0")
+    (home-page
+     "https://github.com/mirage/mirage-mtime"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "0x1smji6hc5wjwky01d581vkil0c5b2kjqhw8s10rp262xsyhn24"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-logs))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-gluten
+  (package
+    (name "ocaml-gluten")
+    (version "0.5.2")
+    (home-page
+     "https://github.com/anmonteiro/gluten"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "0z7b68c2l90lnlds03b459vm16pcril12hl3fr4m3wwh8kfin3wc"
+      ""
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-lwt ocaml-mirage-flow ocaml-faraday ocaml-eio))
+    ;; (propagated-inputs (list ocaml-logs ocaml-cstruct ocaml-mirage-mtime ocaml-alcotest ocaml-angstrom))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-pecu
+  (package
+    (name "ocaml-pecu")
+    (version "0.7")
+    ;; (source (origin
+    ;;           (method url-fetch)
+    ;;           (uri
+    ;;            "https://github.com/mirage/pecu/releases/download/v0.7/pecu-v0.7.tbz")
+    ;;           (sha256
+    ;;            (base32
+    ;;             "0y6pkz7bl63rhlhgdaizlkx4xnak95l6f02468yd6a34n6spfx5d"))))
+    (build-system dune-build-system)
+    (native-inputs (list ocaml-fmt ocaml-alcotest ocaml-crowbar ocaml-astring))
+    (home-page "https://github.com/mirage/pecu")
+    (synopsis "Encoder/Decoder of Quoted-Printable (RFC2045 & RFC2047)")
+    (description
+     "This package provides a non-blocking encoder/decoder of Quoted-Printable
+according to RFC2045 and RFC2047 (about encoded-word).  Useful to translate
+contents of emails.")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0k2l94q7yms2b1cs2727df9xwmydbi4jg0myiyx47ph372i5xdi8"
+      "v"
+      ))
+    (license license:expat)))
+
+(define-public ocaml-mirage-flow
+  (package
+    (name "ocaml-mirage-flow")
+    (version "5.0.0")
+    (home-page
+     "https://github.com/mirage/mirage-flow"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "15183vj8sxz9d58m1baaqspjx709f84afvpyp2p9g1a9411yvliz"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-logs ocaml-cstruct ocaml-mirage-mtime ocaml-alcotest ocaml-angstrom))
+    (synopsis "")
+    (description "")
+    (license license:isc)
     ))
 
 (define-public ocaml-httpun
@@ -3673,7 +3776,9 @@ to which allows adding and looking up bindings in a type safe manner.")
       ""
       ))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-bigstringaf))
+    (propagated-inputs (list ocaml-bigstringaf ocaml-faraday ocaml-cstruct
+                             ocaml-mirage-flow ocaml-gluten
+                             ))
     (synopsis
      "A high performance, memory efficient, and scalable web server written in OCaml "
      )
@@ -3697,7 +3802,7 @@ to which allows adding and looking up bindings in a type safe manner.")
     (build-system dune-build-system)
     ;; (arguments
     ;;  '(#:tests? #f))
-    (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl ocaml-magic-mime ocaml-eio-ssl ocaml-async
+    (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl ocaml-magic-mime ocaml-eio-ssl ocaml-async ocaml-faraday ocaml-async ocaml-httpun ocaml-pecu
                             
                              ))
     (synopsis "Web library for OCaml with support for HTTP/1.X / HTTP/2")
@@ -4801,27 +4906,6 @@ length of domain names are preserved throughout the module.")
      "IP address types with serialization, supporting a wide range of RFCs.")
     (license license:isc)))
 
-(define-public ocaml-pecu
-  (package
-    (name "ocaml-pecu")
-    (version "0.6")
-    (source (origin
-              (method url-fetch)
-              (uri
-               "https://github.com/mirage/pecu/releases/download/v0.6/pecu-v0.6.tbz")
-              (sha256
-               (base32
-                "1iz5jj9lyl1pah8dfni4wv0qml0ir5zknv4zhw7v50sc8kdbglm9"))))
-    (build-system dune-build-system)
-    (native-inputs (list ocaml-fmt ocaml-alcotest ocaml-crowbar ocaml-astring))
-    (home-page "https://github.com/mirage/pecu")
-    (synopsis "Encoder/Decoder of Quoted-Printable (RFC2045 & RFC2047)")
-    (description
-     "This package provides a non-blocking encoder/decoder of Quoted-Printable
-according to RFC2045 and RFC2047 (about encoded-word).  Useful to translate
-contents of emails.")
-    (license license:expat)))
-
 (define-public ocaml-emile
   (package
     (name "ocaml-emile")
@@ -5729,7 +5813,7 @@ big- and little-endian, with their unsafe counter-parts.")
 (define-public ocaml-cstruct
   (package
     (name "ocaml-cstruct")
-    (version "6.1.1")
+    (version "6.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5738,7 +5822,7 @@ big- and little-endian, with their unsafe counter-parts.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0dpbirs6lzp0bclr3wcw407jjspll7iy66z18zks3mjccvlxd21w"))))
+                "1x3ljgf2kn373cbhczxy8mqfrrkd6lhxax5sy0qv49k6zsax7m32"))))
     (build-system dune-build-system)
     (arguments
      `(#:package "cstruct"))
@@ -6550,7 +6634,7 @@ developed in other systems.  In particular, it enjoys a minimalistic syntax.")
 (define-public ocaml-jst-config
   (package
     (name "ocaml-jst-config")
-    (version "0.16.0")
+    (version "0.17.0")
     (source
       (origin
         (method git-fetch)
@@ -6559,8 +6643,8 @@ developed in other systems.  In particular, it enjoys a minimalistic syntax.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32
-          "01419gk2w2r1xqz11rw1glngi8fi6gq9sh79c06vasrk6vxriy0s"))))
+         (base32 "1dy345p6825wyhpv6drlrl9gqwcgx341a5k3pnvfnxpcc6mkw167"
+                 ))))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs
@@ -7256,7 +7340,6 @@ provided by companion libraries such as
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-sexplib0))
-    (properties `((ocaml5.3-variant . ,(delay ocaml5.3-base))))
     (synopsis
      "Full standard library replacement for OCaml")
     (description
@@ -8828,6 +8911,41 @@ standard library that was developed by Jane Street.")
     ;; by OCaml's license for consortium members (see THIRD-PARTY.txt).
     (license license:expat)))
 
+(define-public ocaml-uopt
+  (package
+    (name "ocaml-uopt")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/uopt")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1hxdm39g9922ngvr29vs2y2jdsq8k29hbqhc2y2wqjbla4jqai5p"
+      "v"))
+    (build-system dune-build-system)
+    (properties `((upstream-name . "uopt")))
+    (propagated-inputs (list ocaml-ppx-jane))
+    (synopsis "An [option]-like type that incurs no allocation, without requiring a reserved value in the underlying type ")
+    (description "An [option]-like type that incurs no allocation, without requiring a reserved value in the underlying type")
+    (license license:expat)))
+
+(define-public ocaml-async-log
+  (package
+    (name "ocaml-async-log")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/async_log")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0l76v6mffny7s2hwd4gs275a3iawsv9arjs0vhmqm7xlh3g85rax"
+      "v"))
+    (build-system dune-build-system)
+    (properties `((upstream-name . "uopt")))
+    (propagated-inputs (list ocaml-async-unix ocaml-core ocaml-core-kernel
+                             ocaml-ppx-jane ocaml-timezone))
+    (synopsis "Logging library built on top of Async_unix ")
+    (description "Logging library built on top of Async_unix")
+    (license license:expat)))
+
 (define-public ocaml-core-kernel
   (package
     (name "ocaml-core-kernel")
@@ -8846,7 +8964,7 @@ standard library that was developed by Jane Street.")
      ;; Cyclic dependency with ocaml-core
      `(#:tests? #f))
     (propagated-inputs
-      (list ocaml-base ocaml-core ocaml-int-repr ocaml-ppx-jane))
+      (list ocaml-base ocaml-core ocaml-int-repr ocaml-ppx-jane ocaml-uopt))
     (properties `((upstream-name . "core_kernel")))
     (home-page "https://github.com/janestreet/core_kernel")
     (synopsis "Portable standard library for OCaml")
@@ -8868,7 +8986,8 @@ the full Core is not available, such as in Javascript.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0h6lqaxpp4r06a63k8yr0g9y7wc8r35v2xzqgvkiiq1ypa48zzgm"))))
+                "198jzjln8i1p74xw3c284kc0wmh4qy917z3xwv8pq1n1lidh36n4"
+                ))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-core
                              ocaml-core-kernel
@@ -8886,6 +9005,8 @@ the full Core is not available, such as in Javascript.")
     (description
      "Unix-specific extensions to some of the modules defined in core and
 core_kernel.")
+    (arguments
+     `(#:tests? #f))
     (license license:expat)))
 
 (define-public ocaml-async-kernel
@@ -8927,7 +9048,7 @@ JavaScript using @code{Async_js}.")
                 "1905v8bpwr6dqyawky71ia5x31sj8qxx4yn69i6gnyyd17j5w3bw"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-async-kernel ocaml-core ocaml-core-kernel
-                             ocaml-core-unix ocaml-ppx-jane))
+                             ocaml-core-unix ocaml-ppx-jane ocaml-cstruct))
     (properties `((upstream-name . "async_unix")))
     (home-page "https://github.com/janestreet/async_unix")
     (synopsis "Monadic concurrency library")
@@ -8980,6 +9101,7 @@ JavaScript.")
     (propagated-inputs (list ocaml-async-kernel
                              ocaml-async-rpc-kernel
                              ocaml-async-unix
+                             ocaml-async-log
                              ocaml-core
                              ocaml-core-kernel
                              ocaml-core-unix
@@ -10091,7 +10213,8 @@ OCaml compilers.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1hmrkdcdlkwy7rxhngf3cv3sa61cznnd9p5lmqhx20664gx2ibrh"))))
+         "17l1nzs38nq8sapd3snhsn8qapgivcss3vkv233nnlyixqmq7yhh"
+         ))))
     (build-system dune-build-system)
     (arguments
      ;; Only build the base angstrom package.
