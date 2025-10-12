@@ -3423,6 +3423,28 @@ to which allows adding and looking up bindings in a type safe manner.")
       (license license:bsd-2)
     ))
 
+(define-public ocaml-piaf
+  (package
+    (name "ocaml-piaf")
+    (version "0.2.0")
+    (home-page
+     "https://github.com/anmonteiro/piaf")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0l7rbh6lgxjsxrbsyp5jrh2kxida0si0vv06jp32iimvicyjh2m5" ""
+      ))
+    (build-system dune-build-system)
+    ;; (arguments
+    ;;  '(#:tests? #f))
+    (propagated-inputs (list ocaml-either ocaml-uutf ocaml-gen ocaml-iter ocaml-eio))
+    (synopsis "Web library for OCaml with support for HTTP/1.X / HTTP/2")
+      (description
+       "Containers is an extension of OCaml's standard library (under BSD license) focused on data structures, combinators and iterators, without dependencies on unix, str or num. Every module is independent and is prefixed with 'CC' in the global namespace. Some modules extend the stdlib (e.g. CCList provides safe map/fold_right/append, and additional functions on lists). Alternatively, open Containers will bring enhanced versions of the standard modules into scope."
+       )
+      (license license:bsd-3)
+    ))
+
 (define-public ocaml-domain-local-await
   (package
     (name "ocaml-domain-local-await")
