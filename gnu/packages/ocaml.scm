@@ -125,7 +125,7 @@
                               ".tar.gz"))
           (sha256 (base32 hash))))
 
-(define* (github-tag-origin name home-page version hash #:key (tag-prefix "v"))
+(define* (github-tag-origin name home-page version hash tag-prefix)
   "Create an origin for a GitHub repository using a version tag.
 TAG-PREFIX defaults to \"v\" but can be customized or set to \"\" for no prefix."
   (origin
@@ -2432,8 +2432,7 @@ bitsrings in Erlang style as primitives to the language.")))
     (source
      (github-tag-origin
       name home-page version
-      "166laj8qk7466sdl037c6cjs4ac571hglw4l5qpyll6df07h6a7q"
-      #:tag-prefix ""
+      "166laj8qk7466sdl037c6cjs4ac571hglw4l5qpyll6df07h6a7q" ""
       ))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
@@ -2779,7 +2778,7 @@ spans without being subject to operating system calendar time adjustments.")
     (source
      (github-tag-origin
       name home-page version
-      "0jw8sdz1kl53fzdyxixd8ljfr25vvn4f2z4lspasqcj4ma5k6m7r"))
+      "0jw8sdz1kl53fzdyxixd8ljfr25vvn4f2z4lspasqcj4ma5k6m7r" "v"))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs (list ocaml-re))
@@ -3345,8 +3344,7 @@ to which allows adding and looking up bindings in a type safe manner.")
     (source
      (github-tag-origin
       name home-page version
-      "05sla96m4lbfrnrjczj4xl1zbcwypir6krp4y16x50hz24ai12pc"
-      #:tag-prefix ""
+      "05sla96m4lbfrnrjczj4xl1zbcwypir6krp4y16x50hz24ai12pc" ""
       ))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
@@ -3368,8 +3366,7 @@ to which allows adding and looking up bindings in a type safe manner.")
     (source
      (github-tag-origin
       name home-page version
-      "0h60sxzd9p14ilpg004d47y3zd89pswffr0wvqa9cykpn8qgdfcm"
-      #:tag-prefix ""
+      "0h60sxzd9p14ilpg004d47y3zd89pswffr0wvqa9cykpn8qgdfcm" ""
       ))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
@@ -6252,7 +6249,7 @@ packages.")
     (source
      (github-tag-origin
       name home-page version
-      "1abn5fqqixlj1jbqb6vwysn48m0fv9cp7jyw5nfkkyxivw9xccvd"))
+      "1abn5fqqixlj1jbqb6vwysn48m0fv9cp7jyw5nfkkyxivw9xccvd" "v"))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs
@@ -6438,10 +6435,29 @@ yojson package.  The program @code{atdgen} can be used to derive OCaml-JSON
 serializers and deserializers from type definitions.")
     (license license:bsd-3)))
 
+(define-public ocaml-ppx-yojson-conv
+  (package
+    (name "ocaml-ppx-yojson-conv")
+    (version "0.17.1")
+    (home-page
+     "https://github.com/janestreet/ppx_yojson_conv")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1cpl74k2ic3y0mv0r4jakspy4l7jg3xw9a2ffvqj0yyabwvsx3a0" "v"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-ppxlib ocaml-ppx-js-style ocaml-ppx-yojson-conv-lib))
+    (properties `((upstream-name . "ppx-yojson-conv")))
+    (synopsis "ppx for yojson")
+    (description "ppx_yojson_conv is a PPX syntax extension that generates code for converting OCaml types to and from Yojson.Safe, as defined in the =yojson= library.")
+    ;; With linking exception.
+    (license license:expat)))
+
 (define-public ocaml-ppx-yojson-conv-lib
   (package
     (name "ocaml-ppx-yojson-conv-lib")
-    (version "0.16.0")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/ppx_yojson_conv_lib")
     (source
       (origin
@@ -6983,7 +6999,7 @@ a more consistent API.")
 (define-public ocaml-ppx-deriving
   (package
     (name "ocaml-ppx-deriving")
-    (version "5.2.1")
+    (version "6.1.1")
     (source
      (origin
        (method git-fetch)
@@ -6993,7 +7009,7 @@ a more consistent API.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1wqcnw4wi6pfjjhixpakckm03dpj990259za432804471a6spm2j"))))
+         "1hzzy3zxpwhs0diyx7lyp71szl987l2v62h2hndl5c7hv320k1il"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-ppx-derivers ocaml-ppxlib))
@@ -7229,7 +7245,7 @@ standard library.")
 (define-public ocaml-ppx-fields-conv
   (package
     (name "ocaml-ppx-fields-conv")
-    (version "0.15.0")
+    (version "0.17.0")
     (home-page "https://github.com/janestreet/ppx_fields_conv")
     (source
      (origin
@@ -7239,8 +7255,8 @@ standard library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "094wsnw7fcwgl9xg6vkjb0wbgpn9scsp847yhdd184sz9v1amz14"))))
+        (base32 "0d1lxqwxyqf3fgg48jpl6fzczllwhq3cyw65dsl9sc49187f23hl"
+                ))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-fieldslib ocaml-ppxlib))
@@ -7279,7 +7295,7 @@ definitions.")
 (define-public ocaml-ppx-variants-conv
   (package
     (name "ocaml-ppx-variants-conv")
-    (version "0.15.0")
+    (version "0.17.1")
     (source
      (origin
        (method git-fetch)
@@ -7288,8 +7304,8 @@ definitions.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1dh0bw9dn246k00pymf59yjkl6x6bxd76lkk9b5xpq2692wwlc3s"))))
+        (base32 "1xbml7df11n0fswlp1n12v6irqyd49d3wqbsbcz37b5vvdg6rzz2"
+         ))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-base ocaml-variantslib ocaml-ppxlib))
@@ -8743,7 +8759,7 @@ then run the Bisect_ppx report tool on the generated visitation files.")
     (source
      (github-tag-origin
       name home-page version
-      "0qmsdry5l20fnfh8wrvpqq0dh8kaswsvbkgpri333q4gkp1b3d9j"))
+      "0qmsdry5l20fnfh8wrvpqq0dh8kaswsvbkgpri333q4gkp1b3d9j" "v"))
     (build-system dune-build-system)
     (arguments '(#:tests? #f))           ; no tests
     (propagated-inputs (list ocaml-cmdliner ocaml-ptime))
@@ -8976,7 +8992,7 @@ variants.")
     ;;             "1w1givvhwv9jzj9zbg4mmlpb35sqi75w83r99p2z50bdr69fdf57"
     ;; ))))
     (source (github-tag-origin name home-page version
-      "1rhj00gsj1zz8yd99wkcpsgf0ym1fg940zk2jq29fysk4zd1g7m3" #:tag-prefix ""))
+      "1rhj00gsj1zz8yd99wkcpsgf0ym1fg940zk2jq29fysk4zd1g7m3" ""))
     (build-system dune-build-system)
     ;; (arguments
     ;;  `(#:phases
