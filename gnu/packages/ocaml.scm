@@ -3069,7 +3069,7 @@ simple (yet expressive) query language to select the tests to run.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0bxs3g0zzym8agfcbpg5lmrh6hcb86z861bq40xhhfwqf4pzdbfa"))))
+                "0rmvr0spshh1la6gglzhk501sh9qpnhqk1m56yfm091pr5kl6ydy"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-base
                              ocaml-base-quickcheck
@@ -7956,7 +7956,7 @@ many values).")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0kz83j9v6yz3v8c6vr9ilhkcci4hhjd6i6r6afnx72jh6i7d3hnv"))))
+          (base32 "1cpp6wmkdadpdlbh0imapzs0qjn5p9cd78y35b9wvyj8s4n87pkz"))))
     (build-system dune-build-system)
     (propagated-inputs
       (list ocaml-base ocaml-ppx-here ocaml-ppx-sexp-conv ocaml-ppxlib))
@@ -7979,7 +7979,7 @@ building s-expressions from ocaml values.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0a7hx50bkkc5n5msc3zzc4ixnp7674x3mallknb9j31jnd8l90nj"))))
+          (base32 "1q2di8vb0145xnxxf0qvjdrkiq32724j2wksm3imr06lqjz17n28"))))
     (build-system dune-build-system)
     (propagated-inputs
       (list ocaml-base ocaml-ppx-here ocaml-ppx-sexp-conv ocaml-ppxlib))
@@ -8004,7 +8004,7 @@ context such as function arguments.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0sm5dghyalhws3hy1cc2ih36az1k4q02hcgj6l26gwyma3y4irvq"))))
+          (base32 "14yz95fzw8l4lkzmiphksnw73h8hhd3wk1slgn8971a26g7va5hq"))))
     (build-system dune-build-system)
     (arguments `(#:tests? #f)); no tests
     (propagated-inputs (list ocaml-ppxlib))
@@ -8027,7 +8027,7 @@ context such as function arguments.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0lzi5hxi10p89ddqbrc667267f888kqslal76gfhmszyk60n20av"))))
+          (base32 "1wic880klh1bpy43jp5gh3hvw3a3znn9alvryhj1n0s97wi3asir"))))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #f)); no tests
@@ -8052,7 +8052,7 @@ to record their startup time.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "10siwcqrqa4gh0mg6fkaby0jjskc01r81pcblc67h3vmbjjh08j9"))))
+          (base32 "1iffidvi815nkyfyf5999h5gj45f5cvz81vsf2dyxzshysv9pbsy"))))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #f)); no tests
@@ -8322,7 +8322,7 @@ from type definitions.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "1dp5frk6cig5m3m5rrh2alw63snyf845x7zlkkaljip02pqcbw1s"))))
+          (base32 "001f92jh2jf3fp46j9hhkln6mlri11zpz1c811wz83ixmcjjz85m"))))
     (build-system dune-build-system)
     (arguments `(#:tests? #f)); no tests
     (propagated-inputs
@@ -8424,7 +8424,7 @@ functions from type definitions.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "16fgig88g3jr0m3i636fr52h29h1yzhi8nhnl4029zn808kcdyj2"))))
+          (base32 "1v2prvv8s20xfc91jc0gwn0z2n7cragsfdd0cysb7c4zfbqnjxzg"))))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #f)) ;no tests
@@ -8449,16 +8449,27 @@ PPXs or compiler features not yet upstreamed.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "08i9gz3f4w3bmlrfdw7ja9awsfkhhldz03bnnc4hijfmn8sawzi0"))))
+          (base32 "13hcsjx13yma4215fk4nc52vf0vpf6s2186pb8wyiqa7w9cy6ncn"))))
     (build-system dune-build-system)
     (propagated-inputs
       (list ocaml-base
+            ocaml-ppx-compare
+            ocaml-stdio
+            ocaml-ppx-sexp-value
             ocaml-ppx-here
             ocaml-ppx-sexp-conv
             ocaml-ppx-sexp-message
+            ocaml-ppx-enumerate
+            ocaml-ppx-variants-conv
+            ocaml-ppx-string
+            ocaml-ppx-expect
+            ocaml-ppx-fields-conv
+            ocaml-ppx-let
             ocaml-sexplib
             ocaml-ppxlib))
     (properties `((upstream-name . "ppx_log")))
+    (arguments
+     `(#:tests? #f)) ;no tests
     (home-page "https://github.com/janestreet/ppx_log")
     (synopsis "Extension nodes for lazily rendering log messages")
     (description "This package provides ppx_sexp_message-like extension
@@ -8477,7 +8488,7 @@ nodes for lazily rendering log messages.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0sb5i4v7p9df2bxk66rjs30k9fqdrwsq1jgykjv6wyrx2d9bv955"))))
+          (base32 "0rcnknb6547n9z5akb05diklkzd71yfrgz5p12qlxynlynwqhx98"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-base ocaml-ppxlib))
     (properties `((upstream-name . "ppx_disable_unused_warnings")))
@@ -8817,41 +8828,6 @@ standard library that was developed by Jane Street.")
     ;; by OCaml's license for consortium members (see THIRD-PARTY.txt).
     (license license:expat)))
 
-;; (define-public ocaml-int-repr
-;;   (package
-;;     (name "ocaml-int-repr")
-;;     (version "0.17.0")
-;;     (source
-;;       (origin
-;;         (method git-fetch)
-;;         (uri (git-reference
-;;                (url "https://github.com/janestreet/int_repr")
-;;                (commit (string-append "v" version))))
-;;         (file-name (git-file-name name version))
-;;         (sha256
-;;          (base32
-;;           "008gmlc5bw7gi15kgijmcrx9wkq9gh6rch0gldq1vk3r1z7q1rn9"))
-;;         (modules '((guix build utils)))
-;;         (snippet
-;;          #~(begin
-;;              ;; Remove globalize from [@@deriving ...] annotations
-;;              (substitute* (find-files "." "\\.mli?$")
-;;                (("\\[@@deriving ([^\\]]*), globalize([^\\]]*)\\]")
-;;                 "[@@deriving \\1\\2]")
-;;                (("\\[@@deriving globalize, ([^\\]]*)\\]")
-;;                 "[@@deriving \\1]")
-;;                (("\\[@@deriving globalize\\]")
-;;                 ""))))))
-;;     (build-system dune-build-system)
-;;     (arguments
-;;      `(#:tests? #f)) ;no tests
-;;     (propagated-inputs (list ocaml-base ocaml-ppx-jane ocaml-ppx-sexp-conv))
-;;     (properties `((upstream-name . "int_repr")))
-;;     (home-page "https://github.com/janestreet/int_repr")
-;;     (synopsis "Integers of various widths")
-;;     (description "Integers of various widths.")
-;;     (license license:expat)))
-
 (define-public ocaml-core-kernel
   (package
     (name "ocaml-core-kernel")
@@ -8864,7 +8840,7 @@ standard library that was developed by Jane Street.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "05mb4vbf293iq1xx4acyrmi9cgcw6capwrsa54ils62alby6w6yq"))))
+          (base32 "1nrj8amx76cdgak6j4i9pabnq7hg1hhiw0c3l7mp8d02smwk9dcp"))))
     (build-system dune-build-system)
     (arguments
      ;; Cyclic dependency with ocaml-core
@@ -8883,7 +8859,7 @@ the full Core is not available, such as in Javascript.")
 (define-public ocaml-core-unix
   (package
     (name "ocaml-core-unix")
-    (version "0.15.2")
+    (version "0.17.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8924,7 +8900,7 @@ core_kernel.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01if6c8l2h64v7sk56xr8acnmj6g9whxcjrzzzvczspq88hq2bfh"))))
+                "1zlpppywmzwvszgdc077fgsplv3b6vx0nbrnm70pj94f8znfhikw"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-core ocaml-core-kernel ocaml-ppx-jane))
     (properties `((upstream-name . "async_kernel")))
@@ -8948,7 +8924,7 @@ JavaScript using @code{Async_js}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0z4fgpn93iw0abd7l9kac28qgzgc5qr2x0s1n2zh49lsdn02n6ys"))))
+                "1905v8bpwr6dqyawky71ia5x31sj8qxx4yn69i6gnyyd17j5w3bw"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-async-kernel ocaml-core ocaml-core-kernel
                              ocaml-core-unix ocaml-ppx-jane))
@@ -8974,7 +8950,7 @@ system calls run in.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1b5rp5yam03ir4f1sixpzjg1zdqmkb7lvnaa82kac4fzk80gfrfr"))))
+                "0w7qmf7sp0cnylx76s9x2zri8d2j66l253bqym96igcv1i3acand"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-async-kernel ocaml-core ocaml-ppx-jane
                              ocaml-protocol-version-header))
@@ -9034,7 +9010,7 @@ external entity (like a human or another program).")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "068g11d98wsb5a6ds0p5xybdmx5nx9bxa0k11dmh3l57kn4c169x"))))
+                "0al68g4spx6rn4is09v7f6hargd18raz0x4zah8hwjqildn33487"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-core ocaml-ppx-jane ocaml-uutf))
     (properties `((upstream-name . "textutils_kernel")))
@@ -9057,7 +9033,7 @@ javascript.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wass49h645wql9b7nck2iqlkf4648dkxvlvxixr7z80zcnb5rxr"))))
+                "000jxpfpczjr5pm3gf77kg8h488b9f1fmirrrb4iv4szkym2r7r7"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-core
                              ocaml-core-kernel
@@ -9083,7 +9059,7 @@ javascript.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "00a007aji5rbz42kgbq1w90py6fm9k9akycs5abkcfll5rd0cbhx"))))
+          (base32 "0wf5apsln4clxxndzavxpcwh7zpaf8sf6xnj9jah9jg4r9c8p8zz"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-core ocaml-ppx-jane))
     (home-page "https://github.com/janestreet/timezone")
