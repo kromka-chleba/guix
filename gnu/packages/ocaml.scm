@@ -3357,6 +3357,52 @@ to which allows adding and looking up bindings in a type safe manner.")
       (license license:isc)
     ))
 
+(define-public ocaml-landmarks
+  ;; currently broken until they update ppxlib dependency, unlikely
+  (package
+    (name "ocaml-landmarks")
+    (version "1.5")
+    (home-page
+     "https://github.com/LexiFi/landmarks")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1i1bzvn671qxx2bkvgixmd7kw2df3i8i7iy0mk730fvx7pcb92kq" "v"
+      ))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-ppxlib))
+    (properties `((upstream-name . "thread-table")))
+      (synopsis "Simple profiling library")
+      (description
+       "Landmarks is a simple profiling library for OCaml. It provides primitives to delimit portions of code and measure the performance of instrumented code at runtime.")
+      ;; With linking exception.
+      (license license:expat)
+    ))
+
+(define-public ocaml-iter
+  (package
+    (name "ocaml-iter")
+    (version "1.9")
+    (home-page
+     "https://github.com/c-cube/iter")
+    (source
+     (github-tag-origin
+      name home-page version
+      "05jvz6vphjp229ap24xakxqgw3xymqff80q08pfnh5vr2lyb0hxm" "v"
+      ))
+    (build-system dune-build-system)
+    ;; (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-mdx ocaml-ounit2 ocaml-qcheck))
+    (properties `((upstream-name . "thread-table")))
+      (synopsis "Clean and efficient loop fusion for all your iterating needs!")
+      (description
+       "Iter is a simple abstraction over iter functions intended to iterate efficiently on collections while performing some transformations. Common operations supported by Iter include filter, map, take, drop, append, flat_map, etc. Iter is not designed to be as general-purpose or flexible as Seq. Rather, it aims at providing a very simple and efficient way of iterating on a finite number of values, only allocating (most of the time) one intermediate closure to do so. For instance, iterating on keys, or values, of a Hashtbl.t, without creating a list. Similarly, the code above is turned into a single optimized for loop with flambda."
+       )
+      ;; With linking exception.
+      (license license:bsd-2)
+    ))
+
 (define-public ocaml-domain-local-await
   (package
     (name "ocaml-domain-local-await")
