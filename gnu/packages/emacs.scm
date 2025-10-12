@@ -670,7 +670,7 @@ editor (with wide ints)" )
 
 (define-public emacs-next-minimal
   (let ((commit "9663c959c73d6cca0c56f833d80ff1d9e9708b70")
-        (revision "4"))
+        (revision "5"))
   (package
     (inherit emacs-minimal)
     (name "emacs-next-minimal")
@@ -720,6 +720,22 @@ editor (with wide ints)" )
     (native-inputs (modify-inputs (package-native-inputs emacs-minimal)
                      (prepend python-3.11))))))
 
+(define %selector-next
+  (emacs-ert-selector
+   '("bytecomp--fun-value-as-head"
+     "esh-util-test/path/get-remote"
+     "esh-var-test/path-var/preserve-across-hosts"
+     "ffap-tests--c-path"
+     "find-func-tests--locate-macro-generated-symbols"
+     "grep-tests--rgrep-abbreviate-properties-darwin"
+     "grep-tests--rgrep-abbreviate-properties-gnu-linux"
+     "grep-tests--rgrep-abbreviate-properties-windows-nt-dos-semantics"
+     "grep-tests--rgrep-abbreviate-properties-windows-nt-sh-semantics"
+     "info-xref-test-makeinfo"
+     "man-tests-find-header-file"
+     "tab-bar-tests-quit-restore-window"
+     "tramp-test50-remote-load-path")))
+
 (define* (emacs->emacs-next emacs #:optional name
                             #:key (version (package-version emacs-next-minimal))
                             (source (package-source emacs-next-minimal)))
@@ -754,7 +770,14 @@ editor (with wide ints)" )
                         "\n\n"
                         "(setq find-function-C-source-directory \"" dest "\")"
                         "\n\n"
-                        "(provide 'guix-emacs-c-source)")))))))))))
+                        "(provide 'guix-emacs-c-source)")))))))))
+       ((#:make-flags make-flags)
+        #~(list (string-append "SELECTOR=" #$%selector-next)
+                (let ((release-date "2025-08-14 05:04:03"))
+                  (string-append "RUN_TEMACS= "
+                                 #$(this-package-native-input "libfaketime")
+                                 "/bin/faketime -m -f '" release-date "'"
+                                 " ./temacs"))))))
     ;; Put python in $PATH for test python-shell--convert-file-name-to-send-1;
     ;; The return package object does not inherit its native inputs from
     ;; emacs-next-minimal
