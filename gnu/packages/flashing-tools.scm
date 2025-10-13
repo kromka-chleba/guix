@@ -444,7 +444,7 @@ dump Intel Firmware Descriptor data of an image file.")
 (define-public intelmetool
   (package
     (name "intelmetool")
-    (version "4.7")
+    (version "25.09")
     (source
      (origin
        (method git-fetch)
@@ -454,7 +454,7 @@ dump Intel Firmware Descriptor data of an image file.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0nw555i0fm5kljha9h47bk70ykbwv8ddfk6qhz6kfqb79vzhy4h2"))))
+         "1a1n64dwr5fzdnaj45bjci85ap5yra5gwz4x056zn6481xwvbsmv"))))
     (build-system gnu-build-system)
     (arguments
      (list
