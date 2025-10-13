@@ -1,0 +1,55 @@
+From https://cgit.git.savannah.gnu.org/cgit/hurd/hurd.git/commit/?id=8d217d6563b0ef2d2a950a71d73b7d75e2d76ca0
+
+From 8d217d6563b0ef2d2a950a71d73b7d75e2d76ca0 Mon Sep 17 00:00:00 2001
+From: Yelninei <yelninei@tutamail.com>
+Date: Mon, 13 Oct 2025 19:13:50 +0000
+Subject: [PATCH] umount: Use PATH_MOUNTED from libc.
+
+* utils/umount.c: Don't redefine _PATH_MOUNTED.
+(argp_opts): Use _PATH_MOUNTED for help message.
+* utils/mount.c (argp_opts): Use _PATH_MOUNTED for help message.
+---
+ utils/mount.c  | 2 +-
+ utils/umount.c | 6 +-----
+ 2 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/utils/mount.c b/utils/mount.c
+index d63e89b5..283443f5 100644
+--- a/utils/mount.c
++++ b/utils/mount.c
+@@ -61,7 +61,7 @@ static const struct argp_option argp_opts[] =
+   {"update", 'u', 0, 0, "Flush any meta-data cached in core"},
+   {"remount", 0, 0, OPTION_ALIAS},
+   {"verbose", 'v', 0, 0, "Give more detailed information"},
+-  {"no-mtab", 'n', 0, 0, "Do not update /etc/mtab"},
++  {"no-mtab", 'n', 0, 0, "Do not update " _PATH_MOUNTED},
+   {"test-opts", 'O', "OPTIONS", 0,
+    "Only mount fstab entries matching the given set of options"},
+   {"bind", 'B', 0, 0, "Bind mount, firmlink"},
+diff --git a/utils/umount.c b/utils/umount.c
+index 19f79fce..7a8e889a 100644
+--- a/utils/umount.c
++++ b/utils/umount.c
+@@ -32,10 +32,6 @@
+ #include "match-options.h"
+ #include "../sutils/fstab.h"
+ 
+-/* XXX fix libc */
+-#undef _PATH_MOUNTED
+-#define _PATH_MOUNTED "/etc/mtab"
+-
+ static char *targets;
+ static size_t targets_len;
+ static int readonly;
+@@ -54,7 +50,7 @@ static const struct argp_option argp_opts[] =
+   {NULL, 'd', 0, 0, "Also ask the source translator to go away"},
+   {"fake", FAKE_KEY, 0, 0, "Do not actually umount, just pretend"},
+   {"force", 'f', 0, 0, "Force umount by killing the translator"},
+-  {"no-mtab", 'n', 0, 0, "Do not update /etc/mtab"},
++  {"no-mtab", 'n', 0, 0, "Do not update " _PATH_MOUNTED},
+   {"read-only", 'r', 0, 0, "If unmounting fails, try to remount read-only"},
+   {"nosync", 'S', 0, 0, "Don't sync a translator before killing it"},
+   {"test-opts", 'O', "OPTIONS", 0,
+-- 
+2.51.0
+
