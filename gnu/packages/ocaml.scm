@@ -995,6 +995,87 @@ The loosely specified diff file format is widely used for transmitting differenc
 The test-based infered specification implemented in this library is the following grammar.")
     (license license:isc)))
 
+(define-public ocaml-spdx-licenses
+  (package
+    (name "ocaml-spdx-licenses")
+    (version "v1.4.0")
+    (build-system dune-build-system)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url
+                      "https://github.com/kit-ty-kate/spdx_licenses"
+                          )
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "16nqhh2w2l5sky3i77v854yyyx8d9hgmmg14mkr8m7ym1syvp7mz"
+                ))))
+    (arguments
+     `(#:tests? #f))
+    ;; (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/hannesm/patch")
+    (synopsis "spdx_licenses is an OCaml library aiming to provide an up-to-date and strict SPDX License Expression parser.")
+    (description "It implements the format described in: https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions")
+    (license license:isc)))
+
+(define-public ocaml-0install
+  (package
+    (name "ocaml-0install")
+    (version "v2.18")
+    (build-system dune-build-system)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url
+                      "https://github.com/0install/0install"
+                          )
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1hm72k355qwgh16hngmnd77bgawf20ipnqxfncdzl10rqrc0640b"
+                ))))
+    (arguments
+     `(#:tests? #f))
+    ;; (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/hannesm/patch")
+    (propagated-inputs (list ocaml-lwt ocaml-xmlm ocaml-yojson ocaml-lwt-react ocaml-lablgtk3-sourceview3))
+    (synopsis "the core 0install package" )
+    (description "Zero Install is a decentralised cross-distribution software installation system available under the LGPL. It allows software developers to publish programs directly from their own web-sites, while supporting features familiar from centralised distribution repositories such as shared libraries, automatic updates and digital signatures. It is intended to complement, rather than replace, the operating system's package management. 0install packages never interfere with those provided by the distribution.")
+    (license license:lgpl2.1)))
+
+(define-public ocaml-opam-0install-cudf
+  (package
+    (name "ocaml-opam-0install-cudf")
+    (version "v0.5.0")
+    (build-system dune-build-system)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url
+                      "https://github.com/ocaml-opam/opam-0install-cudf"
+                          )
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "12v1bgnxcxdylgxbsjlcr90rzwcp39rjlv191cy8g2s33nyxyi2c"
+                ))))
+    (propagated-inputs (list ocaml-0install))
+    (arguments
+     `(#:tests? #f))
+    ;; (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/hannesm/patch")
+    (synopsis "A generic CUDF solver library meant to be used in opam")
+    (description "Opam's default solver is designed to maintain a set of packages over time, minimising disruption when installing new programs and finding a compromise solution across all packages.
+
+In many situations (e.g. CI, local roots or duniverse builds) this is not necessary, and we can get a solution much faster by usin a different algorithm.
+
+This package provides a generic solver library which uses 0install's solver library. The library uses the CUDF library in order to interface with opam as it is the format common used to talk to all the supported solvers.")
+    (license license:isc)))
+
 (define ocaml-opam-core
   (package
     (name "ocaml-opam-core")
@@ -1115,7 +1196,7 @@ OPAM.")
                             (string-append "add_sys_mounts "
                                            (%store-directory)
                                            " /run/current-system /usr")))))))))
-    (inputs (list bubblewrap))
+    (inputs (list bubblewrap ocaml-spdx-licenses))
     (propagated-inputs (list ocaml-opam-repository))))
 
 (define ocaml-opam-solver
@@ -1125,6 +1206,7 @@ OPAM.")
     (inputs '())
     (propagated-inputs (list ocaml-opam-format
                              ocaml-mccs
+                             ocaml-opam-0install-cudf
                              ocaml-dose3))
     (arguments `(#:package "opam-solver"
                  ;; tests are run with the opam package
@@ -1270,7 +1352,7 @@ name = Guix Builder")
          ("opam-repo-de897adf36c4230dfea812f40c98223b31c4521a"
           ,(opam-repo "de897adf36c4230dfea812f40c98223b31c4521a"
                       "1m18x9gcwnbar8yv9sbfz8a3qpw412fp9cf4d6fb7syn0p0h96jw")))))
-    (inputs (list ocaml-opam-client))
+    (inputs (list ocaml-opam-client ocaml-spdx-licenses ocaml-opam-0install-cudf))
     (properties
      ;; OPAM is used as a tool and not as a library, we can use the OCaml 4.14
      ;; compiled opam until opam is compatible with OCaml 5.0.
@@ -1353,18 +1435,19 @@ be maintained and distributed separately in the camlpstreams package.")
     (license license:lgpl2.1)))
 
 (define-public camlp5
+  ;; Doesn't work for OCaml 5.4
   (package
     (name "camlp5")
-    (version "8.00.03")
+    (version "8.02.01")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/camlp5/camlp5")
-             (commit (string-append "rel" version))))
+             (commit (string-append "" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fnvmaw9cland09pjx5h6w3f6fz9s23l4nbl4m9fcaa2i4dpraz6"))))
+        (base32 "0fp9275iy0jb8f8fyziczzjqm38qsjryrv29zga65abgkzkkc859"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f  ; XXX TODO figure out how to run the tests
@@ -3661,75 +3744,6 @@ to which allows adding and looking up bindings in a type safe manner.")
     (license license:lgpl2.1)
     ))
 
-(define-public ocaml-tacaml
-  (package
-    (name "ocaml-tacaml")
-    (version "1.0.0")
-    (home-page "https://github.com/hesterjeng/tacaml")
-    (source
-     (github-tag-origin
-      name home-page version
-      "0d45rjr2rc39i53fdsczd7pxw5rb5i2a2vcjd0k08vrjxac5ys0s"
-      "v"
-      ))
-    (build-system dune-build-system)
-    (propagated-inputs (list ocaml-ctypes ocaml-ppx-deriving ocaml-containers))
-    (native-inputs (list ta-lib))
-    ;; (propagated-inputs (list ocaml-eio ocaml-ssl))
-    ;; (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl))
-    (synopsis " ta-lib bindings for OCaml ")
-    (description "tacaml provides OCaml bindings to the TA-Lib (Technical Analysis Library). This project offers both raw C bindings and higher-level, type-safe wrappers for over 160 technical analysis functions commonly used in financial markets.")
-    (license license:lgpl2.0)))
-
- (define-public ocaml-longleaf
-(package
- (name "ocaml-longleaf")
- (version "1.0.3")
- (build-system dune-build-system)
- (home-page "https://github.com/hesterjeng/longleaf")
- (source
-     (github-tag-origin
-      name home-page version "1sy188ibw4n38kfsy8zq808wy77gd8s56fsx0jraflnkwadrqi7m"
-      "v"))
- (native-inputs
-  (list ocaml-alcotest))
- (propagated-inputs
-  (list ocaml-ppx-deriving
-        ocaml-ppx-yojson-conv
-        ocaml-ppx-variants-conv
-        ocaml-ppx-fields-conv
-        ocaml-ppx-hash
-        ocaml-tyxml
-        ocaml-tacaml
-        ocaml-ptime
-        ocaml-eio-main
-        ;; ocaml-ptime
-        ;; ocaml-ppx-yojson-conv-lib
-        ;; ocaml-ppx-deriving
-        ;; ocaml-ppx-variants-conv
-        ;; ocaml-ppx-fields-conv
-        ;; ocaml-cmdliner
-        ;; ocaml-graph
-        ;; ocaml-eio-main
-        ;; ocaml-tacaml
-        ;; ocaml-fileutils
-        ;; ocaml-yojson
-        ;; ocaml-uuidm
-        ;; ocaml-tyxml
-        ;; ocaml-alcotest
-        ;; longleaf-frontend-dev
-        ;; longleaf-quantstats-dev
-        ))
- (synopsis "Algorithmic trading platform written in OCaml")
- (description
-  "Longleaf is an algorithmic trading platform that supports live trading,
-paper trading, and backtesting with multiple brokerages and market data sources.
-The platform uses a functional, modular architecture with strategies implemented
-as functors for maximum code reuse and type safety.
-
-The platform includes tacaml for TA-Lib technical analysis bindings.")
- (license license:gpl3+)
-    ))
 
 (define-public ocaml-dream
 (package
@@ -3747,6 +3761,15 @@ The platform includes tacaml for TA-Lib technical analysis bindings.")
  (propagated-inputs
   (list ocaml-ppx-deriving
         ocaml-magic-mime
+        ocaml-yojson
+        ocaml-digestif
+        ocaml-ssl
+        ocaml-mirage-crypto
+        ocaml-ptime
+        ocaml-httpun-ws
+        ocaml-mirage-crypto
+        ocaml-unstrctrd
+        ;; ocaml-lwt-ssl
         ocaml-lwt-ppx))
  (synopsis "Tidy, feature-complete Web framework ")
  (description "")
@@ -4609,7 +4632,7 @@ accesses to the store.")
 (define-public ocaml-lwt
   (package
     (name "ocaml-lwt")
-    (version "5.8.0")
+    (version "5.9.2")
     (source
       (origin
         (method git-fetch)
@@ -4618,7 +4641,8 @@ accesses to the store.")
                (commit version)))
         (file-name (git-file-name name version))
         (sha256 (base32
-                 "0l7pd4kl9n8ja4v0rx415l385qqxbbg1pq244zcknslkkd444zhr"))))
+                 "1vvyjnw9xcsc1zqjsp2s75g3dl0as573rk67i1va3hbhvm230fm7"
+                 ))))
     (build-system dune-build-system)
     (arguments
      `(#:package "lwt"))
@@ -4636,16 +4660,35 @@ process.  Also, in many cases, Lwt threads can interact without the need for
 locks or other synchronization primitives.")
     (license license:lgpl2.1)))
 
-;; TODO this alias is not ideal but ocaml-lwt already explicitly specifies a
-;; package argument and at least this way the importer doesn't try to
-;; re-import it.
 (define-public ocaml-lwt-ppx
-  (package 
-    (inherit ocaml-lwt)
+  (package
     (name "ocaml-lwt-ppx")
-    (propagated-inputs (list ocaml-ppxlib ocaml-lwt))
+    (version "5.9.2")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/ocsigen/lwt")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256 (base32
+                 "1vvyjnw9xcsc1zqjsp2s75g3dl0as573rk67i1va3hbhvm230fm7"))))
+    (build-system dune-build-system)
     (arguments
-     '(#:package "lwt_ppx"))))
+     `(#:package "lwt_ppx"))
+    (native-inputs
+     (list ocaml-cppo pkg-config))
+    (inputs
+     (list glib))
+    (propagated-inputs
+     (list ocaml-mmap ocaml-ocplib-endian ocaml-seq libev ocaml-ppxlib ocaml-lwt))
+    (home-page "https://github.com/ocsigen/lwt")
+    (synopsis "Cooperative threads and I/O in monadic style")
+    (description "Lwt provides typed, composable cooperative threads.  These
+make it easy to run normally-blocking I/O operations concurrently in a single
+process.  Also, in many cases, Lwt threads can interact without the need for
+locks or other synchronization primitives.")
+    (license license:lgpl2.1)))
 
 (define-public ocaml-lwt-dllist
   (package
@@ -4860,17 +4903,17 @@ module Unix.")
   (package
     (inherit ocaml-lwt)
     (name "ocaml-lwt-react")
-    (version "1.2.0")
+    (version "5.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                      (url "https://github.com/ocsigen/lwt")
                      ;; Version from opam
-                     (commit "5.6.0")))
+                     (commit "5.8.0")))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "12sglfwdx4anfslj437g7gxchklgzfvba6i4p478kmqr56j2xd0c"))))
+                "0l7pd4kl9n8ja4v0rx415l385qqxbbg1pq244zcknslkkd444zhr"))))
     (arguments
      `(#:package "lwt_react"))
     (properties `((upstream-name . "lwt_react")))
