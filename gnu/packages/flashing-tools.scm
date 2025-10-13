@@ -445,39 +445,41 @@ dump Intel Firmware Descriptor data of an image file.")
   (package
     (name "intelmetool")
     (version "4.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://review.coreboot.org/p/coreboot")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0nw555i0fm5kljha9h47bk70ykbwv8ddfk6qhz6kfqb79vzhy4h2"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://review.coreboot.org/coreboot")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0nw555i0fm5kljha9h47bk70ykbwv8ddfk6qhz6kfqb79vzhy4h2"))))
     (build-system gnu-build-system)
-    (inputs
-     (list pciutils zlib))
     (arguments
-     `(#:make-flags
-       (list "CC=gcc"
-             "INSTALL=install"
-             (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-        (add-after 'unpack 'chdir
-          (lambda _
-            (chdir "util/intelmetool")
-            #t))
-        (delete 'configure)
-        (delete 'check))))
-    (home-page "https://github.com/zamaudio/intelmetool")
+     (list
+      #:tests? #f                       ; No tests
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              "INSTALL=install"
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "util/intelmetool")
+              #t)))))
+    (inputs
+     (list pciutils
+           zlib))
     (synopsis "Intel Management Engine tools")
     (description "This package provides tools for working with Intel
 Management Engine (ME).  You need to @code{sudo rmmod mei_me} and
 @code{sudo rmmod mei} before using this tool.  Also pass
 @code{iomem=relaxed} to the Linux kernel command line.")
     (license license:gpl2)
-
+    (home-page "https://review.coreboot.org/q/project:coreboot")
     ;; This is obviously an Intel thing, plus it requires <cpuid.h>.
     (supported-systems '("x86_64-linux" "i686-linux"))))
 
