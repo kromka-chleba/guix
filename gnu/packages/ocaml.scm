@@ -1686,7 +1686,7 @@ Knuth’s LR(1) parser construction technique.")
                                     `("OCAMLPATH" ":" prefix ,ocamlpath))))))))
     (inputs (list bash-minimal))
     (native-inputs (list gmp ocaml-qcheck ocaml-ounit2 z3))
-    (propagated-inputs (list dune-site
+    (propagated-inputs (list ocaml-dune-site
                              ocaml-base
                              ocaml-menhir
                              ocaml-graph
@@ -2341,15 +2341,15 @@ about.")
 dune packages.  However, it is not meant for public consumption and provides
 no stability guarantee.")))
 
-(define-public dune-site
+(define-public ocaml-dune-site
   (package
     (inherit dune-ordering)
-    (name "dune-site")
+    (name "ocaml-dune-site")
     (build-system dune-build-system)
     (arguments
      `(#:package "dune-site"
        #:tests? #f))
-    (propagated-inputs (list dune-private-libs))
+    (propagated-inputs (list dune-private-libs ocaml-lwt))
     (synopsis "Location information embedder")
     (description "This library helps embed location information inside
 executables and libraries")))
@@ -3779,6 +3779,72 @@ to which allows adding and looking up bindings in a type safe manner.")
  (synopsis "Tidy, feature-complete Web framework ")
  (description "")
  (license license:gpl3+)))
+(define-public ocaml-cstruct-lwt
+  (package
+    (name "ocaml-cstruct-lwt")
+    (version "6.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-cstruct/releases/download/v6.2.0/cstruct-6.2.0.tbz")
+       (sha256
+        (base32 "0qiyy1h7qsy90hdl01qdsg4rv61f3d5sp8wg2i4q63jqj8rhfy4s"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-lwt ocaml-cstruct ocaml-ppxlib ocaml-sexplib ocaml-async))
+    (home-page "https://github.com/mirage/ocaml-cstruct")
+    (synopsis "Access C-like structures directly from OCaml")
+    (description
+     "Cstruct is a library and syntax extension to make it easier to access C-like
+structures directly from OCaml.  It supports both reading and writing to these
+structures, and they are accessed via the `Bigarray` module.")
+    (license license:isc)))
+(define-public ocaml-tcpip
+  (package
+    (name "ocaml-tcpip")
+    (version "9.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/mirage-tcpip/releases/download/v9.0.1/tcpip-9.0.1.tbz")
+       (sha256
+        (base32 "00qbz7f14wlin0hxmmj8ynz0zhqwccmxjwqksziza741hvlprh7s"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list
+                             ocaml-cstruct
+                             ;; ocaml-cstruct-lwt
+                             ;; ocaml-mirage-net
+                             ocaml-mirage-mtime
+                             ocaml-mirage-crypto-rng
+                             ocaml-mirage-sleep
+                             ocaml-ipaddr
+                             ocaml-macaddr
+                             ;; ocaml-macaddr-cstruct
+                             ocaml-cstruct-lwt
+                             ocaml-fmt
+                             ocaml-lwt
+                             ocaml-lwt-dllist
+                             ocaml-logs
+                             ocaml-duration
+                             ocaml-randomconv
+                             ;; ocaml-ethernet
+                             ;; ocaml-arp
+                             ocaml-mirage-flow
+                             ;; ocaml-ipaddr-cstruct
+                             ;; ocaml-macaddr-cstruct
+                             ;; ocaml-lru
+                             ;; ocaml-metrics
+                             ocaml-cmdliner))
+    (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/mirage/mirage-tcpip")
+    (synopsis "OCaml TCP/IP networking stack, used in MirageOS")
+    (description
+     "`mirage-tcpip` provides a networking stack for the [Mirage operating
+system](https://mirage.io).  It provides implementations for the following
+module types (which correspond with the similarly-named protocols): * IP (via
+the IPv4 and IPv6 modules) * ICMP * UDP * TCP.")
+    (license license:isc)))
 
 (define-public ocaml-caqti
   (package
@@ -3794,17 +3860,20 @@ to which allows adding and looking up bindings in a type safe manner.")
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-angstrom
                              ocaml-bigstringaf
+                             ocaml-dune-site
                              ocaml-domain-name
                              ocaml-ipaddr
+                             ocaml-calendar
                              ocaml-logs
                              ocaml-lwt-dllist
                              ocaml-mtime
-                             ocaml-odoc
                              ocaml-ptime
                              ocaml-tls
                              ocaml-uri
+                             ocaml-ke
+                             ocaml-tcpip
                              ocaml-x509))
-    (native-inputs (list ocaml-alcotest ocaml-cmdliner ocaml-mdx ocaml-re))
+    (native-inputs (list ocaml-alcotest ocaml-cmdliner ocaml-mdx ocaml-re postgresql))
     (home-page "https://github.com/paurkedal/ocaml-caqti/")
     (synopsis "Unified interface to relational database libraries")
     (description
@@ -3826,6 +3895,7 @@ target for higher level interfaces and code generators.")
   (package
     (inherit ocaml-caqti)
     (name "caqti-lwt")
+    (propagated-inputs (list ocaml-caqti))
     (arguments `(#:package "caqti-lwt"))
   )
 )
@@ -3848,7 +3918,7 @@ target for higher level interfaces and code generators.")
                              ocaml-fix
                              ocaml-cppo
                              ocaml-ppxlib
-                             ocaml-odoc))
+                             ))
     (native-inputs (list ocaml-findlib))
     (home-page "https://reasonml.github.io/")
     (synopsis "Reason: Syntax & Toolchain for OCaml")
@@ -3860,7 +3930,7 @@ OCaml & @code{JavaScript} ecosystem.")
 (define-public ocaml-dream-pure
   (package
     (name "ocaml-dream-pure")
-    (version "1.0.0~alpha2")
+    (version "1.0.0alpha2")
     (source
      (origin
        (method url-fetch)
@@ -3875,8 +3945,14 @@ OCaml & @code{JavaScript} ecosystem.")
                              ocaml-lwt
                              ocaml-lwt-ppx
                              ocaml-ptime
+                             ocaml-faraday
+                             ocaml-digestif
+                             ocaml-psq
+                             ocaml-magic-mime
+                             ocaml-caqti-lwt
+                             ocaml-result
                              ocaml-uri))
-    (native-inputs (list ocaml-alcotest ocaml-bisect-ppx ocaml-ppx-expect
+    (native-inputs (list ocaml-alcotest ocaml-ppx-expect
                          ocaml-ppx-yojson-conv))
     (home-page "https://github.com/aantron/dream")
     (synopsis
@@ -3896,7 +3972,7 @@ OCaml & @code{JavaScript} ecosystem.")
         (base32 "0pq1ww3p41m6dzk2cmrr7pq03kvb5hjqvk49s95vp030kygxivmi"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-gluten-lwt ocaml-faraday-lwt-unix
-                             ocaml-odoc))
+                             ))
     (home-page "https://github.com/anmonteiro/gluten")
     (synopsis "Lwt + Unix support for gluten")
     (description #f)
@@ -3905,7 +3981,7 @@ OCaml & @code{JavaScript} ecosystem.")
 (define-public ocaml-dream-httpaf
   (package
     (name "ocaml-dream-httpaf")
-    (version "1.0.0~alpha4")
+    (version "1.0.0alpha4")
     (source
      (origin
        (method url-fetch)
@@ -3943,7 +4019,8 @@ OCaml & @code{JavaScript} ecosystem.")
        (sha256
         (base32 "0pq1ww3p41m6dzk2cmrr7pq03kvb5hjqvk49s95vp030kygxivmi"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-gluten ocaml-lwt ocaml-odoc))
+    (propagated-inputs (list ocaml-gluten ocaml-lwt
+                             ))
     (home-page "https://github.com/anmonteiro/gluten")
     (synopsis "Lwt-specific runtime for gluten")
     (description #f)
@@ -3968,6 +4045,9 @@ OCaml & @code{JavaScript} ecosystem.")
 (define-public ocaml-h2-lwt-unix
   (package
     (name "ocaml-h2-lwt-unix")
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (version "0.13.0")
     (source
      (origin
@@ -3978,7 +4058,8 @@ OCaml & @code{JavaScript} ecosystem.")
         (base32 "03q7m2ra6ch49z1vwjbmp4qzr0sv3pl3n8h7lbkr8lhpg3qvd28d"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-h2-lwt ocaml-faraday-lwt-unix
-                             ocaml-gluten-lwt-unix ocaml-odoc))
+                             ocaml-gluten-lwt-unix
+                             ))
     (home-page "https://github.com/anmonteiro/ocaml-h2")
     (synopsis "Lwt + UNIX support for h2")
     (description
@@ -4020,10 +4101,14 @@ binaries.")
     (synopsis "Lwt support for Faraday")
     (description #f)
     (license license:bsd-3)))
+
 (define-public ocaml-h2-lwt
   (package
     (name "ocaml-h2-lwt")
     (version "0.13.0")
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (source
      (origin
        (method url-fetch)
@@ -4032,13 +4117,15 @@ binaries.")
        (sha256
         (base32 "03q7m2ra6ch49z1vwjbmp4qzr0sv3pl3n8h7lbkr8lhpg3qvd28d"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-h2 ocaml-lwt ocaml-gluten-lwt ocaml-odoc))
+    (propagated-inputs (list ocaml-h2 ocaml-lwt ocaml-gluten-lwt
+                             ))
     (home-page "https://github.com/anmonteiro/ocaml-h2")
     (synopsis "Lwt support for h2")
     (description
      "h2 is an implementation of the HTTP/2 specification entirely in OCaml.  h2-lwt
 provides an Lwt runtime implementation for h2.")
     (license license:bsd-3)))
+
 (define-public ocaml-httpun-lwt
   (package
     (name "ocaml-httpun-lwt")
@@ -4067,7 +4154,7 @@ provides an Lwt runtime implementation for h2.")
        (sha256
         (base32 "1zhhizim7zwxlv2r748hf1vwzgdpvzkdplyqdqbk391lwlw7zn85"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-camlp-streams ocaml-markup ocaml-bisect-ppx))
+    (propagated-inputs (list ocaml-camlp-streams ocaml-markup ))
     (native-inputs (list ocaml-ounit2))
     (home-page "https://github.com/aantron/lambdasoup")
     (synopsis
@@ -4086,6 +4173,9 @@ a minimal learning curve.  It is a very simple library.")
   (package
     (name "ocaml-mirage-crypto-rng")
     (version "2.0.2")
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (source
      (origin
        (method url-fetch)
@@ -4104,10 +4194,14 @@ a minimal learning curve.  It is a very simple library.")
 implementations: Fortuna, HMAC-DRBG, getrandom/getentropy based (in the unix
 sublibrary).")
     (license license:isc)))
+
 (define-public ocaml-dune-configurator
   (package
     (name "ocaml-dune-configurator")
     (version "3.20.2")
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (source
      (origin
        (method url-fetch)
@@ -4116,7 +4210,8 @@ sublibrary).")
        (sha256
         (base32 "0jd5kkpvkkpcmy0wwcyqnmy6x2pjz7rbsqb8pfwsid5xc0nnpa5i"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-csexp ocaml-odoc))
+    (propagated-inputs (list ocaml-csexp ocaml-lwt
+                             ))
     (home-page "https://github.com/ocaml/dune")
     (synopsis "Helper library for gathering system configuration")
     (description
@@ -4126,6 +4221,7 @@ instance.  Among other things, dune-configurator allows one to: - test if a C
 program compiles - query pkg-config - import #define from OCaml header files -
 generate config.h file.")
     (license license:expat)))
+
 (define-public ocaml-randomconv
   (package
     (name "ocaml-randomconv")
@@ -4149,6 +4245,9 @@ your choice (int8/int16/int32/int64/int/float).")
   (package
     (name "ocaml-mirage-crypto-rng-lwt")
     (version "1.2.0")
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (source
      (origin
        (method url-fetch)
@@ -4158,7 +4257,8 @@ your choice (int8/int16/int32/int64/int/float).")
         (base32 "0zp60zp101mcygwhsh62jj61sy61yh2k31d8kgznily1jv6jnm09"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-duration ocaml-logs ocaml-mirage-crypto-rng
-                             ocaml-mtime ocaml-lwt))
+                             ocaml-mtime ocaml-lwt ocaml-mirage-clock ocaml-eio ocaml-async
+                             ocaml-mirage-time))
     (home-page "https://github.com/mirage/mirage-crypto")
     (synopsis "A cryptographically secure PRNG")
     (description
@@ -4176,7 +4276,8 @@ your choice (int8/int16/int32/int64/int/float).")
        (sha256
         (base32 "1fzq1brw9na4p22m20xjw19qbk869cj7nkrc2faw0khm40l47smq"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-caqti ocaml-odoc ocaml-postgresql ocaml-uri))
+    (propagated-inputs (list ocaml-caqti
+                             ocaml-postgresql ocaml-uri))
     (native-inputs (list ocaml-alcotest ocaml-cmdliner))
     (home-page "https://github.com/paurkedal/ocaml-caqti/")
     (synopsis "PostgreSQL driver for Caqti based on C bindings")
@@ -4195,7 +4296,7 @@ your choice (int8/int16/int32/int64/int/float).")
         (base32 "1bspn767p05vyxi8367ks7q3qapzi1fmfl3k7pr8z4zqf8kx4iqw"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-dune-compiledb ocaml-dune-configurator
-                             ocaml-odoc))
+                             ))
     (native-inputs (list postgresql))
     (home-page "https://mmottl.github.io/postgresql-ocaml")
     (synopsis "Bindings to the PostgreSQL library")
@@ -4206,6 +4307,9 @@ your choice (int8/int16/int32/int64/int/float).")
   (package
     (name "ocaml-dune-compiledb")
     (version "0.6.0")
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (source
      (origin
        (method url-fetch)
@@ -4215,7 +4319,8 @@ your choice (int8/int16/int32/int64/int/float).")
         (base32 "1zzriwgflwcgpa16s3gmv7z48bari21jv0sk3xrxz2dgqba4zrzm"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-ezjsonm ocaml-sexplib ocaml-sexplib0
-                             ocaml-fpath ocaml-odoc))
+                             ocaml-fpath
+                             ))
     (home-page "https://github.com/edwintorok/dune-compiledb")
     (synopsis "Generate compile_commands.json from dune rules")
     (description
@@ -4236,8 +4341,10 @@ headers.")
         (base32 "1p82r68lxk6wzxihzd620a6kzp27vn548j2cr970l4jfdcy6gsxz"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-tyxml ocaml-tyxml-syntax ocaml-ppxlib
-                             ocaml-odoc))
-    (native-inputs (list ocaml-alcotest ocaml-reason))
+                             ))
+    (native-inputs (list ocaml-alcotest
+                         ;; ocaml-reason
+                         ))
     (home-page "https://github.com/ocsigen/tyxml")
     (synopsis "JSX syntax to write TyXML documents")
     (description
@@ -4258,7 +4365,8 @@ reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
        (sha256
         (base32 "1fzq1brw9na4p22m20xjw19qbk869cj7nkrc2faw0khm40l47smq"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-caqti ocaml-odoc ocaml-sqlite3))
+    (propagated-inputs (list ocaml-caqti
+                             ocaml-sqlite3))
     (native-inputs (list ocaml-alcotest ocaml-cmdliner))
     (home-page "https://github.com/paurkedal/ocaml-caqti/")
     (synopsis "Sqlite3 driver for Caqti using C bindings")
@@ -4276,7 +4384,8 @@ reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
        (sha256
         (base32 "1p82r68lxk6wzxihzd620a6kzp27vn548j2cr970l4jfdcy6gsxz"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-ppxlib ocaml-re ocaml-uutf ocaml-odoc))
+    (propagated-inputs (list ocaml-ppxlib ocaml-re ocaml-uutf
+                             ))
     (native-inputs (list ocaml-alcotest))
     (home-page "https://github.com/ocsigen/tyxml")
     (synopsis "Common layer for the JSX and PPX syntaxes for Tyxml")
@@ -4286,7 +4395,7 @@ reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
 (define-public ocaml-dream
   (package
     (name "ocaml-dream")
-    (version "1.0.0~alpha8")
+    (version "1.0.0alpha8")
     (source
      (origin
        (method url-fetch)
@@ -4325,18 +4434,19 @@ reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
                              ocaml-uri
                              ocaml-yojson))
     (native-inputs (list ocaml-alcotest
-                         ocaml-bisect-ppx
+                         
                          ocaml-caqti-driver-postgresql
                          ocaml-caqti-driver-sqlite3
                          ocaml-crunch
                          ;; ocaml-html-of-jsx
-                         js-of-ocaml
+                         ;; js-of-ocaml
                          ;; js-of-ocaml-ppx
                          ocaml-ppx-expect
                          ocaml-ppx-yojson-conv
-                         ocaml-reason
+                         ;; ocaml-reason
                          ocaml-tyxml
-                         ocaml-tyxml-jsx))
+                         ;;ocaml-tyxml-jsx
+                         ))
     (home-page "https://github.com/aantron/dream")
     (synopsis "Tidy, feature-complete Web framework")
     (description
@@ -4609,6 +4719,9 @@ wherever they are applicable.")
       name home-page version "1w188b4c3cpfzgxyhil6g319r7y3hk9lw6wyf1881hwxsf6kprqq"
       "v"
       ))
+    (arguments
+    ;; Tests take FOREVER
+     '(#:tests? #f))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-ppx-jane ocaml-mirage-crypto ocaml-ptime ocaml-x509 ocaml-eio ocaml-core-unix ocaml-async ocaml-cstruct-async ocaml-mirage-ptime ocaml-mirage-kv ocaml-mirage-flow ocaml-crowbar ocaml-hxd ocaml-eio-main))
     ;; (propagated-inputs (list ocaml-ohex ocaml-digestif ocaml-ptime ocaml-fpath ocaml-bos ocaml-ipaddr
@@ -4749,6 +4862,29 @@ wherever they are applicable.")
     (description "")
     (license license:isc)
     ))
+(define-public ocaml-sedlex
+  (package
+    (name "ocaml-sedlex")
+    (version "3.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ocaml-community/sedlex/archive/refs/tags/v3.7.tar.gz")
+       (sha256
+        (base32 "0l88w2rr5wkrgj3hr6ara39ra5d9zijv26y1qxlpx4sz1xqqkd7d"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ppxlib ocaml-gen
+                             ))
+    (native-inputs (list ocaml-ppx-expect))
+    (home-page "https://github.com/ocaml-community/sedlex")
+    (synopsis "An OCaml lexer generator for Unicode")
+    (description
+     "sedlex is a lexer generator for OCaml.  It is similar to ocamllex, but supports
+Unicode.  Unlike ocamllex, sedlex allows lexer specifications within regular
+OCaml source files.  Lexing specific constructs are provided via a ppx syntax
+extension.")
+    (license license:expat)))
 
 (define-public ocaml-pecu
   (package
@@ -5867,7 +6003,7 @@ and consumable.")
 (define-public ocaml-sedlex
   (package
     (name "ocaml-sedlex")
-    (version "3.2")
+    (version "3.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5876,7 +6012,7 @@ and consumable.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vzsmp8mvx9vrgjr5chsk2p2s5ii08c9kizw9ilx78jj30nzamz5"))))
+                "02qjpblb0w1wiy9ilc6y56pm46m07ksxc7v5h1lcbsfj9hkapjmr"))))
     (build-system dune-build-system)
     (arguments
      (list #:package "sedlex"
@@ -7258,7 +7394,7 @@ writing to these structures, and they are accessed via the Bigarray module.")
     (build-system dune-build-system)
     (arguments
      `(#:package "ezjsonm"))
-    (native-inputs (list ocaml-alcotest js-of-ocaml node-lts))
+    (native-inputs (list ocaml-alcotest node-lts))
     (propagated-inputs (list ocaml-jsonm ocaml-uutf ocaml-sexplib0 ocaml-hex))
     (home-page "https://github.com/mirage/ezjsonm/")
     (synopsis "Read and write JSON data")
@@ -10772,6 +10908,7 @@ directly by this package, or DOM trees (@code{js_of_ocaml-tyxml}) virtual DOM
 also create your own representation and use it to instantiate a new set of
 combinators.")
     (license license:lgpl2.1)))
+
 (define-public ocaml-bisect-ppx
   (package
     (name "ocaml-bisect-ppx")
@@ -10831,6 +10968,8 @@ tool on the generated visitation files.")
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-odoc-parser
                              ocaml-astring
+                             ocaml-uutf
+                             ocaml-sexplib
                              ocaml-cmdliner
                              ocaml-fpath
                              ocaml-tyxml
@@ -10843,7 +10982,8 @@ tool on the generated visitation files.")
                          jq
                          ocaml-ppx-expect
                          ocaml-bos
-                         ocaml-bisect-ppx))
+                         ;; ocaml-bisect-ppx
+                         ))
     (home-page "https://github.com/ocaml/odoc")
     (synopsis "OCaml Documentation Generator")
     (description
@@ -11921,45 +12061,57 @@ HTTP parser, and implementations using various asynchronous programming
 libraries.")
     (license license:isc)))
 
+(define-public js-of-ocaml-compiler
+  (package
+    (name "js-of-ocaml-compiler")
+    (version "6.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ocsigen/js_of_ocaml/releases/download/6.2.0/js_of_ocaml-6.2.0.tbz")
+       (sha256
+        (base32 "1nm5sa6xpzcbwf3rpkfg19d3c8f6x3h3wcw858sjl5qvimvl3ikw"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ppxlib
+                             ocaml-cmdliner
+                             ocaml-sedlex
+                             ocaml-menhir
+                             ocaml-yojson
+                             ))
+    (native-inputs (list ocaml-num ocaml-ppx-expect ocaml-re ocaml-qcheck git))
+    (properties `((upstream-name . "js_of_ocaml-compiler")))
+    (home-page "https://ocsigen.org/js_of_ocaml/latest/manual/overview")
+    (synopsis "Compiler from OCaml bytecode to JavaScript")
+    (description
+     "Js_of_ocaml is a compiler from OCaml bytecode to @code{JavaScript}.  It makes it
+possible to run pure OCaml programs in @code{JavaScript} environment like
+browsers and Node.js.")
+    (license license:gpl2+)))
+
 (define-public js-of-ocaml
   (package
     (name "js-of-ocaml")
     (version "6.2.0")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ocsigen/js_of_ocaml")
-             (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri
+        "https://github.com/ocsigen/js_of_ocaml/releases/download/6.2.0/js_of_ocaml-6.2.0.tbz")
        (sha256
-        (base32 "0xsz4dj0gh2rpbixqdqwb78r10pj5c2gbiqfzpjz16l2g8fgqmp3"))))
+        (base32 "1nm5sa6xpzcbwf3rpkfg19d3c8f6x3h3wcw858sjl5qvimvl3ikw"))))
     (build-system dune-build-system)
-    (arguments
-     ;;tests assume ocaml 4.13
-     `(#:tests? #f))
-    (propagated-inputs
-     (list ocaml-ppxlib
-           ocaml-uchar
-           ocaml-menhir
-           ocaml-reactivedata
-           ocaml-cmdliner
-           ocaml-lwt
-           ocaml-tyxml
-           ocaml-re
-           ocaml-uutf
-           ocaml-graphics
-           ocaml-yojson))
-    (native-inputs
-     ;; for tests
-     (list node-lts ocaml-ppx-expect ocaml-num))
+    (propagated-inputs (list js-of-ocaml-compiler ocaml-ppxlib
+                             ocaml-odoc))
+    (native-inputs (list ocaml-num ocaml-ppx-expect ocaml-re git))
     (properties `((upstream-name . "js_of_ocaml")))
-    (home-page "https://ocsigen.org/js_of_ocaml/")
-    (synopsis "Compiler from OCaml bytecode to Javascript")
-    (description "Js_of_ocaml is a compiler from OCaml bytecode to JavaScript.
-It makes it possible to run pure OCaml programs in JavaScript environment like
+    (home-page "https://ocsigen.org/js_of_ocaml/latest/manual/overview")
+    (synopsis "Compiler from OCaml bytecode to JavaScript")
+    (description
+     "Js_of_ocaml is a compiler from OCaml bytecode to @code{JavaScript}.  It makes it
+possible to run pure OCaml programs in @code{JavaScript} environment like
 browsers and Node.js.")
-    (license license:lgpl2.1+)))
+    (license license:gpl2)))
 
 (define-public ocaml-afl-persistent
   (package
