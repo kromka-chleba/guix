@@ -5,6 +5,7 @@
 ;;; Copyright © 2024 Justin Veilleux <terramorpha@cock.li>
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;; Copyright © 2025 Meredith Oleander <mereditholeander@gmail.com>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -231,6 +232,36 @@ mission-critical safety and performance for financial services.")
      "Waylock is a small screen locker for Wayland compositors implementing the
 @code{ext-session-lock-v1} protocol.")
     (license license:expat)))
+
+(define-public dt
+  (package
+    (name "dt")
+    (version "1.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/so-dang-cool/dt")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qxggpg7wlfmrkllkq6xyrg9699jaqhxscxm7hy37bf1k5vhpk8g"))
+       (modules '((guix build utils)))
+       (snippet '(delete-file-recursively "demos"))))
+    (build-system zig-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:tests? #f                       ; Many tests fail with explanation
+                                        ; "0x29b18c in waitPosix (test)"
+      #:zig-build-flags #~(list "dt")
+      #:zig zig-0.14))
+    (home-page "https://dt.plumbing/")
+    (synopsis "Simple stream editing tool")
+    (description "@code{dt} is an @code{awk}-like tool and concatenative,
+functional programming language for doing small text-processing tasks, either
+from batch scripts, the command line, or an interactive REPL.")
+    (license license:bsd-3)))
 
 (define-public zig-clap
   (package
