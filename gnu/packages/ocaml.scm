@@ -59,6 +59,7 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages databases)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages finance)
@@ -3744,12 +3745,12 @@ to which allows adding and looking up bindings in a type safe manner.")
     (license license:lgpl2.1)
     ))
 
-
-(define-public ocaml-dream
+(define-public ocaml-dream-mirage
 (package
- (name "ocaml-dream")
+ (name "ocaml-dream-mirage")
  (version "1.0.0-alpha8")
  (build-system dune-build-system)
+ (arguments `(#:package "dream-mirage"))
  (home-page "https://github.com/camlworks/dream")
  (source
      (github-tag-origin
@@ -3758,22 +3759,641 @@ to which allows adding and looking up bindings in a type safe manner.")
       ""))
  (native-inputs
   (list ocaml-alcotest))
- (propagated-inputs
-  (list ocaml-ppx-deriving
-        ocaml-magic-mime
-        ocaml-yojson
-        ocaml-digestif
-        ocaml-ssl
-        ocaml-mirage-crypto
-        ocaml-ptime
-        ocaml-httpun-ws
-        ocaml-mirage-crypto
-        ocaml-unstrctrd
-        ;; ocaml-lwt-ssl
-        ocaml-lwt-ppx))
+ (propagated-inputs (list ocaml-lwt-ppx))
+ ;; (propagated-inputs
+ ;;  (list ocaml-ppx-deriving
+ ;;        ocaml-graphql-lwt
+ ;;        ocaml-magic-mime
+ ;;        ocaml-multipart-form-lwt
+ ;;        ocaml-yojson
+ ;;        ocaml-digestif
+ ;;        ocaml-ssl
+ ;;        ocaml-lwt-ssl
+ ;;        ocaml-mirage-crypto
+ ;;        ocaml-ptime
+ ;;        ocaml-httpun-ws
+ ;;        ocaml-mirage-crypto
+ ;;        ocaml-unstrctrd
+ ;;        ;; ocaml-lwt-ssl
+ ;;        ocaml-lwt-ppx))
  (synopsis "Tidy, feature-complete Web framework ")
  (description "")
  (license license:gpl3+)))
+
+(define-public ocaml-caqti
+  (package
+    (name "ocaml-caqti")
+    (version "2.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/paurkedal/ocaml-caqti/releases/download/v2.2.4/caqti-v2.2.4.tbz")
+       (sha256
+        (base32 "1fzq1brw9na4p22m20xjw19qbk869cj7nkrc2faw0khm40l47smq"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-angstrom
+                             ocaml-bigstringaf
+                             ocaml-domain-name
+                             ocaml-ipaddr
+                             ocaml-logs
+                             ocaml-lwt-dllist
+                             ocaml-mtime
+                             ocaml-odoc
+                             ocaml-ptime
+                             ocaml-tls
+                             ocaml-uri
+                             ocaml-x509))
+    (native-inputs (list ocaml-alcotest ocaml-cmdliner ocaml-mdx ocaml-re))
+    (home-page "https://github.com/paurkedal/ocaml-caqti/")
+    (synopsis "Unified interface to relational database libraries")
+    (description
+     "Caqti provides a monadic cooperative-threaded OCaml connector API for relational
+databases.  The purpose of Caqti is further to help make applications
+independent of a particular database system.  This is achieved by defining a
+common signature, which is implemented by the database drivers.  Connection
+parameters are specified as an URI, which is typically provided at run-time.
+Caqti then loads a driver which can handle the URI, and provides a first-class
+module which implements the driver API and additional convenience functionality.
+ Caqti does not make assumptions about the structure of the query language, and
+only provides the type information needed at the edges of communication between
+the OCaml code and the database; i.e.  for encoding parameters and decoding
+returned tuples.  It is hoped that this agnostic choice makes it a suitable
+target for higher level interfaces and code generators.")
+    (license #f)))
+
+(define-public ocaml-caqti-lwt
+  (package
+    (inherit ocaml-caqti)
+    (name "caqti-lwt")
+    (arguments `(#:package "caqti-lwt"))
+  )
+)
+
+(define-public ocaml-reason
+  (package
+    (name "ocaml-reason")
+    (version "3.17.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/reasonml/reason/releases/download/3.17.0/reason-3.17.0.tbz")
+       (sha256
+        (base32 "1sx5z269sry2xbca3d9sw7mh9ag773k02r9cgrz5n8gxx6f83j42"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-cmdliner
+                             ocaml-dune-build-info
+                             ocaml-menhir
+                             ocaml-fix
+                             ocaml-cppo
+                             ocaml-ppxlib
+                             ocaml-odoc))
+    (native-inputs (list ocaml-findlib))
+    (home-page "https://reasonml.github.io/")
+    (synopsis "Reason: Syntax & Toolchain for OCaml")
+    (description
+     "Reason gives OCaml a new syntax that is remniscient of languages like
+@code{JavaScript}.  It's also the umbrella project for a set of tools for the
+OCaml & @code{JavaScript} ecosystem.")
+    (license license:expat)))
+(define-public ocaml-dream-pure
+  (package
+    (name "ocaml-dream-pure")
+    (version "1.0.0~alpha2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/aantron/dream/releases/download/1.0.0-alpha4/dream-1.0.0-alpha4.tar.gz")
+       (sha256
+        (base32 "045glrnb15k6vv7avg0s002kycynf5cmir3cl6g0ih379mlv6hx1"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-base64
+                             ocaml-bigstringaf
+                             ocaml-hmap
+                             ocaml-lwt
+                             ocaml-lwt-ppx
+                             ocaml-ptime
+                             ocaml-uri))
+    (native-inputs (list ocaml-alcotest ocaml-bisect-ppx ocaml-ppx-expect
+                         ocaml-ppx-yojson-conv))
+    (home-page "https://github.com/aantron/dream")
+    (synopsis
+     "Internal: shared HTTP types for Dream (server) and Hyper (client)")
+    (description "This package does not have a stable API.")
+    (license license:expat)))
+(define-public ocaml-gluten-lwt-unix
+  (package
+    (name "ocaml-gluten-lwt-unix")
+    (version "0.5.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/gluten/releases/download/0.5.2/gluten-0.5.2.tbz")
+       (sha256
+        (base32 "0pq1ww3p41m6dzk2cmrr7pq03kvb5hjqvk49s95vp030kygxivmi"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-gluten-lwt ocaml-faraday-lwt-unix
+                             ocaml-odoc))
+    (home-page "https://github.com/anmonteiro/gluten")
+    (synopsis "Lwt + Unix support for gluten")
+    (description #f)
+    (license license:bsd-3)))
+
+(define-public ocaml-dream-httpaf
+  (package
+    (name "ocaml-dream-httpaf")
+    (version "1.0.0~alpha4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/aantron/dream/releases/download/1.0.0-alpha8/dream-1.0.0-alpha8.tar.gz")
+       (sha256
+        (base32 "15pjbk4m4imq80a7szdwsyz2c8g6x2ln2jaajz4yagy0j0l83v93"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-dream-pure
+                             ocaml-gluten
+                             ocaml-gluten-lwt-unix
+                             ocaml-h2
+                             ocaml-h2-lwt-unix
+                             ocaml-httpun
+                             ocaml-httpun-lwt-unix
+                             ocaml-httpun-ws
+                             ocaml-lwt
+                             ocaml-lwt-ppx
+                             ocaml-lwt-ssl
+                             ocaml-ssl))
+    (home-page "https://github.com/aantron/dream")
+    (synopsis
+     "Internal: shared http/af stack for Dream (server) and Hyper (client)")
+    (description "This package does not have a stable API.")
+    (license license:expat)))
+(define-public ocaml-gluten-lwt
+  (package
+    (name "ocaml-gluten-lwt")
+    (version "0.5.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/gluten/releases/download/0.5.2/gluten-0.5.2.tbz")
+       (sha256
+        (base32 "0pq1ww3p41m6dzk2cmrr7pq03kvb5hjqvk49s95vp030kygxivmi"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-gluten ocaml-lwt ocaml-odoc))
+    (home-page "https://github.com/anmonteiro/gluten")
+    (synopsis "Lwt-specific runtime for gluten")
+    (description #f)
+    (license license:bsd-3)))
+
+(define-public ocaml-faraday-lwt-unix
+  (package
+    (name "ocaml-faraday-lwt-unix")
+    (version "0.8.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://github.com/inhabitedtype/faraday/archive/0.8.2.tar.gz")
+       (sha256
+        (base32 "1iiml37sgn28mm0szm4ldqq6fkji4l5368l7dvgafgpx745sj3kj"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-faraday-lwt ocaml-lwt))
+    (home-page "https://github.com/inhabitedtype/faraday")
+    (synopsis "Lwt_unix support for Faraday")
+    (description #f)
+    (license license:bsd-3)))
+(define-public ocaml-h2-lwt-unix
+  (package
+    (name "ocaml-h2-lwt-unix")
+    (version "0.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/ocaml-h2/releases/download/0.13.0/h2-0.13.0.tbz")
+       (sha256
+        (base32 "03q7m2ra6ch49z1vwjbmp4qzr0sv3pl3n8h7lbkr8lhpg3qvd28d"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-h2-lwt ocaml-faraday-lwt-unix
+                             ocaml-gluten-lwt-unix ocaml-odoc))
+    (home-page "https://github.com/anmonteiro/ocaml-h2")
+    (synopsis "Lwt + UNIX support for h2")
+    (description
+     "h2 is an implementation of the HTTP/2 specification entirely in OCaml.
+h2-lwt-unix provides an Lwt runtime implementation for h2 that targets UNIX
+binaries.")
+    (license license:bsd-3)))
+(define-public ocaml-httpun-lwt-unix
+  (package
+    (name "ocaml-httpun-lwt-unix")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/httpun/releases/download/0.2.0/httpun-0.2.0.tbz")
+       (sha256
+        (base32 "0b5xhyv7sbwls8fnln1lp48v5mlkx3ay7l8820f8xbl59kpjgkm2"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-httpun ocaml-httpun-lwt
+                             ocaml-gluten-lwt-unix))
+    (home-page "https://github.com/anmonteiro/httpun")
+    (synopsis "Lwt + Unix support for httpun")
+    (description #f)
+    (license license:bsd-3)))
+(define-public ocaml-faraday-lwt
+  (package
+    (name "ocaml-faraday-lwt")
+    (version "0.8.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://github.com/inhabitedtype/faraday/archive/0.8.2.tar.gz")
+       (sha256
+        (base32 "1iiml37sgn28mm0szm4ldqq6fkji4l5368l7dvgafgpx745sj3kj"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-faraday ocaml-lwt))
+    (home-page "https://github.com/inhabitedtype/faraday")
+    (synopsis "Lwt support for Faraday")
+    (description #f)
+    (license license:bsd-3)))
+(define-public ocaml-h2-lwt
+  (package
+    (name "ocaml-h2-lwt")
+    (version "0.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/ocaml-h2/releases/download/0.13.0/h2-0.13.0.tbz")
+       (sha256
+        (base32 "03q7m2ra6ch49z1vwjbmp4qzr0sv3pl3n8h7lbkr8lhpg3qvd28d"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-h2 ocaml-lwt ocaml-gluten-lwt ocaml-odoc))
+    (home-page "https://github.com/anmonteiro/ocaml-h2")
+    (synopsis "Lwt support for h2")
+    (description
+     "h2 is an implementation of the HTTP/2 specification entirely in OCaml.  h2-lwt
+provides an Lwt runtime implementation for h2.")
+    (license license:bsd-3)))
+(define-public ocaml-httpun-lwt
+  (package
+    (name "ocaml-httpun-lwt")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/httpun/releases/download/0.2.0/httpun-0.2.0.tbz")
+       (sha256
+        (base32 "0b5xhyv7sbwls8fnln1lp48v5mlkx3ay7l8820f8xbl59kpjgkm2"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-httpun ocaml-lwt ocaml-gluten-lwt))
+    (home-page "https://github.com/anmonteiro/httpun")
+    (synopsis "Lwt support for httpun")
+    (description #f)
+    (license license:bsd-3)))
+(define-public ocaml-lambdasoup
+  (package
+    (name "ocaml-lambdasoup")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://github.com/aantron/lambdasoup/archive/1.1.1.tar.gz")
+       (sha256
+        (base32 "1zhhizim7zwxlv2r748hf1vwzgdpvzkdplyqdqbk391lwlw7zn85"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-camlp-streams ocaml-markup ocaml-bisect-ppx))
+    (native-inputs (list ocaml-ounit2))
+    (home-page "https://github.com/aantron/lambdasoup")
+    (synopsis
+     "Easy functional HTML scraping and manipulation with CSS selectors")
+    (description
+     "Lambda Soup is an HTML scraping library inspired by Python's Beautiful Soup.  It
+provides lazy traversals from HTML nodes to their parents, children, siblings,
+etc., and to nodes matching CSS selectors.  The traversals can be manipulated
+using standard functional combinators such as fold, filter, and map.  The DOM
+tree is mutable.  You can use Lambda Soup for automatic HTML rewriting in
+scripts.  Lambda Soup rewrites its own ocamldoc page this way.  A major goal of
+Lambda Soup is to be easy to use, including in interactive sessions, and to have
+a minimal learning curve.  It is a very simple library.")
+    (license license:expat)))
+(define-public ocaml-mirage-crypto-rng
+  (package
+    (name "ocaml-mirage-crypto-rng")
+    (version "2.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/mirage-crypto/releases/download/v2.0.2/mirage-crypto-2.0.2.tbz")
+       (sha256
+        (base32 "0x2q47b07a7s2br75zxdvlmsb421mif7ry2p6p4zn9s0ycwrv6kk"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-dune-configurator ocaml-duration ocaml-logs
+                             ocaml-mirage-crypto ocaml-digestif))
+    (native-inputs (list ocaml-ounit2 ocaml-randomconv ocaml-ohex))
+    (home-page "https://github.com/mirage/mirage-crypto")
+    (synopsis "A cryptographically secure PRNG")
+    (description
+     "Mirage-crypto-rng provides a random number generator interface, and
+implementations: Fortuna, HMAC-DRBG, getrandom/getentropy based (in the unix
+sublibrary).")
+    (license license:isc)))
+(define-public ocaml-dune-configurator
+  (package
+    (name "ocaml-dune-configurator")
+    (version "3.20.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ocaml/dune/releases/download/3.20.2/dune-3.20.2.tbz")
+       (sha256
+        (base32 "0jd5kkpvkkpcmy0wwcyqnmy6x2pjz7rbsqb8pfwsid5xc0nnpa5i"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-csexp ocaml-odoc))
+    (home-page "https://github.com/ocaml/dune")
+    (synopsis "Helper library for gathering system configuration")
+    (description
+     "dune-configurator is a small library that helps writing OCaml scripts that test
+features available on the system, in order to generate config.h files for
+instance.  Among other things, dune-configurator allows one to: - test if a C
+program compiles - query pkg-config - import #define from OCaml header files -
+generate config.h file.")
+    (license license:expat)))
+(define-public ocaml-randomconv
+  (package
+    (name "ocaml-randomconv")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/hannesm/randomconv/releases/download/v0.2.0/randomconv-0.2.0.tbz")
+       (sha256
+        (base32 "1sk3bdfz1nlqrivp8vy3slpbhqw858gc5zwjix3a8hg30zgiw5xk"))))
+    (build-system dune-build-system)
+    (home-page "https://github.com/hannesm/randomconv")
+    (synopsis
+     "Convert from random byte vectors (int -> string) to random native numbers")
+    (description
+     "Given a function which produces random byte vectors, convert it to a number of
+your choice (int8/int16/int32/int64/int/float).")
+    (license license:isc)))
+(define-public ocaml-mirage-crypto-rng-lwt
+  (package
+    (name "ocaml-mirage-crypto-rng-lwt")
+    (version "1.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/mirage-crypto/releases/download/v1.2.0/mirage-crypto-1.2.0.tbz")
+       (sha256
+        (base32 "0zp60zp101mcygwhsh62jj61sy61yh2k31d8kgznily1jv6jnm09"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-duration ocaml-logs ocaml-mirage-crypto-rng
+                             ocaml-mtime ocaml-lwt))
+    (home-page "https://github.com/mirage/mirage-crypto")
+    (synopsis "A cryptographically secure PRNG")
+    (description
+     "Mirage-crypto-rng-lwt provides entropy collection code for the RNG using Lwt.")
+    (license license:isc)))
+(define-public ocaml-caqti-driver-postgresql
+  (package
+    (name "ocaml-caqti-driver-postgresql")
+    (version "2.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/paurkedal/ocaml-caqti/releases/download/v2.2.4/caqti-v2.2.4.tbz")
+       (sha256
+        (base32 "1fzq1brw9na4p22m20xjw19qbk869cj7nkrc2faw0khm40l47smq"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-caqti ocaml-odoc ocaml-postgresql ocaml-uri))
+    (native-inputs (list ocaml-alcotest ocaml-cmdliner))
+    (home-page "https://github.com/paurkedal/ocaml-caqti/")
+    (synopsis "PostgreSQL driver for Caqti based on C bindings")
+    (description #f)
+    (license #f)))
+(define-public ocaml-postgresql
+  (package
+    (name "ocaml-postgresql")
+    (version "5.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mmottl/postgresql-ocaml/releases/download/5.3.2/postgresql-5.3.2.tbz")
+       (sha256
+        (base32 "1bspn767p05vyxi8367ks7q3qapzi1fmfl3k7pr8z4zqf8kx4iqw"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-dune-compiledb ocaml-dune-configurator
+                             ocaml-odoc))
+    (native-inputs (list postgresql))
+    (home-page "https://mmottl.github.io/postgresql-ocaml")
+    (synopsis "Bindings to the PostgreSQL library")
+    (description
+     "Postgresql offers library functions for accessing @code{PostgreSQL} databases.")
+    (license #f)))
+(define-public ocaml-dune-compiledb
+  (package
+    (name "ocaml-dune-compiledb")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/edwintorok/dune-compiledb/releases/download/0.6.0/dune-compiledb-0.6.0.tbz")
+       (sha256
+        (base32 "1zzriwgflwcgpa16s3gmv7z48bari21jv0sk3xrxz2dgqba4zrzm"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ezjsonm ocaml-sexplib ocaml-sexplib0
+                             ocaml-fpath ocaml-odoc))
+    (home-page "https://github.com/edwintorok/dune-compiledb")
+    (synopsis "Generate compile_commands.json from dune rules")
+    (description
+     "Generates a compile_commands.json from dune rules that can be used by language
+server like clangd', or static analyzers like goblint'.  Works with generated
+headers.")
+    (license license:lgpl2.1+)))
+(define-public ocaml-tyxml-jsx
+  (package
+    (name "ocaml-tyxml-jsx")
+    (version "4.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ocsigen/tyxml/releases/download/4.6.0/tyxml-4.6.0.tbz")
+       (sha256
+        (base32 "1p82r68lxk6wzxihzd620a6kzp27vn548j2cr970l4jfdcy6gsxz"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-tyxml ocaml-tyxml-syntax ocaml-ppxlib
+                             ocaml-odoc))
+    (native-inputs (list ocaml-alcotest ocaml-reason))
+    (home-page "https://github.com/ocsigen/tyxml")
+    (synopsis "JSX syntax to write TyXML documents")
+    (description
+     "```reason open Tyxml; let to_reason = <a href=\"reasonml.github.io/\"> \"Reason!\"
+</a> ``` The @code{TyXML} JSX allow to write @code{TyXML} documents with
+reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
+@code{TyXML} module.")
+    (license #f)))
+(define-public ocaml-caqti-driver-sqlite3
+  (package
+    (name "ocaml-caqti-driver-sqlite3")
+    (version "2.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/paurkedal/ocaml-caqti/releases/download/v2.2.4/caqti-v2.2.4.tbz")
+       (sha256
+        (base32 "1fzq1brw9na4p22m20xjw19qbk869cj7nkrc2faw0khm40l47smq"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-caqti ocaml-odoc ocaml-sqlite3))
+    (native-inputs (list ocaml-alcotest ocaml-cmdliner))
+    (home-page "https://github.com/paurkedal/ocaml-caqti/")
+    (synopsis "Sqlite3 driver for Caqti using C bindings")
+    (description #f)
+    (license #f)))
+(define-public ocaml-tyxml-syntax
+  (package
+    (name "ocaml-tyxml-syntax")
+    (version "4.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ocsigen/tyxml/releases/download/4.6.0/tyxml-4.6.0.tbz")
+       (sha256
+        (base32 "1p82r68lxk6wzxihzd620a6kzp27vn548j2cr970l4jfdcy6gsxz"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ppxlib ocaml-re ocaml-uutf ocaml-odoc))
+    (native-inputs (list ocaml-alcotest))
+    (home-page "https://github.com/ocsigen/tyxml")
+    (synopsis "Common layer for the JSX and PPX syntaxes for Tyxml")
+    (description #f)
+    (license #f)))
+
+(define-public ocaml-dream
+  (package
+    (name "ocaml-dream")
+    (version "1.0.0~alpha8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/aantron/dream/releases/download/1.0.0-alpha8/dream-1.0.0-alpha8.tar.gz")
+       (sha256
+        (base32 "15pjbk4m4imq80a7szdwsyz2c8g6x2ln2jaajz4yagy0j0l83v93"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-bigarray-compat
+                             ocaml-camlp-streams
+                             ocaml-caqti
+                             ocaml-caqti-lwt
+                             libev
+                             ocaml-cstruct
+                             ocaml-digestif
+                             ocaml-dream-httpaf
+                             ocaml-dream-pure
+                             ocaml-fmt
+                             ocaml-graphql-parser
+                             ocaml-graphql-lwt
+                             ocaml-lambdasoup
+                             ocaml-lwt
+                             ocaml-lwt-ppx
+                             ocaml-lwt-ssl
+                             ocaml-logs
+                             ocaml-magic-mime
+                             ocaml-markup
+                             ocaml-mirage-clock
+                             ocaml-mirage-crypto
+                             ocaml-mirage-crypto-rng
+                             ocaml-mirage-crypto-rng-lwt
+                             ocaml-multipart-form
+                             ocaml-multipart-form-lwt
+                             ocaml-ptime
+                             ocaml-ssl
+                             ocaml-uri
+                             ocaml-yojson))
+    (native-inputs (list ocaml-alcotest
+                         ocaml-bisect-ppx
+                         ocaml-caqti-driver-postgresql
+                         ocaml-caqti-driver-sqlite3
+                         ocaml-crunch
+                         ;; ocaml-html-of-jsx
+                         js-of-ocaml
+                         ;; js-of-ocaml-ppx
+                         ocaml-ppx-expect
+                         ocaml-ppx-yojson-conv
+                         ocaml-reason
+                         ocaml-tyxml
+                         ocaml-tyxml-jsx))
+    (home-page "https://github.com/aantron/dream")
+    (synopsis "Tidy, feature-complete Web framework")
+    (description
+     "Dream is a feature-complete Web framework with a simple programming model and no
+boilerplate.  It provides only two data types, request and response.  Almost
+everything else is either a built-in OCaml type, or an abbreviation for a bare
+function.  For example, a Web app, known in Dream as a handler, is just an
+ordinary function from requests to responses.  And a middleware is then just a
+function from handlers to handlers.  Within this model, Dream adds: - Session
+management with pluggable back ends. - A fully composable router. - Support for
+HTTP/1.1, HTTP/2, and HTTPS. - @code{WebSockets}. - @code{GraphQL}, including
+subscriptions and a built-in @code{GraphiQL} editor. - SQL connection pool
+helpers. - Server-side HTML templates. - Automatic secure handling of cookies
+and forms. - Unified, internationalization-friendly error handling. - A neat
+log, and OCaml runtime configuration. - Helpers for Web formats, such as
+Base64url, and a modern cipher.  Because of the simple programming model,
+everything is optional and composable.  It is trivially possible to strip Dream
+down to just a bare driver of the various HTTP protocols.  Dream is presented as
+a single module, whose API is documented on one page.  In addition, Dream comes
+with a large number of examples.  Security topics are introduced throughout,
+wherever they are applicable.")
+    (license license:expat)))
+
+;; (define-public ocaml-dream
+;; (package
+;;  (name "ocaml-dream")
+;;  (version "1.0.0-alpha8")
+;;  (build-system dune-build-system)
+;;  (arguments `(#:package "dream"))
+;;  (home-page "https://github.com/camlworks/dream")
+;;  (source
+;;      (github-tag-origin
+;;       name home-page version
+;;       "0hhw4z6y09pi410lq2hzd9p2b1ck394kbwma1sbh0mwlng66r400"
+;;       ""))
+;;  (native-inputs
+;;   (list ocaml-alcotest))
+;;  (propagated-inputs
+;;   (list ocaml-ppx-deriving
+;;         ocaml-graphql-lwt
+;;         ocaml-magic-mime
+;;         ocaml-dream-mirage
+;;         ocaml-multipart-form-lwt
+;;         ocaml-yojson
+;;         ocaml-digestif
+;;         ocaml-ssl
+;;         ocaml-lwt-ssl
+;;         ocaml-mirage-crypto
+;;         ocaml-ptime
+;;         ocaml-httpun-ws
+;;         ocaml-mirage-crypto
+;;         ocaml-unstrctrd
+;;         ;; ocaml-lwt-ssl
+;;         ocaml-lwt-ppx))
+;;  (synopsis "Tidy, feature-complete Web framework ")
+;;  (description "")
+;;  (license license:gpl3+)))
 
 (define-public ocaml-eio-ssl
   (package
@@ -4324,6 +4944,27 @@ contents of emails.")
     (license license:expat)
     ))
 
+(define-public ocaml-multipart-form-lwt
+  (package
+    (name "ocaml-multipart-form-lwt")
+    (version "0.7.0")
+    (home-page "https://github.com/dinosaure/multipart_form"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "1bq03iarfrad7l2xv3hqnzf2acacjq4l9akwz208i65vazp47fq2"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-multipart-form))
+    (synopsis "normal version")
+    (description "")
+    (arguments
+     `(#:package "multipart_form-lwt"))
+    (license license:expat)
+    ))
+
 (define-public ocaml-multipart-form-piaf
   (package
     (name "ocaml-multipart-form-piaf")
@@ -4688,6 +5329,35 @@ locks or other synchronization primitives.")
 make it easy to run normally-blocking I/O operations concurrently in a single
 process.  Also, in many cases, Lwt threads can interact without the need for
 locks or other synchronization primitives.")
+    (license license:lgpl2.1)))
+
+(define-public ocaml-lwt-ssl
+  (package
+    (name "ocaml-lwt-ssl")
+    (version "1.2.0")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/ocsigen/lwt_ssl"
+                    )
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256 (base32 "0dml6rmb5975k4cmizd9lwzqf56d0n3kgmd9ysd76px7z7x94j9f"
+                        ))))
+    (build-system dune-build-system)
+    (native-inputs
+     (list ocaml-cppo pkg-config))
+    (inputs
+     (list glib))
+    (propagated-inputs (list ocaml-ssl ocaml-lwt))
+    ;; (propagated-inputs
+    ;;  (list ocaml-mmap ocaml-ocplib-endian ocaml-seq libev ocaml-ppxlib ocaml-lwt))
+    (home-page "https://github.com/ocsigen/lwt")
+    (synopsis ""
+     )
+    (description ""
+     )
     (license license:lgpl2.1)))
 
 (define-public ocaml-lwt-dllist
@@ -6778,6 +7448,81 @@ and 4 (random based) according to RFC 4122.")
     (synopsis "Graph library for OCaml")
     (description "OCamlgraph is a generic graph library for OCaml.")
     (license license:lgpl2.1)))
+
+(define-public ocaml-graphql
+  (package
+    (name "ocaml-graphql")
+    (version "0.14.0")
+    (home-page "https://github.com/andreas/ocaml-graphql-server"
+               )
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0pxn2pqw881cs8lwwhxi0k5lfy992fwr7xmjxcy9ndqp35kay2bk"
+                ))))
+    (build-system dune-build-system)
+    (arguments `(#:package "graphql"))
+    ;; (propagated-inputs (list ocaml-stdlib-shims))
+    (native-inputs (list ocaml-graphics ocaml-seq ocaml-rresult ocaml-yojson ocaml-graphql-parser))
+    ;; (properties `((upstream-name . "ocamlgraph")))
+    (synopsis "")
+    (description "")
+    (license license:expat)))
+
+(define-public ocaml-graphql-lwt
+  (package
+    (name "ocaml-graphql")
+    (version "0.14.0")
+    (home-page "https://github.com/andreas/ocaml-graphql-server"
+               )
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0pxn2pqw881cs8lwwhxi0k5lfy992fwr7xmjxcy9ndqp35kay2bk"
+                       ))))
+    (build-system dune-build-system)
+    (arguments `(#:package "graphql-lwt"))
+    (propagated-inputs (list ocaml-graphql-parser ocaml-graphql ocaml-lwt ocaml-rresult ocaml-yojson))
+    (native-inputs (list ocaml-graphics))
+    ;; (properties `((upstream-name . "ocamlgraph")))
+    (synopsis "")
+    (description "")
+    (license license:expat)))
+
+(define-public ocaml-graphql-parser
+  (package
+    (name "ocaml-graphql")
+    (version "0.14.0")
+    (home-page "https://github.com/andreas/ocaml-graphql-server"
+               )
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0pxn2pqw881cs8lwwhxi0k5lfy992fwr7xmjxcy9ndqp35kay2bk"
+                       ))))
+    (build-system dune-build-system)
+    (arguments `(#:package "graphql_parser"))
+    (propagated-inputs (list ocaml-menhir ocaml-re ocaml-fmt ocaml-alcotest))
+    (native-inputs (list ocaml-graphics))
+    (properties `((upstream-name . "graphql_parser")))
+    (synopsis "")
+    (description "")
+    (license license:expat)))
 
 (define-public ocaml-piqi
   (package
@@ -10027,38 +10772,30 @@ directly by this package, or DOM trees (@code{js_of_ocaml-tyxml}) virtual DOM
 also create your own representation and use it to instantiate a new set of
 combinators.")
     (license license:lgpl2.1)))
-
 (define-public ocaml-bisect-ppx
   (package
     (name "ocaml-bisect-ppx")
     (version "2.8.3")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/aantron/bisect_ppx")
-             (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri "https://github.com/aantron/bisect_ppx/archive/2.8.3.tar.gz")
        (sha256
-        (base32
-         "1albx01qvr4fax4wkdmy0dd21q0fd9ixsgsvnr1z32ngj9nyi9fy"))))
+        (base32 "1nzq3wsdaw8k9pfmyvd7hj86h4phslyfcqsfa3f51bpvc0pypp97"))))
     (build-system dune-build-system)
-    (propagated-inputs
-     (list ocaml-ppxlib ocaml-cmdliner))
-    (arguments
-     ;; Tests require ocamlformat which would lead to circular dependencies
-     '(#:tests? #f))
+    (propagated-inputs (list ocaml-cmdliner ocaml-ppxlib))
+    (native-inputs (list ocamlformat))
     (properties `((upstream-name . "bisect_ppx")))
     (home-page "https://github.com/aantron/bisect_ppx")
     (synopsis "Code coverage for OCaml")
-    (description "Bisect_ppx helps you test thoroughly.  It is a small
-preprocessor that inserts instrumentation at places in your code, such as
-if-then-else and match expressions.  After you run tests, Bisect_ppx gives a
-nice HTML report showing which places were visited and which were missed.
-
-Usage is simple - add package bisect_ppx when building tests, run your tests,
-then run the Bisect_ppx report tool on the generated visitation files.")
-    (license license:mpl2.0)))
+    (description
+     "Bisect_ppx helps you test thoroughly.  It is a small preprocessor that inserts
+instrumentation at places in your code, such as if-then-else and match
+expressions.  After you run tests, Bisect_ppx gives a nice HTML report showing
+which places were visited and which were missed.  Usage is simple - add package
+bisect_ppx when building tests, run your tests, then run the Bisect_ppx report
+tool on the generated visitation files.")
+    (license license:expat)))
 
 (define-public ocaml-crunch
   (package
@@ -10086,55 +10823,43 @@ then run the Bisect_ppx report tool on the generated visitation files.")
     (version "3.1.0")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ocaml/odoc")
-             (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri
+        "https://github.com/ocaml/odoc/releases/download/3.1.0/odoc-3.1.0.tbz")
        (sha256
-        (base32 "1rvx6j1dw8x5xwlbggxg5i2y7fipwqgqs0fkd53j85dr4hwp669j"))))
+        (base32 "0559zx12v7qa42a048rdjc4qcgikbviirdfqmv5h6jckykzkqnrm"))))
     (build-system dune-build-system)
-    (arguments
-     `(#:tests? #f; not compatible with current version of ocaml-yojson
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-test
-           (lambda _
-             ;; test results expects #!/bin/sh but gets a store path instead
-             (substitute* "test/xref2/with.t/run.t"
-               (("#!/bin/sh") (string-append "#!" (which "sh")))))))))
-    (inputs
-    (list ocaml-astring
-          ocaml-cmdliner
-          ocaml-fmt
-          ocaml-fpath
-          ocaml-logs
-          ocaml-odoc-parser
-          ocaml-re
-          ;; ocaml-result
-          ocaml-menhir
-          ocaml-sexplib
-          ocaml-tyxml))
-  (native-inputs
-    (list ocaml-alcotest
-          ocaml-bos
-          ocaml-cppo
-          ocaml-findlib
-          ocaml-lwt
-          ocaml-markup
-          ocaml-ppx-expect
-          ocaml-version
-          ocaml-yojson
-          jq))
+    (propagated-inputs (list ocaml-odoc-parser
+                             ocaml-astring
+                             ocaml-cmdliner
+                             ocaml-fpath
+                             ocaml-tyxml
+                             ocaml-fmt
+                             ocaml-crunch))
+    (native-inputs (list ocaml-cppo
+                         ocaml-findlib
+                         ocaml-yojson
+                         ocaml-sexplib0
+                         jq
+                         ocaml-ppx-expect
+                         ocaml-bos
+                         ocaml-bisect-ppx))
     (home-page "https://github.com/ocaml/odoc")
-    (synopsis "OCaml documentation generator")
-    (description "Odoc is a documentation generator for OCaml.  It reads
-@emph{doc comments}, delimited with @code{(** ... *)}, and outputs
-@acronym{HTML}.
-
-Text inside doc comments is marked up in ocamldoc syntax.  Odoc's main
-advantage over ocamldoc is an accurate cross-referencer, which handles the
-complexity of the OCaml module system.")
+    (synopsis "OCaml Documentation Generator")
+    (description
+     "**odoc** is a powerful and flexible documentation generator for OCaml.  It reads
+*doc comments*, demarcated by `(** ... *)`, and transforms them into a variety
+of output formats, including HTML, @code{LaTeX}, and man pages. - **Output
+Formats:** Odoc generates HTML for web browsing, @code{LaTeX} for PDF
+generation, and man pages for use on Unix-like systems. - **Cross-References:**
+odoc uses the `ocamldoc` markup, which allows to create links for functions,
+types, modules, and documentation pages. - **Link to Source Code:**
+Documentation generated includes links to the source code of functions,
+providing an easy way to navigate from the docs to the actual implementation. -
+**Code Highlighting:** odoc automatically highlights syntax in code snippets for
+different languages.  odoc is part of the [OCaml
+Platform](https://ocaml.org/docs/platform), the recommended set of tools for
+OCaml.")
     (license license:isc)))
 
 (define-public ocaml-odoc-parser
