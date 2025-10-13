@@ -797,7 +797,7 @@ describing upgrade scenarios in package-based software distributions.")
 (define-public ocaml-mccs
   (package
     (name "ocaml-mccs")
-    (version "1.1+14")
+    (version "1.1+19")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -806,7 +806,8 @@ describing upgrade scenarios in package-based software distributions.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "17bvm0jhhs8h3p5sbb65asj53a8sxl634cc0kvcivpams74837zq"))))
+                "1x1y5rhj4f0xakbgfn9f90a9xy09v99p8mc42pbnam5kghyjmxy6"
+                ))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-cudf))
     (home-page "https://www.i3s.unice.fr/~cpjm/misc/")
@@ -1020,6 +1021,50 @@ The test-based infered specification implemented in this library is the followin
     (synopsis "spdx_licenses is an OCaml library aiming to provide an up-to-date and strict SPDX License Expression parser.")
     (description "It implements the format described in: https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions")
     (license license:isc)))
+
+(define-public ocaml-ipaddr-cstruct
+  (package
+    (name "ocaml-ipaddr-cstruct")
+    (version "5.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-ipaddr/releases/download/v5.6.1/ipaddr-5.6.1.tbz")
+       (sha256
+        (base32 "06d32jp2a2ym49bg4736g2snqhi7glk7bgp94g446n6lmgw7sq8y"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ipaddr ocaml-cstruct ocaml-ppx-sexp-conv))
+    (native-inputs (list ocaml-ounit2))
+    (home-page "https://github.com/mirage/ocaml-ipaddr")
+    (synopsis
+     "A library for manipulation of IP address representations using Cstructs")
+    (description "Cstruct convertions for macaddr.")
+    (license license:isc)))
+
+(define-public ocaml-xenstore
+  (package
+    (name "ocaml-xenstore")
+    (version "2.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-xenstore/releases/download/2.4.0/xenstore-2.4.0.tbz")
+       (sha256
+        (base32 "197s11f50rysffy1qh5b2fm3a89abccwnvpk6rylig58lnr3pdhi"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ounit2 ocaml-lwt))
+    (home-page "https://github.com/mirage/ocaml-xenstore")
+    (synopsis "Xenstore protocol in pure OCam")
+    (description
+     "This repo contains: 1.  a xenstore client library, a merge of the Mirage and XCP
+ones 2.  a xenstore server library 3.  a xenstore server instance which runs
+under Unix with libxc 4.  a xenstore server instance which runs on mirage.  The
+client and the server libraries have sets of unit-tests.")
+    (license #f)))
+
+
 (define-public ocaml-ipaddr-sexp
   (package
     (name "ocaml-ipaddr-sexp")
@@ -1032,7 +1077,9 @@ The test-based infered specification implemented in this library is the followin
        (sha256
         (base32 "06d32jp2a2ym49bg4736g2snqhi7glk7bgp94g446n6lmgw7sq8y"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-ipaddr ocaml-ppx-sexp-conv ocaml-sexplib0))
+    (arguments '(#:package "ipaddr-sexp"
+                 #:tests? #f)) ; tests build macaddr-sexp too, causing conflicts
+    (propagated-inputs (list ocaml-ipaddr ocaml-ppx-sexp-conv ocaml-sexplib0 ocaml-ipaddr-cstruct))
     (native-inputs (list ocaml-ounit2))
     (home-page "https://github.com/mirage/ocaml-ipaddr")
     (synopsis
@@ -1064,6 +1111,126 @@ The test-based infered specification implemented in this library is the followin
 @code{MirageOS} unikernels.")
     (license license:isc)))
 
+(define-public ocaml-xen-gnt
+  (package
+    (name "ocaml-xen-gnt")
+    (version "4.0.2")
+    (home-page "https://github.com/mirage/ocaml-gnt")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0jq9xdjvzx7rxhi8mq68lql6xfkkwknzpbc1417myhs8jmrvhsbh"
+      "v"
+      ))
+    (arguments
+     `(#:package "xen-gnt"))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-cstruct ocaml-io-page ocaml-lwt
+                             ocaml-lwt-dllist ocaml-cmdliner))
+    (synopsis #f)
+    (description #f)
+    (license license:isc)))
+
+(define-public ocaml-xen-gnt-unix
+  (package
+    (inherit ocaml-xen-gnt)
+    (arguments
+     `(#:package "xen-gnt-unix"))
+    (inputs (list xen))
+    (propagated-inputs (list ocaml-cstruct ocaml-io-page ocaml-lwt
+                             ocaml-lwt-dllist ocaml-cmdliner))
+  ))
+
+(define-public ocaml-tls-mirage
+  (package
+    (name "ocaml-tls-mirage")
+    (version "2.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirleft/ocaml-tls/releases/download/v2.0.3/tls-2.0.3.tbz")
+       (sha256
+        (base32 "1my3a71l3fb1idgmcirbi29p6xmwzlhg0ls3hirjxnpk8nkrn5fp"))))
+    (build-system dune-build-system)
+    (arguments
+     ;; tests take a long time?
+     `(#:tests? #f))
+    (propagated-inputs (list ocaml-tls
+                             ocaml-fmt
+                             ocaml-lwt
+                             ocaml-mirage-flow
+                             ocaml-mirage-kv
+                             ocaml-mirage-ptime
+                             ocaml-ptime
+                             ocaml-mirage-crypto
+                             ;; ocaml-mirage-crypto-pk
+                             ))
+    (native-inputs (list gmp))
+    (home-page "https://github.com/mirleft/ocaml-tls")
+    (synopsis "Transport Layer Security purely in OCaml, MirageOS layer")
+    (description
+     "Tls-mirage provides an effectful FLOW module to be used in the @code{MirageOS}
+ecosystem.")
+    (license license:bsd-2)))
+(define-public ocaml-xenstore-transport
+  (package
+    (name "ocaml-xenstore-transport")
+    (version "1.5.0")
+    (arguments
+     ;; tests could not find xenstore?
+     `(#:tests? #f))
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/xapi-project/ocaml-xenstore-clients/releases/download/v1.5.0/xenstore-tool-1.5.0.tbz")
+       (sha256
+        (base32 "0pz4q08fpgnk4ix98ajw1sjyyykdxsyq7shh54wwb0pr1y1is6ry"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-lwt ocaml-xenstore ocaml-camlp-streams))
+    (native-inputs (list ocaml-findlib ocaml-ounit2))
+    (properties `((upstream-name . "xenstore_transport")))
+    (home-page "http://github.com/xapi-project/ocaml-xenstore-clients")
+    (synopsis
+     "Low-level libraries for connecting to a xenstore service on a xen host")
+    (description
+     "These libraries contain the IO functions for communicating with a xenstore
+service on a xen host.  One subpackage deals with regular Unix threads and
+another deals with Lwt co-operative threads.")
+    (license license:lgpl2.1)))
+
+(define-public ocaml-vchan
+  (package
+    (name "ocaml-vchan")
+    (version "6.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-vchan/releases/download/v6.0.2/vchan-6.0.2.tbz")
+       (sha256
+        (base32 "1razkj2jbplj1midhaiqlflzvibcl0ylivvz34g8rf6nbbdbaj3y"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-lwt
+                             ocaml-cstruct
+                             ocaml-io-page
+                             ocaml-mirage-flow
+                             ocaml-xenstore
+                             ocaml-mirage-xen
+                             ocaml-xenstore-transport
+                             ocaml-xen-gnt
+                             ocaml-xen-gnt-unix
+                             ))
+    (native-inputs (list ocaml-ounit2))
+    (home-page "https://github.com/mirage/ocaml-vchan")
+    (synopsis "Xen Vchan implementation")
+    (description
+     "This is an implementation of the Xen \"libvchan\" or \"vchan\" communication
+protocol in OCaml.  It allows fast inter-domain communication using shared
+memory.")
+    (license license:isc)))
+
 (define-public ocaml-conduit
   (package
     (name "ocaml-conduit")
@@ -1076,17 +1243,13 @@ The test-based infered specification implemented in this library is the followin
        (sha256
         (base32 "0qbgyqn4xv79gznv5i7lxj4g920kyr8xl30p7a4p6m2vhq8djqqa"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-ppx-sexp-conv
-                             ocaml-sexplib0
-                             ocaml-astring
-                             ocaml-ppx-here
-                             ocaml-ca-certs
-                             ocaml-ca-certs-nss
-                             ocaml-uri
-                             ocaml-logs
+    (arguments
+     '(#:package "conduit"))
+    (propagated-inputs (list ocaml-sexplib0
                              ocaml-ipaddr
-                             ;; ocaml-ipaddr-sexp
-                             ))
+                             ocaml-ipaddr-sexp
+                             ocaml-uri
+                             ocaml-astring))
     (home-page "https://github.com/mirage/ocaml-conduit")
     (synopsis "A network connection establishment library")
     (description
@@ -1117,7 +1280,9 @@ implementation.")
        (sha256
         (base32 "0qbgyqn4xv79gznv5i7lxj4g920kyr8xl30p7a4p6m2vhq8djqqa"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-ppx-sexp-conv ocaml-sexplib0 ocaml-conduit
+    (arguments
+     '(#:package "conduit-lwt"))
+    (propagated-inputs (list ocaml-conduit
                              ocaml-lwt))
     (home-page "https://github.com/mirage/ocaml-conduit")
     (synopsis "A portable network connection establishment library using Lwt")
@@ -1136,15 +1301,20 @@ implementation.")
        (sha256
         (base32 "0qbgyqn4xv79gznv5i7lxj4g920kyr8xl30p7a4p6m2vhq8djqqa"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-logs
-                             ocaml-ppx-sexp-conv
-                             ocaml-conduit-lwt
+    (arguments
+     ;; tests failed, unknown scheme?
+     `(
+       #:tests? #f
+       #:package "conduit-lwt-unix"))
+    (propagated-inputs (list ocaml-conduit-lwt
                              ocaml-lwt
                              ocaml-uri
+                             ocaml-lwt-log
                              ocaml-ipaddr
-                             ;; ocaml-ipaddr-sexp
-                             ocaml-ca-certs))
-    (native-inputs (list ocaml-lwt-log ocaml-ssl ocaml-lwt-ssl))
+                             ocaml-ipaddr-sexp
+                             ocaml-logs
+                             ocaml-ca-certs
+                             ocaml-lwt-ssl))
     (home-page "https://github.com/mirage/ocaml-conduit")
     (synopsis "A network connection establishment library for Lwt_unix")
     (description #f)
@@ -1154,7 +1324,10 @@ implementation.")
   (package
     (name "ocaml-cohttp-lwt-unix")
     (arguments
-     `(#:package "cohttp-lwt-unix"))
+     `(
+     ;; tests failed, unknown scheme?
+       #:tests? #f
+       #:package "cohttp-lwt-unix"))
     (version "6.1.1")
     (source
      (origin
@@ -1193,9 +1366,9 @@ implies that this only works under Unix, it should also be fine under Windows
 too.")
     (license license:isc)))
 
-(define-public ocaml-0install
+(define-public ocaml-0install-solver
   (package
-    (name "ocaml-0install")
+    (name "ocaml-0install-solver")
     (version "v2.18")
     (build-system dune-build-system)
     (source (origin
@@ -1211,13 +1384,49 @@ too.")
                 "1hm72k355qwgh16hngmnd77bgawf20ipnqxfncdzl10rqrc0640b"
                 ))))
     (arguments
-     `(#:tests? #f))
+     `(#:tests? #f
+       #:package "0install-solver"))
+    (home-page "https://github.com/0install/0install")
+    (synopsis "Package dependency solver")
+    (description "Zero Install is a decentralised cross-distribution software installation system available under the LGPL. It allows software developers to publish programs directly from their own web-sites, while supporting features familiar from centralised distribution repositories such as shared libraries, automatic updates and digital signatures. It is intended to complement, rather than replace, the operating system's package management. 0install packages never interfere with those provided by the distribution.")
+    (license license:lgpl2.1)))
+
+(define-public ocaml-0install
+  (package
+    (inherit ocaml-0install-solver)
+    (name "ocaml-0install")
+    (version "v2.18")
+    (build-system dune-build-system)
+    ;; (source (origin
+    ;;           (method git-fetch)
+    ;;           (uri (git-reference
+    ;;                  (url
+    ;;                   "https://github.com/0install/0install"
+    ;;                       )
+    ;;                  (commit version)))
+    ;;           (file-name (git-file-name name version))
+    ;;           (sha256
+    ;;            (base32
+    ;;             "1hm72k355qwgh16hngmnd77bgawf20ipnqxfncdzl10rqrc0640b"
+    ;;             ))))
+    (arguments
+     `(#:tests? #f
+       #:package "0install"))
     ;; (native-inputs (list ocaml-alcotest))
-    (home-page "https://github.com/hannesm/patch")
-    (native-inputs (list glib curl))
-    (propagated-inputs (list ocaml-lwt ocaml-xmlm ocaml-yojson ocaml-lwt-react
-                             ocaml-lablgtk3-sourceview3 ocaml-lwt ocaml-lwt-glib ocaml-http
-                             ocaml-cohttp ocaml-cohttp-lwt ocaml-lwt-ssl ocaml-cohttp-lwt-unix
+    ;; (home-page "https://github.com/0install/0install")
+    (native-inputs (list curl))
+    (propagated-inputs (list ocaml-lwt
+                             ocaml-xmlm
+                             ocaml-yojson
+                             ocaml-react
+                             ocaml-lwt-react
+                             ocaml-sha
+                             ocaml-0install-solver
+                             ;; For dune select form - using curl instead of cohttp
+                             ocaml-curl
+                             ocaml-curl-lwt
+                             ocaml-stdlib-shims
+                             ocaml-sha
                              ))
     (synopsis "the core 0install package" )
     (description "Zero Install is a decentralised cross-distribution software installation system available under the LGPL. It allows software developers to publish programs directly from their own web-sites, while supporting features familiar from centralised distribution repositories such as shared libraries, automatic updates and digital signatures. It is intended to complement, rather than replace, the operating system's package management. 0install packages never interfere with those provided by the distribution.")
@@ -1259,7 +1468,7 @@ too.")
                (base32
                 "12v1bgnxcxdylgxbsjlcr90rzwcp39rjlv191cy8g2s33nyxyi2c"
                 ))))
-    (propagated-inputs (list ocaml-0install))
+    (propagated-inputs (list ocaml-0install ocaml-cudf))
     (arguments
      `(#:tests? #f))
     ;; (native-inputs (list ocaml-alcotest))
@@ -1427,10 +1636,11 @@ OPAM.")
     (propagated-inputs
      (list ocaml-opam-state
            ocaml-opam-solver
+           ocaml-spdx-licenses
            ocaml-opam-repository
            ocaml-base64
            ocaml-re
-           ocaml-cmdliner))))
+           ocaml-cmdliner-1.3))))
 
 (define-public opam
   (package
@@ -4031,7 +4241,7 @@ structures, and they are accessed via the `Bigarray` module.")
                              ;; ocaml-ethernet
                              ;; ocaml-arp
                              ocaml-mirage-flow
-                             ;; ocaml-ipaddr-cstruct
+                             ocaml-ipaddr-cstruct
                              ;; ocaml-macaddr-cstruct
                              ;; ocaml-lru
                              ;; ocaml-metrics
@@ -6537,16 +6747,14 @@ length of domain names are preserved throughout the module.")
 (define-public ocaml-macaddr
   (package
     (name "ocaml-macaddr")
-    (version "5.3.1")
+    (version "5.6.1")
     (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/mirage/ocaml-ipaddr/")
-                    (commit (string-append "v" version))))
-              (file-name name)
+              (method url-fetch)
+              (uri
+               "https://github.com/mirage/ocaml-ipaddr/releases/download/v5.6.1/ipaddr-5.6.1.tbz")
               (sha256
                (base32
-                "1zgwx0ms3l4k4dzwnkrwq4zzqjrddjsvqn66mbd0rm6aq1ib019d"))))
+                "06d32jp2a2ym49bg4736g2snqhi7glk7bgp94g446n6lmgw7sq8y"))))
     (build-system dune-build-system)
     (arguments '(#:package "macaddr"))
     (propagated-inputs (list ocaml-cstruct ocaml-domain-name))
@@ -6562,6 +6770,16 @@ length of domain names are preserved throughout the module.")
 @code{Macaddr_sexp} library
 @end itemize")
     (license license:isc)))
+
+(define-public ocaml-macaddr-cstruct
+  (package
+    (inherit ocaml-macaddr)
+    (name "ocaml-macaddr-cstruct")
+    (arguments '(#:package "macaddr-cstruct"))
+    (propagated-inputs (list ocaml-macaddr ocaml-cstruct))
+    (synopsis "OCaml library for MAC addresses with Cstruct support")
+    (description
+     "This package provides Cstruct serialization for MAC addresses.")))
 
 (define-public ocaml-ipaddr
   ;; same repo and versions as ocaml-macaddr
@@ -6943,33 +7161,60 @@ tracing is enabled (via mirage-profile), it also writes each log message to
 the trace buffer.")
     (license license:isc)))
 
-(define-public ocaml-ocurl
+(define-public ocaml-curl
   (package
-    (name "ocaml-ocurl")
-    (version "0.9.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://ygrek.org.ua/p/release/ocurl/ocurl-"
-                                  version ".tar.gz"))
-              (sha256
-                (base32
-                  "0qvpsqbq4qbd397n0nlv9cwlqfyjw7gfb5mmq1awvnklr0c9fdg0"))))
-    (build-system ocaml-build-system)
+    (name "ocaml-curl")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ygrek/ocurl/releases/download/0.10.0/curl-0.10.0.tbz")
+       (sha256
+        (base32 "0519l7vxrk0z05j0068rr5j1bhnbgc7yk6ldflm2k53zv9gj2kn1"))))
+    (build-system dune-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'fix-/bin/sh
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "configure"
-               (("-/bin/sh") (string-append "-" (which "bash")))))))))
-    (native-inputs
-     (list pkg-config))
+     `(#:package "curl"))
+    (native-inputs (list pkg-config))
     (inputs (list curl))
-    (home-page "http://ocurl.forge.ocamlcore.org/")
+    (properties `((upstream-name . "curl")))
+    (home-page "https://github.com/ygrek/ocurl")
     (synopsis "OCaml bindings for libcurl")
     (description "Client-side URL transfer library, supporting HTTP and a
 multitude of other network protocols (FTP/SMTP/RTSP/etc).")
-    (license license:isc)))
+    (license license:expat)))
+
+(define-public ocaml-curl-lwt
+  (package
+    (inherit ocaml-curl)
+    (name "ocaml-curl-lwt")
+    (arguments
+     `(#:package "curl_lwt"))
+    (propagated-inputs (list ocaml-curl ocaml-lwt))
+    (synopsis "OCaml bindings for libcurl with Lwt support")
+    (description "Lwt-enabled bindings for libcurl, providing asynchronous
+URL transfers.")))
+
+(define-public ocaml-ocurl
+  (package
+    (name "ocaml-ocurl")
+    (version "transition")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/ygrek/ocurl/releases/download/0.10.0/curl-0.10.0.tbz")
+       (sha256
+        (base32 "0519l7vxrk0z05j0068rr5j1bhnbgc7yk6ldflm2k53zv9gj2kn1"))))
+    (build-system ocaml-build-system)
+    (propagated-inputs (list ocaml-curl ocaml-curl-lwt))
+    (home-page "https://ygrek.org/p/ocurl")
+    (synopsis
+     "This is a transition package, ocurl is now named curl. Use the curl package instead")
+    (description
+     "This is a transition package, ocurl is now named curl.  Use the curl package
+instead.")
+    (license license:expat)))
 
 (define-public ocaml-base64
   (package
