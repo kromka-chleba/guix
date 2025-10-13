@@ -1893,7 +1893,7 @@ files in these formats.")
 (define-public ocaml-zarith
   (package
     (name "ocaml-zarith")
-    (version "1.12")
+    (version "1.14")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1901,8 +1901,8 @@ files in these formats.")
                      (commit (string-append "release-" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32
-                "1jslm1rv1j0ya818yh23wf3bb6hz7qqj9pn5fwl45y9mqyqa01s9"))))
+               (base32 "10fjr5ahxl7clikj17wfqj1c7yrvksc0vfzc52vfbwlcpw7c2jn5"
+                       ))))
     (build-system ocaml-build-system)
     (native-inputs
      (list perl))
@@ -3625,6 +3625,24 @@ to which allows adding and looking up bindings in a type safe manner.")
     (license license:lgpl2.1)
     ))
 
+(define-public ocaml-nlopt
+  (package
+    (name "ocaml-nlopt")
+    (version "0.7")
+    (home-page "https://github.com/mkur/nlopt-ocaml"
+               )
+    (source
+     (github-tag-origin
+      name home-page version "04j0a251wxvak7g5v5p2w2xz9csjcac88p1g4ryj56kvf7adnd7r"
+      "release-"
+      ))
+    (build-system dune-build-system)
+    (native-inputs (list nlopt))
+    (synopsis "OCaml bindings to the NLOpt optimization library ")
+    (description "nlopt-ocaml implements OCaml bindings to the NLOpt optimization library.")
+    (license license:lgpl2.1)
+    ))
+
 (define-public ocaml-eio-ssl
   (package
     (name "ocaml-eio-ssl")
@@ -3694,6 +3712,9 @@ to which allows adding and looking up bindings in a type safe manner.")
     (home-page
      "https://github.com/mirage/mirage-crypto"
      )
+    (arguments
+     ;; No tests
+     `(#:tests? #f))
     (source
      (github-tag-origin
       name home-page version
@@ -3701,9 +3722,33 @@ to which allows adding and looking up bindings in a type safe manner.")
       "v"
       ))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-logs ocaml-digestif ocaml-duration ocaml-eqaf ocaml-mirage-mtime ocaml-miou))
+    (propagated-inputs (list
+                        ocaml-ohex
+                        ocaml-zarith
+                        ocaml-mirage-sleep
+                        ocaml-mirage-runtime
+                        ocaml-logs ocaml-digestif ocaml-duration ocaml-eqaf ocaml-mirage-mtime ocaml-miou))
     (synopsis "Cryptographic primitives for OCaml, in OCaml (also used in MirageOS) ")
     (description "mirage-crypto is a small cryptographic library that puts emphasis on the applicative style and ease of use. It includes basic ciphers (AES, 3DES, RC4, ChaCha20/Poly1305), AEAD primitives (AES-GCM, AES-CCM, ChaCha20/Poly1305), public-key primitives (RSA, DSA, DH), elliptic curves (NIST P-256, P-384, P-521, and curve 25519), and a strong RNG (Fortuna).")
+    (license license:isc)
+    ))
+
+(define-public ocaml-ohex
+  (package
+    (name "ocaml-ohex")
+    (version "0.2.0")
+    (home-page
+     "https://git.robur.coop/robur/ohex"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "1ky2vg25h18wjzjb40bm8qyv153wcgh9526xjdrp3f0m14h3yn7n"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-alcotest))
+    (synopsis "")
+    (description "")
     (license license:isc)
     ))
 
@@ -3722,6 +3767,193 @@ to which allows adding and looking up bindings in a type safe manner.")
       ))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-logs))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-gmap
+  (package
+    (name "ocaml-gmap")
+    (version "0.3.0")
+    (home-page
+     "https://github.com/hannesm/gmap"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "0880mhcybr662k6wnahx5mwbialh878kkzxacn47qniadd21x411"
+      ""
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ohex ocaml-digestif ocaml-ptime ocaml-fpath ocaml-bos ocaml-ipaddr
+                             ocaml-mirage-crypto ocaml-kdf
+                             ))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-asn1-combinators
+  (package
+    (name "ocaml-asn1-combinators")
+    (version "0.3.2")
+    (home-page
+     "https://github.com/mirleft/ocaml-asn1-combinators"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "0qbkn1wjbfqkj7pggrmiraffw6yds1324d8jb78l160kdqpzvpq8"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ptime
+                             ))
+    (native-inputs (list ocaml-ohex))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-mirage-ptime
+  (package
+    (name "ocaml-mirage-ptime")
+    (version "5.1.0")
+    (home-page "https://github.com/mirage/mirage-ptime"
+               )
+    (source
+     (github-tag-origin
+      name home-page version "13y9b4sl7mjax3djby94f4kcbvqf3ck2b52xhwqx3vbh78hg6pl4"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ptime))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+(define-public ocaml-mirage-kv
+  (package
+    (name "ocaml-mirage-kv")
+    (version "6.1.1")
+    (home-page "https://github.com/mirage/mirage-kv"
+               )
+    (source
+     (github-tag-origin
+      name home-page version "1i0q9023my6b2xy2jx65g52xywgi3fl0giixs744n9ryn83yrw7q"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-lwt ocaml-ptime ocaml-optint ocaml-fmt ocaml-alcotest))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-tls
+  (package
+    (name "ocaml-tls")
+    (version "2.0.3")
+    (home-page "https://github.com/mirleft/ocaml-tls")
+    (source
+     (github-tag-origin
+      name home-page version "1w188b4c3cpfzgxyhil6g319r7y3hk9lw6wyf1881hwxsf6kprqq"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ppx-jane ocaml-mirage-crypto ocaml-ptime ocaml-x509 ocaml-eio ocaml-core-unix ocaml-async ocaml-cstruct-async ocaml-mirage-ptime ocaml-mirage-kv ocaml-mirage-flow ocaml-crowbar ocaml-hxd ocaml-eio-main))
+    ;; (propagated-inputs (list ocaml-ohex ocaml-digestif ocaml-ptime ocaml-fpath ocaml-bos ocaml-ipaddr
+    ;;                          ocaml-mirage-crypto ocaml-kdf ocaml-gmap ocaml-asn1-combinators
+    ;;                          ))
+    (native-inputs (list gmp))
+    (synopsis "TLS in pure OCaml")
+    (description "Transport Layer Security (TLS) is probably the most widely deployed security protocol on the Internet. It provides communication privacy to prevent eavesdropping, tampering, and message forgery. Furthermore, it optionally provides authentication of the involved endpoints. TLS is commonly deployed for securing web services (HTTPS), emails, virtual private networks, and wireless networks.")
+    (license license:isc)
+    ))
+
+(define-public ocaml-ca-certs
+  (package
+    (name "ocaml-ca-certs")
+    (version "1.0.1")
+    (home-page
+     "https://github.com/mirage/ca-certs"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "1pd7903cizj6qq5d0bl34i7q2y50vs6gzxbc87dwqswsfji3mffr"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ohex ocaml-digestif ocaml-ptime ocaml-fpath ocaml-bos ocaml-x509))
+    (native-inputs (list gmp))
+    (arguments
+     ;; no trust anchor
+     '(#:tests? #f))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-x509
+  (package
+    (name "ocaml-x509")
+    (version "1.0.6")
+    (home-page
+     "https://github.com/mirleft/ocaml-x509"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "0mdyyp5lddc870jl2vrll77yfkq0ckhf77wgazpkr8q3995ckl4h"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ohex ocaml-digestif ocaml-ptime ocaml-fpath ocaml-bos ocaml-ipaddr
+                             ocaml-mirage-crypto ocaml-kdf ocaml-gmap ocaml-asn1-combinators
+                             ))
+    (native-inputs (list gmp))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-ca-certs
+  (package
+    (name "ocaml-ca-certs")
+    (version "1.0.1")
+    (home-page
+     "https://github.com/mirage/ca-certs"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "1pd7903cizj6qq5d0bl34i7q2y50vs6gzxbc87dwqswsfji3mffr"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ohex ocaml-digestif ocaml-ptime ocaml-fpath ocaml-bos ocaml-x509))
+    (native-inputs (list gmp))
+    (arguments
+     ;; no trust anchor
+     '(#:tests? #f))
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
+(define-public ocaml-mirage-sleep
+  (package
+    (name "ocaml-mirage-sleep")
+    (version "4.1.0")
+    (home-page
+     "https://github.com/mirage/mirage-sleep"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "139jh41j5yxg8l98lfk6rh9qpxh57gc0wazlimzd81s6wqmi5v3p"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-duration ocaml-lwt))
     (synopsis "")
     (description "")
     (license license:isc)
@@ -3902,6 +4134,24 @@ contents of emails.")
       ))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-oseq))
+    (synopsis "")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-kdf
+  (package
+    (name "ocaml-kdf")
+    (version "1.0.0")
+    (home-page "https://github.com/robur-coop/kdf"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "1ggw55mppvxliwahv54ryq8znilnd17asas1m301bq08bznff9fy"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-digestif ocaml-mirage-crypto))
     (synopsis "")
     (description "")
     (license license:expat)
@@ -4167,7 +4417,7 @@ accesses to the store.")
 (define-public ocaml-uring
   (package
     (name "ocaml-uring")
-    (version "0.5")
+    (version "2.7.0")
     (home-page "https://github.com/ocaml-multicore/ocaml-uring")
     (source
       (origin
@@ -4177,7 +4427,7 @@ accesses to the store.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256 (base32
-                 "0ygx8v01bb5808wy6nppg40h1ns8b1f2l585lwc4389z4wrppk95"))))
+                 "0ja1z1if07wyk61vz3d5i1bcm1a1vbpazjakg0g2ppjfaphbhcv8"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-cstruct
@@ -4199,7 +4449,9 @@ accesses to the store.")
   (package
     (inherit ocaml-eio)
     (name "ocaml-eio-linux")
-    (arguments `(#:package "eio_linux"))
+    (arguments `(#:package "eio_linux"
+                 #:tests? #f
+                 ))
     (propagated-inputs
      (list ocaml-eio
            ocaml-uring
@@ -5875,7 +6127,7 @@ compatibility with older compiler to use these new features in their code.")
 (define-public ocaml-fileutils
   (package
     (name "ocaml-fileutils")
-    (version "0.6.4")
+    (version "0.6.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5884,7 +6136,7 @@ compatibility with older compiler to use these new features in their code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1s2az5lv52r0fig4624652zn3jj5dy30d1xlw6gzd0s086i4bvjh"))))
+                "12x658yn6f14vy13sh4d9g0wwdz0xwkhrrg97225q8pv2dlbp4yd"))))
     (build-system dune-build-system)
     (propagated-inputs
      (list ocaml-stdlib-shims))
@@ -6074,6 +6326,33 @@ big- and little-endian, with their unsafe counter-parts.")
      `(#:package "cstruct"))
     (propagated-inputs
      (list ocaml-bigarray-compat))
+    (native-inputs
+     (list ocaml-alcotest))
+    (home-page "https://github.com/mirage/ocaml-cstruct")
+    (synopsis "Access C structures via a camlp4 extension")
+    (description "Cstruct is a library and syntax extension to make it easier
+to access C-like structures directly from OCaml.  It supports both reading and
+writing to these structures, and they are accessed via the Bigarray module.")
+    (license license:isc)))
+
+(define-public ocaml-cstruct-async
+  (package
+    (name "ocaml-cstruct-async")
+    (version "6.2.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/mirage/ocaml-cstruct")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1x3ljgf2kn373cbhczxy8mqfrrkd6lhxax5sy0qv49k6zsax7m32"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:package "cstruct-async"))
+    (propagated-inputs
+     (list ocaml-bigarray-compat ocaml-async-unix ocaml-async))
     (native-inputs
      (list ocaml-alcotest))
     (home-page "https://github.com/mirage/ocaml-cstruct")
@@ -9555,7 +9834,7 @@ stream, and convert everything to UTF-8.")
 (define-public ocaml-tyxml
   (package
     (name "ocaml-tyxml")
-    (version "4.5.0")
+    (version "4.6.0")
     (source
      (origin
        (method git-fetch)
@@ -9565,7 +9844,7 @@ stream, and convert everything to UTF-8.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0bh66wknc7sx2r63kscp0hg6h73dkv6qpkx0cdz2qp7p28pg2ixz"))))
+         "0mabl4q2vcv5b3b6myb49k99q69smyg0bhlm4ilz16n7yhlw0y2l"))))
     (build-system dune-build-system)
     (inputs
      (list ocaml-re ocaml-seq ocaml-uutf))
@@ -10718,6 +10997,7 @@ libraries.")
       ))
     (propagated-inputs
       (list ocaml-re
+            ocaml-tls
             ocaml-uri
             ocaml-ipaddr
             ocaml-logs
@@ -10736,7 +11016,10 @@ libraries.")
             ocaml-base64
             ))
     (native-inputs
-     (list ocaml-fmt
+     (list
+      gmp
+      ocaml-ca-certs
+      ocaml-fmt
            ocaml-jsonm
            ocaml-alcotest
            ocaml-crowbar))
