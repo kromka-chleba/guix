@@ -605,7 +605,7 @@ depend: $(STDLIB_MLIS) $(STDLIB_DEPS)"))
        ("perl" ,perl)
        ("pkg-config" ,pkg-config)))))
 
-(define-public ocaml ocaml-5.4)
+(define-public ocaml ocaml-5.3)
 
 (define-public ocamlbuild
   (package
@@ -1020,6 +1020,178 @@ The test-based infered specification implemented in this library is the followin
     (synopsis "spdx_licenses is an OCaml library aiming to provide an up-to-date and strict SPDX License Expression parser.")
     (description "It implements the format described in: https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions")
     (license license:isc)))
+(define-public ocaml-ipaddr-sexp
+  (package
+    (name "ocaml-ipaddr-sexp")
+    (version "5.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-ipaddr/releases/download/v5.6.1/ipaddr-5.6.1.tbz")
+       (sha256
+        (base32 "06d32jp2a2ym49bg4736g2snqhi7glk7bgp94g446n6lmgw7sq8y"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ipaddr ocaml-ppx-sexp-conv ocaml-sexplib0))
+    (native-inputs (list ocaml-ounit2))
+    (home-page "https://github.com/mirage/ocaml-ipaddr")
+    (synopsis
+     "A library for manipulation of IP address representations using sexp")
+    (description "Sexp convertions for ipaddr.")
+    (license license:isc)))
+
+
+(define-public ocaml-ca-certs-nss
+  (package
+    (name "ocaml-ca-certs-nss")
+    (version "3.115")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ca-certs-nss/releases/download/v3.115/ca-certs-nss-3.115.tbz")
+       (sha256
+        (base32 "03rqcwpbjisrxis1ixzwazp641w6i7zpn39x2bd2xsibx6nyyf3j"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-mirage-ptime ocaml-x509 ocaml-digestif ocaml-ipaddr-sexp
+                             ))
+    (native-inputs (list ocaml-logs ocaml-fmt ocaml-bos ocaml-cmdliner
+                         ocaml-alcotest gmp))
+    (home-page "https://github.com/mirage/ca-certs-nss")
+    (synopsis "X.509 trust anchors extracted from Mozilla's NSS")
+    (description
+     "Trust anchors extracted from Mozilla's NSS certdata.txt package, to be used in
+@code{MirageOS} unikernels.")
+    (license license:isc)))
+
+(define-public ocaml-conduit
+  (package
+    (name "ocaml-conduit")
+    (version "8.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-conduit/releases/download/v8.0.0/conduit-8.0.0.tbz")
+       (sha256
+        (base32 "0qbgyqn4xv79gznv5i7lxj4g920kyr8xl30p7a4p6m2vhq8djqqa"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ppx-sexp-conv
+                             ocaml-sexplib0
+                             ocaml-astring
+                             ocaml-ppx-here
+                             ocaml-ca-certs
+                             ocaml-ca-certs-nss
+                             ocaml-uri
+                             ocaml-logs
+                             ocaml-ipaddr
+                             ;; ocaml-ipaddr-sexp
+                             ))
+    (home-page "https://github.com/mirage/ocaml-conduit")
+    (synopsis "A network connection establishment library")
+    (description
+     "The `conduit` library takes care of establishing and listening for TCP and
+SSL/TLS connections for the Lwt and Async libraries.  The reason this library
+exists is to provide a degree of abstraction from the precise SSL library used,
+since there are a variety of ways to bind to a library (e.g. the C FFI, or the
+Ctypes library), as well as well as which library is used (just @code{OpenSSL}
+for now).  By default, @code{OpenSSL} is used as the preferred connection
+library, but you can force the use of the pure OCaml TLS stack by setting the
+environment variable `CONDUIT_TLS=native` when starting your program.  The
+useful opam packages available that extend this library are: - `conduit`: the
+main `Conduit` module - `conduit-lwt`: the portable Lwt implementation -
+`conduit-lwt-unix`: the Lwt/Unix implementation - `conduit-async` the Jane
+Street Async implementation - `conduit-mirage`: the @code{MirageOS} compatible
+implementation.")
+    (license license:isc)))
+
+(define-public ocaml-conduit-lwt
+  (package
+    (name "ocaml-conduit-lwt")
+    (version "8.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-conduit/releases/download/v8.0.0/conduit-8.0.0.tbz")
+       (sha256
+        (base32 "0qbgyqn4xv79gznv5i7lxj4g920kyr8xl30p7a4p6m2vhq8djqqa"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ppx-sexp-conv ocaml-sexplib0 ocaml-conduit
+                             ocaml-lwt))
+    (home-page "https://github.com/mirage/ocaml-conduit")
+    (synopsis "A portable network connection establishment library using Lwt")
+    (description #f)
+    (license license:isc)))
+
+(define-public ocaml-conduit-lwt-unix
+  (package
+    (name "ocaml-conduit-lwt-unix")
+    (version "8.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-conduit/releases/download/v8.0.0/conduit-8.0.0.tbz")
+       (sha256
+        (base32 "0qbgyqn4xv79gznv5i7lxj4g920kyr8xl30p7a4p6m2vhq8djqqa"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-logs
+                             ocaml-ppx-sexp-conv
+                             ocaml-conduit-lwt
+                             ocaml-lwt
+                             ocaml-uri
+                             ocaml-ipaddr
+                             ;; ocaml-ipaddr-sexp
+                             ocaml-ca-certs))
+    (native-inputs (list ocaml-lwt-log ocaml-ssl ocaml-lwt-ssl))
+    (home-page "https://github.com/mirage/ocaml-conduit")
+    (synopsis "A network connection establishment library for Lwt_unix")
+    (description #f)
+    (license license:isc)))
+
+(define-public ocaml-cohttp-lwt-unix
+  (package
+    (name "ocaml-cohttp-lwt-unix")
+    (arguments
+     `(#:package "cohttp-lwt-unix"))
+    (version "6.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/mirage/ocaml-cohttp/releases/download/v6.1.1/cohttp-6.1.1.tbz")
+       (sha256
+        (base32 "1728dhv143pmgz6r2mvbhxia7f8gxay3dw34b58hnfiv41b0qhkb"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-http
+                             ocaml-cohttp
+                             ocaml-cohttp-lwt
+                             ocaml-conduit-lwt-unix
+                             ;; js-of-ocaml
+                             ocaml-astring
+                             ;; ocaml-cohttp-lwt
+                             ;; ocaml-cmdliner
+                             ;; ocaml-lwt
+                             ;; ocaml-conduit-lwt
+                             ;; ocaml-conduit-lwt-unix
+                             ;; ocaml-fmt
+                             ;; ocaml-ppx-sexp-conv
+                             ocaml-magic-mime
+                             ;; ocaml-logs
+                             ;; ocaml-odoc
+                             ))
+    (native-inputs (list ocaml-ounit2 curl))
+    (home-page "https://github.com/mirage/ocaml-cohttp")
+    (synopsis "CoHTTP implementation for Unix and Windows using Lwt")
+    (description
+     "An implementation of an HTTP client and server using the Lwt concurrency
+library.  See the `Cohttp_lwt_unix` module for information on how to use this.
+The package also installs `cohttp-curl-lwt` and a `cohttp-server-lwt` binaries
+for quick uses of a HTTP(S) client and server respectively.  Although the name
+implies that this only works under Unix, it should also be fine under Windows
+too.")
+    (license license:isc)))
 
 (define-public ocaml-0install
   (package
@@ -1042,10 +1214,33 @@ The test-based infered specification implemented in this library is the followin
      `(#:tests? #f))
     ;; (native-inputs (list ocaml-alcotest))
     (home-page "https://github.com/hannesm/patch")
-    (propagated-inputs (list ocaml-lwt ocaml-xmlm ocaml-yojson ocaml-lwt-react ocaml-lablgtk3-sourceview3))
+    (native-inputs (list glib curl))
+    (propagated-inputs (list ocaml-lwt ocaml-xmlm ocaml-yojson ocaml-lwt-react
+                             ocaml-lablgtk3-sourceview3 ocaml-lwt ocaml-lwt-glib ocaml-http
+                             ocaml-cohttp ocaml-cohttp-lwt ocaml-lwt-ssl ocaml-cohttp-lwt-unix
+                             ))
     (synopsis "the core 0install package" )
     (description "Zero Install is a decentralised cross-distribution software installation system available under the LGPL. It allows software developers to publish programs directly from their own web-sites, while supporting features familiar from centralised distribution repositories such as shared libraries, automatic updates and digital signatures. It is intended to complement, rather than replace, the operating system's package management. 0install packages never interfere with those provided by the distribution.")
     (license license:lgpl2.1)))
+
+(define-public ocaml-lwt-glib
+  (package
+    (name "ocaml-lwt-glib")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://github.com/ocsigen/lwt_glib/archive/1.1.1.tar.gz")
+       (sha256
+        (base32 "0qkk8yjqbp3py59sg7hq495v9b1p0jp881zsmr2jgib6p5x4hnlw"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-lwt))
+    (native-inputs (list glib pkg-config))
+    (properties `((upstream-name . "lwt_glib")))
+    (home-page "https://github.com/ocsigen/lwt_glib")
+    (synopsis "GLib integration for Lwt")
+    (description #f)
+    (license license:lgpl2.0+))) 
 
 (define-public ocaml-opam-0install-cudf
   (package
@@ -1439,7 +1634,7 @@ be maintained and distributed separately in the camlpstreams package.")
   ;; Doesn't work for OCaml 5.4
   (package
     (name "camlp5")
-    (version "8.02.01")
+    (version "8.04.00")
     (source
      (origin
        (method git-fetch)
@@ -1448,7 +1643,8 @@ be maintained and distributed separately in the camlpstreams package.")
              (commit (string-append "" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fp9275iy0jb8f8fyziczzjqm38qsjryrv29zga65abgkzkkc859"))))
+        (base32 "0ykrlifzhky0z8q0hbfhv4vqlzx9qrk614lrk7blra7ddwd1b174"
+                ))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f  ; XXX TODO figure out how to run the tests
@@ -1480,7 +1676,7 @@ be maintained and distributed separately in the camlpstreams package.")
                                                      "/lib/ocaml/camlp5/"))
              #t)))))
     (inputs
-     (list ocaml ocaml-camlp-streams))
+     (list ocaml ocaml-camlp-streams ocaml-rresult ocaml-bos ocaml-re ocaml-pcre2 pcre2))
     (native-inputs
      (list perl ocaml-findlib))
     (home-page "https://camlp5.github.io/")
@@ -3779,6 +3975,7 @@ to which allows adding and looking up bindings in a type safe manner.")
  (synopsis "Tidy, feature-complete Web framework ")
  (description "")
  (license license:gpl3+)))
+
 (define-public ocaml-cstruct-lwt
   (package
     (name "ocaml-cstruct-lwt")
@@ -3791,7 +3988,9 @@ to which allows adding and looking up bindings in a type safe manner.")
        (sha256
         (base32 "0qiyy1h7qsy90hdl01qdsg4rv61f3d5sp8wg2i4q63jqj8rhfy4s"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-lwt ocaml-cstruct ocaml-ppxlib ocaml-sexplib ocaml-async))
+    (arguments
+     `(#:package "cstruct-lwt"))
+    (propagated-inputs (list ocaml-lwt ocaml-cstruct ocaml-ppxlib ocaml-sexplib ocaml-async-unix ocaml-async))
     (home-page "https://github.com/mirage/ocaml-cstruct")
     (synopsis "Access C-like structures directly from OCaml")
     (description
@@ -3799,6 +3998,7 @@ to which allows adding and looking up bindings in a type safe manner.")
 structures directly from OCaml.  It supports both reading and writing to these
 structures, and they are accessed via the `Bigarray` module.")
     (license license:isc)))
+
 (define-public ocaml-tcpip
   (package
     (name "ocaml-tcpip")
@@ -7000,6 +7200,28 @@ pattern matching and substitution, similar to the functionality
 offered by the Perl language.")
     ;; With static linking exception
     (license license:lgpl2.1+)))
+
+(define-public ocaml-pcre2
+  (package
+    (name "ocaml-pcre2")
+    (version "8.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/camlp5/pcre2-ocaml/archive/refs/tags/8.0.3.tar.gz")
+       (sha256
+        (base32 "0hkvv2wznq3a6npbxxcg02ng14hj2kabscm8qfdy1s883bwc4jdb"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-dune-configurator))
+    (native-inputs (list pcre2 ocaml-ounit2))
+    (home-page "https://github.com/camlp5/pcre2-ocaml")
+    (synopsis
+     "Bindings to the Perl Compatibility Regular Expressions library (version 2)")
+    (description
+     "pcre2-ocaml offers library functions for string pattern matching and
+substitution, similar to the functionality offered by the Perl language.")
+    (license #f)))
 
 (define-public ocaml-expect
   (package
@@ -12078,6 +12300,8 @@ libraries.")
                              ocaml-sedlex
                              ocaml-menhir
                              ocaml-yojson
+                             ocaml-tyxml
+                             ocaml-reactivedata
                              ))
     (native-inputs (list ocaml-num ocaml-ppx-expect ocaml-re ocaml-qcheck git))
     (properties `((upstream-name . "js_of_ocaml-compiler")))
@@ -12102,7 +12326,8 @@ browsers and Node.js.")
         (base32 "1nm5sa6xpzcbwf3rpkfg19d3c8f6x3h3wcw858sjl5qvimvl3ikw"))))
     (build-system dune-build-system)
     (propagated-inputs (list js-of-ocaml-compiler ocaml-ppxlib
-                             ocaml-odoc))
+                             ;; ocaml-odoc
+                             ))
     (native-inputs (list ocaml-num ocaml-ppx-expect ocaml-re git))
     (properties `((upstream-name . "js_of_ocaml")))
     (home-page "https://ocsigen.org/js_of_ocaml/latest/manual/overview")
