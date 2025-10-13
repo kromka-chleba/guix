@@ -3679,10 +3679,9 @@ to which allows adding and looking up bindings in a type safe manner.")
     ;; (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl))
     (synopsis " ta-lib bindings for OCaml ")
     (description "tacaml provides OCaml bindings to the TA-Lib (Technical Analysis Library). This project offers both raw C bindings and higher-level, type-safe wrappers for over 160 technical analysis functions commonly used in financial markets.")
-    (license license:lgpl2.0)
-    ))
+    (license license:lgpl2.0)))
 
-(define-public ocaml-longleaf
+ (define-public ocaml-longleaf
 (package
  (name "ocaml-longleaf")
  (version "1.0.3")
@@ -3729,9 +3728,29 @@ The platform uses a functional, modular architecture with strategies implemented
 as functors for maximum code reuse and type safety.
 
 The platform includes tacaml for TA-Lib technical analysis bindings.")
- (license license:gpl3+))
- )
+ (license license:gpl3+)
+    ))
 
+(define-public ocaml-dream
+(package
+ (name "ocaml-dream")
+ (version "1.0.0-alpha8")
+ (build-system dune-build-system)
+ (home-page "https://github.com/camlworks/dream")
+ (source
+     (github-tag-origin
+      name home-page version
+      "0hhw4z6y09pi410lq2hzd9p2b1ck394kbwma1sbh0mwlng66r400"
+      ""))
+ (native-inputs
+  (list ocaml-alcotest))
+ (propagated-inputs
+  (list ocaml-ppx-deriving
+        ocaml-magic-mime
+        ocaml-lwt-ppx))
+ (synopsis "Tidy, feature-complete Web framework ")
+ (description "")
+ (license license:gpl3+)))
 
 (define-public ocaml-eio-ssl
   (package
@@ -4620,7 +4639,13 @@ locks or other synchronization primitives.")
 ;; TODO this alias is not ideal but ocaml-lwt already explicitly specifies a
 ;; package argument and at least this way the importer doesn't try to
 ;; re-import it.
-(define ocaml-lwt-ppx ocaml-lwt)
+(define-public ocaml-lwt-ppx
+  (package 
+    (inherit ocaml-lwt)
+    (name "ocaml-lwt-ppx")
+    (propagated-inputs (list ocaml-ppxlib ocaml-lwt))
+    (arguments
+     '(#:package "lwt_ppx"))))
 
 (define-public ocaml-lwt-dllist
   (package
