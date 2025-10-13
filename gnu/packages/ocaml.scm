@@ -127,7 +127,8 @@
 
 (define* (github-tag-origin name home-page version hash tag-prefix)
   "Create an origin for a GitHub repository using a version tag.
-TAG-PREFIX defaults to \"v\" but can be customized or set to \"\" for no prefix."
+TAG-PREFIX is appended before the version to easily allow the same function
+to be used for other repos."
   (origin
     (method git-fetch)
     (uri (git-reference
@@ -3056,6 +3057,7 @@ immutability.")
     (propagated-inputs
      (list ocaml-astring
            ocaml-cmdliner
+           ocaml-logs
            ocaml-fmt
            ocaml-re
            ocaml-stdlib-shims
@@ -3070,6 +3072,16 @@ Alcotest provides a quiet and colorful output where only faulty runs are fully
 displayed at the end of the run (with the full logs ready to inspect), with a
 simple (yet expressive) query language to select the tests to run.")
     (license license:isc)))
+
+(define-public ocaml-alcotest-lwt
+  (package
+    (inherit ocaml-alcotest)
+    (name "ocaml-alcotest-lwt")
+    (arguments
+     `(#:package "alcotest-lwt"))
+    (propagated-inputs (list ocaml-alcotest ocaml-lwt))
+    )
+ )
 
 (define-public ocaml-expect-test-helpers-core
   (package
@@ -3675,6 +3687,26 @@ to which allows adding and looking up bindings in a type safe manner.")
       (license license:bsd-3)
     ))
 
+(define-public ocaml-mirage-crypto
+  (package
+    (name "ocaml-mirage-crypto")
+    (version "2.0.2")
+    (home-page
+     "https://github.com/mirage/mirage-crypto"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "0zsqd5fhvq3cq00drymbbbzy7wxz72h5ppzxlh0yr1ssj4jn0lp4"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-logs ocaml-digestif ocaml-duration ocaml-eqaf ocaml-mirage-mtime ocaml-miou))
+    (synopsis "Cryptographic primitives for OCaml, in OCaml (also used in MirageOS) ")
+    (description "mirage-crypto is a small cryptographic library that puts emphasis on the applicative style and ease of use. It includes basic ciphers (AES, 3DES, RC4, ChaCha20/Poly1305), AEAD primitives (AES-GCM, AES-CCM, ChaCha20/Poly1305), public-key primitives (RSA, DSA, DH), elliptic curves (NIST P-256, P-384, P-521, and curve 25519), and a strong RNG (Fortuna).")
+    (license license:isc)
+    ))
+
 (define-public ocaml-mirage-mtime
   (package
     (name "ocaml-mirage-mtime")
@@ -3716,17 +3748,30 @@ to which allows adding and looking up bindings in a type safe manner.")
     (license license:isc)
     ))
 
+(define-public ocaml-h2
+  (package
+    (name "ocaml-h2")
+    (version "0.13.0")
+    (home-page
+     "https://github.com/anmonteiro/ocaml-h2"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "13j67g9kv50zhn5c3vz9s536y3ja0qd8kazm7nafkniabxa1hli9" ""))
+    (propagated-inputs (list ocaml-faraday ocaml-angstrom ocaml-mirage-flow ocaml-gluten ocaml-httpun ocaml-base64 ocaml-hex ocaml-yojson))
+    (arguments
+     ;; http2-frame-test-case broken
+     '(#:tests? #f))
+    (build-system dune-build-system)
+    (synopsis "")
+    (description "")
+    (license license:isc)
+    ))
+
 (define-public ocaml-pecu
   (package
     (name "ocaml-pecu")
     (version "0.7")
-    ;; (source (origin
-    ;;           (method url-fetch)
-    ;;           (uri
-    ;;            "https://github.com/mirage/pecu/releases/download/v0.7/pecu-v0.7.tbz")
-    ;;           (sha256
-    ;;            (base32
-    ;;             "0y6pkz7bl63rhlhgdaizlkx4xnak95l6f02468yd6a34n6spfx5d"))))
     (build-system dune-build-system)
     (native-inputs (list ocaml-fmt ocaml-alcotest ocaml-crowbar ocaml-astring))
     (home-page "https://github.com/mirage/pecu")
@@ -3763,6 +3808,185 @@ contents of emails.")
     (license license:isc)
     ))
 
+(define-public ocaml-bigarray-overlap
+  (package
+    (name "ocaml-bigarray-overlap")
+    (version "0.2.1")
+    (home-page
+     "https://github.com/dinosaure/overlap"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "1j1d4iisn9nkvipgwii9g116iv60ci863ip4wwcl7ijvpi6n0jv2"
+      "v"
+      ))
+    (native-inputs (list pkg-config))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-alcotest))
+    (synopsis "")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-hxd
+  (package
+    (name "ocaml-hxd")
+    (version "0.3.5")
+    (home-page
+     "https://github.com/dinosaure/hxd"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "0nfiw2kqqzs27ah9k7y3jd4syvjwqfvw64sl7n5gl0677g5izn50"
+      "v"
+      ))
+    (propagated-inputs (list ocaml-cmdliner))
+    (build-system dune-build-system)
+    ;; (propagated-inputs (list ocaml-angstrom ocaml-uutf ocaml-ke ocaml-crowbar ocaml-rresult ocaml-hxd))
+    (synopsis "")
+    (description "")
+    (license license:expat)
+    (arguments
+     ;; tests failing, unsure
+     '(#:tests? #f))
+    ))
+
+(define-public ocaml-unstrctrd
+  (package
+    (name "ocaml-unstrctrd")
+    (version "0.4")
+    (home-page
+     "https://github.com/dinosaure/unstrctrd"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "1x1jglg5c9hzsgdcldcv5vw6kr3p4v0kx3x62k6dsiiv8bryf600"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-angstrom ocaml-uutf ocaml-ke ocaml-crowbar ocaml-rresult ocaml-hxd))
+    (synopsis "")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-oseq
+  (package
+    (name "ocaml-oseq")
+    (version "0.5.1")
+    (home-page "https://github.com/c-cube/oseq"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "1yfbh5xm6wh8bsbb4c0v0hxpidz2jssbjpgvl9gp1g3gm4wgyakz"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-containers))
+    (synopsis "Purely functional iterators compatible with standard `seq`. ")
+    (description "Simple list of suspensions, as a composable lazy iterator that behaves like a value.  The type of sequences, 'a OSeq.t, is compatible with the new standard type of iterators 'a Seq.t.")
+    (license license:bsd-2)
+    ))
+
+(define-public ocaml-dscheck
+  (package
+    (name "ocaml-dscheck")
+    (version "0.5.0")
+    (home-page "https://github.com/ocaml-multicore/dscheck"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "06jcd0r0iw9h226r8fik8qzblspgk2dbvzf72x8k0ij3z6vz6m82"
+      ""
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-oseq))
+    (synopsis "")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-miou
+  (package
+    (name "ocaml-miou")
+    (version "0.4.0")
+    (home-page "https://github.com/robur-coop/miou"
+     )
+    (source
+     (github-tag-origin
+      name home-page version "14wlxfmh0yrwdgvk83w84i1hyfs4f592i6gic5qfxyw1l2xgbdc9"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-dscheck))
+    (synopsis "")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-multipart-form
+  (package
+    (name "ocaml-multipart-form")
+    (version "0.7.0")
+    (home-page "https://github.com/dinosaure/multipart_form"
+     )
+    (source
+     (github-tag-origin
+      name home-page version
+      "1bq03iarfrad7l2xv3hqnzf2acacjq4l9akwz208i65vazp47fq2"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-miou ocaml-ke ocaml-angstrom ocaml-eio ocaml-pecu ocaml-cohttp ocaml-cohttp-lwt ocaml-unstrctrd ocaml-prettym ocaml-alcotest-lwt ocaml-rosetta))
+    (synopsis "normal version")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-multipart-form-piaf
+  (package
+    (name "ocaml-multipart-form-piaf")
+    (version "0.0.0-06a86ad")
+    (home-page "https://github.com/anmonteiro/multipart_form")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/anmonteiro/multipart_form")
+             (commit "06a86ad395a4f09cdf1ac4fd1f15993521e7ac47")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ybig1cqfphwc79m7bmp2x2hd9jdy6jvz4il17vq4v8b1iphkfgr"
+                )))
+     )
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-miou ocaml-ke ocaml-angstrom ocaml-eio ocaml-pecu ocaml-cohttp ocaml-cohttp-lwt ocaml-unstrctrd ocaml-prettym ocaml-alcotest-lwt ocaml-rosetta ocaml-faraday))
+    (synopsis "forked version for piaf")
+    (description "")
+    (license license:expat)
+    ))
+
+(define-public ocaml-prettym
+  (package
+    (name "ocaml-prettym")
+    (version "0.0.3")
+    (home-page "https://github.com/dinosaure/prettym")
+    (source
+     (github-tag-origin
+      name home-page version "1sh0j23if7scaqbq8gzl181dy28l2zyc5gvr6l891p0znf53m1lf"
+      ""
+      ))
+    (propagated-inputs (list ocaml-bigstringaf ocaml-ke ocaml-bigarray-overlap ocaml-jsonm ocaml-base64))
+    (build-system dune-build-system)
+    ;; (propagated-inputs (list ocaml-logs ocaml-cstruct ocaml-mirage-mtime ocaml-alcotest ocaml-angstrom))
+    (synopsis "A simple bounded encoder constraints by columns in OCaml ")
+    (description "prettym is a simple bounded encoder to serialize human readable values and respect the 80-column constraint. It permits to serialize values in the respect of RFC 822 and put fws token when necessary.
+
+For example, a list of email addresses should fits under the 80 column for an email. The encoder should find the opportunity to add a line breaker plus a space to respect RFC 822.")
+    (license license:expat)
+    ))
+
 (define-public ocaml-httpun
   (package
     (name "ocaml-httpun")
@@ -3788,7 +4012,37 @@ contents of emails.")
       (license license:bsd-3)
     ))
 
+(define-public ocaml-httpun-ws
+  (package
+    (name "ocaml-httpun-ws")
+    (version "0.2.0")
+    (home-page
+     "https://github.com/anmonteiro/httpun-ws")
+    (source
+     (github-tag-origin
+      name home-page version
+      "12cc219q5bgpfwj2d8k6rykcadpgzcw0sgj52rbw207i227z1r35"
+      ""
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-bigstringaf ocaml-faraday ocaml-cstruct
+                             ocaml-mirage-flow ocaml-gluten ocaml-digestif
+                             ocaml-base64 ocaml-httpun
+                             ))
+    (synopsis
+     "A high performance, memory efficient, and scalable web server written in OCaml (websockets) "
+     )
+    (description "httpun-ws is a Websocket implementation that uses http-un for the initial connection and upgrade.
+
+It started as a fork of websocketaf, but has since diverged quite a bit, given the meager implementation in the original work."
+       )
+      (license license:bsd-3)
+    ))
+
 (define-public ocaml-piaf
+  ;; NOTE I have been unable to get this package to build.
+  ;; this is because of a vendored dependency on a fork of
+  ;; ocaml-multipart-form-piaf
   (package
     (name "ocaml-piaf")
     (version "0.2.0")
@@ -3797,18 +4051,13 @@ contents of emails.")
     (source
      (github-tag-origin
       name home-page version
-      "0l7rbh6lgxjsxrbsyp5jrh2kxida0si0vv06jp32iimvicyjh2m5" ""
+      "0l7rbh6lgxjsxrbsyp5jrh2kxida0si0vv06jp32iimvicyjh2m5"
+      ""
       ))
     (build-system dune-build-system)
-    ;; (arguments
-    ;;  '(#:tests? #f))
-    (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl ocaml-magic-mime ocaml-eio-ssl ocaml-async ocaml-faraday ocaml-async ocaml-httpun ocaml-pecu
-                            
-                             ))
+    (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl ocaml-magic-mime ocaml-eio-ssl ocaml-async ocaml-faraday ocaml-async ocaml-httpun ocaml-pecu ocaml-prettym ocaml-httpun-ws ocaml-h2 ocaml-unstrctrd ocaml-multipart-form-piaf))
     (synopsis "Web library for OCaml with support for HTTP/1.X / HTTP/2")
-      (description
-       "Containers is an extension of OCaml's standard library (under BSD license) focused on data structures, combinators and iterators, without dependencies on unix, str or num. Every module is independent and is prefixed with 'CC' in the global namespace. Some modules extend the stdlib (e.g. CCList provides safe map/fold_right/append, and additional functions on lists). Alternatively, open Containers will bring enhanced versions of the standard modules into scope."
-       )
+      (description "")
       (license license:bsd-3)
     ))
 
@@ -3873,22 +4122,19 @@ A library that needs to suspend and later resume the current thread of execution
 OCaml with fibers.")
     (license license:isc)))
 
-(define-public ocaml5.0-eio
-  (package-with-ocaml5.0 ocaml-eio))
+;; (define-public ocaml-eio-luv
+;;   (package
+;;     (inherit ocaml-eio)
+;;     (name "ocaml-eio-luv")
+;;     (arguments `(#:package "eio-luv"))
+;;     (propagated-inputs (list ocaml-eio ocaml-luv))
+;;     (native-inputs (list ocaml-mdx))
+;;     (synopsis "Libuv-based backend for Ocaml Eio")
+;;     (description "@code{Eio_luv} provides a cross-platform backend for
+;; @code{Ocaml Eio}'s APIs using luv (libuv)")))
 
-(define ocaml-eio-luv
-  (package
-    (inherit ocaml-eio)
-    (name "ocaml-eio-luv")
-    (arguments `(#:package "eio_luv"))
-    (propagated-inputs (list ocaml-eio ocaml-luv))
-    (native-inputs (list ocaml-mdx))
-    (synopsis "Libuv-based backend for Ocaml Eio")
-    (description "@code{Eio_luv} provides a cross-platform backend for
-@code{Ocaml Eio}'s APIs using luv (libuv)")))
-
-(define-public ocaml5.0-eio-luv
-  (package-with-ocaml5.0 ocaml-eio-luv))
+;; (define-public ocaml5.4-eio-luv
+;;   (package-with-ocaml5.0 ocaml-eio-luv))
 
 (define-public ocaml-unionfind
   (package
@@ -3980,7 +4226,7 @@ accesses to the store.")
                  #:tests? #f))
     (propagated-inputs
      (list ocaml-eio
-           ocaml-eio-luv
+           ;; ocaml-eio-luv
            ocaml-eio-linux))
     (native-inputs
      (list ocaml-mdx))
@@ -6673,6 +6919,78 @@ recommend using this package directly.")
     (synopsis "Jane Street C header files")
     (description "C header files shared between the various Jane Street
 packages.")
+    (license license:expat)))
+
+(define-public ocaml-uuuu
+  (package
+    (name "ocaml-uuuu")
+    (version "0.3.0")
+    (home-page "https://github.com/mirage/uuuu")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0jbv126gzmqbjyif0qj6ajazdxdzl7h5rz00045n69ag80s4x8ig"
+      "v"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (synopsis "")
+    (description "")
+    (license license:expat)))
+
+
+(define-public ocaml-yuscii
+  (package
+    (name "ocaml-yuscii")
+    (version "0.3.0")
+    (home-page "https://github.com/mirage/yuscii")
+    (source
+     (github-tag-origin
+      name home-page version
+      "11qf4ds5gmap4afg40lim2m9l1v7lv80k3fk41py25z4p2f0rzbc"
+      "v"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (synopsis "")
+    (description "")
+    (license license:expat)))
+
+(define-public ocaml-coin
+  (package
+    (name "ocaml-coin")
+    (version "0.1.4")
+    (home-page "https://github.com/mirage/coin")
+    (source
+     (github-tag-origin
+      name home-page version
+      "06q4y0ky3q5860a14ly2jixzk16c0c6yv7skv4p6kld4vaabbxgx"
+      "v"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    ;; (propagated-inputs (list ocaml-coin))
+    (synopsis "Coin")
+    (description "coin is a little library to normalize an KOI8-{U,R} input to Unicode. This library uses tables provided by the Unicode Consortium:
+
+https://ftp.unicode.org/Public/MAPPINGS/VENDORS/MISC
+
+This project takes tables and converts them to OCaml code. Then, it provides a non-blocking decoder to translate KOI8-{U,R} codepoint to Unicode codepoint.")
+    (license license:expat)))
+
+(define-public ocaml-rosetta
+  (package
+    (name "ocaml-rosetta")
+    (version "0.3.0")
+    (home-page "https://github.com/mirage/rosetta")
+    (source
+     (github-tag-origin
+      name home-page version "16r0gid0ypv500pi7jxsmbwn2w7pps2h0xb8wd3imjzkq6pq7qsy"
+      "v"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs (list ocaml-coin ocaml-yuscii ocaml-uuuu))
+    (synopsis "Universal decoder of encoded flow to Unicode ")
+    (description "Rosetta is a merge-point between uuuu, coin and yuscii. It able to decode UTF-7, ISO-8859 and KOI8 and return Unicode code-point - then, end-user can normalize it to UTF-8 with uutf for example.
+
+The final goal is to provide an universal decoder of any encoding. This project is a part of mrmime, a parser of emails to be able to decode encoded-word (according rfc2047).")
     (license license:expat)))
 
 (define-public ocaml-time-now
@@ -10272,36 +10590,156 @@ up to OCaml 4.08.")
     (synopsis "RFC3986 URI/URL parsing library")
     (description "This package adds S-exp support to @code{ocaml-uri}.")))
 
-(define-public ocaml-cohttp
+(define-public ocaml-http
   (package
-    (name "ocaml-cohttp")
-    (version "5.0.0")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-              (url "https://github.com/mirage/ocaml-cohttp")
-              (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32
-            "074xis3wmr76gadh1ffmfzjfx13mw4kr2s6rkwqwzcl6l85n9x2z"))))
+    (name "ocaml-http")
+    (version "6.1.1")
     (build-system dune-build-system)
-    (arguments '(#:package "cohttp"))
+    (arguments '(#:package "http"))
+    (home-page "https://github.com/mirage/ocaml-cohttp")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1li96x3s287a092nb9d0panr55298a9dd3v1s9igdxllsb789l9a"
+      "v"
+      ))
     (propagated-inputs
       (list ocaml-re
             ocaml-uri
+            ;; ocaml-http
             ocaml-uri-sexp
             ocaml-sexplib0
             ocaml-ppx-sexp-conv
             ocaml-stringext
-            ocaml-base64))
+            ocaml-ppx-expect
+            ocaml-base-quickcheck
+            ocaml-base64
+            ))
     (native-inputs
      (list ocaml-fmt
            ocaml-jsonm
            ocaml-alcotest
            ocaml-crowbar))
+    (synopsis "OCaml library for HTTP clients and servers")
+    (description
+      "Cohttp is an OCaml library for creating HTTP daemons.  It has a portable
+HTTP parser, and implementations using various asynchronous programming
+libraries.")
+    (license license:isc)))
+
+(define-public ocaml-cohttp
+  (package
+    (name "ocaml-cohttp")
+    (version "6.1.1")
+    (build-system dune-build-system)
+    (arguments '(#:package "cohttp"))
     (home-page "https://github.com/mirage/ocaml-cohttp")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1li96x3s287a092nb9d0panr55298a9dd3v1s9igdxllsb789l9a"
+      "v"
+      ))
+    (propagated-inputs
+      (list ocaml-re
+            ocaml-uri
+            ocaml-http
+            ocaml-logs
+            ocaml-uri-sexp
+            ocaml-sexplib0
+            ocaml-ppx-sexp-conv
+            ocaml-stringext
+            ocaml-base64
+            ))
+    (native-inputs
+     (list ocaml-fmt
+           ocaml-jsonm
+           ocaml-alcotest
+           ocaml-crowbar))
+    (synopsis "OCaml library for HTTP clients and servers")
+    (description
+      "Cohttp is an OCaml library for creating HTTP daemons.  It has a portable
+HTTP parser, and implementations using various asynchronous programming
+libraries.")
+    (license license:isc)))
+
+(define-public ocaml-cohttp-lwt
+  (package
+    (name "ocaml-cohttp-lwt")
+    (version "6.1.1")
+    (build-system dune-build-system)
+    (arguments '(#:package "cohttp-lwt"))
+    (home-page "https://github.com/mirage/ocaml-cohttp")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1li96x3s287a092nb9d0panr55298a9dd3v1s9igdxllsb789l9a"
+      "v"
+      ))
+    (propagated-inputs
+      (list ocaml-re
+            ocaml-uri
+            ocaml-ipaddr
+            ocaml-logs
+            ocaml-cohttp
+            ;; ocaml-http
+            ocaml-uri-sexp
+            ocaml-sexplib0
+            ocaml-ppx-sexp-conv
+            ocaml-stringext
+            ocaml-ppx-expect
+            ocaml-base-quickcheck
+            ocaml-base64
+            ))
+    (native-inputs
+     (list ocaml-fmt
+           ocaml-jsonm
+           ocaml-alcotest
+           ocaml-crowbar))
+    (synopsis "OCaml library for HTTP clients and servers")
+    (description
+      "Cohttp is an OCaml library for creating HTTP daemons.  It has a portable
+HTTP parser, and implementations using various asynchronous programming
+libraries.")
+    (license license:isc)))
+
+(define-public ocaml-cohttp-eio
+  (package
+    (name "ocaml-cohttp-eio")
+    (version "6.1.1")
+    (build-system dune-build-system)
+    (arguments '(#:package "cohttp-eio"))
+    (home-page "https://github.com/mirage/ocaml-cohttp")
+    (source
+     (github-tag-origin
+      name home-page version
+      "1li96x3s287a092nb9d0panr55298a9dd3v1s9igdxllsb789l9a"
+      "v"
+      ))
+    (propagated-inputs
+      (list ocaml-re
+            ocaml-uri
+            ocaml-ipaddr
+            ocaml-logs
+            ocaml-cohttp
+            ocaml-eio
+            ocaml-eio-main
+            ocaml-mirage-crypto
+            ocaml-ptime
+            ;; ocaml-http
+            ocaml-uri-sexp
+            ocaml-sexplib0
+            ocaml-ppx-sexp-conv
+            ocaml-stringext
+            ocaml-ppx-expect
+            ocaml-base-quickcheck
+            ocaml-base64
+            ))
+    (native-inputs
+     (list ocaml-fmt
+           ocaml-jsonm
+           ocaml-alcotest
+           ocaml-crowbar))
     (synopsis "OCaml library for HTTP clients and servers")
     (description
       "Cohttp is an OCaml library for creating HTTP daemons.  It has a portable
@@ -10516,6 +10954,7 @@ constant-time to avoid timing-attack with crypto stuff.")
     (native-inputs
      (list pkg-config
            ocaml-fmt
+           ocaml-crowbar
            ocaml-alcotest
            ocaml-bos
            ocaml-astring
