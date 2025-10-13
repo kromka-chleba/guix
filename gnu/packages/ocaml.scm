@@ -61,6 +61,7 @@
   #:use-module (gnu packages curl)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
+  #:use-module (gnu packages finance)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages ghostscript)
@@ -3642,13 +3643,101 @@ to which allows adding and looking up bindings in a type safe manner.")
     (description "nlopt-ocaml implements OCaml bindings to the NLOpt optimization library.")
     (license license:lgpl2.1)
     ))
+(define-public ocaml-nlopt
+  (package
+    (name "ocaml-nlopt")
+    (version "0.7")
+    (home-page "https://github.com/mkur/nlopt-ocaml"
+               )
+    (source
+     (github-tag-origin
+      name home-page version "04j0a251wxvak7g5v5p2w2xz9csjcac88p1g4ryj56kvf7adnd7r"
+      "release-"
+      ))
+    (build-system dune-build-system)
+    (native-inputs (list nlopt))
+    (synopsis "OCaml bindings to the NLOpt optimization library ")
+    (description "nlopt-ocaml implements OCaml bindings to the NLOpt optimization library.")
+    (license license:lgpl2.1)
+    ))
+
+(define-public ocaml-tacaml
+  (package
+    (name "ocaml-tacaml")
+    (version "1.0.0")
+    (home-page "https://github.com/hesterjeng/tacaml")
+    (source
+     (github-tag-origin
+      name home-page version
+      "0d45rjr2rc39i53fdsczd7pxw5rb5i2a2vcjd0k08vrjxac5ys0s"
+      "v"
+      ))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-ctypes ocaml-ppx-deriving ocaml-containers))
+    (native-inputs (list ta-lib))
+    ;; (propagated-inputs (list ocaml-eio ocaml-ssl))
+    ;; (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl))
+    (synopsis " ta-lib bindings for OCaml ")
+    (description "tacaml provides OCaml bindings to the TA-Lib (Technical Analysis Library). This project offers both raw C bindings and higher-level, type-safe wrappers for over 160 technical analysis functions commonly used in financial markets.")
+    (license license:lgpl2.0)
+    ))
+
+(define-public ocaml-longleaf
+(package
+ (name "ocaml-longleaf")
+ (version "1.0.3")
+ (build-system dune-build-system)
+ (home-page "https://github.com/hesterjeng/longleaf")
+ (source
+     (github-tag-origin
+      name home-page version "1sy188ibw4n38kfsy8zq808wy77gd8s56fsx0jraflnkwadrqi7m"
+      "v"))
+ (native-inputs
+  (list ocaml-alcotest))
+ (propagated-inputs
+  (list ocaml-ppx-deriving
+        ocaml-ppx-yojson-conv
+        ocaml-ppx-variants-conv
+        ocaml-ppx-fields-conv
+        ocaml-ppx-hash
+        ocaml-tyxml
+        ocaml-tacaml
+        ocaml-ptime
+        ocaml-eio-main
+        ;; ocaml-ptime
+        ;; ocaml-ppx-yojson-conv-lib
+        ;; ocaml-ppx-deriving
+        ;; ocaml-ppx-variants-conv
+        ;; ocaml-ppx-fields-conv
+        ;; ocaml-cmdliner
+        ;; ocaml-graph
+        ;; ocaml-eio-main
+        ;; ocaml-tacaml
+        ;; ocaml-fileutils
+        ;; ocaml-yojson
+        ;; ocaml-uuidm
+        ;; ocaml-tyxml
+        ;; ocaml-alcotest
+        ;; longleaf-frontend-dev
+        ;; longleaf-quantstats-dev
+        ))
+ (synopsis "Algorithmic trading platform written in OCaml")
+ (description
+  "Longleaf is an algorithmic trading platform that supports live trading,
+paper trading, and backtesting with multiple brokerages and market data sources.
+The platform uses a functional, modular architecture with strategies implemented
+as functors for maximum code reuse and type safety.
+
+The platform includes tacaml for TA-Lib technical analysis bindings.")
+ (license license:gpl3+))
+ )
+
 
 (define-public ocaml-eio-ssl
   (package
     (name "ocaml-eio-ssl")
     (version "0.3.0")
-    (home-page
-     "https://github.com/anmonteiro/eio-ssl")
+    (home-page "https://github.com/anmonteiro/eio-ssl")
     (source
      (github-tag-origin
       name home-page version
@@ -3656,10 +3745,9 @@ to which allows adding and looking up bindings in a type safe manner.")
       ""
       ))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-eio ocaml-ssl))
-    ;; (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl))
-    (synopsis "OpenSSL bindings to OCaml EIO")
-    (description "A wrapper around OCaml-SSL that performs I/O concurrently with eio.")
+    (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl))
+    (synopsis "")
+    (description "")
     (license license:lgpl2.0)
     ))
 
@@ -4290,21 +4378,31 @@ It started as a fork of websocketaf, but has since diverged quite a bit, given t
     ))
 
 (define-public ocaml-piaf
-  ;; NOTE I have been unable to get this package to build.
-  ;; this is because of a vendored dependency on a fork of
-  ;; ocaml-multipart-form-piaf
   (package
     (name "ocaml-piaf")
     (version "0.2.0")
-    (home-page
-     "https://github.com/anmonteiro/piaf")
+    (home-page "https://github.com/anmonteiro/piaf")
     (source
      (github-tag-origin
       name home-page version
       "0l7rbh6lgxjsxrbsyp5jrh2kxida0si0vv06jp32iimvicyjh2m5"
-      ""
-      ))
+      ""))
     (build-system dune-build-system)
+    (arguments
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'use-system-multipart-form-piaf
+           (lambda _
+             ;; Use system ocaml-multipart-form-piaf instead of vendored version
+             ;; Replace vendor/dune to use system package
+             (with-output-to-file "vendor/dune"
+               (lambda ()
+                 (display ";; Use system multipart_form-piaf package\n")))
+             ;; Patch multipart/dune to use system piaf_multipart_form
+             (substitute* "multipart/dune"
+               (("piaf\\.multipart_form")
+                "piaf_multipart_form"))
+             #t)))))
     (propagated-inputs (list ocaml-eio ocaml-ipaddr ocaml-ke ocaml-uri ocaml-ssl ocaml-magic-mime ocaml-eio-ssl ocaml-async ocaml-faraday ocaml-async ocaml-httpun ocaml-pecu ocaml-prettym ocaml-httpun-ws ocaml-h2 ocaml-unstrctrd ocaml-multipart-form-piaf))
     (synopsis "Web library for OCaml with support for HTTP/1.X / HTTP/2")
       (description "")
@@ -7498,8 +7596,8 @@ serializers and deserializers from type definitions.")
           (url home-page)
           (commit (string-append "v" version))))
         (sha256
-         (base32
-          "1npc1dbrcl3izi2rpf3rqz98jvsxrgzqn2vb95nf8wxgmh6gmrsc"))))
+         (base32 "0nd9vghqbgpam17n4lrcwp88n67q98x0dr86d921760y05q2js2w"
+                 ))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-yojson))
     (properties `((upstream-name . "ppx_yojson_conv_lib")))
