@@ -67,6 +67,53 @@
 ;; of several associated packages (docker-libnetwork and go-sctp).
 (define %docker-version "20.10.27")
 
+(define-public go-github-com-containerd-go-runc
+  (package
+    (name "go-github-com-containerd-go-runc")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/go-runc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03f6a44j24g64x0zwx6daqbssbka0wcvj3fkjz4rvqx5dz3n7xhf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/go-runc"
+      #:test-flags #~(list "-skip" "TestRuncStarted")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs import-path #:allow-other-keys)
+              (substitute* (string-append "src/" import-path "/runc_test.go")
+                (("Command: \"/bin/true\",")
+                 (string-append "Command: \""
+                                (search-input-file inputs "/bin/true")
+                                "\",\n"))
+                (("Command: \"/bin/false\",")
+                 (string-append "Command: \""
+                                (search-input-file inputs "/bin/false")
+                                "\",\n")))
+              (substitute* (string-append "src/" import-path "/runc.go")
+                (("return -1, err")
+                 "fmt.Errorf(\"Achou\")\n  return -1, err")))))))
+    (inputs
+     (list coreutils))
+    (propagated-inputs (list go-golang-org-x-sys go-github-com-sirupsen-logrus
+                             go-github-com-opencontainers-runtime-spec
+                             go-github-com-containerd-console))
+    (home-page "https://github.com/containerd/go-runc")
+    (synopsis "Go package to consume the runc CLI")
+    (description
+     "This package allows your Go application to consume the
+@url{https://github.com/opencontainers/runc,runc} binary.
+It tries to expose all the settings and features of the runc CLI.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-docker-go-metrics
   (package
     (name "go-github-com-docker-go-metrics")
