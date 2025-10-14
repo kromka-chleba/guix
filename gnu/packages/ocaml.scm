@@ -9482,7 +9482,7 @@ to a Yojson.Safe value.")
 (define-public ocaml-merlin-lib
   (package
     (name "ocaml-merlin-lib")
-    (version "5.6-504")
+    (version "5.6-503")
     (source
      (origin
        (method git-fetch)
@@ -9491,8 +9491,8 @@ to a Yojson.Safe value.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0nxi4zbs6djfsk649dm5rax5bgw0v3bywj4vkzfpi3lpc1h0mn3g"))))
+        (base32 "164mcl6rlaj8y6ia9l2zfc9pwq6x8kv3q62vkidjxm313lyq858k"
+                ))))
     (build-system dune-build-system)
     (arguments '(#:package "merlin-lib"
                  #:tests? #f))          ; no tests
