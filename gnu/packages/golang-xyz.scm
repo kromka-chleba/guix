@@ -365,6 +365,37 @@ implementation of the kernel-userspace communication protocol, and does not
 use the C library from the project called FUSE.")
     (license (list license:bsd-2 license:bsd-3 license:hpnd))))
 
+(define-public go-github-com-cncf-xds-go
+  (package
+    (name "go-github-com-cncf-xds-go")
+    (version "0.0.0-20250501225837-2ac532fd4443")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cncf/xds")
+             (commit (go-version->git-ref version
+                                          #:subdir "go"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0snccl7rrx2f07131s0n8z3d1p5v2nvcg7v3dhq1a5sl46b1x78b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/cncf/xds/go"
+      #:unpack-path "github.com/cncf/xds"))
+    (propagated-inputs (list go-google-golang-org-protobuf
+                             go-google-golang-org-grpc
+                             go-google-golang-org-genproto-googleapis-api
+                             go-github-com-envoyproxy-protoc-gen-validate
+                             go-cel-dev-expr))
+    (home-page "https://github.com/cncf/xds")
+    (synopsis "Universal data-plane API using the xDS protocol in Go")
+    (description "This Go package aims to provide a set of APIs that
+provide the standard for L4/L7 data plane configuration.")
+    (license license:asl2.0)))
+
 (define-public go-code-cloudfoundry-org-bytefmt
   (package
     (name "go-code-cloudfoundry-org-bytefmt")
