@@ -4156,16 +4156,19 @@ to which allows adding and looking up bindings in a type safe manner.")
 (define-public ocaml-dream-mirage
 (package
  (name "ocaml-dream-mirage")
- (version "1.0.0alpha8")
+ (version "1.0.0-git")
  (source
   (origin
-    (method url-fetch)
-    (uri
-     "https://github.com/aantron/dream/releases/download/1.0.0-alpha8/dream-1.0.0-alpha8.tar.gz")
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/aantron/dream")
+          (commit "af3c9bff7b4f11777190946e2f3453697bf5a07b")))
+    (file-name (git-file-name name version))
     (sha256
-     (base32 "15pjbk4m4imq80a7szdwsyz2c8g6x2ln2jaajz4yagy0j0l83v93"))))
+     (base32 "0djl3a0xhj0ppgiimfhb44y60za92v3mgsgkspd6b37f6s5b2abm"))))
  (build-system dune-build-system)
- (arguments `(#:package "dream-mirage"))
+ (arguments `(#:package "dream-mirage"
+              #:tests? #f))
  (home-page "https://github.com/aantron/dream")
  (native-inputs
   (list ocaml-alcotest))
@@ -4643,17 +4646,20 @@ OCaml & @code{JavaScript} ecosystem.")
 (define-public ocaml-dream-pure
   (package
     (name "ocaml-dream-pure")
-    (version "1.0.0alpha8")
+    (version "1.0.0-git")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        "https://github.com/aantron/dream/releases/download/1.0.0-alpha8/dream-1.0.0-alpha8.tar.gz")
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aantron/dream")
+             (commit "af3c9bff7b4f11777190946e2f3453697bf5a07b")))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "15pjbk4m4imq80a7szdwsyz2c8g6x2ln2jaajz4yagy0j0l83v93"))))
+        (base32 "0djl3a0xhj0ppgiimfhb44y60za92v3mgsgkspd6b37f6s5b2abm"))))
     (build-system dune-build-system)
     (arguments
-     '(#:package "dream-pure"))
+     '(#:package "dream-pure"
+       #:tests? #f))
     (propagated-inputs (list ocaml-base64
                              ocaml-bigstringaf
                              ocaml-hmap
@@ -4696,25 +4702,28 @@ OCaml & @code{JavaScript} ecosystem.")
 (define-public ocaml-dream-httpaf
   (package
     (name "ocaml-dream-httpaf")
-    (version "1.0.0alpha8")
+    (version "1.0.0-git")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        "https://github.com/aantron/dream/releases/download/1.0.0-alpha8/dream-1.0.0-alpha8.tar.gz")
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aantron/dream")
+             (commit "af3c9bff7b4f11777190946e2f3453697bf5a07b")))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "15pjbk4m4imq80a7szdwsyz2c8g6x2ln2jaajz4yagy0j0l83v93"))))
+        (base32 "0djl3a0xhj0ppgiimfhb44y60za92v3mgsgkspd6b37f6s5b2abm"))))
     (build-system dune-build-system)
     (arguments
-     '(#:package "dream-httpaf"))
+     '(#:package "dream-httpaf"
+       #:tests? #f))
     (propagated-inputs (list ocaml-dream-pure
                              ocaml-gluten
                              ocaml-gluten-lwt-unix
-                             ocaml-h2
-                             ocaml-h2-lwt-unix
-                             ocaml-httpun
-                             ocaml-httpun-lwt-unix
-                             ocaml-httpun-ws
+                             ocaml-h2-0.12.0
+                             ocaml-h2-lwt-unix-0.12.0
+                             ocaml-httpun-0.1.0
+                             ocaml-httpun-lwt-unix-0.1.0
+                             ocaml-httpun-ws-0.1.0
                              ocaml-lwt
                              ocaml-lwt-ppx
                              ocaml-lwt-ssl
@@ -4784,6 +4793,25 @@ OCaml & @code{JavaScript} ecosystem.")
 h2-lwt-unix provides an Lwt runtime implementation for h2 that targets UNIX
 binaries.")
     (license license:bsd-3)))
+
+(define-public ocaml-h2-lwt-unix-0.12.0
+  (package
+    (inherit ocaml-h2-lwt-unix)
+    (name "ocaml-h2-lwt-unix-0.12.0")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/ocaml-h2/releases/download/0.12.0/h2-0.12.0.tbz")
+       (sha256
+        (base32 "1ijkijpk5ss9d2dn2myrqp1k2qc67ycvvix834v3islh7l8hpr1n"))))
+    (arguments
+     '(#:package "h2-lwt-unix"
+       #:tests? #f))
+    (propagated-inputs (list ocaml-h2-lwt-0.12.0 ocaml-faraday-lwt-unix
+                             ocaml-gluten-lwt-unix))))
+
 (define-public ocaml-httpun-lwt-unix
   (package
     (name "ocaml-httpun-lwt-unix")
@@ -4802,6 +4830,24 @@ binaries.")
     (synopsis "Lwt + Unix support for httpun")
     (description #f)
     (license license:bsd-3)))
+
+(define-public ocaml-httpun-lwt-unix-0.1.0
+  (package
+    (inherit ocaml-httpun-lwt-unix)
+    (name "ocaml-httpun-lwt-unix-0.1.0")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/httpun/releases/download/0.1.0/httpun-0.1.0.tbz")
+       (sha256
+        (base32 "1lclla34qc03yss3vfbw83nmxg3r9ccik6013vn8vkz189glc1sh"))))
+    (arguments
+     '(#:package "httpun-lwt-unix"))
+    (propagated-inputs (list ocaml-httpun-0.1.0 ocaml-httpun-lwt-0.1.0
+                             ocaml-gluten-lwt-unix))))
+
 (define-public ocaml-faraday-lwt
   (package
     (name "ocaml-faraday-lwt")
@@ -4843,6 +4889,23 @@ binaries.")
 provides an Lwt runtime implementation for h2.")
     (license license:bsd-3)))
 
+(define-public ocaml-h2-lwt-0.12.0
+  (package
+    (inherit ocaml-h2-lwt)
+    (name "ocaml-h2-lwt-0.12.0")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/ocaml-h2/releases/download/0.12.0/h2-0.12.0.tbz")
+       (sha256
+        (base32 "1ijkijpk5ss9d2dn2myrqp1k2qc67ycvvix834v3islh7l8hpr1n"))))
+    (arguments
+     '(#:package "h2-lwt"
+       #:tests? #f))
+    (propagated-inputs (list ocaml-h2-0.12.0 ocaml-lwt ocaml-gluten-lwt))))
+
 (define-public ocaml-httpun-lwt
   (package
     (name "ocaml-httpun-lwt")
@@ -4860,6 +4923,23 @@ provides an Lwt runtime implementation for h2.")
     (synopsis "Lwt support for httpun")
     (description #f)
     (license license:bsd-3)))
+
+(define-public ocaml-httpun-lwt-0.1.0
+  (package
+    (inherit ocaml-httpun-lwt)
+    (name "ocaml-httpun-lwt-0.1.0")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        "https://github.com/anmonteiro/httpun/releases/download/0.1.0/httpun-0.1.0.tbz")
+       (sha256
+        (base32 "1lclla34qc03yss3vfbw83nmxg3r9ccik6013vn8vkz189glc1sh"))))
+    (arguments
+     '(#:package "httpun-lwt"))
+    (propagated-inputs (list ocaml-httpun-0.1.0 ocaml-lwt ocaml-gluten-lwt))))
+
 (define-public ocaml-lambdasoup
   (package
     (name "ocaml-lambdasoup")
@@ -5141,14 +5221,16 @@ reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
 (define-public ocaml-dream
   (package
     (name "ocaml-dream")
-    (version "1.0.0alpha8")
+    (version "1.0.0-git")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        "https://github.com/aantron/dream/releases/download/1.0.0-alpha8/dream-1.0.0-alpha8.tar.gz")
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aantron/dream")
+             (commit "af3c9bff7b4f11777190946e2f3453697bf5a07b")))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "15pjbk4m4imq80a7szdwsyz2c8g6x2ln2jaajz4yagy0j0l83v93"))))
+        (base32 "0djl3a0xhj0ppgiimfhb44y60za92v3mgsgkspd6b37f6s5b2abm"))))
     (build-system dune-build-system)
     (arguments
      '(#:package "dream"
@@ -5597,6 +5679,20 @@ wherever they are applicable.")
     (description "")
     (license license:isc)
     ))
+
+(define-public ocaml-h2-0.12.0
+  (package
+    (inherit ocaml-h2)
+    (name "ocaml-h2-0.12.0")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/anmonteiro/ocaml-h2/archive/"
+                          version ".tar.gz"))
+       (sha256
+        (base32 "0dr4k5x4pq54dxg0ngwaamlg1ir3vsjzzaxp51nrzvpc87a5908v"))))))
+
 (define-public ocaml-sedlex
   (package
     (name "ocaml-sedlex")
@@ -5943,6 +6039,28 @@ It started as a fork of websocketaf, but has since diverged quite a bit, given t
        )
       (license license:bsd-3)
     ))
+
+(define-public ocaml-httpun-ws-0.1.0
+  (package
+    (inherit ocaml-httpun-ws)
+    (name "ocaml-httpun-ws-0.1.0")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/anmonteiro/httpun-ws/archive/"
+                          version ".tar.gz"))
+       (sha256
+        (base32 "1wmfdj94ckqj4438v4xabxzg198z195lzc2qp5mk6q9xp2lmfr76"))))
+    (propagated-inputs (list ocaml-httpun-0.1.0
+                             ocaml-faraday
+                             ocaml-base64
+                             ocaml-angstrom
+                             ocaml-bigstringaf
+                             ocaml-gluten
+                             ocaml-gluten-lwt
+                             ocaml-lwt
+                             ocaml-digestif))))
 
 (define-public ocaml-piaf
   (package
