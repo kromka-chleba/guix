@@ -9,7 +9,7 @@
 # Copyright © 2020 Daniel Brooks <db48x@db48x.net>
 # Copyright © 2021 Jakub Kądziołka <kuba@kadziolka.net>
 # Copyright © 2021 Chris Marusich <cmmarusich@gmail.com>
-# Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
+# Copyright © 2021, 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 # Copyright © 2022 Prafulla Giri <prafulla.giri@protonmail.com>
 # Copyright © 2023 Andrew Tropin <andrew@trop.in>
 # Copyright © 2020 David A. Redick <david.a.redick@gmail.com>
@@ -519,6 +519,9 @@ sys_create_build_user()
 	# ‘tar xf’ creates root:root files.  Change that.
 	chown -R guix-daemon:guix-daemon /gnu /var/guix
 	chown -R root:root /var/guix/profiles/per-user/root
+        # This is needed so the unprivileged daemon can create per-user
+        # directories.
+        chmod 1777 /var/guix/profiles/per-user
 
 	# The unprivileged daemon cannot create the log directory by itself.
 	mkdir -p /var/log/guix
@@ -602,11 +605,13 @@ sys_enable_guix_daemon()
 
               # Install after guix-daemon.service to avoid a harmless warning.
               # systemd .mount units must be named after the target directory.
-	      install_unit gnu-store.mount
+	      install_unprivileged_daemon ||
+                  install_unit gnu-store.mount
 
               systemctl daemon-reload &&
                   systemctl start guix-daemon &&
-	          systemctl start gnu-store.mount; } &&
+	          install_unprivileged_daemon ||
+                  systemctl start gnu-store.mount; } &&
                 _msg_pass "enabled Guix daemon via systemd"
             ;;
         sysv-init)
