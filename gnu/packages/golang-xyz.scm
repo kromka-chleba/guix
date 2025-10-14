@@ -14681,6 +14681,28 @@ to help free up more global locks to handle other tasks.")
 names.")
     (license license:asl2.0)))
 
+(define-public go-github-com-moby-pubsub
+  (package
+    (name "go-github-com-moby-pubsub")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/pubsub")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1di8wyipxjxg9v28klzjna6a9zg5n2g5wyn1qy3klp428zzknbyw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/pubsub"))
+    (home-page "https://github.com/moby/pubsub")
+    (synopsis "Publish–subscribe pattern in Go")
+    (description "This package implements the publish–subscribe pattern in Go.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-moby-spdystream
   (package
     (name "go-github-com-moby-spdystream")
