@@ -1255,6 +1255,119 @@ additional characters (mostly accented ones).  This package provides the
 OpenType variant of these fonts.")
     (license license:gfl1.0)))
 
+(define-public font-nerd-fonts-symbols-mono
+  (package
+    (name "font-nerd-fonts-symbols-mono")
+    (version "3.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ryanoasis/nerd-fonts")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0qlj9lgc0qlgqk716136p1f3c2kvzphkm4q0iy4isj0gz76iqrx0"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Remove large patched-fonts directory to save space and build time
+            (delete-file-recursively "patched-fonts")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f  ; No test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (delete 'build)
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (font-dir (string-append out "/share/fonts/truetype"))
+                     (blank-font "src/unpatched-fonts/NerdFontsSymbolsOnly/NerdFontsSymbolsNerdFontBlank.sfd"))
+
+                ;; Ensure output directory exists
+                (mkdir-p font-dir)
+
+                ;; Set HOME to avoid fontforge warnings
+                (setenv "HOME" (getcwd))
+
+                ;; Patch the blank font to create Symbols Only Mono
+                ;; --complete: Include all icon sets
+                ;; --mono: Create monospaced glyphs (fixed width)
+                ;; --ext ttf: Generate TrueType font
+                ;; --no-progressbars: Disable progress bars for clean build output
+                (invoke "fontforge" "-script" "font-patcher"
+                        "--complete"
+                        "--mono"
+                        "--ext" "ttf"
+                        "--no-progressbars"
+                        "--outputdir" font-dir
+                        blank-font))))
+          (add-after 'install 'check-font
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (font-dir (string-append out "/share/fonts/truetype"))
+                     (font-file (string-append font-dir "/SymbolsNerdFontMono-Regular.ttf")))
+
+                ;; Verify the font file exists
+                (unless (file-exists? font-file)
+                  (error "Font file was not generated!"))
+
+                ;; Use Python script with fontforge to validate the font
+                (invoke "python3" "-c"
+                        (string-append
+                         "import fontforge\n"
+                         "font = fontforge.open('" font-file "')\n"
+                         "glyph_count = len([g for g in font.glyphs() if g.unicode > 0])\n"
+                         "print(f'Font has {glyph_count} glyphs with Unicode mapping')\n"
+                         "if glyph_count < 8000:\n"
+                         "    raise ValueError(f'Font has too few glyphs: {glyph_count}')\n"
+                         "print('✓ Font validation passed')\n"
+                         "font.close()\n"))
+
+                (format #t "✓ Font validation successful: ~a~%" font-file)))))))
+    (native-inputs
+     (list fontforge python))
+    (home-page "https://www.nerdfonts.com/")
+    (synopsis "Monospaced symbol font containing Nerd Fonts icon glyphs")
+    (description
+     "This package provides the Nerd Fonts Symbols Only font in monospaced
+variant, built from source using the Nerd Fonts patcher.  It contains only the
+icon glyphs from Nerd Fonts without any base font, making it suitable for use
+as a fallback font for icon display in terminals and text editors such as Kitty.
+
+The font includes glyphs from multiple icon sets:
+
+@itemize
+@item Powerline with Extra Symbols
+@item Font Awesome and Font Awesome Extension
+@item Material Design Icons
+@item Weather Icons
+@item Devicons
+@item Octicons
+@item Font Logos (formerly Font Linux)
+@item Pomicons
+@item Codeicons
+@end itemize
+
+The monospaced variant ensures all glyphs have uniform width, which is
+essential for terminal emulators that require consistent character spacing.
+
+@strong{Licensing:} This package combines glyphs from multiple sources:
+@itemize
+@item MIT: Nerd Fonts patcher and scripts
+@item SIL OFL-1.1: Various font glyphs (Powerline, Devicons, Octicons, etc.)
+@item Apache-2.0: Codicons, Material Design Icons
+@item CC-BY-4.0: Font Awesome icons
+@end itemize")
+    (license (list license:expat
+                   license:silofl1.1
+                   license:asl2.0
+                   license:cc-by4.0))))
+
 (define-public font-new-computer-modern
   (package
     (name "font-new-computer-modern")
