@@ -9636,6 +9636,31 @@ serialization and are generally 2 to 3 times faster.  In cases where
 changes.")
     (license license:asl2.0)))
 
+  (define-public go-github-com-prometheus-otlptranslator
+  (package
+    (name "go-github-com-prometheus-otlptranslator")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/prometheus/otlptranslator")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1naca6ima2bzf6yhb2w9favqx644c0q1y16jlb2na7s4bgr3107p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/prometheus/otlptranslator"))
+    (propagated-inputs (list go-github-com-grafana-regexp))
+    (home-page "https://github.com/prometheus/otlptranslator")
+    (synopsis "OTLP Prometheus Translator")
+    (description
+     "A Go library for converting OpenTelemetry Protocol (OTLP)
+metric and attribute names to Prometheus-compliant formats.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-puerkitobio-goquery
   (package
     (name "go-github-com-puerkitobio-goquery")
