@@ -9767,6 +9767,31 @@ single @code{Tree} implementation, optimized for sparse nodes.")
        (replace "go-github-com-hashicorp-golang-lru"
          go-github-com-hashicorp-golang-lru-v2)))))
 
+(define-public go-github-com-hashicorp-go-memdb
+  (package
+    (name "go-github-com-hashicorp-go-memdb")
+    (version "1.3.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hashicorp/go-memdb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1faz0sr9f82zz0vgxsh131b7swi6a3yrsgbw72y45cm2k8bxviad"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/go-memdb"))
+    (propagated-inputs (list go-github-com-hashicorp-go-immutable-radix))
+    (home-page "https://github.com/hashicorp/go-memdb")
+    (synopsis "Go package for in-memory database")
+    (description
+     "Package memdb provides an in-memory database that supports transactions and
+MVCC in Golang.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-hashicorp-go-multierror
   (package
     (name "go-github-com-hashicorp-go-multierror")
