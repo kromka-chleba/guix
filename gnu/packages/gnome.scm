@@ -6000,7 +6000,7 @@ faster results and to avoid unnecessary server load.")
            pkg-config
            python
            ;; For tests.
-           python-dbus
+           python-dbus-python
            python-dbusmock-minimal
            python-packaging
            python-pygobject
