@@ -797,6 +797,37 @@ tests.")
 tests.")
     (license license:expat)))
 
+(define-public go-github-com-go-check-check
+  (package
+    (name "go-github-com-go-check-check")
+    (version "0.0.0-20201130134442-10cb98267c6c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-check/check")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jwxndf8rsyx0fgrp47d99rp55yzssmryb92jfj3yf7zd8rjjljn"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (substitute* "check.go"
+              ;; non-constant format string in call to fmt.Fprintf
+              (("WARNING: Error cleaning up temporaries: .*")
+                "WARNING: Error cleaning up temporaries\")\n"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/check.v1"))
+    (propagated-inputs (list go-github-com-kr-pretty))
+    (home-page "https://github.com/go-check/check")
+    (synopsis "Rich testing extension for Go's testing package")
+    (description
+     "Package check is a rich testing extension for Go's testing package.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-go-playground-assert-v2
   (package
     (name "go-github-com-go-playground-assert-v2")
