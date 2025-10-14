@@ -11879,7 +11879,7 @@ OCaml.")
 
 (define-public ocaml-odoc-parser
   (package
-    (name "ocaml-odoc-parser")
+    (name "oocaml-odoc-parser")
     (version "2.0.0")
     (source
       (origin
@@ -12066,7 +12066,7 @@ variants.")
            ocaml-cmdliner
            ocaml-re
            ;; ocaml-result
-           ocaml-odoc-parser
+           ;; ocaml-odoc-parser
            ocaml-version))
     (native-inputs
      (list ocaml-cppo ocaml-lwt ocaml-alcotest))
@@ -12520,8 +12520,8 @@ defined in OCaml 4.12.0.")
            
             ocaml-ppxlib
             ocaml-re
-            ocaml-odoc-parser
-            ocaml-stdio
+            ;; ocaml-odoc-parser
+ ocaml-stdio
             ocaml-uuseg
             ocaml-uutf))
     (native-inputs
