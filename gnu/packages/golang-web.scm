@@ -2133,6 +2133,40 @@ Wasm}.
 @end itemize")
     (license license:isc)))
 
+(define-public go-github-com-containerd-ttrpc
+  (package
+    (name "go-github-com-containerd-ttrpc")
+    (version "1.2.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/ttrpc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fcd9nqkj1iz95h16i8ygiiazvbzmgrawpnvqcpbfhjwkx3sc1m1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/ttrpc"))
+    (propagated-inputs (list go-google-golang-org-protobuf
+                             go-google-golang-org-grpc
+                             go-google-golang-org-genproto-googleapis-rpc
+                             go-golang-org-x-sys
+                             go-github-com-prometheus-procfs
+                             go-github-com-golang-protobuf
+                             go-github-com-gogo-protobuf
+                             go-github-com-containerd-log))
+    (home-page "https://github.com/containerd/ttrpc")
+    (synopsis "Go package for GRPC for low-memory environments")
+    (description
+     "Package ttrpc defines and implements a low level simple transfer protocol
+optimized for low latency and reliable connections between processes on the same
+host.  The protocol uses simple framing for sending requests, responses, and
+data using multiple streams.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-containerd-typeurl
   (package
     (name "go-github-com-containerd-typeurl")
