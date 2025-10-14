@@ -3030,7 +3030,7 @@ and RFC 3339 formats in OCaml.")
        (sha256
         (base32 "0z2873mj3i6h9cg8zlkipcjab8jympa4c4avhk4l04755qzphkds"))))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-base ocaml-mdx ocaml-menhir ocaml-iso8601))
+    (propagated-inputs (list ocaml-base  ocaml-menhir ocaml-iso8601))
     (synopsis "TOML library for OCaml")
     (description
      "This package provides an OCaml library for interacting with files
@@ -3651,7 +3651,7 @@ syntactic tools.")
     (native-inputs (list ocaml-fmt
                          ocaml-sexplib
                          ocaml-logs
-                         ocaml-mdx
+                         
                          ocaml-alcotest
                          ocaml-crowbar
                          ocaml-junit-alcotest
@@ -3682,7 +3682,7 @@ layer.")
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-ppxlib ocaml-ppx-deriving ocaml-yaml
                             ))
-    (native-inputs (list ocaml-alcotest ocaml-bos ocaml-mdx ocaml-ezjsonm))
+    (native-inputs (list ocaml-alcotest ocaml-bos  ocaml-ezjsonm))
     (properties `((upstream-name . "ppx_deriving_yaml")))
     (synopsis "Yaml PPX Deriver")
     (description
@@ -4042,7 +4042,7 @@ to which allows adding and looking up bindings in a type safe manner.")
       "05jvz6vphjp229ap24xakxqgw3xymqff80q08pfnh5vr2lyb0hxm" "v"
       ))
     (build-system dune-build-system)
-    (propagated-inputs (list ocaml-mdx ocaml-ounit2 ocaml-qcheck))
+    (propagated-inputs (list  ocaml-ounit2 ocaml-qcheck))
       (synopsis "Clean and efficient loop fusion for all your iterating needs!")
       (description
        "Iter is a simple abstraction over iter functions intended to iterate efficiently on collections while performing some transformations. Common operations supported by Iter include filter, map, take, drop, append, flat_map, etc. Iter is not designed to be as general-purpose or flexible as Seq. Rather, it aims at providing a very simple and efficient way of iterating on a finite number of values, only allocating (most of the time) one intermediate closure to do so. For instance, iterating on keys, or values, of a Hashtbl.t, without creating a list. Similarly, the code above is turned into a single optimized for loop with flambda."
@@ -4586,7 +4586,7 @@ synchronous operations.")
                              ocaml-tls
                              ocaml-uri
                              ocaml-x509))
-    (native-inputs (list ocaml-alcotest ocaml-cmdliner ocaml-mdx ocaml-re postgresql))
+    (native-inputs (list ocaml-alcotest ocaml-cmdliner  ocaml-re postgresql))
     (home-page "https://github.com/paurkedal/ocaml-caqti/")
     (synopsis "Unified interface to relational database libraries")
     (description
@@ -6100,7 +6100,7 @@ A library that needs to suspend and later resume the current thread of execution
     (native-inputs (list ocaml-astring
                          ocaml-crowbar
                          ocaml-alcotest
-                         ocaml-mdx))
+                         ))
     (synopsis "Effect-based direct-style IO API for OCaml")
     (description "This package provides an effect-based IO API for multicore
 OCaml with fibers.")
@@ -6172,7 +6172,7 @@ accesses to the store.")
            ocaml-bechamel
            ocaml-logs
            ocaml-cmdliner
-           ocaml-mdx))
+           ))
     (synopsis "OCaml bindings for Linux io_uring")
     (description "This package provides OCaml bindings to the Linux
 @code{io_uring} kernel IO interfaces.")
@@ -6192,9 +6192,9 @@ accesses to the store.")
            ocaml-logs
            ocaml-fmt))
     (native-inputs
-     (list ocaml-mdx
+     (list 
            ocaml-alcotest
-           ocaml-mdx))
+           ))
     (synopsis "Linux backend for ocaml-eio")
     (description "@code{Eio_linux} provides a Linux io-uring backend for
 @code{Ocaml Eio} APIs, plus a low-level API that can be used directly
@@ -6214,8 +6214,8 @@ accesses to the store.")
      (list ocaml-eio
            ;; ocaml-eio-luv
            ocaml-eio-linux))
-    (native-inputs
-     (list ocaml-mdx))
+    ;; (native-inputs
+    ;;  (list ocaml-mdx))
     (synopsis "Eio backend selector")
     (description "@code{Eio_main} selects an appropriate backend (e.g.
 @samp{eio_linux} or @samp{eio_luv}), depending on your platform.")))
@@ -9519,7 +9519,7 @@ interfaces and the standard higher-level merlin protocol.")
     (native-inputs
      (list ocaml-dot-merlin-reader ; required for tests
            ocaml-ppxlib
-           ocaml-mdx
+           
            jq))
     (synopsis "Context sensitive completion for OCaml in Vim and Emacs")
     (description "Merlin is an editor service that provides modern IDE
@@ -9547,7 +9547,7 @@ Atom.")
      (native-inputs
       (list ocaml-dot-merlin-reader     ; required for tests
             ocaml-ppxlib
-            ocaml-mdx
+            
             jq))
      (synopsis "Context sensitive completion for OCaml in Vim and Emacs")
      (description "Merlin is an editor service that provides modern IDE
@@ -11829,80 +11829,80 @@ tool on the generated visitation files.")
     (description "ocaml-crunch takes a directory of files and compiles them into a standalone OCaml module which serves the contents directly from memory. This can be convenient for libraries that need a few embedded files (such as a web server) and do not want to deal with all the trouble of file configuration.")
     (license license:isc)))
 
-(define-public ocaml-odoc
-  (package
-    (name "ocaml-odoc")
-    (version "3.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        "https://github.com/ocaml/odoc/releases/download/3.1.0/odoc-3.1.0.tbz")
-       (sha256
-        (base32 "0559zx12v7qa42a048rdjc4qcgikbviirdfqmv5h6jckykzkqnrm"))))
-    (build-system dune-build-system)
-    (propagated-inputs (list ocaml-odoc-parser
-                             ocaml-astring
-                             ocaml-uutf
-                             ocaml-sexplib
-                             ocaml-cmdliner
-                             ocaml-fpath
-                             ocaml-tyxml
-                             ocaml-fmt
-                             ocaml-crunch))
-    (native-inputs (list ocaml-cppo
-                         ocaml-findlib
-                         ocaml-yojson
-                         ocaml-sexplib0
-                         jq
-                         ocaml-ppx-expect
-                         ocaml-bos
-                         ;; ocaml-bisect-ppx
-                         ))
-    (home-page "https://github.com/ocaml/odoc")
-    (synopsis "OCaml Documentation Generator")
-    (description
-     "**odoc** is a powerful and flexible documentation generator for OCaml.  It reads
-*doc comments*, demarcated by `(** ... *)`, and transforms them into a variety
-of output formats, including HTML, @code{LaTeX}, and man pages. - **Output
-Formats:** Odoc generates HTML for web browsing, @code{LaTeX} for PDF
-generation, and man pages for use on Unix-like systems. - **Cross-References:**
-odoc uses the `ocamldoc` markup, which allows to create links for functions,
-types, modules, and documentation pages. - **Link to Source Code:**
-Documentation generated includes links to the source code of functions,
-providing an easy way to navigate from the docs to the actual implementation. -
-**Code Highlighting:** odoc automatically highlights syntax in code snippets for
-different languages.  odoc is part of the [OCaml
-Platform](https://ocaml.org/docs/platform), the recommended set of tools for
-OCaml.")
-    (license license:isc)))
+;; (define-public ocaml-odoc
+;;   (package
+;;     (name "ocaml-odoc")
+;;     (version "3.1.0")
+;;     (source
+;;      (origin
+;;        (method url-fetch)
+;;        (uri
+;;         "https://github.com/ocaml/odoc/releases/download/3.1.0/odoc-3.1.0.tbz")
+;;        (sha256
+;;         (base32 "0559zx12v7qa42a048rdjc4qcgikbviirdfqmv5h6jckykzkqnrm"))))
+;;     (build-system dune-build-system)
+;;     (propagated-inputs (list ocaml-odoc-parser
+;;                              ocaml-astring
+;;                              ocaml-uutf
+;;                              ocaml-sexplib
+;;                              ocaml-cmdliner
+;;                              ocaml-fpath
+;;                              ocaml-tyxml
+;;                              ocaml-fmt
+;;                              ocaml-crunch))
+;;     (native-inputs (list ocaml-cppo
+;;                          ocaml-findlib
+;;                          ocaml-yojson
+;;                          ocaml-sexplib0
+;;                          jq
+;;                          ocaml-ppx-expect
+;;                          ocaml-bos
+;;                          ;; ocaml-bisect-ppx
+;;                          ))
+;;     (home-page "https://github.com/ocaml/odoc")
+;;     (synopsis "OCaml Documentation Generator")
+;;     (description
+;;      "**odoc** is a powerful and flexible documentation generator for OCaml.  It reads
+;; *doc comments*, demarcated by `(** ... *)`, and transforms them into a variety
+;; of output formats, including HTML, @code{LaTeX}, and man pages. - **Output
+;; Formats:** Odoc generates HTML for web browsing, @code{LaTeX} for PDF
+;; generation, and man pages for use on Unix-like systems. - **Cross-References:**
+;; odoc uses the `ocamldoc` markup, which allows to create links for functions,
+;; types, modules, and documentation pages. - **Link to Source Code:**
+;; Documentation generated includes links to the source code of functions,
+;; providing an easy way to navigate from the docs to the actual implementation. -
+;; **Code Highlighting:** odoc automatically highlights syntax in code snippets for
+;; different languages.  odoc is part of the [OCaml
+;; Platform](https://ocaml.org/docs/platform), the recommended set of tools for
+;; OCaml.")
+;;     (license license:isc)))
 
-(define-public ocaml-odoc-parser
-  (package
-    (name "oocaml-odoc-parser")
-    (version "2.0.0")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-              (url "https://github.com/ocaml-doc/odoc-parser")
-              (commit version)))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32
-           "1x48kf051xs98rd6cri591bk1ccp9hyp93n1rlf6qnxic55jw683"))))
-    (build-system dune-build-system)
-    (propagated-inputs
-      (list ocaml-astring ocaml-camlp-streams ocaml-result))
-    (native-inputs
-      (list ocaml-ppx-expect))
-    (home-page "https://github.com/ocaml-doc/odoc-parser")
-    (synopsis "Parser for ocaml documentation comments")
-    (description
-     "This package provides a library for parsing the contents of OCaml
-documentation comments, formatted using Odoc syntax, an extension of the
-language understood by ocamldoc.")
-    (license license:isc)))
+;; (define-public ocaml-odoc-parser
+;;   (package
+;;     (name "oocaml-odoc-parser")
+;;     (version "2.0.0")
+;;     (source
+;;       (origin
+;;         (method git-fetch)
+;;         (uri (git-reference
+;;               (url "https://github.com/ocaml-doc/odoc-parser")
+;;               (commit version)))
+;;         (file-name (git-file-name name version))
+;;         (sha256
+;;           (base32
+;;            "1x48kf051xs98rd6cri591bk1ccp9hyp93n1rlf6qnxic55jw683"))))
+;;     (build-system dune-build-system)
+;;     (propagated-inputs
+;;       (list ocaml-astring ocaml-camlp-streams ocaml-result))
+;;     (native-inputs
+;;       (list ocaml-ppx-expect))
+;;     (home-page "https://github.com/ocaml-doc/odoc-parser")
+;;     (synopsis "Parser for ocaml documentation comments")
+;;     (description
+;;      "This package provides a library for parsing the contents of OCaml
+;; documentation comments, formatted using Odoc syntax, an extension of the
+;; language understood by ocamldoc.")
+;;     (license license:isc)))
 
 (define-public ocaml-fftw3
   (package
