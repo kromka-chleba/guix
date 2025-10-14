@@ -4829,6 +4829,28 @@ sessions, flash messages, custom backends, and more.")
 protocol.")
     (license license:bsd-2)))
 
+(define-public go-github-com-grafana-regexp
+  (package
+    (name "go-github-com-grafana-regexp")
+    (version "0.0.0-20240518133315-a468a5bfb3bc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/grafana/regexp")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vhncrr5n8f150rg0q01i7yc58b0jpcci2h7zgiwv9wr5k0yaqs2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/grafana/regexp"))
+    (home-page "https://github.com/grafana/regexp")
+    (synopsis "Grafana Go regexp package")
+    (description "Package regexp implements regular expression search.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-gregjones-httpcache
   (package
     (name "go-github-com-gregjones-httpcache")
