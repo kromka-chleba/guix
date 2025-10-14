@@ -582,6 +582,18 @@ which will be used as a snippet in origin."
    "1.1.0"
    #:repository-url "https://github.com/camdencheek/tree-sitter-go-mod"))
 
+(define-public tree-sitter-gosum
+  (let ((version "1.0.0")
+        (commit "27816eb6b7315746ae9fcf711e4e1396dc1cf237")
+        (revision "0"))
+    (tree-sitter-grammar
+     "gosum" "Go .sum"
+     "13h690k9q8kf7mldcps10h0kj0bdnlkfml9zkcawdswx8r7wblzn"
+     (git-version version revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-go-sum")))
+
 (define-public tree-sitter-haskell
   (tree-sitter-grammar
    "haskell" "Haskell"
