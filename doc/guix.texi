@@ -1073,8 +1073,9 @@ useradd -g guix-daemon -G guix-daemon,kvm               \
         -c "Guix daemon privilege separation user"      \
         --system guix-daemon
 
-# Make the store writable, in case the systemd 'gnu-store.mount'
-# unit made it read-only.
+# Make the store writable, in case the systemd 'gnu-store.mount' unit
+# made it read-only.  The 'gnu-store.mount' unit should be uninstalled
+# if present.
 mount -o remount,rw /gnu/store
 
 chown -R guix-daemon:guix-daemon                        \
