@@ -9636,6 +9636,37 @@ serialization and are generally 2 to 3 times faster.  In cases where
 changes.")
     (license license:asl2.0)))
 
+(define-public go-go-opentelemetry-io-otel-exporters-jaeger
+  (package
+    (name "go-go-opentelemetry-io-otel-exporters-jaeger")
+    (version "1.17.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-telemetry/opentelemetry-go")
+             (commit (go-version->git-ref version
+                                          #:subdir "exporters/jaeger"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0241rgx3wf4gfk9q0s0r378kv6hs8dii1d2zgp09941dgk59zmp9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.opentelemetry.io/otel/exporters/jaeger"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-google-go-cmp
+                             go-github-com-go-logr-stdr
+                             go-github-com-go-logr-logr
+                             go-golang-org-x-sys))
+    (home-page "https://pkg.go.dev/go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry-Go Jaeger Exporter")
+    (description
+     "Package jaeger contains an OpenTelemetry tracing exporter for Jaeger.")
+    (license license:asl2.0)))
+
+
   (define-public go-github-com-prometheus-otlptranslator
   (package
     (name "go-github-com-prometheus-otlptranslator")
