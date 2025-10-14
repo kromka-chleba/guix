@@ -4719,8 +4719,6 @@ OCaml & @code{JavaScript} ecosystem.")
     (propagated-inputs (list ocaml-dream-pure
                              ocaml-gluten
                              ocaml-gluten-lwt-unix
-                             ocaml-h2-0.12.0
-                             ocaml-h2-lwt-unix-0.12.0
                              ocaml-httpun-0.1.0
                              ocaml-httpun-lwt-unix-0.1.0
                              ocaml-httpun-ws-0.1.0
@@ -4793,24 +4791,6 @@ OCaml & @code{JavaScript} ecosystem.")
 h2-lwt-unix provides an Lwt runtime implementation for h2 that targets UNIX
 binaries.")
     (license license:bsd-3)))
-
-(define-public ocaml-h2-lwt-unix-0.12.0
-  (package
-    (inherit ocaml-h2-lwt-unix)
-    (name "ocaml-h2-lwt-unix-0.12.0")
-    (version "0.12.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        "https://github.com/anmonteiro/ocaml-h2/releases/download/0.12.0/h2-0.12.0.tbz")
-       (sha256
-        (base32 "1ijkijpk5ss9d2dn2myrqp1k2qc67ycvvix834v3islh7l8hpr1n"))))
-    (arguments
-     '(#:package "h2-lwt-unix"
-       #:tests? #f))
-    (propagated-inputs (list ocaml-h2-lwt-0.12.0 ocaml-faraday-lwt-unix
-                             ocaml-gluten-lwt-unix))))
 
 (define-public ocaml-httpun-lwt-unix
   (package
@@ -4888,23 +4868,6 @@ binaries.")
      "h2 is an implementation of the HTTP/2 specification entirely in OCaml.  h2-lwt
 provides an Lwt runtime implementation for h2.")
     (license license:bsd-3)))
-
-(define-public ocaml-h2-lwt-0.12.0
-  (package
-    (inherit ocaml-h2-lwt)
-    (name "ocaml-h2-lwt-0.12.0")
-    (version "0.12.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        "https://github.com/anmonteiro/ocaml-h2/releases/download/0.12.0/h2-0.12.0.tbz")
-       (sha256
-        (base32 "1ijkijpk5ss9d2dn2myrqp1k2qc67ycvvix834v3islh7l8hpr1n"))))
-    (arguments
-     '(#:package "h2-lwt"
-       #:tests? #f))
-    (propagated-inputs (list ocaml-h2-0.12.0 ocaml-lwt ocaml-gluten-lwt))))
 
 (define-public ocaml-httpun-lwt
   (package
@@ -5238,6 +5201,7 @@ reason's JSX syntax.  It works with textual trees, virtual DOM trees, or any
     (propagated-inputs (list ocaml-bigarray-compat
                              ocaml-camlp-streams
                              ocaml-caqti
+                             ocaml-h2-lwt-unix
                              ocaml-caqti-lwt
                              libev
                              ocaml-cstruct
@@ -5679,19 +5643,6 @@ wherever they are applicable.")
     (description "")
     (license license:isc)
     ))
-
-(define-public ocaml-h2-0.12.0
-  (package
-    (inherit ocaml-h2)
-    (name "ocaml-h2-0.12.0")
-    (version "0.12.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/anmonteiro/ocaml-h2/archive/"
-                          version ".tar.gz"))
-       (sha256
-        (base32 "0dr4k5x4pq54dxg0ngwaamlg1ir3vsjzzaxp51nrzvpc87a5908v"))))))
 
 (define-public ocaml-sedlex
   (package
@@ -9608,7 +9559,7 @@ Atom.")
 (define-public ocaml-lsp-server
   (package
     (name "ocaml-lsp-server")
-    (version "1.24.0")
+    (version "1.23.1")
     (home-page "https://github.com/ocaml/ocaml-lsp")
     (source (origin
               (method git-fetch)
@@ -9616,7 +9567,8 @@ Atom.")
                 (url home-page)
                 (commit version)))
               (sha256
-               (base32 "068kg2n5nlm0jhg62x306pyhghblyy0wvyhm7nraq5bj7y6130a8"
+               (base32
+                "1h02bgf3glf6d6mghk32ds8xm6a7h575f1zf9qkgr6y946rh0760"
                 ))))
     (build-system dune-build-system)
     (arguments '(#:tests? #f)) ; tests are failing for v1.17
