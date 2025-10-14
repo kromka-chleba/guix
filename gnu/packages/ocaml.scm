@@ -4036,6 +4036,7 @@ to which allows adding and looking up bindings in a type safe manner.")
     (version "1.9")
     (home-page
      "https://github.com/c-cube/iter")
+    (arguments '(#:tests? #f))           ; no tests
     (source
      (github-tag-origin
       name home-page version
@@ -6203,7 +6204,7 @@ accesses to the store.")
 (define-public ocaml5.0-eio-linux
   (package-with-ocaml5.0 ocaml-eio-linux))
 
-(define ocaml-eio-main
+(define-public ocaml-eio-main
   (package
     (inherit ocaml-eio)
     (name "ocaml-eio-main")
