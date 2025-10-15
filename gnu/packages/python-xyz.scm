@@ -37146,6 +37146,37 @@ other.")
 nested data structures in Python like lists and dictionaries.")
     (license license:expat)))
 
+(define-public python-durationpy
+  (package
+    (name "python-durationpy")
+    (version "0.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/icholy/durationpy")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1617wg77j68z7v4rbjrhv6n7bchznhgjn21qrmb034sf4hwg77dl"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases '(modify-phases %standard-phases
+                  (replace 'check
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (invoke "python3" "test.py")))))))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/icholy/durationpy")
+    (synopsis
+     "Module for converting between Python's @code{datetime.timedelta} and Golang's
+@code{time.Duration}")
+    (description
+     "@code{durationpy} is a Python library for converting between
+Python's @code{datetime.timedelta} and Golang's @code{time.Duration}.")
+    (license license:expat)))
+
 (define-public python-murmurhash3
   (let ((commit "01f1128a2c5ea08e6dc33515e140bedd68393a2d")
         (revision "0"))
