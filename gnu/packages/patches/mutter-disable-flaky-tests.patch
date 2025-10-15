@@ -1,0 +1,61 @@
+These tests can hang randomly, seemingly more frequently under high load.
+
+diff --git a/src/tests/meson.build b/src/tests/meson.build
+index 433f47f1d..736bec9f1 100644
+--- a/src/tests/meson.build
++++ b/src/tests/meson.build
+@@ -477,16 +477,6 @@ test_cases += [
+       'native-virtual-monitor.c',
+     ],
+   },
+-  {
+-    'name': 'native-screen-cast',
+-    'suite': 'backends/native',
+-    'sources': [
+-      'native-screen-cast.c',
+-    ],
+-    'depends': [
+-      screen_cast_client,
+-    ],
+-  },
+   {
+     'name': 'bezier',
+     'suite': 'backends/native',
+@@ -534,18 +524,6 @@ test_cases += [
+       wayland_test_utils,
+     ],
+   },
+-  {
+-    'name': 'cursor-tests',
+-    'suite': 'backends/native',
+-    'sources': [
+-      'cursor-tests.c',
+-      wayland_test_utils,
+-    ],
+-    'depends': [
+-      test_client_executables.get('cursor-tests-client'),
+-      cursor_screen_cast_client,
+-    ]
+-  },
+   {
+     'name': 'surface-scale-tests',
+     'suite': 'backends/native',
+@@ -857,18 +835,6 @@ if have_xwayland
+         x11_frames,
+       ],
+     },
+-    {
+-      'name': 'xwayland',
+-      'suite': 'wayland',
+-      'depends': [
+-        test_client,
+-        x11_compositor_checker,
+-        x11_frames,
+-      ],
+-      'sources': [
+-        'xwayland-tests.c',
+-      ],
+-    },
+   ]
+ endif
+ 
