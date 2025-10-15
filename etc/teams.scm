@@ -1074,7 +1074,7 @@ the \"texlive\" importer."
 (define-member (person "Tobias Geerinckx-Rice"
                        "me@tobias.gr"
                        "nckx")
-  core mentors)
+  mentors)
 
 (define-member (person "Steve George"
                        "steve@futurile.net"
@@ -1114,7 +1114,7 @@ the \"texlive\" importer."
 (define-member (person "Mathieu Othacehe"
                        "othacehe@gnu.org"
                        "mothacehe")
-  core installer mentors)
+  installer mentors)
 
 (define-member (person "Florian Pelz"
                        "pelzflorian@pelzflorian.de"
@@ -1148,7 +1148,7 @@ the \"texlive\" importer."
 
 (define-member (person "Josselin Poiret"
                        "dev@jpoiret.xyz")
-  core installer)
+  installer)
 
 (define-member (person "("
                        "paren@disroot.org")
@@ -1176,7 +1176,7 @@ the \"texlive\" importer."
 (define-member (person "Maxim Cournoyer"
                        "maxim@guixotic.coop"
                        "apteryx")
-  documentation gnome qt telephony electronics)
+  core documentation electronics gnome qt telephony)
 
 (define-member (person "Katherine Cox-Buday"
                        "cox.katherine.e+guix@gmail.com")
@@ -1332,6 +1332,11 @@ the \"texlive\" importer."
                        "rutherther@ditigal.xyz"
                        "Rutherther")
   release)
+
+(define-member (person "Morgan Arnold"
+                       "morgan.arnold@proton.me"
+                       "mra")
+  core)
 
 
 (define (find-team name)

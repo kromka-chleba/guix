@@ -68,6 +68,7 @@
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
 ;;; Copyright © 2025 Tomás Ortín Fernández <quanrong@mailbox.org>
+;;; Copyright © 2025 Allan Adair <allan@adair.no>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2279,29 +2280,31 @@ interfaces.")
     (license license:bsd-3)))
 
 (define-public go-github-com-awesome-gocui-keybinding
-  (package
-    (name "go-github-com-awesome-gocui-keybinding")
-    (version "1.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/awesome-gocui/keybinding")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0d1nvxs2pd6nc10gm3md2rsd0v33025b8dik1l1iy8klzhiqfd1q"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:tests? #f ;broken tests
-      #:import-path "github.com/awesome-gocui/keybinding"))
-    (propagated-inputs (list go-github-com-awesome-gocui-gocui))
-    (home-page "https://github.com/awesome-gocui/keybinding")
-    (synopsis "Wrapper for parsing gocui keybindings in Golang")
-    (description
-     "This package provides a golang wrapper for parsing gocui keybindings.")
-    (license license:expat)))
+  (let ((commit "86029037a63f3b47096fcfef02f63e5e5d6d5abd")
+        (revision "1"))
+    (package
+      (name "go-github-com-awesome-gocui-keybinding")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/awesome-gocui/keybinding")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1wa7scakwbqfzxc81wxmw1z0c9w3z92vdrxa8mha6w9ykifjdkyz"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:tests? #f ;broken tests
+        #:import-path "github.com/awesome-gocui/keybinding"))
+      (propagated-inputs (list go-github-com-awesome-gocui-gocui))
+      (home-page "https://github.com/awesome-gocui/keybinding")
+      (synopsis "Wrapper for parsing gocui keybindings in Golang")
+      (description
+       "This package provides a golang wrapper for parsing gocui keybindings.")
+      (license license:expat))))
 
 (define-public go-github-com-axiomhq-hyperloglog
   (package
@@ -5675,6 +5678,35 @@ information about the music/image/video that is Now Playing on the system.")
     (description
      "@code{go-localeinfo} extracts monetary/numeric/time
 formatting information, rather than the current locale name.")
+    (license license:expat)))
+
+(define-public go-github-com-denisbrodbeck-machineid
+  (package
+    (name "go-github-com-denisbrodbeck-machineid")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/denisbrodbeck/machineid")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "075rqb2f9hla9jwc6823jkkb3xcv6azz3phndbssssn2dps07cib"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/denisbrodbeck/machineid"
+      #:test-flags
+      #~(list "-vet=off" ;Go@1.24 forces vet, but tests are not ready yet.
+              ;; id_test.go:8: machineid: open /etc/machine-id: no such file
+              ;; or directory
+              "-skip" "TestID|TestProtectedID")))
+    (home-page "https://github.com/denisbrodbeck/machineid")
+    (synopsis "Read the unique machine ID of most host OS's")
+    (description
+     "This package implements functionality for reading the unique machine
+ID (@code{/etc/machine-id}) of most OSs (without admin privileges).")
     (license license:expat)))
 
 (define-public go-github-com-dennwc-btrfs
@@ -18647,6 +18679,77 @@ specified in DCE 1.1).")
      "Ingo is a Go library helping you to persist flags in a INI-like
 configuration file.")
     (license license:isc)))
+
+(define-public go-github-com-schollz-cli-v2
+  ;; It's ad-hoc fork of <https://github.com/urfave/cli> to build
+  ;; <https://github.com/schollz/croc>.
+  (hidden-package
+   (package
+     (name "go-github-com-schollz-cli-v2")
+     (version "2.2.1")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/schollz/cli")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "0wlqfhsrfib4b5b5xlkmgwglpzajjabrf4wisp7q8nvnw9ky86jh"))))
+     (build-system go-build-system)
+     (arguments
+      (list
+       #:import-path "github.com/schollz/cli/v2"
+       #:test-flags
+       ;; panic: flag "--foo" begins with - [recovered]
+       ;; panic: flag "--foo" begins with -
+       #~(list "-skip" "TestApp_RunAsSubCommandIncorrectUsage|TestToMan")))
+     (propagated-inputs
+      (list go-github-com-burntsushi-toml
+            go-github-com-cpuguy83-go-md2man-v2
+            go-gopkg-in-yaml-v2))
+     (home-page "https://github.com/schollz/cli")
+     (synopsis "Package for building command line apps in Golang")
+     (description
+      "Package @code{cli} provides a minimal framework for creating and
+organizing command line Go applications.")
+     (license license:expat))))
+
+(define-public go-github-com-schollz-logger
+  (package
+    (name "go-github-com-schollz-logger")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/schollz/logger")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1680348j54vwfx7sczygchrd9dabnycj3mpxg3fmpf9a356vd2af"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/schollz/logger"
+      ;; Go@1.24 forces vet, but tests are not ready yet.
+      #:test-flags #~(list "-vet=off")))
+    (home-page "https://github.com/schollz/logger")
+    (synopsis "Simplistic, opinionated logging for Golang")
+    (description
+     "This package provides a opinionated logging for Golang.
+Features:
+@itemize
+@item zero dependencies
+@item Global logger (with optional local logger)
+@item leveled
+@item useful defaults / i.e. zero-config
+@item simple API
+@item colors on Linux
+@item set leveling via environmental variables
+@code{LOGGER=trace|debug|info|warn|error}
+@end itemize")
+    (license license:expat)))
 
 (define-public go-github-com-schollz-progressbar-v3
   (package

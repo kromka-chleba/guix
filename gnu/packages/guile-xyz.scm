@@ -2361,13 +2361,12 @@ format.")
     (native-inputs (list guile-3.0))
     (propagated-inputs (list guile-srfi-133))
     (home-page "https://codeberg.org/dpk/extensible-match")
-    (synopsis
-     "Extensible patter-matching library")
+    (synopsis "Extensible pattern-matching library")
     (description
      "Guile-extensible-match is an implementation of SRFI-262.  It provides
 user extensible pattern matching syntax. This implementation use a range
 of optimizations to generate efficient matching code.")
-    (license license:expat)))
+    (license license:cc0)))
 
 (define-public guile-newra
   ;; There has been no release let.
@@ -5205,6 +5204,60 @@ or errors (Left).")
 SRFI defines a family of chain and nest pipeline operators, which can rewrite
 nested expressions like @code{(a b (c d (e f g)))} as a sequence of
 operations: @code{(chain g (e f _) (c d _) (a b _))}.")
+      (license license:expat))))
+
+(define-public guile-srfi-223
+  (let ((commit "a60b766d94365829b154b978c719854caf4533b9") ;finalize commit
+        (revision "0"))
+    (package
+      (name "guile-srfi-223")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+            (url "https://github.com/scheme-requests-for-implementation/srfi-223")
+            (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "16786gk8qcwvqsff6zzfscnjx98pdac5w49shd8369a8jfmkzhqn"))))
+      (native-inputs (list guile-3.0))
+      (build-system guile-build-system)
+      (arguments
+       (list
+        #:not-compiled-file-regexp "-impl\\.scm$"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'move-source
+              (lambda _
+                (mkdir-p "srfi/srfi-223")
+                (substitute* "srfi-223.sld"
+                  (("\\(define-library.*$")
+                   "(define-library (srfi srfi-223)\n")
+                  (("\\(include \"srfi-223.scm\"\\)")
+                   "(include \"srfi-223/223-impl.scm\")"))
+
+                (rename-file "srfi-223.sld" "srfi/srfi-223.scm")
+                (rename-file "srfi-223.scm" "srfi/srfi-223/223-impl.scm")
+
+                ;; Require (chibi test) to run.
+                (delete-file "test.scm")))
+            ;; FIXME: Use #:documentation-file-regexp.
+            (replace 'install-documentation
+              (lambda _
+                (let* ((doc (string-append #$output "/share/doc/"
+                                           (strip-store-file-name #$output))))
+                  (install-file "srfi-223.html" doc)))))))
+      (home-page "https://srfi.schemers.org/srfi-223/")
+      (synopsis "Generalized binary search procedures")
+      (description
+       "This library provides a reference implementation for SRFI-223.  This
+SRFI defines a generalized procedures for binary search of vector-like data
+structures are provided which can be applied to any sequence type, including
+ones defined by the user, together with applications of these procedures for
+Scheme’s built-in vectors.")
       (license license:expat))))
 
 (define-public guile-srfi-232

@@ -20335,44 +20335,6 @@ provides a basic implementation of an interval tree using C++ templates,
 allowing the insertion of arbitrary types into the tree.")
       (license license:expat))))
 
-(define-public python-intervaltree
-  (package
-    (name "python-intervaltree")
-    (version "3.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "intervaltree" version))
-       (sha256
-        (base32
-         "0bcm6c6r4ck9nfj9xwz4rm2swc5lrjvmw3lyl6rgj639jf41nawh"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; pytest seems to have a check to make sure the user is testing
-         ;; their checked-out code and not an installed, potentially
-         ;; out-of-date copy. This is harmless here, since we just installed
-         ;; the package, so we disable the check to avoid skipping tests
-         ;; entirely.
-         (add-before 'check 'import-mismatch-error-workaround
-           (lambda _
-             (setenv "PY_IGNORE_IMPORTMISMATCH" "1")
-             #t)))))
-    (propagated-inputs
-     (list python-sortedcontainers))
-    (native-inputs
-     (list python-pytest))
-    (home-page "https://github.com/chaimleib/intervaltree")
-    (synopsis "Editable interval tree data structure")
-    (description
-     "This package provides a mutable, self-balancing interval tree
-implementation for Python.  Queries may be by point, by range overlap, or by
-range envelopment.  This library was designed to allow tagging text and time
-intervals, where the intervals include the lower bound but not the upper
-bound.")
-    (license license:asl2.0)))
-
 (define-public python-pypairix
   (package
     (name "python-pypairix")
@@ -25340,7 +25302,7 @@ module capable of computing base-level alignments for very large sequences.")
 (define-public gdcm
   (package
     (name "gdcm")
-    (version "3.0.20")
+    (version "3.2.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -25350,14 +25312,12 @@ module capable of computing base-level alignments for very large sequences.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rf0p7dnakjry0fa6ax1h762bn0l5n6ibfdxn077mjvwgpqan51l"))))
+                "1d9dm1wawgjy6vgw3shqchqpjcic6hprwhn0v7dw1qkgn3y8508w"))))
     (build-system cmake-build-system)
     (outputs '("out" "doc"))
     (arguments
      (list
-      #:test-exclude (string-join (list "TestFileMetaInformation"
-                                        "TestElement2"
-                                        "TestSCUValidation"
+      #:test-exclude (string-join (list "TestSCUValidation"
                                         "TestWriter"
                                         "TestAnonymizer4"
                                         "TestPrinter1"
@@ -25367,23 +25327,41 @@ module capable of computing base-level alignments for very large sequences.")
                                         "TestStrictScanner2_1"
                                         "TestStrictScanner2"
                                         "TestStrictScanner2_2"
-                                        "TestFind")
+                                        "TestFind"
+                                        ;; Fail with 'Unsupported JPEG data precision 12'.
+                                        "TestImageReaderRandomEmpty"
+                                        "TestTransferSyntax"
+                                        ;; Relies on non-existent file.
+                                        "TestJSON1")
                                   "|")
       #:configure-flags
-      #~(list "-DGDCM_BUILD_TESTING=true"
+      #~(list "-DGDCM_BUILD_DOCBOOK_MANPAGES=ON"
+              "-DGDCM_BUILD_TESTING=true"
               "-DGDCM_DOCUMENTATION:BOOL=ON"
-              "-DGDCM_PDF_DOCUMENTATION:BOOL=OFF"
               (string-append "-DGDCM_INSTALL_DOC_DIR="
-                             #$output:doc "/share/doc/" #$name))
+                             #$output:doc "/share/doc/" #$name)
+              "-DGDCM_PDF_DOCUMENTATION:BOOL=OFF"
+              "-DGDCM_USE_SYSTEM_CHARLS=ON"
+              "-DGDCM_USE_SYSTEM_EXPAT=ON"
+              "-DGDCM_USE_SYSTEM_JSON=ON"
+              "-DGDCM_USE_SYSTEM_OPENSSL=ON"
+              "-DGDCM_USE_SYSTEM_UUID=ON"
+              "-DGDCM_USE_SYSTEM_ZLIB=ON")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-HOME
-            ;; The build spams ‘Fontconfig error: No writable cache
-            ;; directories’ in a seemingly endless loop otherwise.
+            ;; The build with documentation spams ‘Fontconfig error: No writable
+            ;; cache directories’ in a seemingly endless loop otherwise.
             (lambda _
               (setenv "HOME" "/tmp"))))))
     (native-inputs (list docbook-xsl doxygen graphviz libxslt))
-    (home-page "https://gdcm.sourceforge.net/wiki/index.php/Main_Page")
+    (inputs (list charls
+                  expat
+                  json-c
+                  openssl
+                  (list util-linux "lib")
+                  zlib))
+    (home-page "https://sourceforge.net/projects/gdcm/")
     (synopsis "Grassroots DICOM library")
     (description
      "Grassroots DICOM (GDCM) is an implementation of the DICOM standard

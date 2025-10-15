@@ -25,9 +25,11 @@
 ;;; Copyright © 2023 Wojtek Kosior <koszko@koszko.org>
 ;;; Copyright © 2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2025 Tomás Ortín Fernández <quanrong@mailbox.org>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -114,6 +116,8 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-compression)
+  #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages ruby-check)
@@ -194,8 +198,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.4.0")
-        (commit "679c9b0d8b02710f286b7fb3e65835eefa9f1890")
-        (revision 45))
+        (commit "d671b750f147d63792fbde93c9b17138492a40f5")
+        (revision 46))
     (package
       (name "guix")
 
@@ -211,7 +215,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "0mzflm74kllhfr4gbb1r93l6v8l6r9ak6f46bakpxfpv763bp719"))
+                  "1mrfm0mf9jxzv7q34dyrqspjwb3yi95v7fd3jx89yffvcdd42x21"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1183,6 +1187,108 @@ It functions as a Guile library, with the @code{run-bffe-service} procedure in
 the @code{(bffe)} module as the entry point.")
       (license license:gpl3+))))
 
+(define-public hatch
+  (package
+    (name "hatch")
+    (version "1.9.7")   ;XXX: higher versions require python-uv
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hatch" version))
+       (sha256
+        (base32 "0k32wv4kayb34wwda0xibbawm45bcmzalxmdvgfjlkzrg4hvi9qr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 1778 passed, 107 skipped, 25 deselected
+      #:test-flags
+      #~(list
+         ;; Tests requiring Cargo.
+         ;; OSError: Executable `cargo` could not be found on PATH
+         #$@(map (lambda (test)
+                   (string-append "--deselect="
+                                  "tests/backend/builders/test_app.py::"
+                                  "TestBuildBootstrap::"
+                                  test))
+                 (list "test_default"
+                       "test_default_build_target"
+                       "test_scripts"
+                       "test_scripts_build_target"
+                       "test_python_version"
+                       "test_pyapp_version"
+                       "test_verbosity"
+                       "test_local_build_with_build_target"
+                       "test_local_build_no_build_target"))
+         ;; Tests failing to validate date format.
+         ;; assert (1980, 1, 2, 0, 0, 0) == (2020, 2, 2, 0, 0, 0)
+         "--deselect=tests/backend/builders/test_custom.py::test_default"
+         "--deselect=tests/backend/builders/test_custom.py::test_explicit_path"
+         #$@(map (lambda (test)
+                   (string-append "--deselect="
+                                  "tests/backend/builders/test_wheel.py::"
+                                  "TestBuildStandard::"
+                                  test))
+                 (list "test_default_auto_detection"
+                       "test_editable_default"
+                       "test_editable_default_extra_dependencies"
+                       "test_editable_default_force_include"
+                       "test_editable_default_force_include_option"
+                       "test_editable_default_symlink"
+                       "test_editable_exact"
+                       "test_editable_exact_extra_dependencies"
+                       "test_editable_exact_force_include"
+                       "test_editable_exact_force_include_option"
+                       "test_editable_exact_force_include_build_data_precedence"
+                       "test_editable_pth"))
+         ;; Two tests failed to compare project temporary location.
+         "-k" (string-append
+               "not test_project_location_basic_set_first_project"
+               " and not test_project_location_complex_set_first_project"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list git-minimal
+           nss-certs-for-test
+           python-hatch-vcs
+           python-pytest
+           python-pytest-mock
+           python-pytest-xdist))
+    (inputs
+     (list python-click
+           python-hatchling-for-hatch
+           python-httpx
+           python-hyperlink
+           python-keyring
+           python-packaging
+           python-pexpect
+           python-platformdirs
+           python-rich
+           python-shellingham
+           python-tomli-w
+           python-tomlkit
+           python-userpath
+           python-virtualenv-for-hatch
+           python-zstandard))
+    (home-page "https://hatch.pypa.io/latest/")
+    (synopsis "Python project management")
+    (description "Hatch is a modern, extensible Python project manager.
+
+Features
+
+@itemize
+@item Standardized build system with reproducible builds by default
+@item Robust environment management with support for custom scripts
+@item Configurable Python distribution management
+@item Easy publishing to PyPI or other indexes
+@item Version management
+@item Configurable project generation with sane defaults
+@item Responsive CLI, ~2-3x faster than equivalent tools
+@end itemize")
+    (license license:expat)))
+
 (define-public pipx
   (package
     (name "pipx")
@@ -1212,6 +1318,114 @@ the @code{(bffe)} module as the entry point.")
      "@code{pipx} is a tool to help you install and run end-user applications
 written in Python.  It's roughly similar to JavaScript's @code{npx}, and
 Trisquel's @code{apt}.")
+    (license license:expat)))
+
+(define-public poetry
+  (package
+    (name "poetry")
+    (version "2.1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "poetry" version))
+       (sha256
+        (base32 "1505snny5sgz9zf0wx1zqw6kqly3pi9lbsl8dnbpb55ij1kvvjgj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 1295 passed, 9 skipped
+      #:test-flags
+      ;; Network access is required.
+      #~(list "--ignore=tests/console/commands/test_add.py"
+              "--ignore=tests/console/commands/test_search.py"
+              "--ignore=tests/console/commands/test_show.py"
+              "--ignore=tests/installation/test_chef.py"
+              "--ignore=tests/installation/test_chooser.py"
+              "--ignore=tests/installation/test_executor.py"
+              "--ignore=tests/installation/test_installer.py"
+              "--ignore=tests/packages/test_direct_origin.py"
+              "--ignore=tests/publishing/test_uploader.py"
+              "--ignore=tests/puzzle/test_solver.py"
+              "--ignore=tests/repositories/test_legacy_repository.py"
+              "--ignore=tests/repositories/test_pypi_repository.py"
+              "--ignore=tests/repositories/test_repository_pool.py"
+              "--ignore=tests/utils/test_authenticator.py"
+              "--ignore=tests/utils/test_dependency_specification.py"
+              "--ignore=tests/utils/test_helpers.py"
+              ;; XXX: Various incompatibility faileurs.
+              "--ignore=tests/console/commands/env/test_activate.py"
+              "--ignore=tests/console/commands/python/test_python_list.py"
+              "--ignore=tests/console/commands/test_publish.py"
+              "--ignore=tests/console/test_application_command_not_found.py"
+              "--ignore=tests/inspection/test_info.py"
+              "--ignore=tests/inspection/test_lazy_wheel.py"
+              "--ignore=tests/puzzle/test_provider.py"
+              "--ignore=tests/utils/env/python/test_manager.py"
+              "--ignore=tests/utils/env/test_env.py"
+              "--ignore=tests/utils/test_isolated_build.py"
+              "--ignore=tests/vcs/git/test_backend.py"
+              "-k" (string-join
+                    (list "not test_builder_setup_generation_runs_with_pip_editable"
+                          "test_check_invalid"
+                          "test_create_poetry_fails_on_invalid_configuration"
+                          "test_installer_with_pypi_repository"
+                          "test_shell"
+                          ;; RuntimeError: No lockfile found. Unable to read
+                          ;; locked packages
+                          "test_not_fresh_lock"
+                          ;; assert False is True
+                          "test_env_system_packages_are_relative_to_lib"
+                          ;; poetry.inspection.info.PackageInfoError: Unable
+                          ;; to determine package info for path
+                          "test_info_setup_complex_calls_script")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Almost every dependency is pinned too strictly.
+          (delete 'sanity-check))))
+    (native-inputs
+     (list nss-certs-for-test
+           python-deepdiff
+           python-httpretty
+           python-pytest
+           python-pytest-mock
+           python-pytest-randomly
+           python-pytest-xdist))
+    (propagated-inputs
+     (list python-cachecontrol
+           python-cleo
+           python-crashtest
+           python-dulwich
+           python-entrypoints
+           python-fastjsonschema
+           python-findpython
+           python-importlib-metadata
+           python-installer
+           python-keyring
+           python-packaging
+           python-pbs-installer
+           python-pexpect
+           python-pip
+           python-pkginfo
+           python-platformdirs
+           python-poetry-core
+           python-poetry-plugin-export
+           python-pypa-build
+           python-pyproject-hooks
+           python-requests
+           python-requests-toolbelt
+           python-shellingham
+           python-tomli
+           python-tomlkit
+           python-trove-classifiers
+           python-virtualenv
+           python-xattr))
+    (home-page "https://python-poetry.org")
+    (synopsis "Python dependency management and packaging made easy")
+    (description
+     "Poetry is a tool for dependency management and packaging in Python.  It
+allows you to declare the libraries your project depends on and it will
+manage (install/update) them for you.")
     (license license:expat)))
 
 (define-public python-anaconda-client

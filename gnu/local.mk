@@ -709,7 +709,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/xfig.scm				\
   %D%/packages/xiph.scm				\
   %D%/packages/xml.scm				\
-  %D%/packages/xnee.scm				\
   %D%/packages/xdisorg.scm			\
   %D%/packages/xorg.scm				\
   %D%/packages/xfce.scm				\
@@ -1621,14 +1620,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch		\
   %D%/packages/patches/ispell-for-linphone-cmake.patch		\
   %D%/packages/patches/jamesdsp-fix-bulid-on-pipewire-1.4.0.patch\
-  %D%/packages/patches/jami-disable-webengine.patch		\
-  %D%/packages/patches/jami-enable-testing.patch		\
+  %D%/packages/patches/jami-find-package-avutil.patch		\
   %D%/packages/patches/jami-libjami-headers-search.patch	\
   %D%/packages/patches/jami-qwindowkit.patch			\
   %D%/packages/patches/jami-skip-tests-requiring-internet.patch	\
-  %D%/packages/patches/jami-tests-qtwebengine-ifdef-to-if.patch	\
   %D%/packages/patches/jami-unbundle-dependencies.patch		\
-  %D%/packages/patches/jami-unittests-fix-build.patch		\
   %D%/packages/patches/jamvm-1.5.1-aarch64-support.patch	\
   %D%/packages/patches/jamvm-1.5.1-armv7-support.patch	\
   %D%/packages/patches/jamvm-2.0.0-aarch64-support.patch	\
@@ -1735,6 +1731,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libcroco-CVE-2020-12825.patch		\
   %D%/packages/patches/libcyaml-libyaml-compat.patch		\
   %D%/packages/patches/libexpected-use-provided-catch2.patch	\
+  %D%/packages/patches/libfaketime-32bit.patch			\
   %D%/packages/patches/libgcrypt-arm32-register-pressure.patch	\
   %D%/packages/patches/libgda-CVE-2021-39359.patch		\
   %D%/packages/patches/libgda-disable-data-proxy-test.patch     \
@@ -1749,8 +1746,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libgnome-encoding.patch			\
   %D%/packages/patches/libgnomeui-utf8.patch			\
   %D%/packages/patches/libgrss-CVE-2016-2001.patch		\
-  %D%/packages/patches/libjami-ac-config-files.patch		\
-  %D%/packages/patches/libjami-sdbus-cpp-v2.patch		\
   %D%/packages/patches/libjxr-fix-function-signature.patch	\
   %D%/packages/patches/libjxr-fix-typos.patch			\
   %D%/packages/patches/libofa-ftbfs-1.diff		\
@@ -2053,6 +2048,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-louvain-fix-test.patch		\
   %D%/packages/patches/python-matplotlib-fix-legend-loc-best-test.patch	\
   %D%/packages/patches/python-mohawk-pytest.patch	\
+  %D%/packages/patches/python-norns-nose.patch			\
   %D%/packages/patches/python-numpy-gcc-14.patch		\
   %D%/packages/patches/python-random2-getrandbits-test.patch		\
   %D%/packages/patches/python-pillow-use-zlib-1.3.patch	\

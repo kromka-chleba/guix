@@ -11411,7 +11411,18 @@ standard library and supported by default in Quart.")
        (sha256
         (base32 "0c7jxfkv5q2m95j54dn650gcvdbpag2qcki7phvmrwsgb36w09kd"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (substitute* "ajsonrpc/__init__.py"
+               (("^__version__ = .*")
+                (string-append "__version__ = \"" #$version "\"\n"))))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
     (propagated-inputs
      (list python-quart
            python-sanic
@@ -12119,7 +12130,16 @@ return paginated responses to your clients.")
     (arguments
      (list
       #:test-flags
-      '(list "--unit-tests" "--ignore=tests/ext")
+      #~(list "--asyncio-mode=auto"
+              "--unit-tests"
+              "--ignore=tests/ext"
+              ;; Netwok access is required.
+              "-k" (string-join
+                    (list "not test_optional_params[postgres-default]"
+                          "test_optional_params[postgres-limit-offset]"
+                          "test_optional_params[sqlite-default]"
+                          "test_optional_params[sqlite-limit-offset]")
+                    " and not "))
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'patch-tests

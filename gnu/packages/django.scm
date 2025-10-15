@@ -39,6 +39,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix deprecation)
   #:use-module (guix search-paths)
+  #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
@@ -160,7 +161,7 @@ your project into different processes.")
           (add-before 'check 'pre-check
             (lambda _
               (setenv "PYTHONPATH" "."))))))
-    (propagated-inputs (list python-django python-django-crispy-forms))
+    (propagated-inputs (list python-django-4 python-django-crispy-forms))
     (native-inputs (list python-pytest python-pytest-django python-setuptools))
     (home-page "https://github.com/django-crispy-forms/crispy-bootstrap3")
     (synopsis "Bootstrap3 template pack for django-crispy-forms")
@@ -190,7 +191,7 @@ your project into different processes.")
           (add-before 'check 'pre-check
             (lambda _
               (setenv "PYTHONPATH" "."))))))
-    (propagated-inputs (list python-django python-django-crispy-forms))
+    (propagated-inputs (list python-django-4 python-django-crispy-forms))
     (native-inputs (list python-pytest python-pytest-django python-setuptools))
     (home-page "https://github.com/django-crispy-forms/crispy-bootstrap4")
     (synopsis "Bootstrap4 template pack for django-crispy-forms")
@@ -202,13 +203,13 @@ your project into different processes.")
 (define-public python-django
   (package
     (name "python-django")
-    (version "4.2.23")
+    (version "5.2.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "django" version))
        (sha256
-        (base32 "1r7sbhllc6d903di0ydqy737s28m223lgpk69y6xhjb4dsxfmza2"))))
+        (base32 "0yx82k8iilz8l6wkdvjcrz75i144lf211xybrrrks6b34wvh0pns"))))
     (build-system pyproject-build-system)
     (arguments
      '(#:test-flags
@@ -236,6 +237,12 @@ your project into different processes.")
                ((".*def test_incorrect_timezone.*" all)
                 (string-append "    @unittest.skip('Disabled by Guix')\n"
                                all)))))
+         (add-before 'check 'delete-sitecustomize
+           (lambda* _
+             ;; This file gets loaded instead of the GUIX sitecustomize.py,
+             ;; so we end up ignoring GUIX_PYTHONPATH and breaking imports.
+             ;; It only contains a coverage hook that we don't need here.
+             (delete-file "tests/sitecustomize.py")))
          (replace 'check
            (lambda* (#:key tests? test-flags #:allow-other-keys)
              (if tests?
@@ -291,6 +298,22 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
                   ;; This CVE seems fixed since 4.2.1.
                   (lint-hidden-cve . ("CVE-2023-31047"))))))
 
+(define-public python-django-4
+  (package
+    (inherit python-django)
+    (name "python-django-4")
+    (version "4.2.23")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "django" version))
+        (sha256
+         (base32 "1r7sbhllc6d903di0ydqy737s28m223lgpk69y6xhjb4dsxfmza2"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-django)
+       ((#:phases phases)
+        #~(modify-phases #$phases (delete 'delete-sitecustomize)))))))
+
 (define-public python-django-cache-url
   (package
     (name "python-django-cache-url")
@@ -342,7 +365,7 @@ with a @var{CACHE_URL} environment variable.")
                              (string-append ".:" (getenv "GUIX_PYTHONPATH")))
                      (invoke "django-cadmin" "test" "-v2")))))))
     (propagated-inputs
-     (list python-django))
+     (list python-django-4))
     (native-inputs
      (list python-dj-database-url
            python-dj-email-url
@@ -396,7 +419,7 @@ and adapters that are useful for non-trivial configuration scenarios.")
            python-pytest-django
            python-setuptools
            python-shortuuid
-           python-wheel))
+           tzdata-for-tests))
     (home-page "https://github.com/django-extensions/django-extensions")
     (synopsis "Custom management extensions for Django")
     (description
@@ -467,7 +490,7 @@ that are useful for particular countries or cultures.")
     (native-inputs
      (list python-mock python-setuptools python-wheel))
     (propagated-inputs
-     (list python-django python-six))
+     (list python-django-4 python-six))
     (synopsis "Easy-to-use math field/widget captcha for Django forms")
     (description
      "A multi-value-field that presents a human answerable question,
@@ -546,14 +569,14 @@ when coding custom template tags.")
 (define-public python-easy-thumbnails
   (package
     (name "python-easy-thumbnails")
-    (version "2.10")
+    (version "2.10.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "easy_thumbnails" version))
        (sha256
         (base32
-         "1xafj3lh4841y960wq6lnw31lbki8k84dvg5jqjdy7krrlplc2fh"))))
+         "0bi25k1kf8gn954x6730cn76bidv7jdym8avmcsnqm47jgwsa2m5"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags '(list "--pyargs" "easy_thumbnails")))
@@ -564,7 +587,7 @@ when coding custom template tags.")
            python-pytest-django
            python-setuptools
            python-testfixtures
-           python-wheel))
+           tzdata-for-tests))
     (home-page "https://github.com/SmileyChris/easy-thumbnails")
     (synopsis "Easy thumbnails for Django")
     (description
@@ -628,8 +651,8 @@ useful tools for testing Django applications and projects.")
            python-requests
            python-setuptools
            python-setuptools-scm
-           python-wheel
-           python-whoosh))
+           python-whoosh
+           tzdata-for-tests))
     (home-page "https://haystacksearch.org/")
     (synopsis "Pluggable search for Django")
     (description "Haystack provides modular search for Django.  It features a
@@ -673,7 +696,7 @@ them do this.")
 (define-public python-django-allauth
   (package
     (name "python-django-allauth")
-    (version "65.3.1")
+    (version "65.7.0")
     (source
      (origin
        (method git-fetch)
@@ -682,7 +705,7 @@ them do this.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vm8q5jp854lrykqirmklmlppzz6dih2bzjgv4c7mdwhsfp9s1i2"))))
+        (base32 "1k5b3x7pdysb21vbqx7pxi9cm72yj057mm1clg19ymiqj4kq8yfl"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -710,7 +733,12 @@ them do this.")
     (inputs (list xmlsec-openssl))
     (native-inputs
      (list tzdata-for-tests
+           python-django-ninja
+           python-django-rest-framework
+           python-oauthlib
+           python-psycopg2
            python-pytest
+           python-pytest-asyncio
            python-pytest-django
            python-setuptools))
     (home-page "https://github.com/pennersr/django-allauth")
@@ -721,10 +749,70 @@ registration, account management as well as 3rd party (social)
 account authentication.")
     (license license:expat)))
 
+(define-public python-django-csp
+  (package
+    (name "python-django-csp")
+    (version "4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_csp" version))
+       (sha256
+        (base32 "0cr8f4lbv8y32gfgnw4b6cnvi8k15ggpi49jmlyhmciff2xi0w5j"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'fix-tests
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("--ruff --ruff-format") ""))
+              (setenv "PYTHONPATH" "."))))))
+    (propagated-inputs (list python-django python-packaging))
+    (native-inputs (list python-jinja2
+                         python-pytest
+                         python-pytest-django
+                         python-setuptools))
+    (home-page "https://django-csp.readthedocs.io/en/latest/")
+    (synopsis "Django Content Security Policy support.")
+    (description "This package adds support for Content-Security-Policy headers
+to Django.")
+    (license license:bsd-3)))
+
+(define-public python-django-template-partials
+  (package
+    (name "python-django-template-partials")
+    (version "25.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_template_partials" version))
+       (sha256
+        (base32 "1xmfjqb4alwqky0jmq03292y7m7w13mmh1yz0ayavlym2954w12m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                         (invoke "django-admin" "test" "--pythonpath=.")))))))
+    (propagated-inputs (list python-django))
+    (native-inputs (list python-flit-core))
+    (home-page "https://github.com/carltongibson/django-template-partials")
+    (synopsis
+     "Reusable named inline-partials for the Django Template Language")
+    (description
+     "This package provides template partials for Django, offering fragment
+reuse, integration with the template loader and inline output.")
+    (license license:expat)))
+
 (define-public python-django-debug-toolbar
   (package
     (name "python-django-debug-toolbar")
-    (version "3.2.1")
+    (version "6.0.0")
     (source
      (origin
        (method git-fetch)
@@ -734,7 +822,7 @@ account authentication.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1m1j2sx7q0blma0miswj3c8hrfi5q4y5cq2b816v8gagy89xgc57"))))
+         "0rh0bkbn3z8njmaca0jjby4l9axmbgmcr34pf4sdjk99l55azmv4"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -752,10 +840,11 @@ account authentication.")
     (propagated-inputs
      (list python-sqlparse python-django))
     (native-inputs
-     (list python-django-jinja
+     (list python-django-csp
+           python-django-template-partials
+           python-hatchling
            python-html5lib
            python-setuptools
-           python-wheel
            tzdata-for-tests))
     (home-page "https://github.com/jazzband/django-debug-toolbar")
     (synopsis "Toolbar to help with developing Django applications")
@@ -847,7 +936,7 @@ templatetags and a full test suite.")
                (with-directory-excursion "testing"
                  (invoke "python" "runtests.py"))))))))
     (propagated-inputs
-     (list python-django python-jinja2 python-pytz python-django-pipeline))
+     (list python-django-4 python-jinja2 python-pytz python-django-pipeline))
     (native-inputs
      (list python-setuptools python-wheel tzdata-for-tests))
     (home-page "https://niwinz.github.io/django-jinja/latest/")
@@ -1033,7 +1122,7 @@ for Django sites.")
       #:test-backend #~'custom
       #:test-flags #~(list "tests/runtests.py")))
     (native-inputs (list python-setuptools tzdata-for-tests))
-    (propagated-inputs (list python-django))
+    (propagated-inputs (list python-django-4))
     (home-page "https://github.com/django/django-contrib-comments")
     (synopsis "Comments framework")
     (description
@@ -1105,14 +1194,14 @@ to asyncio and Pydantic.")
 (define-public python-django-pipeline
   (package
     (name "python-django-pipeline")
-    (version "4.0.0")
+    (version "4.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "django_pipeline" version))
        (sha256
         (base32
-         "125wkgi3hf1ly34ps7n63k6agb067h17ngxyf9xjykn6kl6ikc8a"))))
+         "1d12wzqvdnc3hk3s5yz9jd4xqhc75wbfsl6xdhwphnr1dzgpj7da"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1531,7 +1620,7 @@ Django projects, which allows association of a number of tags with any
 (define-public python-django-rest-framework
   (package
     (name "python-django-rest-framework")
-    (version "3.15.2")
+    (version "3.16.1")
     (source
      (origin
        (method git-fetch)
@@ -1541,7 +1630,7 @@ Django projects, which allows association of a number of tags with any
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ky559g2rpbz5sir33qq56c1bd4gc73hlrnkxsxpdm5mi69jrvcx"))))
+         "01i2p1mh48bkxhggvfh6j11rh9zrgw4w6fr78msgrdw6bdjf4fwj"))))
     (build-system pyproject-build-system)
     (arguments
      '(#:phases
@@ -1642,7 +1731,7 @@ a single block.")
                   (delete "python-django-crispy-forms")))))
            (list python-crispy-bootstrap3 python-crispy-bootstrap4))
       (list python-pytest python-pytest-django python-setuptools)))
-    (propagated-inputs (list python-django))
+    (propagated-inputs (list python-django-4))
     (home-page "https://github.com/django-crispy-forms/django-crispy-forms")
     (synopsis "Tool to control Django forms without custom templates")
     (description
@@ -1659,7 +1748,9 @@ forms using your favorite CSS framework, without writing template code.")
        (method url-fetch)
        (uri (pypi-uri "django_compressor" version))
        (sha256
-        (base32 "08m8cs1mnpwd2zlck8cbl4cdp21dgv4vj7j17krbgn745s5a9n61"))))
+        (base32 "08m8cs1mnpwd2zlck8cbl4cdp21dgv4vj7j17krbgn745s5a9n61"))
+       (patches
+        (search-patches "django-compressor-build-with-beautifulsoup-4.14+.patch"))))
     (build-system pyproject-build-system)
     (arguments
      (list

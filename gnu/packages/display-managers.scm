@@ -196,7 +196,8 @@ background with abstract shapes.  Inspired by solarized-sddm-theme.")
       (license license:gpl3+))))
 
 (define-public dexy-color-sddm-theme
-  (let ((commit "7929384dbb9305e6da53a8942bca3d75593fd99f")
+  ;; No upstream releases or tags
+  (let ((commit "4785d3b80d725cf55cecd7b27181f77151c4e3e2")
         (revision "0"))
     (package
       (name "dexy-color-sddm-theme")
@@ -209,7 +210,7 @@ background with abstract shapes.  Inspired by solarized-sddm-theme.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1dcp3pvs6x63740sz852yr19fjrdnh81dbrq7rssgm6ssi1rqjig"))))
+                  "14fzc4kq50ii1qmmvnp9gxig504zfx1rsfsp0wq9bay7d72j282c"))))
       (build-system copy-build-system)
       (arguments
        `(#:install-plan '(("Dexy-Color-SDDM"
@@ -217,8 +218,8 @@ background with abstract shapes.  Inspired by solarized-sddm-theme.")
       (home-page "https://github.com/L4ki/Dexy-Plasma-Themes")
       (synopsis "Dexy Color theme for SDDM")
       (description
-       "This package provides a minimalistic and modern SDDM theme with blured
-background.")
+       "This package provides a minimalistic and modern SDDM theme with a
+blurred background.")
       (license license:gpl3+))))
 
 (define-public guix-simplyblack-sddm-theme
@@ -363,6 +364,32 @@ experience for your users, your family and yourself")
 probably cause you diabetes just from looking at it.  Sweeten the login
 experience for your users, your family and yourself")
     (license license:gpl3+)))
+
+(define-public where-is-my-sddm-theme
+    (package
+      (name "where-is-my-sddm-theme")
+      (version "1.12.0")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/stepanzubkov/where-is-my-sddm-theme")
+                      (commit (string-append "v" version))))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                   "0a30rlknxz855qsrc3ksyic4cj5axm6pwk5nya3nlbqjrrghy7gr"))))
+      (build-system copy-build-system)
+      (arguments
+       `(#:install-plan '(("where_is_my_sddm_theme" "/share/sddm/themes/")
+                          ("where_is_my_sddm_theme_qt5" "/share/sddm/themes/"))))
+      (home-page "https://github.com/stepanzubkov/where-is-my-sddm-theme")
+      (synopsis "Minimal SDDM theme, simply a black screen and a password")
+      (description
+       "This package is a @emph{minimalist and highly customizable} SDDM theme.
+It's only a black screen and a password input field.  Nothing extra, right?
+Even when you enter the wrong password it will only show a red border around
+the screen.")
+      (license license:gpl3+)))
 
 (define-public lightdm
   (package

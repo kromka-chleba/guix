@@ -840,6 +840,45 @@ functions allow Lisp programs to explore the web.")
 (define-public cl-acl-compat
   (sbcl-package->cl-source-package sbcl-acl-compat))
 
+(define-public sbcl-common-macros
+  (let ((commit "f261a4a07c52e5c560d90154393bd49421ece740")
+        (revision "0"))
+    (package
+      (name "sbcl-common-macros")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/robert-strandh/Common-macros")
+                (commit commit)))
+         (file-name (git-file-name "cl-common-macros" version))
+         (sha256
+          (base32
+           "0rn0rnccjgxsrf828bw740vs8psjjxb5x4hmk8rnqiz5p3y0lvph"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       '(#:asd-systems '("common-macro-definitions")))
+      (inputs
+       (list sbcl-ecclesia))
+      (home-page "https://github.com/robert-strandh/Common-macros")
+      (synopsis "Portable Common Lisp macro definitions")
+      (description
+       "This library defines most Common Lisp standard macros that can be
+defined in a portable way and that can generate portable code.  Some of these
+macros may not be good enough as the final version for a typical
+implementation, but they will work.")
+      (license license:bsd-2))))
+
+(define-public cl-common-macros
+  (sbcl-package->cl-source-package sbcl-common-macros))
+
+(define-public ecl-common-macros
+  (sbcl-package->ecl-package sbcl-common-macros))
+
+(define-public clasp-common-macros
+  (sbcl-package->clasp-package sbcl-common-macros))
+
 (define-public sbcl-adopt
   (package
     (name "sbcl-adopt")
@@ -1511,21 +1550,21 @@ Common Lisp arrays and performing numerical calculations with them.")
   (sbcl-package->ecl-package sbcl-array-operations))
 
 (define-public sbcl-array-utils
-  (let ((commit "29da8fccf6093fe8f8c7b2daef7de1a428ef1834")
-        (revision "0"))
+  (let ((commit "16e108a516a1e6662adaa59f05841b8d251c250f")
+        (revision "1"))
     (package
       (name "sbcl-array-utils")
-      (version (git-version "1.2.0" revision commit))
+      (version (git-version "1.3.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/array-utils")
+           (url "https://codeberg.org/shinmera/array-utils")
            (commit commit)))
          (file-name (git-file-name "cl-array-utils" version))
          (sha256
-          (base32 "1d66s2inb9hpw27hdb20x27dychmpn1mn35v0mlsib848qdz87az"))))
+          (base32 "0xacdjirb4bkszilmyyg7fzinka71f14z30nz2jwi7a88b8lxk1g"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
@@ -1535,7 +1574,7 @@ Common Lisp arrays and performing numerical calculations with them.")
       (description
        "A miniature toolkit that contains some useful shifting/popping/pushing
 functions for arrays and vectors.  Originally from Plump.")
-      (home-page "https://shinmera.github.io/array-utils/")
+      (home-page "https://shinmera.com/docs/array-utils")
       (license license:zlib))))
 
 (define-public cl-array-utils
@@ -1909,8 +1948,8 @@ synchronization latency.")
 
 (define-public sbcl-atomics
   ;; No release in years.
-  (let ((commit "b7477024894e322bff9c85e6d81e5e8d1d4eae59")
-        (revision "2"))
+  (let ((commit "5b36bf251fee2f80e34cbf6802c9eb08ce3675f6")
+        (revision "3"))
     (package
       (name "sbcl-atomics")
       (version (git-version "1.0.0" revision commit))
@@ -1918,17 +1957,17 @@ synchronization latency.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/atomics")
+               (url "https://codeberg.org/shinmera/atomics")
                (commit commit)))
          (file-name (git-file-name "cl-atomics" version))
          (sha256
-          (base32 "1ah6fgvfva0axnhj4sp1qy6gjyw41fkhpnv998di0wbp6hls8j39"))))
+          (base32 "0lmrqn2yzrs1qxd0asjpwk50hdcp2hkkbcpzc4lkm3xbxnwxrwg2"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-documentation-utils))
       (native-inputs
        (list sbcl-parachute))
-      (home-page "https://shinmera.github.io/atomics/")
+      (home-page "https://shinmera.com/docs/atomics")
       (synopsis "Common Lisp portability layer for atomic operations")
       (description
        "This is a library for access to atomic operation primitives such as
@@ -5587,8 +5626,8 @@ from/to strings, streams and files.")
   (sbcl-package->ecl-package sbcl-cl-csv))
 
 (define-public sbcl-cl-data-structures
-  (let ((commit "ffab56830f3ed777450a065890484ef22147cd44")
-        (revision "2"))
+  (let ((commit "d11e589a3ddc6c32fcbd8be7e9f8e3471bc4d5dd")
+        (revision "3"))
     (package
       (name "sbcl-cl-data-structures")
       (version (git-version "1.4.1" revision commit))
@@ -5600,7 +5639,7 @@ from/to strings, streams and files.")
                (commit commit)))
          (file-name (git-file-name "cl-data-structures" version))
          (sha256
-          (base32 "0h49h1x9dgr53imj0r4lgx0zvdsv3mnh7lyayzy9hlysy2ixp425"))))
+          (base32 "12pdk3634nz51z4x2gly06h2j8bykqwxwfadsyq7r4ybzs3z8d73"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-prove))

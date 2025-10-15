@@ -6170,7 +6170,7 @@ at @code{musicbrainz.org}.")
 (define-public clyrics
   (package
     (name "clyrics")
-    (version "0.16")
+    (version "0.17")
     (source
      (origin
        (method git-fetch)
@@ -6179,7 +6179,7 @@ at @code{musicbrainz.org}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1izlqnzr1a504djhzk1a5k8dwwrkd5iyjfsfm5x48sb3vjlr1fr3"))))
+        (base32 "1np1rs6wl592smzy6b04adc38wa2b00fsy973dpv5bai64slrq43"))))
     (build-system trivial-build-system)
     (inputs
      (list bash ; for the wrapped program
@@ -6786,7 +6786,7 @@ as a whole to realisticly reproduce the features and flaws of the real deal.")
 (define-public spectacle-analyzer
   (package
     (name "spectacle-analyzer")
-    (version "1.0")
+    (version "2.0")
     (source
      (origin
        (method git-fetch)
@@ -6798,7 +6798,7 @@ as a whole to realisticly reproduce the features and flaws of the real deal.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0xiqa6z8g68lcvnwhws4j7c4py35r9d20cirrili7ycyp3a6149a"))))
+         "0146mvq1amdmz0cgfm1zr8416cvl8cm5z6s426lhsy00ahw0knrc"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no check target

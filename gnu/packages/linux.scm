@@ -152,6 +152,7 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages libedit)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages libusb)
@@ -526,7 +527,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.16-version "6.16.9")
+(define-public linux-libre-6.16-version "6.16.11")
 (define-public linux-libre-6.16-gnu-revision "gnu")
 (define deblob-scripts-6.16
   (linux-libre-deblob-scripts
@@ -536,7 +537,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1i4kba2wpkc7jmj7b2qjkrgqsl0g0s1h7j9pfvc7zqyyn9v3kkqr")))
 (define-public linux-libre-6.16-pristine-source
   (let ((version linux-libre-6.16-version)
-        (hash (base32 "13g59jvc6kvp8dzl6ysmzrpq4nh9xvy5va5avrsn6iq5ryiwij3s")))
+        (hash (base32 "0yxsinhly689327jbvwm2nfr6cx7ynj9sd87a9var1rx8l64yc2z")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.16)))
@@ -545,7 +546,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.49")
+(define-public linux-libre-6.12-version "6.12.51")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -555,12 +556,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "09jm892q3b275liyzmycczg6nyjg1ramsma920jf5k6s8vhj2ii3")))
+        (hash (base32 "08bj3b6a6jwvrpjl5sxvmzwwnc00clq98rjwb61fznd7khaasm9d")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.108")
+(define-public linux-libre-6.6-version "6.6.110")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -570,12 +571,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "19k834gd9galmzl7gq0v25nv785ld7ryygrmgdh1cpb9m8rd6730")))
+        (hash (base32 "07gv37ralrhf709plqj1hzk1adwilh6znmay6agpbf23anphvwhv")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.154")
+(define-public linux-libre-6.1-version "6.1.155")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -585,12 +586,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0f3jgbfd2j7sz7h1hb30s1r9147g1cbb3ia09k9834fvbiz1ihaa")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "165im36dhnvhrfkn4x77ds6cgisn40d1cwxvxsci5lnhqf9bl6kg")))
+        (hash (base32 "0wsw99h2jsrcx9fff59nqjx66l40vywj8qi3j6yvqpq8xsp8g4y2")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.193")
+(define-public linux-libre-5.15-version "5.15.194")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -600,7 +601,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0rg65s6kd9gxxa3wl6180pr39rb6zbcicwjik4kygs2ns0247y56")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "168ymh51hm0l6pd9g2kc33ji28gznc25rwzj7rvhnw82z79640n7")))
+        (hash (base32 "0zi6ihvjmaf940arnc7jjvdqrjf3cvkc9mqc8n24dz85vam6z39l")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
@@ -620,7 +621,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.299")
+(define-public linux-libre-5.4-version "5.4.300")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -630,7 +631,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0l7pwhgw9laxfypcpqlz411x3hybcw2269abh3lpcw96bgv5m1k2")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "0bdzy3bpywm24nx73ah9smwmmlmyhvlf5xcp2kk1z54dxfp9bpl8")))
+        (hash (base32 "0nl1l689d4jq2l39v816yy7z5lzc5dvv8aqn85xlv4najc022jcr")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
@@ -3236,6 +3237,40 @@ block devices, UUIDs, TTYs, and many other tools.")
    (inputs
     (modify-inputs (package-inputs util-linux)
       (prepend eudev)))))
+
+(define-public chimerautils
+  (package
+    (name "chimerautils")
+    (version "14.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chimera-linux/chimerautils")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10xs9i9w9an9jjq7vgkyfqfyzdisbb57c8c1rryjpfiz8dmi8g41"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ;no test suite
+    (inputs (list acl
+                  libedit
+                  libxo
+                  ncurses
+                  openssl
+                  zlib
+                  (list zstd "lib")))
+    (native-inputs (list flex bison pkg-config))
+    (home-page "https://github.com/chimera-linux/chimerautils")
+    (synopsis "The FreeBSD-based core Linux userland from Chimera Linux")
+    (description
+     "This is a port of the FreeBSD userland for Linux provided by
+the Chimera Linux distribution.  Essentially, it is a collection of UNIX tools
+such as @command{grep}, @command{cp}, @command{vi}, etc. and can be used as an
+alternative to the corresponding implementations from the GNU project.")
+    (license license:bsd-2)))
 
 (define-public ddate
   (package
@@ -6814,7 +6849,7 @@ arrays when needed.")
 (define-public multipath-tools
   (package
     (name "multipath-tools")
-    (version "0.9.6")
+    (version "0.11.0")
     (home-page "https://github.com/opensvc/multipath-tools")
     (source (origin
               (method git-fetch)
@@ -6822,7 +6857,7 @@ arrays when needed.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1933iqh9r54pdl95yck0n4bw7jiiblymc964vlc1787qd4q012sz"))
+                "1yl2cd4xgw2l5xzx5dbdf7awhrvfbjsrspli9i6bmxc5j4jkvazr"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -6880,8 +6915,7 @@ arrays when needed.")
               ;; by forcing the usage of FORTIFY_SOURCE=2.
               (substitute* "create-config.mk"
                 (("FORTIFY_SOURCE=3")
-                 "FORTIFY_SOURCE=2"))
-              ))
+                 "FORTIFY_SOURCE=2"))))
           (add-before 'build 'set-LDFLAGS
             (lambda _
               ;; Note: this cannot be passed as a make flag because that will
@@ -7422,7 +7456,7 @@ obviously it can be shared with files outside our set).")
 (define-public f2fs-tools
   (package
     (name "f2fs-tools")
-    (version "1.15.0")
+    (version "1.16.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7432,7 +7466,7 @@ obviously it can be shared with files outside our set).")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ffws8pbpzp9730v0wy5xjas698lnbd2p7wpr2gl4mx45rsay9a5"))))
+                "0832ix3jnmfagx53wr6clc3q4ay7cbashfj7jirk01gyzwbvblfc"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool pkg-config))

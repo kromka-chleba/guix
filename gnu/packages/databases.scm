@@ -66,6 +66,7 @@
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;; Copyright © 2025 Philippe Swartvagher <phil.swart@gmx.fr>
+;;; Copyright © 2025 Simen Endsjø <contact@simendsjo.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3135,7 +3136,7 @@ sets, bitmaps and hyperloglogs.")
   (package
     (name "valkey")
     ;; For compatibility, keep in sync with redis version.
-    (version "7.2.6")
+    (version "7.2.11")
     (source
      (origin
        (method git-fetch)
@@ -3144,7 +3145,7 @@ sets, bitmaps and hyperloglogs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01pbaprl6nwrwv9382i033w8sslqainws0b22b3l1lzladdawrwx"))
+        (base32 "099523fqbya1xc87spwdxi5nld48r1di31q6zpn252nny0xbrdcb"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete bundled jemalloc, as the package will use the libc one
@@ -3196,7 +3197,7 @@ database.")
   (package
     (inherit valkey-7)
     (name "valkey")
-    (version "8.1.1")
+    (version "8.1.4")
     (source
      (origin
        (inherit (package-source valkey-7))
@@ -3206,7 +3207,7 @@ database.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1n5ckpa1h87h1llnm4khyf6060gqd4pj43d93vlrvn3hxpdyji8b"))))
+        (base32 "1p7jr5048syd9ln0bsh2n5ba6fd7x9wfa1x67b7wychv7a46dfx1"))))
     (arguments
      (substitute-keyword-arguments (package-arguments valkey-7)
        ((#:phases phases '%standard-phases)

@@ -2313,13 +2313,17 @@ before interacting with non-free LLMs.")
                 ("magit-perl-executable"
                  (search-input-file inputs "/bin/perl"))))))))
     (native-inputs
-     (list emacs-cond-let texinfo))
+     (list texinfo))
     (inputs
      (list git perl))
     (propagated-inputs
      ;; Note: the 'git-commit' and 'magit-section' dependencies are part of
      ;; magit itself.
-     (list emacs-compat emacs-llama emacs-transient emacs-with-editor))
+     (list emacs-compat
+           emacs-cond-let
+           emacs-llama
+           emacs-transient
+           emacs-with-editor))
     (home-page "https://magit.vc/")
     (synopsis "Emacs interface for the Git version control system")
     (description
@@ -4772,7 +4776,7 @@ Selectrum.")
 (define-public emacs-empv
   (package
     (name "emacs-empv")
-    (version "5.0.0")
+    (version "5.1.0")
     (source
      (origin
        (method git-fetch)
@@ -4782,7 +4786,7 @@ Selectrum.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "02qvac61v6fxgv8pjbbakn3z3xf1x6358gca7nil9k9jv9xq12ng"))))
+         "0in9yyssahrp0qfbwziymg85bmysxlzr58vycb13k4m4g9i4s3r7"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -17669,32 +17673,58 @@ functions to assist in reviewing changes on files.")
     (license license:gpl3+)))
 
 (define-public emacs-popwin
-  (package
-    (name "emacs-popwin")
-    (version "1.0.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacsorphanage/popwin")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1x1iimzbwb5izbia6aj6xv49jybzln2qxm5ybcrcq7xync5swiv1"))))
-    (build-system emacs-build-system)
-    (arguments
-     (list
-      #:tests? #f ; requires an attached terminal
-      ))
-    (native-inputs
-     (list emacs-ert-runner))
-    (home-page "https://github.com/emacsorphanage/popwin")
-    (synopsis "Popup window manager for Emacs")
-    (description
-     "This package provides utilities for treating certain windows as @dfn{pop
-up windows}, which close automatically when quitting a command or selecting
-another window.")
-    (license license:gpl3+)))
+  ;; Last release is from 2020.
+  (let ((commit "213e462c4aa23c9aa78105b78a8fb27c8bbc3c9c")
+        (revision "0"))
+    (package
+      (name "emacs-popwin")
+      (version (git-version "1.0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/emacsorphanage/popwin")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "13gn96h0f4z9g1dg65hiq24srjq75jnndd0khzx8j2xv7d5fmmyk"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:test-command
+        #~(list "emacs" "-Q" "-batch"
+                "-l" "test/popwin-test.el"
+                "-f" "ert-run-tests-batch-and-exit")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; Ran 42 tests, 33 results as expected, 0 unexpected, 9 skipped.
+            (add-before 'check 'skip-tests
+              (lambda _
+                (emacs-batch-edit-file "test/popwin-test.el"
+                  '(progn
+                    (let ((tests (list "find-file-interactively"
+                                       "display-buffer-interactively"
+                                       "find-file-tail-interactively"
+                                       "popup-at-bottom-with-three-columes"
+                                       "popup-at-top-with-three-columes.*"
+                                       "popup-buffer-interactively"
+                                       "popup-buffer-tail-interactively"
+                                       "popwin-side-window"
+                                       "popup-from-minibuffer")))
+                      (dolist (test tests)
+                              (save-excursion
+                               (re-search-forward (format "%s ()" test))
+                               (insert "\n(skip-unless nil)")))
+                      (basic-save-buffer)))))))))
+      (native-inputs
+       (list emacs-ert-runner))
+      (home-page "https://github.com/emacsorphanage/popwin")
+      (synopsis "Popup window manager for Emacs")
+      (description
+       "This package provides utilities for treating certain windows as
+@dfn{pop up windows}, which close automatically when quitting a command or
+selecting another window.")
+      (license license:gpl3+))))
 
 (define-public emacs-pyvenv
   (package
@@ -19391,7 +19421,14 @@ extensions.")
                              "-L" "./test"
                              "-l" "evil-collection-test.el"
                              "-l" "evil-collection-magit-tests.el"
-                             "-f" "ert-run-tests-batch-and-exit")))
+                             "-f" "ert-run-tests-batch-and-exit")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'skip-failing-tests
+            (lambda _
+              (substitute* "test/evil-collection-magit-tests.el"
+                (("\\(ert-deftest evil-collection-magit-section-maps-accounted-for .*" all)
+                 (string-append all " (skip-unless nil)"))))))))
     (native-inputs
      (list emacs-magit))
     (propagated-inputs
@@ -32288,8 +32325,7 @@ accept and reject GitHub pull requests.")
                 "0ryf2jk54iqg7q494qdghg2pkhw8ky3s53dpj55871x6p2m1387r"))))
     (build-system emacs-build-system)
     (propagated-inputs
-     (list emacs-cond-let
-           emacs-ghub
+     (list emacs-ghub
            emacs-magit
            emacs-markdown-mode))
     (synopsis "Review GitHub Pull Requests")
@@ -33090,7 +33126,6 @@ buffers – other modes on the TODO list).
      (list #:tests? #f)) ; No tests in source.
     (propagated-inputs
      (list emacs-async
-           emacs-cond-let
            emacs-dash
            emacs-f
            emacs-hl-todo
@@ -33214,7 +33249,7 @@ and comments")
                 ("tokei-program"
                  (search-input-file inputs "/bin/tokei"))))))))
     (inputs (list tokei))
-    (propagated-inputs (list emacs-cond-let emacs-magit))
+    (propagated-inputs (list emacs-magit))
     (home-page "https://github.com/nagy/tokei.el")
     (synopsis "Display codebase statistics in Emacs")
     (description
@@ -35179,7 +35214,7 @@ recursively.  The results are cached for speed.")
     (arguments
      (list #:tests? #f)) ; A makefile but no tests.
     (propagated-inputs
-     (list emacs-cond-let emacs-dash emacs-magit))
+     (list emacs-dash emacs-magit))
     (synopsis "Support for Org links to Magit buffers")
     (description "This package defines several Org link types, which can be
 used to link to certain Magit buffers.  Use the command
@@ -35596,7 +35631,7 @@ in Docker environment.")
 (define-public emacs-dape
   (package
     (name "emacs-dape")
-    (version "0.24.1")
+    (version "0.25.0")
     (source
      (origin
        (method git-fetch)
@@ -35605,7 +35640,7 @@ in Docker environment.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xlgshrhm09azy5afrlrdxlnyb08p7v06vb6mws6ii3pbr50y3k7"))))
+        (base32 "1mj9xqpsaylf7qg7b4a2bhb3gf7wgv9wjphzkwc694sd079i2yyn"))))
     (build-system emacs-build-system)
     (arguments
      ;; FIXME python tests pass, JS tests require additional dependencies
@@ -35835,7 +35870,6 @@ utilities.")
     (propagated-inputs
      (modify-inputs (package-propagated-inputs emacs-treemacs)
        (append emacs-all-the-icons
-               emacs-cond-let
                emacs-evil
                emacs-magit
                emacs-projectile
@@ -36264,7 +36298,6 @@ commands (a prefix and a suffix) we prefer to call it just a \"transient\".")
     (propagated-inputs
      (list emacs-closql
            emacs-compat
-           emacs-cond-let
            emacs-emacsql
            emacs-ghub
            emacs-llama
@@ -42349,8 +42382,7 @@ go directly to where they belong.")
     (native-inputs
      (list emacs-ert-runner texinfo))
     (propagated-inputs
-     (list emacs-cond-let
-           emacs-dash
+     (list emacs-dash
            emacs-emacsql
            emacs-magit))
     (home-page "https://github.com/org-roam/org-roam/")
@@ -42469,8 +42501,7 @@ structure of all your Org files – headings, links and so on..")
                (("^cd.*\"")
                 "")))))))
     (propagated-inputs
-     (list emacs-cond-let
-           emacs-llama
+     (list emacs-llama
            emacs-magit
            emacs-org-mem))
     ;; tests

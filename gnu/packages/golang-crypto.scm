@@ -1438,6 +1438,32 @@ cryptographic hash as specified in
 @url{http://www.larc.usp.br/~pbarreto/WhirlpoolPage.html}.")
     (license license:bsd-3)))
 
+(define-public go-github-com-kalafut-imohash
+  (package
+    (name "go-github-com-kalafut-imohash")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kalafut/imohash")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dzzqjzjg8d6lkic231kcl8bgd3cz1fykw48n5czw845a6fbz1cs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kalafut/imohash"))
+    (propagated-inputs (list go-github-com-twmb-murmur3))
+    (home-page "https://github.com/kalafut/imohash")
+    (synopsis "Fast hashing for large files")
+    (description
+     "Package imohash implements a fast, constant-time hash for files.  It is
+ based atop murmurhash3 and uses file size and sample data to construct the
+hash.")
+    (license license:expat)))
+
 (define-public go-github-com-libp2p-go-libp2p-crypto
   (let ((commit "7240b40a3ddc47c4d17c15baabcbe45e5219171b")
         (revision "0"))
@@ -2257,6 +2283,38 @@ wide-block encryption mode developed by Halevi and Rogaway.")
       (description "Go-Bloom implements bloom filter using double hashing.")
       (license license:asl2.0))))
 
+(define-public go-github-com-schollz-pake-v3
+  (package
+    (name "go-github-com-schollz-pake-v3")
+    (version "3.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/schollz/pake")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1y6g5l0c4d8yqpg7pkvlfdj4fycipwcb5fd4lw6qhdsw3y5h89cp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/schollz/pake/v3"))
+    (propagated-inputs
+     (list go-filippo-io-edwards25519
+           go-github-com-tscholl2-siec))
+    (home-page "https://github.com/schollz/pake")
+    (synopsis "Strong secret between parties over an insecure channel")
+    (description
+     "This package implements a functionality for two parties to generate a
+ mutual secret key by using a weak key that is known to both
+beforehand (e.g. via some other channel of communication).  This is a simple
+API for an implementation of @acronym{Password-Authenticated Key Exchange,
+PAKE}.  This protocol is derived from
+@url{https://crypto.stanford.edu/~dabo/cryptobook/BonehShoup_0_4.pdf, Dan
+Boneh and Victor Shoup's cryptography book} (pg 789, PAKE2 protocol).")
+    (license license:expat)))
+
 (define-public go-github-com-sean--seed
   (package
     (name "go-github-com-sean--seed")
@@ -2442,6 +2500,30 @@ Main functions:
 @item @code{SM4} national secret block cipher algorithm library
 @end itemize")
     (license license:asl2.0)))
+
+(define-public go-github-com-tscholl2-siec
+  (package
+    (name "go-github-com-tscholl2-siec")
+    (version "0.0.0-20240310163802-c2c6f6198406")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tscholl2/siec")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cwigl3z375b63k85l6mrym4xjh74qfhmb62sc1f8rqldxr2gnvp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tscholl2/siec"))
+    (home-page "https://github.com/tscholl2/siec")
+    (synopsis "Isolated Elliptic Curve Implementation in Golang")
+    (description
+     "This package exports a super-isolated elliptic curve.  Over the base
+field 𝔽ₚ, the curve E does not admit any isogenies to other curves.")
+    (license license:expat)))
 
 (define-public go-github-com-twmb-murmur3
   (package
@@ -3085,6 +3167,21 @@ tools."))))
 
 (define-public age-keygen
   (deprecated-package "age-keygen" age))
+
+(define-public go-imohash
+  (package/inherit go-github-com-kalafut-imohash
+    (name "go-imohash")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-kalafut-imohash)
+       ((#:tests? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "github.com/kalafut/imohash/cmd/imosum")
+       ((#:unpack-path _ "") "github.com/kalafut/imohash")))
+    (native-inputs
+     (package-propagated-inputs go-github-com-kalafut-imohash))
+    (propagated-inputs '())))
 
 (define-public go-jwker
   (package/inherit go-github-com-jphastings-jwker

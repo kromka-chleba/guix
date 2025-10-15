@@ -3747,14 +3747,14 @@ eight bytes) tools
 (define-public asio
   (package
     (name "asio")
-    (version "1.28.0")
+    (version "1.36.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/asio/asio/"
                            version " (Stable)/asio-" version ".tar.bz2"))
        (sha256
-        (base32 "0cp2c4v0kz0ln4bays0s3fr1mcxl527ay2lp7s14qbxx38vc5pfh"))))
+        (base32 "092mh9lmvj0da2wnna0x43wi08fcdl1bxrp6ji6crnfcq7ixpx3v"))))
     (build-system gnu-build-system)
     (inputs
      (list boost openssl))
@@ -4133,7 +4133,7 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
 (define-public opendht
     (package
       (name "opendht")
-      (version "3.4.0")
+      (version "3.5.4")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -4142,8 +4142,7 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "069y4mgygjsfp5szfbqr7l30g7fbcqqj62h11byyq9k24rl7ilsq"))
-                (patches (search-patches "opendht-nanosleep.patch"))))
+                  "1qy5fvz4rr480n0sa81n3rx5zskpgk7zqip12b9ly8hk43mxsycs"))))
       (outputs '("out" "python" "tools" "debug"))
       (build-system gnu-build-system)
       (arguments
@@ -4194,6 +4193,15 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                   (("extra_link_args=\\[(.*)\\]" _ args)
                    (string-append "extra_link_args=[" args
                                   ", '-Wl,-rpath=" #$output "/lib']")))))
+            ;; This is due to an upstream issue:
+            ;; https://git.jami.net/savoirfairelinux/opendht/-/issues/69 
+            (add-after 'unpack 'fix-llhttp-lib-substitution
+              (lambda _
+                (substitute* "configure.ac"
+                  (("http_lib")
+                   "llhttp_lib")
+                  (("-lllhttp")
+                   ", libllhttp"))))
             ;; TODO: build with liburing, requires cmake or meson.
             (add-after 'unpack 'pkgconfig-disable-iouring
               (lambda _
@@ -4277,8 +4285,8 @@ A very simple IM client working over the DHT.
 
 (define-public dhtnet
   ;; There is no tag nor release; use the latest available commit.
-  (let ((revision "4")
-        (commit "6c5ee3a21556d668d047cdedb5c4b746c3c6bdb2"))
+  (let ((revision "5")
+        (commit "f925f5200539d4e1ee6176d828ae08a8a6c3890a"))
     (package
       (name "dhtnet")
       ;; The base version is taken from the CMakeLists.txt file (see:
@@ -4292,7 +4300,7 @@ A very simple IM client working over the DHT.
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0np0h19gcibn9d4hyn9vjvlxjc6ma8cg8j1qxh1cam5c9i49h1xv"))))
+                  "1dkxs4w6k8ajn8ndy5gp4qg7yvl2z6jf72wxx71panvgy8lrc6y3"))))
       (outputs (list "out" "debug"))
       (build-system cmake-build-system)
       (arguments

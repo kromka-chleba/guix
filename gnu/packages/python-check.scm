@@ -1858,6 +1858,24 @@ wrapper above tools such as Pyflakes, pydocstyle, pycodestyle and McCabe,
 among others.")
     (license license:lgpl3+)))
 
+(define-public python-pynose
+  (package
+    (name "python-pynose")
+    (version "1.5.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pynose" version))
+       (sha256
+        (base32 "0jbzmxnxmgf60158gpvfsp8j2cid6psfwj3j94vxv61z8wk4xnl1"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/mdmintz/pynose")
+    (synopsis "pynose fixes nose to extend unittest and make testing easier")
+    (description
+     "pynose fixes nose to extend unittest and make testing easier.")
+    (license license:lgpl2.0)))
+
 (define-public python-pytest-aiohttp
   (package
     (name "python-pytest-aiohttp")
@@ -2577,6 +2595,39 @@ times and detect flakyness.")
 which can be used to register helper functions without requiring someone to
 import them in their actual tests to use them.")
     (license license:asl2.0)))
+
+(define-public python-pytest-home
+  (package
+    (name "python-pytest-home")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jaraco/pytest-home")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "151xx48dahbh7yx2a9cr9f2iy2i6f7s3zsm4zn5apvgl9qmjhkk7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (propagated-inputs (list python-pytest))
+    (native-inputs
+     (list git-minimal
+           python-pytest
+           python-setuptools
+           python-setuptools-scm))
+    (home-page "https://github.com/jaraco/pytest-home")
+    (synopsis "Home directory fixtures")
+    (description
+     "This package provides home directory fixtures for pytest.")
+    (license license:expat)))
 
 (define-public python-pytest-html
   (package
