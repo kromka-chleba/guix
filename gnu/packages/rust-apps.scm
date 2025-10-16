@@ -3003,6 +3003,28 @@ older terminal emulators.")
 runs a command whenever it detects modifications.")
     (license license:asl2.0)))
 
+(define-public lutgen
+  (package
+    (name "lutgen")
+    (version "0.14.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "lutgen" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0gzn5cw9ry96nlbbi61si3yp4dk71pi3bjxmck5mfvrd38zn37my"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'lutgen))
+    (home-page "https://lut.sh")
+    (synopsis "Blazingly fast interpolated LUT utility for arbitrary and
+popular color palettes")
+    (description
+     "This package provides a library for a blazingly fast interpolated
+@acronym{LUT, Look-Up Table} utility for arbitrary and popular color
+palettes.")
+    (license license:expat)))
+
 (define-public rbw
   (package
     (name "rbw")
