@@ -3046,6 +3046,29 @@ popular color palettes")
 Look-Up Table} utility for arbitrary and popular color palettes.")
     (license license:expat)))
 
+(define-public lutgen-studio
+  (package
+    (name "lutgen-studio")
+    (version "0.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "lutgen-studio" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "14w93187g8ijcfxp8n05rz7f1d8yc0clydw5mdj1s27qgn7slpgr"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'lutgen-studio))
+    (home-page "https://lut.sh")
+    (synopsis
+     "Official GUI for Lutgen, to apply popular colorschemes to any image or
+wallpaper")
+    (description
+     "This package provides the official @acronym{GUI, Graphical User
+Interface} for Lutgen, to apply popular colorschemes to any image or
+wallpaper.")
+    (license license:expat)))
+
 (define-public rbw
   (package
     (name "rbw")
