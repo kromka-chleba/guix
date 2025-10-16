@@ -1331,7 +1331,7 @@ the \"texlive\" importer."
 (define-member (person "Rutherther"
                        "rutherther@ditigal.xyz"
                        "Rutherther")
-  release)
+  core release)
 
 (define-member (person "Morgan Arnold"
                        "morgan.arnold@proton.me"
