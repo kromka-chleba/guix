@@ -1006,8 +1006,8 @@ which allows one to install the M8 firmware on any Teensy.")
     (synopsis
      (string-append (package-synopsis nextpnr) " Cli only version."))))
 
-(define-public nextpnr-ice40
-  (deprecated-package "nextpnr-ice40" nextpnr))
+(define-deprecated-package nextpnr-ice40
+  nextpnr)
 
 (define-public nvc
   (package
