@@ -42,6 +42,7 @@
 ;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
 ;;; Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
 ;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
+;;; Copyright © 2025 Samuel Sehnert <mail@buffersquid.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4038,6 +4039,32 @@ and users are in full control of their data and workflow.")
     (description
      "This package provides a high performance CSV command line toolkit.")
     (license (list license:unlicense license:expat))))
+
+(define-public zola
+  (package
+    (name "zola")
+    (version "0.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (file-name (git-file-name name version))
+       (uri (git-reference
+             (url "https://github.com/getzola/zola")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1j7mdw7y3j2fzwickfl9w4yx0xjbkaf03vcndf2b6jc3la20rzgv"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f))
+    (native-inputs (list pkg-config))
+    (inputs (cons* libwebp oniguruma
+                   (cargo-inputs 'zola)))
+    (synopsis "Static site generator")
+    (description
+     "Zola generates static websites from Markdown content and Tera templates.
+It supports taxonomies, shortcodes, and live reloading.")
+    (home-page "https://getzola.org")
+    (license license:expat)))
 
 (define-public zoxide
   (package
