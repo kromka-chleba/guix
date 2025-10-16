@@ -3069,6 +3069,26 @@ Interface} for Lutgen, to apply popular colorschemes to any image or
 wallpaper.")
     (license license:expat)))
 
+(define-public lutgen-palettes
+  (package
+    (name "lutgen-palettes")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "lutgen-palettes" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "01kaydd14jq6q8x87419v0vsw8bccwmkiybpy7d5by3hizwa0vmb"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'lutgen-palettes))
+    (home-page "https://lut.sh")
+    (synopsis "Popular colorscheme palettes")
+    (description
+     "This package provides @acronym{LUT, Look-Up Table} for some popular
+colorscheme palettes.")
+    (license license:expat)))
+
 (define-public rbw
   (package
     (name "rbw")
