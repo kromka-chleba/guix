@@ -3025,6 +3025,27 @@ popular color palettes")
 palettes.")
     (license license:expat)))
 
+(define-public lutgen-cli
+  (package
+    (name "lutgen-cli")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "lutgen-cli" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "00a3a73gh23vqh7b54cmd8hvc0l0m6rignyd7m7z2g5g27ag190v"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'lutgen-cli))
+    (home-page "https://lut.sh")
+    (synopsis "Blazingly fast interpolated LUT utility for arbitrary and
+popular color palettes")
+    (description
+     "This package provides a blazingly fast interpolated @acronym{LUT,
+Look-Up Table} utility for arbitrary and popular color palettes.")
+    (license license:expat)))
+
 (define-public rbw
   (package
     (name "rbw")
