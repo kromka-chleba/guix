@@ -21740,6 +21740,45 @@ above over the network.")
 in Org buffers and displays matching entries.")
     (license license:gpl3+)))
 
+(define-public emacs-helm-rg
+  ;; Release 0.1 is from 2017.
+  (let ((commit "e404dbe0a4ec1ed32b05d4aa18b83f3dc59a1581") ;main branch
+        (revision "0"))
+    (package
+      (name "emacs-helm-rg")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+            (url "https://github.com/cosmicexplorer/helm-rg/")
+            (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0cqs5nxfh06gbx6kxyckal4p058vgjgqaziz9xsx72dlqlxgmhv9"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; Byte compile fails with:
+            ;; "void-function helm-rg--join-conditions"
+            (delete 'build))
+        #:test-command                  ;see Makefile
+        #~(list "emacs" "--batch" "-L" "." "-l" "tests/helm-rg-test.el"
+                "--eval" "(ert (rx bos \"test-helm-rg\"))"
+                "-f" "ert-run-tests-batch-and-exit")))
+      (propagated-inputs (list emacs-dash emacs-helm))
+      (native-inputs (list emacs-ert-runner))
+      (home-page "https://github.com/cosmicexplorer/helm-rg/")
+      (synopsis "Helm extension to ripgrep")
+      (description
+       "@code{Helm-ri} performs a search of massive codebases extremely fast,
+using ripgrep and helm.")
+      (license license:gpl3))))
+
 (define-public emacs-dired-git-info
   ;; Upstream has no proper release.  The base version is extracted from the
   ;; "Version" keyword in the main file.
