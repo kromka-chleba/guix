@@ -6967,32 +6967,34 @@ including parsing and code generation.")
     (license license:expat)))
 
 (define-public guile-drmaa
-  (package
-    (name "guile-drmaa")
-    (version "0.1.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.elephly.net/software/guile-drmaa.git")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1pail39f3iwllcdma4pk4sxsaypplgb5zjyvjwqf5hdv8s3y211x"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list autoconf automake pkg-config texinfo sed))
-    (inputs
-     (list guile-3.0))
-    (propagated-inputs
-     (list guile-bytestructures nyacc))
-    (home-page "https://git.elephly.net/software/guile-drmaa.git")
-    (synopsis "Guile bindings to DRMAA")
-    (description "This project provides Guile bindings to the DRMAA library
+  (let ((commit "52428874211cf427aa0cc423ea8ae22f425d15a9")
+        (revision "0"))
+    (package
+      (name "guile-drmaa")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://git.elephly.net/software/guile-drmaa.git")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1k3hm3j20pwlbql9wmqm8yscgbraq5qvksc9cg9knpc3pf15gghd"))))
+      (build-system gnu-build-system)
+      (native-inputs
+       (list autoconf automake pkg-config texinfo sed))
+      (inputs
+       (list guile-3.0))
+      (propagated-inputs
+       (list guile-bytestructures nyacc))
+      (home-page "https://git.elephly.net/software/guile-drmaa.git")
+      (synopsis "Guile bindings to DRMAA")
+      (description "This project provides Guile bindings to the DRMAA library
 version 1.  DRMAA is a resource management library implemented by HPC cluster
 schedulers.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public guile-libyaml
   (package
