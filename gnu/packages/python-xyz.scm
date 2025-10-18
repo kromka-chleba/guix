@@ -22491,9 +22491,10 @@ It uses LR parsing and does extensive error checking.")
     (native-inputs
      (list python-pytest
            python-setuptools-scm
-           python-setuptools
-           python-wheel))
-    (home-page "https://bitbucket.org/astanin/python-tabulate")
+           python-setuptools))
+    (propagated-inputs
+     (list python-wcwidth))
+    (home-page "https://github.com/astanin/python-tabulate")
     (synopsis "Pretty-print tabular data")
     (description
      "Tabulate is a library and command-line utility to pretty-print tabular
