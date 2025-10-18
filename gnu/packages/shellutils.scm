@@ -1166,15 +1166,14 @@ with Guix Home:
                              poppler
                              mailcap))
     (native-inputs (list python-pytest))
-    (home-page "https://0xacab.org/jvoisin/mat2")
+    (home-page "https://github.com/jvoisin/mat2")
     (synopsis
-     "CLI metadata removal tool, written in Python with wide compatibility")
+     "Metadata removal tool")
     (description
      "mat2 is a metadata removal tool, supporting a wide range of commonly used file
 formats, written in python3: at its core, it's a library, used by an eponymous
 command-line interface, as well as several file manager extensions.")
     (license license:lgpl3)))
-
 
 (define-public fzf-tab
   (package
