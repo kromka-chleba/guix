@@ -152,7 +152,7 @@ a @code{printf}-like syntax and five logging levels.")
 (define-public glog
   (package
     (name "glog")
-    (version "0.5.0")
+    (version "0.7.1")
     (home-page "https://github.com/google/glog")
     (source (origin
               (method git-fetch)
@@ -160,7 +160,7 @@ a @code{printf}-like syntax and five logging levels.")
                                   (commit (string-append "v" version))))
               (sha256
                (base32
-                "17014q25c99qyis6l3fwxidw6222bb269fdlr74gn7pzmzg4lvg3"))
+                "1zh482ga8mndsw277h9wrq4i5xffji0li3v0xha1i6j1llzicz7s"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (native-inputs
