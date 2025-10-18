@@ -15,6 +15,7 @@
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Charles <charles@charje.net>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
+;;; Copyright © 2025 dan <i@dan.games>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -67,6 +68,7 @@
   #:use-module (gnu packages language)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages logging)
+  #:use-module (gnu packages lua)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
@@ -544,6 +546,20 @@ other Japanese input methods.")
     (home-page "https://github.com/ueno/ibus-skk")
     (license gpl2+)))
 
+(define librime-lua
+  (let ((commit "68f9c364a2d25a04c7d4794981d7c796b05ab627")
+        (revision "0"))
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/hchunhui/librime-lua")
+           (commit commit)))
+    (file-name
+     (git-file-name "librime-lua" (git-version "0" revision commit)))
+    (sha256
+     (base32
+      "1759pk44bslsfv890gmkrg8r3qrnmimidp1hf3nc2c15s9fymgwv")))))
+
 (define-public librime
   (package
     (name "librime")
@@ -557,13 +573,26 @@ other Japanese input methods.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "07cmfjdd4j64hygfk0q8k0aiakb9zp1phrwlhmwcnhwqpl0kqjvn"))))
+         "07cmfjdd4j64hygfk0q8k0aiakb9zp1phrwlhmwcnhwqpl0kqjvn"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (let ((dst (string-append (getcwd) "/plugins/librime-lua")))
+              (mkdir-p dst)
+            (copy-recursively #$librime-lua dst))))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_MERGED_PLUGINS=Off"
+              "-DENABLE_EXTERNAL_PLUGINS=On"
+              "-DLUA_VERSION=lua-5.3")))
     (inputs
      (list boost
            capnproto
            glog
            leveldb
+           lua
            marisa
            opencc
            yaml-cpp))
