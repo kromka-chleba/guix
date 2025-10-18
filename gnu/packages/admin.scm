@@ -6670,7 +6670,7 @@ Discover other RouterOS devices or @command{mactelnetd} hosts.
 (define-public bfs
   (package
     (name "bfs")
-    (version "3.0.4")
+    (version "4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6679,22 +6679,39 @@ Discover other RouterOS devices or @command{mactelnetd} hosts.
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0n2y9m81278j85m8vk242m9nsxdcw62rxsar4hzwszs6p5cjz5ny"))))
+                "12642axr4q8hp3br1x7yxhwdb7ppn8c3yhsq7ndbip2rybk0drpj"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:make-flags #~(list (string-append "CC="
-                                               #$(cc-for-target))
-                                (string-append "PREFIX="
-                                               #$output) "bfs")
-           #:phases #~(modify-phases %standard-phases
-                        (delete 'configure)
-                        (add-before 'check 'disable-exec-no-path-test
-                          (lambda _
-                            ;; This test unsets PATH. It then probably cannot find
-                            ;; echo since it's not inside _PATH_STDPATH (?). We
-                            ;; delete the test to disable it.
-                            (delete-file "tests/posix/exec_nopath.sh"))))))
-    (inputs (list acl attr libcap oniguruma))
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'configure
+                     (lambda _
+                       ;; bfs uses a custom configure script
+                       (invoke "./configure"
+                               (string-append "--prefix=" #$output)
+                               "--enable-release"
+                               (string-append "CC=" #$(cc-for-target)))))
+                   (add-before 'check 'patch-test-file-paths
+                     (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                       ;; This test unsets PATH. It then probably cannot find
+                       ;; echo since it's not inside _PATH_STDPATH (?).
+                       (substitute* (list "tests/posix/exec_nopath.sh")
+                         (("echo")
+                          (search-input-file (or native-inputs inputs) "/bin/echo")))
+
+                       ;; Some tests look for /bin/sh directly
+                       (let ((sh (search-input-file (or native-inputs inputs) "/bin/sh")))
+                         (substitute* (list "tests/xspawn.c")
+                           (("\"/bin/sh\"")
+                            (format #f "\"~a\"" sh)))
+                         (substitute* (list "tests/bfs/execdir_path_relative_slash.sh")
+                           (("/bin/sh")
+                            (format #f "\"~a\"" sh)))
+                         ;; execdir_self.sh generates a script with #!/bin/sh
+                         (substitute* (list "tests/gnu/execdir_self.sh")
+                           (("#!/bin/sh")
+                            (format #f "#!~a" sh)))))))))
+    (inputs (list acl attr libcap liburing oniguruma))
     (synopsis "Breadth-first search for your files")
     (description
      "Bfs is a variant of the UNIX @command{find} command that operates
