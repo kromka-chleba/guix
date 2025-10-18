@@ -547,7 +547,7 @@ other Japanese input methods.")
 (define-public librime
   (package
     (name "librime")
-    (version "1.10.0")
+    (version "1.14.0")
     (source
      (origin
        (method git-fetch)
@@ -557,7 +557,7 @@ other Japanese input methods.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0p4ybmn2syhf30vwzrd6ms77xadhl2lh7d2apq2m1yzmy42mdydm"))))
+         "07cmfjdd4j64hygfk0q8k0aiakb9zp1phrwlhmwcnhwqpl0kqjvn"))))
     (build-system cmake-build-system)
     (inputs
      (list boost
