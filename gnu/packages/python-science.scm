@@ -5503,6 +5503,64 @@ for parameterized model creation and handling.  Its features include:
 science including tools for accessing data sets in Python.")
     (license license:bsd-3)))
 
+(define-public python-polars-runtime-32
+  (package
+    (name "python-polars-runtime-32")
+    (version "1.34.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "polars_runtime_32" version))
+       (sha256
+        (base32 "076w02arkzgrpqifpg4q2rnxh6knc21q5xm3aczq63ca29jzirpb"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tikv-jemallocator
+           (lambda _
+             (substitute* "Cargo.toml"
+               (("^tikv-jemallocator.*") ""))
+             (substitute* "Cargo.toml"
+               (("^zstd.*" all) (string-append all "\ntikv-jemallocator = \"0.6.0\"")))))
+          (add-after 'build 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
+          (add-after 'build-python-module 'install-python-module
+            (assoc-ref py:%standard-phases 'install)))
+      #:install-source? #false))
+    (inputs
+     (cons* (list zstd "lib") (cargo-inputs 'python-polars-runtime-32)))
+    (native-inputs
+     (list maturin pkg-config python-wrapper))
+    (home-page #f)
+    (synopsis "Blazingly fast DataFrame library")
+    (description "Blazingly fast @code{DataFrame} library.")
+    (license #f)))
+
+(define-public python-polars
+  (package
+    (name "python-polars")
+    (version "1.34.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "polars" version))
+       (sha256
+        (base32 "04s0rpaxzgjf5n3camcamw5sid0kdcnml89rrwdv3d3x09qzirax"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-polars-runtime-32))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page #f)
+    (synopsis "Blazingly fast DataFrame library")
+    (description "Blazingly fast @code{DataFrame} library.")
+    (license #f)))
+
 (define-public python-pyfma
   (package
     (name "python-pyfma")

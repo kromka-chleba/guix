@@ -27,6 +27,7 @@
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages assembly)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages llvm)
@@ -607,6 +608,48 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
       "This package provides a library for syntax highlighting and code
 intelligence.")
      (license license:expat))))
+
+(define-public rust-tikv-jemallocator-0.6.0.c7991e5
+  (let ((commit "c7991e5bb6b3e9f79db6b0f48dcda67c5c3d2936")
+        (revision "0"))
+    (hidden-package
+     (package
+       (name "rust-tikv-jemallocator")
+       (version (git-version "0.6.0" revision commit))
+       (source (origin
+                 (method git-fetch)
+                 (uri (git-reference
+                       (url "https://github.com/pola-rs/jemallocator")
+                       (commit commit)))
+                 (file-name (git-file-name name version))
+                 (sha256
+                  (base32
+                   "0wwdw0f3a9vgck3x10gxq80606b2wam31vglhjw2fabdvq2wmxcy"))))
+       (build-system cargo-build-system)
+       (arguments
+           (list #:skip-build? #f
+                 #:cargo-package-crates
+                 ''("tikv-jemalloc-sys"
+                    "tikv-jemallocator")
+                 #:phases
+                 #~(modify-phases %standard-phases
+                      ; (add-before 'build 'set-env
+                      ;   (lambda _
+                      ;     (setenv "RUST_BACKTRACE" "full")))
+                     (add-after 'unpack 'remove-workspace-members
+                       (lambda _
+                         ; Avoid unnecessary workspace members
+                         (substitute* "Cargo.toml"
+                           (("\"jemallocator-global\", \"jemalloc-ctl\", ") ""))
+                         ; Avoid dev dependency, that is excluded from workspace
+                         (substitute* "jemallocator/Cargo.toml"
+                           (("^tikv-jemalloc-ctl.*$") "")))))))
+       (inputs (cargo-inputs 'rust-tikv-jemallocator-0.6.0.c7991e5))
+       ; (native-inputs (list gnu-make autoconf))
+       (home-page "https://github.com/pola-rs/jemallocator")
+       (synopsis "Rust allocator backed by jemalloc")
+       (description "This package provides a Rust allocator backed by jemalloc.")
+       (license (list license:expat license:asl2.0))))))
 
 (define-public rust-web-view-0.7.3.82d7cbc
   (let ((commit "82d7cbce6228b1a964673cc0f22944ad808eab42")
