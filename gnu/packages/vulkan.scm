@@ -780,3 +780,28 @@ storage.")
     (synopsis "Utility libraries for Vulkan developers")
     (description "Utility libraries for Vulkan developers.")
     (license license:asl2.0)))
+
+(define-public directx-headers
+  (package
+    (name "directx-headers")
+    (version "1.618.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url "https://github.com/microsoft/DirectX-Headers.git")
+                           (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256 (base32 "0813ihk0f7c3pnswr82rvvaz2jrr55l5618j8kc20l67fd94mafc"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f
+           #:configure-flags
+           ;; Building test requires libd3d12, which we don't have at the
+           ;; moment.
+           #~(list "-DDXHEADERS_BUILD_TEST=OFF"
+                   "-DDXHEADERS_BUILD_GOOGLE_TEST=OFF")))
+    (home-page "https://github.com/microsoft/DirectX-Headers")
+    (synopsis "Official Direct3D 12 headers")
+    (description "This package hosts the official DirectX headers available under the MIT
+license.")
+    (license license:expat)))
