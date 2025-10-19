@@ -388,8 +388,8 @@ $(prefix)/etc/openrc\n")))
                   ;; Copy the bootstrap executables.
                   (for-each (lambda (input)
                               (intern (assoc-ref inputs input) #t))
-                            '("bootstrap/bash" "bootstrap/mkdir"
-                              "bootstrap/tar" "bootstrap/xz")))))
+                            '("bootstrap-bash" "bootstrap-mkdir"
+                              "bootstrap-tar" "bootstrap-xz")))))
             (add-after 'unpack 'disable-failing-tests
               ;; XXX FIXME: These tests fail within the build container.
               (lambda _
@@ -491,45 +491,38 @@ $(prefix)/etc/openrc\n")))
                      help2man
                      po4a-minimal)))
       (inputs
-       `(("bash-minimal", bash-minimal)
-         ("bzip2" ,bzip2)
-         ("gzip" ,gzip)
-         ("sqlite" ,sqlite)
-         ("libgcrypt" ,libgcrypt)
-         ("zlib" ,zlib)
-
-         ("guile" ,guile-3.0-latest)
-
-         ;; Some of the tests use "unshare" when it is available.
-         ("util-linux" ,util-linux)
-         ,@(if (target-linux?)
-               `(("slirp4netns" ,slirp4netns))
-               '())
-
-         ;; Many tests rely on the 'guile-bootstrap' package, which is why we
-         ;; have it here.
-         ("boot-guile" ,(bootstrap-guile-origin (%current-system)))
-         ,@(if (and (not (%current-target-system))
-                    (string=? (%current-system) "x86_64-linux"))
-               `(("boot-guile/i686" ,(bootstrap-guile-origin "i686-linux")))
-               '())
-         ,@(if (%current-target-system)
-               `(("xz" ,xz))
-               '())
-
-         ;; Tests also rely on these bootstrap executables.
-         ("bootstrap/bash" ,(bootstrap-executable "bash" (%current-system)))
-         ("bootstrap/mkdir" ,(bootstrap-executable "mkdir" (%current-system)))
-         ("bootstrap/tar" ,(bootstrap-executable "tar" (%current-system)))
-         ("bootstrap/xz" ,(bootstrap-executable "xz" (%current-system)))
-
-         ("disarchive" ,disarchive)               ;for 'guix perform-download'
-         ("guile-bzip2" ,guile-bzip2)             ;for Disarchive
-         ("guile-lzma" ,guile-lzma)               ;for Disarchive
-
-         ("git-minimal" ,git-minimal)             ;for 'guix perform-download'
-
-         ("glibc-utf8-locales" ,(libc-utf8-locales-for-target))))
+       (append (list bash-minimal
+                     bzip2
+                     gzip
+                     sqlite
+                     libgcrypt
+                     zlib
+                     guile-3.0-latest
+                     ;; Some of the tests use "unshare" when it is available.
+                     util-linux
+                     ;; Many tests rely on the 'guile-bootstrap' package,
+                     ;; which is why we have it here.
+                     (bootstrap-guile-origin (%current-system))
+                     ;; Tests also rely on these bootstrap executables.
+                     (bootstrap-executable "bash" (%current-system))
+                     (bootstrap-executable "mkdir" (%current-system))
+                     (bootstrap-executable "tar" (%current-system))
+                     (bootstrap-executable "xz" (%current-system))
+                     disarchive         ;for 'guix perform-download'
+                     guile-bzip2        ;for Disarchive
+                     guile-lzma         ;for Disarchive
+                     git-minimal        ;for 'guix perform-download'
+                     (libc-utf8-locales-for-target))
+               (if (target-linux?)
+                   (list slirp4netns)
+                   '())
+               (if (and (not (%current-target-system))
+                        (string=? (%current-system) "x86_64-linux"))
+                   (list (bootstrap-guile-origin "i686-linux"))
+                   '())
+               (if (%current-target-system)
+                   (list xz)
+                   '())))
       (propagated-inputs
        (append (if (target-hurd?)
                    '()
