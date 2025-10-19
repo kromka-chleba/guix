@@ -961,24 +961,38 @@ traditional Chinese output.")
     (license gpl3)))
 
 (define-public libhangul
-  (package
-    (name "libhangul")
-    (version "0.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://kldp.net/hangul/release/"
-                           "3442-libhangul-" version ".tar.gz"))
-       (sha256
-        (base32
-         "0ni9b0v70wkm0116na7ghv03pgxsfpfszhgyj3hld3bxamfal1ar"))))
-    (build-system gnu-build-system)
-    (home-page "https://github.com/libhangul/libhangul")
-    (synopsis "Library to support hangul input method logic")
-    (description
-     "This package provides a library to support hangul input method logic,
+  (let ((commit "285e92d744e85e7643a37b120f54f2fca735d90a")
+        (revision "0"))
+    (package
+      (name "libhangul")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/libhangul/libhangul")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1cgjh6y8rl1fxkymqw8l6igd9k3m65kil4437r6jp60qj8m1rr1r"))
+         (modules '((guix build utils)))
+         (snippet
+          #~(begin
+              (substitute* "CMakeLists.txt"
+                ;; Previously libhangul.pc was installed to
+                ;; pkgconfig/libhangul.pc/libhangul.pc
+                (("pkgconfig/libhangul.pc") "pkgconfig/")
+                ;; Build test targets.
+                (("EXCLUDE_FROM_ALL") ""))))))
+      (build-system cmake-build-system)
+      (native-inputs (list check gettext-minimal pkg-config))
+      (home-page "https://github.com/libhangul/libhangul")
+      (synopsis "Library to support hangul input method logic")
+      (description
+       "This package provides a library to support hangul input method logic,
 hanja dictionary and small hangul character classification.")
-    (license lgpl2.1+)))
+      (license lgpl2.1+))))
 
 (define-public ibus-libhangul
   (package
