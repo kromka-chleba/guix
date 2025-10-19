@@ -2929,6 +2929,11 @@ logic, also known as grey logic.")
       '(list "--pyargs" "skmisc")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; Drop test coverage requirements.
+              (substitute* "pyproject.toml"
+                (("--cov(-[^ ]*)?=[^ ]*") ""))))
           (add-after 'unpack 'fix-version
             (lambda _
               (call-with-output-file "skmisc/_version.py"
@@ -2944,15 +2949,13 @@ logic, also known as grey logic.")
     (propagated-inputs (list meson-python
                              python-numpy
                              python-numpydoc
-                             python-spin
-                             python-twine))
+                             python-spin))
     (native-inputs (list gfortran
                          pkg-config
                          python-cython-3
                          python-meson-python
                          python-numpy
                          python-pytest
-                         python-pytest-cov
                          python-setuptools
                          python-wheel))
     (home-page "https://has2k1.github.io/scikit-misc/stable")
