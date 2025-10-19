@@ -87,19 +87,19 @@
 (define-public nimf
   (package
     (name "nimf")
-    (version "1.2")
+    (version "1.4.13")
     (source
      (origin
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/hamonikr/nimf.git")
-         (commit
-          (string-append "nimf-" version))))
+          (url "https://github.com/hamonikr/nimf.git")
+          (commit
+           (string-append "v" version))))
        (file-name
         (git-file-name name version))
        (sha256
-        (base32 "01qi7flmaqrn2fk03sa42r0caks9d8lsv88s0bgxahhxwk1x76gc"))))
+        (base32 "042jk7qrwd5y5fabzhsqq3wmm9q46nqsmjlcwnyznadhrix4ccwy"))))
     (build-system glib-or-gtk-build-system)
     (outputs '("out" "gtk" "qt" "doc"))
     (arguments
@@ -117,14 +117,7 @@
                              "/share/gtk-doc/html"))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-qt4
-            (lambda _
-              (substitute* '("configure.ac" "modules/clients/Makefile.am")
-                (("\\[QtGui\\]")
-                 "[Qt5Gui]")
-                ((" qt4")
-                 ""))))
-          (add-after 'disable-qt4 'patch-flags
+          (add-after 'unpack 'patch-flags
             (lambda _
               (substitute* "configure.ac"
                 (("-Werror")
@@ -133,19 +126,20 @@
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "configure.ac"
                 (("/usr/share/anthy/anthy.dic")
-                 (search-input-file inputs "/share/anthy/anthy.dic")))
-              (substitute* "configure.ac"
-                ;; Do not provide the PATH argument to AC_PATH_PROG; so that
-                ;; the needed binaries are looked from PATH (the default
-                ;; behavior).
-                (("\\[/usr/bin:\\$GTK3_LIBDIR/libgtk-3-0]")
-                 "")
-                (("\\[/usr/bin:\\$GTK2_LIBDIR/libgtk2.0-0]")
-                 "")
-                (("\\[/usr/bin:\\$GTK3_LIBDIR/libgtk-3-0:\
-\\$GTK2_LIBDIR/libgtk2.0-0]")
-                 ""))
+                 (search-input-file inputs "/share/anthy/anthy.dic"))
+                (("host_bins Qt6") "libexecdir Qt6"))
+              (substitute* '("configure.ac"
+                             "modules/services/indicator/nimf-indicator.c")
+                (("ayatana-") ""))
+              ;; Do not provide the PATH argument to AC_PATH_PROG; so that
+              ;; the needed binaries are looked from PATH (the default
+              ;; behavior).
+              (invoke "sed" "-i" "-E" "-z"
+                      "s/\\[\\/usr\\/bin[^]]*\\]//g"
+                      "configure.ac")
               (substitute* "modules/clients/gtk/Makefile.am"
+                (("\\$\\(GTK4_LIBDIR\\)")
+                 (string-append #$output:gtk "/lib"))
                 (("\\$\\(GTK3_LIBDIR\\)")
                  (string-append #$output:gtk "/lib"))
                 (("\\$\\(GTK2_LIBDIR\\)")
@@ -154,6 +148,10 @@
                 (("\\$\\(QT5_IM_MODULE_DIR\\)")
                  (string-append #$output:qt
                                 "/lib/qt5/plugins/inputmethods")))
+              (substitute* "modules/clients/qt6/Makefile.am"
+                (("\\$\\(QT6_IM_MODULE_DIR\\)")
+                 (string-append #$output:qt
+                                "/lib/qt6/plugins/inputmethods")))
               (substitute* '("bin/nimf-settings/Makefile.am"
                              "data/apparmor-abstractions/Makefile.am"
                              "data/Makefile.am" "data/im-config/Makefile.am"
@@ -181,11 +179,13 @@
     (inputs
      (list anthy
            libappindicator
+           gtk
            gtk+-2
            gtk+
            libhangul
            m17n-db
            m17n-lib
+           qtbase
            qtbase-5
            librime
            (librsvg-for-system)
