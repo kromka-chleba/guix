@@ -805,3 +805,18 @@ storage.")
     (description "This package hosts the official DirectX headers available under the MIT
 license.")
     (license license:expat)))
+
+(define-public directx-headers-1.4
+  (let ((commit "980971e835876dc0cde415e8f9bc646e64667bf7")
+        (revision "0")
+        (base directx-headers))
+    (package
+      (inherit base)
+      (version (git-version "1.4.10" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference (url "https://github.com/microsoft/DirectX-Headers.git")
+                             (commit commit)))
+         (file-name (git-file-name (package-name base) version))
+         (sha256 (base32 "0c7l2xdsbr132ga2nyqjhz9xa42dxvhh9idjxnl673mz5kab1j6h")))))))
