@@ -4595,49 +4595,52 @@ implementing the layer-shell protocol.")
 configuration."))))
 
 (define-public yambar-wayland
-  (package
-    (name "yambar-wayland")
-    (version "1.11.0")
-    (home-page "https://codeberg.org/dnkl/yambar")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url home-page)
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0c3sk2i14fcb0l95pvfnj2sx0vx4ql1vldhimfccbf2qj0r30b20"))))
-    (build-system meson-build-system)
-    (arguments
-     (list
-      #:build-type "release"
-      #:configure-flags #~'("-Db_lto=true"
-                            "-Dbackend-x11=disabled"
-                            "-Dbackend-wayland=enabled")))
-    (native-inputs (list pkg-config
-                         tllist
-                         flex
-                         bison
-                         scdoc
-                         wayland-protocols))
-    (inputs (list fcft
-                  wayland
-                  pipewire
-                  libyaml
-                  pixman
-                  alsa-lib
-                  json-c
-                  libmpdclient
-                  pulseaudio
-                  eudev))
-    (synopsis "X11 and Wayland status panel")
-    (description
-     "@command{yambar} is a lightweight and configurable status panel (bar,
-for short) for X11 and Wayland, that goes to great lengths to be both CPU and
-battery efficient---polling is only done when absolutely necessary.")
-    (license license:expat)))
+  (let ((commit "abeffbd9a9fd0b2133343e1149e65d4a795a43d0")
+        (revision "1"))
+    (package
+      (name "yambar-wayland")
+      (version (git-version "1.11.0" revision commit))
+      (home-page "https://codeberg.org/dnkl/yambar")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url home-page)
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0szi6a1dfprbw069zy96ranz68nzr0zasd610kqxdyydbdkfwwg8"))))
+      (build-system meson-build-system)
+      (arguments
+       (list
+        #:build-type "release"
+        #:configure-flags #~'("-Db_lto=true"
+                              "-Dbackend-x11=disabled"
+                              "-Dbackend-wayland=enabled")))
+      (native-inputs (list pkg-config
+                           tllist
+                           flex
+                           bison
+                           scdoc
+                           wayland-protocols))
+      (inputs (list fcft
+                    wayland
+                    pipewire
+                    libyaml
+                    pixman
+                    alsa-lib
+                    json-c
+                    libmpdclient
+                    pulseaudio
+                    eudev
+                    basu))
+      (synopsis "X11 and Wayland status panel")
+      (description
+       "@command{yambar} is a lightweight and configurable status panel (bar,
+  for short) for X11 and Wayland, that goes to great lengths to be both CPU and
+  battery efficient---polling is only done when absolutely necessary.")
+      (license license:expat))))
 
 (define-public wideriver
   (package
