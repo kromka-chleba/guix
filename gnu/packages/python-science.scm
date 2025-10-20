@@ -37,6 +37,7 @@
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
+;;; Copyright © 2025 Alexis Simon <alexis.simon@runbox.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
