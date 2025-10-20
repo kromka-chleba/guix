@@ -81,8 +81,11 @@
       (name "MATE")
       (snippet '((service mate-desktop-service-type))))
      (desktop-environment
+      (name "KDE Plasma")
+      (snippet '((service plasma-desktop-service-type))))
+     (desktop-environment
       (name "Icewm")
-      (snippet '((specification->package "icewm"))))
+      (packages '((specification->package "icewm"))))
      (desktop-environment
       (name "Openbox")
       (packages '((specification->package "openbox"))))
