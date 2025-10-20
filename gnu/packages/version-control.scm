@@ -2568,16 +2568,16 @@ control to Git repositories.")
 (define-public gitile
   (package
     (name "gitile")
-    (version "0.1.4")
+    (version "0.1.5")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-              (url "https://git.lepiller.eu/git/gitile")
+              (url "https://repo.pisemsky.site/git/gitile")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wb1rajcrzdqjncv40s7hjsnvlh1gq4z9pn9gf210g1iy35vimmz"))))
+        (base32 "0skjkjvs9bk8pd2g63j29cpdnpaljs2n6j2c3ljx33k3vk01xd2z"))))
     (build-system gnu-build-system)
     (arguments
      `(#:imported-modules ((guix build guile-build-system)
