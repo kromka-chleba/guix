@@ -601,9 +601,6 @@ void createSymlink(const Path & target, const Path & link)
 }
 
 
-LogType logType = ltPretty;
-Verbosity verbosity = lvlInfo;
-
 static int nestingLevel = 0;
 
 
@@ -690,9 +687,6 @@ void writeToStderr(const string & s)
         if (std::uncaught_exceptions() == 0) throw;
     }
 }
-
-
-void (*_writeToStderr) (const unsigned char * buf, size_t count) = 0;
 
 
 void readFull(int fd, unsigned char * buf, size_t count)
@@ -1251,7 +1245,6 @@ void keepOnExec(int fd)
 //////////////////////////////////////////////////////////////////////
 
 
-volatile sig_atomic_t _isInterrupted = 0;
 
 void _interrupted()
 {
