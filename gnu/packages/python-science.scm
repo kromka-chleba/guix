@@ -74,6 +74,7 @@
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
+  #:use-module (gnu packages jemalloc)
   #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
@@ -5530,13 +5531,22 @@ science including tools for accessing data sets in Python.")
                (("^tikv-jemallocator.*") ""))
              (substitute* "Cargo.toml"
                (("^zstd.*" all) (string-append all "\ntikv-jemallocator = \"0.6.0\"")))))
+          ;; jemalloc needs unbundling for tikv-jemallocator-sys
+          (add-before 'build 'override-jemalloc
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((jemalloc (assoc-ref inputs "jemalloc")))
+                ;; This flag is needed when not using the bundled jemalloc.
+                ;; https://github.com/tikv/jemallocator/issues/19
+                (setenv "CARGO_FEATURE_UNPREFIXED_MALLOC_ON_SUPPORTED_PLATFORMS" "1")
+                (setenv "JEMALLOC_OVERRIDE"
+                        (string-append jemalloc "/lib/libjemalloc.so")))))
           (add-after 'build 'build-python-module
             (assoc-ref py:%standard-phases 'build))
           (add-after 'build-python-module 'install-python-module
             (assoc-ref py:%standard-phases 'install)))
       #:install-source? #false))
     (inputs
-     (cons* (list zstd "lib") (cargo-inputs 'python-polars-runtime-32)))
+     (cons* jemalloc (list zstd "lib") (cargo-inputs 'python-polars-runtime-32)))
     (native-inputs
      (list maturin pkg-config python-wrapper))
     (home-page #f)

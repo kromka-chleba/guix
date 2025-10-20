@@ -628,15 +628,12 @@ intelligence.")
                    "0wwdw0f3a9vgck3x10gxq80606b2wam31vglhjw2fabdvq2wmxcy"))))
        (build-system cargo-build-system)
        (arguments
-           (list #:skip-build? #f
+           (list #:skip-build? #t
                  #:cargo-package-crates
                  ''("tikv-jemalloc-sys"
                     "tikv-jemallocator")
                  #:phases
                  #~(modify-phases %standard-phases
-                      ; (add-before 'build 'set-env
-                      ;   (lambda _
-                      ;     (setenv "RUST_BACKTRACE" "full")))
                      (add-after 'unpack 'remove-workspace-members
                        (lambda _
                          ; Avoid unnecessary workspace members
@@ -644,9 +641,9 @@ intelligence.")
                            (("\"jemallocator-global\", \"jemalloc-ctl\", ") ""))
                          ; Avoid dev dependency, that is excluded from workspace
                          (substitute* "jemallocator/Cargo.toml"
-                           (("^tikv-jemalloc-ctl.*$") "")))))))
+                           (("^tikv-jemalloc-ctl.*$") ""))))
+                    )))
        (inputs (cargo-inputs 'rust-tikv-jemallocator-0.6.0.c7991e5))
-       ; (native-inputs (list gnu-make autoconf))
        (home-page "https://github.com/pola-rs/jemallocator")
        (synopsis "Rust allocator backed by jemalloc")
        (description "This package provides a Rust allocator backed by jemalloc.")
