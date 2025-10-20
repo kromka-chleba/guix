@@ -278,6 +278,29 @@ compatible Zig code based on the @acronym{LSP, Language Server Protocol} meta
 model.")
       (license license:expat))))
 
+(define-public zig-lsp-kit-for-zls-0.15
+  (let ((commit "576e9405b1ab22c17c0f9318feed3278aa66b0ea")
+        (revision "0"))
+    (package
+      (name "zig-lsp-kit")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/zigtools/lsp-kit")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0pmlc0j5mv6narb4qmc3lzdf7jrajannfbk75f1pxxhqrv6i58sp"))))
+      (build-system zig-build-system)
+      (arguments (list #:zig zig-0.15))
+      (home-page "https://zigtools.github.io/lsp-kit/")
+      (synopsis "Library for creating LSP in zig")
+      (description
+       "The necessary building blocks to develop LSP implementations in Zig.")
+      (license license:expat))))
+
 (define-public zig-diffz
   (let ((commit "420fcb22306ffd4c9c3c761863dfbb6bdbb18a73")
         (revision "0"))
