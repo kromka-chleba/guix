@@ -33632,6 +33632,33 @@ files are easily readable and they work nicely with version control systems.")
 GUI and terminal, and requires a nerd font installed on your system.")
       (license license:gpl3+))))
 
+(define-public emacs-nerd-icons-dired
+  ;; No tags provided upstream
+  (let ((commit "adf9a2bb5f3f13be7a676923639337f3fcc5d8c3")
+        (revision "0"))
+    (package
+      (name "emacs-nerd-icons-dired")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/rainstormstudio/nerd-icons-dired")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0x1xmwlfjgbk5kk4bxvgz4ykwwgiwmdbzhgsw49kpzz678a3qzrp"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f))                   ;no tests
+      (propagated-inputs (list emacs-nerd-icons))
+      (home-page "https://github.com/rainstormstudio/nerd-icons-dired")
+      (synopsis "Icons for Dired via Nerd Icons")
+      (description
+       "This package adds icons to Dired, using the @code{nerd-icons} package.")
+      (license license:gpl3+))))
+
 (define-public emacs-all-the-icons
   (package
     (name "emacs-all-the-icons")
