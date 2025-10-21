@@ -35,14 +35,16 @@
                                         #:key
                                         xgcc
                                         xbinutils
-                                        with-winpthreads?)
+                                        with-winpthreads?
+                                        with-ucrt?)
   "Return a mingw-w64 for targeting MACHINE.  If XGCC or XBINUTILS is specified,
 use that gcc or binutils when cross-compiling.  If WITH-WINPTHREADS? is
 specified, recurse and return a mingw-w64 with support for winpthreads."
   (let* ((triplet (string-append machine "-" "w64-mingw32")))
     (package
       (name (string-append "mingw-w64" "-" machine
-                           (if with-winpthreads? "-winpthreads" "")))
+                           (if with-winpthreads? "-winpthreads" "")
+                           (if with-ucrt? "-ucrt" "")))
       (version "13.0.0")
       (source
        (origin
@@ -84,10 +86,9 @@ specified, recurse and return a mingw-w64 with support for winpthreads."
                      ;; The default msvcrt changed on 12.0.0 to use UCRT as the
                      ;; default, this could cause problems with programs expecting
                      ;; MSVCRT as the default.
-                     ;;
-                     ;; XXX: A new target to use UCRT can be introduced as
-                     ;; the MSYS2 project does, e.g: x86_64-w64-ucrt-mingw32.
-                     "--with-default-msvcrt=msvcrt")
+                     #$@(if with-ucrt?
+                            #~("--with-default-msvcrt=ucrt")
+                            #~("--with-default-msvcrt=msvcrt")))
              #:make-flags #~'("DEFS=-DHAVE_CONFIG_H -D__MINGW_HAS_DXSDK=1")
              #:phases
              #~(modify-phases %standard-phases
@@ -145,6 +146,24 @@ several new APIs such as DirectX and DDK, and 64-bit support.")
 (define-public mingw-w64-x86_64-winpthreads
   (make-mingw-w64 "x86_64"
                   #:with-winpthreads? #t))
+
+(define-public mingw-w64-x86_64-ucrt
+  (make-mingw-w64 "x86_64"
+                  #:with-ucrt? #t))
+
+(define-public mingw-w64-i686-ucrt
+  (make-mingw-w64 "i686"
+                  #:with-ucrt? #t))
+
+(define-public mingw-w64-x86_64-winpthreads-ucrt
+  (make-mingw-w64 "x86_64"
+                  #:with-winpthreads? #t
+                  #:with-ucrt? #t))
+
+(define-public mingw-w64-i686-winpthreads-ucrt
+  (make-mingw-w64 "i686"
+                  #:with-winpthreads? #t
+                  #:with-ucrt? #t))
 
 (define-public mingw-w64-i686 mingw-w64-i686-winpthreads)
 (define-public mingw-w64-x86_64 mingw-w64-x86_64-winpthreads)
