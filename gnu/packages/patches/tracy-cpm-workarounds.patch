@@ -1,0 +1,83 @@
+From c8e987fffe8ccf4aff5c1d548fae871bed16cc49 Mon Sep 17 00:00:00 2001
+From: dan <i@dan.games>
+Date: Wed, 22 Oct 2025 14:18:37 +0800
+Subject: [PATCH] Find zstd via cmake find module.
+
+---
+ cmake/Findzstd.cmake    | 30 ++++++++++++++++++++++++++++++
+ cmake/vendor.cmake      |  2 ++
+ profiler/CMakeLists.txt |  7 -------
+ 3 files changed, 32 insertions(+), 7 deletions(-)
+ create mode 100644 cmake/Findzstd.cmake
+
+diff --git a/cmake/Findzstd.cmake b/cmake/Findzstd.cmake
+new file mode 100644
+index 00000000..20b4c011
+--- /dev/null
++++ b/cmake/Findzstd.cmake
+@@ -0,0 +1,30 @@
++# Find header files
++find_path(ZSTD_INCLUDE_DIR zstd.h)
++
++# Find a ZSTD version
++if(ZSTD_INCLUDE_DIR AND EXISTS "${ZSTD_INCLUDE_DIR}/zstd.h")
++  file(READ "${ZSTD_INCLUDE_DIR}/zstd.h" CONTENT)
++  string(REGEX MATCH ".*define ZSTD_VERSION_MAJOR *([0-9]+).*define ZSTD_VERSION_MINOR *([0-9]+).*define ZSTD_VERSION_RELEASE *([0-9]+)" VERSION_REGEX "${CONTENT}")
++  set(ZSTD_VERSION_MAJOR ${CMAKE_MATCH_1})
++  set(ZSTD_VERSION_MINOR ${CMAKE_MATCH_2})
++  set(ZSTD_VERSION_RELEASE ${CMAKE_MATCH_3})
++  set(ZSTD_VERSION "${ZSTD_VERSION_MAJOR}.${ZSTD_VERSION_MINOR}.${ZSTD_VERSION_RELEASE}")
++endif()
++
++# Find library
++find_library(ZSTD_LIBRARIES NAMES zstd)
++
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(zstd
++  REQUIRED_VARS ZSTD_LIBRARIES ZSTD_INCLUDE_DIR ZSTD_VERSION)
++
++if(zstd_FOUND)
++  set(ZSTD_INCLUDE_DIRS "${ZSTD_INCLUDE_DIR}")
++
++  if(NOT TARGET ZSTD::ZSTD)
++    add_library(ZSTD::ZSTD UNKNOWN IMPORTED)
++    set_target_properties(ZSTD::ZSTD PROPERTIES
++      IMPORTED_LOCATION "${ZSTD_LIBRARIES}"
++      INTERFACE_INCLUDE_DIRECTORIES "${ZSTD_INCLUDE_DIRS}")
++  endif()
++endif()
+\ No newline at end of file
+diff --git a/cmake/vendor.cmake b/cmake/vendor.cmake
+index b519de6e..72d5c449 100644
+--- a/cmake/vendor.cmake
++++ b/cmake/vendor.cmake
+@@ -12,6 +12,8 @@ option(DOWNLOAD_CAPSTONE "Force download capstone" ON)
+ option(DOWNLOAD_GLFW "Force download glfw" OFF)
+ option(DOWNLOAD_FREETYPE "Force download freetype" OFF)
+ 
++list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
++
+ # capstone
+ 
+ pkg_check_modules(CAPSTONE capstone)
+diff --git a/profiler/CMakeLists.txt b/profiler/CMakeLists.txt
+index 108b30f4..d2cf4965 100644
+--- a/profiler/CMakeLists.txt
++++ b/profiler/CMakeLists.txt
+@@ -114,13 +114,6 @@ if(USE_WAYLAND)
+ 
+     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/FindWaylandScanner.cmake)
+ 
+-    CPMAddPackage(
+-        NAME wayland-protocols
+-        GIT_REPOSITORY https://gitlab.freedesktop.org/wayland/wayland-protocols.git
+-        GIT_TAG 1.37
+-        DOWNLOAD_ONLY YES
+-    )
+-
+     ecm_add_wayland_client_protocol(PROFILER_FILES
+         PROTOCOL ${wayland-protocols_SOURCE_DIR}/stable/xdg-shell/xdg-shell.xml
+         BASENAME xdg-shell
+-- 
+2.49.0
+

@@ -2,7 +2,7 @@
 ;;; Copyright © 2017 Dave Love <fx@gnu.org>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2023 dan <i@dan.games>
+;;; Copyright © 2023, 2025 dan <i@dan.games>
 ;;; Copyright © 2025 Luca Cirrottola <luca.cirro@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -27,6 +27,7 @@
   #:use-module ((guix licenses) #:prefix license:) ; avoid zlib, expat clashes
   #:use-module (guix download)
   #:use-module (guix utils)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
@@ -34,6 +35,7 @@
   #:use-module (gnu packages bash)      ;for "which"
   #:use-module (gnu packages bison)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages fabric-management)
@@ -352,7 +354,7 @@ applications.  CubeGUI is the graphical explorer of the CUBE project.")))
 (define-public tracy-wayland
   (package
     (name "tracy-wayland")
-    (version "0.10")
+    (version "0.12.2")
     (source
      (origin
        (method git-fetch)
@@ -361,51 +363,60 @@ applications.  CubeGUI is the graphical explorer of the CUBE project.")))
              (commit (string-append "v" version))))
        (sha256
         (base32
-         "1w50bckvs1nn68amzrkyrh769dhmlhk7w00kr8ac5h9ryk349p8c"))
+         "0rrnv77yh0fzlqpmn237jwpb93r8ds3jsy7xg46bb7hkq6bym0dy"))
        (file-name (git-file-name "tracy" version))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; XXX: Sadly, the ImGui loaders appear to have been customized by
-           ;; the project and the build fails when using the 'imgui' Guix
-           ;; package due to a missing GL_TEXTURE_WRAP_S definition, so keep
-           ;; the bundled copy.
-
-           ;; Unbundle Zstd.
-           (delete-file-recursively "zstd")
-           ;; Adjust the include directives.
-           (substitute* (find-files "server" "\\.(c|h)pp$")
-             (("#include \".*zstd/(zstd|zdict).h\"" _ header)
-              (format #f "#include \"~a.h\"" header)))
-           ;; De-register source files from Visual Code project.
-           (substitute* "profiler/build/win32/Tracy.vcxproj"
-             ((".*Include=\"..\\\\..\\\\..\\\\zstd\\\\.*") ""))))))
-    ;; Note: There is also CMake and Meson support, but only to build the
-    ;; tracy library, not the profiler command.
-    (build-system gnu-build-system)
+       (patches (search-patches "tracy-cpm-workarounds.patch"))))
+    (build-system cmake-build-system)
     (arguments
      (list
       #:tests? #f                       ;no test for the profiler
-      #:make-flags
-      #~(list (string-append "CC=" #$(cc-for-target))
-              (string-append "CFLAGS=-lzstd"))
+      #:configure-flags
+      #~(list "-DDOWNLOAD_CAPSTONE=OFF"
+              "-DCPM_LOCAL_PACKAGES_ONLY=ON"
+              "-DCPM_ImGui_SOURCE=../lib/imgui"
+              "-DCPM_PPQSort_SOURCE=../lib/ppqsort"
+              ;; Somehow find_package() fails to locate nfd, feeding source to
+              ;; CPM instead.
+              (string-append "-DCPM_nfd_SOURCE="
+                             #$(package-source (this-package-input "nativefiledialog-extended")))
+              (string-append "-Dwayland-protocols_SOURCE_DIR="
+                             #$wayland-protocols "/share/wayland-protocols")
+              ;; PPQSort depends on PackageProject.cmake.
+              (string-append "-DCPM_PackageProject.cmake_SOURCE="
+                             #$package-project-cmake-for-tracy))
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'build 'chdir
+          ;; Both imgui and ppqsort need to be patched, thus we need to copy
+          ;; them otherwise files are read-only.
+          (add-after 'unpack 'copy-libs
             (lambda _
-              (chdir "profiler/build/unix")))
-          (delete 'configure)           ;the profiler has no configure script
-          (replace 'install
+              (mkdir-p "lib/ppqsort")
+              (copy-recursively #$ppqsort-for-tracy "./lib/ppqsort/")
+              (delete-file "./lib/ppqsort/cmake/CPM.cmake")
+              (copy-file "cmake/CPM.cmake" "./lib/ppqsort/cmake/CPM.cmake")
+              (mkdir-p "lib/imgui")
+              (copy-recursively #$imgui-for-tracy "./lib/imgui/")))
+          ;; We only have capstone 5 in Guix.  Remove this phase when we
+          ;; upgrade to capstone 6.
+          (add-after 'unpack 'patch-capstone-arch
             (lambda _
-              (let ((bin (string-append #$output "/bin"))
-                    (tracy (string-append #$output "/bin/tracy")))
-                (mkdir-p bin)
-                (copy-file "Tracy-release" tracy)))))))
+              (substitute* '("server/TracyWorker.cpp"
+                             "profiler/src/profiler/TracySourceView.cpp")
+                (("AARCH64") "ARM64")
+                (("aarch64") "arm64"))))
+          (add-after 'unpack 'patch-zstd-link-target
+            (lambda _
+              (substitute* "cmake/server.cmake"
+                (("libzstd") "zstd"))))
+          (add-before 'configure 'chdir
+            (lambda _
+              (chdir "profiler"))))))
     (inputs (list capstone
                   dbus
                   freetype
                   libxkbcommon
                   mesa
+                  nativefiledialog-extended
                   wayland
                   `(,zstd "lib")))
     (native-inputs (list pkg-config))
@@ -422,10 +433,10 @@ sampling profiler for games and other applications.")
     (name "tracy")
     (arguments
      (substitute-keyword-arguments (package-arguments tracy-wayland)
-       ((#:make-flags flags #~'())
+       ((#:configure-flags flags #~'())
         #~(append #$flags
                   ;; The LEGACY flag indicate we want to build tracy with glfw.
-                  (list "LEGACY=1")))))
+                  (list "-DLEGACY=ON")))))
     (inputs (modify-inputs (package-inputs tracy-wayland)
               (delete "libxkbcommon" "wayland")
               (prepend glfw)))
