@@ -326,6 +326,17 @@ applications.  CubeGUI is the graphical explorer of the CUBE project.")))
     (snippet
      ;; Remove bundled fonts.
      '(delete-file-recursively "misc/fonts"))))
+
+(define ppqsort-for-tracy
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/GabTux/PPQSort")
+           (commit "v1.0.5")))
+    (file-name (git-file-name "ppqsort" "1.0.5"))
+    (sha256
+     (base32
+      "1ycr8fsp8k1225scrbjkj6bjm6iidvbavzvyxgwhbkxjzcimbihh"))))
 (define-public tracy-wayland
   (package
     (name "tracy-wayland")
