@@ -2047,57 +2047,36 @@ other values of screen objects, by setting their values as the tween starting
 point and then, after each tween step, plugging back the result.")
     (license license:expat)))
 
-(define-public abseil-cpp-20220623
+(define-public abseil-cpp
   (package
     (name "abseil-cpp")
-    (version "20220623.2")
+    (version "20250512.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/abseil/abseil-cpp")
-                    (commit version)))
+                     (url "https://github.com/abseil/abseil-cpp")
+                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1cmchfcqp85yp5hc3i47xv3i14v0f2wd5h2jblvcjjmjyhji1bwr"))
+                "069ssr9zad1mfxc6m6m0a97khfyhdb3zq43nyrn0nmxx6flww7kq"))
               (patches
                (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
     (build-system cmake-build-system)
     (arguments
-      (list
-        #:configure-flags
-          ;; The following convoluted expression has been crafted to avoid
-          ;; changing the derivation when removing inheritance from
-          ;; abseil-cpp-20200923.3.
-          #~(cons*
-              "-DABSL_BUILD_TESTING=ON"
-              (delete
-                "-DABSL_RUN_TESTS=ON"
-                (list "-DBUILD_SHARED_LIBS=ON"
-                      "-DABSL_RUN_TESTS=ON"
-                      "-DABSL_USE_EXTERNAL_GOOGLETEST=ON"
-                       ;; Needed, else we get errors like:
-                       ;; ld: CMakeFiles/absl_periodic_sampler_test.dir/internal/periodic_sampler_test.cc.o:
-                       ;;   undefined reference to symbol '_ZN7testing4Mock16UnregisterLockedEPNS_8internal25UntypedFunctionMockerBaseE'
-                       ;; ld: /gnu/store/...-googletest-1.10.0/lib/libgmock.so:
-                       ;;   error adding symbols: DSO missing from command line
-                       ;; collect2: error: ld returned 1 exit status
-                       "-DCMAKE_EXE_LINKER_FLAGS=-lgtest -lpthread -lgmock")))
-        #:phases
-        #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-max
-            (lambda _
-              (substitute* "absl/debugging/failure_signal_handler.cc"
-                (("std::max\\(SIGSTKSZ, 65536\\)")
-                 "std::max<size_t>(SIGSTKSZ, 65536)"))))
-          (add-before 'configure 'remove-gtest-check
-            ;; The CMakeLists fails to find our googletest for some reason, but
-            ;; it works nonetheless.
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                (("check_target\\(gtest\\)") "")
-                (("check_target\\(gtest_main\\)") "")
-                (("check_target\\(gmock\\)") "")))))))
+     (list
+      #:configure-flags
+      #~(list
+         "-DABSL_BUILD_TESTING=ON"
+         "-DBUILD_SHARED_LIBS=ON"
+         "-DABSL_USE_EXTERNAL_GOOGLETEST=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-env-vars
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; absl_time_test requires this environment variable.
+              (setenv "TZDIR" (string-append #$(package-source this-package)
+                                             "/absl/time/internal/cctz/testdata/zoneinfo")))))))
     (native-inputs
      (list googletest))
     (home-page "https://abseil.io")
@@ -2106,46 +2085,6 @@ point and then, after each tween step, plugging back the result.")
 augment the C++ standard library.  The Abseil library code is collected from
 Google's C++ code base.")
     (license license:asl2.0)))
-
-(define-public abseil-cpp
-  (let ((base abseil-cpp-20220623))
-    (package
-      (inherit base)
-      (name "abseil-cpp")
-      (version "20250512.1")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/abseil/abseil-cpp")
-                      (commit version)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "069ssr9zad1mfxc6m6m0a97khfyhdb3zq43nyrn0nmxx6flww7kq"))
-                (patches
-                 (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
-      (arguments
-       (substitute-keyword-arguments (package-arguments base)
-         ((#:configure-flags flags #~'())
-          (if (target-riscv64?)
-              #~(cons* "-DCMAKE_SHARED_LINKER_FLAGS=-latomic"
-                       #$flags)
-              flags))
-         ((#:phases phases)
-          #~(modify-phases #$phases
-              (add-before 'check 'set-env-vars
-                (lambda* (#:key inputs #:allow-other-keys)
-                 ;; absl_time_test requires this environment variable.
-                 (setenv "TZDIR" (string-append #$(package-source this-package)
-                                                "/absl/time/internal/cctz/testdata/zoneinfo"))))
-              #$@(if (target-riscv64?)
-                     #~((replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
-                              (invoke "ctest" "-E"
-                                      "absl_symbolize_test|absl_log_format_test")))))
-                     #~()))))))))
 
 (define (abseil-cpp-for-c++-standard base version)
   (hidden-package
@@ -2169,9 +2108,6 @@ Google's C++ code base.")
 
 (define-public abseil-cpp-cxxstd17
   (abseil-cpp-for-c++-standard abseil-cpp 17))  ;XXX: the default with GCC 11?
-
-(define-public abseil-cpp-cxxstd11
-  (abseil-cpp-for-c++-standard abseil-cpp-20220623 11)) ;last version on C++11
 
 (define-public static-abseil-cpp
   (make-static-abseil-cpp abseil-cpp))
