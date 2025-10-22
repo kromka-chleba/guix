@@ -1,11 +1,13 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2014 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2015, 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2015, 2017 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2016, 2017, 2019-2022, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2017 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2017, 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
@@ -25,14 +27,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages screen)
-  #:use-module (guix licenses)
-  #:use-module (guix packages)
-  #:use-module (guix download)
-  #:use-module (guix gexp)
-  #:use-module (guix git-download)
-  #:use-module (guix utils)
-  #:use-module (guix build-system gnu)
-  #:use-module (gnu packages)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages crypto)
@@ -42,7 +37,162 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages python)
   #:use-module (gnu packages slang)
-  #:use-module (gnu packages texinfo))
+  #:use-module (gnu packages texinfo)
+  #:use-module (gnu packages)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix download)
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages)
+  #:use-module (guix utils))
+
+(define-public abduco
+  (package
+   (name "abduco")
+   (version "0.6")
+   (source
+    (origin
+      (method git-fetch)
+      (uri (git-reference
+             (url "https://github.com/martanne/abduco")
+             (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+       (base32
+        "14cqllh36mvnhwdnl63mrhxlr6a0rq192cmr19ac6cvycicdk6i2"))))
+   (build-system gnu-build-system)
+   (arguments
+    (list
+     #:tests? #f                        ; No test suite
+     #:make-flags
+     #~(list (string-append "CC=" #$(cc-for-target))
+             (string-append "PREFIX=" #$output))
+     #:phases
+     #~(modify-phases %standard-phases
+         (delete 'configure))))
+   (synopsis "Session management in a clean and simple way")
+   (description "abduco provides session management i.e. it allows programs to
+be run independently from their controlling terminal.  That is, programs can
+be detached---run in the background---and then later reattached.")
+   (home-page "https://www.brain-dump.org/projects/abduco/")
+   (license license:isc)))
+
+(define-public byobu
+  (package
+    (name "byobu")
+    (version "5.133")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://launchpad.net/byobu/trunk/"
+                           version "/+download/byobu_"
+                           version ".orig.tar.gz"))
+       (sha256
+        (base32 "0qvmmdnvwqbgbhn5c8asmrmjhclcl029py2d2zvmd7h5ij7s93jd"))
+       (patches (search-patches "byobu-writable-status.patch"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("bash" ,bash-minimal) ; for wrap-program
+       ("python" ,python-wrapper)       ; for config and session GUIs
+       ("python-newt" ,newt "python")))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before
+          'configure 'provide-locale
+          (lambda* (#:key inputs #:allow-other-keys)
+            (let ((libc (assoc-ref inputs "libc"))) ; implicit input
+              (substitute* "usr/bin/byobu.in"
+                (("locale") (string-append libc "/bin/locale")))
+              #t)))
+         (add-after
+          'install 'wrap-python-scripts
+          (lambda* (#:key inputs outputs #:allow-other-keys)
+            (let* ((python (search-input-file inputs "/bin/python"))
+                   (out    (assoc-ref outputs "out"))
+                   (config (string-append out "/bin/byobu-config"))
+                   (select (string-append out "/bin/byobu-select-session")))
+              (wrap-program config
+                `("BYOBU_PYTHON" = (,python))
+                `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH"))))
+              (wrap-program select
+                `("BYOBU_PYTHON" = (,python)))
+              #t))))))
+    (home-page "https://byobu.org/")
+    (synopsis "Text-based window manager and terminal multiplexer")
+    (description
+     "Byobu is a Japanese term for decorative, multi-panel screens that serve
+as folding room dividers.  The Byobu software includes an enhanced profile,
+configuration utilities, and system status notifications for the GNU Screen
+window manager as well as the Tmux terminal multiplexer.")
+    (license license:gpl3+)))
+
+(define-public dtach
+  (package
+    (name "dtach")
+    (version "0.9")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/" name "/" name "/"
+                                  version "/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1wwj2hlngi8qn2pisvhyfxxs8gyqjlgrrv5lz91w8ly54dlzvs9j"))))
+    (build-system gnu-build-system)
+    (arguments
+     ;; No install target.
+     '(#:phases
+       (modify-phases %standard-phases
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (install-file "dtach" (string-append out "/bin"))
+               (install-file "dtach.1" (string-append out "/share/man/man1"))
+               #t))))
+       ;; No check target.
+       #:tests? #f))
+    (home-page "https://dtach.sourceforge.net/")
+    (synopsis "Emulates the detach feature of screen")
+    (description
+     "dtach is a tiny program that emulates the detach feature of screen,
+allowing you to run a program in an environment that is protected from the
+controlling terminal and attach to it later.")
+    (license license:gpl2+)))
+
+(define-public reptyr
+  (package
+    (name "reptyr")
+    (version "0.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nelhage/reptyr")
+             (commit (string-append "reptyr-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03k95bf7b46g89j0hgfvra9d512z0ha7vw9358h9j67h9b5bylwf"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                      ; no tests
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "PREFIX=" #$output)
+                   (string-append "BASHCOMPDIR=" #$output
+                                  "/etc/bash_completion.d"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure))))         ; no configure script
+    (home-page "https://github.com/nelhage/reptyr")
+    (synopsis "Tool for reparenting a running program to a new terminal")
+    (description
+     "reptyr is a utility for taking an existing running program and attaching
+it to a new terminal.  Started a long-running process over @code{ssh}, but have
+to leave and don't want to interrupt it?  Just start a @code{screen}, use
+reptyr to grab it, and then kill the @code{ssh} session and head on home.")
+    ;; Reptyr currently does not support mips.
+    (supported-systems (delete "mips64el-linux" %supported-systems))
+    (license license:expat)))
 
 (define-public screen
   (package
@@ -95,121 +245,4 @@ features such as a scroll-back buffer and a copy-and-paste mechanism.  Screen
 then manages the different virtual terminals, allowing you to easily switch
 between them, to detach them from the current session, or even splitting the
 view to show two terminals at once.")
-    (license gpl2+)))
-
-(define-public dtach
-  (package
-    (name "dtach")
-    (version "0.9")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/" name "/" name "/"
-                                  version "/" name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1wwj2hlngi8qn2pisvhyfxxs8gyqjlgrrv5lz91w8ly54dlzvs9j"))))
-    (build-system gnu-build-system)
-    (arguments
-     ;; No install target.
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (install-file "dtach" (string-append out "/bin"))
-               (install-file "dtach.1" (string-append out "/share/man/man1"))
-               #t))))
-       ;; No check target.
-       #:tests? #f))
-    (home-page "https://dtach.sourceforge.net/")
-    (synopsis "Emulates the detach feature of screen")
-    (description
-     "dtach is a tiny program that emulates the detach feature of screen,
-allowing you to run a program in an environment that is protected from the
-controlling terminal and attach to it later.")
-    (license gpl2+)))
-
-(define-public byobu
-  (package
-    (name "byobu")
-    (version "5.133")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://launchpad.net/byobu/trunk/"
-                           version "/+download/byobu_"
-                           version ".orig.tar.gz"))
-       (sha256
-        (base32 "0qvmmdnvwqbgbhn5c8asmrmjhclcl029py2d2zvmd7h5ij7s93jd"))
-       (patches (search-patches "byobu-writable-status.patch"))))
-    (build-system gnu-build-system)
-    (inputs
-     `(("bash" ,bash-minimal) ; for wrap-program
-       ("python" ,python-wrapper)       ; for config and session GUIs
-       ("python-newt" ,newt "python")))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before
-          'configure 'provide-locale
-          (lambda* (#:key inputs #:allow-other-keys)
-            (let ((libc (assoc-ref inputs "libc"))) ; implicit input
-              (substitute* "usr/bin/byobu.in"
-                (("locale") (string-append libc "/bin/locale")))
-              #t)))
-         (add-after
-          'install 'wrap-python-scripts
-          (lambda* (#:key inputs outputs #:allow-other-keys)
-            (let* ((python (search-input-file inputs "/bin/python"))
-                   (out    (assoc-ref outputs "out"))
-                   (config (string-append out "/bin/byobu-config"))
-                   (select (string-append out "/bin/byobu-select-session")))
-              (wrap-program config
-                `("BYOBU_PYTHON" = (,python))
-                `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH"))))
-              (wrap-program select
-                `("BYOBU_PYTHON" = (,python)))
-              #t))))))
-    (home-page "https://byobu.org/")
-    (synopsis "Text-based window manager and terminal multiplexer")
-    (description
-     "Byobu is a Japanese term for decorative, multi-panel screens that serve
-as folding room dividers.  The Byobu software includes an enhanced profile,
-configuration utilities, and system status notifications for the GNU Screen
-window manager as well as the Tmux terminal multiplexer.")
-    (license gpl3+)))
-
-(define-public reptyr
-  (package
-    (name "reptyr")
-    (version "0.10.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/nelhage/reptyr")
-             (commit (string-append "reptyr-" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "03k95bf7b46g89j0hgfvra9d512z0ha7vw9358h9j67h9b5bylwf"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list #:tests? #f                      ; no tests
-           #:make-flags
-           #~(list (string-append "CC=" #$(cc-for-target))
-                   (string-append "PREFIX=" #$output)
-                   (string-append "BASHCOMPDIR=" #$output
-                                  "/etc/bash_completion.d"))
-           #:phases
-           #~(modify-phases %standard-phases
-               (delete 'configure))))         ; no configure script
-    (home-page "https://github.com/nelhage/reptyr")
-    (synopsis "Tool for reparenting a running program to a new terminal")
-    (description
-     "reptyr is a utility for taking an existing running program and attaching
-it to a new terminal.  Started a long-running process over @code{ssh}, but have
-to leave and don't want to interrupt it?  Just start a @code{screen}, use
-reptyr to grab it, and then kill the @code{ssh} session and head on home.")
-    ;; Reptyr currently does not support mips.
-    (supported-systems (delete "mips64el-linux" %supported-systems))
-    (license expat)))
+    (license license:gpl2+)))

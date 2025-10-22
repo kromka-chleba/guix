@@ -3174,9 +3174,9 @@ models in the STL and OFF file formats.")
       (license license:gpl2+))))
 
 (define-public pythonscad
-  (let ((commit "228aa7b34821523d0dc413d9421bae204edabefe")
+  (let ((commit "92071afdffa6e2f6d99fe7e695c40044ec8aa16a")
         (version "0.0.0")
-        (revision "4"))
+        (revision "5"))
     (package
       (inherit openscad)
       (name "pythonscad")
@@ -3192,7 +3192,7 @@ models in the STL and OFF file formats.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "133anxk4ksi0f8nx15sm564izq2fqni3w72pg54gwrx27zli9cbh"))
+          (base32 "1ivjbcf52xzavyrld5xjii7yrqf27c244ndzvysrdaz53s06nk90"))
          (modules '((guix build utils)))
          (snippet #~(begin
                       ;; Delete all unbundled libraries to replace them with
@@ -3838,12 +3838,36 @@ program that can perform mesh processing tasks in batch mode, without a GUI.")
                              "/share/vim/vimfiles/pack/guix/start/poke")
               (string-append "--with-lispdir="
                              (emacs:elpa-directory #$output)))))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "POKE_LOAD_PATH")
+             (files '("share/poke/pickles")))))
     (home-page "https://www.gnu.org/software/poke/#documentation")
     (synopsis "Editing of arbitrary binary data")
     (description "GNU poke is an interactive, extensible editor for binary data.
 Not limited to editing basic entities such as bits and bytes, it provides a
 full-fledged procedural, interactive programming language designed to describe
 data structures and to operate on them.")
+    (license license:gpl3+)))
+
+(define-public poke-elf
+  (package
+    (name "poke-elf")
+    (version "1.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/poke/poke-elf-" version
+                                  ".tar.gz"))
+              (sha256
+               (base32
+                "0x3shih7sjj34f5305kvbp4cfy11m92zwidjk3658m23zkd6gdqa"))))
+    (build-system gnu-build-system)
+    (native-inputs (list poke))         ;for the test suite
+    (home-page "https://jemarch.net/poke-elf")
+    (synopsis "GNU poke pickle for ELF object files")
+    (description "@code{poke-elf} is a GNU poke pickle for editing ELF object files,
+executables, shared libraries and core dumps.  It supports many architectures
+and extensions.")
     (license license:gpl3+)))
 
 (define-public emacs-poke

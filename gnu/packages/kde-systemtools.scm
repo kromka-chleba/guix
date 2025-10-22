@@ -1,9 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017, 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2016 David Craven <david@craven.ch>
+;;; Copyright © 2017-2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2020 Marius Bakke<mbakke@fastmail.com>
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
-;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023-2025 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023-2025 Sughosha <sughosha@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -37,7 +40,6 @@
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages kde-plasma)
   #:use-module (gnu packages linux)
@@ -57,17 +59,42 @@
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xdisorg))
 
+(define-public baloo-widgets
+  (package
+    (name "baloo-widgets")
+    (version "25.08.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/baloo-widgets-" version ".tar.xz"))
+       (sha256
+        (base32 "1k8v6jkz7mdwnpzr8hvig24iggy6i90warr3qjgnh2sddz5x6v2w"))))
+    (build-system qt-build-system)
+    (native-inputs
+     (list extra-cmake-modules))
+    (inputs
+     (list baloo kconfig ki18n kio))
+    (arguments
+     (list #:configure-flags #~(list "-DBUILD_WITH_QT6=ON")
+           #:qtbase qtbase))
+    (home-page "https://community.kde.org/Baloo")
+    (synopsis "Wigets for use with Baloo")
+    (description "Baloo is a framework for searching and managing metadata.
+This package contains GUI widgets for baloo.")
+    (license license:lgpl2.0+)))
+
 (define-public dolphin
   (package
     (name "dolphin")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dolphin-" version ".tar.xz"))
        (sha256
-        (base32 "1kgaf4889g2hpgi9rdsnlf90a27z3gy6myhgca6zs937d7053c08"))))
+        (base32 "14b7lrp768ryl9gvp1bl8svcl752j4yi1cn9p0sgs1v4ixlz3x06"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools ruby ruby-test-unit))
@@ -95,6 +122,7 @@
            libxkbcommon
            plasma-activities
            qtmultimedia
+           qtwayland
            solid))
     (arguments
      (list #:qtbase qtbase
@@ -118,14 +146,14 @@ The main features of Dolphin are:
 (define-public dolphin-plugins
   (package
     (name "dolphin-plugins")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dolphin-plugins-" version ".tar.xz"))
        (sha256
-        (base32 "1jqr3k9zc9xgzx7sg2x7iwmim143402aznng0w3m9pw5zpaj5x3p"))))
+        (base32 "1j0g2p7hj6ghg84bbchwayr0s0gcy3a8frgvwwjjc0aap5cxs4a3"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -151,14 +179,14 @@ Dolphin with the version control systems: Bzr, Git, Mercurial, Subversion.")
 (define-public kdf
   (package
     (name "kdf")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kdf-" version ".tar.xz"))
               (sha256
                (base32
-                "0h527y4bnr2z4krkbl9m2091v9065waqyc0cqcbvglrs8zj2bjda"))))
+                "1nq13dz5pa7zr5gd3sb3w1iiqc2jj3gh9qv5dcxbs6w4ypry4nkw"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -174,7 +202,8 @@ Dolphin with the version control systems: Bzr, Git, Mercurial, Subversion.")
            kwidgetsaddons
            kstatusnotifieritem
            kxmlgui
-           qt5compat))
+           qt5compat
+           qtwayland))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f))
@@ -189,14 +218,14 @@ unmount drives and view them in a file manager.")
 (define-public khelpcenter
   (package
     (name "khelpcenter")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/khelpcenter-" version ".tar.xz"))
        (sha256
-        (base32 "1br0hw7a61672cg453c32q2b9z8wy2zx2afin5wzx7m7fgwjqmvx"))))
+        (base32 "1nmhg3v73p8yapmvp3chac3vi6jpjwmc0jj28ksbmdrp952yaygb"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools perl))
@@ -217,6 +246,7 @@ unmount drives and view them in a file manager.")
            breeze-icons ;; default icon set
            qtbase
            xapian
+           qtwayland
            qtwebengine))
     (home-page "https://apps.kde.org/khelpcenter/")
     (synopsis "KDE documentation viewer")
@@ -234,27 +264,19 @@ document meta data file.")
 (define-public kio-fuse
   (package
     (name "kio-fuse")
-    (version "5.1.0")
+    (version "5.1.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/kio-fuse/kio-fuse-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0jz9952dd20sw0c25pyn2l86nmc1s5l42gxk4js1jnkx4a0la43x"))))
+                "051xfqfygq11dg6l6522h097raf0yc0sr4vaf5z9ih2mw1yamxmd"))))
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
-      #:phases #~(modify-phases %standard-phases
-                   (replace 'check
-                     (lambda* (#:key tests? #:allow-other-keys)
-                       (when tests?
-                         (setenv "HOME" (getcwd))
-                         (setenv "XDG_RUNTIME_DIR" (getcwd))
-                         (setenv "QT_QPA_PLATFORM" "offscreen")
-                         (invoke "dbus-launch" "ctest" "-E"
-                                 "(fileopstest-cache|fileopstest-filejob)")))))))
+      #:tests? #f ;no tests
+      #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")))
     (native-inputs (list dbus extra-cmake-modules pkg-config))
     (inputs (list fuse kio kcoreaddons qtbase))
     (home-page "https://community.kde.org/Frameworks")
@@ -265,7 +287,7 @@ document meta data file.")
 (define-public kpmcore
   (package
     (name "kpmcore")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -273,7 +295,7 @@ document meta data file.")
                     "/src/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0q7pdjvsd7sxmhmwazvxlccxjmpsyzn3phkhwm8s9fnka2qzqj9g"))))
+                "0mamm43krqzn91y7dwpl4nva8bppywqc59gcbyd1208hw1ll60ir"))))
     (build-system cmake-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config))
@@ -329,14 +351,14 @@ document meta data file.")
 (define-public konsole
   (package
     (name "konsole")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konsole-" version ".tar.xz"))
        (sha256
-        (base32 "1q1w0m0rgl3q096mmaz69d2248fidzd9fkvf3b7gqgg1mgkiz4b0"))))
+        (base32 "0xz3bzkd21pxpqv7m1xinncvq469szs092kxph833pg5095b83r2"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools zlib))
@@ -364,6 +386,7 @@ document meta data file.")
            kxmlgui
            breeze-icons ;; default icon set
            qt5compat
+           qtwayland
            qtmultimedia
            icu4c))
     (arguments
@@ -383,14 +406,14 @@ This package is part of the KDE base applications module.")
 (define-public krfb
   (package
     (name "krfb")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/krfb-" version ".tar.xz"))
        (sha256
-        (base32 "0mqm2s8sbs1c1441pwlm47jg5hanpb4wm4si4w7flixznjddcvs2"))))
+        (base32 "1ni85fp464ayrm4pyapslmx5c3xr9agsnqwx3765fb9yjd18l6w8"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
                      #:tests? #f
@@ -444,14 +467,14 @@ This package is part of the KDE networking module.")
 (define-public ksystemlog
   (package
     (name "ksystemlog")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ksystemlog-" version ".tar.xz"))
        (sha256
-        (base32 "0cc3dslyw8zps4y6f0b56miaj52ndmbw4hn8ajcfm890kjgb3lq4"))))
+        (base32 "0g7g0d0hgf2diwjg9mnrs0igsyz26xm6k2485gpqyymh0dg8kvm2"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -470,7 +493,8 @@ This package is part of the KDE networking module.")
            kitemviews
            ktextwidgets
            kwidgetsaddons
-           kxmlgui))
+           kxmlgui
+           qtwayland))
     (home-page "https://apps.kde.org/ksystemlog/")
     (synopsis "System log viewer")
     (description "This program is developed for being used by beginner users,
@@ -484,14 +508,14 @@ This package is part of the KDE administration module.")
 (define-public kwalletmanager
   (package
     (name "kwalletmanager")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kwalletmanager-" version ".tar.xz"))
        (sha256
-        (base32 "014799qlyk9nz459niqr39xpgwmli0knm34iwyljmidbd9sf4lnd"))))
+        (base32 "0wpvsvvljcynnbdlldj669l1bw1ayhcspkqc5d69wvnlx7w6bads"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -513,7 +537,8 @@ This package is part of the KDE administration module.")
            ktextwidgets
            kwallet
            kwindowsystem
-           kxmlgui))
+           kxmlgui
+           qtwayland))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f))
@@ -526,14 +551,14 @@ This package is part of the KDE administration module.")
 (define-public partitionmanager
   (package
     (name "partitionmanager")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/partitionmanager-" version ".tar.xz"))
        (sha256
-        (base32 "14575n9wkp0jd1wqnhdd6wj9l76xl22jwi2gllfhqvgqldw97vqv"))))
+        (base32 "0yq4v5m8a3c3nwp2ck458vin0jcnmhbryhlkxqjd7r9qh17f45w1"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -553,7 +578,8 @@ This package is part of the KDE administration module.")
            kwidgetsaddons
            kwindowsystem
            kxmlgui
-           polkit-qt6))
+           polkit-qt6
+           qtwayland))
     (home-page "https://apps.kde.org/partitionmanager/")
     (synopsis "Disk device, partition and file system manager")
     (description "KDE Partition Manager is a utility to help you manage the
@@ -609,14 +635,14 @@ as well as QR codes.")
 (define-public yakuake
   (package
     (name "yakuake")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/yakuake-" version ".tar.xz"))
               (sha256
                (base32
-                "0bjmdgzy2n5y7k82b42spyhg971zs066g32k8i9whgm3bflgyzda"))))
+                "07251izhip7q1kwd87839009v3s7b2q1xgxsxgfgcs50v6kgxgkh"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -641,7 +667,8 @@ as well as QR codes.")
            kwidgetsaddons
            kwindowsystem
            libxkbcommon
-           qtsvg))
+           qtsvg
+           qtwayland))
     (arguments
      (list #:qtbase qtbase
            #:tests? #f))

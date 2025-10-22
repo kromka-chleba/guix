@@ -1031,7 +1031,7 @@ console.")
 (define-public btop
   (package
     (name "btop")
-    (version "1.4.4")
+    (version "1.4.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1040,7 +1040,7 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1b918b86sw265kxg99d140z9qxrgv7qw461lnm843v89xj6m8zz0"))))
+                "03dchclmbjphirzqii4m0vyqfd0vw1k8mgpchmr13g3brlfzxd34"))))
     (build-system gnu-build-system)
     (native-inputs (list lowdown))
     (arguments
@@ -2893,7 +2893,7 @@ development, not the kernel implementation of ACPI.")
            python-wheel))
     (inputs
      (list python-psutil
-           python-urwid-3))
+           python-urwid))
     (home-page "https://github.com/amanusk/s-tui")
     (synopsis "Interactive terminal stress test and monitoring tool")
     (description
@@ -3034,7 +3034,7 @@ environment variable is set and output is to tty.")
 (define-public lr
   (package
     (name "lr")
-    (version "2.0")
+    (version "2.0.1")
     (source
      (origin
        (method git-fetch)
@@ -3043,7 +3043,7 @@ environment variable is set and output is to tty.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05k971vf6080igfila8iav5d4j7sgh301123yng9lvsmr8frf8mf"))))
+        (base32 "0mqhcgi4v3zzic0ikf7ja4km1mik29gdp15q8qwjw5bmh22d74ff"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ; There are no tests.
@@ -4755,7 +4755,7 @@ hard-coded.")
 (define-public thermald
   (package
     (name "thermald")
-    (version "2.5.9")
+    (version "2.5.10")
     (source
      (origin
       (method git-fetch)
@@ -4764,7 +4764,7 @@ hard-coded.")
              (commit (string-append "v" version))))
       (file-name (git-file-name name version))
       (sha256
-       (base32 "07rnf5xy2y7nmhwfcdv0vd08x5l25hflnnrgirahrngbkp0zmny9"))))
+       (base32 "1d8yj3d9crqz9ikzb0n2cdaal52gmw25kp6vy2gldwj8x6a3gngr"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4789,7 +4789,7 @@ hard-coded.")
            pkg-config))
     (inputs
      (list dbus-glib libevdev libxml2 upower xz))
-    (home-page "https://01.org/linux-thermal-daemon/")
+    (home-page "https://github.com/intel/thermal_daemon")
     (synopsis "CPU scaling for thermal management")
     (description "The Linux Thermal Daemon helps monitor and control temperature
 on systems running the Linux kernel.")

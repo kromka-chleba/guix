@@ -977,7 +977,7 @@ publish/subscribe, RPC-style request/reply, or service discovery.")
 (define-public nanomsg
   (package
     (name "nanomsg")
-    (version "1.2.1")
+    (version "1.2.2")
     (source
      (origin
        (method git-fetch)
@@ -987,7 +987,7 @@ publish/subscribe, RPC-style request/reply, or service discovery.")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dnnz054czajkdq60z5xw28iiv2qwqhigv9wj54388rk4ak0y3ya"))))
+        (base32 "1vd7kgmljbifa61y6by4ywk4pfxv9kwwcls87iyr32grfyd0v0yl"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -1967,7 +1967,7 @@ of the same name.")
            libssh
            libxml2
            lz4
-           lua-5.2
+           lua-5.4
            mit-krb5
            `(,nghttp2 "lib")
            minizip
@@ -2884,7 +2884,7 @@ that block port 22.")
 (define-public iperf
   (package
     (name "iperf")
-    (version "3.19")
+    (version "3.19.1")
     (source
      (origin
        (method git-fetch)
@@ -2893,7 +2893,7 @@ that block port 22.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hddhjzcr6j5sbsb2dllhn4f7pazvh0h3zykalky5m1gnh1virgw"))))
+        (base32 "1kj2p3dprxv1r77whd5g1wak2k71c7khhrkkx60lcnkf70qy5q67"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -3414,7 +3414,7 @@ updates to the zebra daemon.")
 (define-public bgpq3
   (package
     (name "bgpq3")
-    (version "0.1.36.1")
+    (version "0.1.38")
     (source
      (origin
        (method git-fetch)
@@ -3423,7 +3423,7 @@ updates to the zebra daemon.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0768hihx7idmn2dk8ii21m0dm052amlnfpqq53vsfaapb60n1smc"))))
+        (base32 "11zm2z2cxazzr1x6mwmjc167cclkgaah7b1k8pfpfm555bpli9mf"))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f))                    ; no test suite
@@ -3769,6 +3769,17 @@ eight bytes) tools
 low-level I/O programming that provides developers with a consistent
 asynchronous model using a modern C++ approach.")
     (license license:boost1.0)))
+
+(define-public asio-1.28
+  (package/inherit asio
+    (version "1.28.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/asio/asio/"
+                           version " (Stable)/asio-" version ".tar.bz2"))
+       (sha256
+        (base32 "1479z0pa9781dx1crsyaa9fvlcmyhb22m355f8cil77jjh13xf7i"))))))
 
 (define-public shadowsocks
   (package
@@ -4194,7 +4205,7 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                    (string-append "extra_link_args=[" args
                                   ", '-Wl,-rpath=" #$output "/lib']")))))
             ;; This is due to an upstream issue:
-            ;; https://git.jami.net/savoirfairelinux/opendht/-/issues/69 
+            ;; https://git.jami.net/savoirfairelinux/opendht/-/issues/69
             (add-after 'unpack 'fix-llhttp-lib-substitution
               (lambda _
                 (substitute* "configure.ac"
@@ -5016,7 +5027,7 @@ implementing them.")
            go-github-com-hjson-hjson-go-v4
            go-github-com-kardianos-minwinsvc
            go-github-com-olekukonko-tablewriter-0.0.5
-           go-github-com-quic-go-quic-go
+           go-github-com-quic-go-quic-go-0.52
            go-github-com-vishvananda-netlink
            go-github-com-wlynxg-anet
            go-golang-org-x-crypto

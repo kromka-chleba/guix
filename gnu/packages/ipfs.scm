@@ -124,7 +124,7 @@ JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
 (define-public go-github-com-ipfs-boxo
   (package
     (name "go-github-com-ipfs-boxo")
-    (version "0.30.0")
+    (version "0.33.0")
     (source
      (origin
        (method git-fetch)
@@ -133,7 +133,7 @@ JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1siicb0bs4shc220xk2i5d4p5myrh3yg64hm3yl796gjbcqgs66d"))
+        (base32 "03lr70406w95xqiin07ph0d2x8hcfdj1k1r3f1yq8lv3g5j9wapp"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -189,7 +189,6 @@ JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
            go-github-com-ipfs-go-peertaskqueue
            go-github-com-ipfs-go-test
            go-github-com-ipfs-go-unixfsnode
-           go-github-com-ipld-go-car
            go-github-com-ipld-go-car-v2
            go-github-com-ipld-go-codec-dagpb
            go-github-com-ipld-go-ipld-prime
@@ -1887,7 +1886,7 @@ specified in @url{https://datatracker.ietf.org/doc/html/rfc8484, RFC 8484}.")
 (define-public go-github-com-libp2p-go-libp2p
   (package
     (name "go-github-com-libp2p-go-libp2p")
-    (version "0.41.1")
+    (version "0.43.0")
     (source
      (origin
        (method git-fetch)
@@ -1896,7 +1895,7 @@ specified in @url{https://datatracker.ietf.org/doc/html/rfc8484, RFC 8484}.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sxx27hgryg93a03n08vasycaj76iwclzdskajjy8bivk5z9ls9p"))
+        (base32 "02708nf651cx1ls9k4k0275w8ld4349kzp1yyv35m45phbvzd2zf"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -1937,8 +1936,6 @@ specified in @url{https://datatracker.ietf.org/doc/html/rfc8484, RFC 8484}.")
            go-github-com-huin-goupnp
            go-github-com-ipfs-go-cid
            go-github-com-ipfs-go-datastore
-           go-github-com-ipfs-go-ds-badger
-           go-github-com-ipfs-go-ds-leveldb
            go-github-com-ipfs-go-log-v2
            go-github-com-jackpal-go-nat-pmp
            go-github-com-jbenet-go-temp-err-catcher
@@ -1975,12 +1972,12 @@ specified in @url{https://datatracker.ietf.org/doc/html/rfc8484, RFC 8484}.")
            go-github-com-prometheus-client-model
            go-github-com-quic-go-quic-go
            go-github-com-quic-go-webtransport-go
-           go-github-com-raulk-go-watchdog
            go-go-uber-org-fx
            go-go-uber-org-zap
            go-golang-org-x-crypto
            go-golang-org-x-sync
            go-golang-org-x-sys
+           go-golang-org-x-time
            go-golang-org-x-tools
            go-google-golang-org-protobuf))
     (home-page "https://github.com/libp2p/go-libp2p")
@@ -2136,6 +2133,7 @@ kab-dht}.  This DHT is modeled after Kademlia with S/Kademlia modifications.")
        #:import-path "github.com/libp2p/go-libp2p-kad-dht"))
      (propagated-inputs
       (list go-github-com-libp2p-go-libp2p-kbucket
+            go-github-com-hashicorp-golang-lru
             go-github-com-whyrusleeping-go-keyspace
             go-gonum-org-v1-gonum)))))
 
@@ -2446,7 +2444,7 @@ types.")
 (define-public kubo
   (package
     (name "kubo")
-    (version "0.35.0")
+    (version "0.36.0")
     (source
      (origin
        (method git-fetch)
@@ -2455,7 +2453,7 @@ types.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18xkgxy07dz3zxvvrpaiv5m46slcl6hh07qbmmnfihcnx34431qa"))))
+        (base32 "080ixpahm2hsc7vsipcjlymxagvz9s3n1dc7nn7zfl2z4fwwhdhm"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -2479,6 +2477,7 @@ types.")
                             "commands" "completion" "bash")))))))))
     (inputs (list go-bazil-org-fuse
                   go-contrib-go-opencensus-io-exporter-prometheus
+                  go-github-com-anmitsu-go-shlex
                   go-github-com-blang-semver-v4
                   go-github-com-caddyserver-certmagic
                   go-github-com-cenkalti-backoff-v4
@@ -2510,7 +2509,6 @@ types.")
                   go-github-com-ipfs-go-ipld-format
                   go-github-com-ipfs-go-ipld-git
                   go-github-com-ipfs-go-ipld-legacy
-                  go-github-com-ipfs-go-log
                   go-github-com-ipfs-go-log-v2
                   go-github-com-ipfs-go-metrics-interface
                   go-github-com-ipfs-go-metrics-prometheus
@@ -2518,7 +2516,6 @@ types.")
                   go-github-com-ipfs-go-unixfsnode
                   go-github-com-ipfs-shipyard-nopfs
                   go-github-com-ipfs-shipyard-nopfs-ipfs
-                  go-github-com-ipld-go-car
                   go-github-com-ipld-go-car-v2
                   go-github-com-ipld-go-codec-dagpb
                   go-github-com-ipld-go-ipld-prime

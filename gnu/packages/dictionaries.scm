@@ -37,6 +37,7 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system trivial)
   #:use-module (guix build-system copy)
@@ -46,7 +47,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
-  #:use-module (gnu packages compression)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
@@ -66,6 +67,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages speech)
   #:use-module (gnu packages tcl)
@@ -74,6 +76,39 @@
   #:use-module (gnu packages web)
   #:use-module (gnu packages wordnet)
   #:use-module (gnu packages xml))
+
+(define-public cmudict
+  (package
+    (name "cmudict")
+    (properties '((commit . "0f8072f814306c5ee4fbf992ed853601b12c01f9")
+                  (revision . "0")))
+    (version (git-version "0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cmusphinx/cmudict")
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ri9r9ljbwv282lmv9cp3gmbwlanf99nhzvw83fjf12bc4nxl0qd"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'install-license-files))))
+    (home-page "https://github.com/cmusphinx/cmudict")
+    (synopsis "Pronouncing English dictionary")
+    (description
+     "CMUdict (the Carnegie Mellon Pronouncing Dictionary) is a free
+pronouncing dictionary of English, suitable for uses in speech technology and
+is maintained by the Speech Group in the School of Computer Science at
+Carnegie Mellon University.")
+    (license (license:fsdg-compatible
+              "https://github.com/cmusphinx/cmudict/blob/master/LICENSE"))))
 
 (define-public dico
   (package
@@ -746,3 +781,47 @@ Guix package is installed.")
  and export them to any format and application.")
       (home-page "https://freedict.org")
       (license license:gpl2+))))
+
+(define-public python-cmudict
+  (package
+    (name "python-cmudict")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/prosegrinder/python-cmudict")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ia9flqchgr975zjc9l1p379sglg9b56q9m09n05sag8368409k4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((".*importlib-resources.*")
+                 ""))))
+          (add-after 'ensure-no-mtimes-pre-1980 'inject-data
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((cmudict (search-input-file inputs "cmudict.dict")))
+                (rmdir "src/cmudict/data")
+                (copy-recursively (dirname cmudict) "src/cmudict/data"))))
+          (add-after 'install 'replace-by-symlink
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((cmudict (search-input-file inputs "cmudict.dict"))
+                    (target (string-append (site-packages inputs outputs)
+                                           "/cmudict/data")))
+                (delete-file-recursively target)
+                (symlink (dirname cmudict) target)))))))
+    (native-inputs (list python-poetry-core python-pytest python-setuptools))
+    (inputs (list cmudict))
+    (home-page "https://github.com/prosegrinder/python-cmudict")
+    (synopsis "Python wrapper for The CMU Pronouncing Dictionary data files")
+    (description
+     "This package provides a versioned python wrapper package for The CMU
+Pronouncing Dictionary data files.")
+    (license license:gpl3+)))

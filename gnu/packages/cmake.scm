@@ -156,15 +156,12 @@ using the CMake build system.")
 (define %common-disabled-tests/hurd
   '("CTestTestTimeout"
     "CTestTestRerunFailed"
-    "RunCMake.CompilerChange"
     "RunCMake.ctest_test"
-    "RunCMake.file"
-    "RunCMake.BundleUtilities"
-    "RunCMake.configure_file"
     "RunCMake.CTestTimeout"
     "RunCMake.CTestTimeoutAfterMatch"
-    "RunCMake.CommandLine"
-    "RunCMake.CTestCommandLine"))
+    "RunCMake.CTestCommandLine"
+    ;; Fixed in v4.0.0
+    "RunCMake.RuntimePath"))
 
 (define %preserved-third-party-files
   '(;; 'Source/cm_getdate.c' includes archive_getdate.c wholesale, so it must
@@ -247,15 +244,7 @@ using the CMake build system.")
           ;; CMake uses its own configure script.
           (replace 'configure
             (lambda* (#:key (configure-flags '()) #:allow-other-keys)
-              (apply invoke "./configure" configure-flags)))
-          #$@(if (target-hurd?)
-                 #~((add-after 'unpack 'patch-hurd
-                      (lambda _
-                        ;; Version 3.25.0 has a similar fix.
-                        (substitute* "Utilities/cmlibuv/src/unix/udp.c"
-                          (("!defined\\(__QNX__\\)")
-                           "!defined(__GNU__)")))))
-                 #~()))))
+              (apply invoke "./configure" configure-flags))))))
     (inputs
      (list bzip2
            curl

@@ -2657,7 +2657,7 @@ scientific data storage.")
 (define-public n2p2
   (package
     (name "n2p2")
-    (version "2.1.4")
+    (version "2.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2666,7 +2666,7 @@ scientific data storage.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lw195ihpxwh08387i4gamk1glhalpq888q6nj8l5vswbgnrv1pq"))))
+                "01090j477gh9zk7wj416fvv1hxdnnxwhzy67bn96a04zhnayzkkj"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags '("MODE=shared" "-C" "src")
@@ -2674,6 +2674,8 @@ scientific data storage.")
        (modify-phases %standard-phases
          (add-after 'unpack 'post-unpack
            (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "src/makefile"
+               (("shell") "bash"))
              (substitute* "src/makefile.gnu"
                (("PROJECT_EIGEN=/usr/include/eigen3")
                 (string-append "PROJECT_EIGEN="
@@ -6012,36 +6014,26 @@ associated functions (e.g., contiguous and non-contiguous submatrix views).")
     (license license:asl2.0)))
 
 (define-public muparser
-  ;; When switching download sites, muparser re-issued a 2.2.5 release with a
-  ;; different hash. In order to make `guix package --upgrade` work correctly,
-  ;; we set a Guix packaging revision.
-  ;; When the next version of muparser is released, we can remove
-  ;; UPSTREAM-VERSION and REVISION and use the plain VERSION.
-  (let ((upstream-version "2.2.5")
-        (revision "2"))
-    (package
-      (name "muparser")
-      (version (string-append upstream-version "-" revision))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/beltoforion/muparser")
-               (commit (string-append "v" upstream-version))))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0f0g4995xngf1pp3zr4p6ai2f8v6f8bxwa0k8ayjjiv1l8h44m24"))))
-      (build-system gnu-build-system)
-      (arguments
-       `(#:configure-flags '("--enable-samples=no")
-         #:tests? #f)) ;no "check" target
-      (home-page "http://muparser.beltoforion.de/")
-      (synopsis "Fast parser library for mathematical expressions")
-      (description
-       "muParser is an extensible high performance math parser library.  It is
+  (package
+    (name "muparser")
+    (version "2.3.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/beltoforion/muparser")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zazg6awbfimjlf7352frps47ykpn7z0kz5q686xni7nka0g2k88"))))
+    (build-system cmake-build-system)
+    (home-page "https://beltoforion.de/en/muparser")
+    (synopsis "Fast parser library for mathematical expressions")
+    (description
+     "muParser is an extensible high performance math parser library.  It is
 based on transforming an expression into a bytecode and precalculating constant
 parts of it.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public openblas
   (package

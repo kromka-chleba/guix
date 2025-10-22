@@ -2,7 +2,7 @@
 ;;; Copyright © 2015, 2016, 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016-2018, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2016, 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2016, 2020, 2024, 2025 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2017 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2017 Theodoros Foradis <theodoros@foradis.org>
 ;;; Copyright © 2017 Vasile Dumitrascu <va511e@yahoo.com>
@@ -110,6 +110,7 @@
   #:use-module (gnu packages haskell-check)
   #:use-module (gnu packages haskell-web)
   #:use-module (gnu packages haskell-xyz)
+  #:use-module (gnu packages iso-codes)
   #:use-module (gnu packages jemalloc)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libevent)
@@ -1588,6 +1589,30 @@ The module also includes implementations of the Verhoeff,
 Luhn and family of ISO/IEC 7064 check digit algorithms.")
     (license license:lgpl2.1+)))
 
+(define-public python-schwifty
+  (package
+    (name "python-schwifty")
+    (version "2025.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "schwifty" version))
+       (sha256
+        (base32 "16d0q1yzrh9fn6ybbsvhr9wbgld27rvn152w4wdcibidq2jbi0s2"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatchling python-hatch-vcs python-pytest
+                         python-pydantic-2))
+    (propagated-inputs (list python-importlib-resources python-pycountry
+                             python-rstr python-typing-extensions))
+    (home-page "http://github.com/mdomke/schwifty/")
+    (synopsis "Python module to work with IBANs and BICs")
+    (description
+     "schwifty is a Python library that let's you easily work with
+IBANs and BICs as specified by the ISO.  IBAN is the Internation Bank Account
+Number and BIC the Business Identifier Code.  Both are used for international
+money transfer.")
+    (license license:expat)))
+
 (define-public python-duniterpy
   (package
     (name "python-duniterpy")
@@ -1632,21 +1657,44 @@ main features are:
 (define-public silkaj
   (package
     (name "silkaj")
-    (version "0.10.0")
+    (version "0.12.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "silkaj" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.duniter.org/clients/python/silkaj")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0p8jqnswrrxri8i2ikdz8mij7gks0yab3wdcb37jf2kjwmrwanpk"))))
+        (base32 "0prglgwvzi676h4lyw9266sqiqbfs2l0mv0bmjvplvdxzzcs63bv"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; They require Poetry in the PATH.
+      #~(list "--ignore=tests/integration/"
+              ;; Network access is required.
+              "--deselect=tests/unit/money/test_history.py::test_csv_output"
+              ;; AssertionError: Expected 'mock' to have been called
+              ;; once. Called 0 times
+              "--deselect=tests/unit/test_auth.py::test_authentication_wif")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-check-environment
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TZ" "UTC")
+              (setenv "TZDIR"
+                      (search-input-directory inputs
+                                              "share/zoneinfo")))))))
     (native-inputs
-     (list python-poetry-core))
+     (list python-poetry-core
+           python-pytest
+           python-pytest-sugar
+           tzdata-for-tests))
     (propagated-inputs
-     (list python-click
-           python-duniterpy
+     (list python-duniterpy
            python-pendulum
-           python-tabulate
+           python-rich-click
            python-texttable))
     (home-page "https://git.duniter.org/clients/python/silkaj")
     (synopsis "Command line client for Duniter network")
@@ -2192,14 +2240,10 @@ from account statements and other documents and for managing documents.")
            python-werkzeug))
     (native-inputs
      (list python-babel
-           python-mypy
            python-pytest
-           python-pytest-cov
            python-setuptools
-           python-twine
            python-types-setuptools
-           python-types-simplejson
-           python-wheel))
+           python-types-simplejson))
     (home-page "https://beancount.github.io/fava/")
     (synopsis "Web interface for the accounting tool Beancount")
     (description "Fava is a web interface for the double-entry bookkeeping
@@ -2457,6 +2501,24 @@ analysis of financial market data.")
      "A library to parse MT940 files, a bank account statement exchange
 format used by SWIFT.  It returns smart Python collections for statistics
 and manipulation.")
+    (license license:bsd-3)))
+
+(define-public python-mt940
+  (package
+    (name "python-mt940")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mt940" version))
+       (sha256
+        (base32 "00w9m06wxxqg9w1bkddqr6yl6ajlzhbiryqzijax64l6sks6ml6g"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools-67 python-wheel-0.40))
+    (home-page "http://mt940.b2ck.com/")
+    (synopsis "A simple module to parse MT940 files")
+    (description "This package provides a simple module to parse MT940
+files.")
     (license license:bsd-3)))
 
 (define-public xmrig

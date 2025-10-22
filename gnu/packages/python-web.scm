@@ -4,7 +4,7 @@
 ;;; Copyright © 2017 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym+a@scratchpost.org>
 ;;; Copyright © 2013, 2014, 2015, 2016, 2020, 2023 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2016, 2017, 2019-2023 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2016-2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2017, 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016, 2017, 2020 Julien Lepiller <julien@lepiller.eu>
@@ -25,12 +25,11 @@
 ;;; Copyright © 2017 Mark Meyer <mark@ofosos.org>
 ;;; Copyright © 2018 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2018, 2019, 2021, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2018 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2018, 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2018 swedebugia <swedebugia@riseup.net>
 ;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
-;;; Copyright © 2019 Brendan Tildesley <mail@brendan.scot>
+;;; Copyright © 2019, 2023 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2019 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2019, 2020 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
@@ -65,6 +64,7 @@
 ;;; Copyright © 2022 Baptiste Strazzulla <bstrazzull@hotmail.fr>
 ;;; Copyright © 2023 dan <i@dan.games>
 ;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2023 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2023 Ivan Vilata-i-Balaguer <ivan@selidor.net>
 ;;; Copyright © 2024 Fabio Natali <me@fabionatali.com>
 ;;; Copyright © 2024 Steve George <steve@futurile.net>
@@ -131,6 +131,7 @@
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages lsof)
   #:use-module (gnu packages node)
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages pcre)
@@ -2443,6 +2444,35 @@ Features:
 @end itemize")
     (license license:mpl2.0)))
 
+(define-public python-pycognito
+  (package
+    (name "python-pycognito")
+    (version "2024.5.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pycognito" version))
+       (sha256
+        (base32 "1r1sq87spqcfgg17khgpqc2ga8m9nk10flg9h23drhy2k1kcc4g2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; XXX: cycles with python-moto, bootstrap/minimal variant is required.
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-boto3
+           python-envs
+           python-pyjwt
+           python-requests))
+    (home-page "https://github.com/pvizeli/pycognito")
+    (synopsis "Python library for using AWS Cognito")
+    (description
+     "This package provides a Python class to integrate Boto3's Cognito
+client so it is easy to login users, with @acronym{Secure Remote Password,
+SRP} support.")
+    (license license:asl2.0)))
+
 (define-public python-python3-saml
   (package
     (name "python-python3-saml")
@@ -3845,6 +3875,167 @@ high-speed transfers via libcurl and frequently outperforms alternatives.")
     ;; under the terms of LGPLv2.1+ or Expat.
     (license (list license:lgpl2.1+ license:expat))))
 
+(define-public python-txacme
+  ;; 0.9.3 tag was placed in 2020 and there a lot of changes providing
+  ;; compatibility wit twisted, use the latest commit from trunk branch.
+  ;;
+  ;;See: <https://github.com/twisted/txacme/issues/165>.
+  (let ((commit "ac18f92f6dde971a6b38f2ecfae44665815db583")
+        (revision "0"))
+    (package
+      (name "python-txacme")
+      (version (git-version "0.9.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)               ;no fresh release in PyPI
+         (uri (git-reference
+                (url "https://github.com/twisted/txacme")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0mgdfxldv8qflbn75ywslbarnd4i3l7c4krs4aibl2dpryclsjzs"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list #:test-backend #~'custom
+             #:test-flags #~(list "-m" "twisted.trial" "txacme")))
+      (native-inputs
+       (list python-setuptools))
+      (propagated-inputs
+       (list python-acme
+             python-attrs
+             python-eliot
+             python-josepy
+             python-pem
+             python-treq
+             python-twisted
+             python-txsni))
+      (home-page "https://github.com/twisted/txacme")
+      (synopsis "Twisted implexmentation of the ACME protocol")
+      (description
+       "ACME is Automatic Certificate Management Environment, a protocol that
+allows clients and certificate authorities to automate verification and
+certificate issuance.  The ACME protocol is used by the free Let's Encrypt
+Certificate Authority.
+
+txacme is an implementation of the protocol for Twisted, the event-driven
+networking engine for Python.")
+    (license license:expat))))
+
+(define-public python-txaio
+  (package
+    (name "python-txaio")
+    (version "25.9.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "txaio" version))
+       (sha256
+        (base32 "16ch62yk2gdikkak113h6qw13ns9ksca817hky0vabn0fyh08874"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (home-page "https://github.com/crossbario/txaio")
+    (synopsis "Compatibility layer between Python asyncio and Twisted")
+    (description
+     "Txaio provides a compatibility layer between the Python @code{asyncio}
+ bsmodule and @code{Twisted}.")
+    (license license:expat)))
+
+;; XXX: Potentially abandonware since 2017, consider to remove when nothing
+;; depends on it or fails to build.
+(define-public python-txamqp
+  (package
+    (name "python-txamqp")
+    (version "0.8.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "txAMQP" version))
+       (sha256
+        (base32 "0jd9864k3csc06kipiwzjlk9mq4054s8kzk5q1cfnxj8572s4iv4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;all tests failed
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-six python-twisted))
+    (home-page "https://github.com/txamqp/txamqp")
+    (synopsis "Communicate with AMQP peers and brokers using Twisted")
+    (description
+     "This package provides a Python library for communicating with AMQP peers
+and brokers using the asynchronous networking framework Twisted.  It contains
+all the necessary code to connect, send and receive messages to/from an
+AMQP-compliant peer or broker (Qpid, OpenAMQ, RabbitMQ) using Twisted.  It
+also includes support for using Thrift RPC over AMQP in Twisted
+applications.")
+    (license license:asl2.0)))
+
+(define-public python-txsni
+  (package
+    (name "python-txsni")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/glyph/txsni")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fl8xi7vl24hwbva5v41l6nsrbkj2l2mlsgcvdjxgph61aznwywq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-backend #~'custom
+           #:test-flags #~(list "-m" "twisted.trial"
+                                "--temp-directory=/tmp/_trial_temp"
+                                "txsni")))
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-pyopenssl
+           python-service-identity
+           python-twisted))
+    (home-page "https://github.com/glyph/txsni")
+    (synopsis "Run TLS servers with Twisted")
+    (description
+     "This package provides an easy-to-use SNI endpoint for use with the
+Twisted web framework.")
+    (license license:expat)))
+
+(define-public python-txtorcon
+  (package
+    (name "python-txtorcon")
+    (version "24.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "txtorcon" version))
+       (sha256
+        (base32 "1l4ajw4h7nay4vmllh6cs7zh3hnh8vj4yvgfnq3m734wil9ikzmy"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list lsof))
+    (propagated-inputs
+     (list python-automat
+           python-idna
+           python-incremental
+           python-pyopenssl
+           python-service-identity
+           python-twisted
+           python-zope-interface))
+    (home-page "https://github.com/meejah/txtorcon")
+    (synopsis "Twisted-based Tor controller client")
+    (description
+     "This package provides a Twisted-based Tor controller client,with
+state-tracking and configuration abstractions.")
+    (license license:expat)))
+
 (define-public python-url-normalize
   (package
     (name "python-url-normalize")
@@ -3949,72 +4140,54 @@ Python’s.")
     (license license:bsd-3)))
 
 (define-public python-omnipath
-  ;; The latest release is incompatible with Numpy 2 and pretty old.  A new
-  ;; release is expected soon.
-  (let ((commit "3d1613493aa1554618fb2d7297f82e034b7694ce")
-        (revision "0"))
-    (package
-      (name "python-omnipath")
-      (version (git-version "1.0.8" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/saezlab/omnipath/")
-                      (commit commit)))
-                (file-name (git-file-name name commit))
-                (sha256
-                 (base32
-                  "03lqbgqihglh9mmp7lwmar26fcnsb1qaidrzbmp0z2wvsrgi4fg7"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:test-flags
-        '(list "-k"
-               (string-append
-                ;; These require internet access
-                "not test_download_homologene"
-                " and not test_complex_genes"
-                ;; Arrays are not equal: Mismatched elements: 4759 / 255465 (1.86%)
-                " and not test_import_intercell_network"))
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-before 'build 'pretend-version
-              ;; The version string is usually derived via setuptools-scm, but
-              ;; without the git metadata available, the version string is set
-              ;; to '0.0.0'.
-              (lambda _
-                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
-                        #$(version-major+minor (package-version this-package)))))
-            (add-after 'unpack 'set-home
-              (lambda _ (setenv "HOME" "/tmp"))))))
-      (propagated-inputs
-       (list python-attrs
-             python-docrep
-             python-inflect
-             python-networkx
-             python-packaging
-             python-pandas
-             python-requests
-             python-tqdm
-             python-typing-extensions
-             python-urllib3
-             python-wrapt))
-      (native-inputs
-       (list nss-certs-for-test
-             python-bump2version
-             python-pytest
-             python-pytest-mock
-             python-pytest-socket
-             python-requests-mock
-             python-setuptools
-             python-setuptools-scm
-             python-tox
-             python-wheel))
-      (home-page "https://omnipathdb.org/")
-      (synopsis "Python client for the OmniPath web service")
-      (description "This package provides a Python client for the OmniPath web
+  (package
+    (name "python-omnipath")
+    (version "1.0.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/saezlab/omnipath/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jnc7nsn6n5hqx5wlk928b7xmg0mpfqy8al9w2p707ihcwh4s1rf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags '(list "-k"
+                          (string-append
+                           ;; These require internet access
+                           "not test_download_homologene"
+                           " and not test_complex_genes"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
+    (propagated-inputs (list python-attrs
+                             python-docrep
+                             python-inflect
+                             python-networkx
+                             python-packaging
+                             python-pandas
+                             python-requests
+                             python-tqdm
+                             python-typing-extensions
+                             python-urllib3
+                             python-wrapt))
+    (native-inputs (list nss-certs-for-test
+                         python-bump2version
+                         python-hatchling
+                         python-pytest
+                         python-pytest-mock
+                         python-pytest-socket
+                         python-requests-mock))
+    (home-page "https://omnipathdb.org/")
+    (synopsis "Python client for the OmniPath web service")
+    (description "This package provides a Python client for the OmniPath web
 service.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public python-openai
   (package
@@ -12216,19 +12389,23 @@ your FastAPI app, manage your FastAPI project, and more.")
   (package
     (name "python-pyactiveresource")
     (version "2.2.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pyactiveresource" version))
-              (sha256
-               (base32
-                "1n7xvzh1j8fxal0gx9bgg1ayrp3q9mb1a2vb12d6s86wa93880rg"))))
-    (build-system python-build-system)
-    (native-inputs (list python-dateutil python-pyyaml))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Shopify/pyactiveresource")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03pw6fwqjn09fbd6xmng0arlz75pp6ykw25c8d1snp4bxlzkrwqf"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-dateutil python-pytest python-pyyaml
+                         python-setuptools))
     (propagated-inputs (list python-six))
     (home-page "https://github.com/Shopify/pyactiveresource/")
     (synopsis "ActiveResource for Python")
-    (description "This package provides a Python port of the ActiveResource
-project.
+    (description
+     "This package provides a Python port of the ActiveResource project.
 
 Active Resource attempts to provide a coherent wrapper object-relational
 mapping for REST web services.  It follows the same philosophy as Active
@@ -12241,7 +12418,7 @@ infer complex relations and structures.")
 (define-public python-shopifyapi
   (package
     (name "python-shopifyapi")
-    (version "12.0.0")
+    (version "12.7.0")
     (source
      (origin
        (method git-fetch)
@@ -12250,9 +12427,15 @@ infer complex relations and structures.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qhs52yxwyasdigdsajsnqqb3jg78a3fm7cmx8dfq267l64xk465"))))
+        (base32 "11zjm3aspb247wwlmfmq6wwk6lv3xyv3lqnd78sczjg9anba3779"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-mock python-setuptools))
+    (arguments
+     (list
+      #:test-flags
+      #~'("-k"
+          ;; Disable a failing test.
+          "not test_raises_if_aud_doesnt_match_api_key")))
+    (native-inputs (list python-mock python-pytest python-setuptools))
     (propagated-inputs (list python-pyactiveresource python-pyjwt
                              python-pyyaml python-six))
     (home-page "https://github.com/Shopify/shopify_python_api")
@@ -12288,7 +12471,6 @@ list, create, update, or delete resources (e.g. Order, Product, Collection).")
     (propagated-inputs (list python-jinja2 python-requests))
     (native-inputs (list python-flask
                          python-fonttools
-                         python-nox
                          python-pillow
                          python-pytest
                          python-setuptools

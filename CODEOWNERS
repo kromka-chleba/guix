@@ -224,7 +224,6 @@ guix/build/julia-build-system\.scm                 @guix/julia
 guix/build-system/julia\.scm                       @guix/julia
 
 gnu/packages/(kde)(-.+|)\.scm$                     @guix/kde
-gnu/packages/education\.scm                        @guix/kde
 
 gnu/build/linux-modules\.scm                       @guix/kernel
 gnu/packages/aux-files/linux-libre.*$              @guix/kernel
@@ -347,6 +346,7 @@ gnu/packages/openldap\.scm                         @guix/sysadmin
 gnu/packages/openstack\.scm                        @guix/sysadmin
 gnu/packages/prometheus\.scm                       @guix/sysadmin
 gnu/packages/rdesktop\.scm                         @guix/sysadmin
+gnu/packages/samba\.scm                            @guix/sysadmin
 gnu/packages/selinux\.scm                          @guix/sysadmin
 gnu/packages/storage\.scm                          @guix/sysadmin
 gnu/packages/task-runners\.scm                     @guix/sysadmin

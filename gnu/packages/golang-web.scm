@@ -164,7 +164,7 @@ alternative fork of https://git.autistici.org/ale/lb.")
            go-github-com-spf13-viper))
     (propagated-inputs
      (list go-github-com-labstack-echo-v4
-           go-github-com-quic-go-quic-go
+           go-github-com-quic-go-quic-go-0.52
            go-github-com-sirupsen-logrus
            go-github-com-xtaci-kcp-go-v5
            go-gitlab-com-yawning-obfs4-git
@@ -4930,6 +4930,84 @@ the Go standard library, but returns a client that does not share any state
 with other clients.")
     (license license:mpl2.0)))
 
+(define-public go-github-com-hashicorp-go-metrics
+  ;; v0.5.0 of the library renamed the Go module from
+  ;; "github.com/armon/go-metrics" to "github.com/hashicorp/go-metrics". While
+  ;; this did not introduce any breaking changes to the API, the change did
+  ;; subtly break backwards compatibility.
+  ;;
+  ;; Eventually all usage of "armon/go-metrics" should be replaced with usage
+  ;; of "hashicorp/go-metrics"
+  (package
+    (name "go-github-com-hashicorp-go-metrics")
+    (version "0.5.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hashicorp/go-metrics")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rw8251w6lkpbm6qhbdi37jbjknmlw1ampqicfyk32mfq3grn0ar"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Module name has been changed upstream.
+            (substitute* (find-files "." "\\.go$")
+              (("armon/go-metrics") "hashicorp/go-metrics"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/go-metrics"
+      #:test-flags
+      #~(list "-skip" (string-join
+                       ;; Networking and runnint Prometheus are required.
+                       (list "TestAddSample"
+                             "TestMetricSink"
+                             "TestSetGauge"
+                             "TestSetPrecisionGauge"
+                             "TestStatsd_Conn"
+                             "TestStatsite_Conn"
+                             "TestTaggableMetrics")
+                       "|"))))
+    (native-inputs
+     (list go-github-com-golang-protobuf
+           go-github-com-pascaldekloe-goe
+           go-github-com-prometheus-client-model
+           go-github-com-prometheus-common))
+    (propagated-inputs
+     (list go-github-com-circonus-labs-circonus-gometrics
+           go-github-com-datadog-datadog-go
+           go-github-com-hashicorp-go-immutable-radix
+           go-github-com-prometheus-client-golang))
+    (home-page "https://github.com/hashicorp/go-metrics")
+    (synopsis "Export performance and runtime metrics to external systems")
+    (description
+     "This package implements a functionality which can be used in instrument
+code, expose application metrics, and profile runtime performance in a
+flexible manner.  It makes use of a @code{MetricSink} interface to support
+delivery to any type of backend.
+
+Currently the following sinks are provided:
+@itemize
+@item StatsiteSink : Sinks to a @url{https://github.com/statsite/statsite/,
+statsite} instance (TCP)
+@item StatsdSink: Sinks to a @url{https://github.com/statsd/statsd/, StatsD} /
+statsite instance (UDP)
+@item PrometheusSink: Sinks to a @url{http://prometheus.io/, Prometheus}
+metrics endpoint (exposed via HTTP for scrapes)
+@item InmemSink : Provides in-memory aggregation, can be used to export stats
+@item FanoutSink : Sinks to multiple sinks. Enables writing to multiple
+statsite instances for example
+@item BlackholeSink : Sinks to nowhere
+@end itemize")
+    (license license:expat)))
+
+;; To make importer happy.
+(define-public go-github-com-armon-go-metrics
+  go-github-com-hashicorp-go-metrics)
+
 (define-public go-github-com-hashicorp-go-retryablehttp
   (package
     (name "go-github-com-hashicorp-go-retryablehttp")
@@ -5003,6 +5081,50 @@ API.")
     (description
      "This package provides an implementation of the UNIX socket family data
 types and related helper functions.")
+    (license license:mpl2.0)))
+
+(define-public go-github-com-hashicorp-memberlist
+  (package
+    (name "go-github-com-hashicorp-memberlist")
+    (version "0.5.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hashicorp/memberlist")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09vb2zny0scsr65rp8ibj51diqiv818cwnfbn2xxyzssi5jcpgjv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/memberlist"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-google-btree
+           go-github-com-hashicorp-go-metrics
+           go-github-com-hashicorp-go-msgpack-v2
+           go-github-com-hashicorp-go-multierror
+           go-github-com-hashicorp-go-sockaddr
+           go-github-com-miekg-dns
+           go-github-com-sean--seed))
+    (home-page "https://github.com/hashicorp/memberlist")
+    (synopsis "Gossip based cluster membership and failure detection")
+    (description
+     "memberlist is a Go library that manages cluster membership and member
+failure detection using a gossip based protocol.
+
+The use cases for such a library are far-reaching: all distributed systems
+require membership, and memberlist is a re-usable solution to managing cluster
+membership and node failure detection.
+
+memberlist is eventually consistent but converges quickly on average.  The
+speed at which it converges can be heavily tuned via various knobs on the
+protocol.  Node failures are detected and network partitions are partially
+tolerated by attempting to communicate to potentially dead nodes through
+multiple routes.")
     (license license:mpl2.0)))
 
 (define-public go-github-com-hashicorp-yamux
@@ -9248,31 +9370,27 @@ throughout the @url{https://github.com/pion, Pion} modules.")
                                     go-github-com-pion-transport-v2)
        ((#:import-path _) "github.com/pion/transport/v3")))))
 
-(define-public go-github-com-pion-turn
+(define-public go-github-com-pion-turn-v2
   (package
-    (name "go-github-com-pion-turn")
-    (version "1.4.0")
+    (name "go-github-com-pion-turn-v2")
+    (version "2.1.6")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/pion/turn/")
-             (commit (string-append "v" version))))
+              (url "https://github.com/pion/turn/")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16lkgmrlks0qdzbk8jj0c0j66qfxhb54cvzgrfn4imvm56dbxp2n"))))
+        (base32 "0iw7nvqsxpqy90k5a8mq3dyask272391m59cbiy30aak1y2wwaac"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/pion/turn"
+      #:import-path "github.com/pion/turn/v2"
       #:test-flags
-      #~(list "-skip"
-              (string-join
-               ;; Tests requiring networking setup.
-               (list "TestClientWithSTUN/SendBindingRequest"
-                     "TestClientWithSTUN/SendBindingRequestTo_Parallel")
-               "|"))
+      ;; panic: runtime error: invalid memory address or nil pointer
+      ;; dereference
+      #~(list "-skip" "TestClientWithSTUN")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-examples
@@ -9283,9 +9401,10 @@ throughout the @url{https://github.com/pion, Pion} modules.")
      (list go-github-com-stretchr-testify))
     (propagated-inputs
      (list go-github-com-pion-logging
+           go-github-com-pion-randutil
            go-github-com-pion-stun
-           go-github-com-pion-transport
-           go-github-com-pkg-errors))
+           go-github-com-pion-transport-v2
+           go-golang-org-x-sys))
     (home-page "https://github.com/pion/turn/")
     (synopsis "API for building TURN clients and servers in Golang")
     (description
@@ -9307,35 +9426,9 @@ it like any library.  The quickest way to get started is to look at the
 @url{https://godoc.org/github.com/pion/turn, GoDoc}.")
     (license license:expat)))
 
-(define-public go-github-com-pion-turn-v2
-  (package
-    (inherit go-github-com-pion-turn)
-    (name "go-github-com-pion-turn-v2")
-    (version "2.1.6")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/pion/turn/")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0iw7nvqsxpqy90k5a8mq3dyask272391m59cbiy30aak1y2wwaac"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments
-                                    go-github-com-pion-turn)
-       ((#:import-path flags ''())
-        "github.com/pion/turn/v2")))
-    (propagated-inputs
-     (list go-github-com-pion-logging
-           go-github-com-pion-randutil
-           go-github-com-pion-stun
-           go-github-com-pion-transport-v2
-           go-golang-org-x-sys))))
-
 (define-public go-github-com-pion-turn-v3
   (package
-    (inherit go-github-com-pion-turn)
+    (inherit go-github-com-pion-turn-v2)
     (name "go-github-com-pion-turn-v3")
     (version "3.0.3")
     (source
@@ -9349,7 +9442,7 @@ it like any library.  The quickest way to get started is to look at the
         (base32 "0l78m9ym0sv1zfalbv95lwblmr789fc53d957ph5mdznhjx89lyx"))))
     (arguments
      (substitute-keyword-arguments (package-arguments
-                                    go-github-com-pion-turn)
+                                    go-github-com-pion-turn-v2)
        ((#:import-path flags ''())
         "github.com/pion/turn/v3")))
     (propagated-inputs
@@ -9363,7 +9456,7 @@ it like any library.  The quickest way to get started is to look at the
   (package
     (inherit go-github-com-pion-turn-v3)
     (name "go-github-com-pion-turn-v4")
-    (version "4.0.0")
+    (version "4.1.1")
     (source
      (origin
        (method git-fetch)
@@ -9372,7 +9465,7 @@ it like any library.  The quickest way to get started is to look at the
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yd0v6ijwl62qd2sz7imq9pd2grcrw4dhwnn4302m1k89pxr52wx"))))
+        (base32 "0ajkd63nkif2izblf8bnvs15126bdm4y8qymy2m8vwdbl70swsfv"))))
     (arguments
      (substitute-keyword-arguments (package-arguments
                                     go-github-com-pion-turn-v3)
@@ -9692,7 +9785,7 @@ characters incorrectly escaped by net/url.")
 (define-public go-github-com-quic-go-qpack
   (package
     (name "go-github-com-quic-go-qpack")
-    (version "0.4.0")
+    (version "0.5.1")
     (source
      (origin
        (method git-fetch)
@@ -9701,78 +9794,74 @@ characters incorrectly escaped by net/url.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00mjz445hhx4yar5l8p21bpp4d06jyg2ajw0ax7bh64d37l4kx39"))))
+        (base32 "0aj0vv89l94y3clhsjcm1ham6mysmls4yhv7602cwlyag61hfrh3"))))
     (build-system go-build-system)
     (arguments
      (list
-      ;; Tests require ginkgo v2.
-      #:tests? #f
-      #:import-path "github.com/quic-go/qpack"))
+      #:import-path "github.com/quic-go/qpack"
+      ;; XXX: integrationtests/interop contains git submodule of
+      ;; <https://github.com/qpackers/qifs>.
+      #:test-subdirs #~(list ".")))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (propagated-inputs
-     (list go-github-com-onsi-ginkgo
-           go-github-com-onsi-gomega
-           go-golang-org-x-net))
+     (list go-golang-org-x-net))
     (home-page "https://github.com/quic-go/qpack")
     (synopsis "Minimal QPACK (RFC 9204) implementation for Go")
     (description
-     "A minimal QPACK (RFC 9204) implementation in Go.  It is minimal in the sense
-that it doesn't use the dynamic table at all, but just the static table and (Huffman
-encoded) string literals.  Wherever possible, it reuses code from the
-@url{https://github.com/golang/net/tree/master/http2/hpack, HPACK implementation in
-the Go standard library}.")
+     "A minimal QPACK (RFC 9204) implementation in Go.  It is minimal in the
+sense that it doesn't use the dynamic table at all, but just the static table
+and (Huffman encoded) string literals.  Wherever possible, it reuses code from
+the @url{https://github.com/golang/net/tree/master/http2/hpack, HPACK
+implementation in the Go standard library}.")
     (license license:expat)))
 
 (define-public go-github-com-quic-go-quic-go
   (package
     (name "go-github-com-quic-go-quic-go")
-    (version "0.52.0")
+    (version "0.54.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/quic-go/quic-go")
-             (commit (string-append "v" version))))
+              (url "https://github.com/quic-go/quic-go")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0frcjzrarvk3ck6dhqp88a1cbazw7jb26gxq1wp3lhgmxv4v4m2m"))))
+        (base32 "025klj0pvnz5c1gbz4i3wb8fxbnyf4q5vz08l7xa7204qzl5njlk"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - test
+            (delete-file-recursively "integrationtests/gomodvendor")))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/quic-go/quic-go"
       #:phases
       #~(modify-phases %standard-phases
-          ;; Test steps are taken from GitHub Actions -
-          ;; <https://github.com/quic-go/quic-go/blob/v0.42.0/
-          ;; .github/workflows/unit.yml>.
-          (replace 'check
+          (add-after 'unpack 'remove-examples
             (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (setenv "TIMESCALE_FACTOR" "10")
-                  (invoke "ginkgo" "-r" "-v" "--no-color"
-                          (string-append
-                           "--procs=" (number->string
-                                       ;; All tests passed on 16 threads
-                                       ;; mathine, but fail on
-                                       ;; ci.guix.gnu.org.
-                                       (if (> (parallel-job-count) 17)
-                                           16
-                                           (parallel-job-count))))
-                          "--skip-package=integrationtests"))))))))
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "example"))))
+          (add-before 'check 'pre-check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (setenv "TIMESCALE_FACTOR" "10"))))))
     (native-inputs
-     (list go-ginkgo
-           go-github-com-onsi-ginkgo-v2
-           go-github-com-stretchr-testify
+     (list go-github-com-stretchr-testify
            go-go-uber-org-mock))
     (propagated-inputs
      (list go-github-com-francoispqt-gojay
+           go-github-com-prometheus-client-golang
            go-github-com-quic-go-qpack
            go-golang-org-x-crypto
            go-golang-org-x-exp
            go-golang-org-x-net
            go-golang-org-x-sync
-           go-golang-org-x-sys))
+           go-golang-org-x-sys
+           go-golang-org-x-tools))
     (home-page "https://github.com/quic-go/quic-go")
     (synopsis "QUIC in Go")
     (description
@@ -9780,23 +9869,40 @@ the Go standard library}.")
 protocol.")
     (license license:expat)))
 
+(define-public go-github-com-quic-go-quic-go-0.52
+  (hidden-package
+   (package
+     (inherit go-github-com-quic-go-quic-go)
+     (name "go-github-com-quic-go-quic-go")
+     (version "0.52.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/quic-go/quic-go")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "0frcjzrarvk3ck6dhqp88a1cbazw7jb26gxq1wp3lhgmxv4v4m2m"))))
+     (arguments
+      (list
+       #:skip-build? #t
+       #:tests? #f
+       #:import-path "github.com/quic-go/quic-go")))))
+
 (define-public go-github-com-quic-go-webtransport-go
-  ;; XXX: The latest commits contains comparability with Go@1.24 and QUICK
-  ;; 0.48+, revert back to version tag when released.
-  (let ((commit "0a9e2ee55f751e48eb03c4675d873edff3b69c05")
-        (revision "0"))
     (package
       (name "go-github-com-quic-go-webtransport-go")
-      (version (git-version "0.8.0" revision commit))
+      (version "0.9.0")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/quic-go/webtransport-go")
-               (commit commit)))
+               (commit (string-append "v" version))))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "048qf7glv3zgz43qvi1smwsh1khhzyfrid6hp5dnp799p3s3vk13"))))
+          (base32 "061mr55dq80kf3422vfranqlfb0416vix3wl7rb78ndmrcgvmr86"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -9817,7 +9923,7 @@ protocol, based on @@url{https://github.com/quic-go/quic-go,quic-go}.  It
 currently implements
 @@url{https://www.ietf.org/archive/id/draft-ietf-webtrans-http3-02.html,draft-02}
 of the specification.")
-      (license license:expat))))
+      (license license:expat)))
 
 (define-public go-github-com-rcrowley-go-metrics
   (package
@@ -10082,21 +10188,8 @@ information or even the peer of a VETH interface.")
      (list
       #:import-path "github.com/santhosh-tekuri/jsonschema/v5"
       #:test-flags
-      #~(list "-skip" (string-join
-                       ;; TODO: Figure out why these test patterns fail.
-                       (list "TestDraft2019/optional"
-                             "TestDraft2019/refRemote.json"
-                             "TestDraft2019/vocabulary.json"
-                             "TestDraft2020/dynamicRef.json"
-                             "TestDraft2020/optional"
-                             "TestDraft2020/refRemote.json"
-                             "TestDraft2020/vocabulary.json"
-                             "TestDraft4/refRemote.json"
-                             "TestDraft6/refRemote.json"
-                             "TestDraft7/optional"
-                             "TestDraft7/refRemote.json"
-                             "TestExtra/draft2020")
-                       "|"))
+      ;; Figure out why these test patterns fail.
+      #~(list "-skip" "TestDraft2020")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'copy-json-schema-specs
@@ -10106,12 +10199,16 @@ information or even the peer of a VETH interface.")
                  (string-append #$(this-package-native-input
                                    "specification-json-schema-test-suite")
                                 "/share/tests")
-                 "testdata/JSON-Schema-Test-Suite/tests"))))
+                 "testdata/JSON-Schema-Test-Suite/tests")
+                (copy-recursively
+                 (string-append #$(this-package-native-input
+                                   "specification-json-schema-test-suite")
+                                "/share/remotes")
+                 "testdata/JSON-Schema-Test-Suite/remotes"))))
           (add-after 'check 'remove-json-schema-specs
             (lambda* (#:key import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
-                (delete-file-recursively
-                 "testdata/JSON-Schema-Test-Suite/tests")))))))
+                (delete-file-recursively "testdata")))))))
     (native-inputs
      (list specification-json-schema-test-suite))
     (home-page "https://github.com/santhosh-tekuri/jsonschema")
@@ -10119,6 +10216,39 @@ information or even the peer of a VETH interface.")
     (description
      "Package jsonschema provides json-schema compilation and validation.")
     (license license:asl2.0)))
+
+(define-public go-github-com-santhosh-tekuri-jsonschema-v6
+  (package
+    (inherit go-github-com-santhosh-tekuri-jsonschema-v5)
+    (name "go-github-com-santhosh-tekuri-jsonschema-v6")
+    (version "6.0.2")
+    (source
+     (origin (inherit
+              (package-source go-github-com-santhosh-tekuri-jsonschema-v5))
+             (method git-fetch)
+             (uri (git-reference
+                    (url "https://github.com/santhosh-tekuri/jsonschema")
+                    (commit (string-append "v" version))))
+             (file-name (git-file-name name version))
+             (sha256
+              (base32 "0d1mpp77a9080r7n45wi2avf2zpgjyvxk5zqzxdyd8q0rvb811h0"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-santhosh-tekuri-jsonschema-v5)
+       ((#:import-path _) "github.com/santhosh-tekuri/jsonschema/v6")
+       ((#:test-flags _) #~'())
+       ((#:phases _ '%standard-phases)
+        #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-example-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                ;; Tests try to download from
+                ;; https://raw.githubusercontent.com/santhosh-tekuri/boon\
+                ;; /main/tests/examples/schema.json
+                (delete-file "example_http_test.go"))))))))
+    (propagated-inputs
+     (list go-github-com-dlclark-regexp2
+           go-golang-org-x-text))))
 
 (define-public go-github-com-schollz-peerdiscovery
   (package
@@ -10310,26 +10440,18 @@ API v4.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/shurcooL/httpfs")
-             (commit (go-version->git-ref version))))
+              (url "https://github.com/shurcooL/httpfs")
+              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1m0jjnfzr8372cjx0zjm2zm695kwaz8l1yk7gzgn05biadsklprm"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/shurcooL/httpfs"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; XXX: Replace when go-build-system supports nested path.
-          (delete 'build)
-          (replace 'check
-            (lambda* (#:key import-path tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./..."))))))))
+      #:skip-build? #t
+      #:import-path "github.com/shurcooL/httpfs"))
     (native-inputs
-     (list go-golang-org-x-tools))
+     (list go-golang-org-x-tools-godoc))
     (propagated-inputs
      (list go-github-com-shurcool-httpgzip))
     (home-page "https://github.com/shurcooL/httpfs")
@@ -10357,7 +10479,7 @@ interface.")
      (list
       #:import-path "github.com/shurcooL/httpgzip"))
     (native-inputs
-     (list go-golang-org-x-tools))
+     (list go-golang-org-x-tools-godoc))
     (propagated-inputs
      (list go-golang-org-x-net))
     (home-page "https://github.com/shurcooL/httpgzip")
@@ -10385,7 +10507,7 @@ use gzip compression when serving HTTP requests.")
      (list
       #:import-path "github.com/shurcooL/vfsgen"))
     (native-inputs
-     (list go-golang-org-x-tools))
+     (list go-golang-org-x-tools-godoc))
     (propagated-inputs
      (list go-github-com-shurcool-httpfs))
     (home-page "https://github.com/shurcooL/vfsgen")
@@ -11030,23 +11152,31 @@ extract data from those paths.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/ugorji/go")
-             (commit (string-append "v" version))))
+              (url "https://github.com/ugorji/go")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mny5gm5gr82hz4y6k5ljaa0khjw647ys278wq750fgrbzp6fs8h"))))
+        (base32 "1mny5gm5gr82hz4y6k5ljaa0khjw647ys278wq750fgrbzp6fs8h"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/ugorji/go/codec/codecgen
+            (delete-file-recursively "codec/codecgen")))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/ugorji/go/codec"
-      #:unpack-path "github.com/ugorji/go"
+      #:skip-build? #t
+      #:import-path "github.com/ugorji/go"
+      #:test-flags
+      #~(list "-vet=off")   ;Go@1.24 forces vet, but tests are not ready yet.
       #:phases #~(modify-phases %standard-phases
                    (add-after 'unpack 'remove-benchmarks
                      (lambda* (#:key import-path #:allow-other-keys)
                        (delete-file-recursively (string-append "src/"
                                                                import-path
-                                                               "/bench")))))))
+                                                               "/codec/bench")))))))
     (propagated-inputs (list go-golang-org-x-tools))
     (home-page "https://github.com/ugorji/go")
     (synopsis "Codec and encoding library for various serialization formats")
@@ -11748,7 +11878,7 @@ connection management for @url{https://github.com/xtaci/kcp-go,kcp-go}.")
            go-github-com-hjson-hjson-go-v4
            go-github-com-kardianos-minwinsvc
            go-github-com-olekukonko-tablewriter-0.0.5
-           go-github-com-quic-go-quic-go
+           go-github-com-quic-go-quic-go-0.52
            go-github-com-vishvananda-netlink
            go-github-com-wlynxg-anet
            go-golang-org-x-crypto
@@ -12001,14 +12131,15 @@ Go.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       ;; TODO: Project provides a Go library and also CLI builds for service,
       ;; client and proxy.
       #:skip-build? #t
       #:import-path
       "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2"
-      ;; panic: empty transcript [recovered]
-      #:test-flags #~(list "-skip" "TestQueuePacketConnWriteToKCP")))
+      #:test-flags
+      #~(list "-vet=off"    ;Go@1.24 forces vet, but tests are not ready yet
+              ;; panic: empty transcript [recovered]
+              "-skip" "TestQueuePacketConnWriteToKCP")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
@@ -12145,6 +12276,8 @@ lists)
 @end itemize")
     (license license:mpl2.0)))
 
+;; XXX: This project was archived by the owner on Jul 31, 2023. It is now
+;; read-only. Consider to remove when nothing depends on it.
 (define-public go-go-opencensus-io
   (package
     (name "go-go-opencensus-io")
@@ -12153,16 +12286,32 @@ lists)
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/census-instrumentation/opencensus-go")
-             (commit (string-append "v" version))))
+              (url "https://github.com/census-instrumentation/opencensus-go")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1923j8v214fyk9qlw0lfva6ah8p7s8cfkrysiada5pp4jim4k4xi"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "go.opencensus.io"
+      #:test-subdirs
+      #~(list "exporter/stackdriver/propagation"
+              "internal"
+              "metric"
+              "metric/metricexport"
+              "metric/metricproducer"
+              "metric/test"
+              "plugin/ochttp/propagation/b3"
+              "plugin/ochttp/propagation/tracecontext"
+              "plugin/runmetrics"
+              "resource"
+              "stats"
+              "stats/view"
+              "tag"
+              "trace"
+              "trace/propagation"
+              "trace/tracestate")
       #:test-flags
       #~(list "-skip"
               (string-join
@@ -13343,6 +13492,36 @@ generate Go code.")
        ((#:tests? _ #t) #f)
        ((#:import-path _) "gopkg.in/jcmturner/rpc.v2")))))
 
+(define-public go-gopkg-in-telebot-v3
+  (package
+    (name "go-gopkg-in-telebot-v3")
+    (version "3.3.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/go-telebot/telebot")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l6gl31jd1i5im037ra5qd0sd2acwk09idh89b7d97j34y2a8bv6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/telebot.v3"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-goccy-go-yaml
+	   go-github-com-spf13-viper))
+    (home-page "https://github.com/go-telebot/telebot")
+    (synopsis "Telegram bot framework in Golang")
+    (description
+     "Telebot is a bot framework for @url{https://core.telegram.org/bots/api,
+Telegram Bot API}.  This package provides the best of its kind API for command
+routing, inline query requests and keyboards, as well as callbacks.")
+    (license license:expat)))
+
 (define-public go-k8s-io-cri-api
   (package
     (name "go-k8s-io-cri-api")
@@ -13379,7 +13558,7 @@ docs}.")
 (define-public go-k8s-io-kube-openapi
   (package
     (name "go-k8s-io-kube-openapi")
-    (version "0.0.0-20250905212525-66792eed8611")
+    (version "0.0.0-20250910181357-589584f1c912")
     ;; XXX: Unbundle third_party in pkg.
     (source
      (origin
@@ -13389,32 +13568,27 @@ docs}.")
               (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1979alrrlym968jxdcxc1lpm3b13bnkyayg042gk6xn0kb97mqma"))
-       ;; XXX: test/integration contains submodule with it's own go.mod.
+        (base32 "1appaqgllddcl6kxkz3azix0xhlzy093vvxi6y3im1mkf5zblwl7"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; Keeping just testdata.
-            (for-each delete-file-recursively
-                      (list "test/integration/builder"
-                            "test/integration/builder3"
-                            "test/integration/openapiconv"
-                            "test/integration/pkg/generated"
-                            "test/integration/testutil"
-                            "test/integration/import.go"
-                            "test/integration/integration_suite_test.go"))))))
+            (delete-file-recursively "test")))))
     (build-system go-build-system)
     (arguments
      (list
       #:skip-build? #t
       #:import-path "k8s.io/kube-openapi"
-      ;; Tests are not copatible with Go 1.24+.
-      #:test-flags #~(list "-vet=off")))
+      #:test-flags
+      ;; Go@1.24 forces vet, but tests are not ready yet.
+      #~(list "-vet=off" 
+              ;; It tries to regenerate the test data.
+              "-skip" "TestGenerators")))
     (native-inputs
      (list go-github-com-onsi-ginkgo-v2
            go-github-com-onsi-gomega
            go-github-com-stretchr-testify
-           ;; go-golang-org-x-tools-go-packages-packagestest
+           go-golang-org-x-tools-go-packages-packagestest
+           go-k8s-io-kube-openapi-test-integration
            go-sigs-k8s-io-yaml))
     (propagated-inputs
      (list go-github-com-emicklei-go-restful-v3
@@ -13444,6 +13618,50 @@ docs}.")
 providing support a subset of OpenAPI features to satisfy kubernetes use-cases
 but implement that subset with little to no assumption about the structure of
 the code or routes.")
+    (license license:asl2.0)))
+
+(define-public go-k8s-io-kube-openapi-test-integration
+  (package
+    (name "go-k8s-io-kube-openapi-test-integration")
+    (version "0.0.0-20250910181357-589584f1c912")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kubernetes/kube-openapi")
+              (commit (go-version->git-ref version
+                                           #:subdir "test/integration"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1appaqgllddcl6kxkz3azix0xhlzy093vvxi6y3im1mkf5zblwl7"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "test")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/kube-openapi/test/integration"
+      #:unpack-path "k8s.io/kube-openapi"))
+    (propagated-inputs
+     (list go-github-com-emicklei-go-restful-v3
+           go-github-com-getkin-kin-openapi
+           go-k8s-io-utils))
+    (home-page "https://k8s.io/kube-openapi")
+    (synopsis "Kube OpenAPI Integration Tests")
+    (description
+     "This package providies itegration tests module for
+@code{k8s.io/kube-openapi}.")
     (license license:asl2.0)))
 
 (define-public go-maunium-net-go-mautrix
@@ -13689,7 +13907,6 @@ protocol.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:build-flags #~(list (string-append "-ldflags="
                                            "-X main.lyrebirdVersion="
                                            #$version " -s -w"))

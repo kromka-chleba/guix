@@ -1,10 +1,16 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017, 2019, 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2026, 2019-2021 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017-2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2021 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
-;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2022 Raghav Gururajan <rg@raghavgururajan.name>
+;;; Copyright © 2023-2025 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Superfly Johnson <superfly.johnson@yahoo.com>
+;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,6 +31,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system qt)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix gexp)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
@@ -38,11 +45,14 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphics)
+  #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages kde-graphics)
+  #:use-module (gnu packages kde-multimedia)
   #:use-module (gnu packages kde-pim)
+  #:use-module (gnu packages kde-plasma)
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
@@ -70,10 +80,104 @@
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg))
 
+(define-public kdsoap-ws-discovery-client
+  (package
+    (name "kdsoap-ws-discovery-client")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/kdsoap-ws-discovery-client/"
+                           "/kdsoap-ws-discovery-client-" version ".tar.xz"))
+       (sha256
+        (base32 "0yj2ngw4li5r6zhmkh2lb8fdf8ixz6pp5hxsb4342pz72g04glic"))))
+    (build-system qt-build-system)
+    (native-inputs
+     (list extra-cmake-modules))
+    (inputs (list kdsoap))
+    (arguments (list
+                ;; test require network.
+                #:tests? #f
+                #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
+                #:qtbase qtbase))
+    (home-page "https://caspermeijn.gitlab.io/kdsoap-ws-discovery-client/")
+    (synopsis "WS-Discovery client library based on KDSoap")
+    (description "This package provides a ws-Discovery client library based on
+KDSoap.")
+    (license license:gpl3+)))
+
+(define-public qxmpp
+  (package
+    (name "qxmpp")
+    ;; kaidan requires a precise version
+    (version "1.10.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://invent.kde.org/libraries/qxmpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qinrbr63b1baqv1a7cph8bma6kj1ib8s8ywq6d9497lc1yl2kgi"))))
+    (build-system qt-build-system)
+    (arguments
+     `(#:qtbase ,qtbase
+       #:configure-flags (list "-DBUILD_EXAMPLES=false"
+                               "-DWITH_GSTREAMER=true"
+                               "-DBUILD_OMEMO=ON") ;needed by kaidan
+       #:test-exclude
+        (string-join ;; These tests use the network.
+         (list "tst_qxmppiceconnection"
+               "tst_qxmppcallmanager"
+               "tst_qxmpptransfermanager")
+         "|")))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list
+       gstreamer
+       libomemo-c
+       qca-qt6
+       qt5compat))
+    (home-page "https://invent.kde.org/libraries/qxmpp")
+    (synopsis "XMPP client and server library")
+    (description
+     "QXmpp is a XMPP client and server library written in C++ and uses the Qt
+framework.  It builds XMPP clients complying with the XMPP Compliance Suites
+2021 for IM and Advanced Mobile.")
+    (license license:lgpl2.1+)))
+
+(define-public snorenotify
+  (package
+    (name "snorenotify")
+    (version "0.7.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "mirror://kde/stable/snorenotify/"
+                            version "/src/snorenotify-" version ".tar.xz"))
+        (sha256
+         (base32
+          "0jz6ivk90h7iwgyxar7xzzj8yvzn6s1my6cqs9bdnwqswfk1nhbd"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ; both tests fail, require display
+    (inputs
+     (list qtbase-5))
+    (native-inputs
+     (list extra-cmake-modules qttools-5))
+    (home-page "https://techbase.kde.org/Projects/Snorenotify")
+    (synopsis "Qt notification framework")
+    (description "Snorenotify is a multi platform Qt notification framework.
+Using a plugin system it is possible to create notifications with many
+different notification systems.")
+    (license license:lgpl3)))
+
 (define-public falkon
   (package
     (name "falkon")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
@@ -81,7 +185,7 @@
                            "/src/falkon-" version ".tar.xz"))
        (sha256
         (base32
-         "1049wwm46cd2dd96f9gwlnpz3sdrk8fs12fsp6qk0apmgzq3lf7x"))))
+         "0lqirjirjxin4b2bkf9raalygvjp35qs1r51ydmgf97gjk6nhzzv"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config qttools))
@@ -105,22 +209,87 @@
      "Falkon is is a Qt-based web browser for  KDE.")
     (license license:gpl3+)))
 
+(define-public kaidan
+  (package
+    (name "kaidan")
+    (version "0.12.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/unstable/kaidan/" version
+                                  "/kaidan-" version ".tar.xz"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   (delete-file-recursively "3rdparty")))
+              (sha256
+               (base32 "0q8py100nmvyhm8pfnvpxmghbg445x2vgpw3c519bcrr4w7y6yl0"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+       #:qtbase qtbase
+       #:configure-flags #~(list "-DBUILD_TESTS=true")
+       #:test-exclude "PublicGroupChatTest"
+       #:phases
+         #~(modify-phases %standard-phases
+           (add-before 'check 'set-home
+             (lambda _
+               ;; Tests need write permission in $HOME.
+               (setenv "HOME" "/tmp"))))))
+    (native-inputs (list extra-cmake-modules
+                         pkg-config))
+    (inputs (list icu4c
+                  kcrash
+                  kdsingleapplication
+                  kio
+                  kirigami
+                  kirigami-addons
+                  knotifications
+                  kquickimageeditor
+                  prison
+                  qqc2-desktop-style
+                  qtlocation
+                  qtmultimedia
+                  qtpositioning
+                  qtsvg
+                  qttools
+                  qtwayland
+                  qxmpp
+                  sonnet))
+    (home-page "https://www.kaidan.im/")
+    (synopsis "Qt-based XMPP/Jabber Client")
+    (description "Kaidan is a chat client.  It uses the open communication
+protocol XMPP (Jabber).  The user interface makes use of Kirigami and QtQuick,
+while the back-end of Kaidan is entirely written in C++ using Qt and the
+Qt-based XMPP library QXmpp.")
+    (license (list
+              ;; Graphics
+              license:cc-by-sa4.0
+              ;; Files:
+              ;; src/{StatusBar.cpp|StatusBar.h|singleapp/*|hsluv-c/*}
+              ;; utils/generate-license.py
+              license:expat
+              ;; QrCodeVideoFrame
+              license:asl2.0
+              ;; Others
+              license:gpl3+))))
+
 (define-public kget
   (package
     (name "kget")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kget-" version ".tar.xz"))
        (sha256
-        (base32 "0pg2cv1x04gd7wr1i9qw7p22hg16asarzn9sycq4xwifxg1fvbb7"))))
+        (base32 "07vj6wxprsd610bshfmxjwr22dvnc662cz78y6ksg9ff3a0da532"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools pkg-config))
     (inputs
      (list boost
+           breeze-icons ; default icon set
            gmp
            ;; TODO: enable when we qgpgme support qt6.
            ;; gpgme
@@ -149,8 +318,8 @@
            libgcrypt
            libktorrent
            libmms
-           breeze-icons ; default icon set
-           qca-qt6))
+           qca-qt6
+           qtwayland))
     (arguments
      (list #:qtbase qtbase))
     (home-page "https://www.kde.org/")
@@ -167,7 +336,7 @@ This package is part of the KDE networking module.")
 (define-public kdeconnect
   (package
     (name "kdeconnect")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
@@ -176,7 +345,7 @@ This package is part of the KDE networking module.")
                            version ".tar.xz"))
        (sha256
         (base32
-         "07rmkm8gmfx1hs5n5rql2q9f539hdwv1l8wgjcmd2m5793f0nd4a"))))
+         "02bbj45lhpjrlv6qk59l3gi98jf2ymjw0rzx4ghz0v9x0rm5n974"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -258,7 +427,7 @@ communicate with each other.  Here's a few things KDE Connect can do:
 (define-public kio-extras
   (package
     (name "kio-extras")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
@@ -266,7 +435,7 @@ communicate with each other.  Here's a few things KDE Connect can do:
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1n3cidj9rd77gjagdncp3f1s8351cf56h3mfwsv8z5vw5cppbi5a"))
+                "0prpc44409nawx8kfvv50g64l17ssacz24d3gqw2a9sp1wp9z3w6"))
               (modules '((guix build utils)))
               (snippet
                ;; Fix including libproxy.
@@ -351,14 +520,14 @@ the functionality of the KDE resource and network access abstractions.")
 (define-public kio-zeroconf
   (package
     (name "kio-zeroconf")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kio-zeroconf-" version ".tar.xz"))
        (sha256
-        (base32 "0w27hxmaccw74sycrxpchgh6qgkbqyclc6h7ijsrvvh4l2xhlmc0"))))
+        (base32 "1chaxf0lszn8qfqjaj6sm6l8m5y1pdnwdasl1lmnm2j7jwvzfgbq"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -379,14 +548,14 @@ or Bonjour by other projects).")
 (define-public konversation
   (package
     (name "konversation")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konversation-" version ".tar.xz"))
        (sha256
-        (base32 "0flm9nhk9sv70by4z81kks4wchcrdy6nbgg3bnpi8gzz9j69zlaw"))))
+        (base32 "1agknhi6xiba22nvcfx9ssl1rw9arb5m9mqmm5pgyfdx0zbn63ja"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools qttools))
@@ -417,6 +586,7 @@ or Bonjour by other projects).")
            phonon
            qca-qt6
            qtmultimedia
+           qtwayland
            qt5compat
            solid
            sonnet))
@@ -453,19 +623,20 @@ Features are:
 (define-public krdc
   (package
     (name "krdc")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/krdc-" version ".tar.xz"))
        (sha256
-        (base32 "16vnh9aq8hlhi1bnyy0f0mscc025wp5fnd6vswx8h4dnhq0ink8k"))))
+        (base32 "0yjyf3w5ndsfb9wh8fpkvyjdcvgdzh6ax10v1ip5cmrjjc76abg3"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config kdoctools))
     (inputs
      (list breeze-icons ; default icon set
+           gnutls
            kbookmarks
            freerdp-3
            fuse
@@ -491,7 +662,7 @@ Features are:
            lzo
            libjpeg-turbo
            libgcrypt
-           gnutls))
+           qtwayland))
     (arguments
      (list #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
            #:tests? #f
@@ -509,14 +680,14 @@ This package is part of the KDE networking module.")
 (define-public ktorrent
   (package
     (name "ktorrent")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ktorrent-" version ".tar.xz"))
        (sha256
-        (base32 "0kvjxhhpzn1knvmmq60fjl5hfl6jpiyzzxfsjwmfvc5xavmc4s5l"))))
+        (base32 "1gg22pmzhqkv80qs9xrpbar736imnsi1s9yi3if704mvcvvsx8lv"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -549,6 +720,7 @@ This package is part of the KDE networking module.")
            breeze-icons ; default icon set
            phonon
            qt5compat
+           qtwayland
            qtwebengine
            solid
            syndication
@@ -564,14 +736,14 @@ a full-featured client for BitTorrent.")
 (define-public libktorrent
   (package
     (name "libktorrent")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "00hnmiwbxgwqs90zg07xbirxqi5nv900fpzmcx9gm0012051bqw5"))))
+        (base32 "0djqnl8kmncvsfjxxmvhh2ylr5kzjgzcn4bycs1phlypdj60in25"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -599,14 +771,14 @@ management, IP blocking lists.")
 (define-public kunifiedpush
   (package
     (name "kunifiedpush")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "1mx3kb2yxnvv6rzmhxkl4xqaxzmdkc6vj5a1rd27b5a36s3h3giz"))))
+        (base32 "0cl8awh0qr5h7384f6l3w2122rpl3kynb6mp0aawlx3l60d6lp1a"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -635,14 +807,14 @@ UnifiedPush} client library and distributor daemon.")
 (define-public neochat
   (package
     (name "neochat")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "1dp9yng23vdzmhzrsvb3qh4l8z46pg8jbv51h6756a3zkckmvmws"))))
+        (base32 "1xa372pzrg22ngmjl11mzk3746f2mnc983i4yza6ykv7kdy28fal"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -712,14 +884,14 @@ protocol, supporting end-to-end encryption.  Its features include:
 (define-public ruqola
   (package
     (name "ruqola")
-    (version "2.5.3")
+    (version "2.6.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde//stable/ruqola/ruqola-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "18brrxwn5dh5xj20znmg3v2044m3bw2jyv8abfwa45qk32qjyzi9"))))
+                "09wcqmnl6v6p56633djrszy7znb2zdmd5xlnr8njz0dk2ps7grmm"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -755,6 +927,7 @@ protocol, supporting end-to-end encryption.  Its features include:
            qtwebsockets
            qtnetworkauth
            qtmultimedia
+           qtwayland
            qtsvg
            sonnet))
     (home-page "https://apps.kde.org/ruqola/")
@@ -793,3 +966,85 @@ desktop.  It supports:
 @item DND image to websites or local folder.
 @end itemize")
     (license (list license:lgpl2.1+ license:gpl2+))))
+
+(define-public smb4k
+  (package
+    (name "smb4k")
+    (version "4.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url "https://invent.kde.org/network/smb4k")
+                           (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sbw7fdcgfjadggnmsl3m85kgim80lkn2vakwv4mrkrci0izk1xj"))))
+    (build-system qt-build-system)
+    (arguments (list
+                #:qtbase qtbase
+                #:tests? #f
+                #:configure-flags #~(list "-DSMB4K_WITH_WS_DISCOVERY=ON")))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list breeze-icons ;; default icon set
+           kauth
+           kcompletion
+           kconfig
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           kdbusaddons
+           kdnssd
+           kdsoap
+           kdsoap-ws-discovery-client
+           ki18n
+           kiconthemes
+           kio
+           kirigami
+           kjobwidgets
+           knotifications
+           knotifyconfig
+           kstatusnotifieritem
+           ktextwidgets
+           kwallet
+           kwidgetsaddons
+           kwindowsystem
+           kxmlgui
+           libplasma
+           qtdeclarative
+           qtkeychain-qt6
+           qtwayland
+           samba
+           solid))
+    (home-page "https://apps.kde.org/smb4k/")
+    (synopsis "Samba (SMB) share advanced browser")
+    (description "Smb4K is an network neighborhood browser for the KDE
+Software Compilation and a frontend to the programs of the Samba software
+suite.
+
+Features:
+@itemize
+@item Scanning for (active) workgroups, hosts, and shares
+@item Support of the CIFS (Linux) and SMBFS (FreeBSD) file system
+@item Mounting and unmounting of shares (using the KAuth framework)
+@item Access to the files of a mounted share using a file manager or terminal
+@item Auto-detection of external mounts and unmounts
+@item Remounting of previously used shares on program start
+@item Miscellaneous infos about remote network items and mounted shares
+@item Network search
+@item WINS server support
+@item Preview of the contents of a share
+@item Several methods to look up the initial list of workgroups and domains
+@item Default login
+@item Special handling of homes shares
+@item Ability to bookmark favorite shares and organize them in groups
+@item System tray widget
+@item Support of advanced Samba options
+@item Support of printer shares
+@item KWallet support
+@item Synchronization of a remote share with a local copy and vice versa
+@item Ability to define custom options for individual servers and shares
+@item Laptop support through the Solid hardware device framework
+@end itemize")
+    (license license:gpl2+)))

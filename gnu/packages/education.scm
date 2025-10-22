@@ -56,8 +56,6 @@
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages image)
   #:use-module (gnu packages javascript)
-  #:use-module (gnu packages kde)
-  #:use-module (gnu packages kde-frameworks) ; extra-cmake-modules
   #:use-module (gnu packages linux)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages ncurses)
@@ -217,66 +215,6 @@ of categories with some of the activities available in that category.
 @end enumerate
 ")
     (license license:gpl3+)))
-
-(define-public gcompris-qt
-  (package
-    (name "gcompris-qt")
-    (version "25.0.12")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "mirror://kde/stable/gcompris/qt/src/gcompris-qt-"
-             version ".tar.xz"))
-       (sha256
-        (base32 "1my67r7x6j7snidnj47v3ndhf3i5sxn0zqj4d8apaw6mbqms96vj"))))
-    (build-system qt-build-system)
-    (arguments
-     (list #:qtbase qtbase
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-before 'check 'start-xorg-server
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   ;; The test suite requires a running X server.
-                   (system "Xvfb :1 &")
-                   (setenv "DISPLAY" ":1")
-                   ;; The test suite wants to write to /homeless-shelter
-                   (setenv "HOME" (getcwd)))))
-           #:configure-flags #~(list "-DQML_BOX2D_MODULE=disabled")))
-    (native-inputs
-     (list extra-cmake-modules
-           gettext-minimal
-           kdoctools
-           perl
-           pkg-config
-           qttools
-           xorg-server-for-tests))
-    (inputs
-     (list openssl
-           python-wrapper
-           qtcharts
-           qtdeclarative
-           qtmultimedia
-           qtsensors
-           qtsvg))
-    (home-page "https://gcompris.net/index-en.html")
-    (synopsis "Educational games for small children")
-    (description
-     "Gcompris offers a large collection of educational games for small
-children, designed to be a unified interface to integrate more educational
-games.  Language-oriented games contain vocabulary, sounds, and voices for
-many different languages.
-Currently available boards include:
-@enumerate
-@item learning how to use a mouse and keyboard
-@item learning simple arithmetic
-@item learning how to read an analog clock
-@item recognize letters after hearing their names
-@item reading practice
-@item small games (memory games, jigsaw puzzles, ...)
-@end enumerate")
-    (license (list license:silofl1.1    ; bundled fonts
-                   license:agpl3+))))
 
 (define-public gotypist
   (let ((revision "0")
@@ -682,76 +620,6 @@ hours.")
      "Klavaro is a simple tutor to teach correct typing, almost independently of
 language and very flexible regarding to new or unknown keyboard layouts.")
     (license license:gpl3+)))
-
-(define-public kqtquickcharts
-  (package
-    (name "kqtquickcharts")
-    (version "24.12.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/release-service/"
-                                  version "/src/kqtquickcharts-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1hgcl062i94abq0cwz9fijyjhv2qs3fsjikiy2jb3sh73m6jydqn"))))
-    (build-system qt-build-system)
-    (native-inputs (list extra-cmake-modules))
-    (inputs (list qtdeclarative-5))
-    (arguments (list #:tests? #f))
-    (home-page "https://invent.kde.org/libraries/kqtquickcharts")
-    (synopsis "QtQuick plugin to render beautiful and interactive charts")
-    (description
-     "This package provides a QtQuick plugin to render beautiful and interactive
-charts.")
-    (license (list license:lgpl2.0+ license:gpl2+))))
-
-(define-public ktouch
-  (package
-    (name "ktouch")
-    (version "24.12.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/"
-                           version "/src/ktouch-" version ".tar.xz"))
-       (sha256
-        (base32 "1sqzm8xf3xaia0b761mgpb2q4gc8yxwhvkzwdvw0spj25irdv7n5"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules kdoctools-5 pkg-config))
-    (inputs
-     (list kcmutils-5
-           kcompletion-5
-           kconfig-5
-           kconfigwidgets-5
-           kcoreaddons-5
-           kdeclarative-5
-           ki18n-5
-           kiconthemes-5
-           kitemviews-5
-           ktextwidgets-5
-           kwidgetsaddons-5
-           kwindowsystem-5
-           kxmlgui-5
-           kqtquickcharts
-           libxcb
-           libxkbfile
-           qtbase-5
-           qtdeclarative-5
-           qtgraphicaleffects
-           qtquickcontrols2-5
-           qtx11extras
-           qtxmlpatterns-5))
-    (arguments (list #:tests? #f))
-    (home-page "https://edu.kde.org/ktouch/")
-    (synopsis "Touch typing tutor")
-    (description
-     "KTouch is an aid for learning how to type with speed and accuracy.  It
-provides a sample text to type and indicates which fingers should be used for
-each key.  A collection of lessons are included for a wide range of different
-languages and keyboard layouts, and typing statistics are used to dynamically
-adjust the level of difficulty.")
-    (license license:gpl2)))
 
 (define-public kanatest
   ;; Latest release tarball is 0.4.8, which is really old and does not build

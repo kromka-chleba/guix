@@ -61,6 +61,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages electronics)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages embedded)
   #:use-module (gnu packages flex)
@@ -76,7 +77,10 @@
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages readline)
+  #:use-module (gnu packages swig)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-26))
@@ -161,29 +165,29 @@ brick your device.")
 (define-public avrdude
   (package
     (name "avrdude")
-    (version "8.0")
+    (version "8.1")
     (source
      (origin
-      (method git-fetch)
-      (uri (git-reference
-            (url "https://github.com/avrdudes/avrdude/")
-            (commit (string-append "v" version))))
-      (file-name (git-file-name name version))
-      (sha256
-       (base32 "1r8cfi1lkic8zknb7x44i2mmwxzfwfbblr894x36mffa5da0g7y3"))))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/avrdudes/avrdude/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jfz0z8i5vib181f854zwxd8avw5fy59lh3d78igqxwm08sv8nlb"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:tests? #f))                      ; no tests
+     (list #:tests? #f))                     ;no tests
     (inputs
-     (list libelf libusb-compat libftdi))
+     (list libelf libusb-compat libftdi libserialport readline))
     (native-inputs
-     (list bison flex))
+     (list bison flex python-wrapper))
     (home-page "https://www.nongnu.org/avrdude/")
     (synopsis "AVR downloader and uploader")
     (description
-     "@code{AVRDUDE} is a utility to download/upload/manipulate the ROM and EEPROM
-contents of AVR microcontrollers using the @acronym{ISP, in-system programming}
-technique.")
+     "@code{AVRDUDE} is a utility to download/upload/manipulate the ROM and
+EEPROM contents of AVR microcontrollers using the @acronym{ISP, in-system
+programming} technique.")
     (license license:gpl2+)))
 
 (define-public dfu-programmer
@@ -410,7 +414,7 @@ referred to as the \"Odin 3 protocol\".")
 (define-public ifdtool
   (package
     (name "ifdtool")
-    (version "4.9")
+    (version "25.09")
     (source
      (origin
        (method git-fetch)
@@ -420,7 +424,7 @@ referred to as the \"Odin 3 protocol\".")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0jidj29jh6p65d17k304wlzhxvp4p3c2namgcdwg2sxq8jfr0zlm"))))
+         "1a1n64dwr5fzdnaj45bjci85ap5yra5gwz4x056zn6481xwvbsmv"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -713,7 +717,7 @@ formats, and can perform many different manipulations.")
 (define-public uuu
   (package
     (name "uuu")
-    (version "1.5.201")
+    (version "1.5.233")
     (source
      (origin
        (method git-fetch)
@@ -723,31 +727,32 @@ formats, and can perform many different manipulations.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0jil04khy0lxllhapdm86yyq9i3xqrlvmf6g5r53qmq9jyvxwlhv"))))
+         "08pck42sywg0ibj79lhd3iv9z6bvr5g5bqvkls477x9x85nbsw67"))))
+    (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:modules ((guix build utils)
+     (list
+      #:tests? #f                      ; no tests
+      #:modules '((guix build utils)
                   (ice-9 popen)
                   (srfi srfi-26)
                   (guix build cmake-build-system))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'fix-version-gen
-           (lambda _
-             (call-with-output-file ".tarball-version"
-               (lambda (port)
-                 (display ,version port)))))
-         (add-after 'install 'install-udev-rules
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (uuu (string-append out "/bin/uuu"))
-                    (pipe (open-pipe* OPEN_READ uuu "-udev"))
-                    (rules
-                     (string-append out "/lib/udev/rules.d/70-uuu.rules")))
-               (mkdir-p (string-append out "/lib/udev/rules.d"))
-               (call-with-output-file rules
-                 (cut dump-port pipe <>))))))))
-    (build-system cmake-build-system)
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'fix-version-gen
+            (lambda _
+              (call-with-output-file ".tarball-version"
+                (lambda (port)
+                  (display #$version port)))))
+          (add-after 'install 'install-udev-rules
+            (lambda _
+              (let* ((uuu (string-append #$output "/bin/uuu"))
+                     (pipe (open-pipe* OPEN_READ uuu "-udev"))
+                     (rules
+                      (string-append
+                       #$output "/lib/udev/rules.d/70-uuu.rules")))
+                (mkdir-p (string-append #$output "/lib/udev/rules.d"))
+                (call-with-output-file rules
+                  (cut dump-port pipe <>))))))))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -759,9 +764,10 @@ formats, and can perform many different manipulations.")
 It can be used to upload images to I.MX SoC's using at least their boot ROM.")
     (license license:bsd-3)))
 
+;; The upstream repository has been archived on 2024-08-21,
+;; the replacement Keymapp does not seem to be free software.
+;; Keep it as long as it builds and works and no replacement is in sight.
 (define-public wally-cli
-  ;; Version with updated dependencies is not released yet, see
-  ;; <https://github.com/zsa/wally-cli/pull/7>.
   (let ((commit "b0fafe52cc7fb9d55f2b968d4548c99917c7325c")
         (revision "0"))
     (package

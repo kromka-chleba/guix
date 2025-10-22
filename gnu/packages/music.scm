@@ -680,7 +680,7 @@ you create custom user interfaces for your MIDI hardware.")
 (define-public qmmp
   (package
     (name "qmmp")
-    (version "2.2.8")
+    (version "2.3.0")
     (source
      (origin
        (method url-fetch)
@@ -688,7 +688,7 @@ you create custom user interfaces for your MIDI hardware.")
                            (version-major+minor version) "/"
                            "qmmp-" version ".tar.bz2"))
        (sha256
-        (base32 "12lkpdyxh6sq1lhjnzvcd8z6jw75vyc82bwyv8vyp654cfh9f2kk"))))
+        (base32 "0qrh6g42mq92az7mzrnp5wspm94lyqh4sn8ms661g1f8cw1y7hq1"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1158,7 +1158,7 @@ MusePack, Monkey's Audio, and WavPack files.")
 (define-public flacon
   (package
     (name "flacon")
-    (version "11.4.0")
+    (version "12.0.0")
     (source
       (origin
         (method git-fetch)
@@ -1169,16 +1169,15 @@ MusePack, Monkey's Audio, and WavPack files.")
             (recursive? #t)))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "0yp73yl5x9m2l4whrzj6yx8aqv1915khmlihgp1p12m9m540dql2"))))
-    (build-system cmake-build-system)
+         (base32 "1r8sr4cd1djackfwk7m3qvjlbvh54kcm5cgdqh3clk491r19vm5g"))))
+    (build-system qt-build-system)
     (arguments
       ;; The tests fail while attempting to exercise MacOS functionality.
-      (list #:tests? #f))
-    (native-inputs (list pkg-config))
+      (list #:tests? #f
+            #:qtbase qtbase))
+    (native-inputs (list pkg-config qttools))
     (inputs
-      (list qtbase-5
-            qttools-5
-            taglib
+      (list taglib
             uchardet
             zlib))
     (home-page "https://flacon.github.io/")
@@ -3974,7 +3973,7 @@ tune-in sender list from @url{http://opml.radiotime.com}.")
 (define-public pianobar
   (package
     (name "pianobar")
-    (version "2022.04.01")
+    (version "2024.12.21")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3983,7 +3982,7 @@ tune-in sender list from @url{http://opml.radiotime.com}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "14s97fx83dg8szbib2y608hjzfdhz20hch2ify3gqhji58v69wil"))))
+                "1v17hfdk45pqdgnjvjr1l7galmn2m3cxpp1c772gisfrgrrv7ybr"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no tests

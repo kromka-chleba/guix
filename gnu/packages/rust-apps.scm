@@ -40,6 +40,9 @@
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
+;;; Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
+;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
+;;; Copyright © 2025 Samuel Sehnert <mail@buffersquid.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1554,13 +1557,13 @@ with other physical backends.")
 (define-public just
   (package
     (name "just")
-    (version "1.40.0")
+    (version "1.43.0")
     (source (origin
               (method url-fetch)
               (uri (crate-uri "just" version))
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
-               (base32 "03k9ifgxwxvx41f7xc9hv09h0w6j9k46cazfdxzynq56dly3kl7c"))))
+               (base32 "139l2pqnzhlmmn4frcp4j4a81vnv42w2470sf23rrsilid11dd6i"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-test-flags
@@ -2638,6 +2641,37 @@ implements an analogue of the Texas Instruments Smart Amp speaker protection
 model.")
     (license license:expat)))
 
+(define-public systemd-lsp
+  (package
+    (name "systemd-lsp")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "systemd-lsp" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0a9j93d89pnrmhsp2j219zppp0r0lkrapkf4wlqllycng90grjzb"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-doc
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (doc (string-append out "/share/doc/" #$name "-" #$version)))
+                (copy-recursively "docs/" doc)))))))
+    (inputs (cargo-inputs 'systemd-lsp))
+    (home-page "https://github.com/jfryy/systemd-lsp")
+    (synopsis "Language Server Protocol implementation for systemd unit files")
+    (description
+     "A @acronym{LSP, Language Server Protocol} implementation for systemd unit
+files, providing editing support with syntax highlighting and analysis,
+diagnostics, autocompletion, documentation, and formatting.")
+    (license license:expat)))
+
 (define-public tectonic
   (package
     (name "tectonic")
@@ -2971,14 +3005,14 @@ older terminal emulators.")
 (define-public watchexec
   (package
     (name "watchexec")
-    (version "2.3.0")
+    (version "2.3.2")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "watchexec-cli" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "1qqbcipx90q4hl1l39ijwqqndbd23kmkqha3wxpqn1b8dylfxgy2"))))
+        (base32 "04qm50br5swck9sqvl9qhaa7cfh6z2y12ipj9729biczmzaw1avx"))))
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
@@ -4005,6 +4039,61 @@ and users are in full control of their data and workflow.")
     (description
      "This package provides a high performance CSV command line toolkit.")
     (license (list license:unlicense license:expat))))
+
+(define-public zola
+  (package
+    (name "zola")
+    (version "0.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (file-name (git-file-name name version))
+       (uri (git-reference
+             (url "https://github.com/getzola/zola")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1j7mdw7y3j2fzwickfl9w4yx0xjbkaf03vcndf2b6jc3la20rzgv"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:modules
+      '((guix build cargo-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-completions
+            (lambda* (#:key native-inputs #:allow-other-keys)
+              (for-each
+               (match-lambda
+                 ((shell . path)
+                  (mkdir-p (in-vicinity #$output (dirname path)))
+                  (let ((binary
+                         (if #$(%current-target-system)
+                             (search-input-file native-inputs "bin/zola")
+                             (in-vicinity #$output "bin/zola"))))
+                    (with-output-to-file (in-vicinity #$output path)
+                      (lambda _
+                        (invoke binary "completion" shell))))))
+               '(("bash"   . "share/bash-completion/completions/zola")
+                 ("elvish" . "share/elvish/lib/zola")
+                 ("fish"   . "share/fish/vendor_completions.d/zola.fish")
+                 ("zsh"    . "share/zsh/site-functions/_zola"))))))))
+    (native-inputs
+     (append
+       (if (%current-target-system)
+           (list this-package)
+           '())
+       (list pkg-config)))
+    (inputs (cons* libwebp oniguruma
+                   (cargo-inputs 'zola)))
+    (synopsis "Static site generator")
+    (description
+     "Zola generates static websites from Markdown content and Tera templates.
+It supports taxonomies, shortcodes, and live reloading.")
+    (home-page "https://www.getzola.org/")
+    (license license:expat)))
 
 (define-public zoxide
   (package

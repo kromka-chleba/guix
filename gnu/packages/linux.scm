@@ -85,6 +85,7 @@
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
 ;;; Copyright © 2025 Mathieu Laparie <mlaparie@disr.it>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2025 Arjan Adriaanse <arjan@adriaan.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -153,6 +154,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages libedit)
+  #:use-module (gnu packages kde-graphics)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages libusb)
@@ -527,7 +529,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.16-version "6.16.11")
+(define-public linux-libre-6.16-version "6.16.12")
 (define-public linux-libre-6.16-gnu-revision "gnu")
 (define deblob-scripts-6.16
   (linux-libre-deblob-scripts
@@ -537,7 +539,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1i4kba2wpkc7jmj7b2qjkrgqsl0g0s1h7j9pfvc7zqyyn9v3kkqr")))
 (define-public linux-libre-6.16-pristine-source
   (let ((version linux-libre-6.16-version)
-        (hash (base32 "0yxsinhly689327jbvwm2nfr6cx7ynj9sd87a9var1rx8l64yc2z")))
+        (hash (base32 "0vm257d76hmimnac8hzg66gd1mdg330sai39lywfn4m9bjydx93w")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.16)))
@@ -546,7 +548,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.51")
+(define-public linux-libre-6.12-version "6.12.52")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -556,12 +558,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "08bj3b6a6jwvrpjl5sxvmzwwnc00clq98rjwb61fznd7khaasm9d")))
+        (hash (base32 "1ccyd9h9i3xia1gqq0mggis5yv04c9ys44xp707wfcm0f3v0r1dl")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.110")
+(define-public linux-libre-6.6-version "6.6.111")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -571,7 +573,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "07gv37ralrhf709plqj1hzk1adwilh6znmay6agpbf23anphvwhv")))
+        (hash (base32 "1is6nrm5x54bw8zn8l5akp8ign185i19biks442yynfn63hp1i04")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
@@ -1316,6 +1318,8 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      (append
                       `(;; Provide support for ath9k wireless
                         ("CONFIG_ATH9K_HTC" . m)
+                        ;; Support Orange Pi R1 Plus LTS ethernet PHY.
+                        ("CONFIG_MOTORCOMM_PHY" . m)
                         ;; needed to fix the RTC on rockchip platforms
                         ("CONFIG_RTC_DRV_RK808" . #t)
                         ;; Pinebook display, battery, charger and usb
@@ -1350,6 +1354,8 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                          (append
                           `( ;; Provide support for ath9k wireless
                             ("CONFIG_ATH9K_HTC" . m)
+                            ;; Support Orange Pi R1 Plus LTS ethernet PHY.
+                            ("CONFIG_MOTORCOMM_PHY" . m)
                             ;; needed to fix the RTC on rockchip platforms
                             ("CONFIG_RTC_DRV_RK808" . #t)
                             ;; Pinebook display, battery, charger and usb
@@ -1678,6 +1684,50 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                                            ("CONFIG_CRYPTO_USER_API_RNG" . #true)
                                            ("CONFIG_CRYPTO_USER_API_AEAD" . #true)
                                            ("CONFIG_KEY_DH_OPERATIONS" . #true)
+                                           ;; nftables support
+                                           ("CONFIG_NF_TABLES" . m)
+                                           ("CONFIG_NF_TABLES_INET" . #true)
+                                           ("CONFIG_NF_TABLES_NETDEV" . #true)
+                                           ("CONFIG_NF_TABLES_IPV4" . #true)
+                                           ("CONFIG_NF_TABLES_ARP" . #true)
+                                           ("CONFIG_NF_TABLES_IPV6" . #true)
+                                           ("CONFIG_NF_TABLES_BRIDGE" . m)
+                                           ("CONFIG_NFT_NUMGEN" . m)
+                                           ("CONFIG_NFT_CT" . m)
+                                           ("CONFIG_NFT_FLOW_OFFLOAD" . m)
+                                           ("CONFIG_NFT_CONNLIMIT" . m)
+                                           ("CONFIG_NFT_LOG" . m)
+                                           ("CONFIG_NFT_LIMIT" . m)
+                                           ("CONFIG_NFT_MASQ" . m)
+                                           ("CONFIG_NFT_REDIR" . m)
+                                           ("CONFIG_NFT_NAT" . m)
+                                           ("CONFIG_NFT_TUNNEL" . m)
+                                           ("CONFIG_NFT_QUEUE" . m)
+                                           ("CONFIG_NFT_QUOTA" . m)
+                                           ("CONFIG_NFT_REJECT" . m)
+                                           ("CONFIG_NFT_REJECT_INET" . m)
+                                           ("CONFIG_NFT_COMPAT" . m)
+                                           ("CONFIG_NFT_HASH" . m)
+                                           ("CONFIG_NFT_FIB" . m)
+                                           ("CONFIG_NFT_FIB_INET" . m)
+                                           ("CONFIG_NFT_XFRM" . m)
+                                           ("CONFIG_NFT_SOCKET" . m)
+                                           ("CONFIG_NFT_OSF" . m)
+                                           ("CONFIG_NFT_TPROXY" . m)
+                                           ("CONFIG_NFT_SYNPROXY" . m)
+                                           ("CONFIG_NFT_DUP_NETDEV" . m)
+                                           ("CONFIG_NFT_FWD_NETDEV" . m)
+                                           ("CONFIG_NFT_FIB_NETDEV" . m)
+                                           ("CONFIG_NFT_REJECT_NETDEV" . m)
+                                           ("CONFIG_NFT_REJECT_IPV4" . m)
+                                           ("CONFIG_NFT_DUP_IPV4" . m)
+                                           ("CONFIG_NFT_FIB_IPV4" . m)
+                                           ("CONFIG_NFT_COMPAT_ARP" . m)
+                                           ("CONFIG_NFT_REJECT_IPV6" . m)
+                                           ("CONFIG_NFT_DUP_IPV6" . m)
+                                           ("CONFIG_NFT_FIB_IPV6" . m)
+                                           ("CONFIG_NFT_BRIDGE_META" . m)
+                                           ("CONFIG_NFT_BRIDGE_REJECT" . m)
                                            ;; Provide support for ath9k wireless
                                            ("CONFIG_ATH9K" . m)
                                            ("CONFIG_ATH9K_HTC" . m))
@@ -1994,6 +2044,50 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-pocket-reform.dtb")))))))))))
                                            ("CONFIG_CRYPTO_USER_API_RNG" . #true)
                                            ("CONFIG_CRYPTO_USER_API_AEAD" . #true)
                                            ("CONFIG_KEY_DH_OPERATIONS" . #true)
+                                           ;; nftables support
+                                           ("CONFIG_NF_TABLES" . m)
+                                           ("CONFIG_NF_TABLES_INET" . #true)
+                                           ("CONFIG_NF_TABLES_NETDEV" . #true)
+                                           ("CONFIG_NF_TABLES_IPV4" . #true)
+                                           ("CONFIG_NF_TABLES_ARP" . #true)
+                                           ("CONFIG_NF_TABLES_IPV6" . #true)
+                                           ("CONFIG_NF_TABLES_BRIDGE" . m)
+                                           ("CONFIG_NFT_NUMGEN" . m)
+                                           ("CONFIG_NFT_CT" . m)
+                                           ("CONFIG_NFT_FLOW_OFFLOAD" . m)
+                                           ("CONFIG_NFT_CONNLIMIT" . m)
+                                           ("CONFIG_NFT_LOG" . m)
+                                           ("CONFIG_NFT_LIMIT" . m)
+                                           ("CONFIG_NFT_MASQ" . m)
+                                           ("CONFIG_NFT_REDIR" . m)
+                                           ("CONFIG_NFT_NAT" . m)
+                                           ("CONFIG_NFT_TUNNEL" . m)
+                                           ("CONFIG_NFT_QUEUE" . m)
+                                           ("CONFIG_NFT_QUOTA" . m)
+                                           ("CONFIG_NFT_REJECT" . m)
+                                           ("CONFIG_NFT_REJECT_INET" . m)
+                                           ("CONFIG_NFT_COMPAT" . m)
+                                           ("CONFIG_NFT_HASH" . m)
+                                           ("CONFIG_NFT_FIB" . m)
+                                           ("CONFIG_NFT_FIB_INET" . m)
+                                           ("CONFIG_NFT_XFRM" . m)
+                                           ("CONFIG_NFT_SOCKET" . m)
+                                           ("CONFIG_NFT_OSF" . m)
+                                           ("CONFIG_NFT_TPROXY" . m)
+                                           ("CONFIG_NFT_SYNPROXY" . m)
+                                           ("CONFIG_NFT_DUP_NETDEV" . m)
+                                           ("CONFIG_NFT_FWD_NETDEV" . m)
+                                           ("CONFIG_NFT_FIB_NETDEV" . m)
+                                           ("CONFIG_NFT_REJECT_NETDEV" . m)
+                                           ("CONFIG_NFT_REJECT_IPV4" . m)
+                                           ("CONFIG_NFT_DUP_IPV4" . m)
+                                           ("CONFIG_NFT_FIB_IPV4" . m)
+                                           ("CONFIG_NFT_COMPAT_ARP" . m)
+                                           ("CONFIG_NFT_REJECT_IPV6" . m)
+                                           ("CONFIG_NFT_DUP_IPV6" . m)
+                                           ("CONFIG_NFT_FIB_IPV6" . m)
+                                           ("CONFIG_NFT_BRIDGE_META" . m)
+                                           ("CONFIG_NFT_BRIDGE_REJECT" . m)
                                            ;; Provide support for ath9k wireless
                                            ("CONFIG_ATH9K" . m)
                                            ("CONFIG_ATH9K_HTC" . m))
@@ -2674,6 +2768,32 @@ monitors in @file{/dev/bus/ddcci/[I²C busnumber]}.  While the ddcci-backlight
 module allows the control of the backlight level or luminance property when
 supported under @file{/sys/class/backlight/}.")
       (license license:gpl2+))))
+
+(define-public reform2-lpc-module
+  (package
+    (name "reform2-lpc-module")
+    (version "1.79")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://source.mnt.re/reform/reform-tools.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16xzdygf14zksvqjbp5gwiqsn0mb7kphvzrmqbl9db4kvyj4ajqa"))))
+    (build-system linux-module-build-system)
+    (arguments
+     '(#:tests? #f ;no tests
+       #:source-directory "lpc"))
+    (synopsis "Linux kernel module for the Reform 2 system controller")
+    (description
+     "The reform2_lpc module allows for interaction with the NXP LPC11U24
+Cortex-M0 MCU system controller in the Reform 2 open hardware laptop.  It
+provides battery status information and is necessary to completely shut down
+the system when powering it off via userspace.")
+    (home-page "https://source.mnt.re/reform/reform-tools/")
+    (license license:gpl3+)))
 
 (define-public v4l2loopback-linux-module
   (package
@@ -4757,7 +4877,7 @@ processes currently causing I/O.")
 (define-public iotop
   (package
     (name "iotop")
-    (version "1.26")
+    (version "1.30")
     (source
      (origin
        (method git-fetch)
@@ -4766,7 +4886,7 @@ processes currently causing I/O.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0raac1sp46mls6p0a4yzzc8iqxkw0da4zq54cwjdg4wcy8g43glv"))))
+        (base32 "1sijsk13bkrhsc5bc8f5i97a1ayhivak9pfinnyli57dh22w4k1g"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags
@@ -11547,7 +11667,7 @@ kernel side implementation.")
 (define-public erofs-utils
   (package
     (name "erofs-utils")
-    (version "1.8.3")
+    (version "1.8.10")
     (source
      (origin
        (method git-fetch)
@@ -11556,7 +11676,7 @@ kernel side implementation.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a57a8r58wp90a9r2fmkfxsq2agq78rm2qif3js0rsraz4hhrfn2"))))
+        (base32 "1qlig9q1fdjl0zn7206dbv7w5ssjg4az4hg7y3vk69ly0zbmwkil"))))
     (build-system gnu-build-system)
     (inputs
      (list lz4
@@ -11575,7 +11695,7 @@ provides user-space tools for creating EROFS file systems.")
 (define-public rasdaemon
   (package
     (name "rasdaemon")
-    (version "0.8.0")
+    (version "0.8.3")
     (source
      (origin
        (method git-fetch)
@@ -11584,9 +11704,9 @@ provides user-space tools for creating EROFS file systems.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0m3j1hz9rqcvwmrimpakd239s0ppzaplkykhf9wyh55xmmry8z85"))))
+        (base32 "0vfw4vf75fnpbxnfsmpdwdzhplnccz24j23bg6nsb3b4wa8hv4sa"))))
     (native-inputs (list autoconf automake libtool pkg-config))
-    (inputs (list libtraceevent perl perl-dbd-sqlite sqlite dmidecode kmod))
+    (inputs (list bash-minimal libtraceevent perl perl-dbd-sqlite sqlite dmidecode kmod))
     (arguments
      (list
       #:configure-flags

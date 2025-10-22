@@ -1,7 +1,6 @@
 # List of source files which contain translatable strings.  These should be
 # only package modules (currently it's only a subset of them, but eventually
 # all of them should be listed here.)  Strings of the tools are in 'po/guix'.
-gnu/packages/abduco.scm
 gnu/packages/abiword.scm
 gnu/packages/accessibility.scm
 gnu/packages/acct.scm
@@ -164,9 +163,7 @@ gnu/packages/fortran-xyz.scm
 gnu/packages/freedesktop.scm
 gnu/packages/freeipmi.scm
 gnu/packages/fribidi.scm
-gnu/packages/fsf.scm
 gnu/packages/ftp.scm
-gnu/packages/fvwm.scm
 gnu/packages/gambas.scm
 gnu/packages/games.scm
 gnu/packages/gawk.scm
@@ -226,7 +223,6 @@ gnu/packages/kde-internet.scm
 gnu/packages/kde-multimedia.scm
 gnu/packages/kde-pim.scm
 gnu/packages/kde-plasma.scm
-gnu/packages/kde.scm
 gnu/packages/kerberos.scm
 gnu/packages/kodi.scm
 gnu/packages/language.scm
@@ -499,7 +495,6 @@ gnu/packages/re2c.scm
 gnu/packages/rsync.scm
 gnu/packages/ruby-check.scm
 gnu/packages/ruby.scm
-gnu/packages/rush.scm
 gnu/packages/rust.scm
 gnu/packages/samba.scm
 gnu/packages/scribus.scm

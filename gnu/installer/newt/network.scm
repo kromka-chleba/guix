@@ -112,29 +112,35 @@ network devices were found. Do you want to continue anyway?"))
              full-value
              (+ value 1)))))))
 
+(define (url-alive? url)
+  (false-if-exception
+   (begin
+     (http-request url)
+     #t)))
+
+(define (common-urls-alive? urls)
+  (dynamic-wind
+    (lambda ()
+      (sigaction SIGALRM
+        (lambda _ #f))
+      (alarm 3))
+    (lambda ()
+      (any url-alive?
+           urls))
+    (lambda ()
+      (alarm 0))))
+
 (define (wait-service-online)
   "Display a newt scale until connman detects an Internet access. Do
 FULL-VALUE tentatives, spaced by 1 second."
-  (define (url-alive? url)
-    (false-if-exception
-     (= (response-code (http-request url))
-        200)))
-
-  (define (ci-available?)
-    (dynamic-wind
-      (lambda ()
-        (sigaction SIGALRM
-          (lambda _ #f))
-        (alarm 3))
-      (lambda ()
-        (or (url-alive? "https://bordeaux.guix.gnu.org")
-            (url-alive? "https://ci.guix.gnu.org")))
-      (lambda ()
-        (alarm 0))))
-
   (define (online?)
     (or (and (connman-online?)
-             (ci-available?))
+             (common-urls-alive?
+              (list
+               "https://bordeaux.guix.gnu.org"
+               "https://ci.guix.gnu.org"
+               "https://guix.gnu.org"
+               "https://gnu.org")))
         (file-exists? "/tmp/installer-assume-online")))
 
   (let* ((full-value 5))
@@ -149,11 +155,47 @@ FULL-VALUE tentatives, spaced by 1 second."
            full-value
            (+ value 1))))
     (unless (online?)
-      (run-error-page
-       (G_ "The selected network does not provide access to the \
-Internet and the Guix substitute server, please try again.")
-       (G_ "Connection error"))
-      (abort-to-prompt 'installer-step 'abort))))
+      (case (choice-window
+             (G_ "Internet access")
+             (G_ "Continue")
+             (G_ "Try again?")
+             (G_ "
+The selected network does not seem to provide access to the \
+Internet. The install process requires Internet access. \
+Do you want to continue anyway?"))
+        ((2) (abort-to-prompt 'installer-step 'abort))))))
+
+(define (check-substitute-availability)
+  "Check that at least one of the Guix substitute servers is available."
+  (define (substitutes-available?)
+    (or
+     (file-exists? "/tmp/installer-assume-online")
+     (common-urls-alive?
+      (list
+       "https://bordeaux.guix.gnu.org/nix-cache-info"
+       "https://ci.guix.gnu.org/nix-cache-info"))))
+
+  (let* ((full-value 5))
+    (run-scale-page
+     #:title (G_ "Checking substitutes")
+     #:info-text (G_ "Checking if Guix substitutes are available...")
+     #:scale-full-value full-value
+     #:scale-update-proc
+     (lambda (value)
+       (sleep 1)
+       (if (substitutes-available?)
+           full-value
+           (+ value 1))))
+    (unless (substitutes-available?)
+      (case (choice-window
+             (G_ "Substitute availability")
+             (G_ "Continue")
+             (G_ "Try again?")
+             (G_ "
+None of the Guix substitute servers are available.
+You can proceed with the install, but you will
+have to build most of the packages you install locally."))
+        ((2) (abort-to-prompt 'installer-step 'abort))))))
 
 (define (run-network-page)
   "Run a page to allow the user to configure connman so that it can access the
@@ -192,7 +234,11 @@ Internet."
      (installer-step
       (id 'wait-online)
       (compute (lambda _
-                 (wait-service-online))))))
+                 (wait-service-online))))
+     (installer-step
+      (id 'check-substitutes)
+      (compute (lambda _
+                 (check-substitute-availability))))))
   (run-installer-steps
    #:steps network-steps
    #:rewind-strategy 'start))

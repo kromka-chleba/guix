@@ -903,6 +903,7 @@ which allows one to install the M8 firmware on any Teensy.")
                                   "nextpnr-imgui.patch"))
          (sha256
           (base32 "1zjxvkycg5xx605d4ark8gd10w4xni1wd10chmhv983dvyv875br"))))
+      (outputs '("out" "bba"))
       (build-system qt-build-system)
       (arguments
        (list
@@ -920,7 +921,8 @@ which allows one to install the M8 firmware on any Teensy.")
                 (string-append "-DHIMBAECHEL_PEPPERCORN_PATH="
                                (search-input-directory
                                 %build-inputs "share/prjpeppercorn"))
-                (string-append "-DEXPORT_BBA_FILES=" #$output "/bba-files")
+                (string-append
+                 "-DEXPORT_BBA_FILES=" #$output:bba "/share/nextpnr/bba-files")
                 (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
                 (string-append "-DICESTORM_INSTALL_PREFIX="
                                #$(this-package-native-input "icestorm"))
@@ -970,7 +972,7 @@ which allows one to install the M8 firmware on any Teensy.")
              googletest
              gzip
              prjbeyond-db
-             prjpeppercorn
+             `(,prjpeppercorn "db")
              prjtrellis
              sanitizers-cmake
              yosys))
@@ -988,6 +990,21 @@ which allows one to install the M8 firmware on any Teensy.")
       (description "Nextpnr is a portable FPGA place and route tool.")
       (home-page "https://github.com/YosysHQ/nextpnr/")
       (license license:isc))))
+
+(define-public nextpnr-cli
+  (package
+    (inherit nextpnr)
+    (name "nextpnr-cli")
+    (build-system cmake-build-system)
+    (arguments
+     (substitute-keyword-arguments (package-arguments nextpnr)
+       ((#:configure-flags flags '())
+        #~(delete! "-DBUILD_GUI=ON" #$flags))))
+    (inputs
+     (modify-inputs (package-inputs nextpnr)
+       (delete "qtbase-5" "qtwayland-5" "qtimgui")))
+    (synopsis
+     (string-append (package-synopsis nextpnr) " Cli only version."))))
 
 (define-public nextpnr-ice40
   (deprecated-package "nextpnr-ice40" nextpnr))
@@ -1218,6 +1235,9 @@ chip database for NG-Ultra architecture from NanoXplore.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1lfvd3r1pnyc1mxsiiqqvmp8r5pw1bshgjrsrsnd20grvlv6wwcn"))))
+
+    (outputs (list "out"
+                   "db"))               ;FPGA database files
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1233,7 +1253,7 @@ chip database for NG-Ultra architecture from NanoXplore.")
           (add-before 'chdir 'install-db-files
             (lambda _
               (let ((datadir
-                     (string-append #$output "/share/prjpeppercorn")))
+                     (string-append #$output:db "/share/prjpeppercorn")))
                 (mkdir-p datadir)
                 (copy-recursively "delay" (string-append datadir "/delay"))
                 (copy-recursively "gatemate"
@@ -1617,36 +1637,49 @@ some tool-specific options are set.")
     (license license:bsd-2)))
 
 (define-public python-hdlmake
-  ;; Version bump to 4.0dev2, no tag.
-  (let ((commit "1d81071bf19b8f9c930e31731c5c847837591cb8")
-        (revision "0"))
-    (package
-      (name "python-hdlmake")
-      (version (git-version "4.0dev2" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-                (url "https://gitlab.com/ohwr/project/hdl-make/")
-                (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1l2j86z5smfxw9b842xcbijgl7nvkx3grw5hm54wvv3hkgyp30fn"))))
-      (build-system pyproject-build-system)
-      (arguments (list #:phases #~(modify-phases %standard-phases
-                                    (add-before 'check 'chdir
-                                      (lambda _
-                                        (chdir "testsuite"))))
-                       #:test-flags #~(list "test_all.py")))
-      (native-inputs (list python-pytest python-setuptools))
-      (propagated-inputs (list python-networkx))
-      (home-page "https://ohwr.gitlab.io/project/hdl-make/")
-      (synopsis "Generate multi-purpose makefiles for HDL projects")
-      (description
-       "Hdlmake helps manage and share @acronym{HDL, hardware description
+  (package
+    (name "python-hdlmake")
+    (version "4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/ohwr/project/hdl-make/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mbsm1j058j3wjp0hypd7a9d1xh3xsmy9p3jl9xcpnzjmncm34xr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'chdir
+                     (lambda _
+                       (chdir "testsuite")))
+                   (add-before 'chdir 'build-info
+                     (lambda _
+                       (invoke "make" "-C" "docs" "info")
+                       (install-file
+                        "docs/_build/texinfo/hdlmake.info"
+                        (string-append #$output "/share/info"))
+                       (copy-recursively
+                        "docs/_build/texinfo/hdlmake-figures"
+                        (string-append
+                         #$output "/share/info/hdlmake-figures")))))
+      #:test-flags #~(list "test_all.py")))
+    (native-inputs
+     (list python-pytest-cov
+           python-setuptools
+           python-sphinx
+           texinfo))
+    (propagated-inputs (list python-networkx))
+    (home-page "https://ohwr.gitlab.io/project/hdl-make/")
+    (synopsis "Generate multi-purpose makefiles for HDL projects")
+    (description
+     "Hdlmake helps manage and share @acronym{HDL, hardware description
 language} code by automatically finding file dependencies, writing synthesis
 and simulation Makefiles.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public python-migen
   ;; XXX: The latest version tag (0.9.2) was placed in 2019, there are latest
@@ -2393,27 +2426,31 @@ and coverage-analysis points.  It outputs single- or multi-threaded
     (license license:lgpl3)))
 
 (define-public xoscope
+  (let ((revision "0.0.0")
+        (commit "d97b9b186a4137582ae27fce1da73f51c06f852e"))
   (package
     (name "xoscope")
-    (version "2.3")
+    (version (git-version "2.3" revision commit))
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xoscope/xoscope/"
-                                  version "/xoscope-" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://git.code.sf.net/p/xoscope/code")
+                     (commit commit)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0a5ycfc1qdmibvagc82r2mhv2i99m6pndy5i6ixas3j2297g6pgq"))))
+                "1jaz14pb8lx1y34f979v507dmkrq3wdczi0hkqzb64zg76cdkwya"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list m4 pkg-config))
+     (list m4 pkg-config automake libtool autoconf))
     (inputs
      (list alsa-lib comedilib fftw gtk+ gtkdatabox))
     (synopsis "Digital oscilloscope")
     (description "Xoscope is a digital oscilloscope that can acquire signals
 from ALSA, ESD, and COMEDI sources.  This package currently does not include
-support for ESD sources.")
+support for ESD or COMEDI sources.")
     (home-page "https://xoscope.sourceforge.net/")
-    (license license:gpl2+)))
+    (license license:gpl2+))))
 
 (define-public yosys
   (package

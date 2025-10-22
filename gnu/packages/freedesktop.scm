@@ -111,8 +111,6 @@
   #:use-module (gnu packages hunspell)
   #:use-module (gnu packages ibus)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages kde-frameworks)
-  #:use-module (gnu packages kde)
   #:use-module (gnu packages language)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libunwind)
@@ -153,7 +151,7 @@
 (define-public appstream
   (package
     (name "appstream")
-    (version "1.0.3")
+    (version "1.0.5")
     (source
      (origin
        (method url-fetch)
@@ -162,7 +160,7 @@
                        "appstream/releases/"
                        "AppStream-" version ".tar.xz"))
        (sha256
-        (base32 "195snvg2jw5ywqxz02xfb570yhxvaqp9d4w5a2lpay2fck7zddjs"))))
+        (base32 "08aijy6mfyd9cc7b7gk0610w6rqr5xwpva0fg77z1mdbi6gd43nf"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -522,19 +520,22 @@ Directory Specification.")
 (define-public xdg-utils
   (package
     (name "xdg-utils")
-    (version "1.1.3")
+    (version "1.2.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://portland.freedesktop.org/download/xdg-utils-"
-             version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.freedesktop.org/xdg/xdg-utils.git/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "1nai806smz3zcb2l5iny4x7li0fak0rzmjg6vlyhdqm8z25b166p"))))
+         "0hnb523hiz8wy6gffapys6vw7h1xq50li0s31mvyv4v5nmp2bhg7"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list docbook-xsl docbook-xml-4.1.2
+     (list docbook-xsl
+           docbook-xml-4.1.2
+           docbook-xml-4.3
            libxslt xmlto w3m-for-tests))
     (inputs
      (list bash-minimal                 ;for 'wrap-program'
@@ -554,27 +555,27 @@ Directory Specification.")
                   ,@%default-gnu-modules)
       #:phases
       #~(modify-phases %standard-phases
-        (add-after 'unpack 'patch-hardcoded-paths
-          (lambda* (#:key inputs #:allow-other-keys)
-            (substitute* "scripts/xdg-mime.in"
-              (("/usr/bin/file")
-               (search-input-file inputs "bin/file")))
-            (substitute* "scripts/xdg-open.in"
-              (("/usr/bin/printf")
-               (search-input-file inputs "bin/printf")))))
-        (add-after 'install 'wrap-executables
-          (lambda* (#:key inputs outputs #:allow-other-keys)
-            (let* ((dependencies '("awk" "grep" "hostname" "ls" "mimeopen"
-                                   "sed" "xprop" "xset"))
-                   (pkgs (map (lambda (cmd)
-                                (search-input-file inputs
-                                                   (string-append "bin/" cmd)))
-                              dependencies))
-                   (bindirs (map dirname pkgs)))
-              (with-directory-excursion (string-append #$output "/bin")
-                (for-each (cute wrap-program <>
-                                `("PATH" ":" prefix ,bindirs))
-                          (find-files ".")))))))))
+          (add-after 'unpack 'patch-hardcoded-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "scripts/xdg-mime.in"
+                (("/usr/bin/file")
+                 (search-input-file inputs "bin/file")))
+              (substitute* "scripts/xdg-open.in"
+                (("/usr/bin/printf")
+                 (search-input-file inputs "bin/printf")))))
+          (add-after 'install 'wrap-executables
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((dependencies '("awk" "grep" "hostname" "ls" "mimeopen"
+                                     "sed" "xprop" "xset"))
+                     (pkgs (map (lambda (cmd)
+                                  (search-input-file inputs
+                                                     (string-append "bin/" cmd)))
+                                dependencies))
+                     (bindirs (map dirname pkgs)))
+                (with-directory-excursion (string-append #$output "/bin")
+                  (for-each (cute wrap-program <>
+                                  `("PATH" ":" prefix ,bindirs))
+                            (find-files ".")))))))))
     (home-page "https://www.freedesktop.org/wiki/Software/xdg-utils/")
     (synopsis "Freedesktop.org scripts for desktop integration")
     (description "The xdg-utils package is a set of simple scripts that
@@ -586,7 +587,7 @@ freedesktop.org project.")
   ;; Updating this will rebuild over 700 packages through libinput-minimal.
   (package
     (name "libinput")
-    (version "1.29.0")
+    (version "1.29.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -595,7 +596,7 @@ freedesktop.org project.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1kgr18p7n9bvim9bx24jbr5nwp6icla3bgzfskr04f68mirmx561"))))
+                "11n2vqkdz40vbqdjwm19i7rv2lzqf4i7anlla0havf7h0glqin60"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Ddocumentation=false")
@@ -3318,56 +3319,6 @@ interfaces.")
     (description
      "This package provides an @code{xdg-desktop-portal} backend for Hyprland.")
     (license license:bsd-3)))
-
-(define-public xdg-desktop-portal-kde
-  (package
-    (name "xdg-desktop-portal-kde")
-    (version "6.3.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/plasma/" version "/"
-                                  name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0888kybi3xqp45chlvh5w43rs4jw0z9kmn1pslfp5b1dkmkjzijr"))))
-    (build-system qt-build-system)
-    (arguments (list
-                #:tests? #f ;; colorschemetest test fail, because require dbus.
-                #:qtbase qtbase))
-    (native-inputs (list extra-cmake-modules pkg-config
-                         ;; require by test.
-                         python-minimal
-                         python-pygobject))
-    (inputs (list cups
-                  kcoreaddons
-                  kconfig
-                  kcrash
-                  ki18n
-                  kdeclarative
-                  kio
-                  kirigami
-                  knotifications
-                  libplasma
-                  plasma-wayland-protocols
-                  kstatusnotifieritem
-                  kwayland
-                  kwidgetsaddons
-                  kwindowsystem
-                  kiconthemes
-                  qtdeclarative
-                  qtwayland
-                  wayland
-                  kglobalaccel
-                  kguiaddons
-                  libxkbcommon
-                  wayland-protocols))
-    (propagated-inputs
-     (list xdg-desktop-portal))
-    (synopsis "Backend implementation for xdg-desktop-portal using Qt/KF5")
-    (description "This package provides a backend implementation
-for xdg-desktop-portal that is using Qt/KF5.")
-    (home-page "https://invent.kde.org/plasma/xdg-desktop-portal-kde")
-    (license license:lgpl2.0+)))
 
 (define-public xdg-desktop-portal-wlr
   (package

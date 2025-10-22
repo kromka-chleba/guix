@@ -326,6 +326,12 @@ PARAMETERS."
        "members" user)
   => 204)
 
+(define-forgejo-request (remove-team-member team user)
+  "Remove USER (a string) from TEAM, a Forgejo team."
+  (DELETE "teams" (number->string (forgejo-team-id team))
+          "members" user)
+  => 204)
+
 (define-forgejo-request (repository-teams owner repository)
   "Return the list of teams assigned to REPOSITORY of OWNER."
   (GET "repos" owner repository "teams"
@@ -372,7 +378,8 @@ PARAMETERS."
               to-add)
     (for-each (lambda (user)
                 (format log-port "removing '~a' from team '~a'~%"
-                        user (forgejo-team-name forgejo-team)))
+                        user (forgejo-team-name forgejo-team))
+                (remove-team-member token forgejo-team user))
               to-remove)))
 
 (define* (synchronize-team token team
@@ -766,8 +773,7 @@ and the maven-build-system."
         #:name "KDE team"
         #:description
         "The plasma desktop environment, and KDE Applications."
-        #:scope (list (make-regexp* "^gnu/packages/(kde)(-.+|)\\.scm$")
-                      "gnu/packages/education.scm")))
+        #:scope (list (make-regexp* "^gnu/packages/(kde)(-.+|)\\.scm$"))))
 
 (define-team kernel
   (team 'kernel
@@ -983,6 +989,7 @@ packages (e.g. Astronomy, Chemistry, Math, Physics etc.)"
                       "gnu/packages/openstack.scm"
                       "gnu/packages/prometheus.scm"
                       "gnu/packages/rdesktop.scm"
+                      "gnu/packages/samba.scm"
                       "gnu/packages/selinux.scm"
                       "gnu/packages/storage.scm"
                       "gnu/packages/task-runners.scm"
@@ -1147,7 +1154,8 @@ the \"texlive\" importer."
   ocaml)
 
 (define-member (person "Josselin Poiret"
-                       "dev@jpoiret.xyz")
+                       "dev@jpoiret.xyz"
+                       "jpoiret")
   installer)
 
 (define-member (person "("
@@ -1155,7 +1163,8 @@ the \"texlive\" importer."
   )
 
 (define-member (person "Simon Tournier"
-                       "zimon.toutoune@gmail.com")
+                       "zimon.toutoune@gmail.com"
+                       "zimoun")
   julia core mentors r)
 
 (define-member (person "宋文武"
@@ -1179,7 +1188,8 @@ the \"texlive\" importer."
   core documentation electronics gnome qt telephony)
 
 (define-member (person "Katherine Cox-Buday"
-                       "cox.katherine.e+guix@gmail.com")
+                       "cox.katherine.e+guix@gmail.com"
+                       "katco")
   emacs go lisp)
 
 (define-member (person "Munyoki Kilyungi"
@@ -1226,7 +1236,8 @@ the \"texlive\" importer."
   games)
 
 (define-member (person "Laurent Gatto"
-                       "laurent.gatto@gmail.com")
+                       "laurent.gatto@gmail.com"
+                       "lgatto")
   r)
 
 (define-member (person "Nicolas Goaziou"
@@ -1306,7 +1317,7 @@ the \"texlive\" importer."
 (define-member (person "Nicolas Graves"
                        "ngraves@ngraves.fr"
                        "nicolas-graves")
-  javascript python ruby)
+  core javascript python ruby)
 
 (define-member (person "Yelninei"
                        "yelninei@tutamail.com"
@@ -1331,12 +1342,17 @@ the \"texlive\" importer."
 (define-member (person "Rutherther"
                        "rutherther@ditigal.xyz"
                        "Rutherther")
-  release)
+  core release)
 
 (define-member (person "Morgan Arnold"
                        "morgan.arnold@proton.me"
                        "mra")
   core)
+
+(define-member (person "Danny Milosavljevic"
+                       "dannym@friendly-machines.com"
+                       "daym")
+  bootstrap hpc rust science)
 
 
 (define (find-team name)

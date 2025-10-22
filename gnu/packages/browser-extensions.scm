@@ -193,15 +193,15 @@ ungoogled-chromium.")
 (define-public passff-host
   (package
     (name "passff-host")
-    (version "1.2.4")
-    (home-page "https://github.com/passff/passff-host")
+    (version "1.2.5")
+    (home-page "https://codeberg.org/PassFF/passff-host")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page) (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lcwa1qzfxlifmj33qndp1wgi6yx6vj21ir0az79vhm5k03p961z"))))
+                "01kw5w6ihm4d6l5va7c0mb7539rnmqfn16c9w543xf5s0n5f2i7h"))))
     (build-system copy-build-system)
     (arguments
      (let ((native-manifests "lib/icecat/native-messaging-hosts"))
@@ -231,15 +231,15 @@ properly.")
 (define passff
   (package
     (name "passff")
-    (version "1.16")
-    (home-page "https://github.com/passff/passff")
+    (version "1.23")
+    (home-page "https://codeberg.org/passff/passff")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page) (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0y3cbgy89lgvq6lfabp7mi1zhphdvihcccn3yw5mmaql9yrdm5kc"))))
+                "0y6ji3mqmp9dadj1rm712n1bjpl021a4yssv7m1ydllmw10gs009"))))
     (propagated-inputs (list passff-host))
     (build-system copy-build-system)
     (properties '((addon-id . "passff@invicem.pro")))

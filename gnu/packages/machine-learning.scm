@@ -2133,6 +2133,49 @@ computing environments.")
 data analysis.")
     (license license:bsd-3)))
 
+;; 1.7 intorduced breaking changes in API.
+(define-public python-scikit-learn-1.6
+  (package
+    (inherit python-scikit-learn)
+    (name "python-scikit-learn")
+    (version "1.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/scikit-learn/scikit-learn")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08z1b58n31grfvl42wi6rdwrfhrdhnzkkxhg19iag3zkvkcvxqjl"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-scikit-learn)
+       ((#:test-flags flags)
+        #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+                "-m" "not network"
+                "-k" (string-join
+                      (list "not test_ard_accuracy_on_easy_problem"
+                            "test_check_inplace_ensure_writeable"
+                            "test_check_is_fitted_with_attributes"
+                            "test_covariance"
+                            "test_estimators"
+                            "test_ledoit_wolf"
+                            "test_mcd"
+                            "test_mcd_issue1127"
+                            "test_mcd_support_covariance_is_zero"
+                            "test_oas"
+                            "test_shrunk_covariance"
+                            "test_toy_ard_object")
+                      " and not ")))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-after 'unpack 'remove-broken-tests
+              (lambda _
+                ;; ImportError: cannot import name 'ColMajor' from
+                ;; 'sklearn.utils._cython_blas'
+                ;; (<...>/_cython_blas.cpython-311-x86_64-linux-gnu.so)
+                (delete-file-recursively "sklearn/utils/tests/test_cython_blas.py")))))))))
+
 (define-public python-scikit-learn-extra
   ;; This commit fixes an incompatibility with newer versions of scikit-learn
   (let ((commit "0f95d8dda4c69f9de4fb002366041adcb1302f3b")
@@ -4900,20 +4943,18 @@ in the audio domain.")
                python-sympy)))))
 
 (define-public python-pytorch-geometric
-  (let ((commit "85cf9fc12b1138c1f2adbed8a761356c3f4197e7")
-        (revision "0"))
     (package
       (name "python-pytorch-geometric")
-      (version (git-version "2.6.1" revision commit))
+      (version "2.7.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
                        (url "https://github.com/pyg-team/pytorch_geometric/")
-                       (commit commit)))
+                       (commit version)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "104v3w9yv7akyxpyd8aq85mw1mncql8mvr1p1b34ph09csqh68hq"))))
+                  "0w6gpw0wf9w6h317mbqcf3iidx9yqjba34348p44g80ihskb6ly6"))))
       (build-system pyproject-build-system)
       (arguments
        (list
@@ -4988,7 +5029,7 @@ in the audio domain.")
       (description
        "PyG is a library built upon PyTorch to easily write and train Graph
 Neural Networks for a wide range of applications related to structured data.")
-      (license license:expat))))
+      (license license:expat)))
 
 (define-public python-lightning-cloud
   (package
@@ -5148,20 +5189,18 @@ feedback.")
     (license license:expat)))
 
 (define-public python-pytorch-lightning
-  (let ((commit "1617f70428a791b2d81c392d6a0b8a078d8e7fb1")
-        (revision "0"))
     (package
       (name "python-pytorch-lightning")
-      (version (git-version "2.5.2" revision commit))
+      (version "2.5.5")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
                       (url "https://github.com/Lightning-AI/pytorch-lightning")
-                      (commit commit)))
+                      (commit version)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1i11n4094a8ysb7cj1lww23nh0mk3d9licw9c9pgzws2m0qy70yd"))))
+                  "1xjib19kk8nfncr7cmd0j1czazvjzrprayarw275b75i0szda87h"))))
       (build-system pyproject-build-system)
       (arguments
        (list
@@ -5240,7 +5279,7 @@ feedback.")
       (description
        "PyTorch Lightning is just organized PyTorch; Lightning disentangles
 PyTorch code to decouple the science from the engineering.")
-      (license license:asl2.0))))
+      (license license:asl2.0)))
 
 (define-public python-torchmetrics
   (package
@@ -5302,7 +5341,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
 (define-public python-torchvision
   (package
     (name "python-torchvision")
-    (version "0.23.0")
+    (version "0.24.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5312,7 +5351,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1d09xwblldgzmzfdlrsyx6mgv939z4yi1hqanm9yx63cs2mr7w85"))
+                "1s5ga00shsw1kn23mmvvpllmmniay383csn0mjdasx60cxvky80k"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5341,7 +5380,6 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
            python-typing-extensions
            python-requests
            python-pillow
-           python-pillow-simd
            python-pytorch))
     (native-inputs
      (list pybind11

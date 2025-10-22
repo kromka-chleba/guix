@@ -643,6 +643,70 @@ counterexamples for you.")
 @command{behave}.")
     (license license:expat)))
 
+(define-public python-deal
+  (package
+    (name "python-deal")
+    (version "4.24.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "deal" version))
+       (sha256
+        (base32 "0a2b8s8fmacv56lhrqaif0rbgrmfp0b36m5bvhly89aj5d9qvac1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 668 passed, 194 skipped, 12 deselected
+      #:test-flags
+      ;; Network access is required
+      #~(list "--deselect=tests/test_imports.py::test_smoke_has"
+              #$@(map (lambda (test) (string-append "--deselect="
+                                                    "tests/test_runtime/"
+                                                    "test_offline.py::"
+                                                    test))
+                      (list "test_raises_exception"
+                            "test_raises_specified_exception"
+                            "test_allow_network"
+                            "test_decorating_async_function"
+                            "test_decorating_generator"))
+              ;; TypeError: MaxRetryError.__init__() missing 2 required
+              ;; positional arguments: 'pool' and 'url'
+              "--deselect=tests/test_runtime/test_pure.py::test_pure_offline"
+              ;; TypeError: MaxRetryError.__init__() missing 2 required
+              ;; positional arguments: 'pool' and 'url'
+              #$@(map (lambda (test) (string-append "--deselect="
+                                                    "tests/test_runtime/"
+                                                    "test_raises.py::"
+                                                    test))
+                      (list "test_raises_doesnt_override_another_contract"
+                            "test_raises_doesnt_override_another_contract_async"
+                            "test_raises_generator"))
+              ;; AttributeError: 'NoneType' object has no attribute
+              ;; 'TypeCheckError'
+              "--deselect=tests/test_testing.py::test_return_type_checks"
+              "--deselect=tests/test_testing.py::test_disable_type_checks")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((".*--cov.*") "")))))))
+    (native-inputs
+     (list python-flit-core
+           python-pytest
+           python-docstring-parser
+           python-urllib3))
+    (home-page "https://github.com/life4/deal")
+    (synopsis "Design by contract for Python")
+    (description
+     "This package provides a Python library for
+@url{https://en.wikipedia.org/wiki/Design_by_contract, design by contract}
+(DbC) and checking values, exceptions, and side-effects. In a nutshell, deal
+implements functionality to write bug-free code.  By adding a few decorators
+to the code, providing free tests, static analysis, formal verification, and
+much more.")
+    (license license:expat)))
+
 (define-public python-ddt
   (package
     (name "python-ddt")
@@ -698,6 +762,31 @@ cases.")
      "Doc8 is an opinionated style checker for reStructured Text and plain
 text styles of documentation.")
     (license license:asl2.0)))
+
+(define-public python-dpcontracts
+  (package
+    (name "python-dpcontracts")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dpcontracts" version))
+       (sha256
+        (base32 "0ji38afb5kb52rrjhcqklqvabxxb1lbl32vr7d94iamy2qgxzybc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/deadpixi/contracts")
+    (synopsis "Implementation of contracts for Python")
+    (description
+     "This package provides a simple implementation of contracts for Python.
+Contracts are a debugging and verification tool.  They are declarative
+statements about what states a program must be in to be considered \"correct\"
+at runtime.  They are similar to assertions, and are verified automatically at
+various well-defined points in the program.  Contracts can be specified on
+functions and on classes.")
+    (license license:lgpl3+)))
 
 (define-public python-eradicate
   (package
@@ -1106,11 +1195,10 @@ programs, something like CSmith, a random generator of C programs.")
     (version "2.7.1")
     (source
      (origin
-       ;; There are no tests in the PyPI tarball.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/Parquery/icontract")
-             (commit (string-append "v" version))))
+              (url "https://github.com/Parquery/icontract")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1fix7wx899kn8vp9aa5m6q71la48gx3qqx4qd74535m61pb50r7f"))))
@@ -1118,6 +1206,10 @@ programs, something like CSmith, a random generator of C programs.")
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("asttokens>=2,<3") "asttokens"))))
           (add-before 'check 'set-icontract-slow
             (lambda _
               ;; Setting ICONTRACT_SLOW, does not enable a slow test suite.
@@ -1126,13 +1218,15 @@ programs, something like CSmith, a random generator of C programs.")
               (setenv "ICONTRACT_SLOW" "1"))))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-astor
-           python-asyncstdlib
+     (list python-asyncstdlib
+           python-astor
+           python-deal
+           python-dpcontracts
            python-mypy
            python-numpy
+           python-pytest
            python-setuptools
-           python-typeguard
-           python-wheel))
+           python-typeguard))
     (propagated-inputs
      (list python-asttokens
            python-typing-extensions))
@@ -1559,8 +1653,7 @@ also ensuring that the notebooks are running without errors.")
     (native-inputs
      (list python-hatchling
            python-jinja2
-           python-pytest
-           python-tox))
+           python-pytest))
     (home-page "https://nox.thea.codes/")
     (synopsis "Flexible test automation")
     (description
@@ -3032,7 +3125,6 @@ types (i.e. Convention, Warn, and Error) fail the build.")
      (list python-pre-commit
            python-setuptools
            python-setuptools-scm
-           python-tox
            python-wheel))
     (home-page "https://github.com/pytest-dev/pytest-qt")
     (synopsis "Pytest support for PyQt and PySide applications")

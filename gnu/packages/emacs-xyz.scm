@@ -9979,16 +9979,17 @@ snippets for yasnippet.")
         (base32 "0agiamq7g8zm3blznykbr1kgr09rb133rd4mh9nfc0vfk8i5mabv"))))
     (build-system emacs-build-system)
     (arguments
-     ;; the testing framework test-hdl requires network
-     `(#:tests? #f
-       #:test-command '("make")))
-    (propagated-inputs (list emacs-ag
-                             emacs-async
-                             emacs-flycheck
-                             emacs-hydra
-                             emacs-lsp-mode
-                             emacs-ripgrep
-                             emacs-vhdl-ts-mode))
+     (list
+      #:tests? #f         ;the testing framework, test-hdl, requires network
+      #:test-command #~(list "make")))
+    (propagated-inputs
+     (list emacs-ag
+           emacs-async
+           emacs-flycheck
+           emacs-hydra
+           emacs-lsp-mode
+           emacs-ripgrep
+           emacs-vhdl-ts-mode))
     (home-page "https://github.com/gmlarumbe/vhdl-ext/")
     (synopsis "Extensions to Emacs @code{vhdl-mode}")
     (description "This package provides additional features and utilities for
@@ -10032,9 +10033,9 @@ with Emacs.")
         (base32 "0x11sjiy3j43am0clwxsbx7b38pfsl74qgypkc3czs7dh1c5xyrx"))))
     (build-system emacs-build-system)
     (arguments
-     ;; the testing framework, test-hdl, requires network
-     `(#:tests? #f
-       #:test-command '("make")))
+     (list
+      #:tests? #f         ;the testing framework, test-hdl, requires network
+      #:test-command #~(list "make")))
     (propagated-inputs (list tree-sitter-vhdl))
     (home-page "https://github.com/gmlarumbe/vhdl-ts-mode/")
     (synopsis "VHDL Tree-sitter mode")
@@ -12911,7 +12912,7 @@ generates it as a string.  Please see the homepage for usage examples.")
               (emacs-substitute-variables "jedi-core.el"
                 ("jedi:server-command"
                  `(list ,(search-input-file outputs "bin/jediepcserver")))))))))
-    (native-inputs (list emacs-mocker python-wrapper python-tox))
+    (native-inputs (list emacs-mocker python-wrapper))
     (inputs (list python-wrapper python-epc python-jedi)) ;wrapped
     (propagated-inputs
      (list emacs-auto-complete emacs-python-environment emacs-epc))
@@ -40154,12 +40155,11 @@ fish-completion.  It can be used in both Eshell and M-x shell.")
     (license license:gpl3+)))
 
 (define-public emacs-helm-themes
-  (let ((version "0.05")
-        (commit "92ee3ad4edf1d068feb0822a05638db99b50a7c0")
-        (revision "1"))
+  (let ((commit "1fc4a5d6114bc6c8c444c5ca73f22abe141a690d")
+        (revision "2"))
     (package
       (name "emacs-helm-themes")
-      (version (git-version version revision commit))
+      (version (git-version "0.05" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -40169,7 +40169,7 @@ fish-completion.  It can be used in both Eshell and M-x shell.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1p62gg8nnb6kmb9mk66230p0ap0zwwzhzdxr3j34z5ls574vr6s7"))))
+           "1j74a9ynhfcikl4r0v5lym2ansvgwm643qbmj5hknblpn8g6016c"))))
       (build-system emacs-build-system)
       (arguments
        (list #:tests? #f)) ; No tests despite Makefile.

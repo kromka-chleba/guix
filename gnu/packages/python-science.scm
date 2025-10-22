@@ -2,7 +2,7 @@
 ;;; Copyright © 2015, 2016, 2018, 2020-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
-;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2016,2024 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2016, 2021-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016-2020, 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -37,6 +37,7 @@
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -318,6 +319,7 @@ possibility to differentiate functions that contain matrix functions as
            python-boltons
            python-dask
            python-distributed
+           python-filelock
            python-hatch-vcs
            python-hatchling
            python-joblib
@@ -915,19 +917,19 @@ optimization and generally improved organization.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 2152 passed, 177 skipped, 6 deselected, 4037 warnings
       #:test-flags
-      ;; Flake8 attribute errors.
-      '(list "--ignore=dask_image/ndfilters/_threshold.py"
-             "--ignore=dask_image/ndfourier/_utils.py"
-             "--ignore=dask_image/ndinterp/__init__.py"
-             "--ignore=dask_image/ndmeasure/__init__.py"
-             "--ignore=dask_image/ndmeasure/_utils/_find_objects.py"
-             "--ignore=dask_image/ndmeasure/_utils/_label.py"
-             "--ignore=tests/test_dask_image/test_ndfilters/test__conv.py"
-             "--ignore=tests/test_dask_image/test_ndfourier/test_core.py"
-             "--ignore=tests/test_dask_image/test_ndinterp/test_spline_filter.py"
-             "--ignore=tests/test_dask_image/test_ndmeasure/test_core.py"
-             "--ignore=tests/test_dask_image/test_ndmeasure/test_find_objects.py")
+      #~(list "-k" (string-join
+                    ;; KeyError: 'float32
+                    (list "not test_spline_filter_output_dtype[None-float32_1]"
+                          "test_spline_filter_output_dtype[-1-float32_1]"
+                          ;; AttributeError: 'str' object has no attribute
+                          ;; 'start'
+                          "test_find_objects"
+                          "test_3d_find_objects"
+                          ;; assert False
+                          "test_find_objects_with_empty_chunks")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-version
@@ -936,17 +938,18 @@ optimization and generally improved organization.")
                 (("^version_file.*") "")
                 (("dynamic = \\[\"version\"\\]")
                  (string-append "version = \"" #$version "\""))))))))
-    (propagated-inputs (list python-dask
-                             python-numpy
-                             python-pandas
-                             python-pims
-                             python-scipy
-                             python-tifffile))
     (native-inputs
      (list python-pytest
            python-pytest-timeout
            python-setuptools
            python-setuptools-scm))
+    (propagated-inputs
+     (list python-dask
+           python-numpy
+           python-pandas
+           python-pims
+           python-scipy
+           python-tifffile-for-dask-image))
     (home-page "https://github.com/dask/dask-image")
     (synopsis "Distributed image processing")
     (description "This is a package for image processing with Dask arrays.
@@ -958,8 +961,7 @@ Features:
 @item Includes a few N-D Fourier filters.
 @item Provides some functions for working with N-D label images.
 @item Supports a few N-D morphological operators.
-@end itemize
-")
+@end itemize")
     (license license:bsd-3)))
 
 (define-public python-decaylanguage
@@ -1334,6 +1336,28 @@ computing in Python.  It extends both the @code{concurrent.futures} and
      "This is the Python package for ECOS: Embedded Cone Solver.  ECOS is
 numerical software for solving convex second-order cone programs (SOCPs).")
     (license license:gpl3)))
+
+(define-public python-efficient-apriori
+  (package
+    (name "python-efficient-apriori")
+    (version "2.0.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "efficient_apriori" version))
+       (sha256
+        (base32 "0vmdp8qkir7jrmwgpzajssyxh6q78m0q16pr1v657vla9x5wxn2s"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--doctest-modules" "-vv" "efficient_apriori")))
+    (native-inputs (list python-setuptools python-pytest))
+    (home-page "https://github.com/tommyod/Efficient-Apriori")
+    (synopsis "An efficient Python implementation of the Apriori algorithm.")
+    (description "An efficient Python implementation of the Apriori algorithm,
+which uncovers hidden structures in categorical data")
+    (license license:expat)))
 
 (define-public python-fast-histogram
   (package
@@ -2878,6 +2902,39 @@ logic, also known as grey logic.")
      "Scikit-image is a collection of algorithms for image processing.")
     (license license:bsd-3)))
 
+;; TODO: Port simplified test steps to python-scikit on the next refresh round.
+(define-public python-scikit-image-next
+  (package
+    (inherit python-scikit-image)
+    (name "python-scikit-image")
+    (version "0.25.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/scikit-image/scikit-image")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cr3ki47z9g8kylnff1nrmv5fr3lrgmibl41q0v98pldghnslxdv"))))
+    (arguments
+     (list
+      ;; tests: 8489 passed, 128 skipped
+      #:test-flags
+      #~(list "--ignore=benchmarks"
+              "--pyargs" "skimage")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'remove-local-skimage
+            (lambda _
+              ;; This would otherwise interfere with finding the installed
+              ;; skimage when running tests.
+              (delete-file-recursively "skimage")))
+          (add-before 'check 'post-check
+            (lambda _
+              (for-each delete-file-recursively
+                        (find-files #$output "__pycache__" #:directories? #t)))))))))
+
 (define-public python-scikit-misc
   (package
     (name "python-scikit-misc")
@@ -2895,6 +2952,11 @@ logic, also known as grey logic.")
       '(list "--pyargs" "skmisc")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; Drop test coverage requirements.
+              (substitute* "pyproject.toml"
+                (("--cov(-[^ ]*)?=[^ ]*") ""))))
           (add-after 'unpack 'fix-version
             (lambda _
               (call-with-output-file "skmisc/_version.py"
@@ -2910,15 +2972,13 @@ logic, also known as grey logic.")
     (propagated-inputs (list meson-python
                              python-numpy
                              python-numpydoc
-                             python-spin
-                             python-twine))
+                             python-spin))
     (native-inputs (list gfortran
                          pkg-config
                          python-cython-3
                          python-meson-python
                          python-numpy
                          python-pytest
-                         python-pytest-cov
                          python-setuptools
                          python-wheel))
     (home-page "https://has2k1.github.io/scikit-misc/stable")
@@ -3373,6 +3433,66 @@ its software deployment plugins.")
     (description
      "This package provides a stable interface for interactions between
 Snakemake and its storage plugins.")
+    (license license:expat)))
+
+(define-public python-snakemake-executor-plugin-slurm-jobstep
+  (package
+    (name "python-snakemake-executor-plugin-slurm-jobstep")
+    (version "0.3.0")
+    (home-page "https://github.com/snakemake/snakemake-executor-plugin-slurm-jobstep")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ly15ywmbfcm5z7jy7dxiidpw3immsdd2k80vrm4pza721irxcar"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "python3" "tests/tests.py")))))))
+    (native-inputs (list python-poetry-core
+                         snakemake))
+    (synopsis "Snakemake executor plugin: slurm-jobstep")
+    (description "A Snakemake executor plugin for running srun jobs inside of
+SLURM jobs (meant for internal use by python-snakemake-executor-plugin-slurm).")
+    (license license:expat)))
+
+(define-public python-snakemake-executor-plugin-slurm
+  (package
+    (name "python-snakemake-executor-plugin-slurm")
+    (version "1.7.0")
+    (home-page "https://github.com/snakemake/snakemake-executor-plugin-slurm/")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x7ghrkvmxqbcjl69hxp5axa1av3s0mdc0i9xjg8qjnd3hgd82r3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "python3" "tests/tests.py")))))))
+    (native-inputs (list python-pandas
+                         python-poetry-core
+                         python-pytest
+                         python-snakemake-executor-plugin-slurm-jobstep
+                         snakemake))
+    (synopsis "Snakemake executor plugin: slurm")
+    (description "A Snakemake executor plugin for running SLURM jobs.")
     (license license:expat)))
 
 (define-public python-sparse
@@ -5655,6 +5775,95 @@ well as key metadata and SIRENE database containing data on all French
 compagnies.")
     (license license:expat)))
 
+(define-public python-dvc-objects
+  (package
+    (name "python-dvc-objects")
+    (version "5.1.1")
+    (home-page "https://github.com/iterative/dvc-objects")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dvc_objects" version))
+       (sha256
+        (base32 "1amx5z8k2v2hbsajg0dcd5dxmmlv9bnbchpas95s8sj86cm8yc4y"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-fsspec
+                             python-funcy-1.14))
+    (native-inputs
+     (list python-mypy
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-benchmark
+           python-pytest-cov
+           python-pytest-mock
+           python-pytest-sugar
+           python-reflink
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (synopsis "Filesystem and object-db level abstractions for DVC")
+    (description "Dvc objects provides a filesystem and object-db level
+abstractions to use in dvc and dvc-data.")
+    (license license:asl2.0)))
+
+(define-public python-dvc-data
+  (package
+    (name "python-dvc-data")
+    (version "3.16.12")
+    (home-page "https://github.com/iterative/dvc-data")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "dvc_data" version))
+              (sha256
+               (base32
+                "156iwdn7v5jhwbpwz92n28qiasgcbmcqv9vxg8xbvdfxzlzw0b7r"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-attrs
+           python-dictdiffer
+           python-diskcache
+           python-dvc-objects
+           python-fsspec
+           python-funcy-1.14
+           python-orjson
+           python-pygtrie
+           python-sqltrie
+           python-tqdm))
+    (native-inputs
+     (list python-click
+           python-pytest
+           python-pytest-benchmark
+           python-pytest-cov
+           python-pytest-mock
+           ;; python-pytest-servers is not packaged in Guix yet
+           python-setuptools
+           python-setuptools-scm
+           python-typer
+           python-wheel))
+    (arguments
+     (list
+      #:test-flags
+      ;; TODO: package python-pytest-server with its transitive dependencies
+      #~(list "--ignore=tests/hashfile/test_db.py"
+              "--ignore=tests/hashfile/test_db_index.py"
+              "--ignore=tests/hashfile/test_obj.py"
+              "--ignore=tests/index/test_build.py"
+              "--ignore=tests/index/test_checkout.py"
+              "--ignore=tests/index/test_fs.py"
+              "--ignore=tests/index/test_index.py"
+              "--ignore=tests/index/test_storage.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-pyproject
+            (lambda _
+              ;; setuptools cannot handle both license and license-files
+              (substitute* "pyproject.toml"
+                (("^license = .*") "license = {text = \"Apache-2.0\"}\n")
+                (("^license-files = .*") "")))))))
+    (synopsis "DVC's data management subsystem")
+    (description "Dvc data is DVC's data management subsystem.")
+    (license license:asl2.0)))
+
 (define-public python-pyqtgraph
   (package
     (name "python-pyqtgraph")
@@ -5926,6 +6135,8 @@ Python style, together with a fast and comfortable execution environment.")
         ;; This test attempts to change S3 buckets on AWS and fails
         ;; because there are no AWS credentials.
         "--ignore=tests/test_tibanna.py"
+        ;; E   ModuleNotFoundError: No module named 'google'
+        "--ignore=tests/test_google_lifesciences.py"
         ;; Unclear failure.
         "-k" "not test_lint[long_run-positive]")
       #:phases

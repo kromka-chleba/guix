@@ -1522,7 +1522,7 @@ non-interactive.")
 (define-public git-crypt
   (package
     (name "git-crypt")
-    (version "0.7.0")
+    (version "0.8.0")
     (source
      (origin
        (method git-fetch)
@@ -1531,7 +1531,7 @@ non-interactive.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ymk2z0jfyhycia8hg6wbj2g06m163yzqzanfk172cxb13fa8c26"))))
+        (base32 "0kr3z095vg08mbq9j9sl4lchnq1q9rz4a1nik1pqxh6hdn5kfcpj"))))
     (build-system gnu-build-system)
     (inputs
      (list git openssl))
@@ -3796,7 +3796,7 @@ by rclone usable with git-annex.")
 (define-public fossil
   (package
     (name "fossil")
-    (version "2.25")
+    (version "2.27")
     (source
      (origin
        (method url-fetch)
@@ -3804,7 +3804,7 @@ by rclone usable with git-annex.")
 	     "https://fossil-scm.org/home/tarball/version-" version
 	     "/fossil-" version ".tar.gz"))
        (sha256
-        (base32 "18gws90by2q6a6rk7h3mx46pn79lz4zi3saxlyrdz5982mw9rvp4"))))
+        (base32 "0mhlvsfqjc46jbr5gf7r1d1xz0hg7w8swpz5gb12y3s14f1lx1fm"))))
     (build-system gnu-build-system)
     (native-inputs
      (list tcl                          ;for configuration only
@@ -3836,7 +3836,11 @@ by rclone usable with git-annex.")
                   (add-before 'check 'test-setup
                     (lambda _
                       (setenv "USER" "guix")
-                      (setenv "TZ" "UTC"))))))
+                      (setenv "TZ" "UTC")))
+                  (add-after 'test-setup 'disable-broken-test
+                    (lambda _
+                      ;; https://fossil-scm.org/home/info/4619d2efab946460
+                      (delete-file "test/settings.test"))))))
     (home-page "https://fossil-scm.org")
     (synopsis "Software configuration management system")
     (description

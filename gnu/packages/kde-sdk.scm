@@ -1,5 +1,16 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
+;;; Copyright © 2016, 2017 Thomas Danckaert <post@thomasdanckaert.be>
+;;; Copyright © 2018-2020 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2019 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2019 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
+;;; Copyright © 2021 Alexandros Theodotou <alex@zrythm.org>
+;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
+;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
+;;; Copyright © 2020, 2023-2025 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023-2025 Sughosha <sughosha@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -29,9 +40,11 @@
   #:use-module (gnu packages apr)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages code)
+  #:use-module (gnu packages gettext)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages kde-graphics)
+  #:use-module (gnu packages kde-plasma)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -39,17 +52,42 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages version-control))
 
+(define-public poxml
+  (package
+    (name "poxml")
+    (version "25.08.2")
+    (source (origin
+              (method url-fetch)
+              (uri
+               (string-append "mirror://kde/stable/release-service/" version
+                              "/src/poxml-" version ".tar.xz"))
+              (sha256
+               (base32
+                "1mbynyc4565sma0q9m015dgswiwmnhs1y6a3l5mzxj414x8nq8ml"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list gettext-minimal qtbase))
+    (home-page "https://apps.kde.org/development/")
+    (synopsis "Tools for translating DocBook XML files with Gettext")
+    (description "This is a collection of tools that facilitate translating
+DocBook XML files using Gettext message files (PO files).  Also included are
+several command-line utilities for manipulating DocBook XML files, PO files and
+PO template files.")
+    (license license:gpl2+)))
+
 (define-public libkomparediff2
   (package
     (name "libkomparediff2")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkomparediff2-" version ".tar.xz"))
        (sha256
-        (base32 "0jcb4iynv5yllx4hjahqb4qrpg871srsf0flyhzi5qn0cw4dm06p"))))
+        (base32 "19y1l6sd12rf87k7g1lhkr2yps71vzbs8vwhplkn2axyfiykwlsd"))))
     (native-inputs
      (list extra-cmake-modules pkg-config))
     (inputs
@@ -73,14 +111,14 @@ used in KDE development tools Kompare and KDevelop.")
 (define-public kapptemplate
   (package
     (name "kapptemplate")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kapptemplate-" version ".tar.xz"))
        (sha256
-        (base32 "0hkv74r0v9c8qjr561cipz43x1agx6mg6pddx8av71pz5wslh98z"))))
+        (base32 "0hprgk5cvx62x50c5pkxl6ngch6smf89flcg3k4fjxrwfy0fzdx9"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase))
@@ -94,7 +132,8 @@ used in KDE development tools Kompare and KDevelop.")
            kiconthemes
            kirigami-addons
            ki18n
-           kio))
+           kio
+           qtwayland))
     (home-page "https://apps.kde.org/kapptemplate/")
     (synopsis "Factory for easy creation of KDE/Qt components and programs")
     (description "KAppTemplate is an application to start development quickly
@@ -115,19 +154,19 @@ structure.  It features:
 (define-public kcachegrind
   (package
     (name "kcachegrind")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/kcachegrind-" version ".tar.xz"))
               (sha256
                (base32
-                "11bhyrh2aqcja50i92w0a6cgqz4hz9c0gqjlhp3gkrfg43p8dsv5"))))
+                "1j5z9yrn6j785dywqyprbx6kx83a76a6wbgjrp72mdixl9qw0l4d"))))
     (build-system cmake-build-system)
     (native-inputs
      (list extra-cmake-modules perl python qttools kdoctools))
     (inputs
-     (list qtbase karchive ki18n kio kxmlgui kdbusaddons))
+     (list qtbase karchive ki18n kio kxmlgui kdbusaddons qtwayland))
     (arguments (list #:tests? #f))
     ;; Note: The 'hotshot2calltree' and 'pprof2calltree' scripts depend on
     ;; Python and PHP, respectively.  These are optional and we ignore them
@@ -172,14 +211,14 @@ for some KDevelop language plugins (Ruby, PHP, CSS...).")
 (define-public kdevelop
   (package
     (name "kdevelop")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kdevelop-" version ".tar.xz"))
        (sha256
-        (base32 "09dc22an595wx5nhzdzn1qwgg70qk5y40g879hzwc2qdrpncgx52"))))
+        (base32 "0aav8spzcs33z7xs17xz4psbk5mhw5kaxsf26s7kirbxsgb26ydq"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config shared-mime-info qttools))
@@ -211,6 +250,7 @@ for some KDevelop language plugins (Ruby, PHP, CSS...).")
                   breeze-icons
                   qt5compat
                   qtdeclarative
+                  qtwayland
                   qtwebengine
                   threadweaver
                   ;; recommendes
@@ -301,7 +341,8 @@ submoduletest|cachetest|switchtest)")))))))
       ktextwidgets
       ktexteditor
       ksyntaxhighlighting
-      libgit2-1.8))
+      libgit2-1.8
+      qtwayland))
     (home-page "https://apps.kde.org/kommit/")
     (synopsis "Git client for KDE")
     (description
@@ -311,14 +352,14 @@ submoduletest|cachetest|switchtest)")))))))
 (define-public kompare
   (package
     (name "kompare")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/kompare-" version ".tar.xz"))
               (sha256
                (base32
-                "05z04f71apmjym8xymy62h266p12drdsix69rv77kxvx6gw1gysm"))))
+                "1clkaqwr3j1gx2345jqgfxmv3fz0d0sa2bwmq74jfawc3wmq93h7"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -335,7 +376,8 @@ submoduletest|cachetest|switchtest)")))))))
            kjobwidgets
            kparts
            ktexteditor
-           kwidgetsaddons))
+           kwidgetsaddons
+           qtwayland))
     (home-page "https://apps.kde.org/kompare/")
     (synopsis "Graphical file differences tool")
     (description
@@ -359,14 +401,14 @@ include:
 (define-public massif-visualizer
   (package
     (name "massif-visualizer")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/massif-visualizer-" version ".tar.xz"))
        (sha256
-        (base32 "143xamgifbrqpk59l4p43kzxv792w9c4vdnaalpmzg21x5mgvs59"))))
+        (base32 "054sjb5wp405bz4xq61vbbsd6l3fg65d4p2s8g1sircp5hhfmjgk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config shared-mime-info))
@@ -379,7 +421,8 @@ include:
            kio
            ki18n
            qtsvg
-           qt5compat))
+           qt5compat
+           qtwayland))
     (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/massif_visualizer/")
     (synopsis "Visualize massif data generated by Valgrind")

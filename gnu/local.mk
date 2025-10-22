@@ -72,6 +72,7 @@
 # Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 # Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 # Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+# Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 #
 # This file is part of GNU Guix.
 #
@@ -132,7 +133,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/xdg.scm			\
   %D%/image.scm					\
   %D%/packages.scm				\
-  %D%/packages/abduco.scm			\
   %D%/packages/abiword.scm			\
   %D%/packages/accessibility.scm		\
   %D%/packages/acct.scm				\
@@ -299,10 +299,8 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/fortran-xyz.scm			\
   %D%/packages/freedesktop.scm			\
   %D%/packages/freeipmi.scm			\
-  %D%/packages/fsf.scm				\
   %D%/packages/ftp.scm				\
   %D%/packages/fribidi.scm			\
-  %D%/packages/fvwm.scm				\
   %D%/packages/gambas.scm			\
   %D%/packages/game-development.scm		\
   %D%/packages/games.scm			\
@@ -404,9 +402,10 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/julia-xyz.scm			\
   %D%/packages/jupyter.scm			\
   %D%/packages/kawa.scm				\
-  %D%/packages/kde.scm				\
+  %D%/packages/kde-education.scm		\
   %D%/packages/kde-frameworks.scm		\
   %D%/packages/kde-games.scm			\
+  %D%/packages/kde-graphics.scm			\
   %D%/packages/kde-internet.scm			\
   %D%/packages/kde-multimedia.scm		\
   %D%/packages/kde-office.scm			\
@@ -604,7 +603,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/ruby.scm				\
   %D%/packages/ruby-check.scm				\
   %D%/packages/ruby-xyz.scm				\
-  %D%/packages/rush.scm				\
   %D%/packages/rust.scm				\
   %D%/packages/rust-apps.scm			\
   %D%/packages/rust-crates.scm			\
@@ -684,6 +682,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/upnp.scm				\
   %D%/packages/usb-modeswitch.scm		\
   %D%/packages/uucp.scm				\
+  %D%/packages/oneapi.scm			\
   %D%/packages/valgrind.scm			\
   %D%/packages/version-control.scm		\
   %D%/packages/video.scm			\
@@ -1478,7 +1477,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/glibc-reinstate-prlimit64-fallback.patch	\
   %D%/packages/patches/glibc-skip-c++.patch			\
   %D%/packages/patches/glibc-versioned-locpath.patch		\
-  %D%/packages/patches/glibc-2.29-git-updates.patch     	\
   %D%/packages/patches/glibc-2.29-supported-locales.patch     	\
   %D%/packages/patches/glibc-supported-locales.patch     	\
   %D%/packages/patches/gmime-disable-tests.patch		\
@@ -1520,7 +1518,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/grantlee-register-metaenumvariable.patch	\
   %D%/packages/patches/grep-timing-sensitive-test.patch		\
   %D%/packages/patches/grfcodec-gcc-compat.patch		\
-  %D%/packages/patches/gromacs-tinyxml2.patch			\
   %D%/packages/patches/groovy-add-exceptionutilsgenerator.patch	\
   %D%/packages/patches/grub-efi-fat-serial-number.patch		\
   %D%/packages/patches/grub-hurd64.patch			\
@@ -1710,7 +1707,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/kobodeluxe-graphics-window-signed-char.patch	\
   %D%/packages/patches/kodi-set-libcurl-ssl-parameters.patch		\
   %D%/packages/patches/krita-bump-sip-abi-version-to-12.8.patch	\
-  %D%/packages/patches/krita-xsimd-13-compat.patch	\
+  %D%/packages/patches/kvantum-1.1.5-xdg-dirs-support.patch	\
   %D%/packages/patches/kwayland-5-fix-build.patch		\
   %D%/packages/patches/kwin-unwrap-executable-name-for-dot-desktop-search.patch\
   %D%/packages/patches/laby-make-install.patch			\
@@ -1949,6 +1946,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ocaml-4.09-multiple-definitions.patch	\
   %D%/packages/patches/omake-fix-non-determinism.patch	\
   %D%/packages/patches/oneko-remove-nonfree-characters.patch	\
+  %D%/packages/patches/onetbb-other-arches.patch	\
   %D%/packages/patches/online-judge-tools.patch		\
   %D%/packages/patches/onnx-optimizer-system-library.patch	\
   %D%/packages/patches/onnx-1.13.1-use-system-googletest.patch	\
@@ -2053,6 +2051,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-random2-getrandbits-test.patch		\
   %D%/packages/patches/python-pillow-use-zlib-1.3.patch	\
   %D%/packages/patches/python-pydocstyle-add-support-for-pep701.patch	\
+  %D%/packages/patches/python-pypytools-python-3-fixes.patch	\
   %D%/packages/patches/python-pyreadstat-link-libiconv.patch	\
   %D%/packages/patches/python-sip-include-dirs.patch	\
   %D%/packages/patches/python-scikit-build-setuptools-compat.patch	\
@@ -2160,7 +2159,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-3-reproducible-build.patch	\
   %D%/packages/patches/python-cross-compile.patch		\
   %D%/packages/patches/python-colour-remove-d2to1.patch		\
-  %D%/packages/patches/python-configobj-setuptools.patch	\
   %D%/packages/patches/python-debugpy-unbundle-pydevd.patch	\
   %D%/packages/patches/python-docopt-pytest6-compat.patch	\
   %D%/packages/patches/python-fixtures-remove-monkeypatch-test.patch	\
@@ -2344,7 +2342,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/tensorflow-c-api-fix.patch		\
   %D%/packages/patches/texinfo-headings-single.patch		\
   %D%/packages/patches/texinfo-5-perl-compat.patch		\
-  %D%/packages/patches/telegram-desktop-allow-disable-libtgvoip.patch   \
   %D%/packages/patches/telegram-desktop-hashmap-incomplete-value.patch	\
   %D%/packages/patches/telegram-desktop-qguiapp.patch		\
   %D%/packages/patches/telegram-desktop-unbundle-cppgir.patch   \

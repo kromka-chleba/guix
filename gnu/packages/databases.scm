@@ -3933,10 +3933,36 @@ engraved in its design that you are working not with just tables, you work
 with relational data.")
     (license license:asl2.0)))
 
+(define-public python-tortoise-vector
+  (package
+    (name "python-tortoise-vector")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tortoise_vector" version))
+       (sha256
+        (base32 "09607748biibqs5d7q186x09jcpm0126qmvzqnd80yfmiif2ls97"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests
+    (native-inputs
+     (list python-poetry-core
+           python-poetry-dynamic-versioning))
+    (propagated-inputs
+     (list python-tortoise-orm))
+    (home-page "https://github.com/Chr0nos/tortoise_vector")
+    (synopsis "Tortoise-ORM pgvector implementation")
+    (description
+     "This package adds the support of @code{pgvector} vectors to
+Tortoise-ORM as a new type of fields, it helps to filter/order by cosine
+similarity distances for scementic search using embeddings.")
+    (license license:expat)))
+
 (define-public aerich
   (package
     (name "aerich")
-    (version "0.8.1")
+    (version "0.9.2")
     (source
      (origin
        (method git-fetch)
@@ -3945,22 +3971,34 @@ with relational data.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cln1ik7519n6k4lnh06w956lp8xjb0khkkpsmaj8wqlm0jbvdbi"))))
+        (base32 "07h02lv6r1hf4jjzfsd8g9yxn5df6i5qj8gmrvm2php97x45v84j"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 56 passed, 7 skipped, 1 deselected, 1 warning
+      #:test-flags
+      ;; FileNotFoundError: [Errno 2] No such file or directory: 'uvx'
+      #~(list "--deselect=tests/test_python_m.py::test_poetry_add")))
     (native-inputs
      (list python-cryptography
+           python-pdm-backend
+           python-pydantic-2
+           python-pydantic-settings
            python-pytest
-           python-poetry-core
            python-pytest-asyncio
-           python-pytest-mock))
-    (propagated-inputs
-     (list python-asyncclick
+           python-pytest-mock
+           python-tortoise-vector))
+    (inputs
+     (list python-anyio
+           python-asyncclick
+           python-dictdiffer
+           python-tortoise-orm
+           ;; [optional]
+           python-aiomysql
            python-asyncmy
            python-asyncpg
-           python-dictdiffer
-           python-pydantic
-           python-tomli-w
-           python-tortoise-orm))
+           python-psycopg
+           python-tomli-w))
     (home-page "https://github.com/tortoise/aerich")
     (synopsis "Database migrations tool for Tortoise @acronym{ORM, Object Relational
 Mapper}")

@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2024, 2025 Sughosha <sughosha@disroot.org>
+;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35,8 +36,9 @@
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages graphics)
   #:use-module (gnu packages hunspell)
-  #:use-module (gnu packages kde)
+  #:use-module (gnu packages kde-graphics)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages kde-graphics)
   #:use-module (gnu packages kde-multimedia)
   #:use-module (gnu packages libreoffice)
   #:use-module (gnu packages maths)
@@ -122,6 +124,7 @@
            qca-qt6
            qtkeychain-qt6
            qtsvg
+           qtwayland
            qtwebengine
            shared-mime-info
            sonnet
@@ -226,6 +229,7 @@ Advanced plugins:
            qtmultimedia
            qtscxml
            qtspeech
+           qtwayland
            single-application
            tesseract-ocr))
     (native-inputs
@@ -243,13 +247,13 @@ translation engines.")
 (define-public ghostwriter
   (package
     (name "ghostwriter")
-    (version "25.08.1")
+    (version "25.08.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/ghostwriter-" version ".tar.xz"))
               (sha256
-               (base32 "0hlc039pkrn0l3k4vzvlvwnbzv46vnkacpaasn2lj5rfs3spxcmj"))))
+               (base32 "0xnnvgrxzn4nb9nrccj9gbalqpjpvqhalfaj6ddqd9bww18il3az"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -265,6 +269,7 @@ translation engines.")
            kxmlgui
            qt5compat
            qtsvg
+           qtwayland
            qtwebchannel
            qtwebengine
            sonnet))

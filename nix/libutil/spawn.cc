@@ -30,6 +30,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <cassert>
+#include <format>
 
 #if HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
@@ -61,8 +63,11 @@
 #define pivot_root(new_root, put_old) (syscall(SYS_pivot_root, new_root,put_old))
 #endif
 
-
-#define CLONE_ENABLED defined(CLONE_NEWNS)
+#if defined(CLONE_NEWNS)
+#define CLONE_ENABLED 1
+#else
+#define CLONE_ENABLED 0
+#endif
 
 #if CLONE_ENABLED
 #include <sys/ioctl.h>
@@ -84,7 +89,7 @@ void addPhaseAfter(Phases & phases, string afterLabel, string addLabel, Action a
             phases.insert(i, p);
             return;
         }
-    throw Error(format("label `%1%' not found in phases") % afterLabel);
+    throw Error(std::format("label `{}' not found in phases", afterLabel));
 }
 
 
@@ -98,7 +103,7 @@ void addPhaseBefore(Phases & phases, string beforeLabel, string addLabel, Action
             phases.insert(i, p);
             return;
         }
-    throw Error(format("label `%1%' not found in phases") % beforeLabel);
+    throw Error(std::format("label `{}' not found in phases", beforeLabel));
 }
 
 
@@ -127,7 +132,7 @@ void deletePhase(Phases & phases, string delLabel)
             phases.erase(i);
             return;
         }
-    throw Error(format("label `%1%' not found in phases") % delLabel);
+    throw Error(std::format("label `{}' not found in phases", delLabel));
 }
 
 
@@ -138,25 +143,25 @@ void replacePhase(Phases & phases, string replaceLabel, Action newAction)
             (*i).action = newAction;
             return;
         }
-    throw Error(format("label `%1' not found in phases") % replaceLabel);
+    throw Error(std::format("label `{}' not found in phases", replaceLabel));
 }
 
 
 /* A curated selection of predefined actions */
 
-void reset_writeToStderrAction(SpawnContext & ctx)
+static void reset_writeToStderrAction(SpawnContext & ctx)
 {
     _writeToStderr = 0;
 }
 
 
-void restoreAffinityAction(SpawnContext & ctx)
+static void restoreAffinityAction(SpawnContext & ctx)
 {
     restoreAffinity();
 }
 
 
-void setsidAction(SpawnContext & ctx)
+static void setsidAction(SpawnContext & ctx)
 {
     /* Puts the current process in a separate session, which implies a
        separate process group, so it doesn't receive group-directed signals
@@ -168,7 +173,7 @@ void setsidAction(SpawnContext & ctx)
 }
 
 
-void earlyIOSetupAction(SpawnContext & ctx)
+static void earlyIOSetupAction(SpawnContext & ctx)
 {
     for(auto i = ctx.earlyCloseFDs.begin(); i != ctx.earlyCloseFDs.end(); i++)
         if(close(*i) == -1)
@@ -190,7 +195,7 @@ void earlyIOSetupAction(SpawnContext & ctx)
             /* Doesn't make sense for it to be writable, but compatibility... */
             AutoCloseFD fd = open(ctx.stdinFile.c_str(), O_RDWR);
             if(fd == -1)
-                throw SysError(format("cannot open `%1%'") % ctx.stdinFile);
+                throw SysError(std::format("cannot open `{}'", ctx.stdinFile));
             if(dup2(fd, STDIN_FILENO) == -1)
                 throw SysError("cannot dup2 fd into stdin fd");
         }
@@ -198,7 +203,7 @@ void earlyIOSetupAction(SpawnContext & ctx)
 }
 
 
-void dropAmbientCapabilitiesAction(SpawnContext & ctx)
+static void dropAmbientCapabilitiesAction(SpawnContext & ctx)
 {
   /* Drop ambient capabilities such as CAP_CHOWN that might have been granted
      when starting guix-daemon.  */
@@ -211,27 +216,27 @@ void dropAmbientCapabilitiesAction(SpawnContext & ctx)
 }
 
 
-void chrootAction(SpawnContext & ctx)
+static void chrootAction(SpawnContext & ctx)
 {
     if(ctx.doChroot)
 #if HAVE_CHROOT
         if(chroot(ctx.chrootRootDir.c_str()) == -1)
-            throw SysError(format("cannot change root directory to '%1%'") % ctx.chrootRootDir);
+            throw SysError(std::format("cannot change root directory to '{}'", ctx.chrootRootDir));
 #else
     throw Error("chroot is not supported on this system");
 #endif
 }
 
 
-void chdirAction(SpawnContext & ctx)
+static void chdirAction(SpawnContext & ctx)
 {
     if(ctx.setcwd)
         if(chdir(ctx.cwd.c_str()) == -1)
-            throw SysError(format("changing into `%1%'") % ctx.cwd);
+            throw SysError(std::format("changing into `{}'", ctx.cwd));
 }
 
 
-void closeMostFDsAction(SpawnContext & ctx)
+static void closeMostFDsAction(SpawnContext & ctx)
 {
     if(ctx.closeMostFDs) closeMostFDs(ctx.preserveFDs);
     for(auto i = ctx.preserveFDs.begin(); i != ctx.preserveFDs.end(); i++)
@@ -239,7 +244,7 @@ void closeMostFDsAction(SpawnContext & ctx)
 }
 
 
-void setPersonalityAction(SpawnContext & ctx)
+static void setPersonalityAction(SpawnContext & ctx)
 {
   if(ctx.setPersona)
 #ifdef __linux__
@@ -251,7 +256,7 @@ void setPersonalityAction(SpawnContext & ctx)
 }
 
 
-void oomSacrificeAction(SpawnContext & ctx)
+static void oomSacrificeAction(SpawnContext & ctx)
 {
 #ifdef __linux__
     if(ctx.oomSacrifice)
@@ -265,7 +270,7 @@ void oomSacrificeAction(SpawnContext & ctx)
 }
 
 
-void setIDsAction(SpawnContext & ctx)
+static void setIDsAction(SpawnContext & ctx)
 {
     if(ctx.setSupplementaryGroups)
         if(setgroups(ctx.supplementaryGroups.size(),
@@ -285,7 +290,7 @@ void setIDsAction(SpawnContext & ctx)
             throw SysError("setuid failed");
 }
 
-void setNoNewPrivsAction(SpawnContext & ctx)
+static void setNoNewPrivsAction(SpawnContext & ctx)
 {
   if(ctx.setNoNewPrivs)
 #if __linux__ && defined(PR_SET_NO_NEW_PRIVS)
@@ -296,7 +301,7 @@ void setNoNewPrivsAction(SpawnContext & ctx)
 #endif
 }
 
-void addSeccompFilterAction(SpawnContext & ctx)
+static void addSeccompFilterAction(SpawnContext & ctx)
 {
     if(ctx.addSeccompFilter) {
 #if __linux__ && defined(PR_SET_SECCOMP) && defined(SECCOMP_MODE_FILTER)
@@ -316,7 +321,7 @@ void addSeccompFilterAction(SpawnContext & ctx)
 }
 
 
-void restoreSIGPIPEAction(SpawnContext & ctx)
+static void restoreSIGPIPEAction(SpawnContext & ctx)
 {
     /* Restore default handling of SIGPIPE, otherwise some programs will
        randomly say "Broken pipe". */
@@ -328,14 +333,14 @@ void restoreSIGPIPEAction(SpawnContext & ctx)
 }
 
 
-void setupSuccessAction(SpawnContext & ctx)
+static void setupSuccessAction(SpawnContext & ctx)
 {
     if(ctx.signalSetupSuccess)
         writeFull(STDERR_FILENO, "\n");
 }
 
 
-void execAction(SpawnContext & ctx)
+void execAction(SpawnContext & ctx)	  // kept public for use in 'build.cc'
 {
     Strings envStrs;
     std::vector<char *> envPtrs;
@@ -353,7 +358,7 @@ void execAction(SpawnContext & ctx)
         env = envPtrs.data();
     }
     if(execvpe(ctx.program.c_str(), stringsToCharPtrs(ctx.args).data(), env) == -1)
-        throw SysError(format("executing `%1%'") % ctx.program);
+        throw SysError(std::format("executing `{}'", ctx.program));
 }
 
 
@@ -378,7 +383,7 @@ Phases getBasicSpawnPhases()
 }
 
 
-void usernsInitSyncAction(SpawnContext & sctx)
+static void usernsInitSyncAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -397,7 +402,7 @@ void usernsInitSyncAction(SpawnContext & sctx)
 }
 
 
-void usernsSetIDsAction(SpawnContext & sctx)
+static void usernsSetIDsAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -420,7 +425,7 @@ void usernsSetIDsAction(SpawnContext & sctx)
 }
 
 
-void initLoopbackAction(SpawnContext & sctx)
+static void initLoopbackAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -440,7 +445,7 @@ void initLoopbackAction(SpawnContext & sctx)
 }
 
 
-void setHostAndDomainAction(SpawnContext & sctx)
+static void setHostAndDomainAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -456,7 +461,7 @@ void setHostAndDomainAction(SpawnContext & sctx)
 }
 
 
-void makeFilesystemsPrivateAction(SpawnContext & sctx)
+static void makeFilesystemsPrivateAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined(MS_REC) && defined(MS_PRIVATE)
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -468,7 +473,7 @@ void makeFilesystemsPrivateAction(SpawnContext & sctx)
 }
 
 
-void makeChrootSeparateFilesystemAction(SpawnContext & sctx)
+static void makeChrootSeparateFilesystemAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined(MS_BIND)
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -478,11 +483,11 @@ void makeChrootSeparateFilesystemAction(SpawnContext & sctx)
            a tmpfs on it. */
         if(ctx.mountTmpfsOnChroot) {
             if(mount("none", ctx.chrootRootDir.c_str(), "tmpfs", 0, 0) == -1)
-                throw SysError(format("unable to mount tmpfs on `%1%'") % ctx.chrootRootDir);
+                throw SysError(std::format("unable to mount tmpfs on `{}'", ctx.chrootRootDir));
         }
         else {
             if(mount(ctx.chrootRootDir.c_str(), ctx.chrootRootDir.c_str(), 0, MS_BIND, 0) == -1)
-                throw SysError(format("unable to bind mount ‘%1%’") % ctx.chrootRootDir);
+                throw SysError(std::format("unable to bind mount `{}'", ctx.chrootRootDir));
         }
     }
 #endif
@@ -521,12 +526,12 @@ static int statfsToMountFlags(int f_flags)
 }
 
 
-void bindMount(Path source, Path target, bool readOnly)
+static void bindMount(Path source, Path target, bool readOnly)
 {
 #if HAVE_SYS_MOUNT_H && defined(MS_BIND)
     struct stat st;
     if (lstat(source.c_str(), &st) == -1)
-        throw SysError(format("getting attributes of path `%1%'") % source);
+        throw SysError(std::format("getting attributes of path `{}'", source));
 
     if(S_ISDIR(st.st_mode))
         createDirs(target);
@@ -545,11 +550,11 @@ void bindMount(Path source, Path target, bool readOnly)
         while(true){
             if(lstat(target.c_str(), &st2) != -1) {
                 if(!S_ISREG(st2.st_mode))
-                    throw Error(format("mount target `%1%' exists but is not a regular file") % target);
+                    throw Error(std::format("mount target `{}' exists but is not a regular file", target));
                 break;
             }
             if(errno != ENOENT) {
-                throw SysError(format("stat'ing path `%1%'") % target);
+                throw SysError(std::format("stat'ing path `{}'", target));
             }
             AutoCloseFD fd = open(target.c_str(),
                                   O_WRONLY | O_NOFOLLOW | O_CREAT | O_EXCL,
@@ -561,7 +566,7 @@ void bindMount(Path source, Path target, bool readOnly)
             /* Note: because of O_CREAT | O_EXCL, EACCES can only mean a
              * permission issue with the parent directory */
             if(errno != EEXIST)
-                throw SysError(format("Creating placeholder regular file target mount `%1%'") % target);
+                throw SysError(std::format("Creating placeholder regular file target mount `{}'", target));
         }
     }
 
@@ -569,7 +574,7 @@ void bindMount(Path source, Path target, bool readOnly)
        are in an unprivileged mount namespace and not specifying MS_REC would
        reveal subtrees that had been covered up. */
     if (mount(source.c_str(), target.c_str(), 0, MS_BIND|MS_REC, 0) == -1)
-        throw SysError(format("bind mount from `%1%' to `%2%' failed") % source % target);
+        throw SysError(std::format("bind mount from `{}' to `{}' failed", source, target));
     if(readOnly) {
 #if defined(MS_REMOUNT) && defined(MS_RDONLY)
         /* Extra flags passed with MS_BIND are ignored, hence the extra
@@ -581,12 +586,12 @@ void bindMount(Path source, Path target, bool readOnly)
 #if HAVE_STATVFS
         struct statvfs stvfs;
         if(statvfs(target.c_str(), &stvfs) == -1)
-            throw SysError(format("statvfs of `%1%'") % target);
+            throw SysError(std::format("statvfs of `{}'", target));
         mount_flags |= statfsToMountFlags(stvfs.f_flag);
 #endif
 
         if (mount(source.c_str(), target.c_str(), 0, mount_flags, 0) == -1)
-            throw SysError(format("read-only remount of `%1%' failed") % target);
+            throw SysError(std::format("read-only remount of `{}' failed", target));
 #else
         throw Error("remounting read-only is not supported on this platform");
 #endif
@@ -595,9 +600,9 @@ void bindMount(Path source, Path target, bool readOnly)
 }
 
 
-void mountIntoChroot(std::map<Path, Path> filesInChroot,
-                     set<Path> readOnlyFiles,
-                     Path chrootRootDir)
+static void mountIntoChroot(std::map<Path, Path> filesInChroot,
+			    set<Path> readOnlyFiles,
+			    Path chrootRootDir)
 {
 #if HAVE_SYS_MOUNT_H && defined(MS_BIND)
     for(auto i = filesInChroot.begin(); i != filesInChroot.end(); i++) {
@@ -612,7 +617,7 @@ void mountIntoChroot(std::map<Path, Path> filesInChroot,
 }
 
 
-void mountIntoChrootAction(SpawnContext & sctx)
+static void mountIntoChrootAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined(MS_BIND)
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -623,7 +628,7 @@ void mountIntoChrootAction(SpawnContext & sctx)
 }
 
 
-void mountProcAction(SpawnContext & sctx)
+static void mountProcAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -631,13 +636,13 @@ void mountProcAction(SpawnContext & sctx)
         Path target = (ctx.doChroot ? ctx.chrootRootDir : "") + "/proc";
         createDirs(target);
         if(mount("none", target.c_str(), "proc", 0, 0) == -1)
-            throw SysError(format("mounting `%1%'") % target);
+            throw SysError(std::format("mounting `{}'", target));
     }
 #endif
 }
 
 
-void mountDevshmAction(SpawnContext & sctx)
+static void mountDevshmAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -645,13 +650,13 @@ void mountDevshmAction(SpawnContext & sctx)
         Path target = (ctx.doChroot ? ctx.chrootRootDir : "") + "/dev/shm";
         createDirs(target);
         if(mount("none", target.c_str(), "tmpfs", 0, 0) == -1)
-            throw SysError(format("mounting `%1%'") % target);
+            throw SysError(std::format("mounting `{}'", target));
     }
 #endif
 }
 
 
-void mountDevptsAction(SpawnContext & sctx)
+static void mountDevptsAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -661,34 +666,34 @@ void mountDevptsAction(SpawnContext & sctx)
         if(pathExists(chroot + "/dev/ptmx")) return;
         createDirs(target);
         if(mount("none", target.c_str(), "devpts", 0, "newinstance,mode=0620") == -1)
-            throw SysError(format("mounting `%1%'") % target);
+            throw SysError(std::format("mounting `{}'", target));
         createSymlink("/dev/pts/ptmx", chroot + "/dev/ptmx");
         /* Make sure /dev/pts/ptmx is world-writable.  With some Linux
            versions, it is created with permissions 0.  */
         Path targetPtmx = chroot + "/dev/pts/ptmx";
         if (chmod(targetPtmx.c_str(), 0666) == -1)
-            throw SysError(format("setting permissions on `%1%'") % targetPtmx);
+            throw SysError(std::format("setting permissions on `{}'", targetPtmx));
     }
 #endif
 }
 
 
-void pivotRootAction(SpawnContext & sctx)
+static void pivotRootAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
     if((ctx.cloneFlags & CLONE_NEWNS) != 0 && ctx.doChroot) {
         if (chdir(ctx.chrootRootDir.c_str()) == -1)
-            throw SysError(format("cannot change directory to '%1%'") % ctx.chrootRootDir);
+            throw SysError(std::format("cannot change directory to '{}'", ctx.chrootRootDir));
 
         if (mkdir("real-root", 0) == -1)
             throw SysError("cannot create real-root directory");
 
         if (pivot_root(".", "real-root") == -1)
-            throw SysError(format("cannot pivot old root directory onto '%1%'") % (ctx.chrootRootDir + "/real-root"));
+            throw SysError(std::format("cannot pivot old root directory onto '{}'", (ctx.chrootRootDir + "/real-root")));
 
         if (chroot(".") == -1)
-            throw SysError(format("cannot change root directory to '%1%'") % ctx.chrootRootDir);
+            throw SysError(std::format("cannot change root directory to '{}'", ctx.chrootRootDir));
 
         if (umount2("real-root", MNT_DETACH) == -1)
             throw SysError("cannot unmount real root filesystem");
@@ -700,7 +705,7 @@ void pivotRootAction(SpawnContext & sctx)
 }
 
 
-string idMapToIdentityMap(const string & map)
+static string idMapToIdentityMap(const string & map)
 {
     std::vector<string> mapLines =
         tokenizeString<std::vector<string> >(map, "\n");
@@ -720,7 +725,7 @@ string idMapToIdentityMap(const string & map)
  * processes in it after unshare is called.  So fork a child and have it do
  * the initialization. */
 void unshareAndInitUserns(int flags, const string & uidMap,
-                          const string & gidMap, bool allowSetgroups)
+			  const string & gidMap, bool allowSetgroups)
 {
 #if CLONE_ENABLED
     pid_t pid_ = getpid();
@@ -761,13 +766,13 @@ void unshareAndInitUserns(int flags, const string & uidMap,
                 throw SysError("reaping userns init process");
         }
         if(!(WIFEXITED(status) != 0 && WEXITSTATUS(status) == EXIT_SUCCESS))
-            throw Error(format("userns init child exited with status %1%") % WEXITSTATUS(status));
+            throw Error(std::format("userns init child exited with status {}", WEXITSTATUS(status)));
     }
 #endif
 }
 
 
-void lockMountsAction(SpawnContext & sctx)
+static void lockMountsAction(SpawnContext & sctx)
 {
 #if CLONE_ENABLED && HAVE_SYS_MOUNT_H
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
@@ -868,7 +873,7 @@ void runChildSetup(SpawnContext & ctx)
 }
 
 
-int runChildSetupEntry(void *data)
+static int runChildSetupEntry(void *data)
 {
     runChildSetup(* (SpawnContext *)data);
     return 1;

@@ -417,8 +417,8 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
      (list gcc-15
            hyprwayland-scanner
            (module-ref (resolve-interface
-                  '(gnu packages commencement))
-                 'ld-wrapper)
+                        '(gnu packages commencement))
+                       'ld-wrapper)
            pkg-config))
     (inputs
      (list aquamarine
@@ -3954,7 +3954,7 @@ read and write, and compatible with JSON.")
 (define-public labwc
   (package
     (name "labwc")
-    (version "0.9.1")
+    (version "0.9.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3963,7 +3963,7 @@ read and write, and compatible with JSON.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0p475vjn9gg314spf89di6i1l2lr9xx59mz4hq4shvbh64hr48pi"))))
+                "1qgjfc9glynpd39qdsdfznmn7ggki1kgxnhi1vlc54ianmpdxa38"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config gettext-minimal scdoc))
@@ -4595,20 +4595,23 @@ implementing the layer-shell protocol.")
 configuration."))))
 
 (define-public yambar-wayland
+  ;; This is the last commit
+  (let ((commit "abeffbd9a9fd0b2133343e1149e65d4a795a43d0")
+        (revision "0"))
   (package
     (name "yambar-wayland")
-    (version "1.11.0")
+    (version (git-version "1.11.0" revision commit))
     (home-page "https://codeberg.org/dnkl/yambar")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url home-page)
-             (commit version)))
+             (commit commit)))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0c3sk2i14fcb0l95pvfnj2sx0vx4ql1vldhimfccbf2qj0r30b20"))))
+         "0szi6a1dfprbw069zy96ranz68nzr0zasd610kqxdyydbdkfwwg8"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -4631,13 +4634,14 @@ configuration."))))
                   json-c
                   libmpdclient
                   pulseaudio
-                  eudev))
+                  eudev
+                  basu))
     (synopsis "X11 and Wayland status panel")
     (description
      "@command{yambar} is a lightweight and configurable status panel (bar,
 for short) for X11 and Wayland, that goes to great lengths to be both CPU and
 battery efficient---polling is only done when absolutely necessary.")
-    (license license:expat)))
+    (license license:expat))))
 
 (define-public wideriver
   (package

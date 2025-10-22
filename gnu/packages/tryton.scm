@@ -2,7 +2,7 @@
 ;;; Copyright © 2017 Adriano Peluso <catonano@gmail.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2021 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2021,2024,2025 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2021 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;;
@@ -38,6 +38,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-crypto)
+  #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages time)
@@ -65,13 +66,13 @@ installed in the same environments.  Collecting only paths actually containing
 (define-public trytond
   (package
     (name "trytond")
-    (version "7.4.4")
+    (version "7.0.37")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond" version))
        (sha256
-        (base32 "1bwa631qz07k6s5fbki3ph6sx0ch9yss2q4sa1jb67z6angiwv5f"))
+        (base32 "1i51yd5kvmcny5k36pj0l3rblyig9zxv5pvvln9c2xq2nkndqqr6"))
        (patches (search-patches "trytond-add-guix_trytond_path.patch"))))
     (build-system pyproject-build-system)
     (arguments
@@ -88,6 +89,7 @@ installed in the same environments.  Collecting only paths actually containing
          (add-before 'check 'preparations
            (lambda _
              (setenv "DB_NAME" ":memory:")
+             (setenv "DB_CACHE" "/tmp")
              (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-dateutil
@@ -96,18 +98,18 @@ installed in the same environments.  Collecting only paths actually containing
            python-lxml
            python-passlib
            python-polib
+           python-psycopg2
            python-relatorio
            python-sql
            python-werkzeug))
     (native-inputs
-     (list python-pillow
-           python-pydot
-           python-pytest
-           python-setuptools
-           python-wheel
-           tzdata-for-tests))
+     (list python-html2text python-pillow python-pydot python-pytest
+           python-setuptools tzdata-for-tests))
     (native-search-paths
-     (list (guix-trytonpath-search-path (package-version python))))
+     (list (guix-trytonpath-search-path (package-version python))
+           ;; Required to pick up entry-points from profile for Tryton modules
+           ;; which are not in named 'trytond.modules.…'
+           (guix-pythonpath-search-path (package-version python))))
     (home-page "https://www.tryton.org/")
     (synopsis "Tryton Server")
     (description "Tryton is a three-tier high-level general purpose
@@ -119,16 +121,17 @@ and security.")
 (define-public tryton
   (package
     (name "tryton")
-    (version "7.4.4")
+    (version "7.0.27")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tryton" version))
        (sha256
-        (base32 "0q0qa4pjbpc0h8r9hlnm5dh315w5i7mzqpdrlw1c8qvigpl1rf7g"))))
+        (base32 "0hqni5nhy29a0zs1r6w734dw2skpbnq7yn6s1f7ziq6rpxd57adl"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-backend #~'unittest #:test-flags #~(list "discover")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'change-home
@@ -144,8 +147,7 @@ and security.")
      (list `(,glib "bin")
            gobject-introspection
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (inputs (list bash-minimal))        ;for wrap-program
     (propagated-inputs
      (list (librsvg-for-system)
@@ -155,7 +157,7 @@ and security.")
            python-pycairo
            python-pygobject))
     (home-page "https://www.tryton.org/")
-    (synopsis "Tryton Client")
+    (synopsis "Desktop client for Tryton")
     (description
      "This package provides the Tryton GTK client.")
     (license license:gpl3+)))
@@ -163,78 +165,107 @@ and security.")
 (define-public python-proteus
   (package
     (name "python-proteus")
-    (version "7.4.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "proteus" version))
        (sha256
-        (base32 "1q3d0hkvmfsmxbx2qqp8zpslyy11mzwh0q2dkrh958yfyrzi1550"))))
+        (base32 "1mh82lqc3dbg1kq21lwbk4wa2ghjkrmkz1xx1mzkk50cyhdd800w"))))
     (build-system pyproject-build-system)
     ;; Tests require python-trytond-party which requires python-proteus.
     (arguments
      `(#:tests? #f))
     (propagated-inputs
      (list python-dateutil python-defusedxml))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (home-page "http://www.tryton.org/")
     (synopsis "Library to access a Tryton server as a client")
     (description
      "This package provides a library to access Tryton server as a client.")
     (license license:lgpl3+)))
 
-(define (tryton-phases module . extra-arguments)
+;; Suppress common useless warnings to avoid cluttering output
+(define %pytest.ini "
+[pytest]
+filterwarnings =
+  ignore:.*SQLite backend.*:UserWarning
+  ignore:Can not create index with parameters:UserWarning
+  ignore::DeprecationWarning
+")
+
+(define (tryton-phases module . extra-test-arguments)
   "Return the phases for building and testing a Tryton module named MODULE.
-If present, pass EXTRA-ARGUMENTS to runtest as well."
-  `(modify-phases %standard-phases
-     (replace 'check
-       (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-         (let ((runtest
-                (string-append
-                 (assoc-ref inputs "trytond")
-                 "/lib/python"
-                 ,(version-major+minor (package-version python))
-                 "/site-packages/trytond/tests/run-tests.py")))
-           (when tests?
-             (add-installed-pythonpath inputs outputs)
-             (invoke "python" runtest "-m" ,module ,@extra-arguments)))))))
+If present, pass EXTRA-TEST-ARGUMENTS to pytest as well."
+  #~(modify-phases %standard-phases
+      (add-before 'check 'prepare-check
+        (lambda* (#:key tests? #:allow-other-keys)
+          (when tests?
+            (setenv "DB_NAME" ":memory:")
+            (setenv "DB_CACHE" "/tmp")
+            (setenv "HOME" "/tmp")
+            ;; Fake this directory as a tryton.module.… sub-module.
+            (mkdir-p "/tmp/dummy/trytond/modules")
+            (symlink (getcwd) (string-append "/tmp/dummy/trytond/modules/" #$module))
+            (setenv "GUIX_TRYTOND_MODULES_PATH"
+                    (string-append (getenv "GUIX_TRYTOND_MODULES_PATH")
+                                   ":/tmp/dummy/trytond/modules"))
+            ;; Create pytest.ini in sub-dir to make that dir pytest's
+            ;; "rootdir" and avoid that the module's files get scanned (which
+            ;; will fail since here they are not part of a package).
+            (with-output-to-file "tests/pytest.ini"
+              (lambda ()
+                (format #t #$%pytest.ini))))))
+      (replace 'check
+        (lambda* (#:key tests? #:allow-other-keys)
+          (when tests?
+            ;; Use pytest to allow excluding failing tests via command line
+            ;; args (resp. arguments to '(tryton-arguments)')
+            (invoke "pytest" "--tb=short" "-v"
+                    "--config-file=tests/pytest.ini"
+                    "tests"
+                    #$@extra-test-arguments))))))
 
 (define (tryton-arguments module . extra-arguments)
   "Like ’tryton-phases’, but directly return all arguments for
 the build system."
-  `(#:phases ,(apply tryton-phases module extra-arguments)))
+  (list #:phases (apply tryton-phases module extra-arguments)))
 
 ;;;
 ;;;  Tryton modules - please sort alphabetically
 ;;;
 
-(define (%standard-trytond-native-inputs)
-  ;; native-inputs required by most of the tryton module for running the test
-  `(("python-dateutil" ,python-dateutil)
-    ("python-genshi" ,python-genshi)
-    ("python-lxml" ,python-lxml)
-    ("python-magic" ,python-magic)
-    ("python-passlib" ,python-passlib)
-    ("python-polib" ,python-polib)
-    ("python-proteus" ,python-proteus)
-    ("python-relatorio" ,python-relatorio)
-    ("python-sql" ,python-sql)
-    ("python-werkzeug" ,python-werkzeug-1.0)
-    ("python-wrapt" ,python-wrapt)))
+(define %standard-trytond-native-inputs
+  ;; native-inputs required for building and by most of the trytond modules
+  ;; for running the test
+  (list python-dateutil
+        python-genshi
+        python-lxml
+        python-magic
+        python-passlib
+        python-polib
+        python-proteus
+        python-pytest ; see tryton-phases above
+        python-setuptools ; for pyproject-build-system
+        python-relatorio
+        python-sql
+        python-werkzeug
+        python-wrapt
+        tzdata-for-tests))
 
 (define-public trytond-account
   (package
     (name "trytond-account")
-    (version "6.2.7")
+    (version "7.0.22")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account" version))
        (sha256
-        (base32 "1jjffyfkax36v6znhdyvlrr314h3d5rn13iwv3kvhsm6paddbmwi"))))
-    (build-system python-build-system)
+        (base32 "10m6743h2qjdfrbzvcm11bg7b3rk4570vfg5ng0zi69yv8hd8zak"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-simpleeval trytond trytond-company trytond-currency
            trytond-party))
@@ -245,24 +276,21 @@ the build system."
 most of accounting needs.")
     (license license:gpl3+)))
 
-(define-public python-trytond-account
-  (deprecated-package "python-trytond-account" trytond-account))
-
 (define-public trytond-account-asset
   (package
     (name "trytond-account-asset")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_asset" version))
        (sha256
-        (base32 "0zs0bqa3crfqc39z7c5hcj60w2aws2fv2l9y59v9sfy8azi32533"))))
-    (build-system python-build-system)
+        (base32 "0v11scsbzgfx9k89dqb3fil9ynccvqxm0ph1jhyhls3i09d1vpga"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_asset"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-purchase" ,trytond-purchase)))
+     (cons* trytond-purchase
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account trytond-account-invoice
            trytond-account-product trytond-product))
@@ -275,16 +303,16 @@ of fixed assets.")
 (define-public trytond-account-be
   (package
     (name "trytond-account-be")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_be" version))
        (sha256
-        (base32 "0ff27b9g1nf1gqlbv71kq7nm25r85vqpn8b0piajcxln1pbwgnmw"))))
-    (build-system python-build-system)
+        (base32 "1lx2dgvp84ib18z47fk7chxr04jlqm3jyk5pkb32q0air5d95j2f"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_be"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-account-eu))
     (home-page "https://docs.tryton.org/projects/modules-account-be")
@@ -296,15 +324,15 @@ chart of account for Belgium.")
 (define-public trytond-account-budget
   (package
     (name "trytond-account-budget")
-    (version "6.2.2")
+    (version "7.0.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_account_budget" version))
               (sha256
-               (base32 "055y9jjpx4xfrc6dlssvjzmjz7rrvfljlaljx0v6c6s87mpzi3m5"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_account_budget"))
-    (native-inputs (%standard-trytond-native-inputs))
+               (base32 "0ycxy7p54gssw4mzb62gmlkhkyfa9s8bqaps30zyw0jd79pll2xy"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_budget"))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs (list trytond trytond-account
                              trytond-company trytond-currency))
     (home-page "https://docs.tryton.org/projects/modules-account-budget")
@@ -315,23 +343,26 @@ then be used to track the total amount from relevant transactions against the
 budgeted amount.")
     (license license:gpl3+)))
 
+(define (standard-trytond-native-inputs 1stmodule . more-modules)
+  (apply list 1stmodule more-modules %standard-trytond-native-inputs))
+
 (define-public trytond-account-cash-rounding
   (package
     (name "trytond-account-cash-rounding")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_cash_rounding" version))
        (sha256
-        (base32 "0lxwz3f1p8szphvl64w8fhjnnvn30fin5k1rh47ikvcmlpq8xb67"))))
-    (build-system python-build-system)
+        (base32 "1ap0ndymlkazk3q0crn6ll27w8zmq8ykm9j4qvz5i051kf05k250"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_cash_rounding"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice" ,trytond-account-invoice)
-       ("trytond-purchase" ,trytond-purchase)
-       ("trytond-sale" ,trytond-sale)))
+     (cons* trytond-account-invoice
+            trytond-purchase
+            trytond-sale
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account trytond-currency))
     (home-page
@@ -341,23 +372,51 @@ budgeted amount.")
 amounts to be rounded using the cash rounding factor of the currency.")
     (license license:gpl3+)))
 
+(define-public trytond-account-consolidation
+  (package
+    (name "trytond-account-consolidation")
+    (version "7.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_consolidation" version))
+       (sha256
+        (base32 "07qjw6h2cap1lg712w2yznnbp3swk1m9rspb48c13yyhm5xaf4ii"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_consolidation"))
+    (native-inputs
+     (cons* trytond-account-invoice
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list
+      trytond
+      trytond-account
+      trytond-company
+      trytond-currency))
+    (home-page "https://docs.tryton.org/projects/modules-account-consolidation")
+    (synopsis "Tryton module to consolidate accounting of many companies")
+    (description "The @emph{Account Consolidation} Tryton module allows
+consolidate accounting report of multiple companies.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-credit-limit
   (package
     (name "trytond-account-credit-limit")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_credit_limit" version))
        (sha256
-        (base32 "1j3krz4qm04366d1k4sdf089vwbjl29lw8wbpd002hr2lb2lppm3"))))
-    (build-system python-build-system)
+        (base32 "12p2ryn9lywnxm6839wv9s9jgx8k6cnjaffdxyv2m0vkj2hpvm7r"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_credit_limit"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-dunning" ,trytond-account-dunning)))
+     (cons* trytond-account-dunning
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-account trytond-company trytond-party))
+     (list trytond trytond-account trytond-company trytond-currency
+           trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-account-credit-limit")
     (synopsis "Tryton module for account credit limit")
     (description "The @emph{Account Credit Limit} Tryton module for manages
@@ -367,16 +426,16 @@ credit limit of parties.")
 (define-public trytond-account-de-skr03
   (package
     (name "trytond-account-de-skr03")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_de_skr03" version))
        (sha256
-        (base32 "1igag4nbafr5il6fqw7piak0wma6mgxhzy59zpsnl8gcl96jijv1"))))
-    (build-system python-build-system)
+        (base32 "0id7qvjahgnv3nn0q5sb451zfa61qd04cgpf24y9jcbscb42bs5z"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_de_skr03"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account))
     (home-page "https://docs.tryton.org/projects/modules-account-de-skr03")
@@ -388,16 +447,18 @@ Tryton.")
 (define-public trytond-account-deposit
   (package
     (name "trytond-account-deposit")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_deposit" version))
        (sha256
-        (base32 "0axp72p00fk1r6mr9pip8g4276wvb55vfbp962f3gdsijslj9mqi"))))
-    (build-system python-build-system)
+        (base32 "055v9b30q1drrkzq6xdcd5v20ysa7mqqsvzibrrbjjapx9hi6vp2"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_deposit"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-account-payment-clearing
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account trytond-account-invoice
            trytond-company trytond-party))
@@ -414,16 +475,16 @@ the party.")
 (define-public trytond-account-dunning
   (package
     (name "trytond-account-dunning")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_dunning" version))
        (sha256
-        (base32 "0kzafh99055ghg5d8vs411y5c8v1xjqqf23n1sa9a4dzj10wlq97"))))
-    (build-system python-build-system)
+        (base32 "0vxz71gwp2s5cm6y8c770aaw4mwgbdf8brl75p404lp6mwh3fqay"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_dunning"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-company trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-account-dunning")
@@ -435,16 +496,16 @@ receivable move lines.")
 (define-public trytond-account-dunning-email
   (package
     (name "trytond-account-dunning-email")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_dunning_email" version))
        (sha256
-        (base32 "01d0cwgvl40i7zq9s3yrmf504j8s6395vs8mm1hgg0s9dpi7pl46"))))
-    (build-system python-build-system)
+        (base32 "0ry043b8fa0sphamm7xaybf836c5q75w18158zgzg9wm2xbbqjsg"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_dunning_email"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-dunning trytond-account-dunning-letter
            trytond-party))
@@ -458,18 +519,18 @@ emails.")
 (define-public trytond-account-dunning-fee
   (package
     (name "trytond-account-dunning-fee")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_dunning_fee" version))
        (sha256
-        (base32 "0v88xkigxqr1py2l25z3qfrr1irpllsi7zzwg3sxmp12d8pi8szk"))))
-    (build-system python-build-system)
+        (base32 "00rvw1720rz9x2kl6kss0w85w3ch8lygp4nfljw5hqw1fyxwsq2z"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_dunning_fee"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-dunning-letter" ,trytond-account-dunning-letter)))
+     (cons* trytond-account-dunning-letter
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account-dunning trytond-account-product))
     (home-page "https://docs.tryton.org/projects/modules-account-dunning-fee")
@@ -481,16 +542,16 @@ accounting moves as fees when processing dunning.")
 (define-public trytond-account-dunning-letter
   (package
     (name "trytond-account-dunning-letter")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_dunning_letter" version))
        (sha256
-        (base32 "1jx1ad7kwlk7cm5j2b15bf4lcy5d2c13j8ag48v0pfy3kiglr2z3"))))
-    (build-system python-build-system)
+        (base32 "0ad0jyxmqiyfc5kgxrfzipllxmcn8kzgxmnjjil7w2pv3fw5jcr8"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_dunning_letter"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-account-dunning
            trytond-company trytond-party))
@@ -504,23 +565,30 @@ letters.")
 (define-public trytond-account-es
   (package
     (name "trytond-account-es")
-    (version "6.2.0")
+    (version "7.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_es" version))
        (sha256
-        (base32 "0wwfkqxlppaild62labldabcnzgdmiqd36sknqdb69jn4ljhw4im"))))
-    (build-system python-build-system)
+        (base32 "009wx8ihx8i976hpfpqjlp0gbvfzpdgmpdigwla19416yqjkpvka"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_es"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-asset" ,trytond-account-asset)
-       ("trytond-account-payment-sepa" ,trytond-account-payment-sepa)
-       ("trytond-sale-advance-payment" ,trytond-sale-advance-payment)))
+     (cons* trytond-account-asset
+            trytond-account-payment-sepa
+            trytond-sale-advance-payment
+            trytond-sale-gift-card
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-account trytond-account-eu trytond-account-invoice
-           trytond-company trytond-currency trytond-party))
+     (list python-phonenumbers
+           trytond
+           trytond-account
+           trytond-account-eu
+           trytond-account-invoice
+           trytond-company
+           trytond-currency
+           trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-account-es")
     (synopsis "Tryton with Spanish chart of accounts")
     (description "This package provides the following Spanish charts of
@@ -539,19 +607,46 @@ A wizard allows generating the following AEAT files:
 @end itemize")
     (license license:gpl3+)))
 
+(define-public trytond-account-es-sii
+  (package
+    (name "trytond-account-es-sii")
+    (version "7.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_es_sii" version))
+       (sha256
+        (base32 "1dl8wfzcqyp8zdbxzj264hmgmdy85i74fnmx88vqrrchzmk2g9a4"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_es_sii"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list python-requests
+           python-zeep
+           trytond
+           trytond-account
+           trytond-account-es
+           trytond-account-invoice))
+    (home-page "https://docs.tryton.org/projects/modules-account-es-sii")
+    (synopsis "Tryton module that sends invoices to the Spanish SII webservice")
+    (description "The @emph{Account Spanish SII} Tryton module allows sending
+invoices to the SII portal.  This is legal requirement for some Spanish
+companies.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-eu
   (package
     (name "trytond-account-eu")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_eu" version))
        (sha256
-        (base32 "1k11ncamp4cd5bdpj4va9p0vga2vcgfwd7wbivf1w4m1bzpisvm8"))))
-    (build-system python-build-system)
+        (base32 "115pvxvb4wnlsnbz8qk9z7a9kgvgzjfkxdyvlyffpllq5fwj5dym"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_eu"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -572,16 +667,24 @@ accounting requirements in Europe.  It includes:
 (define-public trytond-account-fr
   (package
     (name "trytond-account-fr")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_fr" version))
        (sha256
-        (base32 "18wmijaxah125skhgpqc7iaw6a8md5mpv7m5yazcrscx9pk1z5jz"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "account_fr"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "0cigsrh2d2bj9h87lxmi8hancghwhxs3mam581knygi8r4n1c7aj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases #$(tryton-phases "account_fr")
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; doctests uses '__file__' which is unset in pytest
+                (invoke "python" "-m" "unittest" "discover")))))))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-party-siret))
     (home-page "https://docs.tryton.org/projects/modules-account-fr")
@@ -593,20 +696,23 @@ for Tryton.")
 (define-public trytond-account-fr-chorus
   (package
     (name "trytond-account-fr-chorus")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_fr_chorus" version))
        (sha256
-        (base32 "14rcfk825m7wi73a4ahps5wqrz2aws3a7spz402mmbfxz84ypvbg"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "account_fr_chorus"))
+        (base32 "1cim1zy34inp9162lcblldwfksxhqvcmcndgvj9l75dsrv53zg9h"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "account_fr_chorus" "-k not scenario"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-edocument-uncefact" ,trytond-edocument-uncefact)))
+     (cons* trytond-account-fr
+            trytond-edocument-uncefact
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list python-requests
+     (list python-oauthlib
+           python-requests-oauthlib
            trytond
            trytond-account
            trytond-account-invoice
@@ -627,16 +733,16 @@ using the credential from the accounting configuration.")
 (define-public trytond-account-invoice
   (package
     (name "trytond-account-invoice")
-    (version "6.2.4")
+    (version "7.0.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice" version))
        (sha256
-        (base32 "12hkrlni1psa5n72bvz94zqwfmzpy24814p0f2vk1cmzkbsfb6vi"))))
-    (build-system python-build-system)
+        (base32 "0s2slws07s3gfarjnc8ps65w9zgpmrr0xj51vlb9rykswynf7515"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -652,22 +758,19 @@ using the credential from the accounting configuration.")
 term.")
     (license license:gpl3+)))
 
-(define-public python-trytond-account-invoice
-  (deprecated-package "python-trytond-account-invoice" trytond-account-invoice))
-
 (define-public trytond-account-invoice-correction
   (package
     (name "trytond-account-invoice-correction")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice_correction" version))
        (sha256
-        (base32 "1m95h7bnwzjbhrnbld5bka4hqygm0d8jcg1g2nmdyqakcniljv34"))))
-    (build-system python-build-system)
+        (base32 "154nyf29lm74wlsad5byh9c96nszscsb31jc4hxi8j91n93f2l6j"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice_correction"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice))
     (home-page
@@ -682,16 +785,16 @@ original quantity, once with the inverted quantity.")
 (define-public trytond-account-invoice-defer
   (package
     (name "trytond-account-invoice-defer")
-    (version "6.2.2")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice_defer" version))
        (sha256
-        (base32 "1jjsadia1bxx0h80aqhm0alzxdqbkg3by0i7i6qfk7wwikim6lkm"))))
-    (build-system python-build-system)
+        (base32 "1q281cl0dhmm5d1cc4sjpx6wk97vrva35sldxwydrpw460df9lh9"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice_defer"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-account-invoice
            trytond-company))
@@ -705,16 +808,16 @@ deferring the expense or the revenue of an invoice line over many periods.")
 (define-public trytond-account-invoice-history
   (package
     (name "trytond-account-invoice-history")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice_history" version))
        (sha256
-        (base32 "1qg8x6kggi2f390y35m7k3mfi358zr4jwiw76vw5kkrpa3gm4lyj"))))
-    (build-system python-build-system)
+        (base32 "07ggrwqq6dz7c49bc20ly7nxznw3sm9q5cmskjycmfx6h72j5l8y"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice_history"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-party))
     (home-page
@@ -727,16 +830,16 @@ the historization of the invoice and its related fields.")
 (define-public trytond-account-invoice-line-standalone
   (package
     (name "trytond-account-invoice-line-standalone")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice_line_standalone" version))
        (sha256
-        (base32 "15ld3iixh8kgil5zw3q4acci4xvdcd56lyin154qaak12f7rms0z"))))
-    (build-system python-build-system)
+        (base32 "1gihaiabl9pk9k8b9hmd0b2ih7i6dmyi2p3s1ycl395y8rc3d58d"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice_line_standalone"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice))
     (home-page
@@ -749,16 +852,16 @@ allows creating an invoice line not linked to an invoice.")
 (define-public trytond-account-invoice-secondary-unit
   (package
     (name "trytond-account-invoice-secondary-unit")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice_secondary_unit" version))
        (sha256
-        (base32 "1wmc8zx51saqxbg26b7jnhl7ss3gjrhzxn7zqqsis9dps6l07jwf"))))
-    (build-system python-build-system)
+        (base32 "1qqr70xw5ybn1xywgdznqc2lqsvs592qiam0rr75zyjzv3g3bfxc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice_secondary_unit"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-product))
     (home-page
@@ -771,16 +874,16 @@ a secondary unit of measure on invoice line.")
 (define-public trytond-account-invoice-stock
   (package
     (name "trytond-account-invoice-stock")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_invoice_stock" version))
        (sha256
-        (base32 "0q12v6xdpsw4fjm9pqp73bffdixi2hm9j2vxxx6n2p9r0c3g1gj1"))))
-    (build-system python-build-system)
+        (base32 "10nysdhm770m4s4nqn8zp8f5ajpi5aqhd3vp4lsfib940lgwrzbx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_invoice_stock"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-product trytond-stock))
     (home-page "https://www.tryton.org/")
@@ -791,23 +894,45 @@ lines and stock moves.  The unit price of the stock move is updated with the
 average price of the posted invoice lines that are linked to it.")
     (license license:gpl3+)))
 
-(define-public python-trytond-account-invoice-stock
-  (deprecated-package
-   "python-trytond-account-invoice-stock" trytond-account-invoice-stock))
+
+(define-public trytond-account-invoice-watermark
+  (package
+    (name "trytond-account-invoice-watermark")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_invoice_watermark" version))
+       (sha256
+        (base32 "00b0s9mzdxafw6hfl4xg3wvb6w3k8zw98knirig4ksy04xr4w4zp"))))
+    (build-system pyproject-build-system)
+    ;; doctest would required libreoffice
+    (arguments (tryton-arguments "account_invoice_watermark"
+                "-k not scenario_account_invoice_watermark.rst"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list python-pypdf
+           trytond
+           trytond-account-invoice))
+    (home-page "https://docs.tryton.org/projects/modules-account-invoice-watermark")
+    (synopsis "Tryton module to add a watermark to invoices")
+    (description "The @emph{Account Invoice Watermark} Tryton module adds a
+\"draft\" or \"paid\" watermark to the printed invoice.")
+    (license license:gpl3+)))
 
 (define-public trytond-account-move-line-grouping
   (package
     (name "trytond-account-move-line-grouping")
-    (version "6.2.0")
+    (version "7.0.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_account_move_line_grouping" version))
               (sha256
-               (base32 "1mrh17a55hkfj89vyx1jrmgzps4ig0m03c10ngsy4my6v6rnnn2r"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_account_move_line_grouping"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-sql trytond trytond-account))
+               (base32 "167z9djgraijy7py64ic9a4y5dp2f57j5j349lpz857qr75zxrv3"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_move_line_grouping"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs (list trytond trytond-account))
     (home-page "https://docs.tryton.org/projects/modules-account-move-line-grouping")
     (synopsis "Tryton module to display account move lines grouped")
     (description "The @emph{Account Move Line Grouping} Tryton module adds a
@@ -817,18 +942,29 @@ view that displays move lines grouped.")
 (define-public trytond-account-payment
   (package
     (name "trytond-account-payment")
-    (version "6.2.2")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_payment" version))
        (sha256
-        (base32 "0gsg53fiqdmrdpckpfh5sm56ycqjdpa26calmng4p0v2rz557l1f"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "account_payment"))
+        (base32 "06hm5lwp3y9azzjwwrk52r28qw5hv440wn42iv5xg50jm4dzag8d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases #$(tryton-phases "account_payment")
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; DB_CACHE and pytest don't work together here
+                (invoke "python" "-m" "unittest" "discover")))))))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice" ,trytond-account-invoice)))
+     (cons* trytond-account-dunning
+            trytond-account-invoice
+            trytond-account-statement
+            trytond-account-statement-rule
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account trytond-company trytond-currency
            trytond-party))
@@ -841,16 +977,18 @@ payments for receivable or payable Account Move Lines.")
 (define-public trytond-account-payment-braintree
   (package
     (name "trytond-account-payment-braintree")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_payment_braintree" version))
        (sha256
-        (base32 "0s8li1ynb89nx5isxmg0rbbk6aw85i0218391z9nzgkj8kxgww9j"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "account_payment_braintree"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "0kix59xjfdq9wa6f1aknf9rf1a8zdf5a8x1r765349w5xlla66mk"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "account_payment_braintree"
+                                 "-k not scenario"))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-braintree trytond trytond-account
            trytond-account-payment trytond-party))
@@ -866,21 +1004,22 @@ methods.")
 (define-public trytond-account-payment-clearing
   (package
     (name "trytond-account-payment-clearing")
-    (version "6.2.1")
+    (version "7.0.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_payment_clearing" version))
        (sha256
-        (base32 "037d759nzfs5qh97a5hq24argrga9i3p0b966xckss38cwyq7ixq"))))
-    (build-system python-build-system)
+        (base32 "15q0jmkckxq4nhvkyhh88jm7gmcw54p6zgragw0d502c7l8bargx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_payment_clearing"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-statement" ,trytond-account-statement)
-       ("trytond-account-statement-rule" ,trytond-account-statement-rule)))
+     (cons* trytond-account-invoice
+            trytond-account-statement
+            trytond-account-statement-rule
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-account-payment))
+     (list trytond trytond-account trytond-account-payment trytond-company))
     (home-page
      "https://docs.tryton.org/projects/modules-account-payment-clearing")
     (synopsis "Tryton module for payment clearing")
@@ -893,16 +1032,16 @@ journal.")
 (define-public trytond-account-payment-sepa
   (package
     (name "trytond-account-payment-sepa")
-    (version "6.2.2")
+    (version "7.0.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_payment_sepa" version))
        (sha256
-        (base32 "0c3ij24l8mxad2ppd3r24mx92l2xm52ip2syf88wlxqhsja9p945"))))
-    (build-system python-build-system)
+        (base32 "0lqpwcaky6dsgghskmsz5d2qqdwx1j8z2vz6wi27rmsgz840ssvg"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_payment_sepa"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-stdnum
            trytond
@@ -919,16 +1058,16 @@ generating SEPA files for a Payment Group.")
 (define-public trytond-account-payment-sepa-cfonb
   (package
     (name "trytond-account-payment-sepa-cfonb")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_payment_sepa_cfonb" version))
        (sha256
-        (base32 "1a4g2jzk8f98iy3plzanz8wfw5jixqpbsljqfigcp05nykbcfwzf"))))
-    (build-system python-build-system)
+        (base32 "0ic3j1rzb8fsxxrcxzpnahjzrz7w7zsbmwjhcaivryvbgyzdzq89"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_payment_sepa_cfonb"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account-payment
@@ -946,16 +1085,17 @@ CFONB flavors to SEPA messages.")
 (define-public trytond-account-payment-stripe
   (package
     (name "trytond-account-payment-stripe")
-    (version "6.2.0")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_payment_stripe" version))
        (sha256
-        (base32 "11lmgw4ny5v7zimvx35kkmy9n2pa342j97abn25y10yrcacfjhvh"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "account_payment_stripe"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "0yh6ixplv0jpmzkm7wfspjv9i7d0a9wxrx6rzhm9md5364nsbcys"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "account_payment_stripe" "-k not scenario"))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-stripe trytond trytond-account trytond-account-payment
            trytond-party))
@@ -970,19 +1110,20 @@ checkout form to handle Setup Intent and Payment Intent by card.")
 (define-public trytond-account-product
   (package
     (name "trytond-account-product")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_product" version))
        (sha256
-        (base32 "1z1ri2plsmdnhgw64r5yxk2m346zcnva8nddmcwcalis35krgjcx"))))
-    (build-system python-build-system)
+        (base32 "17hgqn52li1sdwl9ppa6h2fx1x3hvnbaqb2lvpi0r97zz92wc75x"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_product"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-analytic-account
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-account trytond-analytic-account
-           trytond-company trytond-product))
+     (list trytond trytond-account trytond-company trytond-product))
     (home-page "https://www.tryton.org/")
     (synopsis "Tryton module to add accounting on product")
     (description
@@ -990,23 +1131,60 @@ checkout form to handle Setup Intent and Payment Intent by card.")
 and category.")
     (license license:gpl3+)))
 
-(define-public python-trytond-account-product
-  (deprecated-package "python-trytond-account-product" trytond-account-product))
+(define-public trytond-account-receivable-rule
+  (package
+    (name "trytond-account-receivable-rule")
+    (version "7.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_receivable_rule" version))
+       (sha256
+        (base32 "1a7awr71gwndp367vjam45482555hb2fv8j3z9v2x0q5lvjv3v40"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_receivable_rule"))
+    (native-inputs
+     (cons* trytond-account-statement
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-account
+           trytond-company
+           trytond-party))
+    (home-page "https://docs.tryton.org/projects/modules-account-receivable-rule")
+    (synopsis "Tryton module to enforce receivable rules")
+    (description "The @emph{Account Receivable Rule} Tryton module allows
+defining rules to reconcile receivables between accounts.")
+    (license license:gpl3+)))
 
 (define-public trytond-account-rule
   (package
     (name "trytond-account-rule")
-    (version "6.2.1")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_account_rule" version))
               (sha256
-               (base32 "1rn0xdqk5pcjybpyw09fqag6lyha06dq9qb3v0jc31cvwmd17ckl"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_account_rule"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list trytond trytond-account
-                             trytond-company trytond-party))
+               (base32 "0p9blifdzx97arzs8djpqqgg3lpyk8saxjd4q4xxzjghk22gf04c"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_rule"))
+    (native-inputs
+     (cons* trytond-account-invoice-stock
+            trytond-account-stock-anglo-saxon
+            trytond-account-stock-continental
+            trytond-product
+            trytond-purchase
+            trytond-purchase-shipment-cost
+            trytond-sale
+            trytond-sale-gift-card
+            trytond-stock
+            trytond-stock-consignment
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-account
+           trytond-company
+           trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-account-rule")
     (synopsis "Tryton module to change accounts based on rules")
     (description "The @emph{Account Rule} Tryton module allows rules which
@@ -1016,16 +1194,16 @@ substitute default accounts with other accounts.")
 (define-public trytond-account-statement
   (package
     (name "trytond-account-statement")
-    (version "6.2.3")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_statement" version))
        (sha256
-        (base32 "1c7k1xv5jcraaa9dqdzxphqffycbc1ygy0gc49909vql1r8dpzk5"))))
-    (build-system python-build-system)
+        (base32 "15cak3blrm2czpcpp0pb2ppmjnsw3jblcjwzi5vygxfgk910cgax"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_statement"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -1043,21 +1221,20 @@ statements.  Statement can be used for bank statement, cash daybook etc.")
 (define-public trytond-account-statement-aeb43
   (package
     (name "trytond-account-statement-aeb43")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_statement_aeb43" version))
        (sha256
-        (base32 "1snjabg4qixsb99lsrirpx7zrz0f21wy46d61rar5704657yxyc9"))))
-    (build-system python-build-system)
+        (base32 "0vgcbh7gfgcdqc7fcc90hsib0d5sbianw53vxb61bax8dgzj4cyr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_statement_aeb43"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list python-csb43 python-stdnum trytond trytond-account-statement
-           trytond-bank))
+     (list python-csb43 trytond trytond-account-statement trytond-bank))
     (home-page
-     "https://docs.tryton.org/projects/trytond-account-statement-aeb43")
+     "https://docs.tryton.org/projects/modules-account-statement-aeb43")
     (synopsis "Tryton module to import AEB43 statements")
     (description "The @emph{Account Statement AEB43} Tryton module implements
 the import of @emph{Norm 43} files as statement.  @emph{Norm 43} is a standard
@@ -1067,16 +1244,16 @@ defined by the Spanish banking association.")
 (define-public trytond-account-statement-coda
   (package
     (name "trytond-account-statement-coda")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_statement_coda" version))
        (sha256
-        (base32 "0flz8rkavfcwq3przw9sq8jnpf6hdmyi3ip7vc89s3ykdx4qcrh0"))))
-    (build-system python-build-system)
+        (base32 "1w38h95v9ix4p7qmvwbfn6mi36r2x6rskj6mci8wdhkl55szyf80"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_statement_coda"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-febelfin-coda trytond trytond-account-statement
            trytond-bank))
@@ -1088,19 +1265,43 @@ the import of @emph{CODA} files as statement.  @emph{CODA} is a standard
 defined by Belgian \"febelfin\".")
     (license license:gpl3+)))
 
+(define-public trytond-account-statement-mt940
+  (package
+    (name "trytond-account-statement-mt940")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_statement_mt940" version))
+       (sha256
+        (base32 "1lkcv0h2qm2vgnjf8lyvwqcj48xgrkmsna57k5rc9hzj5pr5fnqp"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_statement_mt940"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list python-mt940
+           trytond
+           trytond-account-statement
+           trytond-bank))
+    (home-page "https://docs.tryton.org/projects/modules-account-statement-mt940")
+    (synopsis "Tryton module to import MT940 statements")
+    (description "The @emph{Account Statement MT940} Tryton module implements
+the import of MT940 files as statements.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-statement-ofx
   (package
     (name "trytond-account-statement-ofx")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_statement_ofx" version))
        (sha256
-        (base32 "01ncqvz4nx277q7x50sqwwvcy3hcpgp7bwhbp2l5aa2habprki8x"))))
-    (build-system python-build-system)
+        (base32 "00dg1dq71qllhnq9ngjb4br3y6qa34hi3gjx93ibwkfy0rj84hni"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_statement_ofx"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-ofxparse trytond trytond-account-statement trytond-bank
            trytond-party))
@@ -1114,16 +1315,18 @@ the import of the @emph{OFX} files as statement.")
 (define-public trytond-account-statement-rule
   (package
     (name "trytond-account-statement-rule")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_statement_rule" version))
        (sha256
-        (base32 "1fbn4z111k0wwsy9jr9np82yyc7xiniavyavwhf0qf3l6l8qwk6x"))))
-    (build-system python-build-system)
+        (base32 "0iy12040cc2s5r3mmvagl20yjzjz5blih67fqqf7wvf8mw2gfgww"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_statement_rule"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-bank
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-account
@@ -1143,24 +1346,46 @@ found that matches.  Then the rule found is used to create the statement lines
 linked to the origin.")
     (license license:gpl3+)))
 
+(define-public trytond-account-statement-sepa
+  (package
+    (name "trytond-account-statement-sepa")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_statement_sepa" version))
+       (sha256
+        (base32 "1gzkljcd5gbwk2vqmzz2zzh5sy7qjbmqviilaribv9n9n6n310dv"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_statement_sepa"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account-statement
+           trytond-bank))
+    (home-page "https://docs.tryton.org/projects/modules-account-statement-sepa")
+    (synopsis "Tryton module to import SEPA statements")
+    (description "The @emph{Account Statement SEPA} Tryton module implements
+the import of the CAMT.052, CAMT.053 and CAMT.054 SEPA files as statement.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-stock-anglo-saxon
   (package
     (name "trytond-account-stock-anglo-saxon")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_stock_anglo_saxon" version))
        (sha256
-        (base32 "1jgj5kb85qj3kb1hcyb9jps1x062cqa32x5rp4rvgg64824d8hwz"))))
-    (build-system python-build-system)
+        (base32 "088qygd6abz63dhd241mg5px2wwzzq7bv1jj3y0prncxzzyrkl9j"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_stock_anglo_saxon"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-purchase" ,trytond-purchase)
-       ("trytond-sale" ,trytond-sale)
-       ("trytond-sale-supply-drop-shipment"
-        ,trytond-sale-supply-drop-shipment)))
+     (cons* trytond-purchase
+            trytond-sale
+            trytond-sale-supply-drop-shipment
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-account
@@ -1178,24 +1403,24 @@ anglo-saxon accounting model for stock valuation.")
 (define-public trytond-account-stock-continental
   (package
     (name "trytond-account-stock-continental")
-    (version "6.2.3")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_stock_continental" version))
        (sha256
-        (base32 "1dzldnasshpx2gn15scycj72z85z5xli5wq1h39y8brb49ib7nvy"))))
-    (build-system python-build-system)
+        (base32 "1hwfv06mg0x1zhpqkbvywkyfdj3fn9p92yxfw6f28da4n3k6id1r"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_stock_continental"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice" ,trytond-account-invoice)
-       ("trytond-purchase" ,trytond-purchase)
-       ("trytond-sale" ,trytond-sale)
-       ("trytond-sale-supply-drop-shipment"
-        ,trytond-sale-supply-drop-shipment)))
+     (cons* trytond-account-invoice
+            trytond-purchase
+            trytond-sale
+            trytond-sale-supply-drop-shipment
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-account trytond-account-product trytond-stock))
+     (list trytond trytond-account trytond-account-product trytond-product
+           trytond-stock))
     (home-page
      "https://docs.tryton.org/projects/modules-account-stock-continental")
     (synopsis "Tryton module for continental real-time stock valuation")
@@ -1203,19 +1428,58 @@ anglo-saxon accounting model for stock valuation.")
 continental accounting model for stock valuation.")
     (license license:gpl3+)))
 
+(define-public trytond-account-stock-eu
+  (package
+    (name "trytond-account-stock-eu")
+    (version "7.0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_stock_eu" version))
+       (sha256
+        (base32 "1iw60aqwjz8wkpkqkc2jvv4i303cgyrym6z716xycqjmg46rn61f"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_stock_eu"))
+    (native-inputs
+     (cons* trytond-carrier
+            trytond-incoterm
+            trytond-production
+            trytond-purchase-shipment-cost
+            trytond-stock-consignment
+            trytond-stock-package-shipping
+            trytond-stock-shipment-cost
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-account
+           trytond-company
+           trytond-country
+           trytond-currency
+           trytond-customs
+           trytond-party
+           trytond-product
+           trytond-product-measurements
+           trytond-stock
+           trytond-stock-shipment-measurements))
+    (home-page "https://docs.tryton.org/projects/modules-account-stock-eu")
+    (synopsis "Tryton module for European stock accounting")
+    (description "The @emph{Account Stock EU} Tryton module is used to
+generate the Intrastat declarations every month.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-stock-landed-cost
   (package
     (name "trytond-account-stock-landed-cost")
-    (version "6.2.2")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_stock_landed_cost" version))
        (sha256
-        (base32 "01yfkhwxw86s354y51bhs799cvfhwkmjrnmhaspbn889mkpir0wg"))))
-    (build-system python-build-system)
+        (base32 "1wjd6c4dp266b5vcw99yas2p42mr86mdzir110w0s3ml46qqwr1j"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_stock_landed_cost"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-account-invoice
            trytond-product trytond-stock))
@@ -1229,16 +1493,16 @@ allocating landed cost on Supplier Shipments after their reception.")
 (define-public trytond-account-stock-landed-cost-weight
   (package
     (name "trytond-account-stock-landed-cost-weight")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_stock_landed_cost_weight" version))
        (sha256
-        (base32 "1dx5m5l1ccnffkqgwxpfk57g1wndxq1q1jrmrbf4cj6q47x1y0xx"))))
-    (build-system python-build-system)
+        (base32 "0msa79mf81prf14p4hfy1b98a9w9x49j138r5bc3c99ymmc3vljk"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_stock_landed_cost_weight"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-stock-landed-cost trytond-product
            trytond-product-measurements trytond-stock-shipment-measurements))
@@ -1253,40 +1517,65 @@ from the Product Measurements")
 (define-public trytond-account-stock-shipment-cost
   (package
     (name "trytond-account-stock-shipment-cost")
-    (version "6.2.1")
+    (version "7.0.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_account_stock_shipment_cost" version))
               (sha256
-               (base32 "1iyz76cma63kp2alqr4rcrm3zjj6ifsvv9hsylbfkamfgy84brsr"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_account_stock_shipment_cost"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list trytond
-                             trytond-account
-                             trytond-account-invoice
-                             trytond-product
-                             trytond-stock
-                             trytond-stock-shipment-cost))
+               (base32 "0gxjhry3hpm0j72ai22q9fgay9w5087xnrisc18ynwv4zzyr84vq"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_stock_shipment_cost"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account
+           trytond-account-invoice
+           trytond-product
+           trytond-stock
+           trytond-stock-shipment-cost))
     (home-page "https://docs.tryton.org/projects/modules-account-stock-shipment-cost")
     (synopsis "Tryton module to allocate shipment cost based on invoice")
     (description "The @emph{Account Stock Shipment Cost} Tryton module
 allocates shipment cost based on invoice.")
     (license license:gpl3+)))
 
+(define-public trytond-account-stock-shipment-cost-weight
+  (package
+    (name "trytond-account-stock-shipment-cost-weight")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_stock_shipment_cost_weight" version))
+       (sha256
+        (base32 "0nlfz0azn6y16i0qy8mwpsdz2ckh554h640warfnydmmbj1hqkni"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_stock_shipment_cost_weight"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account-stock-shipment-cost
+           trytond-stock-shipment-measurements))
+    (home-page
+     "https://docs.tryton.org/projects/modules-account-stock-shipment-cost-weight")
+    (synopsis "Tryton module to allocate shipment cost \"by weight\"")
+    (description "The @emph{Account Stock Shipment Cost Weight} Tryton module
+adds “by weight” as allocation method on shipment cost.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-tax-cash
   (package
     (name "trytond-account-tax-cash")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_tax_cash" version))
        (sha256
-        (base32 "0hy5929697lsa84xyy535gh4s2j1yv4vdfxyi93md17pjf95hwpg"))))
-    (build-system python-build-system)
+        (base32 "0q2nr9fwfb0jv4yiy2xq3r3065lvsji5zj9aj9arbd9kwpzqi51p"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_tax_cash"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-account-invoice trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-account-tax-cash")
@@ -1295,24 +1584,47 @@ allocates shipment cost based on invoice.")
 report on cash basis.")
     (license license:gpl3+)))
 
+(define-public trytond-account-tax-non-deductible
+  (package
+    (name "trytond-account-tax-non-deductible")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_account_tax_non_deductible" version))
+       (sha256
+        (base32 "0xx15wj7phigrdad0yrydjfg98plb712dqq0ayhj3p17ijcvkyfl"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "account_tax_non_deductible"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account
+           trytond-account-invoice))
+    (home-page "https://docs.tryton.org/projects/modules-account-tax-non-deductible")
+    (synopsis "Tryton module to report non-deductible taxes")
+    (description "The @emph{Account Tax Non Deductible} Tryton module allows
+to define non-deductible taxes and reports them.")
+    (license license:gpl3+)))
+
 (define-public trytond-account-tax-rule-country
   (package
     (name "trytond-account-tax-rule-country")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_account_tax_rule_country" version))
        (sha256
-        (base32 "0bg831hha4j71lm9xhpv4al2qaxmk8qgli5s9hx2h4bcy1hbf5wf"))))
-    (build-system python-build-system)
+        (base32 "0jpp11rlskpqp3dzfm8ml2kqn4855vrcrcmwk6jrjkpsh2m8f6s3"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "account_tax_rule_country"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice" ,trytond-account-invoice)
-       ("trytond-purchase" ,trytond-purchase)
-       ("trytond-sale" ,trytond-sale)
-       ("trytond-stock" ,trytond-stock)))
+     (cons* trytond-account-invoice
+            trytond-purchase
+            trytond-sale
+            trytond-stock
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account trytond-country))
     (home-page
@@ -1326,16 +1638,16 @@ criteria.")
 (define-public trytond-analytic-account
   (package
     (name "trytond-analytic-account")
-    (version "6.2.0")
+    (version "7.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_analytic_account" version))
        (sha256
-        (base32 "1ys9admjlgvn2m2zjp74liplzmc8q12x8i004cgb5m43x2mhrj8d"))))
-    (build-system python-build-system)
+        (base32 "14qrx6nf1x939sd20hm905bfj9r1gjfpbs8cs9myjwxrqq2m191l"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "analytic_account"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-company trytond-currency
            trytond-party))
@@ -1346,22 +1658,18 @@ criteria.")
 required to analyse accounting using multiple different axes.")
     (license license:gpl3+)))
 
-(define-public python-trytond-analytic-account
-  (deprecated-package
-   "python-trytond-analytic-account" trytond-analytic-account))
-
 (define-public trytond-analytic-budget
   (package
     (name "trytond-analytic-budget")
-    (version "6.2.1")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_analytic_budget" version))
               (sha256
-               (base32 "080a1s9w6n50xi2r7d3jkyk84rdqzggbqzhab9qjgppl67q85m8p"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_analytic_budget"))
-    (native-inputs (%standard-trytond-native-inputs))
+               (base32 "1j3lxb3nxhis7w4snds0m9yvr70mcr2mj8rbs3vvnmg99ysgrrci"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "analytic_budget"))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs (list trytond trytond-account-budget
                              trytond-analytic-account
                              trytond-company))
@@ -1376,18 +1684,19 @@ transactions against the budgeted amount.")
 (define-public trytond-analytic-invoice
   (package
     (name "trytond-analytic-invoice")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_analytic_invoice" version))
        (sha256
-        (base32 "0416knbcn7wcx4anzvl0hw7qcdn3xndlh5i0pa0xffvw6kw1ijp9"))))
-    (build-system python-build-system)
+        (base32 "0cj20yzaxsmc8ifzqk1d1vvs1bb8r3dlivpqkq0gdjn3mqblfplx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "analytic_invoice"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-asset" ,trytond-account-asset)))
+     (cons* trytond-account-asset
+            trytond-account-invoice-defer
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-analytic-account))
     (home-page "https://docs.tryton.org/projects/modules-analytic-invoice")
@@ -1399,16 +1708,16 @@ analytic accounts on an invoice line.")
 (define-public trytond-analytic-purchase
   (package
     (name "trytond-analytic-purchase")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_analytic_purchase" version))
        (sha256
-        (base32 "098sdhmr1idqqaxms3c05pgmvb27bykwfhgibxi9l1lr6k06d2cr"))))
-    (build-system python-build-system)
+        (base32 "1vpvn3k5zfdhkbv40q91ln1i2014xfcqhi7p4rky1hh9yy2szjl2"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "analytic_purchase"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-analytic-account trytond-analytic-invoice
            trytond-purchase))
@@ -1421,16 +1730,16 @@ analytic accounts on a purchase line.")
 (define-public trytond-analytic-sale
   (package
     (name "trytond-analytic-sale")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_analytic_sale" version))
        (sha256
-        (base32 "00b3xiykm9j0kf1f9kmsy22413rdjsmvg5li7bd4xrxk22j8v4wv"))))
-    (build-system python-build-system)
+        (base32 "06ydgb2x3mwp3g1nnsmm1k449nnn29whl82hgvlp1n5z58lcjmvh"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "analytic_sale"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-analytic-account trytond-analytic-invoice
            trytond-sale))
@@ -1443,18 +1752,26 @@ analytic accounts on a sale line.")
 (define-public trytond-attendance
   (package
     (name "trytond-attendance")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_attendance" version))
        (sha256
-        (base32 "0g9b0x4zdz6djmd592ll8zj4q3lhz5gj97phc38kkzvwgvpq9xw2"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "attendance"))
+        (base32 "1j5pldlgdkhllsqlnpjd4l56h933pyfwllxrfr1dd47730ky7rw9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases #$(tryton-phases "attendance")
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; DB_CACHE and pytest don't work together here
+                (invoke "python" "-m" "unittest" "discover")))))))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-timesheet" ,trytond-timesheet)))
+     (cons* trytond-timesheet
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-company))
     (home-page "https://docs.tryton.org/projects/modules-attendance")
@@ -1465,19 +1782,41 @@ shows for each employee the total duration per day in the company and the
 detail of the time of entrance and exit")
     (license license:gpl3+)))
 
+(define-public trytond-authentication-saml
+  (package
+    (name "trytond-authentication-saml")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_authentication_saml" version))
+       (sha256
+        (base32 "0ln7mj4wg3dapa1sdmcm78bm2j7rsivby23xbmf1s83i3jdb4wdm"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "authentication_saml"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list python-pysaml2
+           trytond))
+    (home-page "https://docs.tryton.org/projects/modules-authentication-saml")
+    (synopsis "Tryton module to authenticate users via SAML")
+    (description "The @emph{Authentication SAML} Tryton module allows
+delegating the user authentication to an identity provider via SAML.")
+    (license license:gpl3+)))
+
 (define-public trytond-authentication-sms
   (package
     (name "trytond-authentication-sms")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_authentication_sms" version))
        (sha256
-        (base32 "17237qrmk8pm7lifrn5zjvsf42cs2q6p2h6qw2vk9fixdz1gxk9x"))))
-    (build-system python-build-system)
+        (base32 "0gnqnc0mcwspby663h91kf2y7pgw25zms3iqh0gs18sygx291a7y"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "authentication_sms"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond))
     (home-page "https://docs.tryton.org/projects/modules-authentication-sms")
@@ -1491,16 +1830,18 @@ configuration file.")
 (define-public trytond-bank
   (package
     (name "trytond-bank")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_bank" version))
        (sha256
-        (base32 "1gvsd8yyrba9bsql9zi4wlmg1jyjb7m13m15av0szkwxylcy0c0q"))))
-    (build-system python-build-system)
+        (base32 "0m5agk7dl2f51sg85s885b8wkfynvli9z8bra0i0f1k65q1qcpcp"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "bank"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* python-schwifty
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list python-stdnum trytond trytond-currency trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-bank")
@@ -1512,16 +1853,16 @@ and account.")
 (define-public trytond-carrier
   (package
     (name "trytond-carrier")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_carrier" version))
        (sha256
-        (base32 "1fr12m4qi0fkxnbjq5v1sf5dkic9xb2j0bvb8y18if3hh0csfcy7"))))
-    (build-system python-build-system)
+        (base32 "0n5jpry7yjc0w1h9z4kkp498v46hbd9gn76b4gwypscd7anpgziy"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "carrier"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-country trytond-party trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-carrier")
@@ -1530,23 +1871,52 @@ and account.")
 of carrier.")
     (license license:gpl3+)))
 
+(define-public trytond-carrier-carriage
+  (package
+    (name "trytond-carrier-carriage")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_carrier_carriage" version))
+       (sha256
+        (base32 "106a7cixchss6g8j0zclhb35ir87sa5whn6l33jxgvraq7jswy9n"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "carrier_carriage"))
+    (native-inputs
+     (cons* trytond-account-invoice
+            trytond-incoterm
+            trytond-purchase-shipment-cost
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-carrier
+           trytond-stock
+           trytond-stock-shipment-cost))
+    (home-page "https://docs.tryton.org/projects/modules-carrier-carriage")
+    (synopsis "Tryton module to support multiple carriers")
+    (description "The @emph{Carrier Carriage} Tryton module extends the
+support of carrier by adding carriers before and after the main carrier.")
+    (license license:gpl3+)))
+
 (define-public trytond-carrier-percentage
   (package
     (name "trytond-carrier-percentage")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_carrier_percentage" version))
        (sha256
-        (base32 "0lnahli4bc4zspr86i8qchza96k4cmsfcdg3wp7wicp1s2ki7bbw"))))
-    (build-system python-build-system)
+        (base32 "10gp67rdv9qlprq8381k8pxsswc8022idkim2fhxivglghic3i4r"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "carrier_percentage"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-purchase-shipment-cost" ,trytond-purchase-shipment-cost)
-       ("trytond-sale-shipment-cost" ,trytond-sale-shipment-cost)
-       ("trytond-stock-shipment-cost" ,trytond-stock-shipment-cost)))
+     (cons* trytond-purchase-shipment-cost
+            trytond-sale-shipment-cost
+            trytond-stock-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-carrier trytond-currency))
     (home-page "https://docs.tryton.org/projects/modules-carrier-percentage")
@@ -1558,19 +1928,19 @@ method \"on percentage\" on carrier.")
 (define-public trytond-carrier-subdivision
   (package
     (name "trytond-carrier-subdivision")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_carrier_subdivision" version))
        (sha256
-        (base32 "1a4jpi6iaah3f1zsdsjz2zak6wd9jai4jcqzijl2li4pcnkc0x8a"))))
-    (build-system python-build-system)
+        (base32 "0vpp0pk7mh8ir6jbqcyc9q5g872750g8ikhiichph2w9bjjkq2rx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "carrier_subdivision"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale-shipment-cost" ,trytond-sale-shipment-cost)
-       ("trytond-stock-shipment-cost" ,trytond-stock-shipment-cost)))
+     (cons* trytond-carrier-carriage
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-carrier))
     (home-page "https://docs.tryton.org/projects/modules-carrier-subdivision")
@@ -1593,20 +1963,20 @@ or a specific postal code.")
 (define-public trytond-carrier-weight
   (package
     (name "trytond-carrier-weight")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_carrier_weight" version))
        (sha256
-        (base32 "0mvz7q2hb4bcj3abvi4dxmnqbrph1g49s2bvyf3lx9ykbmr6v3n7"))))
-    (build-system python-build-system)
+        (base32 "0s6120k2glc18z6jhdm870vh8l575sq11a6sa262bmi1hqgmk2gp"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "carrier_weight"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-purchase-shipment-cost" ,trytond-purchase-shipment-cost)
-       ("trytond-sale-shipment-cost" ,trytond-sale-shipment-cost)
-       ("trytond-stock-shipment-cost" ,trytond-stock-shipment-cost)))
+     (cons* trytond-purchase-shipment-cost
+            trytond-sale-shipment-cost
+            trytond-stock-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-carrier
@@ -1624,24 +1994,27 @@ the weight is greater or equal but smaller than the next line.")
 (define-public trytond-commission
   (package
     (name "trytond-commission")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_commission" version))
        (sha256
-        (base32 "1m8cg6vb08paymi3bckqwp2vg0as36p6jadg86dc4b1axabas144"))))
-    (build-system python-build-system)
+        (base32 "0xvlkx45r4mrn86jib9mc98vlwx8c03c9py4dzfhpiy1lngz5hg8"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "commission"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale" ,trytond-sale)))
+     (cons* trytond-account-invoice-stock
+            trytond-sale
+            trytond-stock
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list python-simpleeval
            trytond
            trytond-account
            trytond-account-invoice
            trytond-account-product
+           trytond-company
            trytond-party
            trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-commission")
@@ -1654,16 +2027,16 @@ invoice, following the agent's commission plan.")
 (define-public trytond-commission-waiting
   (package
     (name "trytond-commission-waiting")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_commission_waiting" version))
        (sha256
-        (base32 "16y11dc33x1h55v94rab8wzbh4d1pc35vd64ys8915rvijpm6xm5"))))
-    (build-system python-build-system)
+        (base32 "0iwsrcp2gxa13mcvqag063wq3fxpq8qm2ws9qkv8v2k6ypbqvp43"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "commission_waiting"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-account-invoice
            trytond-commission))
@@ -1677,16 +2050,16 @@ to a waiting account defined on the agent.")
 (define-public trytond-company
   (package
     (name "trytond-company")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_company" version))
        (sha256
-        (base32 "03ss7cwxbynn8ly5y32bj1cl2ikji9ydsby62l440jb025sn9x8v"))))
-    (build-system python-build-system)
+        (base32 "19j2msxjis7sw6gvgp89gbhm44364wgl03w0s2i6kd52jy40jpdv"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "company"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-currency trytond-party))
     (home-page "https://www.tryton.org/")
@@ -1696,22 +2069,19 @@ to a waiting account defined on the agent.")
 company and employee and extend the user model.")
     (license license:gpl3+)))
 
-(define-public python-trytond-company
-  (deprecated-package "python-trytond-company" trytond-company))
-
 (define-public trytond-company-work-time
   (package
     (name "trytond-company-work-time")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_company_work_time" version))
        (sha256
-        (base32 "08nhnlxy1z5drlmxdsd6ad166qx5ckymzx94ja824n1qqac17zqw"))))
-    (build-system python-build-system)
+        (base32 "1y6c3p51jp2hcvby12b3pmn0h7jmsd7qigfxznmj17k6bqmm7b6b"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "company_work_time"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-company))
     (home-page "https://docs.tryton.org/projects/modules-company-work-time")
@@ -1728,47 +2098,47 @@ month and a year of work.")
 (define-public trytond-country
   (package
     (name "trytond-country")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_country" version))
        (sha256
-        (base32 "1mlf6fwngdbqy6c7xi7nmg4dph3nnac61rkzhn79x5zqg2mgnv53"))))
-    (build-system python-build-system)
+        (base32 "1qvnbq9c0kymzgl82p56z31nvqshsqwqh746z229sbrln39i7miv"))))
+    (build-system pyproject-build-system)
     ;; Doctest contains one test that requires internet access.
-    (arguments (tryton-arguments "country" "--no-doctest"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (arguments (tryton-arguments "country"
+                "-k not scenario_country_import.rst"))
+    (native-inputs
+     (cons* python-pycountry
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list python-pycountry-20.7.3 trytond))
+     (list trytond))
     (home-page "http://www.tryton.org/")
     (synopsis "Tryton module with countries")
     (description
      "This package provides a Tryton module with countries.")
     (license license:gpl3+)))
 
-(define-public python-trytond-country
-  (deprecated-package "python-trytond-country" trytond-country))
-
 (define-public trytond-currency
   (package
     (name "trytond-currency")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_currency" version))
        (sha256
-        (base32 "1sx9wanb4r95gs5hsl6hgy0gcvsfh0yr17rnhaa908286f88wa4f"))))
-    (build-system python-build-system)
-    ;; Doctest 'scenario_currency_rate_update.rst' fails.
-    (arguments (tryton-arguments "currency" "--no-doctest"))
+        (base32 "1gw82jfvlnbyr3wkh5r8gsd7b7m3jz0szvqqd9fccm1yb229k91w"))))
+    (build-system pyproject-build-system)
+    ;; Quite some tests require network access.
+    (arguments (tryton-arguments "currency"
+                "-k not (scenario_currency_rate_update.rst or ECBtestCase)"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("python-forex-python" ,python-forex-python)
-       ("python-pycountry" ,python-pycountry)))
+     (cons* python-pycountry
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list python-sql trytond))
+     (list trytond))
     (home-page "https://www.tryton.org/")
     (synopsis "Tryton module with currencies")
     (description
@@ -1776,23 +2146,23 @@ month and a year of work.")
 currency and rate.")
     (license license:gpl3+)))
 
-(define-public python-trytond-currency
-  (deprecated-package "python-trytond-currency" trytond-currency))
-
 (define-public trytond-currency-ro
   (package
     (name "trytond-currency-ro")
-    (version "6.2.0")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_currency_ro" version))
               (sha256
-               (base32 "1kn4bgh1gg5dcphb2afqb922myyg2012vdhixipmi7ccbv7ik46s"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_currency_ro"))
-        (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-lxml python-requests trytond
-                             trytond-currency))
+               (base32 "1az7w8afhs5cwv4npfa2naizv7mr1mg9c4fgpdg5yp9vlkw3kssz"))))
+    (build-system pyproject-build-system)
+    ;; doctests require network access
+    (arguments (tryton-arguments "currency_ro" "-k not scenario_currency_ro"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list python-requests
+           trytond
+           trytond-currency))
     (home-page "https://docs.tryton.org/projects/modules-currency-ro")
     (synopsis "Fetch currency rates from the Romanian National Bank")
     (description "The @emph{Currency RO} Tryton module adds the Romanian
@@ -1802,17 +2172,20 @@ National Bank as a source for currency exchange rates.")
 (define-public trytond-currency-rs
   (package
     (name "trytond-currency-rs")
-    (version "6.2.0")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_currency_rs" version))
               (sha256
-               (base32 "05admscvj5m7anhji2ni9w2d8b33vlgcifda6jbrxdw8g4c0yivn"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_currency_rs"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-lxml trytond trytond-currency
-                             python-zeep))
+               (base32 "1zkb1b9y3j027g46jfwpxb6nv84qds795arsfdzn82zncp9gz4lx"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "currency_rs"
+                "-k not (scenario_currency_rs or test_selection_fields)"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-currency
+           python-zeep))
     (home-page "https://docs.tryton.org/projects/modules-currency-rs")
     (synopsis "Fetch currency rates from the Serbian National Bank")
     (description "The @emph{Currency RS} Tryton module adds the Serbian
@@ -1822,16 +2195,16 @@ National Bank as a source for currency exchange rates.")
 (define-public trytond-customs
   (package
     (name "trytond-customs")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_customs" version))
        (sha256
-        (base32 "1zx9cwiq9q4802bj2ga3bilyjls60vpycp3cncqfqh2n4mg23xlq"))))
-    (build-system python-build-system)
+        (base32 "0v6rzrdphys3davkc3d46mlq6hkd8xl6x444ddl23fw0b08mvrna"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "customs"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-simpleeval trytond trytond-country trytond-currency
            trytond-product))
@@ -1844,16 +2217,16 @@ duty based on the tariff code.")
 (define-public trytond-dashboard
   (package
     (name "trytond-dashboard")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_dashboard" version))
        (sha256
-        (base32 "1b8dalnbj69ppk8q7znw1ljyv5515r16m6gfd9a3l25dpvj0cxz2"))))
-    (build-system python-build-system)
+        (base32 "0cdxmyzs23bdksqgg87y7r4zvpzx63pvjgvhjck6hm49nyicqlmf"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "dashboard"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond))
     (home-page "https://docs.tryton.org/projects/modules-dashboard")
@@ -1862,24 +2235,126 @@ duty based on the tariff code.")
 configure their dashboard.")
     (license license:gpl3+)))
 
+(define-public trytond-document-incoming
+  (package
+    (name "trytond-document-incoming")
+    (version "7.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_document_incoming" version))
+       (sha256
+        (base32 "18apzwxh8qh0c9gkhjf95avm4f2v5w96rx564j5v2j53a9kp86zj"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "document_incoming"))
+    (native-inputs
+     (cons* trytond-inbound-email
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list python-pypdf
+           trytond
+           trytond-company))
+    (home-page "https://docs.tryton.org/projects/modules-document-incoming")
+    (synopsis "Tryton module to manage incoming documents")
+    (description "The @emph{Document Incoming} Tryton module collects and
+process incoming documents.")
+    (license license:gpl3+)))
+
+(define-public trytond-document-incoming-invoice
+  (package
+    (name "trytond-document-incoming-invoice")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_document_incoming_invoice" version))
+       (sha256
+        (base32 "1jpwwqpa4zaap1bi6praldybx2psgyi7lkafxcg2qrs36xzwgzpl"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "document_incoming_invoice"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account-invoice
+           trytond-document-incoming
+           trytond-party))
+    (home-page "https://docs.tryton.org/projects/modules-document-incoming-invoice")
+    (synopsis "Tryton module to manage incoming invoice document")
+    (description "The @emph{Document Incoming Invoice} Tryton module creates
+supplier invoices from incoming documents.")
+    (license license:gpl3+)))
+
+(define-public trytond-document-incoming-ocr
+  (package
+    (name "trytond-document-incoming-ocr")
+    (version "7.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_document_incoming_ocr" version))
+       (sha256
+        (base32 "0gngpviap9yr8lv5x02k9a0s86jj8lm7395sp6kshzq0hbr7q0nk"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "document_incoming_ocr"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-company
+           trytond-document-incoming))
+    (home-page "https://docs.tryton.org/projects/modules-document-incoming-ocr")
+    (synopsis "Tryton module to process incoming document with OCR")
+    (description "The @emph{Document Incoming OCR} Tryton module provides the
+basis to interact with OCR services.")
+    (license license:gpl3+)))
+
+(define-public trytond-document-incoming-ocr-typless
+  (package
+    (name "trytond-document-incoming-ocr-typless")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_document_incoming_ocr_typless" version))
+       (sha256
+        (base32 "1d1arbkz1clih78sy06kk1qw6a84z2r1zy59mnrrg35irn55kfrl"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "document_incoming_ocr_typless"
+                "-k not scenario_document_incoming_ocr_typless.rs" ))
+    (native-inputs
+     (cons* trytond-document-incoming-invoice
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list python-requests
+           trytond
+           trytond-currency
+           trytond-document-incoming
+           trytond-document-incoming-ocr
+           trytond-party))
+    (home-page "https://docs.tryton.org/projects/modules-document-incoming-ocr-typless")
+    (synopsis "Tryton module that integrates Typless online OCR for incoming document")
+    (description "The @emph{Document Incoming OCR Typless} Tryton module
+provides integration with Typless online services.")
+    (license license:gpl3+)))
+
 (define-public trytond-edocument-uncefact
   (package
     (name "trytond-edocument-uncefact")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_edocument_uncefact" version))
        (sha256
-        (base32 "0nf72c5sw33c77y87idkhf8fz39a7qlgmlrbnzz1cwcpky4hrmdg"))))
-    (build-system python-build-system)
+        (base32 "1zk7nzfrsxq3h9n1dkmqpxvjmzax2p0snqhgg99q7zs9s1x9wm2k"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "edocument_uncefact"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("python-lxml" ,python-lxml)
-       ("trytond-account-invoice" ,trytond-account-invoice)))
+     (cons* trytond-account-invoice
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-edocument-unece))
+     (list trytond
+           trytond-edocument-unece))
     (home-page "https://docs.tryton.org/projects/modules-edocument-uncefact")
     (synopsis "Tryton module for electronic document UN/CEFACT")
     (description "The @emph{Edocument UN/CEFACT} Tryton module implements
@@ -1893,16 +2368,16 @@ electronic document from UN/CEFACT.  Supported formats are:
 (define-public trytond-edocument-unece
   (package
     (name "trytond-edocument-unece")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_edocument_unece" version))
        (sha256
-        (base32 "1ikrh9yk5if8v1sw1aihnysbpipmly6r6ka6zccjcywm1cmabhx0"))))
-    (build-system python-build-system)
+        (base32 "1ncagmd0ydvxplvih1bjzmjvx2hpbxyrqfnzwwd6f9ixk9vz60wl"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "edocument_unece"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-edocument-unece")
@@ -1921,17 +2396,24 @@ from the UNECE.  Supported formats are:
 (define-public trytond-gis
   (package
     (name "trytond-gis")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_gis" version))
        (sha256
-        (base32 "0zfvbqzxhvjja03pv9ja9rml2i2fqiir5a92rz0vj3lx9azjbkvw"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_gis"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-geomet  trytond))
+        (base32 "1kx62p7jl27ihh0j952f4r0bfn1a1zz15wgvd254yyhc3h57pc7b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f  ;; tests require postgis database
+      #:phases (tryton-phases "gis")))
+    (native-inputs
+     (cons* python-psycopg2
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list python-geomet
+           trytond))
     (home-page "https://docs.tryton.org/projects/backend-gis")
     (synopsis "Geographic Information System support from Tryton")
     (description "The @emph{Trytond GIS} Tryton module adds GIS (Geographic
@@ -1941,16 +2423,16 @@ information system) support to Tryton.")
 (define-public trytond-google-maps
   (package
     (name "trytond-google-maps")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_google_maps" version))
        (sha256
-        (base32 "0g6hag2n7rc7avcawwhdkndbqxc957nyrwq4arkrlkidpbipw37n"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_google_maps"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "1sb1mp991szg9bfjbn2pvri52sndk33ffx19r7d2cybnkihnhydv"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "google_maps"))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs (list trytond trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-google-maps")
     (synopsis "Tryton module to link addresses to Google Maps")
@@ -1959,35 +2441,57 @@ field on the party addresses.  This link open the Google Maps page on the
 default browser with the map centered on the selected address.")
     (license license:gpl3+)))
 
+(define-public trytond-inbound-email
+  (package
+    (name "trytond-inbound-email")
+    (version "7.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_inbound_email" version))
+       (sha256
+        (base32 "0y4zjqr3wrd5pvp8gi270m6r4kfs9djz8hc2iw8mj5p8w5hw8p33"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "inbound_email"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond))
+    (home-page "https://docs.tryton.org/projects/modules-inbound-email")
+    (synopsis "Tryton module to manage inbound e-mail")
+    (description "The @emph{Inbound Email} Tryton module allows defining rules
+to apply to inbound e-mails.")
+    (license license:gpl3+)))
+
 (define-public trytond-incoterm
   (package
     (name "trytond-incoterm")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_incoterm" version))
        (sha256
-        (base32 "08sz2j3610iqqzz3qdl51pxdj8mncyjp8lg29y6sskfd0s4fhax5"))))
-    (build-system python-build-system)
+        (base32 "1p5p6nddx8qavs02355378ayy620lf884v35blvffz870mybz7i7"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "incoterm"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account" ,trytond-account)
-       ("trytond-account-invoice" ,trytond-account-invoice)
-       ("trytond-account-invoice-stock" ,trytond-account-invoice-stock)
-       ("trytond-carrier" ,trytond-carrier)
-       ("trytond-purchase" ,trytond-purchase)
-       ("trytond-purchase-request-quotation"
-        ,trytond-purchase-request-quotation)
-       ("trytond-sale" ,trytond-sale)
-       ("trytond-sale-invoice-grouping" ,trytond-sale-invoice-grouping)
-       ("trytond-sale-opportunity" ,trytond-sale-opportunity)
-       ("trytond-sale-shipment-cost" ,trytond-sale-shipment-cost)
-       ("trytond-stock" ,trytond-stock)
-       ("trytond-stock-shipment-cost" ,trytond-stock-shipment-cost)))
+     (cons* trytond-account
+            trytond-account-invoice
+            trytond-account-invoice-stock
+            trytond-carrier
+            trytond-purchase
+            trytond-purchase-request-quotation
+            trytond-sale
+            trytond-sale-invoice-grouping
+            trytond-sale-opportunity
+            trytond-sale-shipment-cost
+            trytond-stock
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-company trytond-party))
+     (list trytond
+           trytond-company
+           trytond-country
+           trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-incoterm")
     (synopsis "Tryton module for incoterms")
     (description "The @emph{Incoterm} Tryton module is used to manage the
@@ -1998,16 +2502,16 @@ versions of 2010 and 2020.")
 (define-public trytond-ldap-authentication
   (package
     (name "trytond-ldap-authentication")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_ldap_authentication" version))
        (sha256
-        (base32 "0c3g2y8zqh17wwg9w3bk9q1gwm4hq7h8avchmbfawi6cq3g6ch5b"))))
-    (build-system python-build-system)
+        (base32 "0pnmv39hdw4a61ml8s2sh5c9dxxgsmnjfg27w490l0mvrnb394n4"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "ldap_authentication"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-ldap3 trytond))
     (home-page "https://docs.tryton.org/projects/modules-ldap-authentication")
@@ -2019,16 +2523,16 @@ authenticating users via a LDAP server.")
 (define-public trytond-marketing
   (package
     (name "trytond-marketing")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_marketing" version))
        (sha256
-        (base32 "1ljv23ldva3cd07k0knncnawwrig8q6lgsxlm392dcqkyb8gvbjg"))))
-    (build-system python-build-system)
+        (base32 "1pihlkwa54wjv8hjmsjfmrajfjhdk6ja8pnqkfxqx5s26qzp5x1w"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "marketing"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond))
     (home-page "https://docs.tryton.org/projects/modules-marketing")
@@ -2040,20 +2544,23 @@ fundamentals for marketing modules.")
 (define-public trytond-marketing-automation
   (package
     (name "trytond-marketing-automation")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_marketing_automation" version))
        (sha256
-        (base32 "17x4pikw2i513wwrfv8g8xim65ksk3dwijahk1qhf3yqpa506kp2"))))
-    (build-system python-build-system)
+        (base32 "0cnnaijg9f7l92gir3sbr066b67zzbhqqxxrlypiyk83wwca9l76"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "marketing_automation"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-party" ,trytond-party)))
+     (cons* trytond-sale
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-marketing trytond-web-shortener))
+     (list trytond
+           trytond-marketing
+           trytond-party
+           trytond-web-shortener))
     (home-page "https://docs.tryton.org/projects/modules-marketing-automation")
     (synopsis "Tryton module to plan, coordinate and manage marketing
 campaigns")
@@ -2062,19 +2569,48 @@ marketing actions to be automated.  It is based on scenarios and activities
 that are executed on selected records.")
     (license license:gpl3+)))
 
+(define-public trytond-marketing-campaign
+  (package
+    (name "trytond-marketing-campaign")
+    (version "7.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_marketing_campaign" version))
+       (sha256
+        (base32 "1sabklrxyfx9172813b5q4i74xn4j24hs5pd5gy9lcc0xlyv8bm6"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "marketing_campaign"))
+    (native-inputs
+     (cons* trytond-marketing-automation
+            trytond-marketing-email
+            trytond-sale
+            trytond-sale-opportunity
+            trytond-sale-point
+            trytond-web-shortener
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-marketing))
+    (home-page "https://docs.tryton.org/projects/modules-marketing-campaign")
+    (synopsis "Tryton module to manage marketing campaign")
+    (description "The @emph{Marketing Campaign} Tryton module helps collecting
+data about marketing campaigns.")
+    (license license:gpl3+)))
+
 (define-public trytond-marketing-email
   (package
     (name "trytond-marketing-email")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_marketing_email" version))
        (sha256
-        (base32 "1z38c3lw8chqbm23y0wfsnp268kq2f9azly4ix6imis74zdjnzkl"))))
-    (build-system python-build-system)
+        (base32 "00ycqv3x22hxz9kfc10w9z2fn0bicb8p63szj2k4x30val22bxb6"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "marketing_email"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-marketing trytond-party trytond-web-shortener
            trytond-web-user))
@@ -2087,21 +2623,21 @@ mailing lists.")
 (define-public trytond-notification-email
   (package
     (name "trytond-notification-email")
-    (version "6.2.2")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_notification_email" version))
        (sha256
-        (base32 "1i0h7spdnf3gryzbzjm8khc0jxzj6g6ljsjgsd28h39kqpdxyffz"))))
-    (build-system python-build-system)
+        (base32 "1vyvxp612wb1v173zmd9jf24kz49aw51399gjpj6mwip06q54r6d"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "notification_email"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-commission" ,trytond-commission)
-       ("trytond-company" ,trytond-company)
-       ("trytond-party" ,trytond-party)
-       ("trytond-web-user" ,trytond-web-user)))
+     (cons* trytond-commission
+            trytond-company
+            trytond-party
+            trytond-web-user
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond))
     (home-page "https://docs.tryton.org/projects/modules-notification-email")
@@ -2115,17 +2651,18 @@ to the email.")
 (define-public trytond-party
   (package
     (name "trytond-party")
-    (version "6.2.1")
+    (version "7.0.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_party" version))
        (sha256
-        (base32 "1g62kzdqr4rq6k8zswil4anwhd22d8nzz0i852fmkdsb97yqg4id"))))
-    (build-system python-build-system)
-    ;; Doctest 'scenario_party_phone_number.rst' fails.
-    (arguments (tryton-arguments "party" "--no-doctest"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "19mlqkykih95h28r6d9ibmdvh93hxjw4ykgr6svc204rvpjqlbmg"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "party"))
+    (native-inputs
+     (cons* python-phonenumbers
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list python-stdnum trytond trytond-country))
     (home-page "https://www.tryton.org/")
@@ -2135,24 +2672,21 @@ to the email.")
 addresses.")
     (license license:gpl3+)))
 
-(define-public python-trytond-party
-  (deprecated-package "python-trytond-party" trytond-party))
-
 (define-public trytond-party-avatar
   (package
     (name "trytond-party-avatar")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_party_avatar" version))
        (sha256
-        (base32 "00gjjvslvcvfkdb0293n9yd9pmsnlbjvcnxrjg99vxkrn6dcwxzh"))))
-    (build-system python-build-system)
+        (base32 "1dvr1k5nd4pk8j3ix1x289ln35mlb6hf2i0qn19kyj27nlmb8p99"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "party_avatar"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-company" ,trytond-company)))
+     (cons* trytond-company
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-party-avatar")
@@ -2164,16 +2698,16 @@ party.")
 (define-public trytond-party-relationship
   (package
     (name "trytond-party-relationship")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_party_relationship" version))
        (sha256
-        (base32 "0vhm7zl29z8al4ay4n6gw3zazq07dsdhjc54il7sg3z9kz21xv6k"))))
-    (build-system python-build-system)
+        (base32 "1jqxg281ndxhg64bgnzb5rl53cv7clz8q9qs3qqsncj7vawxcwx2"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "party_relationship"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-party-relationship")
@@ -2185,16 +2719,16 @@ different types of relations between parties.")
 (define-public trytond-party-siret
   (package
     (name "trytond-party-siret")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_party_siret" version))
        (sha256
-        (base32 "0ab5g3rs2k73wk01ykzh1s4pgrnypdv4l75lr3pn8hyxw9q4b5vk"))))
-    (build-system python-build-system)
+        (base32 "0bvn22hpj8a65kcvd1g8b51dxylpi6dm77fzivpklmpjqln5wgl3"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "party_siret"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-party-siret")
@@ -2206,16 +2740,16 @@ identification numbers SIREN and SIRET on party and address.")
 (define-public trytond-product
   (package
     (name "trytond-product")
-    (version "6.2.0")
+    (version "7.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product" version))
        (sha256
-        (base32 "1cq270ng0rav7hzxip3fswbvhs6wkjadl2j8kmiy30qa43abmpwr"))))
-    (build-system python-build-system)
+        (base32 "0d03zmhay1kaaw8a9yalfsyzn54pb9yzkg1kxpywzd4ysxs295iz"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-stdnum trytond trytond-company))
     (home-page "https://www.tryton.org/")
@@ -2225,22 +2759,19 @@ identification numbers SIREN and SIRET on party and address.")
 Template and Product.")
     (license license:gpl3+)))
 
-(define-public python-trytond-product
-  (deprecated-package "python-trytond-product" trytond-product))
-
 (define-public trytond-product-attribute
   (package
     (name "trytond-product-attribute")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_attribute" version))
        (sha256
-        (base32 "10656g9na098ndjhy4iv1iv0020jin7yw38bb79zxynck39vld29"))))
-    (build-system python-build-system)
+        (base32 "15sdcmjnkyznay4ib4ccwlhhl6aymdpd7w0f6d28dfv41y4viw1y"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_attribute"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-product-attribute")
@@ -2252,16 +2783,16 @@ models `Attribute` and `Attribute Set` for products.")
 (define-public trytond-product-classification
   (package
     (name "trytond-product-classification")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_classification" version))
        (sha256
-        (base32 "1a5rdvscp3hb7jddciqmpzb095yzmyvsj5jc06jiilvynrawwzsh"))))
-    (build-system python-build-system)
+        (base32 "0xd67s2d6n6a9kna5a1fvx3kcbb6wnkk4337pcfs4b7zkls4q4m8"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_classification"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product))
     (home-page
@@ -2275,16 +2806,16 @@ reference field classification to the product template.")
 (define-public trytond-product-classification-taxonomic
   (package
     (name "trytond-product-classification-taxonomic")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_classification_taxonomic" version))
        (sha256
-        (base32 "1933kqhab8ky2mman13mmg06rdmlbak3sjgm5qbk615x5fzbl4s4"))))
-    (build-system python-build-system)
+        (base32 "04rr76kwxv05z0m5dy3p5sk5cq4jf0wab8wzrwl8g62ajrs8m697"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_classification_taxonomic"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product-classification))
     (home-page
@@ -2297,16 +2828,16 @@ adds the taxonomic classification to the products.")
 (define-public trytond-product-cost-fifo
   (package
     (name "trytond-product-cost-fifo")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_cost_fifo" version))
        (sha256
-        (base32 "1lqd960z7dmy3000fhhqqbmq7c4lk2l2dqw383sd62ka5j57kpf4"))))
-    (build-system python-build-system)
+        (base32 "130vq1wqxxlcdxdlyf3apg0f2xpy4farbl49mplz6ihiwpvzh1ka"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_cost_fifo"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-product-cost-fifo")
@@ -2318,16 +2849,16 @@ first-in-first-out option in the `Cost Method` field of the product form.")
 (define-public trytond-product-cost-history
   (package
     (name "trytond-product-cost-history")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_cost_history" version))
        (sha256
-        (base32 "16gnqa04fv7525ax12xfmh4phk4fvm577j3c80cahxqpvsp2a0q6"))))
-    (build-system python-build-system)
+        (base32 "19dmw7319q3nrn9hj1i7zzbi034y7sb8870376sln8yw5rfacqvz"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_cost_history"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-product-cost-history")
@@ -2343,21 +2874,21 @@ and assets.")
 (define-public trytond-product-cost-warehouse
   (package
     (name "trytond-product-cost-warehouse")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_cost_warehouse" version))
        (sha256
-        (base32 "0anz5071j1yzg9xp00qqcc3a4wb3zvl6605bzici76558zj7fl38"))))
-    (build-system python-build-system)
+        (base32 "075qjhwpc1a9hg8hzrzbwhaa9bnyz8a9y55jgl88b013zc2aic5h"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_cost_warehouse"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice-stock" ,trytond-account-invoice-stock)
-       ("trytond-account-stock-continental" ,trytond-account-stock-continental)
-       ("trytond-product-cost-fifo" ,trytond-product-cost-fifo)
-       ("trytond-product-cost-history" ,trytond-product-cost-history)))
+     (cons* trytond-account-invoice-stock
+            trytond-account-stock-continental
+            trytond-product-cost-fifo
+            trytond-product-cost-history
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-company trytond-product trytond-stock))
     (home-page
@@ -2370,15 +2901,16 @@ cost price of products to be calculated separately for each warehouse.")
 (define-public trytond-product-image
   (package
     (name "trytond-product-image")
-    (version "6.2.1")
+    (version "7.0.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_product_image" version))
               (sha256
-               (base32 "1xdqgc4y1sghnp5q25facdz3mnaxf8fysqlpbq3zrghsvi136mvd"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_product_image"))
-    (native-inputs (%standard-trytond-native-inputs))
+               (base32 "0x60yvgmg9wa8mqs3kalvhvgm8lwqdnzmwi960ipfims8mfsjfpj"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "product_image"
+                "-k not (test_get_image_url or test_image)"))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs (list python-pillow trytond trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-product-image")
     (synopsis "Tryton module that adds images to products")
@@ -2389,16 +2921,19 @@ product and variant.")
 (define-public trytond-product-image-attribute
   (package
     (name "trytond-product-image-attribute")
-    (version "6.2.0")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_product_image_attribute" version))
               (sha256
-               (base32 "1ywyh158325v461qkka5svp4gygsfkkrxd6yl9dgfgypd483qjs8"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_product_image_attribute"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list trytond trytond-product
+               (base32 "0avbq2bvcynfb70148nmkm2pgzy6f40qm2hmh2ms5nsyn2r9bfz4"))))
+    (build-system pyproject-build-system)
+    ;; tests require network - unfortunately this disables the main test case
+    (arguments (tryton-arguments "product_image_attribute"
+                                 "-k not test_image_attribute"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs (list trytond
+                             trytond-product
                              trytond-product-attribute
                              trytond-product-image))
     (home-page "https://docs.tryton.org/projects/modules-product-image-attribute")
@@ -2410,23 +2945,25 @@ attributes to product images.")
 (define-public trytond-product-kit
   (package
     (name "trytond-product-kit")
-    (version "6.2.2")
+    (version "7.0.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_kit" version))
        (sha256
-        (base32 "1s41jng93cmf4pahz59jmza1k6nj6pb532k0mn2xnr0pgnh26w9m"))))
-    (build-system python-build-system)
+        (base32 "00479fq97ldrg3hkwzhwaaadd430rcs9rg4dd13lbijckzhapj86"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_kit"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice" ,trytond-account-invoice)
-       ("trytond-account-invoice-stock" ,trytond-account-invoice-stock)
-       ("trytond-company" ,trytond-company)
-       ("trytond-purchase" ,trytond-purchase)
-       ("trytond-sale" ,trytond-sale)
-       ("trytond-stock" ,trytond-stock)))
+     (cons* trytond-account-invoice
+            trytond-account-invoice-stock
+            trytond-company
+            trytond-purchase
+            trytond-purchase-amendment
+            trytond-sale
+            trytond-sale-amendment
+            trytond-stock
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-product-kit")
@@ -2439,16 +2976,16 @@ purchased using a single line.")
 (define-public trytond-product-measurements
   (package
     (name "trytond-product-measurements")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_measurements" version))
        (sha256
-        (base32 "111q382lv3yg76r7jxfhnvr35kgi2fhiyxyj07immvwm5k3z0vi1"))))
-    (build-system python-build-system)
+        (base32 "133d2rsipfakjx35m685qclis5b1y288wpb03sqny41h1sd0h2qr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_measurements"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-product-measurements")
@@ -2460,16 +2997,16 @@ following measurements to Product:")
 (define-public trytond-product-price-list
   (package
     (name "trytond-product-price-list")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_price_list" version))
        (sha256
-        (base32 "0x85317skmqkq12i9qqyjiny37rn2dccx7rk7lan87jj2cam70q4"))))
-    (build-system python-build-system)
+        (base32 "1n1zbq7jwqkida4qx7pp4ybys7pskppxqd86kl1vdw5fj43nhm7n"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_price_list"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-simpleeval trytond trytond-company trytond-product))
     (home-page "https://docs.tryton.org/projects/modules-product-price-list")
@@ -2478,21 +3015,46 @@ following measurements to Product:")
 to compute prices per product or category.")
     (license license:gpl3+)))
 
+(define-public trytond-product-price-list-cache
+  (package
+    (name "trytond-product-price-list-cache")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_product_price_list_cache" version))
+       (sha256
+        (base32 "1hrj7iz9yb2kmybjcgzzp9s29jc6884vih6fqw5xgnz78x9rbfdq"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "product_price_list_cache"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-product
+           trytond-product-price-list))
+    (home-page "https://docs.tryton.org/projects/modules-product-price-list-cache")
+    (synopsis "Tryton module to cache price lists")
+    (description "The @emph{Product Price List Cache} Tryton module
+pre-computes and stores prices for each product and price list.")
+    (license license:gpl3+)))
+
 (define-public trytond-product-price-list-dates
   (package
     (name "trytond-product-price-list-dates")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_price_list_dates" version))
        (sha256
-        (base32 "0312s99fqfjwyn5lp3b8qd7j0ac0208jbalgxxazfks1h2g22nj5"))))
-    (build-system python-build-system)
+        (base32 "075xhsp94mniwd97qrbhizjy3ijcslm6ygl3fpi275cvz5dx3qad"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_price_list_dates"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale-price-list" ,trytond-sale-price-list)))
+     (cons* trytond-product-price-list-cache
+            trytond-purchase-price-list
+            trytond-sale-price-list
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-product-price-list))
     (home-page
@@ -2505,16 +3067,16 @@ date and end date conditions to the price list lines.")
 (define-public trytond-product-price-list-parent
   (package
     (name "trytond-product-price-list-parent")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_product_price_list_parent" version))
        (sha256
-        (base32 "0w5fmr2p56p44yq33qgjxp5b8r7bpyixwpdp6xgbrd36ig9wcg3z"))))
-    (build-system python-build-system)
+        (base32 "12icwym955ip9wk667yyzarc2qjp8xf6dq12fy0blsqf17jfn91j"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "product_price_list_parent"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product-price-list))
     (home-page
@@ -2528,16 +3090,26 @@ which contains the unit price computed by the parent price list.")
 (define-public trytond-production
   (package
     (name "trytond-production")
-    (version "6.2.1")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_production" version))
        (sha256
-        (base32 "1sjrpyh4cxllmcxh085nfkq4hhdaz2mcgs1x9hwcsk9scqbi8fkw"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "production"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "1jlhipmcvr09xdjh8f6qzmfas5yjii31ymhb2cgkp52b1kp563xw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases #$(tryton-phases "production")
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; DB_CACHE and pytest don't work together here
+                (invoke "python" "-m" "unittest" "discover")))))))
+    (native-inputs
+     (cons* trytond-stock-lot
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-company trytond-product trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-production")
@@ -2549,16 +3121,16 @@ for production management: Bill of material and production order.")
 (define-public trytond-production-outsourcing
   (package
     (name "trytond-production-outsourcing")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_production_outsourcing" version))
        (sha256
-        (base32 "0ms50p42jr23v2fgm3kplacr11czx16dljmxvvn4qgxlacsf0dz0"))))
-    (build-system python-build-system)
+        (base32 "105xn6w0xqvqw3y7yyapv8ks3kfk7ffm5g00vy0scl3c9qi8qi5s"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "production_outsourcing"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product trytond-production
            trytond-production-routing trytond-purchase))
@@ -2574,18 +3146,18 @@ the production.")
 (define-public trytond-production-routing
   (package
     (name "trytond-production-routing")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_production_routing" version))
        (sha256
-        (base32 "1a6cw0yc60ijd8bnrk84rzx4swqi294g3dsapp03hapn9rgdjbpj"))))
-    (build-system python-build-system)
+        (base32 "0n9xay9s12lzkcra30npnsh0589zrfkhk7al5whla58i123a7vwi"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "production_routing"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-stock-supply-production" ,trytond-stock-supply-production)))
+     (cons* trytond-stock-supply-production
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-production))
     (home-page "https://docs.tryton.org/projects/modules-production-routing")
@@ -2597,16 +3169,16 @@ routings for production: Routing, Step and Operation.")
 (define-public trytond-production-split
   (package
     (name "trytond-production-split")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_production_split" version))
        (sha256
-        (base32 "1fcsbvmcjxriq4yllxv2h7i2p07caqgka39f04l7pvz4w9ha4s96"))))
-    (build-system python-build-system)
+        (base32 "06ic3w4zskk08q617660w1gx5l8dmf782n9kq0kg8x82m2lw0f0n"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "production_split"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-production))
     (home-page "https://docs.tryton.org/projects/modules-production-split")
@@ -2621,16 +3193,16 @@ quantity.")
 (define-public trytond-production-work
   (package
     (name "trytond-production-work")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_production_work" version))
        (sha256
-        (base32 "1bff8rfdrlx14ahjnmq3lw7z816qnk22cjk9wwmwkcpl99faw3bd"))))
-    (build-system python-build-system)
+        (base32 "031673vvqmdhrfkib5nikza4a5w5hgq4x14mdzgwny3ln7vdmis9"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "production_work"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-company
@@ -2648,16 +3220,16 @@ work cost.")
 (define-public trytond-production-work-timesheet
   (package
     (name "trytond-production-work-timesheet")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_production_work_timesheet" version))
        (sha256
-        (base32 "19d9sasviayn4vkbwgxmgqbn2fd61qqh4sk35vzlmkbwycrbczhi"))))
-    (build-system python-build-system)
+        (base32 "0c737kxdqpjc1h9vb00sz69zh6y76d3ll71nrs2nxidqjdwyhhz5"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "production_work_timesheet"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-production-routing trytond-production-work
            trytond-timesheet))
@@ -2671,16 +3243,16 @@ entering a timesheet for production works.")
 (define-public trytond-project
   (package
     (name "trytond-project")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_project" version))
        (sha256
-        (base32 "0rr1ar7ah753afqi16yklirwv3ikmcv4xhnbv5vixna1kqhg8n43"))))
-    (build-system python-build-system)
+        (base32 "0y8ymmfp91z89ylwwfwkl66l227phz3c0dj1r3k8ahlv7q4rrlsg"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "project"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-company trytond-company-work-time
            trytond-party trytond-timesheet))
@@ -2693,21 +3265,22 @@ project and task and the basis for simple project management.")
 (define-public trytond-project-invoice
   (package
     (name "trytond-project-invoice")
-    (version "6.2.3")
+    (version "7.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_project_invoice" version))
        (sha256
-        (base32 "1hdyds6k2k0hjk8za8xa64qvqx9pnyv1a6g7mq80ag8hscx2s282"))))
-    (build-system python-build-system)
+        (base32 "031bjkh6dyixs4rkmdpaf28xa8cx5yr3hh51gkcd4mcnz2pbflxx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "project_invoice"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
            trytond-account-invoice
            trytond-account-product
+           trytond-currency
            trytond-product
            trytond-project
            trytond-project-revenue
@@ -2730,16 +3303,16 @@ methods on projects.  The methods are:
 (define-public trytond-project-plan
   (package
     (name "trytond-project-plan")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_project_plan" version))
        (sha256
-        (base32 "1rijwxx1sypgv3fapw7sv0i6xbci2b6h3ij42aq693yvn0wm46q4"))))
-    (build-system python-build-system)
+        (base32 "06411x4iswy09pjxxiwxrha5r272df1rkyd5w42b192vxbjfshy7"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "project_plan"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-company trytond-project trytond-timesheet))
     (home-page "https://docs.tryton.org/projects/modules-project-plan")
@@ -2751,18 +3324,18 @@ on top of the Project module.")
 (define-public trytond-project-revenue
   (package
     (name "trytond-project-revenue")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_project_revenue" version))
        (sha256
-        (base32 "0hpqwjpd6d0a291yssa8f0x89xxqvdzq8a3f10csibsq7bssqzki"))))
-    (build-system python-build-system)
+        (base32 "1j8qdliylg1jjas51z34gvi78q9qv81ssk4blp9y4kr1svq8wpjk"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "project_revenue"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-purchase" ,trytond-purchase)))
+     (cons* trytond-purchase
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-company
@@ -2783,16 +3356,16 @@ the linked time sheets and the linked purchase lines.")
 (define-public trytond-purchase
   (package
     (name "trytond-purchase")
-    (version "6.2.3")
+    (version "7.0.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase" version))
        (sha256
-        (base32 "1lni31dhi1yrz0ga1l2268fyv564gsqiy1rjal8l765v40121q0p"))))
-    (build-system python-build-system)
+        (base32 "0qf17qpcid9d0vm5wnzfg0qsal67zfdxipjr28nw9azjvx07vbvz"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -2810,22 +3383,19 @@ the linked time sheets and the linked purchase lines.")
      "This package provides a Tryton module that defines the Purchase model.")
     (license license:gpl3+)))
 
-(define-public python-trytond-purchase
-  (deprecated-package "python-trytond-purchase" trytond-purchase))
-
 (define-public trytond-purchase-amendment
   (package
     (name "trytond-purchase-amendment")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_amendment" version))
        (sha256
-        (base32 "0zprgfxpif2bbjbv8b4aci7s5si9sp3rjizr7nf31mvsjnwx7i06"))))
-    (build-system python-build-system)
+        (base32 "0s8kp88s73jn9z5bnj5n91fl67hpycrzcxl6hkdx4l2vha6r2f65"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_amendment"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-purchase
            trytond-purchase-history trytond-stock))
@@ -2846,19 +3416,46 @@ amendment is composed of action lines which can:
 @end itemize")
     (license license:gpl3+)))
 
+(define-public trytond-purchase-blanket-agreement
+  (package
+    (name "trytond-purchase-blanket-agreement")
+    (version "7.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_purchase_blanket_agreement" version))
+       (sha256
+        (base32 "1h96y36ik14snxw6hm6w6nsxkkn5lv4vmhmy1xfadiffafhr7503"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "purchase_blanket_agreement"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-company
+           trytond-currency
+           trytond-party
+           trytond-product
+           trytond-purchase))
+    (home-page "https://docs.tryton.org/projects/modules-purchase-blanket-agreement")
+    (synopsis "Tryton module for purchase blanket agreements")
+    (description "The @emph{Purchase Blanket Agreement} Tryton module manages
+long-term contracts with suppliers to purchase a specific quantity of products
+with multiple orders over a period.")
+    (license license:gpl3+)))
+
 (define-public trytond-purchase-history
   (package
     (name "trytond-purchase-history")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_history" version))
        (sha256
-        (base32 "0b72q0b41jfaahccdnya9amp5x4w90mlx4b32wdby96xvfi485ar"))))
-    (build-system python-build-system)
+        (base32 "1vf9r2rsbxxgy9brl3458n5axdk4sc4r01xrq7h1293izs1cjw5s"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_history"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-purchase))
     (home-page "https://docs.tryton.org/projects/modules-purchase-history")
@@ -2871,19 +3468,19 @@ time the purchase is reset to draft.")
 (define-public trytond-purchase-invoice-line-standalone
   (package
     (name "trytond-purchase-invoice-line-standalone")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_invoice_line_standalone" version))
        (sha256
-        (base32 "169y69an6i796m8bmp8sanfn0qh7bcws8nangp96q07dsv51wrvb"))))
-    (build-system python-build-system)
+        (base32 "1djvnlqlhc3q77r07il8hx5j13qzjdnwfxfnrj3sf8nkpdbi12ac"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_invoice_line_standalone"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice-line-standalone
-           trytond-purchase))
+           trytond-party trytond-purchase))
     (home-page
      "https://docs.tryton.org/projects/modules-purchase-invoice-line-standalone")
     (synopsis "Tryton module for standalone invoice line from purchase")
@@ -2894,21 +3491,22 @@ makes purchase to generate invoice lines instead of invoices.")
 (define-public trytond-purchase-price-list
   (package
     (name "trytond-purchase-price-list")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_price_list" version))
        (sha256
-        (base32 "0xqry794l9vy5v5ck0qqy9yli57av4zzmpv1g8f9hkg7lm9ypg0v"))))
-    (build-system python-build-system)
+        (base32 "1zpyd9vryh9lwl3n8pnfa222815n7lcmwhs82p734v5l7c9cwfwg"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_price_list"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
            trytond-company
            trytond-party
+           trytond-product
            trytond-product-price-list
            trytond-purchase))
     (home-page "https://docs.tryton.org/projects/modules-purchase-price-list")
@@ -2917,20 +3515,48 @@ makes purchase to generate invoice lines instead of invoices.")
 lists to be defined for suppliers.")
     (license license:gpl3+)))
 
+(define-public trytond-purchase-product-quantity
+  (package
+    (name "trytond-purchase-product-quantity")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_purchase_product_quantity" version))
+       (sha256
+        (base32 "0q1paxi1ppdc1qim389nixl483hd8whrgv6ck554f4008v4dpj8r"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "purchase_product_quantity"))
+    (native-inputs
+     (cons* trytond-stock-supply
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-product
+           trytond-purchase
+           trytond-purchase-request))
+    (home-page "https://docs.tryton.org/projects/modules-purchase-product-quantity")
+    (synopsis "Tryton module to add quantity constraints on purchase lines")
+    (description "The @emph{Purchase Product Quantity} Tryton module permits
+to enforce the minimal and the rounding of quantity purchased per supplier
+from purchase request.")
+    (license license:gpl3+)))
+
 (define-public trytond-purchase-request
   (package
     (name "trytond-purchase-request")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_request" version))
        (sha256
-        (base32 "0as8lb6bgjigpg926fjfyfy25758m45ihl1xish5vlfcxmccpyn3"))))
-    (build-system python-build-system)
-    ;; Doctest 'scenario_purchase_request.rst' fails.
-    (arguments (tryton-arguments "purchase_request" "--no-doctest"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "0s6i8s0s3k8wj2xkyncfnn9zd4l7d73wyz7x6glqyjx7x69qc74p"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "purchase_request"))
+    (native-inputs
+     (cons* trytond-stock-supply-bootstrap
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-product trytond-purchase))
     (home-page "https://www.tryton.org/")
@@ -2941,25 +3567,21 @@ Purchase Requests which are central points to collect purchase requests
 generated by other process from Tryton.")
     (license license:gpl3+)))
 
-(define-public python-trytond-purchase-request
-  (deprecated-package
-   "python-trytond-purchase-request" trytond-purchase-request))
-
 (define-public trytond-purchase-request-quotation
   (package
     (name "trytond-purchase-request-quotation")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_request_quotation" version))
        (sha256
-        (base32 "08kcp88lfn8aa92cd07x5i5xbjznqy0x9lr34f07ky0i26nrnn72"))))
-    (build-system python-build-system)
+        (base32 "176p3yslqhn75a5nkkgzqsbrbb247b52za7ydrhd20dylid24g6s"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_request_quotation"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-purchase-requisition" ,trytond-purchase-requisition)))
+     (cons* trytond-purchase-requisition
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-company
@@ -2979,16 +3601,16 @@ supplier.")
 (define-public trytond-purchase-requisition
   (package
     (name "trytond-purchase-requisition")
-    (version "6.2.0")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_requisition" version))
        (sha256
-        (base32 "0wm4xrxklwd5bbdzlwr5ca4h0zm6jx9pm08mspk15nbvf23qz5n3"))))
-    (build-system python-build-system)
+        (base32 "000n2fhx38yxxg6czsd2ir1qlb4fv0zx720w4p6lfi8g3xgri01c"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_requisition"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-company
@@ -3010,20 +3632,23 @@ be created.")
 (define-public trytond-purchase-secondary-unit
   (package
     (name "trytond-purchase-secondary-unit")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_secondary_unit" version))
        (sha256
-        (base32 "04fnrim6dimrd63rqbqginlklpih7sb4x3zai5idxjn6hc1l398y"))))
-    (build-system python-build-system)
+        (base32 "1sg7jc9aw1wa7xbhn2l4g6b8q161zf4118jfy1i6968dx6z2ask7"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_secondary_unit"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice-secondary-unit"
-        ,trytond-account-invoice-secondary-unit)
-       ("trytond-stock-secondary-unit" ,trytond-stock-secondary-unit)))
+     (cons* trytond-account-invoice-secondary-unit
+            trytond-purchase-amendment
+            trytond-purchase-blanket-agreement
+            trytond-purchase-request
+            trytond-purchase-requisition
+            trytond-stock-secondary-unit
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-product
            trytond-purchase trytond-stock))
@@ -3041,24 +3666,24 @@ the product with its factor against the purchase unit.")
 (define-public trytond-purchase-shipment-cost
   (package
     (name "trytond-purchase-shipment-cost")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_purchase_shipment_cost" version))
        (sha256
-        (base32 "1xpkqicv32vrhi89wpn073bc58x6xl189yv0f7h1i9m9q613w9ps"))))
-    (build-system python-build-system)
+        (base32 "1mvn0cwr5c9ndrghir7yd9djvdlk4sshnlq0qxw9wp613qlcwp6x"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "purchase_shipment_cost"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice-stock" ,trytond-account-invoice-stock)
-       ("trytond-account-stock-anglo-saxon" ,trytond-account-stock-anglo-saxon)
-       ("trytond-account-stock-continental" ,trytond-account-stock-continental)
-       ("trytond-purchase" ,trytond-purchase)))
+     (cons* trytond-account-invoice-stock
+            trytond-account-stock-anglo-saxon
+            trytond-account-stock-continental
+            trytond-purchase
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-carrier trytond-currency trytond-product
-           trytond-stock))
+           trytond-stock trytond-stock-shipment-cost))
     (home-page
      "https://docs.tryton.org/projects/modules-purchase-shipment-cost")
     (synopsis "Tryton module for purchase shipment costs")
@@ -3066,19 +3691,46 @@ the product with its factor against the purchase unit.")
 shipment costs to Supplier Shipment.")
     (license license:gpl3+)))
 
+(define-public trytond-quality
+  (package
+    (name "trytond-quality")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_quality" version))
+       (sha256
+        (base32 "04w50icp1bqn6ybmvdl0hxnmizsjjj1jnhkid51w8s0phlwdlvrc"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "quality"))
+    (native-inputs
+     (cons* trytond-production
+            trytond-stock
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-company
+           trytond-product))
+    (home-page "https://docs.tryton.org/projects/modules-quality")
+    (synopsis "Tryton module for quality management")
+    (description "The @emph{Quality} Tryton module enables quality to be
+controlled by configuring control points and inspecting against these when
+certain operations are performed.")
+    (license license:gpl3+)))
+
 (define-public trytond-sale
   (package
     (name "trytond-sale")
-    (version "6.2.4")
+    (version "7.0.15")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale" version))
        (sha256
-        (base32 "124cx2h93dw61rnavc2q7isjy9008qc379g82myihq9gh4z6rbpr"))))
-    (build-system python-build-system)
+        (base32 "171ihl762iizlyvhn4zvg52waffsaxr9yh7d7gy4vsdciym6vm8k"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -3103,21 +3755,25 @@ to be generated that contain aggregated sales figures.")
 (define-public trytond-sale-advance-payment
   (package
     (name "trytond-sale-advance-payment")
-    (version "6.2.0")
+    (version "7.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_advance_payment" version))
        (sha256
-        (base32 "00rlg4jax212qha2w6acris7knj3b17a0rrlm7xyw0bp2vfzgb69"))))
-    (build-system python-build-system)
+        (base32 "08qcfa5sif1a3l02f5vr5668bzca8mndg0h917r2x43z6gd1g8z9"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_advance_payment"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale-supply" ,trytond-sale-supply)))
+     (cons* trytond-sale-supply
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list python-simpleeval trytond trytond-account
-           trytond-account-invoice trytond-sale))
+     (list python-simpleeval
+           trytond
+           trytond-account
+           trytond-account-invoice
+           trytond-company
+           trytond-sale))
     (home-page
      "https://docs.tryton.org/projects/modules-sale-advance-payment")
     (synopsis "Tryton module for sale advance payment")
@@ -3128,16 +3784,16 @@ for advance payment management on the sale.")
 (define-public trytond-sale-amendment
   (package
     (name "trytond-sale-amendment")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_amendment" version))
        (sha256
-        (base32 "0mrnqlgihkvn4z2p1k90c9cha8kqa28ss1ycjzsalxmngnw27hfg"))))
-    (build-system python-build-system)
+        (base32 "0p4v44hcby6s7l07hzdxj5z8lzb4xn4r4z5j1rlnkfvgccgmfvpc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_amendment"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-sale
            trytond-sale-history trytond-stock))
@@ -3148,19 +3804,46 @@ sales that are being processed and keep track of the changes.  An amendment is
 composed of action lines which can:")
     (license license:gpl3+)))
 
+(define-public trytond-sale-blanket-agreement
+  (package
+    (name "trytond-sale-blanket-agreement")
+    (version "7.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_sale_blanket_agreement" version))
+       (sha256
+        (base32 "0ai58qmyqrn89ppbrnsqclss5kf4hr5y2gpa9s0xs1cicn367w8f"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_blanket_agreement"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-company
+           trytond-currency
+           trytond-party
+           trytond-product
+           trytond-sale))
+    (home-page "https://docs.tryton.org/projects/modules-sale-blanket-agreement")
+    (synopsis "Tryton module for sale blanket agreements")
+    (description "The @emph{Sale Blanket Agreement} Tryton module manages
+long-term contracts with customers to sell a specific quantity of products
+with multiple orders over a period.")
+    (license license:gpl3+)))
+
 (define-public trytond-sale-complaint
   (package
     (name "trytond-sale-complaint")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_complaint" version))
        (sha256
-        (base32 "172650xyn2k1ay6jd4vy6f71s9rfv8qalfx9j8jz0i4cn320z272"))))
-    (build-system python-build-system)
+        (base32 "18840gqa97bmw6yksy18a65qn3lidcy2vn5h35mp1pzq6rb5rc6i"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_complaint"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-company trytond-party
            trytond-sale))
@@ -3173,16 +3856,16 @@ composed of action lines which can:")
 (define-public trytond-sale-credit-limit
   (package
     (name "trytond-sale-credit-limit")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_credit_limit" version))
        (sha256
-        (base32 "0rx3zi0m4cbpbmjlzkii08424yz68y31nqqkgj6rl9swaqins67h"))))
-    (build-system python-build-system)
+        (base32 "15lkdvhxhr3wk9s20g2ypaqmal4kc0cr40gj51jamfqj8s1yj79p"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_credit_limit"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account-credit-limit
@@ -3200,16 +3883,16 @@ credit limit of the party when confirming a sale.")
 (define-public trytond-sale-discount
   (package
     (name "trytond-sale-discount")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_discount" version))
        (sha256
-        (base32 "1kbfbd5rmvaaf5wwvb1akxf7zij1bqpzx2s0dahjxcihxwwra2ib"))))
-    (build-system python-build-system)
+        (base32 "1hqxa97dpqy9b4cpvh977scfrjyk6kmkvlyy8xi7cdwam02miwim"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_discount"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product trytond-sale))
     (home-page "https://docs.tryton.org/projects/modules-sale-discount")
@@ -3221,16 +3904,16 @@ line.")
 (define-public trytond-sale-extra
   (package
     (name "trytond-sale-extra")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_extra" version))
        (sha256
-        (base32 "0j9ya68p6bfyr2ixh1dqfqnmfa4mn5ayf9hn5pfm2z7nih8bys3r"))))
-    (build-system python-build-system)
+        (base32 "1vvw7h2q0c6ifbwl3z60sna022npsqby29hrxcpgd5izcphk8jja"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_extra"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-company
@@ -3247,23 +3930,24 @@ on sale based on criteria.")
 (define-public trytond-sale-gift-card
   (package
     (name "trytond-sale-gift-card")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_gift_card" version))
        (sha256
-        (base32 "0r395qj178f39lip8mkwhn9lakkh3700hlpcsd208d8wqqqmbf1n"))))
-    (build-system python-build-system)
+        (base32 "1brfyrdd3j1lk8accdjv1jx6ila0rbskjjhlg0vv2jflwq81hpvn"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_gift_card"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale-point" ,trytond-sale-point)))
+     (cons* trytond-sale-point
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-account
            trytond-account-invoice
            trytond-company
+           trytond-currency
            trytond-product
            trytond-sale
            trytond-stock))
@@ -3276,16 +3960,18 @@ and redeeming of gift cards.")
 (define-public trytond-sale-history
   (package
     (name "trytond-sale-history")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_history" version))
        (sha256
-        (base32 "0snjdbhq5mf8j7z6i6yqk3kjl3mpjsdzwnh5bzcnax2n4zrscvxq"))))
-    (build-system python-build-system)
+        (base32 "1adi6hvlpmg036h29zjzj6aismcvh9dk94acmk12bg7qv4zw9imx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_history"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-sale-subscription
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-sale))
     (home-page "https://docs.tryton.org/projects/modules-sale-history")
@@ -3295,19 +3981,42 @@ historization of the sale and adds a revision counter which increases each
 time the sale is reset to draft.")
     (license license:gpl3+)))
 
+(define-public trytond-sale-invoice-date
+  (package
+    (name "trytond-sale-invoice-date")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_sale_invoice_date" version))
+       (sha256
+        (base32 "0ssc87by1hinxckcma99hlngy1r9is84svccy1zrvqdif06pjfqp"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_invoice_date"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-party
+           trytond-sale))
+    (home-page "https://docs.tryton.org/projects/modules-sale-invoice-date")
+    (synopsis "Tryton module to compute the invoice date of sale")
+    (description "The @emph{Sale Invoice Date} Tryton module fills the invoice
+date of invoices created by sales.")
+    (license license:gpl3+)))
+
 (define-public trytond-sale-invoice-grouping
   (package
     (name "trytond-sale-invoice-grouping")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_invoice_grouping" version))
        (sha256
-        (base32 "1c70s1lnxzhg6yqv7vjxyqvxp4myh26i9hnnf1k045d6hwf80hvf"))))
-    (build-system python-build-system)
+        (base32 "06awrzvq8c4v7133by95njiq1n3j85x362r4fhb6z7fyrn03kzx6"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_invoice_grouping"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-party trytond-sale))
     (home-page
@@ -3320,26 +4029,24 @@ option to define how invoice lines generated from sales will be grouped.")
 (define-public trytond-sale-opportunity
   (package
     (name "trytond-sale-opportunity")
-    (version "6.2.0")
+    (version "7.0.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_opportunity" version))
        (sha256
-        (base32 "05zliwc39zandn7amjzf1n7fqxq7yrwrx5b418ikh09pfz4alq21"))))
-    (build-system python-build-system)
+        (base32 "1r2xa0y60yc4f13w0pm7w48jnwh60hrn2w4jld251wjf56cb1yjr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_opportunity"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
-           trytond-account
            trytond-account-invoice
            trytond-company
            trytond-currency
            trytond-party
            trytond-product
-           trytond-sale
-           trytond-stock))
+           trytond-sale))
     (home-page "https://docs.tryton.org/projects/modules-sale-opportunity")
     (synopsis "Tryton module with leads and opportunities")
     (description "The @emph{Sale Opportunity} Tryton module defines the
@@ -3349,20 +4056,22 @@ lead/opportunity model.")
 (define-public trytond-sale-payment
   (package
     (name "trytond-sale-payment")
-    (version "6.2.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_payment" version))
        (sha256
-        (base32 "02zq3smfj55n70kqgipi2q869lp7hlfm0qbw74qx7pina28pipf4"))))
-    (build-system python-build-system)
+        (base32 "03rd22bim95z9frpmvb5vk2h2p4pybbds3jy3y8rkz3vhizv61j4"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_payment"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-payment-clearing" ,trytond-account-payment-clearing)))
+     (cons* trytond-account-payment-clearing
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-account-invoice trytond-account-payment
+     (list trytond
+           trytond-account-invoice
+           trytond-account-payment
            trytond-sale))
     (home-page "https://docs.tryton.org/projects/modules-sale-payment")
     (synopsis "Tryton module that manage payments on sale")
@@ -3373,24 +4082,24 @@ payments prior to the creation of any invoice.")
 (define-public trytond-sale-point
   (package
     (name "trytond-sale-point")
-    (version "6.2.2")
+    (version "7.0.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_sale_point" version))
               (sha256
-               (base32 "0brysadw75rm80yk66wq68gqkyb28zk65sw530fyacx9ma0sq0pj"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_sale_point"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-sql
-                             trytond
-                             trytond-account
-                             trytond-account-product
-                             trytond-company
-                             trytond-party
-                             trytond-product
-                             trytond-sale
-                             trytond-stock))
+               (base32 "1b7jjs14h6n8vipj5wyk07jaa5i71nb1x0x8g1zwgzh49k6pjl9l"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_point"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account
+           trytond-account-product
+           trytond-company
+           trytond-party
+           trytond-product
+           trytond-sale
+           trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-sale-point")
     (synopsis "Tryton module for Point of Sales")
     (description "The @emph{Sale Point} Tryton module allows retail sales to
@@ -3400,16 +4109,16 @@ be handled and recorded.")
 (define-public trytond-sale-price-list
   (package
     (name "trytond-sale-price-list")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_price_list" version))
        (sha256
-        (base32 "037h107wl3p3ig9w8db2878x80gzdf4dsa9wjrrcxdaz7yp7iwhn"))))
-    (build-system python-build-system)
+        (base32 "0r0rklqqa8aw97yk910l4vzx953a3q4hlbn53l22pq0f30j2gqlf"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_price_list"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-company trytond-party
            trytond-product-price-list trytond-sale))
@@ -3422,18 +4131,19 @@ price list on sale.  A price list can be set per party or as default.")
 (define-public trytond-sale-product-customer
   (package
     (name "trytond-sale-product-customer")
-    (version "6.2.2")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_product_customer" version))
        (sha256
-        (base32 "01nyhimg00z33zzlxyg8incpfbgcqa7svmzzv5n0x2dafnx5n7wl"))))
-    (build-system python-build-system)
+        (base32 "0zgzkif68sf9klpdp88rmns9ga5c3ir0jkg88yqa5gv3rma3sh3a"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_product_customer"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale-amendment" ,trytond-sale-amendment)))
+     (cons* trytond-sale-amendment
+            trytond-sale-blanket-agreement
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-product trytond-sale))
     (home-page
@@ -3443,23 +4153,102 @@ price list on sale.  A price list can be set per party or as default.")
 customer's names and codes for products or variants.")
     (license license:gpl3+)))
 
+(define-public trytond-sale-product-quantity
+  (package
+    (name "trytond-sale-product-quantity")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_sale_product_quantity" version))
+       (sha256
+        (base32 "1k1mi0iiw1xqm3sjywzfq61whc9kwsv09248m31y9k1r0qx0zxh7"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_product_quantity"))
+    (native-inputs
+     (cons* trytond-sale-point
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-product
+           trytond-sale))
+    (home-page "https://docs.tryton.org/projects/modules-sale-product-quantity")
+    (synopsis "Tryton module to add quantity constraints on sale lines")
+    (description "The @emph{Sale Product Quantity} Tryton module permits
+enforcing the minimal and the rounding of quantity sold per product.")
+    (license license:gpl3+)))
+
+(define-public trytond-sale-product-recommendation
+  (package
+    (name "trytond-sale-product-recommendation")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_sale_product_recommendation" version))
+       (sha256
+        (base32 "11s8i76p6743xx1m0h0hslvzw4cj190m3hdpsv6id5prgragx9sk"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_product_recommendation"))
+    (native-inputs
+     (cons* trytond-sale-point
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list trytond
+           trytond-product
+           trytond-sale))
+    (home-page "https://docs.tryton.org/projects/modules-sale-product-recommendation")
+    (synopsis "Tryton module for product recommendations")
+    (description "The @emph{Sale Product Recommendation} Tryton module
+provides facilities to implement recommendation of products on sale.")
+    (license license:gpl3+)))
+
+(define-public trytond-sale-product-recommendation-association-rule
+  (package
+    (name "trytond-sale-product-recommendation-association-rule")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_sale_product_recommendation_association_rule" version))
+       (sha256
+        (base32 "0d59811an015s8lfv4i5dflkg8fbvn937y81shn6wxndrrm32z4a"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_product_recommendation_association_rule"))
+    (native-inputs
+     (cons* trytond-sale-point
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list python-efficient-apriori
+           trytond trytond-product
+           trytond-sale
+           trytond-sale-product-recommendation))
+    (home-page
+     "https://docs.tryton.org/projects/modules-sale-product-recommendation-association-rule")
+    (synopsis "Tryton module to learn association rule for recommendations")
+    (description "The @emph{Sale Product Recommendation Association Rule}
+Tryton module implements recommendation based on association rule learning
+from previous sales.")
+    (license license:gpl3+)))
+
 (define-public trytond-sale-promotion
   (package
     (name "trytond-sale-promotion")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_promotion" version))
        (sha256
-        (base32 "1nd4f5j25v3g25hr0xr6kqzv0rqavnwkc5wyn8r0if1y9b2scwnc"))))
-    (build-system python-build-system)
+        (base32 "1vc7ij8pgnfgp5w557kf1lnbir5xcq1i6zqhvv9pa0rpnrsmnh5z"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_promotion"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-simpleeval
            trytond
            trytond-company
+           trytond-currency
            trytond-product
            trytond-product-price-list
            trytond-sale
@@ -3473,18 +4262,21 @@ on a sale based on criteria.")
 (define-public trytond-sale-promotion-coupon
   (package
     (name "trytond-sale-promotion-coupon")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_promotion_coupon" version))
        (sha256
-        (base32 "18086y4xszb5iq6v5ibq3kylzc3b8zbyn6pn6pm61mdbdpqav7mg"))))
-    (build-system python-build-system)
+        (base32 "1xywa7b3mfq6x9xzmxdxr3j5i5vy91wjxmf1f2s3q8hya92djjnr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_promotion_coupon"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list trytond trytond-sale trytond-sale-promotion))
+     (list trytond
+           trytond-company
+           trytond-sale
+           trytond-sale-promotion))
     (home-page
      "https://docs.tryton.org/projects/modules-sale-promotion-coupon")
     (synopsis "Tryton module for sale promotion coupon")
@@ -3492,24 +4284,48 @@ on a sale based on criteria.")
 to the promotions.")
     (license license:gpl3+)))
 
+(define-public trytond-sale-promotion-coupon-payment
+  (package
+    (name "trytond-sale-promotion-coupon-payment")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_sale_promotion_coupon_payment" version))
+       (sha256
+        (base32 "051jgg0pid8rsk8987q0vfx1xiixvh65rzl9bcgdzj7kl8fxlssp"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "sale_promotion_coupon_payment"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-account-payment
+           trytond-sale-promotion-coupon))
+    (home-page "https://docs.tryton.org/projects/modules-sale-promotion-coupon-payment")
+    (synopsis "Tryton module to link payments with coupons")
+    (description "The @emph{Sale Promotion Coupon Payment} Tryton module
+includes the identical parties from the payments to count usage per party.")
+    (license license:gpl3+)))
+
 (define-public trytond-sale-secondary-unit
   (package
     (name "trytond-sale-secondary-unit")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_secondary_unit" version))
        (sha256
-        (base32 "0as7vc8wp2i3402h5r90zg6170y3av41a6k5ivdfbaxlhsjq8lxa"))))
-    (build-system python-build-system)
+        (base32 "1pd3a4ykjyiipacy0pksv30mb6kf7n203mp6qh8jn4c2wwvjn06g"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_secondary_unit"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-account-invoice-secondary-unit"
-        ,trytond-account-invoice-secondary-unit)
-       ("trytond-sale-product-customer" ,trytond-sale-product-customer)
-       ("trytond-stock-secondary-unit" ,trytond-stock-secondary-unit)))
+     (cons* trytond-account-invoice-secondary-unit
+            trytond-sale-amendment
+            trytond-sale-blanket-agreement
+            trytond-sale-product-customer
+            trytond-stock-secondary-unit
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-account-invoice trytond-product trytond-sale
            trytond-stock))
@@ -3524,19 +4340,22 @@ unit is defined on the product with its factor against the sale unit.")
 (define-public trytond-sale-shipment-cost
   (package
     (name "trytond-sale-shipment-cost")
-    (version "6.2.2")
+    (version "7.0.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_shipment_cost" version))
        (sha256
-        (base32 "1r6jcsfxa2q448ks5s23apbj3b35rc5596qk7f3hzwiw6nm168k5"))))
-    (build-system python-build-system)
+        (base32 "011hjaqwd3m4ncz15rs3czp8rcwcr4ak4rjzb15zznb0ghkz1kgx"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_shipment_cost"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-sale-promotion" ,trytond-sale-promotion)
-       ("trytond-stock-shipment-cost" ,trytond-stock-shipment-cost)))
+     (cons* trytond-account
+            trytond-party
+            trytond-sale-promotion
+            trytond-sale-shipment-grouping
+            trytond-stock
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-account-invoice
@@ -3544,7 +4363,8 @@ unit is defined on the product with its factor against the sale unit.")
            trytond-currency
            trytond-product
            trytond-sale
-           trytond-stock))
+           trytond-stock
+           trytond-stock-shipment-cost))
     (home-page "https://docs.tryton.org/projects/modules-sale-shipment-cost")
     (synopsis "Tryton module for sale shipment cost")
     (description "The @emph{Sale Shipment Cost} Tryton module adds shipment
@@ -3554,16 +4374,16 @@ cost for sale.")
 (define-public trytond-sale-shipment-grouping
   (package
     (name "trytond-sale-shipment-grouping")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_shipment_grouping" version))
        (sha256
-        (base32 "0v8inxsgdhmkiaj0l3c2gjzbs96qbbxmbw67f14mx9axjvcvkkwy"))))
-    (build-system python-build-system)
+        (base32 "1hb4h00xsx9r6cri6c5ys7gx0181h8lv2q366djsxfsci76zim8g"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_shipment_grouping"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-party trytond-sale trytond-stock))
     (home-page
@@ -3576,16 +4396,16 @@ define how stock moves generated from sales will be grouped.")
 (define-public trytond-sale-shipment-tolerance
   (package
     (name "trytond-sale-shipment-tolerance")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_shipment_tolerance" version))
        (sha256
-        (base32 "1vggdhnfg05dad2gmyi49ydhrq3sjqva4shn9zygj8fyjpkppx2y"))))
-    (build-system python-build-system)
+        (base32 "0cqia2qlf6f6yjn673amicjraggb59z0g00cbrdfpyv4g2zgv6qr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_shipment_tolerance"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-sale trytond-stock))
     (home-page
@@ -3602,18 +4422,18 @@ raised.")
 (define-public trytond-sale-stock-quantity
   (package
     (name "trytond-sale-stock-quantity")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_stock_quantity" version))
        (sha256
-        (base32 "0bn06a752rp16ki5xa0dr3in5xj1hry6020qgz6mji8kxl24v7sv"))))
-    (build-system python-build-system)
+        (base32 "0q5kffgg8cpgwyzn283aghrqbqsnjayvq70q9va2khqnjbl1h9rh"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_stock_quantity"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-stock-supply" ,trytond-stock-supply)))
+     (cons* trytond-stock-supply
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-product trytond-sale trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-sale-stock-quantity")
@@ -3628,16 +4448,16 @@ stock forecasts.")
 (define-public trytond-sale-subscription
   (package
     (name "trytond-sale-subscription")
-    (version "6.2.0")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_subscription" version))
        (sha256
-        (base32 "095zdy6031lqffm3yddhsrv93dl2dgqjpbskp539knvd72bdaqdd"))))
-    (build-system python-build-system)
+        (base32 "1jdpg6g8w0q5slsfdzz6bkacv78x4gw5nr2afi7m9givqr8vivrm"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_subscription"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -3655,16 +4475,16 @@ services and recurrence rule models.")
 (define-public trytond-sale-subscription-asset
   (package
     (name "trytond-sale-subscription-asset")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_subscription_asset" version))
        (sha256
-        (base32 "0bkksk3l3ydxmqglsrrqgwgrak6iwc740vmj0dpw93h4f127haiv"))))
-    (build-system python-build-system)
+        (base32 "1xg9wypsmv701w7mv49mw8glgkhfbvijsx97n0fr23h7w9pm7lnr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_subscription_asset"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-sale-subscription trytond-stock-lot))
     (home-page
@@ -3677,16 +4497,18 @@ notion of asset to the sale subscription module.")
 (define-public trytond-sale-supply
   (package
     (name "trytond-sale-supply")
-    (version "6.2.0")
+    (version "7.0.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_supply" version))
        (sha256
-        (base32 "05ik819spy8jmc5k10mki6kxdjxdqrr4x0g3rgvvlnmadn5igykf"))))
-    (build-system python-build-system)
+        (base32 "0rgyrimkfali4ak7b0052rp3m8m07qk1fhd10vi98zynz5bqs73g"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_supply"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-stock-supply
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-purchase trytond-purchase-request trytond-sale
            trytond-stock))
@@ -3703,16 +4525,19 @@ supply method.")
 (define-public trytond-sale-supply-drop-shipment
   (package
     (name "trytond-sale-supply-drop-shipment")
-    (version "6.2.1")
+    (version "7.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_supply_drop_shipment" version))
        (sha256
-        (base32 "1i3a8amm3nacc7wis3amr4z9pl47sjzy7gds5qv1xg3fl1awm4ic"))))
-    (build-system python-build-system)
+        (base32 "04ydxw9jqbq07z5hl4aw31riyp9pv097v50zg9i4d7j2aykkldir"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_supply_drop_shipment"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-sale-amendment
+            trytond-stock-split
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-company
@@ -3735,16 +4560,16 @@ shipment is created and linked to both the purchase and the sale.")
 (define-public trytond-sale-supply-production
   (package
     (name "trytond-sale-supply-production")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_sale_supply_production" version))
        (sha256
-        (base32 "08ky3mqprlqyksw91mqlb7mjkfpdrgzgnc862wm2q28s0aydn3dv"))))
-    (build-system python-build-system)
+        (base32 "062nmykl8q9cypza05rr9japx2z0h63310m78qkbwnqvmlfih8jn"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "sale_supply_production"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-production trytond-sale-supply))
     (home-page
@@ -3761,16 +4586,16 @@ back to the default supply method.")
 (define-public trytond-stock
   (package
     (name "trytond-stock")
-    (version "6.2.7")
+    (version "7.0.16")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock" version))
        (sha256
-        (base32 "02klx6qk2vrwiynxcdjnpqx593wr1wjg9sygh5zjzrqqwmjb16yi"))))
-    (build-system python-build-system)
+        (base32 "0kbp2s6dn8dp8h8pjasqylr8adicz52z02cqc6bpxr529aj7sa55"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list python-simpleeval
            trytond
@@ -3787,24 +4612,21 @@ between these locations, shipments for product arrivals and departures and
 inventory to control and update stock levels.")
     (license license:gpl3+)))
 
-(define-public python-trytond-stock
-  (deprecated-package "python-trytond-stock" trytond-stock))
-
 (define-public trytond-stock-assign-manual
   (package
     (name "trytond-stock-assign-manual")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_assign_manual" version))
        (sha256
-        (base32 "0jn5rbbgmr7jnddrbmy49r2vpfbbfsrgx1bkgjkg687d922lwnrh"))))
-    (build-system python-build-system)
+        (base32 "0rh6fap18m0pglc0rpvwy0px8gxkj5cy93pln9b2d98saxndiirc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_assign_manual"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-production" ,trytond-production)))
+     (cons* trytond-production
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-assign-manual")
@@ -3817,18 +4639,18 @@ location to pick products.")
 (define-public trytond-stock-consignment
   (package
     (name "trytond-stock-consignment")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_consignment" version))
        (sha256
-        (base32 "0c26gvqmh98hj7zp1kx3q30wdwnvy8j101m9kmsi21j9n2nw7maj"))))
-    (build-system python-build-system)
+        (base32 "0q8kszbcndm58x6yngyi1phqqzmsd9rawv6rdc00q8x4xyjsc9wr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_consignment"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-stock-supply" ,trytond-stock-supply)))
+     (cons* trytond-stock-supply
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-account-invoice
@@ -3847,18 +4669,21 @@ consignment stock from supplier or at customer warehouse.")
 (define-public trytond-stock-forecast
   (package
     (name "trytond-stock-forecast")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_forecast" version))
        (sha256
-        (base32 "19w4q71rm4j0rlsdp6d2ykyjcdkrvq5mjlprsdk6890dmnxm6czx"))))
-    (build-system python-build-system)
+        (base32 "0avj0j3aphfqr97j7yy5kx2xz1znlf2bsls7c6dxkxwmr9k8p6w0"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_forecast"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list trytond trytond-company trytond-product trytond-stock))
+     (list trytond
+           trytond-company
+           trytond-product
+           trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-forecast")
     (synopsis "Tryton module with stock forecasts")
     (description "The @emph{Stock Forecast} Tryton module provide a simple way
@@ -3869,16 +4694,16 @@ other stock mechanisms to anticipate customer demand.")
 (define-public trytond-stock-inventory-location
   (package
     (name "trytond-stock-inventory-location")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_inventory_location" version))
        (sha256
-        (base32 "1x35rq6hzxb9wzsflvlsbl1fjgqcp6byrj4rk20fvgbhnv02s4x0"))))
-    (build-system python-build-system)
+        (base32 "1z79j28liyrf1wk34vpnqrvv0d9pil74scmghyn6s3d5a0hvaia6"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_inventory_location"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-company trytond-product trytond-stock))
     (home-page
@@ -3891,18 +4716,18 @@ wizard \"Create Inventories\" under the \"Inventories\" sub-menu.")
 (define-public trytond-stock-location-move
   (package
     (name "trytond-stock-location-move")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_location_move" version))
        (sha256
-        (base32 "07f0xq26wc0vpxf94655gsya3nxsa2xpi6v1c74q5a2qan4gkv9k"))))
-    (build-system python-build-system)
+        (base32 "0qm25pa1w7cark6bphxfqvb0rw0zrr3izn7rllzsy4drvnh7ad1k"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_location_move"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-stock-supply" ,trytond-stock-supply)))
+     (cons* trytond-stock-supply
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-location-move")
@@ -3915,16 +4740,16 @@ defining some Locations as movable
 (define-public trytond-stock-location-sequence
   (package
     (name "trytond-stock-location-sequence")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_location_sequence" version))
        (sha256
-        (base32 "0ab2jf36mmbkg0hrhwrmpjh5m9kpl60mz1gdkb2zhv629z9bxr13"))))
-    (build-system python-build-system)
+        (base32 "12ahqcxxfsk5iwxyyx7fz1hplp4yjdrw11ybyd1cdvcx3zsjblag"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_location_sequence"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-stock))
     (home-page
@@ -3937,42 +4762,46 @@ ordering to location.")
 (define-public trytond-stock-lot
   (package
     (name "trytond-stock-lot")
-    (version "6.2.0")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_lot" version))
        (sha256
-        (base32 "0z0ligvgvm2py794sg2ay5r47pm30m890lmfp2jvdr3vjbq3f1a3"))))
-    (build-system python-build-system)
+        (base32 "1vgc9j221sp0wrs5c90pl5z5xmi6qdn2jm5s0hpaw94sv883j464"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_lot"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs
+     (cons* trytond-stock-split
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-product trytond-stock))
+     (list trytond
+           trytond-product
+           trytond-stock))
     (home-page "https://www.tryton.org/")
     (synopsis "Tryton module for lot of products")
     (description
      "This package provides a Tryton module that defines lot of products.")
     (license license:gpl3+)))
 
-(define-public python-trytond-stock-lot
-  (deprecated-package "python-trytond-stock-lot" trytond-stock-lot))
-
 (define-public trytond-stock-lot-sled
   (package
     (name "trytond-stock-lot-sled")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_lot_sled" version))
        (sha256
-        (base32 "14bx84snw6kd896h6gdd825qrg2p7nmm341xl8qvrpn34jq3p2p1"))))
-    (build-system python-build-system)
+        (base32 "1bvdd4jlw3rplpqpjl3k34hzlpv4mmahc1ga3qacr3n03w1040sc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_lot_sled"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list trytond trytond-product trytond-stock trytond-stock-lot))
+     (list trytond
+           trytond-product
+           trytond-stock
+           trytond-stock-lot))
     (home-page "https://docs.tryton.org/projects/modules-stock-lot-sled")
     (synopsis "Tryton module for shelf life expiration date of product lots")
     (description "The @emph{Stock Lot Sled} Tryton module adds the \"Shelf
@@ -3984,18 +4813,18 @@ it is no more used to compute the forecast quantity of the stock.")
 (define-public trytond-stock-lot-unit
   (package
     (name "trytond-stock-lot-unit")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_lot_unit" version))
        (sha256
-        (base32 "1m6vbz57y0yrjv4z447gggqgcwd6dzk0hrycv5zvbq4h1kscrh6z"))))
-    (build-system python-build-system)
+        (base32 "0zpyhspnfbcr45x5c5w8dgz1ssl5z72l36c3w4j05z3c0lxs50vz"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_lot_unit"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-production" ,trytond-production)))
+     (cons* trytond-production
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-product trytond-stock trytond-stock-lot))
     (home-page "https://docs.tryton.org/projects/modules-stock-lot-unit")
@@ -4007,18 +4836,21 @@ unit and quantity on stock lot.")
 (define-public trytond-stock-package
   (package
     (name "trytond-stock-package")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_package" version))
        (sha256
-        (base32 "1jy7qz62h29rf10mjr9d9pm6g53ira26m77iccs0cwv3qlrv87rg"))))
-    (build-system python-build-system)
+        (base32 "1ambw85d8ibi5b5pki8frc401m5xiyjikwrkqlnbi86h6r3agacc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_package"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list trytond trytond-company trytond-product trytond-stock))
+     (list trytond
+           trytond-company
+           trytond-product
+           trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-package")
     (synopsis "Tryton module for stock packaging")
     (description "The @emph{Stock Package} Tryton module allows storing
@@ -4028,16 +4860,16 @@ packaging information about customer and supplier return shipments.")
 (define-public trytond-stock-package-shipping
   (package
     (name "trytond-stock-package-shipping")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_package_shipping" version))
        (sha256
-        (base32 "0j902bvkmfhn353z6dgfbik7jh5yps13jz4dq785rqj2ia5az9iq"))))
-    (build-system python-build-system)
+        (base32 "1md2rxdgsgblk2vsicr0xx7pjdixc69awy3wsdlq0vxmxaicahfa"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_package_shipping"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-carrier
@@ -4057,20 +4889,31 @@ interact with shipping service providers.")
 (define-public trytond-stock-package-shipping-dpd
   (package
     (name "trytond-stock-package-shipping-dpd")
-    (version "6.2.3")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_package_shipping_dpd" version))
        (sha256
-        (base32 "0q7g5qg9j32kn51yigiahd939k2x9gfsnb8k6kinyc9vhq3anbkx"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "stock_package_shipping_dpd"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "18sdjrg6p4bjlv2jahial0as3j54r9r6a915fbw6ji7bvrk9ify6"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "stock_package_shipping_dpd"
+                                 "-k not scenario_shipping_dpd"))
+    (native-inputs
+     (cons* trytond-sale
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list python-pypdf2 trytond trytond-party trytond-product trytond-stock
-           trytond-stock-package trytond-stock-package-shipping
-           trytond-stock-shipment-measurements python-zeep))
+     (list python-pypdf
+           python-zeep
+           trytond
+           trytond-party
+           trytond-product
+           trytond-stock
+           trytond-stock-package
+           trytond-stock-package-shipping
+           trytond-stock-shipment-measurements))
     (home-page
      "https://docs.tryton.org/projects/modules-stock-package-shipping-dpd")
     (synopsis "DPD connector for the Tryton application platform")
@@ -4082,16 +4925,20 @@ different web services, the module supports:")
 (define-public trytond-stock-package-shipping-mygls
   (package
     (name "trytond-stock-package-shipping-mygls")
-    (version "6.2.1")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_stock_package_shipping_mygls" version))
               (sha256
-               (base32 "0pwq720mqv473s5aqib89z5bjdl127l8nqw91prxsna82bm16kv2"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_stock_package_shipping_mygls"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-pypdf2
+               (base32 "1qm1a9mkb8w2jaz149zk7rvv7w9s0irmv9fdnwhp3jmxlfrvh7xm"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "stock_package_shipping_mygls"
+                                 "-k not scenario_shipping_mygls"))
+    (native-inputs
+     (cons* trytond-sale
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
+    (propagated-inputs (list python-pypdf
                              trytond
                              trytond-carrier
                              trytond-stock
@@ -4107,17 +4954,23 @@ package labels to be generated for shipments using MyGLS webservices.")
 (define-public trytond-stock-package-shipping-sendcloud
   (package
     (name "trytond-stock-package-shipping-sendcloud")
-    (version "6.2.1")
+    (version "7.0.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_stock_package_shipping_sendcloud" version))
               (sha256
-               (base32 "1hvlyrdz1nv1l06qrdj1np8yfyip8hhw0l7wbin1rab63hbxa8rf"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_stock_package_shipping_sendcloud"))
-    (native-inputs (%standard-trytond-native-inputs))
+               (base32 "04jm3ippy3ym79c1akx9fypw7nj80drbywsa3j7aa5bj043jk269"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "stock_package_shipping_sendcloud"
+                                 "-k not scenario_shipping_sendcloud"))
+    (native-inputs
+     (cons* trytond-sale
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs (list python-requests
                              trytond
+                             trytond-carrier
                              trytond-company
                              trytond-party
                              trytond-product
@@ -4136,19 +4989,27 @@ supported carriers.")
 (define-public trytond-stock-package-shipping-ups
   (package
     (name "trytond-stock-package-shipping-ups")
-    (version "6.2.0")
+    (version "7.0.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_package_shipping_ups" version))
        (sha256
-        (base32 "198i6fdb9ghcsd7z1cb1f3m261dl9w9hxmzzvs7h51f2lbw07n58"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "stock_package_shipping_ups"))
-    (native-inputs (%standard-trytond-native-inputs))
+        (base32 "0zpcpfdc0fp258n7kfdmdscal4d922121jxfh6lcgjs5pjfbn8r5"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an api key
+    (arguments (tryton-arguments "stock_package_shipping_ups"
+                                 "-k not scenario_shipping_ups"))
+    (native-inputs
+     (cons* trytond-sale
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list python-requests
+     (list python-oauthlib
+           python-requests
+           python-requests-oauthlib
            trytond
+           trytond-carrier
            trytond-party
            trytond-product
            trytond-stock
@@ -4165,20 +5026,30 @@ you to generate the UPS labels per package using the UPS webservices.")
 (define-public trytond-stock-product-location
   (package
     (name "trytond-stock-product-location")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_product_location" version))
        (sha256
-        (base32 "18r7j40zdbva8rcxyhianjwb7m30db7qf85709kivvbvbk93rabh"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "stock_product_location"))
+        (base32 "1pd9qvfzw89c8dx75i2mn23h1gn44mxviji5msm466ig3zi21qhx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases #$(tryton-phases "stock_product_location")
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; DB_CACHE and pytest don't work together here
+                (invoke "python" "-m" "unittest" "discover")))))))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-production" ,trytond-production)))
+     (cons* trytond-production
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-product trytond-stock))
+     (list trytond
+           trytond-product
+           trytond-stock))
     (home-page
      "https://docs.tryton.org/projects/modules-stock-product-location")
     (synopsis "Tryton module to add default location on product")
@@ -4192,18 +5063,18 @@ warehouse.")
 (define-public trytond-stock-quantity-early-planning
   (package
     (name "trytond-stock-quantity-early-planning")
-    (version "6.2.2")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_quantity_early_planning" version))
        (sha256
-        (base32 "04fj6h21kl4ab8vl1w9vhnvsxgjg6qd1gxcf1i6r7pfsbhjz8gfj"))))
-    (build-system python-build-system)
+        (base32 "0zk6y57yykm8yb2qnbcypkfaw3a9g0isqz2v6hl21kpxnyz4sicc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_quantity_early_planning"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-production" ,trytond-production)))
+     (cons* trytond-production
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-company trytond-stock))
     (home-page
@@ -4216,18 +5087,18 @@ reducing stock level by proposing to consume earlier.")
 (define-public trytond-stock-quantity-issue
   (package
     (name "trytond-stock-quantity-issue")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_quantity_issue" version))
        (sha256
-        (base32 "0ig2lix5qw8ql1gax8dymwc7advmf9x3xc8djhw5sgb8v0bvknrv"))))
-    (build-system python-build-system)
+        (base32 "19vpka6czcg4s93wx8r7j4rx4i327gr5fpiys1bwzjyqqpw08apa"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_quantity_issue"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-production" ,trytond-production)))
+     (cons* trytond-production
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond trytond-company trytond-product trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-quantity-issue")
@@ -4239,16 +5110,16 @@ stock quantity issues.")
 (define-public trytond-stock-secondary-unit
   (package
     (name "trytond-stock-secondary-unit")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_secondary_unit" version))
        (sha256
-        (base32 "0ihhgf4xs5rrf12v9mfj4rpsxjrqfl7schp3r66cdmrm0ccnrj29"))))
-    (build-system python-build-system)
+        (base32 "0xb85s763yf1icl05f09m4wizk1klby6bqj7addwnld2ycm906ga"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_secondary_unit"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-secondary-unit")
@@ -4260,18 +5131,21 @@ secondary unit of measure on the stock move.")
 (define-public trytond-stock-shipment-cost
   (package
     (name "trytond-stock-shipment-cost")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_shipment_cost" version))
        (sha256
-        (base32 "0abl4lw0mz7c1chv5c5r3341cqcfz49nw00g9y12kxbxib17h3fc"))))
-    (build-system python-build-system)
+        (base32 "04v7s9amb225r60zrhlp3kv4xykaws7gwvg1sdvxflq6zkxn0brv"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_shipment_cost"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list trytond trytond-carrier trytond-product trytond-stock))
+     (list trytond
+           trytond-carrier
+           trytond-product
+           trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-shipment-cost")
     (synopsis "Tryton module for stock shipment cost")
     (description "The @emph{Stock Shipment Cost} Tryton Module adds a shipment
@@ -4279,23 +5153,50 @@ cost on the outgoing moves which is calculated from the carrier purchase
 price.  This cost is added to the product margin reports.")
     (license license:gpl3+)))
 
+(define-public trytond-stock-shipment-cost-weight
+  (package
+    (name "trytond-stock-shipment-cost-weight")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trytond_stock_shipment_cost_weight" version))
+       (sha256
+        (base32 "0ayrwalpn2ryis94wgjvaplp9azfjdyzqw331ipvm5s3ayfcbjia"))))
+    (build-system pyproject-build-system)
+    (arguments (tryton-arguments "stock_shipment_cost_weight"))
+    (native-inputs %standard-trytond-native-inputs)
+    (propagated-inputs
+     (list trytond
+           trytond-carrier
+           trytond-stock-shipment-cost
+           trytond-stock-shipment-measurements))
+    (home-page "https://docs.tryton.org/projects/modules-stock-shipment-cost-weight")
+    (synopsis "Tryton module to allocate shipment cost \"by weight\"")
+    (description "The @emph{Stock Shipment Cost Weight} Tryton module adds “by
+weight” as allocation method of shipment cost on the carrier.")
+    (license license:gpl3+)))
+
 (define-public trytond-stock-shipment-measurements
   (package
     (name "trytond-stock-shipment-measurements")
-    (version "6.2.1")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_shipment_measurements" version))
        (sha256
-        (base32 "0a2p3c1780waa779kx24vpknjr9g6z8097ika9kl047xzdnw4n00"))))
-    (build-system python-build-system)
+        (base32 "1w7xaxkqwwgxjlypk1gh1765nd0p28hqnqc4m0qab4r4gl4jgr56"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_shipment_measurements"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-stock-package" ,trytond-stock-package)))
+     (cons* trytond-stock-package
+            %standard-trytond-native-inputs))
     (propagated-inputs
-     (list trytond trytond-product trytond-product-measurements
+     (list trytond
+           trytond-company
+           trytond-product
+           trytond-product-measurements
            trytond-stock))
     (home-page
      "https://docs.tryton.org/projects/modules-stock-shipment-measurements")
@@ -4308,16 +5209,16 @@ measurement and the quantity of their moves.")
 (define-public trytond-stock-split
   (package
     (name "trytond-stock-split")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_split" version))
        (sha256
-        (base32 "1gqbkncdg084cxfsq7vc4ikvdajd2akbl2ryi3awh5xs7phrpabf"))))
-    (build-system python-build-system)
+        (base32 "0hvkk7n160w05xwyjlh11p41q2wg2wq7zylmh7wypbc6k7qx0m2g"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_split"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-stock))
     (home-page "https://docs.tryton.org/projects/modules-stock-split")
@@ -4331,16 +5232,16 @@ there can be a move with the remaining quantity.")
 (define-public trytond-stock-supply
   (package
     (name "trytond-stock-supply")
-    (version "6.2.2")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_supply" version))
        (sha256
-        (base32 "1kb6rnb1xk8hnqr9znfpgh8m66590zqbar62xr7094bwaym2ymaa"))))
-    (build-system python-build-system)
+        (base32 "14sckfm145awpx9flcsrfc16yl4wxg2asjsmpz57clm2c6nnrhmr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_supply"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond
            trytond-account
@@ -4356,22 +5257,33 @@ there can be a move with the remaining quantity.")
 mechanisms and introduces the concepts of order point.")
     (license license:gpl3+)))
 
-(define-public python-trytond-stock-supply
-  (deprecated-package "python-trytond-stock-supply" trytond-stock-supply))
+(define-public trytond-stock-supply-bootstrap
+  (hidden-package
+   (package/inherit trytond-stock-supply
+     (name "trytond-stock-supply-bootstrap")
+     (arguments
+      (list
+       #:tests? #f
+       #:phases
+       #~(modify-phases %standard-phases
+           (delete 'sanity-check))))
+     (propagated-inputs
+      (modify-inputs (package-propagated-inputs trytond-stock-supply)
+        (delete "trytond-purchase-request"))))))
 
 (define-public trytond-stock-supply-day
   (package
     (name "trytond-stock-supply-day")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_supply_day" version))
        (sha256
-        (base32 "112xzrzw2k4badync2qd9aanvni43nh86qhrdh754f311km5gh7q"))))
-    (build-system python-build-system)
+        (base32 "1bh8wn40s6i6agr67zl7a7k4l537haadp8czgvdcwckz3nlh0flq"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_supply_day"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-purchase))
     (home-page "https://docs.tryton.org/projects/modules-stock-supply-day")
@@ -4385,16 +5297,16 @@ a supplying may happens at any day of the week.")
 (define-public trytond-stock-supply-forecast
   (package
     (name "trytond-stock-supply-forecast")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_supply_forecast" version))
        (sha256
-        (base32 "0b7d8csjcn74086wgm6cydirsl1ygrd9hysd7l4kmd3jz8bb8dzs"))))
-    (build-system python-build-system)
+        (base32 "1wp0ajsxpnw03az5xrhd24lyh64d2w357x6456c622yi4bgg957v"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_supply_forecast"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-stock-forecast trytond-stock-supply))
     (home-page
@@ -4407,16 +5319,16 @@ forecast into account to compute purchase requests.")
 (define-public trytond-stock-supply-production
   (package
     (name "trytond-stock-supply-production")
-    (version "6.2.0")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_stock_supply_production" version))
        (sha256
-        (base32 "03cs9g9yfw885ia03x2lxkpjnh919ynizimvvx1jay62i3adk7a2"))))
-    (build-system python-build-system)
+        (base32 "0anghn1h2afv7j6wr4b4ymwwyr1kf7j98l01v857p1q6086k898m"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "stock_supply_production"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-product trytond-production trytond-stock
            trytond-stock-supply))
@@ -4430,18 +5342,20 @@ supply mechanisms via production request.")
 (define-public trytond-timesheet
   (package
     (name "trytond-timesheet")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_timesheet" version))
        (sha256
-        (base32 "0lbdb0743mj33vrzrb3fq93d3ksj3395d7q0ivbplp1nn3hrh6sq"))))
-    (build-system python-build-system)
+        (base32 "1f4js2aykh68b272mijlqlzphkim2c37qb9dnbgcydqaydvy9025"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "timesheet"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
-     (list trytond trytond-company trytond-company-work-time))
+     (list trytond
+           trytond-company
+           trytond-company-work-time))
     (home-page "https://docs.tryton.org/projects/modules-timesheet")
     (synopsis "Tryton module with timesheets")
     (description "The @emph{Timesheet} Tryton module allows tracking the time
@@ -4453,16 +5367,16 @@ periods.")
 (define-public trytond-timesheet-cost
   (package
     (name "trytond-timesheet-cost")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_timesheet_cost" version))
        (sha256
-        (base32 "1b1xi7fa371kdsci0naskspvznswb8z8yay7nrzzi8rv622g0cjw"))))
-    (build-system python-build-system)
+        (base32 "0j01gmci9kzjlp0jplg3k36hzwa4cws51jxbjlni65szmm4vsvkw"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "timesheet_cost"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-company trytond-party trytond-timesheet))
     (home-page "https://docs.tryton.org/projects/modules-timesheet-cost")
@@ -4474,16 +5388,16 @@ employee.")
 (define-public trytond-user-role
   (package
     (name "trytond-user-role")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_user_role" version))
        (sha256
-        (base32 "0kx6vqmhny8xjzm2wsy0kf14ybgcdig1cjhyir9b0v11fbavhbw7"))))
-    (build-system python-build-system)
+        (base32 "08mds3hfzwfhk7cgdanhz9p943naqi355ih9w15psri4h87234i1"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "user_role"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond))
     (home-page "https://docs.tryton.org/projects/modules-user-role")
@@ -4497,23 +5411,26 @@ user for a period of time only.")
 (define-public trytond-web-shop
   (package
     (name "trytond-web-shop")
-    (version "6.2.0")
+    (version "7.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_web_shop" version))
        (sha256
-        (base32 "182mawahm74lkns2cpy9lrczhllpa8p8np1d7k9agv9kypaqq582"))))
-    (build-system python-build-system)
+        (base32 "19i8c34jcgni6q6fyr0dbfpcbcri9cw2nrwh7j609yspvi4x2was"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "web_shop"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-product-attribute" ,trytond-product-attribute)
-       ("trytond-product-image" ,trytond-product-image)))
+     (cons* trytond-account-tax-rule-country
+            trytond-product-attribute
+            trytond-product-image
+            trytond-sale-price-list
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list trytond
            trytond-account
            trytond-company
+           trytond-country
            trytond-currency
            trytond-product
            trytond-sale
@@ -4528,29 +5445,39 @@ configuration of an online web shop.")
 (define-public trytond-web-shop-shopify
   (package
     (name "trytond-web-shop-shopify")
-    (version "6.2.2")
+    (version "7.0.10")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "trytond_web_shop_shopify" version))
               (sha256
-               (base32 "1nd2wnzr6cibqcsidk0k98iy4vs7dy7crhld60wkbza8pgc23hc4"))))
-    (build-system python-build-system)
-    (arguments (tryton-arguments "trytond_web_shop_shopify"))
-    (native-inputs (%standard-trytond-native-inputs))
-    (propagated-inputs (list python-dateutil
-                             python-pyactiveresource
-                             python-shopifyapi
-                             python-sql
-                             trytond
-                             trytond-account-payment
-                             trytond-currency
-                             trytond-party
-                             trytond-product
-                             trytond-product-attribute
-                             trytond-sale
-                             trytond-sale-payment
-                             trytond-stock
-                             trytond-web-shop))
+               (base32 "1jfjj52gxp0hrkh43wydaly4czzip4xx0ck39mpnqqla5ax2jq9i"))))
+    (build-system pyproject-build-system)
+    ;; doctest requires network and an account at shopify
+    (arguments
+     (tryton-arguments "web_shop_shopify" "-k not scenario_web_shop_shopify"))
+    (native-inputs
+     (cons* trytond-account-payment-clearing
+            trytond-customs
+            trytond-product-image
+            trytond-product-measurements
+            trytond-sale-discount
+            trytond-sale-secondary-unit
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
+    (propagated-inputs
+     (list python-pyactiveresource
+           python-shopifyapi
+           trytond
+           trytond-account-payment
+           trytond-currency
+           trytond-party
+           trytond-product
+           trytond-product-attribute
+           trytond-sale
+           trytond-sale-amendment
+           trytond-sale-payment
+           trytond-stock
+           trytond-web-shop))
     (home-page "https://docs.tryton.org/projects/modules-web-shop-shopify")
     (synopsis "Integrate Tryton with Shopify")
     (description "The @emph{Web Shop Shopify} Tryton module provides a way to
@@ -4561,23 +5488,22 @@ to Shopify, and downloads orders, transactions and creates fulfilments.")
 (define-public trytond-web-shop-vue-storefront
   (package
     (name "trytond-web-shop-vue-storefront")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_web_shop_vue_storefront" version))
        (sha256
-        (base32 "18rc77crfdckzxcz5wryqk0iqccm3mx2a6b956274643sa8kbhvs"))))
-    (build-system python-build-system)
+        (base32 "051xsffvhigra6xf7vnl9vnsd9d393xg9b2alcfy6h5fz5f2zxcr"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "web_shop_vue_storefront"))
     (native-inputs
-     `(,@(%standard-trytond-native-inputs)
-       ("trytond-carrier" ,trytond-carrier)
-       ("trytond-product-attribute" ,trytond-product-attribute)
-       ("trytond-product-image" ,trytond-product-image)
-       ("trytond-sale-promotion-coupon" ,trytond-sale-promotion-coupon)
-       ("trytond-sale-shipment-cost" ,trytond-sale-shipment-cost)
-       ("trytond-stock-shipment-cost" ,trytond-stock-shipment-cost)))
+     (cons* trytond-carrier
+            trytond-product-attribute
+            trytond-product-image
+            trytond-sale-promotion-coupon
+            trytond-sale-shipment-cost
+            %standard-trytond-native-inputs))
     (propagated-inputs
      (list python-elasticsearch
            python-stdnum
@@ -4597,16 +5523,16 @@ Vue Storefront 1.x.")
 (define-public trytond-web-shop-vue-storefront-stripe
   (package
     (name "trytond-web-shop-vue-storefront-stripe")
-    (version "6.2.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_web_shop_vue_storefront_stripe" version))
        (sha256
-        (base32 "0qzcflcrkd35da9vb9gl9mnxg7dis1sz9kp9hb6hbnmyjbhdz17k"))))
-    (build-system python-build-system)
+        (base32 "1350gyrvx8r845cikvl0p3z9rpnkz2apcqz5blx26pzhdlvkk5x5"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "web_shop_vue_storefront_stripe"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-account-payment-stripe trytond-sale-payment
            trytond-web-shop trytond-web-shop-vue-storefront))
@@ -4620,16 +5546,16 @@ provides support of Stripe payment for Vue Storefront integration.")
 (define-public trytond-web-shortener
   (package
     (name "trytond-web-shortener")
-    (version "6.2.1")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_web_shortener" version))
        (sha256
-        (base32 "0mjcp97f5dh6lzgw4yhd7k01jlmaga1jvsc07as1snz9y7r06kpk"))))
-    (build-system python-build-system)
+        (base32 "052c4sylpqjgwgk02zy9kq1pdxbnfciga7lf8aip8sxry55n95in"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "web_shortener"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond))
     (home-page "https://docs.tryton.org/projects/modules-web-shortener")
@@ -4642,16 +5568,16 @@ optionally triggers action.")
 (define-public trytond-web-user
   (package
     (name "trytond-web-user")
-    (version "6.2.0")
+    (version "7.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "trytond_web_user" version))
        (sha256
-        (base32 "04b3mb4kxibz073746c90i9k4gsc3vnnk47fcn4wqj2b2wq6smng"))))
-    (build-system python-build-system)
+        (base32 "1ww3074ywgvh7rl007m85lndnhywkx71gsi302nxrsvrkjnxjjyc"))))
+    (build-system pyproject-build-system)
     (arguments (tryton-arguments "web_user"))
-    (native-inputs (%standard-trytond-native-inputs))
+    (native-inputs %standard-trytond-native-inputs)
     (propagated-inputs
      (list trytond trytond-party))
     (home-page "https://docs.tryton.org/projects/modules-web-user")

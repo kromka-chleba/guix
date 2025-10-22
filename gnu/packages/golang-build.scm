@@ -91,7 +91,7 @@ interoperate.")
 (define-public go-github-com-ebitengine-purego
   (package
     (name "go-github-com-ebitengine-purego")
-    (version "0.8.4")
+    (version "0.9.0")
     (source
      (origin
        (method git-fetch)
@@ -100,14 +100,14 @@ interoperate.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0sy5cn56wxwv1qpl6vg5160hlk004m5wdlf18rfnj63573f5kivh"))))
+        (base32 "0qkjn7xswbfrly8bwryww0jwfdasig9bfx24dnwryz8iakkyww6f"))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/ebitengine/purego"
       ;; TODO: This failed test should be proper checked.
       ;; ld:
-      ;; /tmp/guix-build-go-github-com-ebitengine-purego-0.8.4.drv-0/ccguQKNs.o:
+      ;; /tmp/guix-build-go-github-com-ebitengine-purego-0.9.0.drv-0/ccguQKNs.o:
       ;; relocation R_X86_64_32 against `.bss' can not be used when making a
       ;; shared object; recompile with -fPIC ld: failed to set dynamic section
       ;; sizes: bad value collect2: error: ld returned 1 exit status
@@ -384,6 +384,34 @@ replace a file or symbolic link.")
 1.1: Authentication and Security Services.")
     (license license:bsd-3)))
 
+(define-public go-github-com-matttproud-golang-protobuf-extensions
+  (package
+    (name "go-github-com-matttproud-golang-protobuf-extensions")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matttproud/golang_protobuf_extensions")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xqsf9vpcrd4hp95rl6kgmjvkv1df4aicfw4l5vfcxcwxknfx2xs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/matttproud/golang_protobuf_extensions"))
+    (propagated-inputs
+     (list go-github-com-golang-protobuf))
+    (home-page "https://github.com/matttproud/golang_protobuf_extensions")
+    (synopsis "Support for streaming Protocol Buffer messages for Golang")
+    (description
+     "This package provides various Protocol Buffer extensions for the Go
+language (golang), namely support for record length-delimited message
+streaming.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-mmcloughlin-avo
   (package
     (name "go-github-com-mmcloughlin-avo")
@@ -450,16 +478,17 @@ primitives in Go.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/twitchyliquid64/golang-asm")
-             (commit (string-append "v" version))))
+              (url "https://github.com/twitchyliquid64/golang-asm")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1akw41i0snxqw9lqzmnn4gx6hd5js5dr1vmfkm49wxans4k14vw4"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/twitchyliquid64/golang-asm"))
+      #:import-path "github.com/twitchyliquid64/golang-asm"
+      #:test-flags
+      #~(list "-vet=off")))   ;Go@1.24 forces vet, but tests are not ready yet.
     (home-page "https://github.com/twitchyliquid64/golang-asm")
     (synopsis "Assembler from the Go compiler, in library form")
     (description
@@ -471,16 +500,16 @@ library.")
 (define-public go-github-com-yuin-goldmark
   (package
     (name "go-github-com-yuin-goldmark")
-    (version "1.7.12")
+    (version "1.7.13")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/yuin/goldmark")
-             (commit (string-append "v" version))))
+              (url "https://github.com/yuin/goldmark")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qc665b8clfvah62l8bkk473ybng7qzwwibxsq5wskfswv5yaj94"))))
+        (base32 "183v5bzgwr7ibbj6srnaaq7n98xqifaswa0c01yf693p5l6q3q6m"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -529,7 +558,7 @@ library.")
 (define-public go-golang-org-x-arch
   (package
     (name "go-golang-org-x-arch")
-    (version "0.17.0")
+    (version "0.22.0")
     (source
      (origin
        (method git-fetch)
@@ -538,7 +567,7 @@ library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02qwvciikyrssifdp50zbjgqvpkb6sj09jzjvyl1n9v5fvg7mxba"))))
+        (base32 "14s32fhg9wxvnsnl9szfsbhkxyxcql6dg2qwli055wfly8wly26m"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -563,28 +592,47 @@ toolchain.  The parts needed in the main Go repository are copied in.")
 (define-public go-golang-org-x-crypto
   (package
     (name "go-golang-org-x-crypto")
-    (version "0.38.0")
+    (version "0.43.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/crypto")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/crypto")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wx7wf3ifb10cx2yckm925a9ydy5bw3iv664cma27abkfssj07ba"))
+        (base32 "1d49g86ndfzj40nrichhhsknn6lgl1gh8862dmgsx0l0885kik9i"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
             ;; Submodules with their own go.mod files and packaged separately:
             ;;
-            ;; - olang.org/x/crypto/x509roots/fallback
-            (for-each delete-file-recursively (list "x509roots/fallback"))))))
+            ;; - golang.org/x/crypto/argon2/_asm
+            ;; - golang.org/x/crypto/blake2b/_asm/AVX2
+            ;; - golang.org/x/crypto/blake2b/_asm/standard
+            ;; - golang.org/x/crypto/blake2s/_asm
+            ;; - golang.org/x/crypto/chacha20poly1305/_asm
+            ;; - golang.org/x/crypto/internal/poly1305/_asm
+            ;; - golang.org/x/crypto/salsa20/salsa/_asm
+            ;; - golang.org/x/crypto/sha3/_asm
+            ;; - golang.org/x/crypto/x509roots/fallback
+            (for-each delete-file-recursively
+                      (list "argon2/_asm"
+                            "blake2b/_asm/AVX2"
+                            "blake2b/_asm/standard"
+                            "blake2s/_asm"
+                            "chacha20poly1305/_asm"
+                            "internal/poly1305/_asm"
+                            "salsa20/salsa/_asm"
+                            "sha3/_asm"
+                            "x509roots/fallback"))))))
     (build-system go-build-system)
     (arguments
      (list
       #:skip-build? #t
       #:import-path "golang.org/x/crypto"
+      ;; panic: testing: test using t.Setenv or t.Chdir can not use t.Parallel
+      #:test-flags #~(list "-skip" "TestWithPebble")
       #:phases
       #~(modify-phases %standard-phases
           ;; Network access required: go mod download -json
@@ -611,7 +659,8 @@ toolchain.  The parts needed in the main Go repository are copied in.")
      (list go-golang-org-x-net-bootstrap
            go-golang-org-x-text-bootstrap))
     (propagated-inputs
-     (list go-golang-org-x-sys go-golang-org-x-term))
+     (list go-golang-org-x-sys
+           go-golang-org-x-term))
     (home-page "https://go.googlesource.com/crypto/")
     (synopsis "Supplementary cryptographic libraries in Go")
     (description
@@ -634,8 +683,9 @@ language.")
   (package
     (name "go-golang-org-x-exp")
     ;; Note: Beware, the updater gets this wrong.  Take the latest version
-    ;; string from <https://pkg.go.dev/golang.org/x/exp?tab=versions>.
-    (version "0.0.0-20250531010427-b6e5de432a8b")
+    ;; string from <https://pkg.go.dev/golang.org/x/exp?tab=versions>, or try
+    ;; "guix import go golang.org/x/exp".
+    (version "0.0.0-20250911091902-df9299821621")
     (source
      (origin
        (method git-fetch)
@@ -644,7 +694,7 @@ language.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vszjiblb7i79dp9x1zvfpjidnmkzsaq6ij2jfh63hv9ph7yz3hf"))
+        (base32 "0jmpq16f2d8i3bnwxa78j384vi5gynfajh34m2nh3vhji3d35777"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -667,25 +717,14 @@ language.")
       #~(list "-skip"
               (string-join
                (list
-                ;; Disable failing tests: error running `go mod init`:
-                ;; go: modules disabled by GO111MODULE=off.
+                ;; gorelease_test.go:310: error running `go mod init`: go:
+                ;; modules disabled by GO111MODULE=off; see 'go help modules'
                 "TestRelease_gitRepo_uncommittedChanges"
-                "TestFailure"
-                ;; Delete: want nil discarded elements, got
-                ;; 0xc000012858, 0xc000012860
-                "TestDeleteClearTail"
-                ;; DeleteFunc: want nil discarded elements, got
-                ;; 0xc000012910, 0xc000012918
-                "TestDeleteFuncClearTail"
-                ;; Compact: want nil discarded elements, got
-                ;; 0xc000012b30, 0xc000012b38
-                "TestCompactClearTail"
-                ;; CompactFunc: want nil discarded elements, got
-                ;; 0xc000012be8, 0xc000012bf0
-                "TestCompactFuncClearTail"
-                ;; Replace: want nil discarded element, got
-                ;; 0xc000013058
-                "TestReplaceClearTail")
+                ;; constraints_test.go:104:
+                ;; /gnu/store/vr0097qq0kl1ansn6iv5smysjh9v7ycd-go-1.24.3/lib/go/bin/go
+                ;; mod tidy: exit status 1 go: modules disabled by
+                ;; GO111MODULE=off; see 'go help modules'
+                "TestFailure")
                "|"))
       #:phases
       #~(modify-phases %standard-phases
@@ -693,6 +732,8 @@ language.")
             (lambda* (#:key import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
                 (delete-file-recursively "slog/benchmarks")))))))
+    (native-inputs
+     (list go-golang-org-x-tools-go-packages-packagestest))
     (propagated-inputs
      (list go-github-com-google-go-cmp
            go-golang-org-x-mod
@@ -721,7 +762,7 @@ directory) packages.")
     ;; Note: Beware, the updater gets this wrong.  Take the latest version
     ;; string from
     ;; <https://pkg.go.dev/golang.org/x/exp/typeparams?tab=versions>.
-    (version "0.0.0-20250531010427-b6e5de432a8b")
+    (version "0.0.0-20251009144603-d2f985daa21b")
     (source
      (origin
        (method git-fetch)
@@ -730,7 +771,7 @@ directory) packages.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vszjiblb7i79dp9x1zvfpjidnmkzsaq6ij2jfh63hv9ph7yz3hf"))))
+        (base32 "0kn9bcbrkdvg4f8kvc0cdahyyy72w2jf9v9c95k67k0b46fwh3i6"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -757,23 +798,23 @@ compile does not support generics.")
 (define-public go-golang-org-x-image
   (package
     (name "go-golang-org-x-image")
-    (version "0.27.0")
+    (version "0.32.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/image")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/image")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kc75lbfb0m9xp0idcqlpcis6xahblw2q7cj6vg9lmblxzqy5nvh"))))
+        (base32 "174mwxshc6idwihajb05h68ynf63ppfqw5zi6cm5ja08dsfbk43b"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:skip-build? #t
       #:import-path "golang.org/x/image"
       #:phases
       #~(modify-phases %standard-phases
-          (delete 'build) ; no go files in project's root
           (add-after 'unpack 'remove-examples
             (lambda* (#:key import-path #:allow-other-keys)
               (delete-file-recursively
@@ -800,20 +841,16 @@ compile does not support generics.")
 (define-public go-golang-org-x-mod
   (package
     (name "go-golang-org-x-mod")
-    ;; XXX: To update to 0.22.0+ go-1.23 is required, wich provides
-    ;; "go/version" module, see
-    ;; <https://cs.opensource.google/go/go/+/refs/tags/
-    ;; go1.23.0:src/go/version/version.go>.
-    (version "0.24.0")
+    (version "0.29.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/mod")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/mod")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17sjk98d3qwh9s6gqjmfy07z0gyj5hyv5a9kyg4si3yjfzbnwhx7"))))
+        (base32 "1cc79540hc7yjwmqi6574808i3i3p0n8q49fp7vccb86qgms1rcc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -851,7 +888,7 @@ loading algorithms.")
 (define-public go-golang-org-x-net
   (package
     (name "go-golang-org-x-net")
-    (version "0.40.0")
+    (version "0.46.0")
     (source
      (origin
        (method git-fetch)
@@ -860,7 +897,7 @@ loading algorithms.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zsh08wbamzlvlwvlw6slgcqhaa59rwz9pq01lbyjigw6cfww406"))))
+        (base32 "0zb45fmiwsi8nq56wfzk83q7ksqk8jaw8rlpnxv929c419gi8h0s"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -895,16 +932,16 @@ loading algorithms.")
 (define-public go-golang-org-x-sync
   (package
     (name "go-golang-org-x-sync")
-    (version "0.14.0")
+    (version "0.17.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/sync")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/sync")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gpa1v6wnp1bszk5iyiakq1j37icgxswj3iysdrdyp0yadw0pm30"))))
+        (base32 "0bga9sfiwqxs7g913p7b355hg30agw58h5f5k7rzgpsai37nbkik"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -939,7 +976,7 @@ cancellation for groups of goroutines working on subtasks of a common task
 (define-public go-golang-org-x-sys
   (package
     (name "go-golang-org-x-sys")
-    (version "0.33.0")
+    (version "0.37.0")
     (source
      (origin
        (method git-fetch)
@@ -948,7 +985,7 @@ cancellation for groups of goroutines working on subtasks of a common task
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19m090xd3abysvk1y07fhhd025k3s456i71ww0pq0b2pzsva5ra2"))))
+        (base32 "0cjq8n66i9cccigi204mkhqmrb9mdirxjxl0nk7c8s6w70fifbby"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1004,16 +1041,16 @@ low-level interaction with the operating system.")
     (name "go-golang-org-x-telemetry")
     ;; Beware: the updater gets this wrong.  Use the latest commit and its
     ;; matching date.
-    (version "0.0.0-20250529002037-25d2f7894191")
+    (version "0.0.0-20251009181524-91c411e14f39")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/telemetry")
-             (commit (go-version->git-ref version))))
+              (url "https://go.googlesource.com/telemetry")
+              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ymqig10vyrmzkali1wqhxrrb3fjvl7z9wmzf5g0dydb9a8ng42l"))
+        (base32 "0v5427r8il5bj9h86d7dy1k1g9jag9c7vmbq0kmrzhfn6l0c310c"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -1029,20 +1066,26 @@ low-level interaction with the operating system.")
       #~(list "-skip" (string-join
                        ;; Tests fail with error: failed to download config
                        ;; module.
-                       (list "TestConcurrentStart"
+                       (list "TestConcurrentStart" ;got 0 report dates, want 3
+                             "TestStart"           ;no upload occurred on 2786
                              "TestDownload"
+                             ;; got err clone: checking out
+                             ;; https://go.googlesource.com/tools: fork/exec
+                             ;; /bin/sh: no such file or directory
+                             "TestReadPCLineTable"
+                             "TestUpdateIssues"
+                             ;; querying go info: listing toolchain versions:
+                             ;; listing versions: exit status 1 (stderr: go:
+                             ;; list -m cannot be used with GO111MODULE=off
+                             "TestLoadedChartsAreValid"
                              "TestRun_Basic"
-                             "TestRun_Concurrent"
-                             "TestRun_DebugLog"
+                             "TestRun_Retries"
+                             "TestRun_MultipleUploads"
                              "TestRun_EmptyUpload"
                              "TestRun_MissingDate"
-                             "TestRun_ModeHandling/on"
-                             "TestRun_MultipleUploads"
-                             "TestRun_Retries"
-                             "TestStart" ;no upload occurred on 2786
-                             ;; TestLoadedChartsAreValid fails with "go: list
-                             ;; -cannot be used with GO111MODULE=off"
-                             "TestLoadedChartsAreValid")
+                             "TestRun_ModeHandling"
+                             "TestRun_DebugLog"
+                             "TestRun_Concurrent")
                        "|"))
       #:import-path "golang.org/x/telemetry"))
     (propagated-inputs
@@ -1060,7 +1103,7 @@ Go toolchain programs with opt-in telemetry.")
 (define-public go-golang-org-x-telemetry-config
   (package
     (name "go-golang-org-x-telemetry-config")
-    (version "0.48.0")
+    (version "0.68.0")
     (source
      (origin
        (method git-fetch)
@@ -1070,7 +1113,7 @@ Go toolchain programs with opt-in telemetry.")
                                           #:subdir "config"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lzybsdibr71y6n3x8qh37yh9vfwdmmdb6vksqimg4ayys373q7x"))))
+        (base32 "0v5427r8il5bj9h86d7dy1k1g9jag9c7vmbq0kmrzhfn6l0c310c"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1090,7 +1133,7 @@ telemetry uploads: GOOS, GOARCH, Go version, and per-program counters.")
 (define-public go-golang-org-x-term
   (package
     (name "go-golang-org-x-term")
-    (version "0.32.0")
+    (version "0.36.0")
     (source
      (origin
        (method git-fetch)
@@ -1099,7 +1142,7 @@ telemetry uploads: GOOS, GOARCH, Go version, and per-program counters.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09q25x265yyy4jfjqpm10x8jai30wcbhb7bqgkjll4gw2sz3zhz1"))))
+        (base32 "13xd1frw2jzqbd8743m5zhrq6asz9ar1maxd3cbk3rzybc9wx0p5"))))
     (build-system go-build-system)
     (arguments '(#:import-path "golang.org/x/term"))
     (propagated-inputs
@@ -1124,7 +1167,7 @@ terminals, as commonly found on Unix systems.")
 (define-public go-golang-org-x-text
   (package
     (name "go-golang-org-x-text")
-    (version "0.25.0")
+    (version "0.30.0")
     (source
      (origin
        (method git-fetch)
@@ -1133,7 +1176,7 @@ terminals, as commonly found on Unix systems.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r9532ml0psfby89agf20q23qzwfikhydl8q77ad5y73xvdx89lf"))))
+        (base32 "0pgpfzk86wqf6k2fbrxa80pz1jx6y4dfr4dr26pwsw6j7l3s5pby"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1174,16 +1217,16 @@ processing.")
 (define-public go-golang-org-x-time
   (package
     (name "go-golang-org-x-time")
-    (version "0.11.0")
+    (version "0.14.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/time")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/time")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bqgxv7b3n69h4mi4hwr51pfr1hr6s1h6k7nb3dl32dryy7xwr12"))))
+        (base32 "0xinpch5wm57hrf3d8iasxyszibqclsr911l7527al4y92myjn3x"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1199,80 +1242,60 @@ time.")
 (define-public go-golang-org-x-tools
   (package
     (name "go-golang-org-x-tools")
-    (version "0.33.0")
+    (version "0.37.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/tools")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/tools")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lbb4y1c5b4719pdhfcb90sdzagzsb2lw5hx8gizsba3cj0r0f25"))
+        (base32 "0l0srynl2cikmz089q5vqgifz6ll2ic1762fbfvak26vqbcx0knz"))
        (modules '((guix build utils)))
        (snippet
         '(begin
-           ;; gopls versions are tagged separately, and it is a
-           ;; separate Guix package.
-           (delete-file-recursively "gopls")))))
+           ;; Submodules with their own go.mod files and packaged separately:
+           ;;
+           ;; - golang.org/x/tools/cmd/auth
+           ;; - golang.org/x/tools/gopls
+           (delete-file-recursively "gopls")
+           (delete-file-recursively "cmd/auth")))))
     (build-system go-build-system)
     (arguments
      (list
+      #:skip-build? #t
       #:import-path "golang.org/x/tools"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; XXX: Workaround for go-build-system's lack of Go modules
-          ;; support.
-          (delete 'build)
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v"
-                          ;; TODO: They contain final project executable builds,
-                          ;; would be packed separately.
-                          ;; - cmd
-                          ;; - godoc
-
-                          ;; FIXME: Figure out why they are failing:
-                          ;; "./go/analysis/..."
-                          ;; "./go/callgraph/..."
-                          ;; "./go/packages/..."
-                          ;; "./go/ssa/..."
-                          ;; "./internal/..."
-                          ;; "./present/..."
-                          ;; "./refactor/eg/..."
-
-                          "./blog/..."  ;
-                          "./container/..."
-                          "./copyright/..."
-                          "./cover/..."
-                          "./go/ast/..."
-                          "./go/buildutil/..."
-                          "./go/cfg/..."
-                          "./go/expect/..."
-                          "./go/gccgoexportdata/..."
-                          "./go/gcexportdata/..."
-                          "./go/internal/..."
-                          "./go/loader/..."
-                          "./go/types/..."
-                          "./imports/..."
-                          "./playground/..."
-                          "./refactor/importgraph/..."
-                          "./refactor/rename/..."
-                          "./refactor/satisfy/..."
-                          "./txtar/..."
-                          "-skip"
-                          (string-join
-                           (list
-                            ;; The GenericPaths test fails with "invalid
-                            ;; memory address or nil pointer dereference".
-                            "TestGenericPaths"
-                            ;; The ordering and paths tests fails because they
-                            ;; can't find test packages (perhaps because we do
-                            ;; not support Go modules).
-                            "TestOrdering" "TestPaths")
-                           "|")))))))))
+      #:test-subdirs
+      #~(list "./blog/..."
+              "./container/..."
+              "./copyright/..."
+              "./cover/..."
+              "./go/ast/..."
+              "./go/buildutil/..."
+              "./go/cfg/..."
+              "./go/gccgoexportdata/..."
+              "./go/gcexportdata/..."
+              "./go/internal/..."
+              "./go/loader/..."
+              "./go/types/..."
+              "./imports/..."
+              "./playground/..."
+              "./refactor/importgraph/..."
+              "./refactor/rename/..."
+              "./refactor/satisfy/..."
+              "./txtar/...")
+      #:test-flags
+      #~(list "-skip" (string-join
+                       (list
+                        ;; The GenericPaths test fails with "invalid memory
+                        ;; address or nil pointer dereference".
+                        "TestGenericPaths"
+                        ;; The ordering and paths tests fails because they
+                        ;; can't find test packages (perhaps because we do not
+                        ;; support Go modules).
+                        "TestOrdering" "TestPaths")
+                       "|"))))
     (native-inputs
      (list gccgo-14
            go-github-com-google-go-cmp))
@@ -1298,6 +1321,130 @@ Go programming language.")
             #:import-path "golang.org/x/tools"))
      (native-inputs '())
      (propagated-inputs '()))))
+
+(define-public go-golang-org-x-tools-go-expect
+  (package
+    (name "go-golang-org-x-tools-go-expect")
+    (version "0.1.1-deprecated")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://go.googlesource.com/tools")
+              (commit (go-version->git-ref version
+                                           #:subdir "go/expect"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sjvngpahkb5x573i855fjlb1fdmr6n269nmb5xxnbabjb27mnvg"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "go" "expect")
+            (delete-all-but "." "go")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "golang.org/x/tools/go/expect"
+      #:unpack-path "golang.org/x/tools"))
+    (propagated-inputs (list go-golang-org-x-mod))
+    (home-page "https://golang.org/x/tools")
+    (synopsis "Interpreting structured comments in Golang")
+    (description
+     "Package expect provides support for interpreting structured comments in
+Go source code (including go.mod and go.work files) as test expectations.")
+    (license license:bsd-3)))
+
+(define-public go-golang-org-x-tools-go-packages-packagestest
+  (package
+    (name "go-golang-org-x-tools-go-packages-packagestest")
+    (version "0.1.1-deprecated")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://go.googlesource.com/tools")
+              (commit (go-version->git-ref version
+                                           #:subdir "go/packages/packagestest"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sjvngpahkb5x573i855fjlb1fdmr6n269nmb5xxnbabjb27mnvg"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "go" "packages")
+            (delete-all-but "go/packages" "packagestest")
+            (delete-all-but "." "go")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "golang.org/x/tools/go/packages/packagestest"
+      #:unpack-path "golang.org/x/tools"))
+    (propagated-inputs
+     (list go-golang-org-x-tools
+           go-golang-org-x-tools-go-expect))
+    (home-page "https://golang.org/x/tools")
+    (synopsis "Temporary testing projects for Golang")
+    (description
+     "Package packagestest creates temporary projects on disk for testing go
+tools on.")
+    (license license:bsd-3)))
+
+(define-public go-golang-org-x-tools-godoc
+  (package
+    (name "go-golang-org-x-tools-godoc")
+    (version "0.1.0-deprecated")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/tools")
+             (commit (go-version->git-ref version
+                                          #:subdir "godoc"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1blk22apy424j9v58lfy4pxnrgh93yqchqhxsnf78dmx4vx5yi9r"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "godoc")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "golang.org/x/tools/godoc"
+      #:unpack-path "golang.org/x/tools"))
+    (propagated-inputs
+     (list go-golang-org-x-tools
+           go-github-com-yuin-goldmark))
+    (home-page "https://golang.org/x/tools")
+    (synopsis "Code for running a godoc server.")
+    (description
+     "This package provides most of the code for running a @code{godoc}
+ server.")
+    (license license:bsd-3)))
 
 (define-public go-golang-org-x-vuln
   (package
@@ -1325,6 +1472,8 @@ Go programming language.")
       ;; go: modules disabled by GO111MODULE=off
       #:test-flags #~(list "-skip" "TestVet|TestGoModTidy|Test58509")
       #:test-subdirs #~(list "internal/..." "scan/..." ".")))
+    (native-inputs
+     (list go-golang-org-x-tools-go-packages-packagestest))
     (propagated-inputs
      (list go-github-com-google-go-cmdtest
            go-github-com-google-go-cmp
@@ -1365,8 +1514,8 @@ values.")
 
 (define-public go-google-golang-org-genproto-googleapis-rpc
   ;; No release or verion tags, use the latest commit.
-  (let ((commit "e70fdf4c4cb4151b7aa3579ce8a3fb662bafe335")
-        (revision "0"))
+  (let ((commit "49b9836ed3ff1e1dd329d17e442987447e931c7d")
+        (revision "1"))
     (package
       (name "go-google-golang-org-genproto-googleapis-rpc")
       (version (git-version "0.0.0" revision commit))
@@ -1374,11 +1523,11 @@ values.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/googleapis/go-genproto")
-               (commit commit)))
+                (url "https://github.com/googleapis/go-genproto")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0jf332yxgf1c6nj76b1p52907g786gynzd78g899m3vrfa45wswz"))))
+          (base32 "0pr2qvmrg9f3nrbvmw8ir37mki92nkb9km8zlpxslzmxbjmiwjxb"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -1397,23 +1546,21 @@ values.")
 (define-public go-google-golang-org-protobuf
   (package
     (name "go-google-golang-org-protobuf")
-    (version "1.36.6")
+    (version "1.36.10")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://go.googlesource.com/protobuf")
-             (commit (string-append "v" version))))
+              (url "https://go.googlesource.com/protobuf")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lp1a6bcwdiil4my0aq85ranxf2k757m8q0ss9658jyrh5g7av79"))))
+        (base32 "1509n0gvzqq8mr2377lzg70hfzwrijv069z094rnghif9b0hh07g"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "google.golang.org/protobuf"
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build)))) ; no go files in project's root
+      #:skip-build? #t
+      #:import-path "google.golang.org/protobuf"))
     (propagated-inputs (list go-github-com-google-go-cmp))
     (home-page "https://google.golang.org/protobuf")
     (synopsis "Go library for Protocol Buffers")
