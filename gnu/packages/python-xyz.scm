@@ -9856,13 +9856,13 @@ errors when data is invalid.")
   (package
     (inherit python-pydantic)
     (name "python-pydantic")
-    (version "2.10.4")
+    (version "2.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pydantic" version))
        (sha256
-        (base32 "01jg4ll2py05izm7s9hlv5xbxcsp26bvb2585gzf8vfs4fbjxwc2"))))
+        (base32 "0x6fcp5dh3z03rsqj4a9726lq5b2w3zl255w0c0vnh611wmwi88x"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -9879,12 +9879,14 @@ errors when data is invalid.")
            python-jsonschema
            python-pytest
            python-pytest-benchmark
-           python-pytest-mock))
+           python-pytest-mock
+           python-pytest-run-parallel))
     (propagated-inputs
      (list python-annotated-types
            python-pydantic-core
            python-rich
-           python-typing-extensions))))
+           python-typing-extensions
+           python-typing-inspection))))
 
 (define-public python-pydantic-core
   (package
