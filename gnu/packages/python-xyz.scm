@@ -9867,13 +9867,13 @@ errors when data is invalid.")
 (define-public python-pydantic-core
   (package
     (name "python-pydantic-core")
-    (version "2.27.2")
+    (version "2.41.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pydantic_core" version))
        (sha256
-        (base32 "0fgv3xdn4n7a606sjz8b15cnzyqy3pspycvjc1r0bvhz9id6w0pb"))))
+        (base32 "1mg4rriq049452wm5sd8d02kj9k0jkaqgdp4cxd918flm4lpkr3h"))))
     (build-system cargo-build-system)
     (arguments
      (list
