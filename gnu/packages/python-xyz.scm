@@ -1500,6 +1500,28 @@ pyte is a fork of vt102, which was an incomplete pure Python implementation
 of VT100 terminal.")
     (license license:lgpl3+)))
 
+(define-public python-pytest-run-parallel
+  (package
+    (name "python-pytest-run-parallel")
+    (version "0.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_run_parallel" version))
+       (sha256
+        (base32 "1kh53vfsrsh3g69gjms436f7994bkvy6x81raw4mz5r6in08l205"))
+       ;; Thread-unsafe tests are failing.
+       ;; https://github.com/Quansight-Labs/pytest-run-parallel/issues/135
+       (patches
+        (search-patches "python-pytest-run-parallel-del-unsafe-tests.patch"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-pytest))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/Quansight-Labs/pytest-run-parallel")
+    (synopsis "A simple pytest plugin to run tests concurrently")
+    (description "A simple pytest plugin to run tests concurrently.")
+    (license license:expat)))
+
 (define-public python-pyxdameraulevenshtein
   (package
     (name "python-pyxdameraulevenshtein")
