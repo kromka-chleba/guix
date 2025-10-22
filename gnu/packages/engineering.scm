@@ -2700,60 +2700,54 @@ for reverse engineers.")
 (define-public lib3mf
   (package
     (name "lib3mf")
-    (version "2.2.0")
+    (version "2.4.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
               (url "https://github.com/3MFConsortium/lib3mf")
-              (commit (string-append "v" version))))
+              (commit (string-append "v" version))
+              (recursive? #t)))         ;need cpp-base64
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "05zqvnzmi7j8rhp2mrskvxf1bxl7kb4c72dfx4y86219i1hx7i2q"))
+         "1pv2mjbgkqmakxc8ipnnydk2rj65mimzrdh04bx6hap9mm6rpk48"))
        (modules '((guix build utils)))
        (snippet
         '(begin
            ;; Delete pre-compiled ACT.
-           (delete-file-recursively "AutomaticComponentToolkit/bin")
-
+           (delete-file-recursively "AutomaticComponentToolkit/act.linux64")
            ;; Remove bundled software.  Preserve cpp-base64 as it has been
            ;; modified and cannot easily be unbundled.
            (for-each delete-file-recursively
-                     '("Include/Libraries/libzip"
-                       "Include/Libraries/zlib"
-                       "Source/Libraries/libzip"
-                       "Source/Libraries/zlib"))
-
-           ;; Adjust header includes such that system headers are found.
-           (substitute*
-               '("Include/Common/OPC/NMR_OpcPackageReader.h"
-                 "Include/Common/Platform/NMR_ImportStream_ZIP.h"
-                 "Include/Common/Platform/NMR_ExportStream_ZIP.h"
-                 "Include/Common/Platform/NMR_ImportStream_Compressed.h"
-                 "Include/Common/Platform/NMR_ExportStream_Compressed.h"
-                 "Source/Common/Platform/NMR_PortableZIPWriterEntry.cpp")
-             (("Libraries/libzip/") "")
-             (("Libraries/zlib/") ""))))))
+                     '("Libraries/libzip"
+                       "Libraries/zlib"
+                       ;; "Libraries/fast_float"
+                       "Libraries/libressl"
+                       "Libraries/googletest"
+                       "submodules/libzip"
+                       "submodules/zlib"
+                       ;; "submodules/fast_float"
+                       "submodules/AutomaticComponentToolkit"
+                       "submodules/googletest"))))))
     (build-system cmake-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(list "-DUSE_INCLUDED_ZLIB=0"
-              "-DUSE_INCLUDED_LIBZIP=0"
-              "-DUSE_INCLUDED_GTEST=0"
-              "-DUSE_INCLUDED_SSL=0")
+      #~(list "-DUSE_INCLUDED_ZLIB=OFF"
+              "-DUSE_INCLUDED_LIBZIP=OFF"
+              "-DUSE_INCLUDED_SSL=OFF")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'provide-act
             (lambda* (#:key native-inputs inputs #:allow-other-keys)
-              (let ((act (search-input-file (or native-inputs inputs)
-                                            "bin/act"))
-                    (dir "AutomaticComponentToolkit/bin"))
-                (mkdir-p dir)
-                (symlink act (string-append dir "/act.linux"))))))))
+              (symlink
+               (search-input-file (or native-inputs inputs) "bin/act")
+               "AutomaticComponentToolkit/act.linux64"))))))
     (native-inputs
-     (list automatic-component-toolkit googletest pkg-config))
+     (list automatic-component-toolkit
+           ;; fast-float
+           googletest pkg-config))
     (inputs
      (list `(,util-linux "lib") libzip libressl zlib))
     (synopsis
