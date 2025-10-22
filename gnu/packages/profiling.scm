@@ -312,6 +312,20 @@ applications.  CubeGUI is the graphical explorer of the CUBE project.")))
 (define-public cube
   (deprecated-package "cube" cubegui))
 
+(define imgui-for-tracy
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/ocornut/imgui")
+           (commit "v1.91.9b-docking")))
+    (file-name (git-file-name "imgui" "1.91.9b-docking"))
+    (sha256
+     (base32
+      "1d0wa48k4wdwwgz6xb8bai3phyqav8ndfyh6lrlbbywd63m8j0wr"))
+    (modules '((guix build utils)))
+    (snippet
+     ;; Remove bundled fonts.
+     '(delete-file-recursively "misc/fonts"))))
 (define-public tracy-wayland
   (package
     (name "tracy-wayland")
