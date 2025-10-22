@@ -2687,13 +2687,13 @@ instantly.")
 (define-public python-hypothesis
   (package
     (name "python-hypothesis")
-    (version "6.135.26")
+    (version "6.142.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "hypothesis" version))
        (sha256
-        (base32 "0073lb8xp789fxs5g8dmi3pr2p8q7imfsksidy0ccfahrm30xbvk"))))
+        (base32 "034kg84i87cwpk86x283bkbx50zzpcg8gaglm8kcaqk5fl4cny9i"))))
     (build-system pyproject-build-system)
     (arguments
      ;; XXX: Tests are not distributed with the PyPI archive.
