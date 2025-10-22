@@ -337,6 +337,18 @@ applications.  CubeGUI is the graphical explorer of the CUBE project.")))
     (sha256
      (base32
       "1ycr8fsp8k1225scrbjkj6bjm6iidvbavzvyxgwhbkxjzcimbihh"))))
+
+(define package-project-cmake-for-tracy
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/TheLartians/PackageProject.cmake")
+           (commit (string-append "v" "1.13.0"))))
+    (file-name (git-file-name "package-project-cmake" "1.13.0"))
+    (sha256
+     (base32
+      "1nivxmjjhc3bi5v7qwwvllq8ykdh3mijz1d7sil502xy370b5fj5"))))
+
 (define-public tracy-wayland
   (package
     (name "tracy-wayland")
