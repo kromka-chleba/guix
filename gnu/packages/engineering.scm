@@ -2703,59 +2703,65 @@ for reverse engineers.")
     (version "2.2.0")
     (source
      (origin
-      (method git-fetch)
-      (uri (git-reference (url "https://github.com/3MFConsortium/lib3mf")
-                          (commit (string-append "v" version))))
-      (file-name (git-file-name name version))
-      (sha256
-       (base32
-        "05zqvnzmi7j8rhp2mrskvxf1bxl7kb4c72dfx4y86219i1hx7i2q"))
-      (modules '((guix build utils)))
-      (snippet
-       '(begin
-          ;; Delete pre-compiled ACT.
-          (delete-file-recursively "AutomaticComponentToolkit/bin")
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/3MFConsortium/lib3mf")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "05zqvnzmi7j8rhp2mrskvxf1bxl7kb4c72dfx4y86219i1hx7i2q"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Delete pre-compiled ACT.
+           (delete-file-recursively "AutomaticComponentToolkit/bin")
 
-          ;; Remove bundled software.  Preserve cpp-base64 as it has been
-          ;; modified and cannot easily be unbundled.
-          (for-each delete-file-recursively
-                    '("Include/Libraries/libzip"
-                      "Include/Libraries/zlib"
-                      "Source/Libraries/libzip"
-                      "Source/Libraries/zlib"))
+           ;; Remove bundled software.  Preserve cpp-base64 as it has been
+           ;; modified and cannot easily be unbundled.
+           (for-each delete-file-recursively
+                     '("Include/Libraries/libzip"
+                       "Include/Libraries/zlib"
+                       "Source/Libraries/libzip"
+                       "Source/Libraries/zlib"))
 
-          ;; Adjust header includes such that system headers are found.
-          (substitute* '("Include/Common/OPC/NMR_OpcPackageReader.h"
-                         "Include/Common/Platform/NMR_ImportStream_ZIP.h"
-                         "Include/Common/Platform/NMR_ExportStream_ZIP.h"
-                         "Include/Common/Platform/NMR_ImportStream_Compressed.h"
-                         "Include/Common/Platform/NMR_ExportStream_Compressed.h"
-                         "Source/Common/Platform/NMR_PortableZIPWriterEntry.cpp")
-            (("Libraries/libzip/") "")
-            (("Libraries/zlib/") ""))))))
+           ;; Adjust header includes such that system headers are found.
+           (substitute*
+               '("Include/Common/OPC/NMR_OpcPackageReader.h"
+                 "Include/Common/Platform/NMR_ImportStream_ZIP.h"
+                 "Include/Common/Platform/NMR_ExportStream_ZIP.h"
+                 "Include/Common/Platform/NMR_ImportStream_Compressed.h"
+                 "Include/Common/Platform/NMR_ExportStream_Compressed.h"
+                 "Source/Common/Platform/NMR_PortableZIPWriterEntry.cpp")
+             (("Libraries/libzip/") "")
+             (("Libraries/zlib/") ""))))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags (list "-DUSE_INCLUDED_ZLIB=0"
-                               "-DUSE_INCLUDED_LIBZIP=0"
-                               "-DUSE_INCLUDED_GTEST=0"
-                               "-DUSE_INCLUDED_SSL=0")
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'provide-act
-                    (lambda* (#:key native-inputs inputs #:allow-other-keys)
-                      (let ((act (search-input-file (or native-inputs inputs)
-                                                    "bin/act"))
-                            (dir "AutomaticComponentToolkit/bin"))
-                        (mkdir-p dir)
-                        (symlink act (string-append dir "/act.linux"))))))))
+     (list
+      #:configure-flags
+      #~(list "-DUSE_INCLUDED_ZLIB=0"
+              "-DUSE_INCLUDED_LIBZIP=0"
+              "-DUSE_INCLUDED_GTEST=0"
+              "-DUSE_INCLUDED_SSL=0")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'provide-act
+            (lambda* (#:key native-inputs inputs #:allow-other-keys)
+              (let ((act (search-input-file (or native-inputs inputs)
+                                            "bin/act"))
+                    (dir "AutomaticComponentToolkit/bin"))
+                (mkdir-p dir)
+                (symlink act (string-append dir "/act.linux"))))))))
     (native-inputs
      (list automatic-component-toolkit googletest pkg-config))
     (inputs
      (list `(,util-linux "lib") libzip libressl zlib))
-    (synopsis "Implementation of the 3D Manufacturing Format (3MF) file standard")
+    (synopsis
+     "Implementation of the 3D Manufacturing Format (3MF) file standard")
     (description
      "Lib3MF is a C++ implementation of the 3D Manufacturing Format (3MF) file
-standard.  It offers a way to integrate 3MF reading and writing capabilities, as
-well as conversion and validation tools for input and output data.  The
+standard.  It offers a way to integrate 3MF reading and writing capabilities,
+as well as conversion and validation tools for input and output data.  The
 specification can be downloaded at @url{http://3mf.io/specification/}.")
     (home-page "https://3mf.io/")
     (license license:bsd-2)))
