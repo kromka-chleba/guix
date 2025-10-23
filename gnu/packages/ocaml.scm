@@ -2712,32 +2712,18 @@ dates and times.")
 (define-public ocaml-cmdliner
   (package
     (name "ocaml-cmdliner")
-    (version "1.1.1")
+    (version "1.3.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://erratique.ch/software/cmdliner/releases/"
                                   "cmdliner-" version ".tbz"))
               (sha256
                (base32
-                "1yxm4x34cbi06bfld601ds9drlbnyx0797ym3n6yyh4rlz1qgbm1"))))
-    (build-system ocaml-build-system)
+                "1fwc2rj6xfyihhkx4cn7zs227a74rardl262m2kzch5lfgsq10cf"))))
+    (build-system dune-build-system)
     (inputs
      (list ocaml-result))
-    (native-inputs
-     (list ocamlbuild))
-    (arguments
-     `(#:tests? #f
-       #:make-flags ,#~(list (string-append "LIBDIR=" #$output
-                                            "/lib/ocaml/site-lib/cmdliner"))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'build 'fix-source-file-order
-           (lambda _
-             (substitute* "build.ml"
-               (("Sys.readdir dir")
-                "let a = Sys.readdir dir in Array.sort String.compare a; a"))
-             #t)))))
+    (arguments `(#:tests? #f))
     (home-page "https://erratique.ch/software/cmdliner")
     (synopsis "Declarative definition of command line interfaces for OCaml")
     (description "Cmdliner is a module for the declarative definition of command
