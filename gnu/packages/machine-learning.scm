@@ -2203,17 +2203,20 @@ and are compatible with its API.")
 (define-public python-thinc
   (package
     (name "python-thinc")
-    (version "8.1.12")
+    ;; 8.2.4 is the last version that supports NumPy 1.
+    (version "8.2.4")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "thinc" version))
               (sha256
                (base32
-                "0lx37vl84y2jcsfn9sphdzbjny2jjyfb85llrrvz0xmig5f2rlcx"))))
+                "19w66418bydjavngmg8ckdcr4ja0fsmlnidnpfg534b252gv70wk"))))
+                ;; "0xnakn2x4ia82nv8vp17f26m7fm2ca1rbv6wigd0pa0j54icbbzm"))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
          (add-after 'build 'build-ext
            (lambda _
              (invoke "python" "setup.py" "build_ext" "--inplace"
@@ -2227,11 +2230,12 @@ and are compatible with its API.")
                              python-packaging
                              python-preshed
                              python-pydantic-2
-                             python-setuptools
                              python-srsly
                              python-wasabi))
-    (native-inputs (list python-cython python-mock python-pytest
-                         python-setuptools python-wheel))
+    (native-inputs (list python-cython-0 ;explicitly restricted to cython<3.
+                         python-mock
+                         python-pytest
+                         python-setuptools))
     (home-page "https://github.com/explosion/thinc")
     (synopsis "Functional take on deep learning")
     (description
