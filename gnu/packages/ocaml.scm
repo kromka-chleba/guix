@@ -8331,7 +8331,8 @@ combinators.")
     (arguments
      ;; Tests require ocamlformat which would lead to circular dependencies
      '(#:tests? #f))
-    (properties `((upstream-name . "bisect_ppx")))
+    (properties `((upstream-name . "bisect_ppx")
+                  (ocaml5.3-variant . ,(delay ocaml5.3-bisect-ppx))))
     (home-page "https://github.com/aantron/bisect_ppx")
     (synopsis "Code coverage for OCaml")
     (description "Bisect_ppx helps you test thoroughly.  It is a small
