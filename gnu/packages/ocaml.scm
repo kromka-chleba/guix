@@ -5342,7 +5342,7 @@ and 4 (random based) according to RFC 4122.")
 (define-public ocaml-graph
   (package
     (name "ocaml-graph")
-    (version "2.0.0")
+    (version "2.2.0")
     (home-page "https://github.com/backtracking/ocamlgraph/")
     (source (origin
               (method git-fetch)
@@ -5352,7 +5352,7 @@ and 4 (random based) according to RFC 4122.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gjrsyyamvvn2rd9n9yjx6hsglhw0dbm4cgazq0dpx0bbr4inwc3"))))
+                "02f4iyrnnhi7kam7qrnny76vbdh1q68748bcrq02cy8wa79chp3r"))))
     (build-system dune-build-system)
     (arguments `(#:package "ocamlgraph"))
     (propagated-inputs (list ocaml-stdlib-shims))
