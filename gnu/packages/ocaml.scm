@@ -8343,6 +8343,13 @@ Usage is simple - add package bisect_ppx when building tests, run your tests,
 then run the Bisect_ppx report tool on the generated visitation files.")
     (license license:mpl2.0)))
 
+(define-versioned-package ocaml5.3-bisect-ppx
+  (package
+    (inherit ocaml-bisect-ppx)
+    (propagated-inputs
+     (list ocaml5.3-ppxlib ocaml-cmdliner))
+    (properties `((upstream-name . "bisect_ppx")))))
+
 (define-public ocaml-odoc
   (package
     (name "ocaml-odoc")
