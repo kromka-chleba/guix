@@ -8295,7 +8295,7 @@ stream, and convert everything to UTF-8.")
         (base32
          "0bh66wknc7sx2r63kscp0hg6h73dkv6qpkx0cdz2qp7p28pg2ixz"))))
     (build-system dune-build-system)
-    (inputs
+    (propagated-inputs
      (list ocaml-re ocaml-seq ocaml-uutf))
     (native-inputs
      (list ocaml-alcotest))
