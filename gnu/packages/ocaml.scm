@@ -117,11 +117,20 @@
                  (number->string file-number) "/" name "-" version
                  ".tar.gz"))
 
+;; Source archives hosted at janestreet.com (up thru v0.16 only).
 (define (janestreet-origin name version hash)
   (origin (method url-fetch)
           (uri (string-append "https://ocaml.janestreet.com/ocaml-core/v"
                               (version-major+minor version) "/files/"
                               name "-v" (version-major+minor+point version)
+                              ".tar.gz"))
+          (sha256 (base32 hash))))
+
+;; Source archives for Jane Street packages on GitHub.
+(define (janestreet-github-origin name version hash)
+  (origin (method url-fetch)
+          (uri (string-append "https://github.com/janestreet/" name "/archive/refs/tags/v"
+                              (version-major+minor+point version)
                               ".tar.gz"))
           (sha256 (base32 hash))))
 
