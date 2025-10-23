@@ -4436,22 +4436,21 @@ epoch.")
 (define-public ocaml-ptime
   (package
     (name "ocaml-ptime")
-    ;; TODO 1.1.0 has some issues, so for now we are stuck with 0.8.5
-    (version "0.8.5")
+    (version "1.2.0")
     (source (origin
               (method url-fetch)
               (uri
-               "https://erratique.ch/software/ptime/releases/ptime-0.8.5.tbz")
+               "https://erratique.ch/software/ptime/releases/ptime-1.2.0.tbz")
               (sha256
                (base32
-                "1fxq57xy1ajzfdnvv5zfm7ap2nf49znw5f9gbi4kb9vds942ij27"))))
+                "1c1swx6h794gcck358nqfzshlfhyw1zb5ji4h1pc63j9vxzp85ln"))))
     (build-system ocaml-build-system)
     (arguments
-     `(#:build-flags (list "build" "--with-js_of_ocaml" "true" "--tests"
-                           "true")
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure))))
-    (propagated-inputs (list ocaml-result js-of-ocaml))
+     `(#:build-flags (list "build" "--tests" "true")
+       #:phases
+       ,#~(modify-phases %standard-phases
+            (delete 'configure))))
+    (propagated-inputs (list ocaml-result))
     (native-inputs (list ocaml-findlib ocamlbuild ocaml-topkg opam-installer))
     (home-page "https://erratique.ch/software/ptime")
     (synopsis "POSIX time for OCaml")
