@@ -36,6 +36,8 @@
             strip-ocaml5.0-variant
             package-with-ocaml5.3
             strip-ocaml5.3-variant
+            %ocaml-package-version-prefixes
+            define-versioned-package
             default-findlib
             default-ocaml
             lower
@@ -231,6 +233,43 @@ pre-defined variants."
   (package
     (inherit p)
     (properties (alist-delete 'ocaml5.3-variant (package-properties p)))))
+
+;; The set of versioned package prefixes allowed in calls to
+;; `define-versioned-package`.
+(define %ocaml-package-version-prefixes
+  '("ocaml4.07-" "ocaml4.09-" "ocaml5.0-" "ocaml5.3-"))
+
+;; Alternative syntax for defining a package compatible with a single version
+;; of the OCaml compiler.
+;;
+;; `(define-versioned-package ocamlX.Y-foo <package>)`
+;;
+;; expands to
+;;
+;; `(define-public ocamlX.Y-foo
+;;    (package-with-ocamlX.Y <package>))`
+;;
+;; and requires every package name to have one of the prefixes in
+;; `%ocaml-package-version-prefixes`.
+(define-syntax define-versioned-package
+  (lambda (x)
+    (syntax-case x ()
+      ((_ name package)
+       (let* ((name-parts (string-split
+                           (symbol->string (syntax->datum #'name))
+                           #\-))
+              (ocaml-name (car name-parts))
+              (ocaml-prefix (string-append ocaml-name "-"))
+              (wrapper (datum->syntax
+                        #'wrapper
+                        (string->symbol
+                         (string-append "package-with-" ocaml-name)))))
+         (unless (member ocaml-prefix %ocaml-package-version-prefixes)
+           (error (format
+                   #f
+                   "Versioned package name must have one of these prefixes: ~s"
+                   %ocaml-package-version-prefixes)))
+         #`(define-public name (#,wrapper package)))))))
 
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
