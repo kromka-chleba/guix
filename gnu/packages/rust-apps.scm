@@ -4236,3 +4236,27 @@ compose file, or existing object.")
     (description
      "This package provides a command-line tool for flashing Espressif devices.")
     (license (list license:expat license:asl2.0))))
+
+(define-public broot
+  (package
+    (name "broot")
+    (version "1.51.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "broot" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "04rhh885sriwh8vh4pf7c65f6c2awasis62g77adaafffzavwyn5"))))
+    (build-system cargo-build-system)
+    (inputs (cons* libgit2-1.9 zlib (cargo-inputs 'broot)))
+    (native-inputs
+     (list pkg-config))
+    (home-page "https://dystroy.org/broot/")
+    (synopsis "Search-first directory browser and file manipulation tool")
+    (description
+     "This package provides a search-first interactive directory-tree browser and
+launcher.  It enables an interactive directory search and navigation
+augmenting the cd command with fuzzy search across file paths and contents.
+It also includes file preview and configurable file manipulation commands.")
+    (license license:expat)))
