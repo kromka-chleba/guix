@@ -9924,6 +9924,26 @@ on the cold path and should be kept out of the way to avoid polluting the
 instruction cache on the hot path.  See also
 https://github.com/ocaml/ocaml/issues/8563.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-here
+  (package
+    (name "ocaml-ppx-here")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin "ppx_here" version
+			   "04x96awp00y2v2s4zldlbmfiwvd4vm92vig3yvxhxzx56kdnkb17"))
+    (build-system dune-build-system)
+    (arguments
+     ;; broken tests
+     `(#:tests? #f))
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_here")))
+    (home-page "https://github.com/janestreet/ppx_here")
+    (synopsis "Expands [%here] into its location")
+    (description
+      "Part of the Jane Street's PPX rewriters collection.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
