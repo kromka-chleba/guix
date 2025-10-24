@@ -9676,6 +9676,29 @@ also ocaml_intrinsics library.")
 packages.")
     (license license:expat)))
 
+(define-versioned-package ocaml5.3-sexplib0
+  (package
+    (name "ocaml-sexplib0")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/sexplib0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1s6bc7hj7zwrrz7m5c994h0zjx69af9lvx5ayjpg7dsy2h9g17a3"))))
+    (build-system dune-build-system)
+    (arguments `(#:tests? #f))          ;no tests
+    (synopsis "Library containing the definition of S-expressions and some
+base converters")
+    (description "Part of Jane Street's Core library The Core suite of
+libraries is an industrial strength alternative to OCaml's standard library
+that was developed by Jane Street, the largest industrial user of OCaml.")
+    (license license:expat)))
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
