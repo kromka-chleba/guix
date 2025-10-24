@@ -9619,6 +9619,30 @@ bibliography files in BibTeX format, a bibliography in HTML format.")
 3.0, supporting easy interop between OCaml and GNU Guile Scheme.")
     (license license:gpl3+)))
 
+(define-versioned-package ocaml5.3-compiler-libs
+  (package
+    (name "ocaml-compiler-libs")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/ocaml-compiler-libs")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0cs3waqdnf5xv5cv5g2bkjypgqibwlxgkxd5ddmvj5g9d82vm821"))))
+    (build-system dune-build-system)
+    (arguments `(#:tests? #f))          ;no tests
+    (properties `((upstream-name . "ocaml-compiler-libs")))
+    (synopsis "Compiler libraries repackaged")
+    (description "This package simply repackages the OCaml compiler libraries
+so they don't expose everything at toplevel.  For instance, @code{Ast_helper}
+is now @code{Ocaml_common.Ast_helper}.")
+    (license license:expat)))
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
