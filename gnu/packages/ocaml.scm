@@ -9815,6 +9815,27 @@ OCaml AST in the OCaml syntax;
 @end itemize")
     (license license:expat)))
 
+(define-versioned-package ocaml5.3-ppxlib-jane
+  (package
+    (name "ocaml-ppxlib-jane")
+    (version "0.17.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/janestreet/ppxlib_jane")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0abnhxpvb0sykaifi9qygyq25sqhsm8z3wcj3gd9zsj5mds540h1"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_jane")))
+    (home-page "https://github.com/janestreet/ppx_jane")
+    (synopsis "Utilities for working with Jane Street AST constructs")
+    (description "Part of the Jane Street's PPX rewriters collection.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
