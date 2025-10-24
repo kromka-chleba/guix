@@ -9731,6 +9731,25 @@ provided by companion libraries such as
 @url{https://github.com/janestreet/stdio, ocaml-stdio}.")
     (license license:expat)))
 
+(define-versioned-package ocaml5.3-stdio
+  (package
+    (name "ocaml-stdio")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/stdio")
+    (source
+     (janestreet-github-origin "stdio" version
+                               "0vhpmzvzi6g61gymnrgynji07awzb7r8qrbw62gl3kzz9cylgjz7"))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-sexplib0))
+    (arguments `(#:tests? #f))          ;no tests
+    (synopsis "Standard IO library for OCaml")
+    (description
+     "Stdio implements simple input/output functionalities for OCaml.  It
+re-exports the input/output functions of the OCaml standard libraries using
+a more consistent API.")
+    (license license:expat)))
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
