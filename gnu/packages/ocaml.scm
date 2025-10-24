@@ -9659,6 +9659,23 @@ is now @code{Ocaml_common.Ast_helper}.")
 when available, or compatible software implementation on other targets.  See
 also ocaml_intrinsics library.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-jane-street-headers
+  (package
+    (name "ocaml-jane-street-headers")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin
+      "jane-street-headers" version
+      "0kzbc8vpmd0k09bpw0bk1jlx3p5rgv5y27qdjdyplyq6rn261ykq"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))          ; no tests
+    (home-page "https://github.com/janestreet/jane-street-headers")
+    (synopsis "Jane Street C header files")
+    (description "C header files shared between the various Jane Street
+packages.")
+    (license license:expat)))
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
