@@ -1049,6 +1049,52 @@ applications associated with them.  Caja is also responsible for handling the
 icons on the MATE desktop.  It works on local and remote file systems.")
     (license license:gpl2+)))
 
+(define-public caja-actions
+  (package
+    (name "caja-actions")
+    (version "1.28.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://mate/"
+                           (version-major+minor version)
+                           "/"
+                           "caja-actions-"
+                           version
+                           ".tar.xz"))
+       (sha256
+        (base32 "0kga1dfv6kcyyidgzbnxvyc48kqmnq0ai82ri62aszvhir43j39i"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "--with-caja-extdir="
+                             #$output "/lib/caja/extensions-2.0/"
+                             "--disable-static"))))
+    (native-inputs (list gettext-minimal
+                         intltool
+                         libice
+                         libxml2
+                         libtool
+                         gobject-introspection
+                         gtk-doc/stable
+                         pkg-config
+                         yelp-tools))
+    (inputs (list caja
+                  dbus
+                  dbus-glib
+                  gtk+
+                  (list glib "bin")
+                  libgtop
+                  libsm
+                  mate-desktop))
+    (home-page "https://mate-desktop.org/")
+    (synopsis "Execute commands from the caja popup menu")
+    (description
+     "This package allows caja users to add and launch arbitrary programs
+through the popup menu of selected files.")
+    (license license:gpl2+)))
+
 (define-public python-caja
   (package
     (name "python-caja")
