@@ -9904,6 +9904,26 @@ This library is portable and doesn't provide IO functions.  To read
 s-expressions from files or other external sources, you should use
 parsexp_io.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-cold
+  (package
+    (name "ocaml-ppx-cold")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_cold")
+    (source
+     (janestreet-github-origin "ppx_cold" version
+			   "0ba5lwidfwkbiwpsszdlfh6ym5ydq8nbg4fzpsj2087gxzsfc3k7"))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_cold")))
+    (synopsis "Syntax extension for indicating cold path")
+    (description
+     "This package contains an syntax extension to indicate that the code is
+on the cold path and should be kept out of the way to avoid polluting the
+instruction cache on the hot path.  See also
+https://github.com/ocaml/ocaml/issues/8563.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
