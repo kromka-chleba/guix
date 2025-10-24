@@ -410,7 +410,7 @@ the Net to search for documents which are not on the local system.")
 (define-public zeal
   (package
     (name "zeal")
-    (version "0.7.1")
+    (version "0.7.2")
     (source
      (origin
        (method git-fetch)
@@ -419,10 +419,11 @@ the Net to search for documents which are not on the local system.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yz9zz18rh1d67w40ib4pna70vqkwa9i9nyj423rjysv5rdj2pzp"))))
+        (base32 "1slq3asssszim9y4lvqx08svilmyisk3cl35mmb676fsx7pningn"))))
     (build-system qt-build-system)
     (arguments
       (list
+       #:qtbase qtbase
        #:tests? #f))                    ;no tests
     (native-inputs
      (list extra-cmake-modules pkg-config))
@@ -430,12 +431,10 @@ the Net to search for documents which are not on the local system.")
      (list bash-minimal
            libarchive
            sqlite
-           qtbase-5
-           qtdeclarative-5
-           qtwayland-5
-           qtwebchannel-5
-           qtwebengine-5
-           qtquickcontrols-5
+           qtdeclarative
+           qtwayland
+           qtwebchannel
+           qtwebengine
            qtx11extras
            xcb-util-keysyms))
     (home-page "https://zealdocs.org/")

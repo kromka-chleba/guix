@@ -580,8 +580,8 @@ many programming languages.")
        (release-monitoring-url . "https://i3wm.org/downloads")))
     (license license:bsd-3)))
 
-(define-public i3-gaps
-  (deprecated-package "i3-gaps" i3-wm))
+(define-deprecated-package i3-gaps
+  i3-wm)
 
 (define-public i3ipc-glib
   (package
@@ -1822,8 +1822,8 @@ Keybinder works with GTK-based applications using the X Window System.")
     (home-page "https://github.com/kupferlauncher/keybinder")
     (license license:x11)))
 
-(define-public keybinder-3.0
-  (deprecated-package "keybinder-3.0" keybinder))
+(define-deprecated-package keybinder-3.0
+  keybinder)
 
 (define-public sandbar
   (package
@@ -2484,7 +2484,7 @@ narrow the items to those matching the tokens in the input.")
   (package
     (inherit sway)
     (name "swayfx")
-    (version "0.5")
+    (version "0.5.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2493,7 +2493,7 @@ narrow the items to those matching the tokens in the input.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0pvha915hihip59g6dkhjifm9rvwrvgxd3shc6xz99r377prpml1"))))
+                "1d4srsp1c4dfq7qqcccbqw0jwn9ghzqhkvgr1msgs7r1jkk4v4sd"))))
     (build-system meson-build-system)
     (inputs (list basu
                   cairo
@@ -2507,7 +2507,7 @@ narrow the items to those matching the tokens in the input.")
                   scenefx
                   swaybg
                   wayland
-                  wlroots-0.18))
+                  wlroots-0.19))
     (home-page "https://github.com/WillPower3309/swayfx")
     (synopsis "Sway Fork with extra options and effects")
     (description
@@ -4699,7 +4699,7 @@ configure input, and customize Wayfire plugins.")
 (define-public scenefx
   (package
     (name "scenefx")
-    (version "0.2.1")
+    (version "0.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4708,7 +4708,7 @@ configure input, and customize Wayfire plugins.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jvbskpmhq0vs4rx9723n709h77zg4c0cid8jwnrag1hqh601ch4"))))
+                "10f4rygnb8qrlcxw6f3gpl4xa20wrykx63cvn8wih74smdr48gjw"))))
     (build-system meson-build-system)
     (native-inputs (list pkg-config
                          ;; for wayland-scanner.
@@ -4717,7 +4717,7 @@ configure input, and customize Wayfire plugins.")
                   mesa
                   libxkbcommon
                   libdrm
-                  wlroots-0.18))
+                  wlroots-0.19))
     (home-page "https://github.com/wlrfx/scenefx")
     (synopsis "Drop-in replacement for the wlroots scene API")
     (description

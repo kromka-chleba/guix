@@ -82,6 +82,7 @@
 ;;; Copyright © 2024 Justin Veilleux <terramorpha@cock.li>
 ;;; Copyright © 2025 Noé Lopez <noelopez@free.fr>
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
+;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2966,8 +2967,8 @@ GNOME and KDE desktops to the icon names proposed in the specification.")
     (description "Icons for the GNOME desktop.")
     (license license:lgpl3))) ; or Creative Commons BY-SA 3.0
 
-(define-public gnome-icon-theme
-  (deprecated-package "gnome-icon-theme" adwaita-icon-theme))
+(define-deprecated-package gnome-icon-theme
+  adwaita-icon-theme)
 
 (define-public tango-icon-theme
   (package
@@ -7405,8 +7406,8 @@ programs via D-Bus.  It also ships a library for integration into development
 environments.")
     (license license:gpl2+)))
 
-(define-public d-feet
-  (deprecated-package "d-feet" d-spy))
+(define-deprecated-package d-feet
+  d-spy)
 
 (define-public yelp-xsl
   (package
@@ -10616,8 +10617,8 @@ Aegis (encrypted / plain-text), andOTP, Google Authenticator
 @end itemize")
     (license license:gpl3+)))
 
-(define-public authenticator
-  (deprecated-package "authenticator" gnome-authenticator))
+(define-deprecated-package authenticator
+  gnome-authenticator)
 
 (define-public gsound
   (package
@@ -11263,6 +11264,18 @@ is suitable as a default application in a Desktop environment.")
            `(,gtk+ "bin") intltool pkg-config))
     (inputs
      (list gtk+ gtksourceview-4 libsm))
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-configure
+                 (lambda _
+                   ;; xpad fails to build due to gettext version mismatch, so
+                   ;; we force it to use gettext 0.23.
+                   (substitute* "configure.ac"
+                     (("AM_GNU_GETTEXT_VERSION.*")
+                      (string-append
+                       "AM_GNU_GETTEXT_VERSION([0.23])\n"
+                       "AM_GNU_GETTEXT_REQUIRE_VERSION([0.23])\n"))))))))
     (home-page "https://wiki.gnome.org/Apps/Xpad")
     (synopsis "Virtual sticky note")
     (description
@@ -11896,8 +11909,8 @@ format.  It integrates perfectly with the GNOME desktop and provides an easy
 and uncluttered interface for the management of password databases.")
     (license license:gpl3+)))
 
-(define-public passwordsafe
-  (deprecated-package "passwordsafe" secrets))
+(define-deprecated-package passwordsafe
+  secrets)
 
 (define-public sound-juicer
   (package
@@ -12660,8 +12673,8 @@ versions of Adwaita, Adwaita-dark and HighContrast themes.  It also provides
 index files needed for Adwaita to be used outside of GNOME.")
     (license license:lgpl2.1+)))
 
-(define-public gnome-themes-standard
-  (deprecated-package "gnome-themes-standard" gnome-themes-extra))
+(define-deprecated-package gnome-themes-standard
+  gnome-themes-extra)
 
 (define-public gnote
   (package

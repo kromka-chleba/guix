@@ -95,7 +95,7 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages cmake)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages glib)
@@ -4752,6 +4752,55 @@ a HTTP context
 way.")
     (license license:asl2.0)))
 
+(define-public go-github-com-containerd-go-runc
+  (package
+    (name "go-github-com-containerd-go-runc")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/go-runc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03f6a44j24g64x0zwx6daqbssbka0wcvj3fkjz4rvqx5dz3n7xhf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/go-runc"
+      #:test-flags #~(list "-skip" "TestRuncStarted")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs import-path #:allow-other-keys)
+              (substitute* (string-append "src/" import-path "/runc_test.go")
+                (("Command: \"/bin/true\",")
+                 (string-append "Command: \""
+                                (search-input-file inputs "/bin/true")
+                                "\",\n"))
+                (("Command: \"/bin/false\",")
+                 (string-append "Command: \""
+                                (search-input-file inputs "/bin/false")
+                                "\",\n")))
+              (substitute* (string-append "src/" import-path "/runc.go")
+                (("return -1, err")
+                 "fmt.Errorf(\"Achou\")\n  return -1, err")))))))
+    (inputs
+     (list coreutils))
+    (propagated-inputs
+     (list go-github-com-containerd-console
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-sirupsen-logrus
+           go-golang-org-x-sys))
+    (home-page "https://github.com/containerd/go-runc")
+    (synopsis "Runc bindings for Golang")
+    (description
+     "This package implements a functionality for consuming the @code{runc}
+ binary in Go applications.  It tries to expose all the settings and features
+of the @code{runc} CLI.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-containerd-log
   (package
     (name "go-github-com-containerd-log")
@@ -8305,8 +8354,8 @@ while callers can implement logging with whatever backend is appropriate.")
 standard log package.")
     (license license:asl2.0)))
 
-(define-public go-github-com-go-md2man
-  (deprecated-package "go-github-com-go-md2man" go-github-com-cpuguy83-go-md2man-v2))
+(define-deprecated-package go-github-com-go-md2man
+  go-github-com-cpuguy83-go-md2man-v2)
 
 (define-public go-github-com-go-openapi-inflect
   (package
@@ -9508,6 +9557,30 @@ provides a buffered io.Writer that is flushed at a timed interval.")
 according @@url{https://rfc-editor.org/rfc/rfc8785.html, RFC 8785}.")
     (license license:asl2.0)))
 
+(define-public go-github-com-grafana-regexp
+  (package
+    (name "go-github-com-grafana-regexp")
+    (version "0.0.0-20240518133315-a468a5bfb3bc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/grafana/regexp")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vhncrr5n8f150rg0q01i7yc58b0jpcci2h7zgiwv9wr5k0yaqs2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/grafana/regexp"))
+    (home-page "https://github.com/grafana/regexp")
+    (synopsis "Alternative implementation of Go's std @code{regexp} package")
+    (description
+     "This package provides an alternative implementation of @code{regexp},
+ with some code optimisations to make it run faster.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-guptarohit-asciigraph
   (package
     (name "go-github-com-guptarohit-asciigraph")
@@ -9791,6 +9864,38 @@ single @code{Tree} implementation, optimized for sparse nodes.")
        (prepend go-golang-org-x-exp)
        (replace "go-github-com-hashicorp-golang-lru"
          go-github-com-hashicorp-golang-lru-v2)))))
+
+(define-public go-github-com-hashicorp-go-memdb
+  (package
+    (name "go-github-com-hashicorp-go-memdb")
+    (version "1.3.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hashicorp/go-memdb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1faz0sr9f82zz0vgxsh131b7swi6a3yrsgbw72y45cm2k8bxviad"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/go-memdb"))
+    (propagated-inputs
+     (list go-github-com-hashicorp-go-immutable-radix))
+    (home-page "https://github.com/hashicorp/go-memdb")
+    (synopsis "Golang in-memory database built on immutable radix trees")
+    (description
+     "This package implements a simple in-memory database built on immutable
+@url{https://en.wikipedia.org/wiki/Radix_tree, radix trees}.  The database
+provides Atomicity, Consistency and Isolation from ACID.  Being that it is
+in-memory, it does not provide durability.  The database is instantiated with
+a schema that specifies the tables and indices that exist and allows
+transactions to be executed.  The database provides the following:
+@acronym{Multi-Version Concurrency Control, MVCC}, transaction support, rich
+indexing, watches.")
+    (license license:mpl2.0)))
 
 (define-public go-github-com-hashicorp-go-msgpack-v2
   (package
@@ -14745,6 +14850,30 @@ to help free up more global locks to handle other tasks.")
 names.")
     (license license:asl2.0)))
 
+(define-public go-github-com-moby-pubsub
+  (package
+    (name "go-github-com-moby-pubsub")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/moby/pubsub")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1di8wyipxjxg9v28klzjna6a9zg5n2g5wyn1qy3klp428zzknbyw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/pubsub"))
+    (home-page "https://github.com/moby/pubsub")
+    (synopsis "Publish–subscribe pattern in Golang")
+    (description "This package implements a
+@url{https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern,
+publish–subscribe pattern}.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-moby-spdystream
   (package
     (name "go-github-com-moby-spdystream")
@@ -16818,16 +16947,21 @@ specification-runtime-spec.")
 (define-public go-github-com-opencontainers-runtime-tools
   (package
     (name "go-github-com-opencontainers-runtime-tools")
-    (version "0.9.0")
+    ;; XXX: See: <https://github.com/opencontainers/runtime-tools/issues/792>.
+    (properties '((commit . "0ea5ed0382a279b30530acccafaf070fefeddafd")
+                  (revision . "0")))
+    (version (git-version "0.9.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
               (url "https://github.com/opencontainers/runtime-tools")
-              (commit (string-append "v" version))))
+              (commit (assoc-ref properties 'commit))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pli3jb1rq9lkzzz83f7jw788vijg7x6ly3vgasdlwri7kiph1sa"))
+        (base32 "1385hh25ysni83wp5xdn4zajzavmnbrgz9mrpqsj3byk33xqyh3z"))
        (snippet
         #~(begin (use-modules (guix build utils))
                  (delete-file-recursively "vendor")))))
@@ -16835,8 +16969,6 @@ specification-runtime-spec.")
     (arguments
      (list
       #:skip-build? #t
-      ;; XXX: See: <https://github.com/opencontainers/runtime-tools/issues/792>.
-      #:tests? #f
       #:import-path "github.com/opencontainers/runtime-tools"
       #:build-flags
       #~(list (format #f "-ldflags=-X ~s"
@@ -16850,14 +16982,15 @@ specification-runtime-spec.")
            go-github-com-stretchr-testify
            go-github-com-urfave-cli))
     (propagated-inputs
-     (list go-github-com-blang-semver
+     (list go-github-com-blang-semver-v4
+           go-github-com-google-uuid
            go-github-com-hashicorp-go-multierror
+           go-github-com-moby-sys-capability
+           go-github-com-moby-sys-mountinfo
            go-github-com-mrunalp-fileutils
            go-github-com-opencontainers-runtime-spec
            go-github-com-opencontainers-selinux
-           go-github-com-satori-go-uuid
            go-github-com-sirupsen-logrus
-           go-github-com-syndtr-gocapability
            go-github-com-xeipuuv-gojsonschema
            go-golang-org-x-sys))
     (home-page "https://github.com/opencontainers/runtime-tools")
@@ -20564,6 +20697,82 @@ structures using selector strings.  It's similar to @code{jq}/@code{yq}, but
 supports JSON, YAML, TOML, XML and CSV with zero runtime dependencies.")
     (license license:expat)))
 
+(define-public go-github-com-tonistiigi-go-csvvalue
+  (package
+    (name "go-github-com-tonistiigi-go-csvvalue")
+    (version "0.0.0-20240814133006-030d3b2625d0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tonistiigi/go-csvvalue")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "128i7fmxyf08q80b1i6hgb3sbx2nsa56p2kr6vcdyijazhqnrn0p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tonistiigi/go-csvvalue"))
+    (home-page "https://github.com/tonistiigi/go-csvvalue")
+    (synopsis "Efficient parser for a single line CSV value in Golang")
+    (description
+     "Package csvvalue provides an efficient parser for a single line CSV
+value.  It is more efficient than the standard library csv package for parsing
+many small values.  For multi-line CSV parsing, the standard library is
+recommended.")
+    (license license:expat)))
+
+(define-public go-github-com-tonistiigi-units
+  (package
+    (name "go-github-com-tonistiigi-units")
+    (version "0.0.0-20180711220420-6950e57a87ea")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tonistiigi/units")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1w8rgmlg6pim4vchg4qfpdf6niqmsp0a4f6bafgwd1gnwxi71zkf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tonistiigi/units"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/tonistiigi/units")
+    (synopsis "Simple byte size formatting")
+    (description "This package provides a simple byte size formatting in Go.")
+    (license license:expat)))
+
+(define-public go-github-com-tonistiigi-vt100
+  (package
+    (name "go-github-com-tonistiigi-vt100")
+    (version "0.0.0-20240514184818-90bafcd6abab")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tonistiigi/vt100")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vjk3yam610kc600h3hd3glsygr3m863765m9q7c0gsaj0vd38y0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tonistiigi/vt100"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/tonistiigi/vt100")
+    (synopsis "Raw-mode vt100 screen reader in Golang")
+    (description
+     "Package vt100 implements a quick-and-dirty programmable ANSI terminal
+emulator.")
+    (license license:expat)))
+
 (define-public go-github-com-twpayne-go-shell
   (package
     (name "go-github-com-twpayne-go-shell")
@@ -22002,8 +22211,9 @@ common sequence} values from two arbitrary arrays.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/yuin/gopher-lua"
+      #:test-flags
+      #~(list "-vet=off") ;Go@1.24 forces vet, but tests are not ready yet.
       #:phases
       #~(modify-phases %standard-phases
           ;; FIXME: "ls" needs to be substituted in _glua-tests/issues.lua and
@@ -24311,22 +24521,21 @@ recognizers) at run time.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/mvdan/editorconfig")
-             (commit (string-append "v" version))))
+              (url "https://github.com/mvdan/editorconfig")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0mi1cp6fyaknjn7smvaas4lj03fws5qib5vbi4mrz3qrmvmhh9l4"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "mvdan.cc/editorconfig"))
-    (native-inputs
-     (list cmake-minimal))
+      #:import-path "mvdan.cc/editorconfig"
+      #:test-flags #~(list "-skip" "TestViaCmake")))
     (home-page "https://github.com/mvdan/editorconfig")
     (synopsis "EditorConfig support in Go")
     (description
-     "Package editorconfig allows parsing and using @code{EditorConfig} files, as
-defined in @url{https://editorconfig.org/,https://editorconfig.org/}.")
+     "Package editorconfig allows parsing and using @code{EditorConfig}
+files, as defined in https://editorconfig.org/.")
     (license license:bsd-3)))
 
 (define-public go-mvdan-cc-gofumpt
@@ -24905,15 +25114,23 @@ library.")
 ;;;
 
 (define-public glua
-  (package
-    (inherit go-github-com-yuin-gopher-lua)
+  (package/inherit go-github-com-yuin-gopher-lua
     (name "glua")
     (arguments
-     (list
-      #:tests? #f
-      #:install-source? #f
-      #:import-path "github.com/yuin/gopher-lua/cmd/glua"
-      #:unpack-path "github.com/yuin/gopher-lua"))))
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-yuin-gopher-lua)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "github.com/yuin/gopher-lua/cmd/glua")
+       ((#:unpack-path _ "") "github.com/yuin/gopher-lua")
+       ((#:phases %standard-phases)
+        #~(modify-phases %standard-phases
+            (delete 'disable-failing-tests)))))
+    (native-inputs
+     (append (package-native-inputs go-github-com-yuin-gopher-lua)
+             (package-propagated-inputs go-github-com-yuin-gopher-lua)))
+    (propagated-inputs '())
+    (inputs '())))
 
 (define-public go-asmfmt
   (package
@@ -24977,39 +25194,6 @@ correctly.")))
     (description
      (string-append (package-description go-zgo-at-jfmt)
                     "  This package provides a command line interface (CLI) tool."))))
-
-(define-public go-jsonnet
-  (package
-    (name "go-jsonnet")
-    (version "0.20.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/google/go-jsonnet")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1qfr6yvhj33rhx1icxh99bbpngh5kwq1x7r39315y53bw216vbrz"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:install-source? #f
-      #:import-path "github.com/google/go-jsonnet/cmd/jsonnet"
-      #:unpack-path "github.com/google/go-jsonnet"))
-    (native-inputs
-     (list go-github-com-fatih-color
-           go-github-com-sergi-go-diff
-           go-gopkg-in-yaml-v2
-           go-sigs-k8s-io-yaml))
-    (home-page "https://github.com/google/go-jsonnet")
-    (synopsis "Go implementation of Jsonnet")
-    (description
-     "This package provides an implementation of the @url{http://jsonnet.org/,
-Jsonnet} data templating language in Go.  It is a
-feature-complete,production-ready implementation, compatible with the original
-Jsonnet C++implementation.")
-    (license license:asl2.0)))
 
 (define-public go-ifacemaker
   (package/inherit go-github-com-vburenin-ifacemaker

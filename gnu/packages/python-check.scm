@@ -3104,28 +3104,28 @@ types (i.e. Convention, Warn, and Error) fail the build.")
 (define-public python-pytest-qt
   (package
     (name "python-pytest-qt")
-    (version "4.4.0")
+    (version "4.5.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pytest-qt" version))
+       (uri (pypi-uri "pytest_qt" version))
        (sha256
-        (base32 "0i38qp2rqb44grbk9rn7zr5ffjvdlcl6k380759ji920m51632bn"))))
+        (base32 "17ridbk4gsr1aclgs1ai55r6k2ngrg0wn9b40g96bw48qh0hwqji"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;;#:test-target "pytest"
       #:phases
-      '(modify-phases %standard-phases
+      #~(modify-phases %standard-phases
          (add-before 'check 'set-qpa
            (lambda _ (setenv "QT_QPA_PLATFORM" "offscreen"))))))
-    (propagated-inputs
-     (list python-pluggy python-pyqt python-pytest))
     (native-inputs
-     (list python-pre-commit
+     (list python-pyqt-6
+           python-pytest-bootstrap
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-pluggy
+           python-typing-extensions))
     (home-page "https://github.com/pytest-dev/pytest-qt")
     (synopsis "Pytest support for PyQt and PySide applications")
     (description
@@ -4182,31 +4182,24 @@ provided for the main Python test runners.")
 (define-public python-syrupy
   (package
     (name "python-syrupy")
-    (version "4.9.1")
+    (version "5.0.0")
     (source
      (origin
-       (method git-fetch)               ;no tests in PyPI archive
+       (method git-fetch)
        (uri (git-reference
               (url "https://github.com/syrupy-project/syrupy")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10q1xdwbcy9jfq8gd4r9q4r2p2zpcfrh4yj58nl9sbr2nc3irbh0"))))
+        (base32 "1ysm42an2pf4ppd1i5yzh11bq1rfydhg6rmmh5v91gcixpvi872d"))))
     (build-system pyproject-build-system)
     (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "invoke" "test")))))))
+     (list #:test-backend #~'custom
+           #:test-flags #~(list "-m" "invoke" "test")))
     (native-inputs
      (list python-invoke
-           python-debugpy
-           python-twine
            python-poetry-core
-           python-pytest
+           python-pytest-bootstrap
            python-pytest-xdist
            python-setuptools-scm))
     (home-page "https://github.com/syrupy-project/syrupy")

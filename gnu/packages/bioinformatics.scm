@@ -350,40 +350,6 @@ transparently with both VCFs and BCFs, both uncompressed and BGZF-compressed.")
     ;; The sources are dual MIT/GPL, but becomes GPL-only when USE_GPL=1.
     (license (list license:gpl3+ license:expat))))
 
-(define-public bcftools-1.12
-  (package/inherit bcftools
-    (version "1.12")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/samtools/bcftools/"
-                                  "releases/download/"
-                                  version "/bcftools-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "1x94l1hy2pi3lbz0sxlbw0g6q5z5apcrhrlcwda94ns9n4r6a3ks"))
-              (modules '((guix build utils)))
-              (snippet '(begin
-                          ;; Delete bundled htslib.
-                          (delete-file-recursively "htslib-1.12")))))
-    (native-inputs (list htslib-1.12 perl))))
-
-(define-public bcftools-1.10
-  (package/inherit bcftools
-    (version "1.10")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/samtools/bcftools/"
-                                  "releases/download/"
-                                  version "/bcftools-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "10xgwfdgqb6dsmr3ndnpb77mc3a38dy8kh2c6czn6wj7jhdp4dra"))
-              (modules '((guix build utils)))
-              (snippet '(begin
-                          ;; Delete bundled htslib.
-                          (delete-file-recursively "htslib-1.10")))))
-    (native-inputs (list htslib-1.10 perl))))
-
 (define-public bedops
   (package
     (name "bedops")
@@ -2900,8 +2866,8 @@ biological activities from omics data within a unified framework.")
     (license license:bsd-3)))
 
 ;; See: <https://github.com/scverse/decoupler/blob/main/CHANGELOG.md#200>
-(define-public python-decoupler-py
-  (deprecated-package "python-decoupler-py" python-decoupler))
+(define-deprecated-package python-decoupler-py
+  python-decoupler)
 
 (define-public python-demuxem
   (package
@@ -2964,7 +2930,7 @@ demultiplexing step.")
      (list python-anndata
            python-ipywidgets
            python-leidenalg
-           python-vtraag-louvain
+           python-louvain-igraph
            python-matplotlib
            python-numpy
            python-pandas
@@ -6027,8 +5993,8 @@ subgroups.")
     (description "muon is a multimodal omics Python framework.")
     (license license:bsd-3)))
 
-(define-public python-pyega3
-  (deprecated-package "python-pyega3" python-ega-download-client))
+(define-deprecated-package python-pyega3
+  python-ega-download-client)
 
 (define-public python-pysam
   (package
@@ -6120,79 +6086,6 @@ also includes an interface for tabix.")
      "twobitreader is a Python library for reading .2bit files as used by the
 UCSC genome browser.")
     (license license:artistic2.0)))
-
-(define-public python-plastid
-  (package
-    (name "python-plastid")
-    (version "0.6.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/joshuagryphon/plastid")
-                    (commit "d97f239d73b3a7c2eff46f71928b777431891f90")))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0iccpywlpf1ws46279z9rl0l29pil0rj0g2j5nvqq7jfbnq581cf"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "plastid/test"
-             ;; These four failures look like errors in the test wrapper
-             ;; class.
-             "-k" (string-append "not test_chrom_sizes"
-                                 " and not test_no_crash_if_file_not_exist"
-                                 " and not test_fiveprime_variable"
-                                 " and not test_fiveprime_variable_from_file"))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'unpack-test-data
-            (lambda* (#:key inputs #:allow-other-keys)
-              (invoke "tar" "-C" "plastid/test"
-                      "-xf" (assoc-ref inputs "test-data"))
-              ;; This one requires bowtie-build
-              (delete-file "plastid/test/functional/test_crossmap.py")))
-          (add-after 'unpack 'patch-for-python-3.10
-            (lambda _
-              ;; Some classes were moved from collections to collections.abc
-              ;; in Python 3.10.
-              (substitute* "plastid/readers/bigbed.pyx"
-                ((", Iterable")
-                 "\nfrom collections.abc import Iterable"))))
-          (add-before 'check 'build-extensions
-            (lambda _
-              ;; Cython extensions have to be built before running the tests.
-              (invoke "python3" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs
-     (list python-numpy
-           python-scipy
-           python-pandas
-           python-pysam
-           python-matplotlib
-           python-biopython
-           python-twobitreader
-           python-termcolor))
-    (inputs
-     (list openssl))
-    (native-inputs
-     `(("python-cython" ,python-cython)
-       ("python-pytest" ,python-pytest)
-       ("python-setuptools" ,python-setuptools)
-       ("python-wheel" ,python-wheel)
-       ("test-data"
-        ,(origin
-           (method url-fetch)
-           (uri "https://www.dropbox.com/s/np3wlfvp6gx8tb8/2022-05-04.plastid-test-data.tar.bz2?dl=1")
-           (file-name "plastid-test-data-2022-05-04.tar.bz2")
-           (sha256
-            (base32 "1szsji06m2r21flnvxg84jnj5zmlk6z10c9651v9ag71nxj9rbzn"))))))
-    (home-page "https://github.com/joshuagryphon/plastid")
-    (synopsis "Python library for genomic analysis")
-    (description
-     "plastid is a Python library for genomic analysis – in particular,
-high-throughput sequencing data – with an emphasis on simplicity.")
-    (license license:bsd-3)))
 
 (define-public tetoolkit
   (package
@@ -9706,48 +9599,6 @@ data.  It also provides the @command{bgzip}, @command{htsfile}, and
     ;; the rest is released under the Expat license
     (license (list license:expat license:bsd-3))))
 
-(define-public htslib-1.19
-  (package
-    (inherit htslib)
-    (version "1.19")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/samtools/htslib/releases/download/"
-                    version "/htslib-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "0dh79lwpspwwfbkmllrrhbk8nkvlfc5b5ib4d0xg5ld79w6c8lc7"))
-              (snippet
-               #~(begin
-                   (use-modules (guix build utils))
-                   (delete-file-recursively "htscodecs")))))
-    (build-system gnu-build-system)
-    ;; Let htslib translate "gs://" and "s3://" to regular https links with
-    ;; "--enable-gcs" and "--enable-s3". For these options to work, we also
-    ;; need to set "--enable-libcurl".
-    (arguments
-     `(#:configure-flags '("--enable-gcs"
-                           "--enable-libcurl"
-                           "--enable-s3"
-                           "--with-external-htscodecs")))
-    (inputs
-     (list bzip2 curl openssl xz))
-    ;; This is referred to in the pkg-config file as a required library.
-    (propagated-inputs
-     (list htscodecs zlib))
-    (native-inputs
-     (list perl))
-    (home-page "https://www.htslib.org")
-    (synopsis "C library for reading/writing high-throughput sequencing data")
-    (description
-     "HTSlib is a C library for reading/writing high-throughput sequencing
-data.  It also provides the @command{bgzip}, @command{htsfile}, and
-@command{tabix} utilities.")
-    ;; Files under cram/ are released under the modified BSD license;
-    ;; the rest is released under the Expat license
-    (license (list license:expat license:bsd-3))))
-
 (define-public htslib-1.14
   (package/inherit htslib
     (version "1.14")
@@ -9766,37 +9617,6 @@ data.  It also provides the @command{bgzip}, @command{htsfile}, and
     (propagated-inputs
      (modify-inputs (package-propagated-inputs htslib)
                     (delete "htscodecs")))))
-
-(define-public htslib-1.12
-  (package/inherit htslib
-    (version "1.12")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/samtools/htslib/releases/download/"
-                    version "/htslib-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "1jplnvizgr0fyyvvmkfmnsywrrpqhid3760vw15bllz98qdi9012"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments htslib)
-       ((#:configure-flags cf #~'())
-        #~(delete "--with-external-htscodecs" #$cf))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs htslib)
-                    (delete "htscodecs")))))
-
-(define-public htslib-1.10
-  (package/inherit htslib
-    (version "1.10")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/samtools/htslib/releases/download/"
-                    version "/htslib-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "0wm9ay7qgypj3mwx9zl1mrpnr36298b1aj5vx69l4k7bzbclvr3s"))))))
 
 (define-public htslib-1.9
   (package/inherit htslib
@@ -9822,41 +9642,6 @@ data.  It also provides the @command{bgzip}, @command{htsfile}, and
               (sha256
                (base32
                 "1rja282fwdc25ql6izkhdyh8ppw8x2fs0w0js78zgkmqjlikmma9"))))))
-
-(define htslib-for-samtools-1.2
-  (package/inherit htslib
-    (version "1.2.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/samtools/htslib/releases/download/"
-                    version "/htslib-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "1c32ssscbnjwfw3dra140fq7riarp2x990qxybh34nr1p5r17nxx"))))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-tests
-           (lambda _
-             (substitute* "test/test.pl"
-               (("/bin/bash") (which "bash"))))))))
-    (inputs
-     `(("zlib" ,zlib)))
-    (native-inputs
-     `(("perl" ,perl)))))
-
-(define htslib-for-stringtie
-  (package
-    (inherit htslib-1.12)
-    (source (origin
-              (inherit (package-source htslib-1.12))
-              (patches
-               (search-patches "htslib-for-stringtie.patch"))))
-    (arguments
-     `(#:configure-flags '("--with-libdeflate")))
-    (inputs
-     (list bzip2 libdeflate openssl))))
 
 (define-public idr
   (package
@@ -11309,145 +11094,6 @@ variant calling (in conjunction with bcftools), and a simple alignment
 viewer.")
     (license license:expat)))
 
-(define-public samtools-1.14
-  (package/inherit samtools
-    (version "1.14")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (string-append "mirror://sourceforge/samtools/samtools/"
-                       version "/samtools-" version ".tar.bz2"))
-       (sha256
-        (base32
-         "0x3xdda78ac5vx66b3jdsv9sfhyz4npl4znl1zbaf3lbm6xdlhck"))
-       (modules '((guix build utils)))
-       (snippet '(begin
-                   ;; Delete bundled htslib.
-                   (delete-file-recursively "htslib-1.14")))))
-    (native-inputs (list pkg-config))
-    (inputs
-     (list htslib-1.14 ncurses perl python zlib))))
-
-(define-public samtools-1.12
-  (package/inherit samtools
-    (version "1.12")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (string-append "mirror://sourceforge/samtools/samtools/"
-                       version "/samtools-" version ".tar.bz2"))
-       (sha256
-        (base32
-         "1jrdj2idpma5ja9cg0rr73b565vdbr9wyy6zig54bidicc2pg8vd"))
-       (modules '((guix build utils)))
-       (snippet '(begin
-                   ;; Delete bundled htslib.
-                   (delete-file-recursively "htslib-1.12")))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments samtools)
-       ((#:modules _ #f)
-        '((ice-9 ftw)
-          (ice-9 regex)
-          (guix build gnu-build-system)
-          (guix build utils)))
-       ((#:phases phases)
-        `(modify-phases ,phases
-           (add-after 'install 'install-library
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((lib (string-append (assoc-ref outputs "out") "/lib")))
-                 (install-file "libbam.a" lib))))
-           (add-after 'install 'install-headers
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((include (string-append (assoc-ref outputs "out")
-                                             "/include/samtools/")))
-                 (for-each (lambda (file)
-                             (install-file file include))
-                           (scandir "." (lambda (name)
-                                          (string-match "\\.h$" name)))))))))))
-    (native-inputs (list pkg-config))
-    (inputs
-     (list htslib-1.12 ncurses perl python zlib))))
-
-(define-public samtools-1.10
-  (package (inherit samtools)
-    (name "samtools")
-    (version "1.10")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (string-append "mirror://sourceforge/samtools/samtools/"
-                       version "/samtools-" version ".tar.bz2"))
-       (sha256
-        (base32
-         "119ms0dpydw8dkh3zc4yyw9zhdzgv12px4l2kayigv31bpqcb7kv"))
-       (modules '((guix build utils)))
-       (snippet '(begin
-                   ;; Delete bundled htslib.
-                   (delete-file-recursively "htslib-1.10")
-                   #t))))
-    (inputs
-     (list htslib-1.10 ncurses perl python zlib))))
-
-(define-public samtools-1.2
-  (package (inherit samtools)
-    (name "samtools")
-    (version "1.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (string-append "mirror://sourceforge/samtools/samtools/"
-                       version "/samtools-" version ".tar.bz2"))
-       (sha256
-        (base32
-         "1akdqb685pk9xk1nb6sa9aq8xssjjhvvc06kp4cpdqvz2157l3j2"))
-       (modules '((guix build utils)))
-       (snippet
-        ;; Delete bundled htslib and Windows binaries
-        '(for-each delete-file-recursively (list "win32" "htslib-1.2.1")))))
-    (arguments
-     `(#:make-flags
-       ,#~(list (string-append "prefix=" #$output)
-                (string-append "BGZIP="
-                               #$(this-package-input "htslib")
-                               "/bin/bgzip")
-                (string-append "HTSLIB="
-                               #$(this-package-input "htslib")
-                               "/lib/libhts.so")
-                (string-append "HTSDIR="
-                               #$(this-package-input "htslib")
-                               "/include"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-makefile-curses
-           (lambda _
-             (substitute* "Makefile"
-               (("-lcurses") "-lncurses")
-               (("include \\$\\(HTSDIR.*") ""))))
-         (add-after 'unpack 'patch-tests
-           (lambda _
-             (substitute* "test/test.pl"
-               ;; The test script calls out to /bin/bash
-               (("/bin/bash") (which "bash"))
-               ;; There are two failing tests upstream relating to the "stats"
-               ;; subcommand in test_usage_subcommand ("did not have Usage"
-               ;; and "usage did not mention samtools stats"), so we disable
-               ;; them.
-               (("(test_usage_subcommand\\(.*\\);)" cmd)
-                (string-append "unless ($subcommand eq 'stats') {" cmd "};")))
-             ;; This test fails because the grep output doesn't look as
-             ;; expected; it is correct, though.
-             (substitute* "test/mpileup/mpileup.reg"
-               (("P 52.out.*") ""))))
-         (delete 'configure))))
-    (native-inputs
-     (list grep gawk pkg-config))
-    (inputs
-     (list htslib-for-samtools-1.2 ncurses perl python zlib))))
-
 (define-public samtools-0.1
   ;; This is the most recent version of the 0.1 line of samtools.  The input
   ;; and output formats differ greatly from that used and produced by samtools
@@ -12794,14 +12440,14 @@ against local background noises.")
 (define-public stringtie
   (package
     (name "stringtie")
-    (version "2.2.0")
+    (version "3.0.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://ccb.jhu.edu/software/stringtie/dl/"
                                   "stringtie-" version ".tar.gz"))
               (sha256
                (base32
-                "08w3ish4y9kf9acp7k38iwi8ixa6j51m6qyf0vvfj7yz78a3ai3x"))
+                "1mrqcvnhxbidyhf521naywb5ci579160ydqnl5kb4hqjqvm01mn2"))
               ;; This package bundles an annoying amount of third party source
               ;; code.
               (modules '((guix build utils)))
@@ -12827,7 +12473,7 @@ against local background noises.")
              (let ((bin (string-append (assoc-ref outputs "out") "/bin/")))
                (install-file "stringtie" bin)))))))
     (inputs
-     (list bzip2 htslib-for-stringtie libdeflate zlib))
+     (list bzip2 htslib libdeflate zlib))
     (home-page "https://ccb.jhu.edu/software/stringtie/")
     (synopsis "Transcript assembly and quantification for RNA-Seq data")
     (description
@@ -17461,8 +17107,8 @@ lowly expressed transcripts.")
 mapped paired-end sequencing reads.")
     (license license:gpl3+)))
 
-(define-public fanc
-  (deprecated-package "fanc" python-fanc))
+(define-deprecated-package fanc
+  python-fanc)
 
 (define-public python-genomic-regions
   (package
@@ -18714,8 +18360,8 @@ report will provide an intuitive visual overview about the development of
 variant abundance over time and location.")
     (license license:gpl3+)))
 
-(define-public pigx-sars-cov2-ww
-  (deprecated-package "pigx-sars-cov2-ww" pigx-sars-cov-2))
+(define-deprecated-package pigx-sars-cov2-ww
+  pigx-sars-cov-2)
 
 (define-public pigx
   (package
@@ -20178,26 +19824,31 @@ set.")
 (define-public instrain
   (package
     (name "instrain")
-    (version "1.9.0")
+    ;; Git repository does not tag releases, use the latest commit from master
+    ;; branch.
+    (properties '((commit . "6180be7b49a61b7e1ffe9f1489da5c6aa2ff9ac3")
+                  (revision . "0")))
+    (version (git-version "1.10.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/MrOlm/instrain")
-             ;; There are no tags.
-             (commit "168f3f777b45139a9f6099f68974105b45e2d8ba")))
+              (url "https://github.com/MrOlm/instrain")
+              (commit (assoc-ref properties 'commit))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1wc69ggyiacm1slb678239lqmf1g5dlb4alwsbp14gi6393gj9fg"))))
+        (base32 "1njsxjf3248121yw3q1ig6asf6b3wa5fgjfyc6dkgk6nd4ih8wni"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       ;; Tests assume that test files exist (they don't) and are located in
-      ;; the developer's home directory.
+      ;; the developer's home directory, see:
+      ;; <https://github.com/MrOlm/inStrain/issues/218>.
       #:tests? #false
       #:phases
-      '(modify-phases %standard-phases
+      #~(modify-phases %standard-phases
          (add-after 'unpack 'patch-relative-imports
            (lambda _
              (substitute* (find-files "test/tests" "test_.*\\.py")
@@ -20208,7 +19859,11 @@ set.")
                (("from s3_utils")
                 "from .s3_utils")
                (("from job_utils")
-                "from .job_utils")))))))
+                "from .job_utils"))))
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "setup.py"
+               ((".*pytest.*") "")))))))
     (propagated-inputs
      (list python-biopython-1.73
            python-h5py
@@ -20222,10 +19877,7 @@ set.")
            python-seaborn
            python-tqdm))
     (native-inputs
-     (list python-boto3
-           python-pytest
-           python-setuptools
-           python-wheel))
+     (list python-setuptools))
     (home-page "https://github.com/MrOlm/inStrain")
     (synopsis "Calculation of strain-level metrics")
     (description
@@ -21510,46 +21162,6 @@ annotation field ANN.  When filtering based on ANN, annotation entries are
 filtered first.  If no annotation entry remains, the entire variant is
 deleted.")
     (license license:expat)))
-
-(define-public python-velocyto
-  (package
-    (name "python-velocyto")
-    (version "0.17.17")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "velocyto" version))
-       (sha256
-        (base32 "0fgygyzqgrq32dv6a00biq1p1cwi6kbl5iqblxq1kklj6b2mzmhs"))
-       (modules '((guix build utils)))
-       ;; Delete generated C files.
-       (snippet '(for-each delete-file
-                           (find-files "." "\\.c")))))
-    (build-system pyproject-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  ;; Numba needs a writable dir to cache functions.
-                  (add-before 'check 'set-numba-cache-dir
-                    (lambda _
-                      (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-    (native-inputs (list python-joblib python-setuptools python-wheel))
-    (propagated-inputs (list python-click
-                             python-cython
-                             python-h5py
-                             python-loompy
-                             python-matplotlib
-                             python-numba
-                             python-numpy
-                             python-pandas
-                             python-pysam
-                             python-scikit-learn
-                             python-scipy))
-    (home-page "https://github.com/velocyto-team/velocyto.py")
-    (synopsis "RNA velocity analysis for single cell RNA-seq data")
-    (description
-     "Velocyto is a library for the analysis of RNA velocity.  Velocyto
-includes a command line tool and an analysis pipeline.")
-    (license license:bsd-2)))
 
 (define-public arriba
   (package
@@ -23528,15 +23140,16 @@ The output is in SAM format.")
 (define-public libsbml
   (package
     (name "libsbml")
-    (version "5.18.0")
+    (version "5.20.5")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/sbml/libsbml/"
-                                  version "/stable/libSBML-"
-                                  version "-core-src.tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/sbmlteam/libsbml")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0slkagrk3nfi2qsksv6b1brj6zhx4bj4bkib2sdycvrcd10ql2lh"))))
+                "1bzsgwblh5l15xxy7kpdwiya5kwm26sj6daqr9i93h04manpqmfw"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags

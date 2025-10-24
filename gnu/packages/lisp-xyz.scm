@@ -330,8 +330,8 @@ compatible, and adds new functionality.")
   (sbcl-package->ecl-package sbcl-3d-math))
 
 (define-public sbcl-3d-matrices
-  (let ((commit "b4f5a58299f8437fad2d77f0879c374e3430f4b5")
-        (revision "2"))
+  (let ((commit "bc1ffa08dcf4732523e09adcf9deba4ddeb559ff")
+        (revision "3"))
     (package
       (name "sbcl-3d-matrices")
       (version (git-version "1.0.0" revision commit))
@@ -339,17 +339,17 @@ compatible, and adds new functionality.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-matrices")
+               (url "https://codeberg.org/shinmera/3d-matrices")
                (commit commit)))
          (file-name (git-file-name "cl-3d-matrices" version))
          (sha256
-          (base32 "1s8b4zlmqwyplghs73riz1khf0c5sk64w6b12jd599091d5nr6sr"))))
+          (base32 "0jzckgb5lsmh1gn1f4mczjfc5ckkw01a73wrl1shyb9sil93a751"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
       (inputs
        (list sbcl-3d-vectors sbcl-documentation-utils))
-      (home-page "https://shinmera.github.io/3d-matrices/")
+      (home-page "https://codeberg.org/shinmera/3d-matrices")
       (synopsis "Utility library implementing 2x2, 3x3, 4x4 and NxM matrices")
       (description
        "@code{3D-MATRICES} is a library implementing common matrix operations,
@@ -492,8 +492,8 @@ alternative 4x4 matrix representation.")
   (sbcl-package->clasp-package sbcl-3d-transforms))
 
 (define-public sbcl-3d-vectors
-  (let ((commit "257969402864ac3859d77b981abf0aa5373c4e78")
-        (revision "2"))
+  (let ((commit "fc751c65b2285e971c348539bfbc3cbb58b253b0")
+        (revision "3"))
     (package
       (name "sbcl-3d-vectors")
       (version (git-version "3.1.0" revision commit))
@@ -501,11 +501,11 @@ alternative 4x4 matrix representation.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-vectors")
+               (url "https://codeberg.org/shinmera/3d-vectors")
                (commit commit)))
          (file-name (git-file-name "cl-3d-vectors" version))
          (sha256
-          (base32 "0vmf7nycc49ydcy0dfs25cgs655kwjc6jcjvpwxw61jq4gl2fh7x"))))
+          (base32 "0im0c4yv3bmlipbpfqfcbkdpqknr4468xjvdmrr01pchc8r4m11j"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
@@ -4296,20 +4296,20 @@ operating on them.")
   (sbcl-package->ecl-package sbcl-cl-algebraic-data-type))
 
 (define-public sbcl-cl-all
-  (let ((commit "4ce1ea9d9f33c0dd6212044e7952a0c854757ace")
-        (revision "0"))
+  (let ((commit "8db710a4a92a25ca7c8f09fe1ad91a48ad6bd0c9")
+        (revision "1"))
     (package
       (name "sbcl-cl-all")
-      (version (git-version "1.0.0" revision commit))
+      (version (git-version "2.0.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/cl-all")
+               (url "https://codeberg.org/shinmera/cl-all")
                (commit commit)))
          (file-name (git-file-name "cl-all" version))
          (sha256
-          (base32 "0n4sjarj373zpxn78m32rmhxnsnr8qahdslrd9vrkkwjpzar2bwp"))))
+          (base32 "08jsbnkapijn0v4n5h9g6s87i279xmg4fnbw6jajylrg512n38cx"))))
       (build-system asdf-build-system/sbcl)
       (outputs '("out" "bin"))
       (arguments
@@ -4323,7 +4323,7 @@ operating on them.")
                  outputs
                  #:entry-program '((cl-all:toplevel arguments))
                  #:compress? #t))))))
-      (home-page "https://github.com/Shinmera/cl-all")
+      (home-page "https://shinmera.com/docs/cl-all")
       (synopsis "Evaluate Common Lisp expressions in multiple implementations")
       (description "@samp{cl-all} is a library and script for evaluating Common
 Lisp expressions in multiple implementations.")
@@ -14253,11 +14253,11 @@ database files (dbf and db3 files).")
   (sbcl-package->ecl-package sbcl-db3))
 
 (define-public sbcl-dbi
-  (let ((commit "738a74dd69adb2a7c21fa67e140d89c7df25b227")
-        (revision "2"))
+  (let ((commit "be4df4f236391f4e4150a1fe77f8acc92b9f3996")
+        (revision "3"))
     (package
       (name "sbcl-dbi")
-      (version (git-version "0.9.5" revision commit))
+      (version (git-version "0.11.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -14266,7 +14266,7 @@ database files (dbf and db3 files).")
                (commit commit)))
          (file-name (git-file-name "cl-dbi" version))
          (sha256
-          (base32 "0f8z7an8ssg8mdf9k781r4ygdppv798v6f08ibgpd8mv8a6491fg"))))
+          (base32 "0n3lh0rng5gbbb9aqcrszvc99f80j5zk1hdrcvz20qg6c31hhjl6"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        `(("alexandria" ,sbcl-alexandria)
@@ -22962,11 +22962,11 @@ extensions to Common Lisp.  It contains:
   (sbcl-package->clasp-package sbcl-misc-extensions))
 
 (define-public sbcl-mito
-  (let ((commit "47ba4865ca4bb2894b53703a49a299e973f8eb86")
-        (revision "3"))
+  (let ((commit "10c22b64047053b079beb5168d21222abe4d4b1d")
+        (revision "4"))
     (package
       (name "sbcl-mito")
-      (version (git-version "0.1" revision commit))
+      (version (git-version "0.2.0" revision commit))
       (home-page "https://github.com/fukamachi/mito")
       (source
        (origin
@@ -22976,23 +22976,24 @@ extensions to Common Lisp.  It contains:
                (commit commit)))
          (file-name (git-file-name "mito" version))
          (sha256
-          (base32 "0313nxlj1zqw6zyc23xpf85v0jk32sg0543ql8363jki0pmg7yhs"))))
+          (base32 "0yx1hf22k3wgl0b274i25i6cnshijzy7wppi6clgmhi2y5svgddr"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-prove))
       (inputs
-       `(("alexandria" ,sbcl-alexandria)
-         ("cl-package-locks" ,sbcl-cl-package-locks)
-         ("cl-ppcre" ,sbcl-cl-ppcre)
-         ("cl-reexport" ,sbcl-cl-reexport)
-         ("closer-mop" ,sbcl-closer-mop)
-         ("dbi" ,sbcl-dbi)
-         ("dissect" ,sbcl-dissect)
-         ("esrap" ,sbcl-esrap)
-         ("local-time" ,sbcl-local-time)
-         ("sxql" ,sbcl-sxql)
-         ("trivia" ,sbcl-trivia)
-         ("uuid" ,sbcl-uuid)))
+       (list sbcl-alexandria
+             sbcl-chipz
+             sbcl-cl-package-locks
+             sbcl-cl-ppcre
+             sbcl-cl-reexport
+             sbcl-closer-mop
+             sbcl-dbi
+             sbcl-dissect
+             sbcl-esrap
+             sbcl-local-time
+             sbcl-sxql
+             sbcl-trivia
+             sbcl-uuid))
       (arguments
        '(#:phases
          (modify-phases %standard-phases

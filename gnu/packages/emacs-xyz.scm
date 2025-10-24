@@ -70,7 +70,7 @@
 ;;; Copyright © 2020 Jérémy Korwin-Zmijowski <jeremy@korwin-zmijowski.fr>
 ;;; Copyright © 2020 Alberto Eleuterio Flores Guerrero <barbanegra+guix@posteo.mx>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
-;;; Copyright © 2020, 2022, 2023 pinoaffe <pinoaffe@gmail.com>
+;;; Copyright © 2020, 2022, 2023, 2025 pinoaffe <pinoaffe@gmail.com>
 ;;; Copyright © 2020, 2021, 2022 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Ryan Desfosses <rdes@protonmail.com>
 ;;; Copyright © 2020 Marcin Karpezo <sirmacik@wioo.waw.pl>
@@ -2015,7 +2015,7 @@ while the ones that are not being actively edited will be reduced to a smaller
 size.")
       (license license:expat))))
 
-(define-public emacs-zoom 
+(define-public emacs-zoom
     (package
       (name "emacs-zoom")
       (version "0.3.0")
@@ -3355,8 +3355,8 @@ of tasks, including version control, task management, and regex-based
 replacement.")
       (license license:gpl3+))))
 
-(define-deprecated/public emacs-unpackaged-el emacs-unpackaged
-  (deprecated-package "emacs-unpackaged-el" emacs-unpackaged))
+(define-deprecated-package emacs-unpackaged-el
+  emacs-unpackaged)
 
 (define-public emacs-haskell-mode
   (let ((commit "e9c356739310332afe59b10ffa2e6c3e76f124e3")
@@ -5924,8 +5924,8 @@ searches.  Unlike @code{emacs-wiki.el}, it can be combined with any format.")
     (home-page "https://github.com/hexmode/mediawiki-el")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-mediawiki-el emacs-mediawiki
-  (deprecated-package "emacs-mediawiki-el" emacs-mediawiki))
+(define-deprecated-package emacs-mediawiki-el
+  emacs-mediawiki)
 
 (define-public emacs-bm
   (package
@@ -6184,8 +6184,8 @@ Language (CSL), an XML-based, open format to describe the formatting
 of bibliographic references.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-citeproc-el emacs-citeproc
-  (deprecated-package "emacs-citeproc-el" emacs-citeproc))
+(define-deprecated-package emacs-citeproc-el
+  emacs-citeproc)
 
 (define-public emacs-corfu
   (package
@@ -6466,7 +6466,7 @@ local LLM capabilities from Emacs.")
 (define-public emacs-org-fc
   (package
     (name "emacs-org-fc")
-    (version "0.6.2")
+    (version "0.7.0")
     (source
      (origin
        (method git-fetch)
@@ -6475,7 +6475,7 @@ local LLM capabilities from Emacs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pq6l1crjfybn3bd9qp23vddplv0j05l3al0715glr925s0i4cy3"))))
+        (base32 "1bch6dlw3f8zxvfazsndmilizvxvxpcfgrv89nk6id966y3czrpl"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -6499,14 +6499,7 @@ local LLM capabilities from Emacs.")
                 (substitute* "org-fc-awk.el"
                   (("\"find ") (string-append "\"" find " "))
                   (("\"gawk ") (string-append "\"" gawk " "))
-                  (("\"xargs ") (string-append "\"" xargs " "))))))
-          (add-after 'unpack 'disable-failing-tests
-            (lambda _
-              (substitute* (find-files "tests/" "\\.el$")
-                (("\\(ert-deftest org-fc-test-card-rate-(normal|double) .*" all)
-                 (string-append all "(skip-unless nil)\n"))
-                (("\\(ert-deftest org-fc-test-review-data-update .*" all)
-                 (string-append all "(skip-unless nil)\n"))))))))
+                  (("\"xargs ") (string-append "\"" xargs " ")))))))))
     (native-inputs (list emacs-el-mock))
     (inputs (list findutils gawk))
     (propagated-inputs (list emacs-hydra))
@@ -8925,8 +8918,8 @@ If you are using Guix shell with @file{manifest.scm}, the
       (description "This package lets you switch Ruby versions using chruby.")
       (license license:gpl3+))))
 
-(define-deprecated/public emacs-chruby-el emacs-chruby
-  (deprecated-package "emacs-chruby-el" emacs-chruby))
+(define-deprecated-package emacs-chruby-el
+  emacs-chruby)
 
 ;; Package has no release.  Version is extracted from "Version:" keyword in
 ;; main file.
@@ -13943,8 +13936,8 @@ It is built on top of the custom theme support in Emacs 24 or later.")
 variants.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-moe-theme-el emacs-moe-theme
-  (deprecated-package "emacs-moe-theme-el" emacs-moe-theme))
+(define-deprecated-package emacs-moe-theme-el
+  emacs-moe-theme)
 
 (define-public emacs-color-theme-sanityinc-tomorrow
   (package
@@ -16798,8 +16791,8 @@ unique file names you need this package here.")
 individual file buffers.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-undohist-el emacs-undohist
-  (deprecated-package "emacs-undohist-el" emacs-undohist))
+(define-deprecated-package emacs-undohist-el
+  emacs-undohist)
 
 (define-public emacs-eprime
   (let ((commit "17a481af26496be91c07139a9bfc05cfe722506f"))
@@ -21470,8 +21463,8 @@ This is based on Frank Terbeck's @code{gnus-article-treat-patch.el} but has
 been adapted to also work with mu4e.")
       (license license:gpl3+))))
 
-(define-public emacs-mu4e-patch
-  (deprecated-package "emacs-mu4e-patch" emacs-message-view-patch))
+(define-deprecated-package emacs-mu4e-patch
+  emacs-message-view-patch)
 
 (define-public emacs-pretty-mode
   (package
@@ -21498,7 +21491,7 @@ been adapted to also work with mu4e.")
 (define-public emacs-tempel
   (package
     (name "emacs-tempel")
-    (version "1.6")
+    (version "1.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -21507,7 +21500,7 @@ been adapted to also work with mu4e.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1a5pk000cy4zgh73hdpw08cwf1qr7cgw4hpj5n0dkprwbw5hhm8s"))))
+                "1ly38zv73z8y3pwa3wqabxy6qv84w72yqzxywcqpyqfxmzg42dg3"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -22312,8 +22305,8 @@ DefaultEncrypt, please refer to the home page or read the comments in the
 source file, @file{jl-encrypt.el}.")
     (license license:gpl3+)))
 
-(define-public emacs-default-encrypt
-  (deprecated-package "emacs-default-encrypt" emacs-defaultencrypt))
+(define-deprecated-package emacs-default-encrypt
+  emacs-defaultencrypt)
 
 (define-public emacs-deflate
   (package
@@ -26156,8 +26149,8 @@ buffer, and, by virtue of this extension, do so using the Emacs formatting
 rules for that language.")
     (license license:bsd-2)))
 
-(define-deprecated/public emacs-scratch-el emacs-scratch
-  (deprecated-package "emacs-scratch-el" emacs-scratch))
+(define-deprecated-package emacs-scratch-el
+  emacs-scratch)
 
 (define-public emacs-kv
   (package
@@ -28561,8 +28554,8 @@ mode.")
 for operating over the contents of Emacs buffers.")
       (license license:gpl3+))))
 
-(define-deprecated/public emacs-m-buffer-el emacs-m-buffer
-  (deprecated-package "emacs-m-buffer-el" emacs-m-buffer))
+(define-deprecated-package emacs-m-buffer-el
+  emacs-m-buffer)
 
 (define-public emacs-let-alist
   (package
@@ -29748,8 +29741,8 @@ repository, @code{magit-org-todos} will create a section in your Magit status
 buffer with each of your todos.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-magit-org-todos-el emacs-magit-org-todos
-  (deprecated-package "emacs-magit-org-todos-el" emacs-magit-org-todos))
+(define-deprecated-package emacs-magit-org-todos-el
+  emacs-magit-org-todos)
 
 (define-public emacs-vcsh
   (package
@@ -29830,8 +29823,8 @@ Magit.")
 @end itemize\n")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-lice-el emacs-lice
-  (deprecated-package "emacs-lice-el" emacs-lice))
+(define-deprecated-package emacs-lice-el
+  emacs-lice)
 
 (define-public emacs-academic-phrases
   (let ((commit "0823ed8c24b26c32f909b896a469833ec4d7b656"))
@@ -31176,6 +31169,49 @@ With @code{desktop-environment}, you can control the brightness and volume as
 well as take screenshots and lock your screen.  The package depends on the
 availability of shell commands to do the hard work for us.  These commands can
 be changed by customizing the appropriate variables.")
+      (license license:gpl3+))))
+
+(define-public emacs-filechooser
+  ;; no tags
+  (let ((commit "e55c5ea294bbb2c67ab5c51d9489922a83c22456")
+        (revision "0"))
+    (package
+      (name "emacs-filechooser")
+      (version (git-version "0.2.4" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://codeberg.org/rahguzar/filechooser")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0gkqyh0zwqsgqixg7y94axmk00n349iq3cwv9z9vf4zjbmj9sfc4"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ; no tests
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'install 'install-more-stuff
+              (lambda _
+                (substitute* "emacs.portal"
+                  ;; enable by default in exwm
+                  (("UseIn=") "UseIn=exwm;"))
+                (install-file
+                 "emacs.portal"
+                 (string-append #$output "/share/xdg-desktop-portal/portals"))
+                (install-file
+                 "org.gnu.Emacs.FileChooser.service"
+                 (string-append #$output "/share/dbus-1/services")))))))
+      (propagated-inputs
+       (list emacs-compat))
+      (home-page "https://codeberg.org/rahguzar/filechooser")
+      (synopsis "Backend implementation for xdg-desktop-portal using Emacs")
+      (description "This package provides a backend implementation
+for xdg-desktop-portal that uses Emacs.  It allows you to use Emacs' file and
+path selection facilities in graphical programs that use the
+xdg-desktop-portal dbus interface.")
       (license license:gpl3+))))
 
 (define-public emacs-org-caldav
@@ -32868,8 +32904,8 @@ In addition to its predecessor, it offers the following features:
 combinations to perform Cargo tasks within Rust projects.")
       (license license:gpl3+))))
 
-(define-deprecated/public emacs-cargo-el emacs-cargo
-  (deprecated-package "emacs-cargo-el" emacs-cargo))
+(define-deprecated-package emacs-cargo-el
+  emacs-cargo)
 
 (define-public emacs-ztree
   ;; Upstream provides no tag, but the commit below matches latest release.
@@ -34974,8 +35010,8 @@ It provides integration with multiple built-in modes, as well as providing an
 interface to attach and interact with the processes.")
     (license license:gpl3+)))
 
-(define-public emacs-dtache
-  (deprecated-package "emacs-dtache" emacs-detached))
+(define-deprecated-package emacs-dtache
+  emacs-detached)
 
 (define-public emacs-dtrt-indent
   (package
@@ -36361,8 +36397,8 @@ subsequent committal of a chain of @code{undo} commands as a single edit in
 the @code{undo} history.")
       (license license:gpl3+))))
 
-(define-deprecated/public emacs-undo-propose-el emacs-undo-propose
-  (deprecated-package "emacs-undo-propose-el" emacs-undo-propose))
+(define-deprecated-package emacs-undo-propose-el
+  emacs-undo-propose)
 
 (define-public emacs-elisp-docstring-mode
   (let ((commit "f512e509dd690f65133e55563ebbfd2dede5034f")
@@ -36507,8 +36543,8 @@ buffers.")
 JavaScript.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-js2-refactor-el emacs-js2-refactor
-  (deprecated-package "emacs-js2-refactor-el" emacs-js2-refactor))
+(define-deprecated-package emacs-js2-refactor-el
+  emacs-js2-refactor)
 
 (define-public emacs-jsdoc
   (package
@@ -36656,8 +36692,8 @@ done using Helm, Ido or Ivy.")
 Lisp functions that call themselves in tail position.")
       (license license:gpl3+))))
 
-(define-deprecated/public emacs-tco-el emacs-tco
-  (deprecated-package "emacs-tco-el" emacs-tco))
+(define-deprecated-package emacs-tco-el
+  emacs-tco)
 
 (define-public emacs-equake
   ;; Upstream provides no tagged releases, but the commit below matches an
@@ -36980,8 +37016,8 @@ screensaver activation in EXWM.")
     (description "This package provides a GUI for defining and monitoring services.")
     (license license:gpl3+)))
 
-(define-public emacs-prodigy-el
-  (deprecated-package "emacs-prodigy-el" emacs-prodigy))
+(define-deprecated-package emacs-prodigy-el
+  emacs-prodigy)
 
 (define-public emacs-web-server
   (package
@@ -37170,8 +37206,8 @@ support JSX syntax.")
 expanding regions of text without modifying the actual contents.")
       (license license:expat))))
 
-(define-deprecated/public emacs-origami-el emacs-origami
-  (deprecated-package "emacs-origami-el" emacs-origami))
+(define-deprecated-package emacs-origami-el
+  emacs-origami)
 
 (define-public emacs-peep-dired
   (let ((commit "c88a9a3050197840edfe145f11e0bb9488de32f4")
@@ -37561,16 +37597,16 @@ all of your projects, then override or add variables on a per-project basis.")
 user interfaces for various built-in modes.")
     (license license:gpl3+)))
 
-(define-public emacs-casual-calc
-  (deprecated-package "emacs-casual-calc" emacs-casual))
-(define-public emacs-casual-dired
-  (deprecated-package "emacs-casual-dired" emacs-casual))
-(define-public emacs-casual-info
-  (deprecated-package "emacs-casual-info" emacs-casual))
-(define-public emacs-casual-lib
-  (deprecated-package "emacs-casual-lib" emacs-casual))
-(define-public emacs-casual-avy
-  (deprecated-package "emacs-casual-avy" emacs-casual))
+(define-deprecated-package emacs-casual-calc
+  emacs-casual)
+(define-deprecated-package emacs-casual-dired
+  emacs-casual)
+(define-deprecated-package emacs-casual-info
+  emacs-casual)
+(define-deprecated-package emacs-casual-lib
+  emacs-casual)
+(define-deprecated-package emacs-casual-avy
+  emacs-casual)
 
 (define-public emacs-calibredb
   (package
@@ -37847,8 +37883,8 @@ needing to write the result into the buffer.")
 well as an option for visually flashing evaluated s-expressions.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-eval-sexp-fu-el emacs-eval-sexp-fu
-  (deprecated-package "emacs-eval-sexp-fu-el" emacs-eval-sexp-fu))
+(define-deprecated-package emacs-eval-sexp-fu-el
+  emacs-eval-sexp-fu)
 
 (define-public emacs-counsel-tramp
   (package
@@ -38129,8 +38165,8 @@ functions (e.g. @code{webfeeder-title-function}).")
 end of a line and increment or decrement it.")
       (license license:gpl3+))))
 
-(define-public emacs-janpath-evil-numbers
-  (deprecated-package "emacs-janpath-evil-numbers" emacs-evil-numbers))
+(define-deprecated-package emacs-janpath-evil-numbers
+  emacs-evil-numbers)
 
 (define-public emacs-rotate-text
   (package
@@ -40205,11 +40241,10 @@ other @code{helm-type-file} sources such as @code{helm-locate}.")
     (license license:gpl3+)))
 
 (define-public emacs-telega-server
-  (let ((commit "879a8c7afc8967942613b6b898d9ea8c1f3641bf")
-        (revision "0"))
+  (let ((commit "f5b48d2a605c1383ddb8522ed315b625115f16a6"))
     (package
       (name "emacs-telega-server")
-      (version (git-version "0.8.2" revision commit))
+      (version "0.8.5")
       (source
        (origin
          (method git-fetch)
@@ -40217,7 +40252,7 @@ other @code{helm-type-file} sources such as @code{helm-locate}.")
                (url "https://github.com/zevlg/telega.el")
                (commit commit)))
          (sha256
-          (base32 "1ic14hzzgjxpky1r3mz4v72si9hw8cw72420a9lnpdaiw99l8q7h"))
+          (base32 "12h4jvqzw2s30c1wxd26qa9m8fhpb2nc1ijh05781fkxd7sqrdkr"))
          (file-name (git-file-name "emacs-telega" version))))
       (build-system gnu-build-system)
       (arguments
@@ -40252,11 +40287,10 @@ service, and connect it with Emacs via inter-process communication.")
       (license license:gpl3+))))
 
 (define-public emacs-telega
-  (let ((commit "1cedc1a8c838102b342d537a742e5eab3dfad3ce")
-        (revision "0"))
+  (let ((commit "50eea5dea4fdfb9fff46d71e3c3bcc6dbf09f26a"))
     (package
       (name "emacs-telega")
-      (version (git-version "0.8.522" revision commit))
+      (version "0.8.554")
       (source
        (origin
          (method git-fetch)
@@ -40264,7 +40298,7 @@ service, and connect it with Emacs via inter-process communication.")
                (url "https://github.com/zevlg/telega.el")
                (commit commit)))
          (sha256
-          (base32 "036k7vnh6i6la1sa854f4l8phx5ymvgqrx6qqpnsssr5yd0a7drb"))
+          (base32 "1w0hpiaaj6p5nlmdi99psc0lmvmy65d27pz2vv3gafp2la4dplgx"))
          (file-name (git-file-name "emacs-telega" version))
          (patches
           (search-patches "emacs-telega-path-placeholder.patch"
@@ -42698,6 +42732,8 @@ comments or emails.")
          (file-name (git-file-name name version))
          (sha256
           (base32 "1sv5p2f0i4zhfrh8pv39p5aaa9wnbzxkb58p9qslw7qli1wax2l0"))))
+      (arguments
+       (list #:tests? #false))            ;no tests
       (build-system emacs-build-system)
       (home-page "https://github.com/matsl/sv-kalender-namnsdagar")
       (synopsis "Swedish name day calendar")
@@ -43534,8 +43570,8 @@ supports Japanese and has the following features:
 @end itemize\n")
     (license license:gpl2+)))
 
-(define-deprecated/public emacs-spamfilter-el emacs-spamfilter
-  (deprecated-package "emacs-spamfilter-el" emacs-spamfilter))
+(define-deprecated-package emacs-spamfilter-el
+  emacs-spamfilter)
 
 (define-public emacs-promise
   ;; XXX: Last stable release fails to build with "(wrong-number-of-arguments
@@ -44701,8 +44737,8 @@ with the ed editor.")
 audio volume via amixer.")
     (license license:gpl3+)))
 
-(define-deprecated/public emacs-alsamixer-el emacs-alsamixer
-  (deprecated-package "emacs-alsamixer-el" emacs-alsamixer))
+(define-deprecated-package emacs-alsamixer-el
+  emacs-alsamixer)
 
 (define-public emacs-fennel-mode
   (package
@@ -44899,13 +44935,13 @@ on the chosen style."))))
 hacker.")
       (license license:expat))))
 
-(define-deprecated/public emacs-straight-el emacs-straight
-  (deprecated-package "emacs-straight-el" emacs-straight))
+(define-deprecated-package emacs-straight-el
+  emacs-straight)
 
 (define-public emacs-osm
   (package
     (name "emacs-osm")
-    (version "1.7")
+    (version "1.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -44914,10 +44950,11 @@ hacker.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fw0hgi2542ivc05dbq07ybr8c2mf8ja0z3f07lnslvn7vn5xp9i"))))
+                "1azydrknczkn9gvy9ynxr4dk7xy5cwrg985fx8bz2apmalfvmpzw"))))
     (build-system emacs-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
+     (list #:tests? #f                  ;no tests
+           #:phases #~(modify-phases %standard-phases
                         (add-after 'unpack 'set-curl-file-name
                           (lambda* (#:key inputs #:allow-other-keys)
                             (substitute* "osm.el"
@@ -45724,7 +45761,7 @@ in Emacs.")
 (define-public emacs-vertico-posframe
   (package
     (name "emacs-vertico-posframe")
-    (version "0.8.0")
+    (version "0.9.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -45732,7 +45769,7 @@ in Emacs.")
                     ".tar"))
               (sha256
                (base32
-                "0iqy8m1cf819x7ln5sp8b3sh4dk291k9sril35hxsxkiyjal1rqk"))))
+                "16vnacmz52d1rwdmddsr1rm1zki1p3bw10ngpw39a3dszbwqkl3m"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-posframe emacs-vertico))
     (arguments (list #:tests? #f)) ; there are no tests

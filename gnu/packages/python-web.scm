@@ -2717,9 +2717,7 @@ files.")
      (list python-greenlet
            python-pytest
            python-pytest-httpbin
-           python-readme-renderer
            python-setuptools
-           python-twine
            python-werkzeug))
     (propagated-inputs (list python-requests))
     (home-page "https://github.com/ross/requests-futures")
@@ -2975,6 +2973,63 @@ other HTTP libraries.")
     (synopsis "Highly-optimized, pure-python HTTP server")
     (description
      "Cheroot is a high-performance, pure-Python HTTP server.")
+    (license license:bsd-3)))
+
+(define-public python-cherrypy
+  (package
+    (name "python-cherrypy")
+    (version "18.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cherrypy/cherrypy")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mhs64z75mj3rk4rgxc3xm1yksaj253rj9czhk4632blz5yi0kbn"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(map
+         (lambda (test)
+           (string-append "--deselect=cherrypy/test/" test))
+         (list
+          ;; XXX: Unraisable exceptions.
+          "test_config_server.py::ServerConfigTests::testMaxRequestSize"
+          "test_core.py::CoreRequestHandlingTest::testRanges"
+          "test_core.py::CoreRequestHandlingTest::testRedirect"
+          "test_encoding.py::EncodingTests::\
+test_multipart_decoding_bigger_maxrambytes"
+          "test_encoding.py::EncodingTests::\
+test_test_http.py::HTTPTests::test_post_filename_with_special_characters"
+          "test_http.py::HTTPTests::test_post_multipart"
+          "test_http.py::HTTPTests::test_post_filename_with_special_characters"
+          "test_mime.py::SafeMultipartHandlingTest::test_Flash_Upload"
+          "test_tutorials.py::TutorialTest::test09Files"))))
+    (propagated-inputs
+     (list python-cheroot
+           python-jaraco-collections
+           python-more-itertools
+           python-portend
+           python-zc-lockfile))
+    (native-inputs
+     (list python-objgraph
+           python-path
+           python-pytest
+           python-pytest-cov
+           python-pytest-forked
+           python-pytest-services
+           python-pytest-sugar
+           python-requests-toolbelt
+           python-setuptools))
+    (home-page "https://www.cherrypy.dev")
+    (synopsis "Object-Oriented HTTP framework")
+    (description
+     "CherryPy is a pythonic, object-oriented web framework.  It helps in
+building web applications in the same way any other object-oriented Python
+program would be built.")
     (license license:bsd-3)))
 
 (define-public httpie
@@ -3875,6 +3930,41 @@ high-speed transfers via libcurl and frequently outperforms alternatives.")
     ;; under the terms of LGPLv2.1+ or Expat.
     (license (list license:lgpl2.1+ license:expat))))
 
+(define-public python-trio-websocket
+  (package
+    (name "python-trio-websocket")
+    (version "0.12.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/HyperionGray/trio-websocket")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lm712gakpskcn3adna22kj8m1hspz9l68pmlziklr0ycphmyqac"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-trio
+           python-setuptools
+           python-trustme))
+    (propagated-inputs
+     (list python-outcome
+           python-trio
+           python-wsproto))
+    (home-page "https://github.com/HyperionGray/trio-websocket")
+    (synopsis "WebSocket library for Trio")
+    (description "This library implements both server and client aspects of
+the @url{https://tools.ietf.org/html/rfc6455, the WebSocket protocol},
+striving for safety, correctness, and ergonomics.  It is based on the
+@url{https://wsproto.readthedocs.io/en/latest/, wsproto project}, which is a
+@url{https://sans-io.readthedocs.io/, Sans-IO} state machine that implements
+the majority of the WebSocket protocol, including framing, codecs, and events.
+This library handles I/O using @url{https://trio.readthedocs.io/en/latest/,
+the Trio framework}.")
+    (license license:expat)))
+
 (define-public python-txacme
   ;; 0.9.3 tag was placed in 2020 and there a lot of changes providing
   ;; compatibility wit twisted, use the latest commit from trunk branch.
@@ -4756,8 +4846,8 @@ WebSockets (over HTTP/1 and HTTP/2), ASGI/2, and ASGI/3 specifications.  It
 can utilise asyncio, uvloop, or trio worker types.")
     (license license:expat)))
 
-(define-public python-hypercorn
-  (deprecated-package "python-hypercorn" hypercorn))
+(define-deprecated-package python-hypercorn
+  hypercorn)
 
 (define-public python-querystring-parser
   (package
@@ -6075,26 +6165,45 @@ python-requests.")
 HTTP via a UNIX domain socket.")
     (license license:asl2.0)))
 
-(define-public python-requests-unixsocket
-  (deprecated-package "python-requests-unixsocket" python-requests-unixsocket2))
+(define-deprecated-package python-requests-unixsocket
+  python-requests-unixsocket2)
 
-(define-public python-requests_ntlm
+(define-public python-requests-ntlm
   (package
-    (name "python-requests_ntlm")
-    (version "1.2.0")
+    (name "python-requests-ntlm")
+    (version "1.3.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "requests_ntlm" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/requests/requests-ntlm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1a0np7lk8ma1plv1s4aw5q9h2z3aljprkl9qsfypqcaf0zsqbhik"))))
-    (build-system python-build-system)
+        (base32 "0snsk66zdihdlyfjz2zgpyfgdyjg814m3cc4g3my09hdnb5xvagv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; XXX: Connection refused.
+      #~(list "-k" (string-join
+                    (list "not test_ntlm_http_with_cbt"
+                          "test_ntlm_http_without_cbt"
+                          "test_ntlm_https_with_cbt"
+                          "test_ntlm_https_without_cbt")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'spawn-test-server
+            (lambda _
+              ;; Taken from .github/workflows/ci.yml.
+              (spawn "python"
+                     (list "python" "-m" "tests.test_server")))))))
     (propagated-inputs
      (list python-cryptography python-pyspnego python-requests))
+    (native-inputs (list python-flask python-pytest python-setuptools))
     (home-page "https://github.com/requests/requests-ntlm")
-    (synopsis
-     "NTLM authentication support for Requests")
+    (synopsis "NTLM authentication support for Requests")
     (description
      "This package allows for HTTP NTLM authentication using the requests
 library.")
@@ -9927,8 +10036,8 @@ decorators and tools to describe your API and expose its documentation properly 
 Swagger.")
     (license license:bsd-3)))
 
-(define-public python-flask-restplus
-  (deprecated-package "python-flask-restplus" python-flask-restx))
+(define-deprecated-package python-flask-restplus
+  python-flask-restx)
 
 (define-public python-flask-socketio
   (package
@@ -10106,6 +10215,30 @@ conflicts detected by that mechanism.")
     (description "This package contains a generic transaction implementation
 for Python.  It is mainly used by the ZODB.")
     (license license:zpl2.1)))
+
+(define-public python-truststore
+  (package
+    (name "python-truststore")
+    (version "0.10.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "truststore" version))
+       (sha256
+        (base32 "00f3xc7720rkddsn291yrw871kfnimi6d9xbwi75xbb3ci1vv4cx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;all tests require Internet access
+    (native-inputs
+     (list python-flit-core))
+    (home-page "https://github.com/sethmlarson/truststore")
+    (synopsis "Verify certificates using native system trust stores")
+    (description
+     "Truststore is a library which exposes native system certificate stores (ie
+\"trust stores\") through an @code{ssl.SSLContext-like} API.  This means that
+Python applications no longer need to rely on certifi as a root certificate
+store.")
+    (license license:expat)))
 
 (define-public python-robot-detection
   (package

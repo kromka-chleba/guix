@@ -598,6 +598,36 @@ required dependencies.  The HTTP response contains the aggregated health
 result and details about the health status of each component.")
     (license license:expat)))
 
+(define-public go-github-com-aliyun-aliyun-oss-go-sdk
+  (package
+    (name "go-github-com-aliyun-aliyun-oss-go-sdk")
+    (version "3.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/aliyun/aliyun-oss-go-sdk")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s9c3if0is8m52hvb1czh4rb7ck4vk654wbzyq44iq1rqfr6y1ly"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Tests require more packages.
+      #:tests? #f
+      #:import-path "github.com/aliyun/aliyun-oss-go-sdk"))
+    ;; (native-inputs (list
+    ;;   go-github-com-go-check-check
+    ;;   go-github-com-aliyun-alibaba-cloud-sdk-go))
+    (propagated-inputs (list go-golang-org-x-time))
+    (home-page "https://github.com/aliyun/aliyun-oss-go-sdk")
+    (synopsis "Alibaba cloud OSS SDK for Go")
+    (description
+     "This package provides a Go SDK based on the official
+APIs of Alibaba Cloud @acronym{OSS, Object Storage Service}.")
+    (license license:expat)))
+
 (define-public go-github-com-anacrolix-envpprof
   (package
     (name "go-github-com-anacrolix-envpprof")
@@ -1983,6 +2013,45 @@ API.  See the full Circonus API Documentation at
 browser window.")
     (license license:bsd-2)))
 
+(define-public go-github-com-cncf-xds-go
+  (package
+    (name "go-github-com-cncf-xds-go")
+    (version "0.0.0-20250501225837-2ac532fd4443")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cncf/xds")
+              (commit (go-version->git-ref version #:subdir "go"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0snccl7rrx2f07131s0n8z3d1p5v2nvcg7v3dhq1a5sl46b1x78b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/cncf/xds/go"
+      #:unpack-path "github.com/cncf/xds"))
+    (propagated-inputs
+     (list go-cel-dev-expr
+           go-github-com-envoyproxy-protoc-gen-validate
+           go-google-golang-org-genproto-googleapis-api
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/cncf/xds")
+    (synopsis "Universal data-plane API using the xDS protocol in Golang")
+    (description
+     "This package provides a set of APIs implementing the de facto standard
+for L4/L7 data plane configuration, similar to the role played by OpenFlow at
+L2/L3/L4 in @acronym{Software-defined networking, SDN}.
+
+The xDS transport protocol provides a low latency versioned streaming gRPC
+delivery of xDS resources.  The data model covers common data plane concerns
+such as service discovery, load balancing assignments, routing discovery,
+listener configuration, secret discovery, load reporting, health check
+delegation, etc.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-cockroachdb-errors
   (package
     (name "go-github-com-cockroachdb-errors")
@@ -2132,6 +2201,73 @@ CloseRead} helper for write only connections
 Wasm}.
 @end itemize")
     (license license:isc)))
+
+(define-public go-github-com-containerd-containerd-api
+  (package
+    (name "go-github-com-containerd-containerd-api")
+    (version "1.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/containerd")
+              (commit (go-version->git-ref version
+                                           #:subdir "api"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06pl08p1f86z70hy9si5h7p2bgassqjsy625pvzxazxix35ggq6x"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/containerd/api"
+      #:unpack-path "github.com/containerd/containerd"))
+    (propagated-inputs
+     (list go-github-com-containerd-ttrpc
+           go-github-com-containerd-typeurl-v2
+           go-github-com-opencontainers-image-spec
+           go-google-golang-org-genproto-googleapis-rpc
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/containerd/containerd")
+    (synopsis "Go package for gRPC API for containerd")
+    (description
+     "This Go package provides the gRPC API for containerd.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-containerd-ttrpc
+  (package
+    (name "go-github-com-containerd-ttrpc")
+    (version "1.2.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/ttrpc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fcd9nqkj1iz95h16i8ygiiazvbzmgrawpnvqcpbfhjwkx3sc1m1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/ttrpc"))
+    (propagated-inputs
+     (list go-github-com-containerd-log
+           go-github-com-gogo-protobuf
+           go-github-com-golang-protobuf
+           go-github-com-prometheus-procfs
+           go-golang-org-x-sys
+           go-google-golang-org-genproto-googleapis-rpc
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/containerd/ttrpc")
+    (synopsis "Go package for gRPC for low-memory environments")
+    (description
+     "Package ttrpc defines and implements a low level simple transfer protocol
+optimized for low latency and reliable connections between processes on the
+same host.  The protocol uses simple framing for sending requests, responses,
+and data using multiple streams.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-containerd-typeurl
   (package
@@ -12636,6 +12772,38 @@ go.opentelemetry.io/otel, go.opentelemetry.io/otel/metric and
 go.opentelemetry.io/otel/trace.")
     (license license:asl2.0)))
 
+(define-public go-go-opentelemetry-io-otel-exporters-jaeger
+  (package
+    (name "go-go-opentelemetry-io-otel-exporters-jaeger")
+    (version "1.17.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/open-telemetry/opentelemetry-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "exporters/jaeger"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0241rgx3wf4gfk9q0s0r378kv6hs8dii1d2zgp09941dgk59zmp9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.opentelemetry.io/otel/exporters/jaeger"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-go-logr-logr
+           go-github-com-go-logr-stdr
+           go-github-com-google-go-cmp
+           go-golang-org-x-sys))
+    (home-page "https://pkg.go.dev/go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry-Go Jaeger Exporter")
+    (description
+     "Package jaeger contains an OpenTelemetry tracing exporter for Jaeger.")
+    (license license:asl2.0)))
+
 (define-public go-go-opentelemetry-io-otel-exporters-otlp-otlptrace
   (package
     (name "go-go-opentelemetry-io-otel-exporters-otlp-otlptrace")
@@ -13425,6 +13593,44 @@ the standard @code{context} package to store request-scoped values.")
 generate Go code.")
     (license license:asl2.0)))
 
+(define-public go-google-golang-org-grpc-security-advancedtls
+  (package
+    (name "go-google-golang-org-grpc-security-advancedtls")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/grpc/grpc-go")
+              (commit (go-version->git-ref version
+                                           #:subdir "security/advancedtls"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xkqjian41falr0h8sicx2vdajf1zxcrkqiz5p2g7mmm8gcb6l4w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "google.golang.org/grpc/security/advancedtls"
+      #:unpack-path "google.golang.org/grpc"
+      #:test-flags
+      #~(list "-vet=off"
+              "-skip" "Test/ClientServerHandshake")))
+    (native-inputs
+     (list go-google-golang-org-genproto-googleapis-rpc
+           go-golang-org-x-net))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-golang-org-x-crypto
+           go-google-golang-org-protobuf))
+    (home-page "https://google.golang.org/grpc")
+    (synopsis "Go package for gRPC transport credentials")
+    (description
+     "Package advancedtls provides gRPC transport credentials that allow easy
+configuration of advanced TLS features.  For example, periodic credential
+reloading,support for certificate revocation lists, and customizable
+certificate verification behaviors.")
+    (license license:asl2.0)))
+
 ;; This to satisfy alternative import path, some of the projects still use it
 ;; in go.mod.
 (define-public go-gopkg-in-evanphx-json-patch-v4
@@ -13930,12 +14136,10 @@ protocol.")
 and concepts from Philipp Winter's ScrambleSuit protocol.")
     (license (list license:bsd-2 license:bsd-3))))
 
-(define-public go-gitlab-torproject-org-tpo-anti-censorship-pluggable-transports-lyrebird
-  ;; This is a final command, no need for a full name of the go.mod module path
-  ;; style. The same is suggested in project's README and Makefile.
-  (deprecated-package
-   "go-gitlab-torproject-org-tpo-anti-censorship-pluggable-transports-lyrebird"
-   lyrebird))
+;; This is a final command, no need for a full name of the go.mod module path
+;; style. The same is suggested in project's README and Makefile.
+(define-deprecated-package go-gitlab-torproject-org-tpo-anti-censorship-pluggable-transports-lyrebird
+  lyrebird)
 
 (define-public go-jose-util
   (package

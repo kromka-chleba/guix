@@ -331,7 +331,7 @@ network can support simultaneously.")
 (define-public lcrq
   (package
     (name "lcrq")
-    (version "0.2.4")
+    (version "0.3.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -340,7 +340,7 @@ network can support simultaneously.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1d2mk3ii189462dmkksjsaqybj7cizn9vm9c8plml881brlz8a2n"))))
+                "0xspyqjrpjyx79z027ax4d3nrh09qj9vwfvb4pad716avd4zklc4"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -373,8 +373,8 @@ the RFC.")
 
 (define-public netperf
   (let ((version "2.7.0")
-        (revision "1")
-        (commit "3bc455b23f901dae377ca0a558e1e32aa56b31c4"))
+        (revision "2")
+        (commit "afc51ff9764741da4ed6702651fba9d9c23f8557"))
     (package
       (name "netperf")
       (version (git-version version revision commit))
@@ -387,13 +387,13 @@ the RFC.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1msbhbvf39r1a0c9b9myla5i6235fvnp7r6021fl8b5svxjbb0dk"))))
+           "1s7f1w0q9y15z8lhprh7irc1p9qgam140lvwncqk4gk74yvmcrcf"))))
       (build-system gnu-build-system)
       (arguments
        `(#:configure-flags
          ;; Without -fcommon the build fails on newer gcc.
          ;; See: https://gcc.gnu.org/gcc-10/porting_to.html
-         (list "CFLAGS=-fcommon"
+         (list "CFLAGS=-fcommon -D_GNU_SOURCE"
                ;; --enable-demo is needed for flent (not yet packaged).
                "--enable-demo")))
       (native-inputs
@@ -2077,8 +2077,8 @@ manage, and delete Internet resources from Gandi.net such as domain names,
 virtual machines, and certificates.")
     (license license:gpl3+)))
 
-(define-public gandi.cli
-  (deprecated-package "gandi.cli" gandi-cli))
+(define-deprecated-package gandi.cli
+  gandi-cli)
 
 (define-public go-sctp
   ;; docker-libnetwork-cmd-proxy requires this exact commit.

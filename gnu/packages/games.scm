@@ -2817,51 +2817,6 @@ map formats, MAPINFO support, full controller support, debug and scripting
 features, rewinding, and a strict mode for speedrunning.")
     (license license:gpl2+)))
 
-(define-public prboom-plus
-  (package
-   (name "prboom-plus")
-   (version "2.5.1.4")
-   (source (origin
-            (method url-fetch)
-            (uri (string-append "mirror://sourceforge/prboom-plus/prboom-plus/"
-                                version "/prboom-plus-" version ".tar.gz"))
-            (sha256
-             (base32 "151v6nign86m1a2vqz27krsccpc9m4d1jax4y43v2fa82wfj9qp0"))
-            (modules '((guix build utils)))
-            (snippet
-             '(begin
-                (substitute* "src/version.c"
-                  (("__DATE__") "")
-                  (("__TIME__") ""))
-                #t))))
-   (build-system gnu-build-system)
-   (arguments
-    '(#:configure-flags '("--disable-cpu-opt" "CFLAGS=-fcommon")
-      #:make-flags `(,(string-append "gamesdir="
-                                     (assoc-ref %outputs "out") "/bin"))
-      #:phases
-      (modify-phases %standard-phases
-        (add-after 'set-paths 'set-sdl'paths
-          (lambda* (#:key inputs #:allow-other-keys)
-            (setenv "CPATH"
-                    (string-append
-                     (search-input-directory inputs "/include/SDL")
-                     ":" (or (getenv "CPATH") ""))))))))
-   (inputs
-    (list fluidsynth
-          glu
-          libmad
-          libpng
-          libvorbis
-          pcre
-          portmidi
-          (sdl-union (list sdl sdl-image sdl-mixer sdl-net))))
-   (home-page "https://prboom-plus.sourceforge.net/")
-   (synopsis "Version of the classic 3D shoot'em'up game Doom")
-   (description
-    "PrBoom+ is a Doom source port developed from the original PrBoom project.")
-   (license license:gpl2+)))
-
 (define-public redeal
   (let ((commit "e2e81a477fd31ae548a340b5f0f380594d3d0ad6")
         (revision "1"))
@@ -3410,7 +3365,7 @@ Superfluous Returnz.")
 (define-public sosage
   (package
     (name "sosage")
-    (version "1.6.0")
+    (version "1.6.1")
     (source
      (origin
        (method git-fetch)
@@ -3419,7 +3374,7 @@ Superfluous Returnz.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xgk3r18aj9xvrrqr9qdrr6800hkv6lhfcnmm5z21g8kbfh9x4jm"))
+        (base32 "029mcnx2r86gc7chzd0avga4x7gm1yxl2wi3wqxmzhlh51q0p44x"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -10569,7 +10524,7 @@ game field is extended to 4D space, which has to filled up by the gamer with
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-install-helper-paths
            (lambda* (#:key inputs #:allow-other-keys)
-             (let ((p7zip (assoc-ref inputs "p7zip"))
+             (let ((7zip (assoc-ref inputs "7zip"))
                    (innoextract (assoc-ref inputs "innoextract"))
                    (wget (assoc-ref inputs "wget"))
                    (zenity (assoc-ref inputs "zenity")))
@@ -10581,11 +10536,11 @@ game field is extended to 4D space, which has to filled up by the gamer with
                  (("else innoextract")
                   (string-append "else " innoextract "/bin/innoextract"))
                  (("for _extract_zip_sz in 7za 7z")
-                  (string-append "for _extract_zip_sz in " p7zip "/bin/7za"))
+                  (string-append "for _extract_zip_sz in " 7zip "/bin/7z"))
                  (("else if have 7z")
-                  (string-append "else if have " p7zip "/bin/7za"))
+                  (string-append "else if have " 7zip "/bin/7z"))
                  (("7z x -tiso")
-                  (string-append p7zip "/bin/7z x -tiso"))
+                  (string-append 7zip "/bin/7z x -tiso"))
                  (("if have wget")
                   (string-append "if have " wget "/bin/wget"))
                  (("wget -O")
@@ -10614,7 +10569,7 @@ game field is extended to 4D space, which has to filled up by the gamer with
            glm
            freetype
            ;; The following are only needed by the arx-install-data script.
-           p7zip ; Install-helper uses it to extract ISO and .cab archives.
+           7zip ; Install-helper uses it to extract ISO and .cab archives.
            zenity ; GUI for install-helper.
            wget ; Used by the install-helper to download the patch.
            ;; The install-helper needs it to extract the patch.
@@ -11416,8 +11371,8 @@ across many levels and collect all the coaches to win.")
     ;; license.  Desktop file is licensed under CC0 terms.
     (license (list license:gpl2 license:gpl3 license:cc0))))
 
-(define-public ri-li
-  (deprecated-package "ri-li" li-ri))
+(define-deprecated-package ri-li
+  li-ri)
 
 (define-public freeorion
   (package
@@ -11736,7 +11691,7 @@ Xjump game, using SDL instead of Xlib.")
 (define-public xmoto
   (package
     (name "xmoto")
-    (version "0.6.2")
+    (version "0.6.3")
     (source
      (origin
        (method git-fetch)
@@ -11745,7 +11700,7 @@ Xjump game, using SDL instead of Xlib.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14z3yqpiyv4y5l37b12kf8ipgsmb9krb4b5d9adlrry0j43hd7wz"))
+        (base32 "08yi6sgz349s7wa07dyrlbhpkmi25arz0c849qgpsj65vr8n7n8c"))
        (modules '((guix build utils)
                   (ice-9 ftw)
                   (srfi srfi-1)))

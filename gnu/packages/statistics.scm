@@ -244,12 +244,13 @@ This package also provides @command{xls2csv} to export Excel files to CSV.")
            pango
            readline
            gtk+
-           gtksourceview-3
+           gtksourceview-4
            spread-sheet-widget
            zlib))
     (native-inputs
      (list autoconf ;for tests
            `(,glib "bin") ;for glib-genmarshal
+           glibc-locales ;for test 1597: tex non-ascii
            perl
            pkg-config
            python-3 ;for tests
@@ -3632,7 +3633,10 @@ and Causal), and simulations in Bayesian Networks.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1p0cmgy19kbkxia139cb5w9dnkp2cdqp5n3baag6cq3prn3n71mf"))))
+                  "1p0cmgy19kbkxia139cb5w9dnkp2cdqp5n3baag6cq3prn3n71mf"))
+                (patches
+                 (search-patches
+                  "xlispstat-fix-compilation-with-modern-gcc.patch"))))
       (build-system gnu-build-system)
       (arguments
        `(#:parallel-build? #f   ; Parallel builds are not supported

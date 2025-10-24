@@ -130,7 +130,7 @@
 (define-public capypdf
   (package
     (name "capypdf")
-    (version "0.14.0")
+    (version "0.18.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -138,7 +138,7 @@
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "05rpicxw76z4q48ax0dx5rm1k4lhp4lbdr2aw58kly402w8kjdwb"))))
+               (base32 "1929hswywf70lb97wp3xmri45h55n1dyq97n50frj8js582z0aqn"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags #~(list "-Dcpp_std=c++23")
@@ -1151,7 +1151,7 @@ using a stylus.")
 (define-public xournalpp
   (package
     (name "xournalpp")
-    (version "1.2.6")
+    (version "1.2.8")
     (source
      (origin
        (method git-fetch)
@@ -1160,7 +1160,7 @@ using a stylus.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wsks4wwv4d6y2drd64c0p8986l5sv09pnlvpd7hl4asszxmybjm"))))
+        (base32 "134qmx6nvxfpfbx3sb6ss0vc5jcxlhysk699aaklpid03p8ps0y9"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1201,6 +1201,7 @@ using a stylus.")
      (list adwaita-icon-theme
            alsa-lib
            gtk+
+           gtksourceview-4
            (librsvg-for-system)
            libsndfile
            libxml2

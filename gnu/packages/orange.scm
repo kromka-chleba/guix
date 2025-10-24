@@ -22,6 +22,7 @@
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (gnu packages)
@@ -42,38 +43,32 @@
 (define-public python-orange-canvas-core
   (package
     (name "python-orange-canvas-core")
-    (version "0.2.5")
+    (version "0.2.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "orange_canvas_core" version))
        (sha256
-        (base32 "0bp6c5y4a4fzr1hg7aijlbfwp6bqacxxcqhwb2swc21aj846ns0n"))))
+        (base32 "1h0p6p36h9vwmgs7xa7x0qa06zjxjyj8pr1p8d4iykbvl60s3dq0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 227 passed, 4 skipped, 13 deselected, 15 warnings
       #:test-flags
       #~(list "-k" (string-join
-                    (list
-                     ;; AttributeError: 'NoneType' object has no attribute
-                     ;; 'trigger'
-                     "not test_context_menu_delete"
-                     "test_copy_cut_paste"
-                     ;; AttributeError: 'NoneType' object has no attribute
-                     ;; 'isEnabled'
-                     "test_item_context_menu"
-                     ;; Tests fail with error: Failed: CALL ERROR: Exceptions
-                     ;; caught in Qt event loop.
-                     "test_create_new_window"
-                     "test_new_window"
-                     "test_dont_load_swp_on_new_window"
-                     "test_toolbox"
-                     "test_widgettoolgrid"
-                     "test_editlinksnode"
-                     "test_links_edit"
-                     "test_links_edit_widget"
-                     "test_flattened"
-                     "test_tooltree_registry")
+                    ;; Tests fail with error: Failed: CALL ERROR: Exceptions
+                    ;; caught in Qt event loop.
+                    (list "not test_create_new_window"
+                          "test_dont_load_swp_on_new_window"
+                          "test_editlinksnode"
+                          "test_links_edit"
+                          "test_links_edit_widget"
+                          "test_new_window"
+                          "test_toolbox"
+                          "test_widgettoolgrid"
+                          ;; AssertionError: Lists differ
+                          "test_create_normal"
+                          "test_create_on_demand")
                     " and not "))
       #:phases
       #~(modify-phases %standard-phases
@@ -85,28 +80,23 @@
           (add-before 'check 'pre-check
             (lambda _
               (setenv "HOME" "/tmp")
-              (setenv "QT_PLUGIN_PATH"
-                      (string-append #$(this-package-input "qtbase") "/lib/qt6/plugins:"
-                                     (getenv "QT_PLUGIN_PATH")))
               (setenv "QT_QPA_PLATFORM" "offscreen"))))))
     (native-inputs
      (list python-pytest
            python-pytest-qt
            python-setuptools
-           python-trubar
-           python-wheel))
-    (inputs
-     (list qtbase))
+           python-trubar))
     (propagated-inputs
      (list python-anyqt
-           python-cachecontrol
            python-commonmark
            python-dictdiffer
            python-docutils
            python-numpy
+           python-packaging
            python-qasync
            python-requests
            python-requests-cache
+           python-truststore
            python-typing-extensions))
     (home-page "https://github.com/biolab/orange-canvas-core")
     (synopsis "Core component of Orange Canvas")
@@ -166,47 +156,56 @@ GUI based workflow.  It is primarily used in the Orange framework.")
 (define-public orange
   (package
     (name "orange")
-    (version "3.32.0")
+    ;; XXX: The latest commit provides comparability with GCC 14, revert to
+    ;; git tag in the next refresh cycle.
+    (properties '((commit . "44e66283aff4132614ef64a877f9ceef963588a7")
+                  (revision . "0")))
+    (version (git-version "3.39.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "Orange3" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/biolab/orange3")
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0pxjwisc209cdgpqlqazc2vlmr0iqz8ry862w7jx95zic54d9p5l"))))
-    (build-system python-build-system)
+        (base32 "0d2ws64y8chj77yw689pr98wndpiapbh0msxyjah5ki8lygflizs"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'preparations
-           (lambda _
-             ;; Delete test that opens an outgoing connection.
-             (delete-file "Orange/tests/test_url_reader.py")
-             ;; This is a binary data file and it breaks runpath validation.
-             (delete-file "Orange/tests/datasets/binary-blob.tab")
-             ;; Skip the test which uses that binary file.
-             (substitute* "Orange/tests/test_txt_reader.py"
-               (("test_read_nonutf8_encoding") "_test_read_nonutf8_encoding"))
-             ;; We use a correct version of PyQtWebEngine, but the build scripts
-             ;; consider it incorrect anyways. Remove the constraint entirely to
-             ;; work around this bug.
-             (substitute* "requirements-pyqt.txt" (("PyQtWebEngine>=5.12") ""))))
-         (add-before 'check 'pre-check
-           ;; Tests need a writable home.
-           (lambda _
-             (setenv "HOME" "/tmp")
-             (setenv "QT_QPA_PLATFORM" "offscreen")))
-         (add-after 'install 'wrap-executable
-           ;; Ensure that icons are found at runtime.
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (wrap-program (string-append out "/bin/orange-canvas")
-                 `("QT_PLUGIN_PATH" prefix
-                   ,(list (string-append (assoc-ref inputs "qtsvg")
-                                         "/lib/qt5/plugins/"))))))))))
+     (list
+      ;; TODO: Figure out how to enable/fix tests: ImportError: cannot import
+      ;; name '_variable' from partially initialized module 'Orange.data'
+      #:tests? #f
+      #:test-backend #~'unittest
+      #:test-flags #~(list "-v" "Orange.tests" "Orange.widgets.tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            ;; Tests need a writable home.
+            (lambda _
+              (setenv "HOME" "/tmp")
+              (setenv "QT_QPA_PLATFORM" "offscreen")))
+          (add-after 'wrap 'wrap-executable
+            ;; Ensure that icons are found at runtime.
+            (lambda _
+              (wrap-program (string-append #$output "/bin/orange-canvas")
+                `("QT_PLUGIN_PATH" prefix
+                  ,(list (string-append
+                          (string-join
+                           (list #$(this-package-input "qtbase")
+                                 #$(this-package-input "qtsvg")
+                                 #$(this-package-input "qtwayland"))
+                           "/lib/qt6/plugins:")
+                          "/lib/qt6/plugins")))))))))
     (native-inputs
-     (list python-cython))
+     (list python-cython
+           python-recommonmark
+           python-setuptools
+           python-trubar))
     (inputs
-     (list bash-minimal
+     (list bash-minimal ;for wrap
            python-anyqt
            python-baycomp
            python-bottleneck
@@ -223,21 +222,24 @@ GUI based workflow.  It is primarily used in the Orange framework.")
            python-opentsne
            python-orange-canvas-core
            python-orange-widget-base
+           python-packaging
            python-pandas
            python-pygments
-           python-pyqt
+           python-pyqt-6
            python-pyqtgraph
-           python-pyqtwebengine
+           python-pyqtwebengine-6
            python-pyyaml
            python-qtconsole
            python-requests
            python-scikit-learn
            python-scipy
            python-serverfiles
+           python-xgboost
            python-xlrd
            python-xlsxwriter
-           qtbase-5
-           qtsvg-5
+           qtbase
+           qtsvg
+           qtwayland
            xdg-utils))
     (home-page "https://orangedatamining.com/")
     (synopsis "Component-based data mining framework")

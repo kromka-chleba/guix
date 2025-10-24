@@ -1278,6 +1278,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ffmpeg-jami-remove-mjpeg-log.patch	\
   %D%/packages/patches/ffmpeg-jami-screen-sharing-x11-fix.patch	\
   %D%/packages/patches/ffmpeg-4-binutils-2.41.patch	\
+  %D%/packages/patches/fgallery-also-look-for-7z.patch		\
   %D%/packages/patches/fifengine-boost-compat.patch		\
   %D%/packages/patches/fifengine-python-3.9-compat.patch	\
   %D%/packages/patches/fifengine-swig-compat.patch		\
@@ -1435,30 +1436,26 @@ dist_patch_DATA =						\
   %D%/packages/patches/glib-appinfo-watch.patch			\
   %D%/packages/patches/glib-skip-failing-test.patch		\
   %D%/packages/patches/glibc-2.33-riscv64-miscompilation.patch	\
+  %D%/packages/patches/glibc-2.35-CVE-2023-4911.patch	\
+  %D%/packages/patches/glibc-2.37-hurd-clock_t_centiseconds.patch	\
+  %D%/packages/patches/glibc-2.37-versioned-locpath.patch	\
+  %D%/packages/patches/glibc-2.38-ldd-x86_64.patch		\
   %D%/packages/patches/glibc-2.39-git-updates.patch	\
   %D%/packages/patches/glibc-2.40-dl-cache.patch		\
-  %D%/packages/patches/glibc-CVE-2019-7309.patch		\
-  %D%/packages/patches/glibc-CVE-2019-9169.patch		\
-  %D%/packages/patches/glibc-CVE-2019-19126.patch		\
-  %D%/packages/patches/glibc-2.35-CVE-2023-4911.patch	\
+  %D%/packages/patches/glibc-2.41-bootstrap-system.patch	\
+  %D%/packages/patches/glibc-2.41-hurd-local-clock_gettime_MONOTONIC.patch	\
+  %D%/packages/patches/glibc-2.41-ldd-x86_64.patch		\
   %D%/packages/patches/glibc-allow-kernel-2.6.32.patch		\
-  %D%/packages/patches/glibc-boot-2.16.0.patch			\
   %D%/packages/patches/glibc-boot-2.2.5.patch			\
+  %D%/packages/patches/glibc-boot-2.16.0.patch			\
   %D%/packages/patches/glibc-bootstrap-system-2.2.5.patch 	\
   %D%/packages/patches/glibc-bootstrap-system-2.16.0.patch 	\
   %D%/packages/patches/glibc-bootstrap-system.patch		\
-  %D%/packages/patches/glibc-2.41-bootstrap-system.patch	\
   %D%/packages/patches/glibc-cross-objcopy.patch		\
   %D%/packages/patches/glibc-cross-objdump.patch		\
   %D%/packages/patches/glibc-dl-cache.patch			\
   %D%/packages/patches/glibc-hidden-visibility-ldconfig.patch	\
   %D%/packages/patches/glibc-hurd-clock_gettime_monotonic.patch	\
-  %D%/packages/patches/glibc-2.31-hurd-clock_gettime_monotonic.patch	\
-  %D%/packages/patches/glibc-2.37-hurd-clock_t_centiseconds.patch	\
-  %D%/packages/patches/glibc-2.41-hurd-local-clock_gettime_MONOTONIC.patch	\
-  %D%/packages/patches/glibc-2.37-versioned-locpath.patch	\
-  %D%/packages/patches/glibc-2.38-ldd-x86_64.patch		\
-  %D%/packages/patches/glibc-2.41-ldd-x86_64.patch		\
   %D%/packages/patches/glibc-hurd-clock_t_centiseconds.patch	\
   %D%/packages/patches/glibc-hurd-getauxval.patch		\
   %D%/packages/patches/glibc-hurd-gettyent.patch		\
@@ -1473,12 +1470,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/glibc-ldd-powerpc.patch			\
   %D%/packages/patches/glibc-ldd-x86_64.patch			\
   %D%/packages/patches/glibc-locales.patch			\
-  %D%/packages/patches/glibc-locales-2.28.patch			\
   %D%/packages/patches/glibc-reinstate-prlimit64-fallback.patch	\
-  %D%/packages/patches/glibc-skip-c++.patch			\
-  %D%/packages/patches/glibc-versioned-locpath.patch		\
-  %D%/packages/patches/glibc-2.29-supported-locales.patch     	\
   %D%/packages/patches/glibc-supported-locales.patch     	\
+  %D%/packages/patches/glibc-versioned-locpath.patch		\
   %D%/packages/patches/gmime-disable-tests.patch		\
   %D%/packages/patches/gmp-arm-asm-nothumb.patch		\
   %D%/packages/patches/gmp-faulty-test.patch			\
@@ -1580,7 +1574,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/highlight-gui-data-dir.patch		\
   %D%/packages/patches/hplip-usb-timeout.patch			\
   %D%/packages/patches/http-parser-CVE-2020-8287.patch		\
-  %D%/packages/patches/htslib-for-stringtie.patch		\
   %D%/packages/patches/hubbub-sort-entities.patch		\
   %D%/packages/patches/hueplusplus-mbedtls.patch		\
   %D%/packages/patches/hugs-fix-build.patch			\
@@ -2003,14 +1996,10 @@ dist_patch_DATA =						\
   %D%/packages/patches/orpheus-cast-errors-and-includes.patch	\
   %D%/packages/patches/ots-no-include-missing-file.patch	\
   %D%/packages/patches/owncloud-disable-updatecheck.patch	\
-  %D%/packages/patches/p7zip-CVE-2016-9296.patch		\
-  %D%/packages/patches/p7zip-CVE-2017-17969.patch		\
   %D%/packages/patches/pnet-fix-line-number-info.patch		\
   %D%/packages/patches/pnet-fix-off-by-one.patch		\
   %D%/packages/patches/pnet-newer-libgc-fix.patch		\
   %D%/packages/patches/pnet-newer-texinfo-fix.patch		\
-  %D%/packages/patches/p7zip-fix-build-with-gcc-11.patch	\
-  %D%/packages/patches/p7zip-remove-unused-code.patch		\
   %D%/packages/patches/pam-krb5-CVE-2020-10595.patch		\
   %D%/packages/patches/pango-skip-libthai-test.patch		\
   %D%/packages/patches/password-store-tree-compat.patch		\
@@ -2470,6 +2459,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/xfce4-settings-defaults.patch		\
   %D%/packages/patches/xgboost-use-system-dmlc-core.patch	\
   %D%/packages/patches/xiphos-glib.patch                        \
+  %D%/packages/patches/xlispstat-fix-compilation-with-modern-gcc.patch \
   %D%/packages/patches/xmonad-dynamic-linking.patch		\
   %D%/packages/patches/xplanet-1.3.1-cxx11-eof.patch		\
   %D%/packages/patches/xplanet-1.3.1-libdisplay_DisplayOutput.cpp.patch	\

@@ -1133,8 +1133,8 @@ transactions from C or Python.")
     (license license:gpl2+)))
 
 (define-public bffe
-  (let ((commit "2f9b1cb355e9a276903a721b48c77790841a91d6")
-        (revision "15"))
+  (let ((commit "e3226ffbdb9b615957b4815956a70bc6ef9ab175")
+        (revision "16"))
     (package
       (name "bffe")
       (version (git-version "0" revision commit))
@@ -1145,7 +1145,7 @@ transactions from C or Python.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0h1nzlj6k9yhhsc1an72876p19yf8kszs2h7xww5ldcjs8vwxn9c"))
+                  "0d66xj0671rrrflln25yjvk4scmiw9946h344zj9mm35rm3mw207"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (native-inputs
@@ -2232,8 +2232,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "8bfd36fe774aff71f9a33fd99e42d578a823750d")
-        (revision "41"))
+  (let ((commit "f9862fd42d4c7a307cfd092086c327f5c2c6b594")
+        (revision "42"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -2244,7 +2244,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0wd8nj2ji28jvs4wgshhbipxballpfmmwbxx82nk4bypbdpdwd5a"))
+                  "1n8apwpfly9605pp2liy80imv3w6q5h750p697sdn2prnw5ifph3"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

@@ -67,6 +67,7 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system ant)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
@@ -1460,73 +1461,86 @@ for most inputs, but the resulting compressed files are anywhere from 20% to
     (license license:asl2.0)
     (properties '((cpe-vendor . "google")))))
 
-(define-public p7zip
+(define-public 7zip
   (package
-    (name "p7zip")
-    (version "16.02")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/" name "/" name "/"
-                                  version "/" name "_" version
-                                  "_src_all.tar.bz2"))
-              (sha256
-               (base32
-                "07rlwbbgszq8i7m8jh3x6j2w2hc9a72dc7fmqawnqkwlwb00mcjy"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Remove non-free source files
-                  (for-each delete-file
-                            (append
-                             (find-files "CPP/7zip/Compress" "Rar.*")
-                             (find-files "CPP/7zip/Crypto" "Rar.*")
-                             (find-files "DOC/unRarLicense.txt")
-                             (find-files  "Utils/file_Codecs_Rar_so.py")))
-                  (delete-file-recursively "CPP/7zip/Archive/Rar")
-                  (delete-file-recursively "CPP/7zip/Compress/Rar")
-                  ;; Fix FTBFS with gcc-10.
-                  (substitute* "CPP/Windows/ErrorMsg.cpp"
-                    (("switch\\(errorCode\\) \\{")
-                     "switch(static_cast<HRESULT>(errorCode)) {"))))
-              (patches (search-patches "p7zip-CVE-2016-9296.patch"
-                                       "p7zip-CVE-2017-17969.patch"
-                                       "p7zip-fix-build-with-gcc-11.patch"
-                                       "p7zip-remove-unused-code.patch"))))
-    (build-system gnu-build-system)
+    (name "7zip")
+    (version "25.01")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ip7z/7zip")
+              (commit version)))
+       (sha256
+        (base32 "01jg1fkc2zsdngv3ag3pwq4x8i5x01hjxsk30n78ffwiv2ps4rmq"))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)
+                  (ice-9 regex)))
+       (snippet #~(begin
+                    (for-each
+                     delete-file
+                     (append (find-files "CPP/7zip/Compress" "^Rar.*")
+                             (find-files "DOC/unRarLicense.txt")))))))
+    (build-system copy-build-system)
     (arguments
-     `(#:make-flags
-       (list (string-append "DEST_HOME=" (assoc-ref %outputs "out")) "all3")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda _
-             (copy-file
-               ,(cond ((target-x86-64?)
-                       "makefile.linux_amd64_asm")
-                      ((target-x86-32?)
-                       "makefile.linux_x86_asm_gcc_4.X")
-                      (else
-                        "makefile.linux_any_cpu_gcc_4.X"))
-               "makefile.machine")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "make" "test")
-               (invoke "make" "test_7z")
-               (invoke "make" "test_7zr")))))))
-    (native-inputs
-      (cond ((target-x86-64?)
-             (list yasm))
-            ((target-x86-32?)
-             (list nasm))
-            (else '())))
-    (home-page "https://p7zip.sourceforge.net/")
-    (synopsis "Command-line file archiver with high compression ratio")
-    (description "p7zip is a command-line port of 7-Zip, a file archiver that
-handles the 7z format which features very high compression ratios.")
+     (list
+      #:install-plan
+      #~'(("DOC/" "share/doc/7zip")
+          ("CPP/7zip/UI/Console/_o/7z" "bin/")
+          ("CPP/7zip/Bundles/Format7zF/_o/7z.so" "lib/")
+          ("CPP/7zip/Bundles/SFXCon/_o/7zCon" "lib/7zCon.sfx"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (delete 'check)
+          (add-after 'unpack 'patch-sources
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (lib (string-append out "/lib")))
+                (substitute* "CPP/7zip/UI/Client7z/Client7z.cpp"
+                  (("if \\(!lib\\.Load\\(dllPrefix + FTEXT\\(kDllName\\)\\)\\)")
+                   (string-append "if (!lib.Load(FTEXT(\"" lib
+                                  "\") + FTEXT(kDllName)) || "
+                                  "!lib.Load(dllPrefix + FTEXT(kDllName)))")))
+                (substitute* "CPP/7zip/UI/Common/ArchiveCommandLine.cpp"
+                  (("s = FTEXT\\(\"\\.\"\\)")
+                   (string-append "s = FTEXT(\"" lib "\")"))
+                  (("s = fas2fs\\(g_ModuleDirPrefix\\)")
+                   (string-append "s = FTEXT(\"" lib "\") "
+                                  "FSTRING_PATH_SEPARATOR"))))))
+          (add-before 'install 'build
+            (lambda* _
+              (define make-flags
+                '#$(list "DISABLE_RAR=1"
+                         (string-append "CC=" (cc-for-target))
+                         (string-append "CXX=" (cxx-for-target))
+                         (string-append "PLATFORM="
+                                        (cond
+                                         ((target-x86-64?) "x64")
+                                         ((target-x86-32?) "x86")
+                                         ((target-arm32?) "arm")
+                                         ((target-aarch64?) "arm64")
+                                         (#t "")))))
+              (with-directory-excursion "CPP/7zip/"
+                (for-each
+                 (lambda (dir)
+                   (with-directory-excursion dir
+                     (apply invoke "make" "-f" "makefile.gcc" make-flags)))
+                 '("UI/Console"
+                   "Bundles/Format7zF"
+                   "Bundles/SFXCon"))))))))
+    (home-page "https://7-zip.org")
+    (synopsis "7-zip file archiver")
+    (description
+     "7-zip is a command-line file compressor that supports a number
+of archive formats and features self-extracting archives.")
     (license (list license:lgpl2.1+
-                   license:gpl2+
+                   license:bsd-2
+                   license:bsd-3
                    license:public-domain))))
+
+(define-public p7zip
+  (deprecated-package "p7zip" 7zip))
 
 (define-public gzstream
   (package
@@ -2423,8 +2437,8 @@ with @code{deflate} but offers more dense compression.
 The specification of the Brotli Compressed Data Format is defined in RFC 7932.")
     (license license:expat)))
 
-(define-public google-brotli
-  (deprecated-package "google-brotli" brotli))
+(define-deprecated-package google-brotli
+  brotli)
 
 (define-public java-brotli
   (package

@@ -1314,8 +1314,8 @@ playing videos from YouTube.  It parses the YouTube website directly and relies
 on the Invidious instances only as a fallback method.")
     (license license:artistic2.0)))
 
-(define-public straw-viewer
-  (deprecated-package "straw-viewer" pipe-viewer))
+(define-deprecated-package straw-viewer
+  pipe-viewer)
 
 (define-public x265
   (package
@@ -3080,8 +3080,8 @@ wallpaper using mpv.")
 to download videos from Austria's national television broadcaster.")
     (license license:bsd-3)))
 
-(define-public orf-dl
-  (deprecated-package "orf-dl" orfondl))
+(define-deprecated-package orf-dl
+  orfondl)
 
 (define-public yle-dl
   (package
@@ -3134,7 +3134,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.09.26")
+    (version "2025.10.22")
     (source
      (origin
        (method git-fetch)
@@ -3146,7 +3146,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
        (snippet #~(substitute* "pyproject.toml"
                     (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "0j6l2zskmsvqk8h3ialbymk75i0bfzn2qmc2gk6s1ybhnpryrv7y"))))
+        (base32 "19viqfk3gnl6yk9p17kp0a21w18yr32qii4grm3mys758ws881ld"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3192,7 +3192,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
                   python-certifi
                   python-mutagen
                   python-pycryptodomex
-                  python-requests ; TODO Remove this special package
+                  python-requests
                   python-urllib3
                   python-websockets))
     (native-inputs
@@ -4650,9 +4650,9 @@ scenes, sources and filters.")
 via a filter.")
     (license license:gpl2)))
 
-(define-public obs-websocket
-  ;; Functionality was merged into OBS.
-  (deprecated-package "obs-websocket" obs))
+;; Functionality was merged into OBS.
+(define-deprecated-package obs-websocket
+  obs)
 
 (define-public obs-wlrobs
   (package
@@ -6605,17 +6605,31 @@ downloader.  It does not require a Youtube API key.")
 (define-public python-youtube-search
   (package
     (name "python-youtube-search")
-    (version "1.6.6")
+    ;; Original repository is archived, see
+    ;; https://github.com/alexmercerind/youtube-search-python/issues/189
+    ;; The most promising fork (in the sense that it works) is
+    ;; https://github.com/ahmedayyad-dev/youtube-search-python-fork,
+    ;; which is therefor packaged in Guix.
+    (properties '((commit . "6d7e16ebcdc90032392749c2f30f8e29ea0956ae")
+                  (revision . "0")))
+    (version (git-version "1.6.6"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "youtube-search-python" version))
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://github.com/ahmedayyad-dev/youtube-search-python-fork")
+          (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1xgw6nqypnj3ymjkfyzc1vvwar73qvp08prnp15ypmzcd7bx2s25"))))
+        (base32 "1b2sc0v0xw8kqrqy1844xkdsss70npkyk26fprpw3yhz09az5k3q"))))
+    (arguments (list #:tests? #f)) ;no tests in repository
     (build-system pyproject-build-system)
     (propagated-inputs (list python-httpx))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://github.com/alexmercerind/youtube-search-python")
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/ahmedayyad-dev/youtube-search-python-fork")
     (synopsis "Search for YouTube videos, channels & playlists")
     (description
      "This package provides tools to search for @code{YouTube} videos,
@@ -6966,8 +6980,8 @@ Users in group ``wheel'' can skip password authentication.")
     (home-page "https://github.com/AlynxZhou/showmethekey")
     (license license:asl2.0)))
 
-(define-public show-me-the-key
-  (deprecated-package "show-me-the-key" showmethekey))
+(define-deprecated-package show-me-the-key
+  showmethekey)
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

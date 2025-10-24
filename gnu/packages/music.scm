@@ -4358,8 +4358,8 @@ using the beets FetchArt plugin.")
 ;;; XXX: The original project is abandoned for 4y, see
 ;;; <https://github.com/unrblt/beets-bandcamp/issues/15>, this package may be
 ;;; sourced from maintained fork <https://github.com/snejus/beetcamp>.
-(define-public beets-bandcamp
-  (deprecated-package "beets-bandcamp" beets-beetcamp))
+(define-deprecated-package beets-bandcamp
+  beets-beetcamp)
 
 (define-public milkytracker
   (package
@@ -7967,7 +7967,7 @@ choice.")
 (define-public musikcube
   (package
     (name "musikcube")
-    (version "3.0.1")
+    (version "3.0.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7976,7 +7976,7 @@ choice.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09q15xlssgg67zg5m0q574k3al2pdjdnm1580mlf0wzr6a021fnd"))))
+                "0kfdfai2w4qh31kypl94yknir9f41y1wh93k38cpj04w3chdzdx2"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ; No test suite
@@ -7994,7 +7994,7 @@ choice.")
      (list alsa-lib
            boost
            curl
-           ffmpeg-4
+           ffmpeg
            lame
            libev
            libgme
@@ -8080,7 +8080,7 @@ streaming audio server.")
            gtk+
            gtksourceview-4 ; undo, redo, multiline text fields
            hicolor-icon-theme
-           keybinder-3.0 ; keybindings outside of GNOME
+           keybinder ; keybindings outside of GNOME
            (librsvg-for-system)
            libsoup-minimal
            python

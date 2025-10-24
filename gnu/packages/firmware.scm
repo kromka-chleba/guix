@@ -1253,8 +1253,8 @@ Virtual Machines.  OVMF contains a sample UEFI firmware for QEMU and KVM.")
                       (install-file "RISCV_VIRT_CODE.fd" fmw)
                       (install-file "RISCV_VIRT_VARS.fd" fmw))))))))))))
 
-(define-public ovmf
-  (deprecated-package "ovmf" ovmf-x86-64))
+(define-deprecated-package ovmf
+  ovmf-x86-64)
 
 (define* (make-arm-trusted-firmware platform #:key
                                     (triplet "aarch64-linux-gnu")
@@ -1634,6 +1634,7 @@ corresponding layout." layout))
            gnu-make
            grep
            python
+           python-appdirs
            python-dotty-dict
            python-hid
            python-hjson

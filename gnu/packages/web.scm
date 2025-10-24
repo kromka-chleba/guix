@@ -1887,8 +1887,8 @@ C.")
 (SAX-style) JSON parser and validating generator written in ANSI C.")
     (license license:isc)))
 
-(define-public libyajl
-  (deprecated-package "libyajl" yajl))
+(define-deprecated-package libyajl
+  yajl)
 
 (define-public libwebsockets
   (package
@@ -2418,8 +2418,8 @@ directions.")
     (description (package-description esbuild))
     (license (package-license esbuild))))
 
-(define-public esbuild-node
-  (deprecated-package "esbuild-node" node-esbuild))
+(define-deprecated-package esbuild-node
+  node-esbuild)
 
 (define-public wwwoffle
   (package
@@ -5559,8 +5559,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "683b375d5679acd248aeff7e8e16424530a92346")
-        (revision "71"))
+  (let ((commit "6e25a64815957700008cf0ba4aae8b08321d449a")
+        (revision "72"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5572,7 +5572,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "19z1v907dkwpg70d273avvms2vmqnimr6smx5rp5vn6p9wyv95h8"))))
+                  "0nh5381hlcnhmrf4wfrj2ns1mi1aw3ivc5760cjmah3fyvb06igr"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -7226,8 +7226,8 @@ developers can integrate into their applications to make use of the
 functions of Tidy.")
     (license license:bsd-3)))
 
-(define-public tidy
-  (deprecated-package "tidy" tidy-html))
+(define-deprecated-package tidy
+  tidy-html)
 
 (define-public hiawatha
   (package
