@@ -9990,6 +9990,23 @@ by making sure that you only compare comparable values.")
 for the list of all values of a type (for a type which only has finitely
 many values).")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-globalize
+  (package
+   (name "ocaml-ppx-globalize")
+   (version "0.17.0")
+   (source
+    (janestreet-github-origin
+     "ppx_globalize" version
+     "061nwws2rvvc69ppq1gmyxxlddphd1f7bv13qyzilr4zwdj8g8j2"))
+   (build-system dune-build-system)
+   (propagated-inputs (list ocaml5.3-base ocaml5.3-ppxlib-jane ocaml5.3-ppxlib))
+   (properties `((upstream-name . "ppx_globalize")))
+   (home-page "https://github.com/janestreet/ppx_globalize")
+   (synopsis "A PPX rewriter that generates functions to copy local values to the global
+heap")
+   (description "Part of the Jane Street's PPX rewriters collection.")
+   (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
