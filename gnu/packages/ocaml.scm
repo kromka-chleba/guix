@@ -10033,6 +10033,31 @@ heap")
 @code{lint} tool to enforce some coding conventions across all Jane Street
 packages.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-optcomp
+  (package
+    (name "ocaml-ppx-optcomp")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_optcomp")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0287r4sqv752wsyx6k04kxw61wvj5y0xj66cj68q3x3i2b717nhz"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-stdio ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_optcomp")))
+    (synopsis "Optional compilation for OCaml")
+    (description "Ppx_optcomp stands for Optional Compilation.  It is a tool
+used to handle optional compilations of pieces of code depending of the word
+size, the version of the compiler, ...")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
