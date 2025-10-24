@@ -10132,6 +10132,25 @@ recommend using this package directly.")
     (description "This package contains assert-like extension nodes that raise
 useful errors on failure.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-hash
+  (package
+    (name "ocaml-ppx-hash")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin
+      "ppx_hash" version
+      "0pnh1ppavh0z2a12h7x0simd55m9mz1jq4drx89d8jd3fvicm2lc"))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-ppx-compare ocaml5.3-ppx-sexp-conv
+           ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_hash")))
+    (home-page "https://github.com/janestreet/ppx_hash")
+    (synopsis "Generation of hash functions from type expressions and definitions")
+    (description "This package is a collection of ppx rewriters that generate
+hash functions from type exrpessions and definitions.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
