@@ -1832,6 +1832,7 @@ menu specification.")
              (list at-spi2-core
                    atril
                    caja
+                   caja-actions
                    dbus
                    dconf
                    dconf-editor
