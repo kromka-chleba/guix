@@ -10290,6 +10290,38 @@ to Cram.  Expect-tests mimics the existing inline tests framework with the
 output-generating code, interleaved with @code{%expect} extension expressions
 to denote the expected output.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-odoc-parser
+  (package
+    (name "ocaml-odoc-parser")
+    (version "3.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ocaml/odoc")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0azxv64jfgncq11ys9li9mn2vc3s5a5k48pbnrj3qmaj2xzkslbw"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:package "odoc-parser"))
+    (propagated-inputs
+     (list ocaml-astring
+	   ocaml-camlp-streams
+	   ocaml-fpath
+	   ocaml-result
+	   ocaml-uutf))
+    (native-inputs
+     (list ocaml5.3-ppx-expect ocaml-cppo ocaml-tyxml))
+    (home-page "https://github.com/ocaml-doc/odoc-parser")
+    (synopsis "Parser for ocaml documentation comments")
+    (description
+     "This package provides a library for parsing the contents of OCaml
+documentation comments, formatted using Odoc syntax, an extension of the
+language understood by ocamldoc.")
+    (license license:isc)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
