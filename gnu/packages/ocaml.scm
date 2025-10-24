@@ -10058,6 +10058,30 @@ packages.")
 used to handle optional compilations of pieces of code depending of the word
 size, the version of the compiler, ...")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-sexp-conv
+  (package
+    (name "ocaml-ppx-sexp-conv")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_sexp_conv")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1gdgwxcwrzdkw3pm3azqqygk5kvqphffpz4j6ask4f0jkliv8j45"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-ppxlib ocaml5.3-ppxlib-jane))
+    (properties `((upstream-name . "ppx_sexp_conv")))
+    (synopsis "Generation of S-expression conversion functions from type definitions")
+    (description "This package generates S-expression conversion functions from type
+definitions.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
