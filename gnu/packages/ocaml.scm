@@ -10255,6 +10255,41 @@ since the start of the Unix epoch.")
 in-line tests in ocaml code.  It is part of Jane Street's PPX rewriters
 collection.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-expect
+  (package
+    (name "ocaml-ppx-expect")
+    (version "0.17.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/janestreet/ppx_expect")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0nimi4zqlw816j2hbxljqhv8s3kdf8mncdj4474234i1xgzngbwx"))))
+    (build-system dune-build-system)
+    (arguments
+     ;; Cyclic dependency with ocaml-ppx-jane
+     `(#:tests? #f))
+    (propagated-inputs
+     (list ocaml5.3-base
+           ocaml5.3-ppx-here
+           ocaml5.3-ppx-inline-test
+           ocaml5.3-stdio
+           ocaml5.3-ppxlib
+           ocaml-re))
+    (properties `((upstream-name . "ppx_expect")))
+    (home-page "https://github.com/janestreet/ppx_expect")
+    (synopsis "Cram like framework for OCaml")
+    (description "Expect-test is a framework for writing tests in OCaml, similar
+to Cram.  Expect-tests mimics the existing inline tests framework with the
+@code{let%expect_test} construct.  The body of an expect-test can contain
+output-generating code, interleaved with @code{%expect} extension expressions
+to denote the expected output.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
