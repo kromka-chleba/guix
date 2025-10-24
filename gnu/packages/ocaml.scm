@@ -9969,6 +9969,27 @@ than ocaml's Pervasives.compare.  Scaffolding functions also gives you more
 flexibility by allowing you to override them for a specific type and more safety
 by making sure that you only compare comparable values.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-enumerate
+  (package
+    (name "ocaml-ppx-enumerate")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin
+      "ppx_enumerate" version
+      "0dmdbllvsq5n2rv4sr2v3j7k9gckykgq7rzxg1vdynrin6bifzx2"))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f)) ; no test suite
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-ppxlib ocaml5.3-ppxlib-jane))
+    (properties `((upstream-name . "ppx_enumerate")))
+    (home-page "https://github.com/janestreet/ppx_enumerate")
+    (synopsis "Generate a list containing all values of a finite type")
+    (description "Ppx_enumerate is a ppx rewriter which generates a definition
+for the list of all values of a type (for a type which only has finitely
+many values).")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
