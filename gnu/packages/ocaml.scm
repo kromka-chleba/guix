@@ -9944,6 +9944,31 @@ https://github.com/ocaml/ocaml/issues/8563.")
     (description
       "Part of the Jane Street's PPX rewriters collection.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-compare
+  (package
+    (name "ocaml-ppx-compare")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin "ppx_compare" version
+                           "161hprn02b3sdf84lx54yqncrc66cfy9p4v63b3lvvw2h2vkxcph"))
+    (build-system dune-build-system)
+    (arguments
+     ;; Tests are currently failing
+     ;; (see https://github.com/janestreet/ppx_compare/issues/10)
+     '(#:tests? #f))
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-ppxlib ocaml5.3-ppxlib-jane))
+    (properties `((upstream-name . "ppx_compare")))
+    (home-page "https://github.com/janestreet/ppx_compare")
+    (synopsis "Generation of comparison functions from types")
+    (description "Generation of fast comparison functions from type expressions
+and definitions.  Ppx_compare is a ppx rewriter that derives comparison functions
+from type representations.  The scaffolded functions are usually much faster
+than ocaml's Pervasives.compare.  Scaffolding functions also gives you more
+flexibility by allowing you to override them for a specific type and more safety
+by making sure that you only compare comparable values.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
