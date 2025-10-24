@@ -9699,6 +9699,38 @@ libraries is an industrial strength alternative to OCaml's standard library
 that was developed by Jane Street, the largest industrial user of OCaml.")
     (license license:expat)))
 
+(define-versioned-package ocaml5.3-base
+  (package
+    (name "ocaml-base")
+    (version "0.17.3")
+    (home-page "https://github.com/janestreet/base")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/janestreet/base")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0yyd9cs6qf8bzk4cpga6hh0iiarhyl2kn15ar3jgqgfmg3p6bcyb"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-intrinsics-kernel ocaml5.3-sexplib0))
+    (synopsis
+     "Full standard library replacement for OCaml")
+    (description
+     "Base is a complete and portable alternative to the OCaml standard
+library.  It provides all standard functionalities one would expect
+from a language standard library.  It uses consistent conventions
+across all of its module.
+
+Base aims to be usable in any context.  As a result system dependent
+features such as I/O are not offered by Base.  They are instead
+provided by companion libraries such as
+@url{https://github.com/janestreet/stdio, ocaml-stdio}.")
+    (license license:expat)))
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
