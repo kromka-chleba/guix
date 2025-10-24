@@ -10201,6 +10201,28 @@ functionality for parsing and pretty-printing s-expressions.")
 Note that Base doesn't need ppx to build, it is only used as a
 verification tool.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-time-now
+  (package
+    (name "ocaml-time-now")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin
+      "time_now" version
+      "032kz5rnn8h7j0020sz9m544wyymlszpnprqx46kgfafdkjdd1gw"))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs
+     (list ocaml5.3-base ocaml5.3-jane-street-headers ocaml5.3-jst-config
+           ocaml5.3-ppx-base ocaml5.3-ppx-optcomp))
+    (properties `((upstream-name . "time_now")))
+    (home-page
+     "https://github.com/janestreet/time_now")
+    (synopsis "Reports the current time")
+    (description
+     "Provides a single function to report the current time in nanoseconds
+since the start of the Unix epoch.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
