@@ -10151,6 +10151,30 @@ useful errors on failure.")
     (description "This package is a collection of ppx rewriters that generate
 hash functions from type exrpessions and definitions.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-sexplib
+  (package
+    (name "ocaml-sexplib")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/sexplib")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0q2cgpvayczvcn1a2l765hc4d2ny3hb9yl65lhxrz4gc0q0wq50g"))))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base ocaml-num ocaml5.3-parsexp ocaml5.3-sexplib0))
+    (synopsis
+     "Library for serializing OCaml values to and from S-expressions")
+    (description
+     "This package is part of Jane Street's Core library.  Sexplib contains
+functionality for parsing and pretty-printing s-expressions.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
