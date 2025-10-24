@@ -10109,6 +10109,29 @@ intended only to share configuration between different packages from Jane
 Street.  Future updates may not be backward-compatible, and we do not
 recommend using this package directly.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-assert
+  (package
+    (name "ocaml-ppx-assert")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin
+      "ppx_assert" version
+      "12yf3j3zq3mhv58aykzf7iy3igydvswcvlm7rjql4dirls4p5i4l"))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-base
+           ocaml5.3-ppx-cold
+           ocaml5.3-ppx-compare
+           ocaml5.3-ppx-here
+           ocaml5.3-ppx-sexp-conv
+           ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_assert")))
+    (home-page "https://github.com/janestreet/ppx_assert")
+    (synopsis "Assert-like extension nodes that raise useful errors on failure")
+    (description "This package contains assert-like extension nodes that raise
+useful errors on failure.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
