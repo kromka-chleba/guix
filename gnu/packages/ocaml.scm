@@ -10082,6 +10082,33 @@ size, the version of the compiler, ...")
     (description "This package generates S-expression conversion functions from type
 definitions.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-jst-config
+  (package
+    (name "ocaml-jst-config")
+    (version "0.17.0")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/janestreet/jst-config")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "1dy345p6825wyhpv6drlrl9gqwcgx341a5k3pnvfnxpcc6mkw167"))))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f))           ; no tests
+    (propagated-inputs
+      (list ocaml5.3-base ocaml5.3-ppx-assert ocaml5.3-stdio dune-configurator))
+    (home-page "https://github.com/janestreet/jst-config")
+    (synopsis "Compile-time configuration for Jane Street libraries")
+    (description "Defines compile-time constants used in Jane Street libraries
+such as Base, Core, and Async.  This package has an unstable interface; it is
+intended only to share configuration between different packages from Jane
+Street.  Future updates may not be backward-compatible, and we do not
+recommend using this package directly.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
