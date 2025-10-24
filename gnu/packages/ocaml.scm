@@ -10175,6 +10175,32 @@ hash functions from type exrpessions and definitions.")
      "This package is part of Jane Street's Core library.  Sexplib contains
 functionality for parsing and pretty-printing s-expressions.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-base
+  (package
+    (name "ocaml-ppx-base")
+    (version "0.17.0")
+    (source
+     (janestreet-github-origin
+      "ppx_base" version
+      "07765b0x6a7gqkrg7jn0js02fifa3g09pvl914fls484lz3fdrw0"))
+    (build-system dune-build-system)
+    (propagated-inputs
+     (list ocaml5.3-ppx-compare
+           ocaml5.3-ppx-cold
+           ocaml5.3-ppx-enumerate
+	   ocaml5.3-ppx-globalize
+           ocaml5.3-ppx-hash
+           ocaml5.3-ppx-js-style
+           ocaml5.3-ppx-sexp-conv
+           ocaml5.3-ppxlib))
+    (properties `((upstream-name . "ppx_base")))
+    (home-page "https://github.com/janestreet/ppx_base")
+    (synopsis "Base set of ppx rewriters")
+    (description "Ppx_base is the set of ppx rewriters used for Base.
+Note that Base doesn't need ppx to build, it is only used as a
+verification tool.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
