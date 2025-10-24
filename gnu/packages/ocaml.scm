@@ -10322,6 +10322,66 @@ to denote the expected output.")
 documentation comments, formatted using Odoc syntax, an extension of the
 language understood by ocamldoc.")
     (license license:isc)))
+
+(define-versioned-package ocaml5.3-odoc
+  (package
+    (name "ocaml-odoc")
+    (version "3.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ocaml/odoc")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0azxv64jfgncq11ys9li9mn2vc3s5a5k48pbnrj3qmaj2xzkslbw"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:package "odoc"
+       #:phases
+       (modify-phases %standard-phases
+	 (add-after 'unpack 'fix-test
+           (lambda _
+             ;; test results expects #!/bin/sh but gets a store path instead
+             (substitute* "test/xref2/with.t/run.t"
+	       (("#!/bin/sh") (string-append "#!" (which "sh")))))))))
+    (propagated-inputs
+     (list ocaml-astring
+           ocaml-bisect-ppx
+           ocaml-cmdliner
+	   ocaml-crunch
+           ocaml-fmt
+           ocaml-fpath
+           ocaml-logs
+           ocaml5.3-odoc-parser
+           ocaml-re
+           ocaml-result
+	   ocaml5.3-sexplib
+           ocaml-tyxml))
+    (native-inputs
+     (list ocaml-alcotest
+           ocaml-bos
+           ocaml-cppo
+           ocaml-findlib
+           ocaml-lwt
+           ocaml-markup
+	   ocaml-menhir
+           ocaml5.3-ppx-expect
+           ocaml-version
+           ocaml-yojson
+           jq))
+    (home-page "https://github.com/ocaml/odoc")
+    (synopsis "OCaml documentation generator")
+    (description "Odoc is a documentation generator for OCaml.  It reads
+@emph{doc comments}, delimited with @code{(** ... *)}, and outputs
+@acronym{HTML}.
+
+Text inside doc comments is marked up in ocamldoc syntax.  Odoc's main
+advantage over ocamldoc is an accurate cross-referencer, which handles the
+complexity of the OCaml module system.")
+    (license license:isc)))
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
