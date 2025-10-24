@@ -10223,6 +10223,38 @@ verification tool.")
      "Provides a single function to report the current time in nanoseconds
 since the start of the Unix epoch.")
     (license license:expat)))
+
+(define-versioned-package ocaml5.3-ppx-inline-test
+  (package
+    (name "ocaml-ppx-inline-test")
+    (version "0.17.0")
+    (home-page "https://github.com/janestreet/ppx_inline_test")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url (string-append home-page ".git"))
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0azhkx19srpjl748zznrhyzifhkij5h3477mp0dwbp2k16c6pmx4"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f)) ;see home page README for further information
+    (propagated-inputs
+     (list ocaml5.3-base
+           ocaml5.3-compiler-libs
+           ocaml5.3-sexplib0
+           ocaml5.3-stdio
+           ocaml5.3-ppxlib
+           ocaml5.3-time-now))
+    (properties `((upstream-name . "ppx_inline_test")))
+    (synopsis "Syntax extension for writing in-line tests in ocaml code")
+    (description "This package contains a syntax extension for writing
+in-line tests in ocaml code.  It is part of Jane Street's PPX rewriters
+collection.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
