@@ -22,6 +22,7 @@
 (define-module (guix build gnu-build-system)
   #:use-module (guix build utils)
   #:use-module (guix build gremlin)
+  #:use-module (guix build io)
   #:use-module (guix elf)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 match)
@@ -573,10 +574,7 @@ makefiles."
                                               "bin" "sbin"))
                            outputs #:allow-other-keys)
   "When VALIDATE-RUNPATH? is true, validate that all the ELF files in
-ELF-DIRECTORIES have their dependencies found in their 'RUNPATH'.
-
-Since the ELF parser needs to have a copy of files in memory, better run this
-phase after stripping."
+ELF-DIRECTORIES have their dependencies found in their 'RUNPATH'."
   (define (sub-directory parent)
     (lambda (directory)
       (let ((directory (string-append parent "/" directory)))
