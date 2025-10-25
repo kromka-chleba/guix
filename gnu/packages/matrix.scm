@@ -45,6 +45,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages xml)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -143,6 +144,26 @@ on @url{https://github.com/tulir/whatsmeow, whatsmeow}.")
     (home-page "https://github.com/matrix-org/matrix-python-sdk")
     (synopsis "Client-Server SDK for Matrix")
     (description "This package provides client-server SDK for Matrix.")
+    (license license:asl2.0)))
+
+(define-public python-matrix-common
+  (package
+    (name "python-matrix-common")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "matrix_common" version))
+       (sha256
+        (base32 "1ldby8prjxc2dgypmim5lycb3bj4viv7mhvynlbk894zrp623qb2"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'custom
+                     #:test-flags #~(list "-m" "twisted.trial" "tests")))
+    (propagated-inputs (list python-attrs))
+    (native-inputs (list python-setuptools python-twisted))
+    (home-page "https://github.com/matrix-org/matrix-python-common")
+    (synopsis "Common utilities for Synapse, Sydent and Sygnal")
+    (description "This package contains code used by Synapse, Sydent, and Sygnal.")
     (license license:asl2.0)))
 
 (define-public python-matrix-synapse-ldap3
