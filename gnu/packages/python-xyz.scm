@@ -15805,6 +15805,47 @@ addition to a bunch of aliases.")
     (native-inputs (list python-setuptools
                          python-setuptools-scm))))
 
+(define-public python-weasel
+  (package
+    (name "python-weasel")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/explosion/weasel/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q0pqm2wqkghzaqy1caam3zkgkp561aiwshbljfa5lhqh49cfww1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Fetches data over the internet.
+      #~(list
+         "-k"
+         "not _git_ and not _clone and not _remote and not _project_assets")))
+    (inputs (list git))
+    (native-inputs (list nss-certs-for-test
+                         python-pytest
+                         python-setuptools))
+    (propagated-inputs (list
+                        python-confection
+                        python-wasabi
+                        python-srsly
+                        python-typer
+                        python-cloudpathlib
+                        python-smart-open-6 ;should work with 7; pathy needs 6
+                        python-requests
+                        python-pydantic-2))
+    (home-page "https://github.com/explosion/weasel/")
+    (synopsis "Small and easy workflow system")
+    (description "Weasel lets you manage and share end-to-end workflows for
+different use cases and domains, and orchestrate training, packaging and
+serving your custom pipelines")
+    (license license:expat)))
+
 (define-public python-sarge
   (package
     (name "python-sarge")
