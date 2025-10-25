@@ -12261,6 +12261,43 @@ application of SortMeRNA is filtering rRNA from metatranscriptomic data.")
     (supported-systems '("x86_64-linux" "i686-linux"))
     (license license:lgpl3)))
 
+(define-public spoa
+  (package
+    (name "spoa")
+    (version "4.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/rvaser/spoa")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dkvdrrmm9dwps1z8bgpg4yln850wgyixpikbv6sw313fd7g8cwx"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "bin/spoa_test")))))))
+    (inputs (list bioparser biosoup))
+    (native-inputs (list googletest))
+    (home-page "https://github.com/rvaser/spoa")
+    (synopsis "SIMD partial order alignment tool/library")
+    (description
+     "This pakcage provides a C++ implementation of the partial order
+alignment (POA) algorithm (as described in 10.1093/bioinformatics/18.3.452)
+which is used to generate consensus sequences (as described in
+10.1093/bioinformatics/btg109).  It supports three alignment modes: local
+(Smith-Waterman), global (Needleman-Wunsch) and semi-global alignment
+(overlap), and three gap modes: linear, affine and convex (piecewise affine).
+It also supports Intel SSE4.1+ and AVX2 vectorization (marginally faster due
+to high latency shifts), SIMDe and dispatching.")
+    (license license:expat)))
+
 (define-public star
   (package
     (name "star")
