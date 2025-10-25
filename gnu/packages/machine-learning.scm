@@ -1532,13 +1532,15 @@ natural language processing framework.")
 (define-public python-spacy
   (package
     (name "python-spacy")
-    (version "3.6.1")
+    ;; 3.7.5 is the last version that supports NumPy 1.
+    ;; 4.0.0 will be the first version that supports Cython 3.
+    (version "3.7.5")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "spacy" version))
               (sha256
                (base32
-                "0ri1cz62kswawsa4hflh0ah8f63mnnqah0sbd5hmabdf0s3sj8v3"))))
+                "1lrd7k7hizygqldpln4aham6kprbyaj7z7pfd5dabixcyb5wcj56"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1552,7 +1554,10 @@ natural language processing framework.")
               ;; This tries to run the application with typer, which fails
               ;; with an unspecified error, possibly because the build
               ;; container doesn't have /bin/sh.
-              " and not test_project_assets"))
+              " and not test_project_assets"
+              ;; Fails with DeprecationWarning: SelectableGroups dict interface
+              ;; is deprecated. Use select.
+              " and not test_pass_doc_to_pipeline"))
       #:phases
       '(modify-phases %standard-phases
          (add-after 'build 'build-ext
@@ -1571,7 +1576,7 @@ natural language processing framework.")
                              python-pydantic-2
                              python-requests
                              python-setuptools
-                             python-smart-open
+                             python-smart-open-6 ;should work with 7
                              python-spacy-legacy
                              python-spacy-loggers
                              python-srsly
@@ -1579,15 +1584,18 @@ natural language processing framework.")
                              python-tqdm
                              python-typer
                              python-typing-extensions
+                             python-weasel
                              python-wasabi))
     (native-inputs
-     (list python-cython python-pytest python-mock python-wheel))
+     (list python-cython-0              ;Later versions support Cython 3.
+           python-mock
+           python-pytest))
     (home-page "https://spacy.io")
     (synopsis "Natural Language Processing (NLP) in Python")
     (description
      "SpaCy is a library for advanced Natural Language Processing in Python
 and Cython.  It comes with pretrained pipelines and currently supports
-tokenization and training for 70+ languages. It features state-of-the-art
+tokenization and training for 70+ languages.  It features state-of-the-art
 speed and neural network models for tagging, parsing, named entity
 recognition, text classification and more, multi-task learning with pretrained
 transformers like BERT, as well as a production-ready training system and easy
