@@ -316,6 +316,55 @@ and JSON.
 @end itemize")
     (license license:expat)))
 
+(define-public python-cloudpathlib
+  (package
+    (name "python-cloudpathlib")
+    (version "0.23.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/drivendataorg/cloudpathlib")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dqwml269lpz51drgg3s27sqmvwa1vldw2rj34ssnqppcmc5h5lm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Retry.__init__() got an unexpected keyword argument 'timeout'
+      #~(list "--deselect" "tests/test_gs_specific.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-tests
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((" --report-log reportlog.jsonl") "")))))))
+    (native-inputs (list python-azure-identity
+                         python-flit-core
+                         python-psutil
+                         python-pydantic-2
+                         python-pytest
+                         python-pytest-cases
+                         python-pytest-cov
+                         python-pytest-xdist
+                         python-tenacity))
+    (propagated-inputs (list python-azure-storage-blob
+                             python-azure-storage-file-datalake
+                             python-boto3
+                             python-dotenv
+                             python-google-cloud-storage
+                             python-shortuuid))
+    (home-page "https://github.com/drivendataorg/cloudpathlib")
+    (synopsis
+     "Mimic pathlib.Path's interface for URIs from cloud storage services")
+    (description
+     "Cloudpathlib's goal is to be the meringue of file management libraries:
+the subtle sweetness of pathlib working in harmony with the ethereal lightness
+of the cloud.")
+    (license license:expat)))
+
 (define-public python-devpi-common
   (package
     (name "python-devpi-common")
