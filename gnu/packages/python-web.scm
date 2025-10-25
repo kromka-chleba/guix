@@ -11145,6 +11145,29 @@ persistence API that can save your data on disk, encrypted.  Concurrent
 data access will be coordinated by a file lock mechanism.")
     (license license:expat)))
 
+(define-public python-azure-identity
+  (package
+    (name "python-azure-identity")
+    (version "1.25.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "azure_identity" version))
+       (sha256
+        (base32 "0mhl6rly7lh93q3n23r4k14bg3ywx107phz18dj07rixi0l87jl7"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;devtools_testutils not available
+    (propagated-inputs (list python-azure-core
+                             python-cryptography
+                             python-msal
+                             python-msal-extensions
+                             python-typing-extensions))
+    (native-inputs (list python-pytest python-setuptools))
+    (home-page "https://github.com/Azure/azure-sdk-for-python")
+    (synopsis "Microsoft Azure Identity Library for Python")
+    (description "Microsoft Azure Identity Library for Python.")
+    (license license:expat)))
+
 (define-public python-azure-storage-blob
   (package
     (name "python-azure-storage-blob")
