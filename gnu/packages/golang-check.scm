@@ -797,6 +797,40 @@ tests.")
 tests.")
     (license license:expat)))
 
+(define-public go-github-com-gkampitakis-go-snaps
+  (let ((commit "0832b79c205714d0e21108ab3848cc2715eed2d3")
+        (revision "0"))
+    (package
+      (name "go-github-com-gkampitakis-go-snaps")
+      (version (git-version "0.5.15" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/gkampitakis/go-snaps")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1djdcc2pkizpnv35q49y7ncll7yw0w8j3a347ybrqs6my7qv66lx"))))
+      (build-system go-build-system)
+      (propagated-inputs
+       (list go-github-com-gkampitakis-ciinfo
+             go-github-com-goccy-go-yaml
+             go-github-com-kr-pretty
+             go-github-com-maruel-natural
+             go-github-com-sergi-go-diff
+             go-github-com-tidwall-gjson
+             go-github-com-tidwall-sjson
+             go-github-com-tidwall-pretty))
+      (arguments
+       (list
+        #:import-path "github.com/gkampitakis/go-snaps"
+        #:skip-build? #t))
+      (home-page "https://github.com/gkampitakis/go-snaps")
+      (synopsis "Jest-like snapshot testing in Go")
+      (description "go-snaps is a Go implementation of Jest snapshot testing.")
+      (license license:expat))))
+
 (define-public go-github-com-go-playground-assert-v2
   (package
     (name "go-github-com-go-playground-assert-v2")
