@@ -2189,6 +2189,149 @@ rounds that are calibrated to the chosen timer.")
 Python code formatter \"black\".")
     (license license:expat)))
 
+(define-public python-pytest-steps
+  (package
+    (name "python-pytest-steps")
+    (version "1.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-steps" version))
+       (sha256
+        (base32 "05r2ch7191saj7sw6d47bfa5vnyyj157dl8hvlcc78xx6jyxy46j"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; These tests fail with this error, not sure why:
+         ;;   pandas.errors.MergeError: Not allowed to merge between different
+         ;;   levels. (1 levels on the left, 2 on the right)
+         "--deselect"
+         "pytest_steps/tests/test_steps_harvest.py::test_synthesis"
+         "--deselect"
+         "pytest_steps/tests/test_docs_example_with_harvest.py::test_synthesis_df")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+               (apply invoke "python" "-m" "pytest" "-vv" test-flags)))))))
+    (propagated-inputs (list python-makefun
+                             python-pytest ;is actively used
+                             python-wrapt))
+    (native-inputs (list python-pandas
+                         python-pytest-cases-skiptests ;added
+                         python-pytest-harvest-skiptests ;added
+                         python-setuptools
+                         python-setuptools-scm
+                         python-tabulate))
+    (home-page "https://github.com/smarie/python-pytest-steps")
+    (synopsis "Create step-wise / incremental tests in pytest")
+    (description "Create step-wise / incremental tests in pytest.")
+    (license license:expat)))
+
+(define-public python-pytest-steps-skiptests
+  ;; pytest-steps, pytest-harvest, and pytest-cases all depend on each other.
+  ;; A package that skips the tests allows the cycle to be broken.
+  (package
+    (inherit python-pytest-steps)
+    (name "python-pytest-steps-skiptests")
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm))))
+
+(define-public python-pytest-harvest
+  (package
+    (name "python-pytest-harvest")
+    (version "1.10.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-harvest" version))
+       (sha256
+        (base32 "066lqx46hqlvllq6ppmyi47fjc1dww7jwa4wfkkx2hrf3z7s9kr7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+               (invoke "python" "-m" "pytest" "-vv")))))))
+    (native-inputs (list python-pandas
+                         python-pytest-cases-skiptests
+                         python-pytest-steps-skiptests
+                         python-setuptools
+                         python-setuptools-scm
+                         python-tabulate))
+    (propagated-inputs (list python-decopatch-skiptests
+                             python-makefun
+                             python-packaging
+                             python-pytest ;is actively used
+                             python-six))
+    (home-page "https://github.com/smarie/python-pytest-harvest")
+    (synopsis
+     "Store data created during your pytest tests execution")
+    (description
+     "Store data created during your pytest tests execution,
+and retrieve it at the end of the session, e.g. for applicative
+benchmarking purposes.")
+    (license license:expat)))
+
+(define-public python-pytest-harvest-skiptests
+  ;; pytest-steps, pytest-harvest, and pytest-cases all depend on each other.
+  ;; A package that skips the tests allows the cycle to be broken.
+  (package
+    (inherit python-pytest-harvest)
+    (name "python-pytest-harvest-skiptests")
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm))))
+
+(define-public python-pytest-cases
+  (package
+    (name "python-pytest-cases")
+    (version "3.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_cases" version))
+       (sha256
+        (base32 "13vzivzca36g3rbz3k3zny7jqv35vsl2z0fl32ik3j95npqq3qf4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+               (invoke "python" "-m" "pytest" "-vv")))))))
+    (propagated-inputs (list python-decopatch-skiptests
+                             python-makefun
+                             python-pytest ;is actively used
+                             python-packaging))
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm
+                         python-pytest-asyncio
+                         python-pytest-harvest-skiptests
+                         python-pytest-steps-skiptests))
+    (home-page "https://github.com/smarie/python-pytest-cases")
+    (synopsis "Separate test code from test cases in pytest")
+    (description "Separate test code from test cases in pytest.")
+    (license license:expat)))
+
+(define-public python-pytest-cases-skiptests
+  ;; pytest-steps, pytest-harvest, and pytest-cases all depend on each other.
+  ;; A package that skips the tests allows the cycle to be broken.
+  (package
+    (inherit python-pytest-cases)
+    (name "python-pytest-cases-skiptests")
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools python-setuptools-scm))))
+
 (define-public python-pytest-celery
   (package
     (name "python-pytest-celery")

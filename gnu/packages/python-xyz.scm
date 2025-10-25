@@ -15773,6 +15773,38 @@ addition to a bunch of aliases.")
        (sha256
         (base32 "0923mpixwq6hdpkgvi4r46alfvf608iq975rb8lnqpq29j71mmjk"))))))
 
+;;; The smarie-tools are all dependent on each other and thus need to have
+;;; a version without tests to prevent cycles.
+(define-public python-decopatch
+  (package
+    (name "python-decopatch")
+    (version "1.4.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "decopatch" version))
+       (sha256
+        (base32 "082pnnc7a1d7rk40k7m72w7kw8dk7g8m3yzq4cn1hl217z4ljzwm"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))
+    (propagated-inputs (list python-makefun))
+    (native-inputs (list python-pytest
+                         python-pytest-cases-skiptests
+                         python-setuptools
+                         python-setuptools-scm))
+    (home-page "https://github.com/smarie/python-decopatch")
+    (synopsis "Create decorators easily in python")
+    (description "Create decorators easily in python.")
+    (license license:expat)))
+
+(define-public python-decopatch-skiptests
+  (package
+    (inherit python-decopatch)
+    (name "python-decopatch-skiptests")
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm))))
+
 (define-public python-sarge
   (package
     (name "python-sarge")
