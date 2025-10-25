@@ -368,53 +368,54 @@ the MS Graph API.")
 (define-public owncloud-client
   (package
     (name "owncloud-client")
-    (version "2.9.0.5150")
+    (version "6.0.1.17343")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://download.owncloud.com/desktop/ownCloud/stable/"
                            version "/source/ownCloud-" version ".tar.xz"))
        (sha256
-        (base32 "0nf68x840p30yng4fh1nlyiqg40z0rkcv0lskpz8dd4pj1iw5jjs"))
-       (patches (search-patches "owncloud-disable-updatecheck.patch"))))
-    ;; TODO: unbundle qprogessindicator, qlockedfile, qtokenizer and
-    ;; qtsingleapplication which have not yet been packaged, but all are
-    ;; explicitly used from the 3rdparty folder during build.
-    (build-system cmake-build-system)
+        (base32 "1bwhhj8m9kmhqyvy0rqrx8q8xjisc6ayk2mxa2v81jjbcwrnhng9"))))
+    ;; TODO: unbundle qprogessindicator
+    (build-system qt-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-failing-tests
-           ;; "Could not create autostart folder"
-           (lambda _
-             (substitute* "test/CMakeLists.txt"
-                          (("owncloud_add_test\\(Utility\\)" test)
-                           (string-append "#" test)))
-             #t))
-         (add-after 'unpack 'dont-embed-store-path
-           (lambda _
-             (substitute* "src/common/utility_unix.cpp"
-               (("QCoreApplication::applicationFilePath\\()") "\"owncloud\""))
-             #t))
-         (delete 'patch-dot-desktop-files))
-       #:configure-flags `("-DUNIT_TESTING=ON"
-                           ;; build without qtwebkit, which causes the
-                           ;; package to FTBFS while looking for QWebView.
-                           "-DNO_SHIBBOLETH=1"
-                           ;; Fix sync-exclude.list problem, see
-                           ;; <https://github.com/owncloud/client/issues/8373>
-                           ;; <https://issues.guix.gnu.org/47672>
-                           ,(string-append "-DSYSCONF_INSTALL_DIR="
-                                           (assoc-ref %outputs "out")
-                                           "/etc"))))
+     (list #:qtbase qtbase
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'delete-failing-tests
+                 ;; "Could not create autostart folder"
+                 (lambda _
+                   (substitute* "test/CMakeLists.txt"
+                     (("owncloud_add_test\\(Utility\\)" test)
+                      (string-append "#" test)))))
+               (add-after 'unpack 'dont-embed-store-path
+                 (lambda _
+                   (substitute* "src/common/utility_unix.cpp"
+                     (("QCoreApplication::applicationFilePath\\()")
+                      "\"owncloud\"")))))
+           #:configure-flags
+           #~(list "-DUNIT_TESTING=ON"
+                   ;; build without qtwebkit, which causes the
+                   ;; package to FTBFS while looking for QWebView.
+                   "-DNO_SHIBBOLETH=1"
+                   ;; Fix sync-exclude.list problem, see
+                   ;; <https://github.com/owncloud/client/issues/8373>
+                   ;; <https://issues.guix.gnu.org/47672>
+                   (string-append "-DSYSCONF_INSTALL_DIR=" #$output "/etc"))))
     (native-inputs
-     `(("cmocka" ,cmocka)
-       ("extra-cmake-modules" ,extra-cmake-modules)
-       ("perl" ,perl)
-       ("pkg-config" ,pkg-config)
-       ("qtlinguist" ,qttools-5)))
+     (list cmocka
+       extra-cmake-modules
+       perl
+       pkg-config
+       qttools))
     (inputs
-     (list qtbase-5 qtkeychain sqlite zlib))
+     (list kdsingleapplication
+           libre-graph-api-cpp-qt-client
+           qtdeclarative
+           qtkeychain-qt6
+           shared-mime-info
+           sqlite
+           zlib))
     (home-page "https://owncloud.org")
     (synopsis "Folder synchronization with an ownCloud server")
     (description "The ownCloudSync system lets you always have your latest
