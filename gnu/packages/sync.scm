@@ -336,6 +336,35 @@ Memory requirements and CPU utilization are kept at minimum.
 See also: megacmd, the official tool set by MEGA.")
     (license license:gpl2)))
 
+(define-public libre-graph-api-cpp-qt-client
+  (package
+    (name "libre-graph-api-cpp-qt-client")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/owncloud/libre-graph-api-cpp-qt-client")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sa9dbkbyng1h7wsz9qxd01zacah86dn3swsgbb24pdnz2c5mdy1"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f ;no tests
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'change-directory
+                 (lambda _
+                   (chdir "client"))))))
+    (inputs
+     (list qtbase zlib))
+    (home-page "https://libregraph.github.io/")
+    (synopsis "Cloud collaboration API")
+    (description "Libre Graph is a free API for cloud collaboration inspired by
+the MS Graph API.")
+    (license license:asl2.0)))
+
 (define-public owncloud-client
   (package
     (name "owncloud-client")
