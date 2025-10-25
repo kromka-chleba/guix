@@ -11118,6 +11118,33 @@ Python.")
 Python.")
     (license license:expat)))
 
+(define-public python-msal-extensions
+  (package
+    (name "python-msal-extensions")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "msal_extensions" version))
+       (sha256
+        (base32 "19719dhqi920n28qrbpdzh1z1jnba4fjbx323mgjpxjyyq8gvc65"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Tests fail with
+      ;; E   ImportError: attempted relative import with no known parent package
+      #:tests? #f))
+    (propagated-inputs (list python-msal))
+    (native-inputs (list python-pytest python-setuptools))
+    (home-page "https://pypi.org/project/msal-extensions")
+    (synopsis
+     "Microsoft Authentication Library extensions")
+    (description
+     "Microsoft Authentication Library extensions (MSAL EX) provides a
+persistence API that can save your data on disk, encrypted.  Concurrent
+data access will be coordinated by a file lock mechanism.")
+    (license license:expat)))
+
 (define-public python-azure-storage-blob
   (package
     (name "python-azure-storage-blob")
