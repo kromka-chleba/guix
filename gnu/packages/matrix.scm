@@ -28,6 +28,7 @@
 
 (define-module (gnu packages matrix)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages check)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages databases)
@@ -43,7 +44,10 @@
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rust)
+  #:use-module (gnu packages tls)
   #:use-module (gnu packages xml)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system go)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
@@ -201,63 +205,131 @@ an LDAP server.")
 (define-public synapse
   (package
     (name "synapse")
-    (version "1.29.0")
+    (version "1.140.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/matrix-org/synapse")
+             (url "https://github.com/element-hq/synapse")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m05fn5s0xfsnbvvv6089xkf7r8xmzvk9rp15hk9y3zk4fsqi5fw"))))
+        (base32 "0iidr727jw178596ijls670k8i7v7kjbn8w0jhkihf2hy8wnfkcy"))))
     (build-system pyproject-build-system)
-    ;; TODO Run tests with ‘PYTHONPATH=. trial3 tests’.
+    (arguments
+     (list
+      #:modules
+      '(((guix build cargo-build-system) #:prefix cargo:)
+        (guix build pyproject-build-system)
+        (guix build utils))
+      #:imported-modules
+      `(,@%cargo-build-system-modules
+        ,@%pyproject-build-system-modules)
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums))))
+          (add-after 'build 'install-rust-library
+            (lambda _
+              (copy-file "target/release/libsynapse.so"
+                         "synapse/synapse_rust.so")))
+          (add-before 'check 'start-postgresql
+            (lambda* (#:key inputs tests? #:allow-other-keys)
+              (when tests?
+                (setenv "TZDIR" (search-input-directory inputs
+                                                        "share/zoneinfo"))
+                (setenv "POSTGRES_PASSWORD" "postgres")
+                (let ((dbdir (string-append (getcwd) "/../pgdir")))
+                  (invoke "initdb" "-D" dbdir
+                          "--lc-collate" "C"
+                          "--lc-ctype" "C"
+                          "--encoding" "UTF8")
+                  (invoke "pg_ctl" "-D" dbdir
+                          "-o" (string-append "-k " dbdir)
+                          "-l" (string-append dbdir "/db.log")
+                          "start")
+
+                  (setenv "SYNAPSE_POSTGRES_HOST" dbdir))
+
+                (setenv "SYNAPSE_POSTGRES" "postgres")
+                (setenv "SYNAPSE_POSTGRES_USER" "nixbld")
+                (setenv "SYNAPSE_POSTGRES_PASSWORD" "postgres"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "cargo" "test")
+                (invoke "python" "-m" "twisted.trial"
+                        ;; High parallelism makes the test suite unstable, see:
+                        ;; https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/ma/matrix-synapse-unwrapped/package.nix#L159
+                        "-j" (number->string (min 4 (parallel-job-count)))
+                        "tests")))))))
+    (inputs (cargo-inputs 'synapse))
     (propagated-inputs
-     (list python-simplejson ;not attested but required
-           ;; requirements (synapse/python_dependencies.py)
-           python-jsonschema
-           python-frozendict
-           python-unpaddedbase64
+     (list python-attrs
+           python-bcrypt
+           python-bleach
            python-canonicaljson
-           python-signedjson
-           python-pynacl
-           python-idna
-           python-service-identity
-           python-twisted
-           python-treq
-           python-pyopenssl
-           python-pyyaml
+           python-cryptography
+           python-ijson
+           python-immutabledict
+           python-jinja2
+           python-jsonschema
+           python-matrix-common
+           python-msgpack
+           python-multipart
+           python-netaddr
+           python-packaging
+           python-phonenumbers
+           python-pillow
+           python-prometheus-client
            python-pyasn1
            python-pyasn1-modules
-           python-daemonize
-           python-bcrypt
-           python-pillow
-           python-sortedcontainers
+           python-pydantic
            python-pymacaroons
-           python-msgpack
-           python-phonenumbers
-           python-six
-           python-prometheus-client
-           python-attrs
-           python-netaddr
-           python-jinja2
-           python-bleach
+           python-pyopenssl
+           python-pyyaml
+           python-service-identity
+           python-signedjson
+           python-sortedcontainers
+           python-treq
+           python-twisted
            python-typing-extensions
-           ;; conditional requirements (synapse/python_dependencies.py)
-           ;; ("python-hiredis" ,python-hiredis)
-           python-matrix-synapse-ldap3
-           python-psycopg2
-           python-jinja2
-           python-txacme
-           python-pysaml2
+           python-unpaddedbase64
+
+           ;; [all]
+           python-authlib
+           python-hiredis
+           python-idna
            python-lxml
-           python-packaging
-           ;; sentry-sdk, jaeger-client, and opentracing could be included, but
-           ;; all are monitoring aids and not essential.
-           python-pyjwt))
-    (native-inputs (list python-mock python-parameterized python-setuptools))
-    (home-page "https://github.com/matrix-org/synapse")
+           python-matrix-synapse-ldap3
+           python-parameterized
+           python-psycopg2
+           python-psycopg2cffi
+           python-pympler
+           python-pysaml2
+           python-txredisapi))
+    (native-inputs (list python-setuptools-rust
+                         rust `(,rust "cargo")
+                         python-poetry-core
+
+                         ;; required for tests
+                         (libc-utf8-locales-for-target)
+                         openssl
+                         postgresql
+                         python-pyperf
+                         tzdata-for-tests
+                         xmlsec))
+    (home-page "https://github.com/element-hq/synapse")
     (synopsis "Matrix reference homeserver")
     (description
      "Synapse is a reference \"homeserver\" implementation of Matrix from the
