@@ -2040,6 +2040,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-numpy-gcc-14.patch		\
   %D%/packages/patches/python-random2-getrandbits-test.patch		\
   %D%/packages/patches/python-pillow-use-zlib-1.3.patch	\
+  %D%/packages/patches/python-pyccs-maturin-metadata.patch	\
   %D%/packages/patches/python-pydocstyle-add-support-for-pep701.patch	\
   %D%/packages/patches/python-pypytools-python-3-fixes.patch	\
   %D%/packages/patches/python-pyreadstat-link-libiconv.patch	\
@@ -2251,6 +2252,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/rust-1.78-unwinding-fix.patch		\
   %D%/packages/patches/rust-1.81-fix-riscv64-bootstrap.patch	\
   %D%/packages/patches/rust-ring-0.17-ring-core.patch		\
+  %D%/packages/patches/rust-rust-spoa-avoid-src-spoa-compilation.patch	\
   %D%/packages/patches/rw-igraph-0.10.patch			\
   %D%/packages/patches/rxvt-unicode-fix-cursor-position.patch	\
   %D%/packages/patches/s7-flint-3.patch                      	\

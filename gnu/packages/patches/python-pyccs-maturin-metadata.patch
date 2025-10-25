@@ -1,0 +1,30 @@
+From c435f30bb482807f9bbebe2a0129e7527a553e11 Mon Sep 17 00:00:00 2001
+Message-ID: <c435f30bb482807f9bbebe2a0129e7527a553e11.1761427221.git.ngraves@ngraves.fr>
+From: Nicolas Graves <ngraves@ngraves.fr>
+Date: Sat, 25 Oct 2025 23:19:59 +0200
+Subject: [PATCH] cargo: remove failing maturin metadata.
+
+---
+ Cargo.toml | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index a0615072..bf14a6b2 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -4,12 +4,6 @@ version = "1.1.0"
+ authors = ["Jinyang Zhang <zhangjinyang@biols.ac.cn"]
+ edition = "2021"
+ 
+-[package.metadata.maturin]
+-maintainer = "Jinyang Zhang"
+-maintainer-email = "zhangjinyang@biols.ac.cn"
+-requires-python=">=3.7"
+-project-url = { homepage = "https://github.com/Kevinzjy/pyccs" }
+-
+ # [workspace]
+ # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+ 
+-- 
+2.51.0
+

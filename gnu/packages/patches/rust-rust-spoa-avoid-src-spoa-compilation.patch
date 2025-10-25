@@ -1,0 +1,31 @@
+From 7c474396d412d7761b3cc1f119f5382a9d48c0b9 Mon Sep 17 00:00:00 2001
+Message-ID: <7c474396d412d7761b3cc1f119f5382a9d48c0b9.1761424730.git.ngraves@ngraves.fr>
+From: Nicolas Graves <ngraves@ngraves.fr>
+Date: Sat, 25 Oct 2025 22:36:11 +0200
+Subject: [PATCH] build: avoid src/spoa compilation.
+
+---
+ build.rs | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/build.rs b/build.rs
+index 30a4de2..a78ee40 100644
+--- a/build.rs
++++ b/build.rs
+@@ -8,13 +8,6 @@ use std::env;
+ 
+ fn main() {
+ 
+-    let dst = Config::new("src/spoa")
+-           .define("CMAKE_BUILD_TYPE","Release")
+-           .build();
+-
+-    println!("cargo:rustc-link-search=native={}", dst.display());
+-    println!("cargo:rustc-link-lib=static=spoa");
+-
+     let out_dir = env::var("OUT_DIR").unwrap();
+     println!("cargo:rustc-flags=-L {}/lib64/ -L {}/lib/", &out_dir, &out_dir);
+ 
+-- 
+2.51.0
+

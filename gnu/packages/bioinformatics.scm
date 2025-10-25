@@ -163,6 +163,7 @@
   #:use-module (gnu packages ruby)
   #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages ruby-xyz)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages skribilo)
@@ -23982,6 +23983,70 @@ data from @file{.hic} files.  This package provides Python bindings.")
 Binary (bigWig/bigBed) file library.  This provides read-level access to local
 and remote bigWig and bigBed files but no write capabilitites.  The main
 feature is fast retrieval of range queries into numpy arrays.")
+    (license license:expat)))
+
+(define-public python-pyccs
+  (package
+    (name "python-pyccs")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Kevinzjy/pyccs")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09bwpix945ks40x3i7mf345ah4r3sxd7lnds21pn0p0i7ql43znh"))
+       (patches (search-patches "python-pyccs-maturin-metadata.patch"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'fix-rust-spoa-dependency-build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "Cargo.toml"
+                (("^rust-spoa = .*")
+                 "rust-spoa = \"*\"\n"))
+              ;; This is the OUT_DIR from rust-spoa/build.rs.
+              ;; Deleting the other unused build.rs to disambiguate.
+              (delete-file "build.rs")
+              (setenv "OUT_DIR"
+                      (dirname (search-input-file inputs "bin/spoa")))))
+          (replace 'build
+            (lambda _
+              (invoke "make" "lib")
+              ;; Move to default install location of wheels.
+              (rename-file "target/wheels/" "dist")))
+          (replace 'install
+            (assoc-ref py:%standard-phases 'install))
+          (add-after 'install 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (add-after 'add-install-to-pythonpath 'python-sanity-check
+            (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'sanity-check)
+               #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
+                          ,@inputs)
+               #:outputs outputs))))))
+    (inputs (cons* python-wrapper spoa (cargo-inputs 'pyccs)))
+    (native-inputs
+     (list cmake-minimal
+           googletest
+           gnu-make
+           maturin
+           python-setuptools))
+    (home-page "https://github.com/Kevinzjy/pyccs")
+    (synopsis "Detecting cyclic consensus sequences in nanopore long reads")
+    (description
+     "This package provides tooling to detect cyclic consensus sequences in
+nanopore long reads.")
     (license license:expat)))
 
 (define-public python-dna-features-viewer

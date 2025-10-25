@@ -510,6 +510,21 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
             "0h1q1jgyg76axr8h95nv8sg29l15iqnyfr5qfl5rk2wc7iw04avl"))))
        (inputs (cargo-inputs 'rust-smithay-0.7.0.20d2dac))))))
 
+(define-public rust-rust-spoa-0.2.4.fad3817
+  (let* ((commit "fad38175e172ddd8cc51cd8ccd61e93f48191ecf")
+         (revision "1")
+         (version (git-version "0.2.4" revision commit)))
+    (origin
+      (method git-fetch)
+      (uri (git-reference
+             (url "https://github.com/Kevinzjy/rust-spoa")
+             (commit commit)))
+      (file-name (git-file-name "rust-rust-spoa" version))
+      (sha256
+       (base32 "1p2k4rm50cs8qqmjh2zpjqhhjsi2i34qx6n9fiy58jq41617gb9b"))
+      (patches
+       (search-patches "rust-rust-spoa-avoid-src-spoa-compilation.patch")))))
+
 (define inspired-github-color-scheme-for-rust-syntect-5
   (let ((version "1.3.0"))
     (origin
