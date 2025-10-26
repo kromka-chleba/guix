@@ -510,43 +510,6 @@ from protobuf specification files.")
     (propagated-inputs (list python-protobuf))
     (synopsis "Small code-size Protocol Buffers implementation in Python")))
 
-(define-public python-protobuf-5
-  (package
-    (name "python-protobuf")
-    (version "5.28.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "protobuf" version))
-       (sha256
-        (base32
-         "0yzg3i40p7rbr51xr72avpvn72yin5xcxybkyc0y99c0j72dpfk4"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:tests? #f)) ; no tests provided for Python variant
-    (native-inputs
-     (list python-setuptools
-           python-wheel))
-    (inputs (list protobuf))
-    (home-page "https://github.com/protocolbuffers/protobuf")
-    (synopsis "Protocol buffers is a data interchange format")
-    (description
-     "Protocol buffers are a language-neutral, platform-neutral extensible
-mechanism for serializing structured data.")
-    (license license:bsd-3)))
-
-(define-public python-protobuf-4
-  (package/inherit python-protobuf-5
-    (name "python-protobuf")
-    (version "4.21.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "protobuf" version))
-       (sha256
-        (base32 "1pabwidv12r73fy0jlslpgi60zd1lbx9rjnb23kgdm8wcsjl043b"))))))
-
 (define-public python-protobuf
   (package
     (name "python-protobuf")
@@ -583,8 +546,22 @@ mechanism for serializing structured data.")
        (sha256 (base32 "1wh5f4rnzbv46xy1rx62cprhg5hqf2py06s9b7rfpzwwki12fd1f"))))
     (inputs (list protobuf-3.20))))
 
+(define-public python-protobuf-4
+  (package
+    (inherit python-protobuf)
+    (name "python-protobuf")
+    (version "4.21.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "protobuf" version))
+       (sha256
+        (base32 "1pabwidv12r73fy0jlslpgi60zd1lbx9rjnb23kgdm8wcsjl043b"))))
+    (inputs (list protobuf))))
+
 ;; May be removed after 2026-01-26.
 (define-deprecated/public-alias python-protobuf-6 python-protobuf)
+(define-deprecated/public-alias python-protobuf-5 python-protobuf)
 
 (define-public python-pure-protobuf
   (package
