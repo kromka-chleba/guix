@@ -26509,6 +26509,38 @@ tools."))))
     (propagated-inputs '())
     (inputs '())))
 
+(define-public go-oras-land-oras-go-v2
+  (package
+    (name "go-oras-land-oras-go-v2")
+    (version "2.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oras-project/oras-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y2cdpy13gfmjfdpqlcq4ss36avzvfjmmfadc82bawg8jwi0j2jk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "oras.land/oras-go/v2"))
+    (propagated-inputs (list go-github-com-opencontainers-go-digest
+                             go-github-com-opencontainers-image-spec
+                             go-golang-org-x-sync))
+    (home-page "https://oras.land/oras-go")
+    (synopsis "OCI artifacts management library for Golang")
+    (description
+     "@code{oras-go} is a Go library for managing OCI artifacts, compliant with the
+@url{https://github.com/opencontainers/image-spec,OCI Image Format
+Specification} and the
+@url{https://github.com/opencontainers/distribution-spec,OCI Distribution
+Specification}.  It provides unified APIs for pushing, pulling, and managing
+artifacts across OCI-compliant registries, local file systems, and in-memory
+stores.")
+    (license license:asl2.0)))
+
 (define-public go-toml
   (package
     (inherit go-github-com-pelletier-go-toml-v2)
