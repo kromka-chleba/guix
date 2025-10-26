@@ -442,16 +442,20 @@ historical data.")
 (define-public python-carbon
   (package
     (name "python-carbon")
-    (version "1.1.10")
+    (properties '((commit . "697bc3b0060ab245225dc5b90a0f4966b4ec7eef")
+                  (revision . "0")))
+    (version (git-version "1.1.10"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/graphite-project/carbon")
-             (commit version)))
+              (url "https://github.com/graphite-project/carbon")
+              (commit (assoc-ref properties 'commit))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0rnvn0hh4wmr7wn1p7aw1zajgi2r9bxfc1abqazk2k9r6nk5aqmw"))))
+        (base32 "1i5ydnzv53b1pigrqqi9nhivxjmlnswg9pd7vznvg34d7281gx19"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -459,14 +463,7 @@ historical data.")
       #~(list
          ;; XXX: cannot import name 'WhisperDatabase' from 'carbon.database'
          "--ignore=lib/carbon/tests/test_database.py"
-         "--ignore=lib/carbon/tests/test_storage.py"
-         "-k" (string-join
-               (list "not testBasic" ; requires murmurhash3.
-                     ;; XXX: python-mock incompatibility.
-                     "test_decode_pickle"
-                     "test_invalid_pickle"
-                     "test_invalid_types")
-               " and not "))
+         "--ignore=lib/carbon/tests/test_storage.py")
       #:phases
       #~(modify-phases %standard-phases
           ;; Don't install to /opt
@@ -474,7 +471,11 @@ historical data.")
             (lambda _
               (setenv "GRAPHITE_NO_PREFIX" "1"))))))
     (native-inputs
-     (list python-mock python-protobuf python-pytest python-setuptools))
+     (list python-mock
+           python-murmurhash3
+           python-protobuf-6
+           python-pytest
+           python-setuptools))
     (propagated-inputs
      (list python-cachetools python-twisted python-txamqp python-urllib3))
     (home-page "https://graphiteapp.org/")
