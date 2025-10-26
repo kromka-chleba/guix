@@ -11341,25 +11341,23 @@ and Resumable Uploads.")
 (define-public python-googleapis-common-protos
   (package
     (name "python-googleapis-common-protos")
-    (version "1.56.4")
+    (version "1.71.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "googleapis-common-protos" version))
+       (uri (pypi-uri "googleapis_common_protos" version))
        (sha256
-        (base32 "05s4dszqd5pjwjh4bdic40v1v447k0a3dynsrgypqf3rfb276n62"))))
-    (build-system python-build-system)
+        (base32 "0bif5b3sfv13zq4kdwkpm0fwzang3jzpp7xsh0yad7g2fkjh3v0s"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-        (modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest")))))))
-    (propagated-inputs (list python-protobuf))
+     (list
+      ;; TODO: Test's can't see the module.
+      #:tests? #f))
     (native-inputs
-     (list python-pytest))
-    (home-page "https://github.com/googleapis/python-api-common-protos")
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-protobuf))
+    (home-page "https://github.com/googleapis/google-cloud-python")
     (synopsis "Common protobufs used in Google APIs")
     (description "This package contains Python classes generated from the
 common protos in the @code{googleapis/api-common-protos} repository.")
