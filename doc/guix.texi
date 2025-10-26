@@ -13177,7 +13177,7 @@ writing manifests, defining services for Guix System or Guix Home,
 etc.---you will surely find it convenient to toy with ideas at the REPL.
 
 If you use Emacs, the most convenient way to do that is with Geiser
-(@pxref{The Perfect Setup}), but you do not have to use Emacs to enjoy
+(@pxref{Emacs setup,,Tooling,guix-cookbook}), but you do not have to use Emacs to enjoy
 the REPL@.  When using @command{guix repl} or @command{guile} in the
 terminal, we recommend using Readline for completion and Colorized to
 get colorful output.  To do that, you can run:

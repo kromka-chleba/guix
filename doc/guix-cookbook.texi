@@ -526,6 +526,104 @@ You'll find more books, tutorials and other resources at
 @url{https://schemers.org/}.
 @end quotation
 
+@c Tooling - Emacs setup
+@node The Perfect Setup
+@section The Perfect Setup
+@cindex Emacs Setup
+
+The Perfect Setup to hack on Guix is basically the perfect setup used
+for Guile hacking (@pxref{Using Guile in Emacs,,, guile, Guile Reference
+Manual}).  First, you need more than an editor, you need
+@url{https://www.gnu.org/software/emacs, Emacs}, empowered by the
+wonderful @url{https://nongnu.org/geiser/, Geiser}.  To set that up, run:
+
+@example
+guix install emacs guile emacs-geiser emacs-geiser-guile
+@end example
+
+Geiser allows for interactive and incremental development from within
+Emacs: code compilation and evaluation from within buffers, access to
+on-line documentation (docstrings), context-sensitive completion,
+@kbd{M-.} to jump to an object definition, a REPL to try out your code,
+and more (@pxref{Introduction,,, geiser, Geiser User Manual}).  If you
+allow Emacs to load the @file{.dir-locals.el} file at the root of the
+project checkout, it will cause Geiser to automatically add the local
+Guix sources to the Guile load path.
+
+To actually edit the code, Emacs already has a neat Scheme mode.  But in
+addition to that, you must not miss
+@url{https://www.emacswiki.org/emacs/ParEdit, Paredit}.  It provides
+facilities to directly operate on the syntax tree, such as raising an
+s-expression or wrapping it, swallowing or rejecting the following
+s-expression, etc.
+
+@cindex code snippets
+@cindex templates
+@cindex reducing boilerplate
+We also provide templates for common git commit messages and package
+definitions in the @file{etc/snippets} directory.  These templates can
+be used to expand short trigger strings to interactive text snippets. If
+you use @url{https://joaotavora.github.io/yasnippet/, YASnippet}, you
+may want to add the @file{etc/snippets/yas} snippets directory to the
+@var{yas-snippet-dirs} variable.  If you use
+@url{https://github.com/minad/tempel/, Tempel}, you may want to add the
+@file{etc/snippets/tempel/*} path to the @var{tempel-path} variable in
+Emacs.
+
+@lisp
+;; @r{Assuming the Guix checkout is in ~/src/guix.}
+;; @r{Yasnippet configuration}
+(with-eval-after-load 'yasnippet
+  (add-to-list 'yas-snippet-dirs "~/src/guix/etc/snippets/yas"))
+;; @r{Tempel configuration}
+(with-eval-after-load 'tempel
+   ;; Ensure tempel-path is a list -- it may also be a string.
+   (unless (listp 'tempel-path)
+     (setq tempel-path (list tempel-path)))
+   (add-to-list 'tempel-path "~/src/guix/etc/snippets/tempel/*"))
+@end lisp
+
+The commit message snippets depend on @url{https://magit.vc/, Magit} to
+display staged files.  When editing a commit message type @code{add}
+followed by @kbd{TAB} to insert a commit message template for adding a
+package; type @code{update} followed by @kbd{TAB} to insert a template
+for updating a package; type @code{https} followed by @kbd{TAB} to
+insert a template for changing the home page URI of a package to HTTPS.
+
+The main snippet for @code{scheme-mode} is triggered by typing
+@code{package...} followed by @kbd{TAB}.  This snippet also inserts the
+trigger string @code{origin...}, which can be expanded further.  The
+@code{origin} snippet in turn may insert other trigger strings ending on
+@code{...}, which also can be expanded further.
+
+@cindex insert or update copyright
+@cindex @code{M-x guix-copyright}
+@cindex @code{M-x copyright-update}
+We additionally provide insertion and automatic update of a copyright in
+@file{etc/copyright.el}.  You may want to set your full name, mail, and
+load a file.
+
+@lisp
+(setq user-full-name "Alice Doe")
+(setq user-mail-address "alice@@mail.org")
+;; @r{Assuming the Guix checkout is in ~/src/guix.}
+(load-file "~/src/guix/etc/copyright.el")
+@end lisp
+
+To insert a copyright at the current line invoke @code{M-x guix-copyright}.
+
+To update a copyright you need to specify a @code{copyright-names-regexp}.
+
+@lisp
+(setq copyright-names-regexp
+      (format "%s <%s>" user-full-name user-mail-address))
+@end lisp
+
+You can check if your copyright is up to date by evaluating @code{M-x
+copyright-update}.  If you want to do it automatically after each buffer
+save then add @code{(add-hook 'after-save-hook 'copyright-update)} in
+Emacs.
+
 
 @c *********************************************************************
 @node Packaging
