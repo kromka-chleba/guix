@@ -567,29 +567,38 @@ mechanism for serializing structured data.")
 (define-public python-protobuf
   (package
     (name "python-protobuf")
-    (version "3.20.3")
+    (version "6.31.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "protobuf" version))
        (sha256
         (base32
-         "1wh5f4rnzbv46xy1rx62cprhg5hqf2py06s9b7rfpzwwki12fd1f"))))
+         "16nakbb14jjzhgmrvpn0g7k0iasgl8p0xa3kvjj5gfghhb4w9jnq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? #f)) ; no tests provided for Python variant
     (native-inputs
      (list python-setuptools))
-    ;; The C++ implementation is not compatible with Python 3.11, so we cannot
-    ;; pass --cpp_implementation any more.
-    (inputs (list protobuf-3.20))
+    (inputs (list protobuf-6))
     (home-page "https://github.com/google/protobuf")
     (synopsis "Protocol buffers is a data interchange format")
     (description
      "Protocol buffers are a language-neutral, platform-neutral extensible
 mechanism for serializing structured data.")
     (license license:bsd-3)))
+
+(define-public python-protobuf-3
+  (package
+    (inherit python-protobuf)
+    (version "3.20.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "protobuf" version))
+       (sha256 (base32 "1wh5f4rnzbv46xy1rx62cprhg5hqf2py06s9b7rfpzwwki12fd1f"))))
+    (inputs (list protobuf-3.20))))
 
 (define-public python-pure-protobuf
   (package
