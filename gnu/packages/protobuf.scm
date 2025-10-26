@@ -403,21 +403,26 @@ encoder in C++.  The developer using protozero has to manually translate the
 (define-public nanopb
   (package
     (name "nanopb")
-    (version "0.4.6.4")
+    (version "0.4.9.1")
     (source (origin
-              (method git-fetch)        ;for tests
+              (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/nanopb/nanopb")
-                    (commit version)))
+                     (url "https://github.com/nanopb/nanopb")
+                     (commit (string-append name "-" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gb6q4igrjj8jap4p1ijza4y8dkjlingzym3cli1w18f90d7xlh7"))))
+                "0dqhk6rb5mmvr45a0n78ncxb270d7qirrpidh8g00ykwl5jrki3c"))))
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
-                                "-DBUILD_STATIC_LIBS=OFF")
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              "-DBUILD_STATIC_LIBS=OFF"
+              (string-append "-Dnanopb_PYTHON_INSTDIR_OVERRIDE="
+                             #$output "/lib/python"
+                             #$(version-major+minor (package-version python))
+                             "/site-packages"))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'check
@@ -425,7 +430,12 @@ encoder in C++.  The developer using protozero has to manually translate the
               (when tests?
                 (with-directory-excursion "../source/tests"
                   (invoke "scons"))))))))
-    (native-inputs (list protobuf python-protobuf python-wrapper scons))
+    (native-inputs
+     (list protobuf-6
+           python-grpcio-tools
+           python-protobuf-6
+           python-wrapper
+           scons))
     (home-page "https://jpa.kapsi.fi/nanopb/")
     (synopsis "Small code-size Protocol Buffers implementation in ANSI C")
     (description "Nanopb is a small code-size Protocol Buffers implementation
