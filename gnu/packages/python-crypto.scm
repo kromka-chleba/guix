@@ -737,9 +737,13 @@ python-axolotl.")
               (delete-file-recursively
                (string-append (site-packages inputs outputs)
                               "/axolotl/tests")))))))
-    (native-inputs (list python-pytest python-setuptools python-wheel))
-    (propagated-inputs (list python-axolotl-curve25519 python-cryptography
-                             python-protobuf))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-axolotl-curve25519
+           python-cryptography
+           python-protobuf-4))
     (home-page "https://github.com/tgalal/python-axolotl")
     (synopsis "Python port of libaxolotl-android")
     (description
