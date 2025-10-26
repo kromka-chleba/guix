@@ -87,7 +87,7 @@ Weblate} (@pxref{Translating Guix,,, guix, GNU Guix Reference
 Manual}).
 
 @menu
-* Scheme tutorials::            Meet your new favorite language!
+* Tooling::                     How to work (on) Guix
 * Packaging::                   Packaging tutorials
 * System Configuration::        Customizing the GNU System
 * Containers::                  Isolated environments and nested systems
@@ -239,8 +239,9 @@ Guix System Management
 @end menu
 
 @c *********************************************************************
-@node Scheme tutorials
-@chapter Scheme tutorials
+@node Tooling
+@chapter Tooling
+@cindex tooling
 
 GNU@tie{}Guix is written in the general purpose programming language Scheme,
 and many of its features can be accessed and manipulated programmatically.
