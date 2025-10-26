@@ -20814,15 +20814,16 @@ to streamline the journaling workflow.")
 (define-public emacs-denote-markdown
   (package
     (name "emacs-denote-markdown")
-    (version "0.1.1")
+    (version "0.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/denote-markdown-"
                            version ".tar"))
        (sha256
-        (base32 "0ic8kqfw56xsm9s0rlq7cgnh0dzjsbbcx7kdk55dggpvxv67jj62"))))
+        (base32 "0y1lnzv2x6wnw06gx9jb38wwpd4cyn1f8r430wg26zc6grb4fmsz"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;no tests
     (propagated-inputs (list emacs-denote))
     (home-page "https://github.com/protesilaos/denote-markdown")
     (synopsis "Extensions that better integrate Denote with Markdown")
