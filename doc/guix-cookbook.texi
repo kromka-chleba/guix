@@ -243,10 +243,11 @@ Guix System Management
 @chapter Tooling
 @cindex tooling
 
-GNU@tie{}Guix is written in the general purpose programming language Scheme,
-and many of its features can be accessed and manipulated programmatically.
-You can use Scheme to generate package definitions, to modify them, to build
-them, to deploy whole operating systems, etc.
+GNU@tie{}Guix is written in the general purpose programming language
+Scheme, and most of its features can be accessed and manipulated
+programmatically.  You can use Guile Scheme to generate package
+definitions, to modify them, to build them, to deploy whole operating
+systems and much more.
 
 Knowing the basics of how to program in Scheme will unlock many of the
 advanced features Guix provides --- and you don't even need to be an
@@ -686,9 +687,9 @@ process and inject your code there live (sadly it's not packaged in Guix yet).
 @cindex packaging
 
 This chapter is dedicated to teaching you how to add packages to the
-collection of packages that come with GNU Guix.  This involves writing package
-definitions in Guile Scheme, organizing them in package modules, and building
-them.
+collection of packages that come with GNU Guix.  This involves writing
+package definitions in Guile Scheme, organizing them in package modules,
+and building them.
 
 @menu
 * Packaging Tutorial::          A tutorial on how to add packages to Guix.
