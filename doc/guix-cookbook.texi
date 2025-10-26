@@ -708,7 +708,8 @@ source tree as a whole.
 * Running the Test Suite::               Testing the build.
 * Running Guix Before It Is Installed::  Running guix from a local build.
 
-* Packaging Tutorial::          A tutorial on how to add packages to Guix.
+* Update a package::            A simple use case.
+* General Packaging Tutorial::  A tutorial on how to add packages to Guix.
 * Packaging Workflows::         Real life examples on working with specific build systems.
 
 @end menu
@@ -1228,9 +1229,55 @@ package definitions in Guile Scheme, organizing them in package modules,
 and building them.
 
 @menu
+* Update a package::            A simple use case.
 * General Packaging Tutorial::  A tutorial on how to add packages to Guix.
 * Packaging Workflows::         Real life examples on working with specific build systems.
 @end menu
+
+@node Update a package
+@subsection Update a package
+@cindex package update
+@cindex version bump
+
+More often than not users want to use the newest version of some
+software.  For the case that said software is already packages but
+currently not in the newest version, a simple package update can look as
+follows.
+
+@enumerate
+@item
+Make sure you have our repository checked out at the most recent commit
+of our ``master'' branch (@pxref{Building from Git}).
+
+@item
+Find the package definition of the software you want to upgrade by
+inspecting the output of @code{guix show} and open it in your text-file
+editor of choice.
+
+@item
+Find out what the official software release's newest version is and
+change it in your local source checkout.
+
+@item
+Try to build the software with your change by invoking
+@code{./pre-inst-env guix build PACKAGE}.  This should fail due to the
+hash of the source of the package build having changed.  Copy the value
+of the failure output dubbed ``actual hash'' and enter it into the
+package definition bound to be upgraded.
+
+@item
+Try building it, again.  Now, when nothing substantial about the package
+build has changed (e.g. when bumping minor versions) the build succeeds
+and Guix will provide you with the path of the so generated store path.
+
+If all went well we will gladly review and push your change into the
+main repository.  Please open a Pull Request (PR) on Codeberg for that.
+
+@end enumerate
+
+Sometimes so-called version bumps of software also include adjusting the
+build procedure(s) for the package, which can mean anything from adding
+inputs over fixing issues in the code with additional build phases.
 
 @node General Packaging Tutorial
 @section General Packaging Tutorial
