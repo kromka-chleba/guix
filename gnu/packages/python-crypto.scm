@@ -768,7 +768,7 @@ environments.")
     (build-system pyproject-build-system)
     (arguments (list #:test-backend #~'unittest))
     (propagated-inputs
-     (list python-cryptography python-protobuf-5 python-setuptools))
+     (list python-cryptography python-protobuf-6 python-setuptools))
     (home-page "https://dev.gajim.org/gajim/omemo-dr")
     (synopsis "OMEMO cryptography library")
     (description "OMEMO cryptography library that was forked from python-axolotl.")
