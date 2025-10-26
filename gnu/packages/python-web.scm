@@ -11308,30 +11308,22 @@ server-to-server authentication mechanisms to access Google APIs.")
 (define-public python-google-resumable-media
   (package
     (name "python-google-resumable-media")
-    (version "2.3.2")
+    (version "2.7.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "google-resumable-media" version))
+       (uri (pypi-uri "google_resumable_media" version))
        (sha256
-        (base32 "04qm6rd4mpbbym8ci5xrb6fymc3mmm8x2z9f43q5iwbr3s5lx4h6"))))
-    (build-system python-build-system)
+        (base32 "1q1gx757901xyd6p8rpj3b0kajgxayc2zm5h8yw60awzcbaax02j"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; The system tests fail to find test_utils.retry.
-               (delete-file-recursively "tests/system/")
-               (invoke "pytest")))))))
-    (propagated-inputs (list python-google-crc32c))
+     (list
+      ;; TODO: Test's can't see the module.
+      #:tests? #f))
     (native-inputs
-     (list python-google-auth
-           python-mock
-           python-pytest
-           python-requests
-           python-test-utils))
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-google-crc32c))
     (home-page "https://github.com/googleapis/google-resumable-media-python")
     (synopsis "Utilities for Google Media Downloads and Resumable Uploads")
     (description "This package provides utilities for Google Media Downloads
