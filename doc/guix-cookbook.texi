@@ -267,7 +267,7 @@ Let's get started!
 @cindex Scheme, crash course
 
 Guix uses the Guile implementation of Scheme.  To start playing with the
-language, install it with @code{guix install guile} and start a
+language, enter a shell with @code{guix shell guile} and start a
 @dfn{REPL}---short for @uref{https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop,
 @dfn{read-eval-print loop}}---by running @code{guile} from the command line.
 
@@ -517,11 +517,10 @@ Scheme Primer}}, by Christine Lemmer-Webber and the Spritely Institute.
 Abelson and Gerald Jay Sussman, with Julie Sussman.  Colloquially known
 as ``SICP'', this book is a reference.
 
-You can also install it and read it from your computer:
+You can also read it from your computer:
 
 @example
-guix install book-sicp info-reader
-info sicp
+guix shell book-sicp info-reader -- info sicp
 @end example
 
 @end itemize
@@ -547,7 +546,7 @@ need adequate libraries to work on Guile Scheme, notably the ``geiser''
 and ``geiser-guile'' packages.  To give it a try, simply invoke:
 
 @example
-guix install emacs guile emacs-geiser emacs-geiser-guile
+guix shell emacs guile emacs-geiser emacs-geiser-guile -- emacs
 @end example
 
 Geiser allows for interactive and incremental development from within
@@ -641,7 +640,7 @@ to start hacking in Guile. If you are not familiar with Emacs it makes
 the transition easier for you.
 
 @example
-guix install guile-studio
+guix shell guile-studio -- guile-studio
 @end example
 
 Guile Studio comes with Geiser preinstalled and prepared for action.
@@ -651,9 +650,6 @@ Guile Studio comes with Geiser preinstalled and prepared for action.
 
 Vim (and NeoVim) are also packaged in Guix, just in case.
 
-@example
-guix install vim
-@end example
 
 If you want to enjoy a similar development experience to that in the perfect
 setup, you should install several plugins to configure the editor. Vim (and
@@ -662,10 +658,6 @@ NeoVim) have the equivalent to Paredit,
 @code{paredit.vim}}, that will help you with the structural editing of Scheme
 files (the support for very large files is not great, though).
 
-@example
-guix install vim-paredit
-@end example
-
 We also recommend that you run @code{:set autoindent} so that your code is
 automatically indented as you type.
 
@@ -673,16 +665,14 @@ For the interaction with Git,
 @uref{https://www.vim.org/scripts/script.php?script_id=2975,
 @code{fugitive.vim}} is the most commonly used plugin:
 
-@example
-guix install vim-fugitive
-@end example
-
 And of course if you want to interact with Guix directly from inside of
 vim, using the built-in terminal emulator, we have our very own
 @code{guix.vim} package!
 
+Try it all together by invoking:
+
 @example
-guix install vim-guix-vim
+guix shell vim vim-fugitive vim-paredit vim-guix-vim -- vim
 @end example
 
 In NeoVim you can even make a similar setup to Geiser using
