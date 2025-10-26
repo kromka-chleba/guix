@@ -89,7 +89,8 @@ Manual}).
 @menu
 * Tooling::                     How to work (on) Guix
 * Coding::                      Building, running, patching, testing
-* System Configuration::        Customizing the GNU System
+* System Management::           Configuration, customization,
+deployment and administrative tasks
 * Containers::                  Isolated environments and nested systems
 * Virtual Machines::            Virtual machines usage and configuration
 * Advanced package management::  Power to the users!
@@ -2784,8 +2785,9 @@ method, one of the most popular choices for Traditional Chinese users.")
 
 
 @c *********************************************************************
-@node System Configuration
-@chapter System Configuration
+@node System Management
+@chapter System Management
+@cindex System Management
 
 Guix offers a flexible language for declaratively configuring your Guix
 System.  This flexibility can at times be overwhelming.  The purpose of this
@@ -2795,23 +2797,45 @@ chapter is to demonstrate some advanced configuration concepts.
 reference.
 
 @menu
-* Auto-Login to a Specific TTY::  Automatically Login a User to a Specific TTY
-* Customizing the Kernel::      Creating and using a custom Linux kernel on Guix System.
-* Guix System Image API::       Customizing images to target specific platforms.
-* Using security keys::         How to use security keys with Guix System.
-* Dynamic DNS mcron job::       Job to update the IP address behind a DuckDNS host name.
-* Connecting to Wireguard VPN::  Connecting to a Wireguard VPN.
-* Customizing a Window Manager::  Handle customization of a Window manager on Guix System.
+Configuration:
+* Auto-Login to a Specific TTY::       Automatically Login a User to a
+Specific TTY.
+* Using security keys::                How to use security keys with
+Guix System.
+* Connecting to Wireguard VPN::        Connecting to a Wireguard VPN.
+* Setting up NGINX with Lua::          Configuring NGINX web-server to
+load Lua modules.
+* Music Server with Bluetooth Audio::  Headless music player with
+Bluetooth output.
+* Session lock::                       Xorg session locking.
+
+Customization:
+* Customizing the Kernel::       Creating and using a custom Linux
+kernel on Guix System.
+* Customizing a Window Manager:: Handle customization of a Window
+manager on Guix System.
+* Getting substitutes from Tor:: Configuring Guix daemon to get
+substitutes through Tor.
+
+Deployment:
 * Running Guix on a Linode Server::  Running Guix on a Linode Server.
-* Running Guix on a Kimsufi Server::  Running Guix on a Kimsufi Server.
-* Setting up a bind mount::     Setting up a bind mount in the file-systems definition.
-* Getting substitutes from Tor::  Configuring Guix daemon to get substitutes through Tor.
-* Setting up NGINX with Lua::   Configuring NGINX web-server to load Lua modules.
-* Music Server with Bluetooth Audio::  Headless music player with Bluetooth output.
+* Running Guix on a Kimsufi Server:: Running Guix on a Kimsufi Server.
+
+Administration:
+* Setting up a bind mount::     Setting up a bind mount in the
+file-systems definition.
+* Dynamic DNS mcron job::       Job to update the IP address behind a DuckDNS host name.
+
+
+Image:
+* Guix System Image API::       Customizing images to target specific platforms.
 @end menu
 
+@node Guix System Configuration
+@section Guix System Configuration
+
 @node Auto-Login to a Specific TTY
-@section Auto-Login to a Specific TTY
+@subsection Auto-Login to a Specific TTY
 
 While the Guix manual explains auto-login one user to @emph{all} TTYs
 (@pxref{auto-login to TTY,,, guix, GNU Guix Reference Manual}), some
@@ -2854,9 +2878,506 @@ However, if you have an encrypted root partition, and thus already need
 to enter a passphrase when the system boots, auto-login might be a
 convenient option.
 
+@node Using security keys
+@subsection Using security keys
+@cindex 2FA, two-factor authentication
+@cindex U2F, Universal 2nd Factor
+@cindex security key, configuration
+
+The use of security keys can improve your security by providing a second
+authentication source that cannot be easily stolen or copied, at least
+for a remote adversary (something that you have), to the main secret (a
+passphrase -- something that you know), reducing the risk of
+impersonation.
+
+The example configuration detailed below showcases what minimal
+configuration needs to be made on your Guix System to allow the use of a
+Yubico security key.  It is hoped the configuration can be useful for
+other security keys as well, with minor adjustments.
+
+@subsubsection Configuration for use as a two-factor authenticator (2FA)
+
+To be usable, the udev rules of the system should be extended with
+key-specific rules.  The following shows how to extend your udev rules
+with the @file{lib/udev/rules.d/70-u2f.rules} udev rule file provided by
+the @code{libfido2} package from the @code{(gnu packages
+security-token)} module and add your user to the @samp{"plugdev"} group
+it uses:
+
+@lisp
+(use-package-modules ... security-token ...)
+...
+(operating-system
+ ...
+ (users (cons* (user-account
+               (name "your-user")
+               (group "users")
+               (supplementary-groups
+		'("wheel" "netdev" "audio" "video"
+                  "plugdev"))           ;<- added system group
+               (home-directory "/home/your-user"))
+              %base-user-accounts))
+ ...
+ (services
+  (cons*
+   ...
+   (udev-rules-service 'fido2 libfido2 #:groups '("plugdev")))))
+@end lisp
+
+After re-configuring your system and re-logging in your graphical
+session so that the new group is in effect for your user, you can verify
+that your key is usable by launching:
+
+@example
+guix shell ungoogled-chromium -- chromium chrome://settings/securityKeys
+@end example
+
+and validating that the security key can be reset via the ``Reset your
+security key'' menu.  If it works, congratulations, your security key is
+ready to be used with applications supporting two-factor authentication
+(2FA).
+
+@subsubsection Disabling OTP code generation for a Yubikey
+@cindex disabling yubikey OTP
+If you use a Yubikey security key and are irritated by the spurious OTP
+codes it generates when inadvertently touching the key (e.g. causing you
+to become a spammer in the @samp{#guix} channel when discussing from
+your favorite IRC client!), you can disable it via the following
+@command{ykman} command:
+
+@example
+guix shell python-yubikey-manager -- ykman config usb --force --disable OTP
+@end example
+
+Alternatively, you could use the @command{ykman-gui} command provided by
+the @code{yubikey-manager-qt} package and either wholly disable the
+@samp{OTP} application for the USB interface or, from the
+@samp{Applications -> OTP} view, delete the slot 1 configuration, which
+comes pre-configured with the Yubico OTP application.
+
+@subsubsection Requiring a Yubikey to open a KeePassXC database
+@cindex yubikey, keepassxc integration
+The KeePassXC password manager application has support for Yubikeys, but
+it requires installing a udev rules for your Guix System and some
+configuration of the Yubico OTP application on the key.
+
+The necessary udev rules file comes from the
+@code{yubikey-personalization} package, and can be installed like:
+
+@lisp
+(use-package-modules ... security-token ...)
+...
+(operating-system
+ ...
+ (services
+  (cons*
+   ...
+   (udev-rules-service 'yubikey yubikey-personalization))))
+@end lisp
+
+After reconfiguring your system (and reconnecting your Yubikey), you'll
+then want to configure the OTP challenge/response application of your
+Yubikey on its slot 2, which is what KeePassXC uses.  It's easy to do so
+via the Yubikey Manager graphical configuration tool, which can be
+invoked with:
+
+@example
+guix shell yubikey-manager-qt -- ykman-gui
+@end example
+
+First, ensure @samp{OTP} is enabled under the @samp{Interfaces} tab,
+then navigate to @samp{Applications -> OTP}, and click the
+@samp{Configure} button under the @samp{Long Touch (Slot 2)} section.
+Select @samp{Challenge-response}, input or generate a secret key, and
+click the @samp{Finish} button.  If you have a second Yubikey you'd like
+to use as a backup, you should configure it the same way, using the
+@emph{same} secret key.
+
+Your Yubikey should now be detected by KeePassXC.  It can be added to a
+database by navigating to KeePassXC's @samp{Database -> Database
+Security...}  menu, then clicking the @samp{Add additional
+protection...} button, then @samp{Add Challenge-Response}, selecting the
+security key from the drop-down menu and clicking the @samp{OK} button
+to complete the setup.
+
+@node Connecting to Wireguard VPN
+@subsection Connecting to Wireguard VPN
+
+To connect to a Wireguard VPN server you need the kernel module to be
+loaded in memory and a package providing networking tools that support
+it (e.g.  @code{wireguard-tools} or @code{network-manager}).
+
+Here is a configuration example for Linux-Libre < 5.6, where the module
+is out of tree and need to be loaded manually---following revisions of
+the kernel have it built-in and so don't need such configuration:
+
+@lisp
+(use-modules (gnu))
+(use-service-modules desktop)
+(use-package-modules vpn)
+
+(operating-system
+  ;; …
+  (services (cons (simple-service 'wireguard-module
+                                  kernel-module-loader-service-type
+                                  '("wireguard"))
+                  %desktop-services))
+  (packages (cons wireguard-tools %base-packages))
+  (kernel-loadable-modules (list wireguard-linux-compat)))
+@end lisp
+
+After reconfiguring and restarting your system you can either use
+Wireguard tools or NetworkManager to connect to a VPN server.
+
+@subsubsection Using Wireguard tools
+
+To test your Wireguard setup it is convenient to use @command{wg-quick}.
+Just give it a configuration file @command{wg-quick up ./wg0.conf}; or
+put that file in @file{/etc/wireguard} and run @command{wg-quick up wg0}
+instead.
+
+@quotation Note
+Be warned that the author described this command as a: “[…] very quick
+and dirty bash script […]”.
+@end quotation
+
+@subsubsection Using NetworkManager
+
+Thanks to NetworkManager support for Wireguard we can connect to our VPN
+using @command{nmcli} command.  Up to this point this guide assumes that
+you're using Network Manager service provided by
+@code{%desktop-services}.  Ortherwise you need to adjust your services
+list to load @code{network-manager-service-type} and reconfigure your
+Guix system.
+
+To import your VPN configuration execute nmcli import command:
+
+@example shell
+# nmcli connection import type wireguard file wg0.conf
+Connection 'wg0' (edbee261-aa5a-42db-b032-6c7757c60fde) successfully added
+@end example
+
+This will create a configuration file in
+@file{/etc/NetworkManager/wg0.nmconnection}.  Next connect to the
+Wireguard server:
+
+@example shell
+$ nmcli connection up wg0
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/6)
+@end example
+
+By default NetworkManager will connect automatically on system boot.  To
+change that behaviour you need to edit your config:
+
+@example shell
+# nmcli connection modify wg0 connection.autoconnect no
+@end example
+
+For more specific information about NetworkManager and wireguard
+@uref{https://blogs.gnome.org/thaller/2019/03/15/wireguard-in-networkmanager/,see
+this post by thaller}.
+
+@node Setting up NGINX with Lua
+@subsection Setting up NGINX with Lua
+@cindex nginx, lua, openresty, resty
+
+NGINX could be extended with Lua scripts.
+
+Guix provides NGINX service with ability to load Lua module and specific
+Lua packages, and reply to requests by evaluating Lua scripts.
+
+The following example demonstrates system definition with configuration
+to evaluate @file{index.lua} Lua script on HTTP request to
+@uref{http://localhost/hello} endpoint:
+
+@example
+local shell = require "resty.shell"
+
+local stdin = ""
+local timeout = 1000  -- ms
+local max_size = 4096  -- byte
+
+local ok, stdout, stderr, reason, status =
+   shell.run([[/run/current-system/profile/bin/ls /tmp]], stdin, timeout, max_size)
+
+ngx.say(stdout)
+@end example
+
+@lisp
+(use-modules (gnu))
+(use-service-modules #;… web)
+(use-package-modules #;… lua)
+(operating-system
+  ;; …
+  (services
+   ;; …
+   (service nginx-service-type
+            (nginx-configuration
+             (modules
+              (list
+               (file-append nginx-lua-module "/etc/nginx/modules/ngx_http_lua_module.so")))
+             (lua-package-path (list lua-resty-core
+                                     lua-resty-lrucache
+                                     lua-resty-signal
+                                     lua-tablepool
+                                     lua-resty-shell))
+             (lua-package-cpath (list lua-resty-signal))
+             (server-blocks
+              (list (nginx-server-configuration
+                     (server-name '("localhost"))
+                     (listen '("80"))
+                     (root "/etc")
+                     (locations (list
+                                 (nginx-location-configuration
+                                  (uri "/hello")
+                                  (body (list #~(format #f "content_by_lua_file ~s;"
+                                                        #$(local-file "index.lua"))))))))))))))
+@end lisp
+
+@node Music Server with Bluetooth Audio
+@subsection Music Server with Bluetooth Audio
+@cindex mpd
+@cindex music server, headless
+@cindex bluetooth, ALSA configuration
+
+MPD, the Music Player Daemon, is a flexible server-side application for
+playing music.  Client programs on different machines on the network ---
+a mobile phone, a laptop, a desktop workstation --- can connect to it to
+control the playback of audio files from your local music collection.
+MPD decodes the audio files and plays them back on one or many outputs.
+
+By default MPD will play to the default audio device.  In the example
+below we make things a little more interesting by setting up a headless
+music server.  There will be no graphical user interface, no Pulseaudio
+daemon, and no local audio output.  Instead we will configure MPD with
+two outputs: a bluetooth speaker and a web server to serve audio streams
+to any streaming media player.
+
+Bluetooth is often rather frustrating to set up.  You will have to pair
+your Bluetooth device and make sure that the device is automatically
+connected as soon as it powers on.  The Bluetooth system service
+returned by the @code{bluetooth-service} procedure provides the
+infrastructure needed to set this up.
+
+Reconfigure your system with at least the following services and
+packages:
+
+@lisp
+(operating-system
+  ;; …
+  (packages (cons* bluez bluez-alsa
+                   %base-packages))
+  (services
+   ;; …
+   (dbus-service #:services (list bluez-alsa))
+   (bluetooth-service #:auto-enable? #t)))
+@end lisp
+
+Start the @code{bluetooth} service and then use @command{bluetoothctl}
+to scan for Bluetooth devices.  Try to identify your Bluetooth speaker
+and pick out its device ID from the resulting list of devices that is
+indubitably dominated by a baffling smorgasbord of your neighbors' home
+automation gizmos.  This only needs to be done once:
+
+@example
+$ bluetoothctl 
+[NEW] Controller 00:11:22:33:95:7F BlueZ 5.40 [default]
+
+[bluetooth]# power on
+[bluetooth]# Changing power on succeeded
+
+[bluetooth]# agent on
+[bluetooth]# Agent registered
+
+[bluetooth]# default-agent
+[bluetooth]# Default agent request successful
+
+[bluetooth]# scan on
+[bluetooth]# Discovery started
+[CHG] Controller 00:11:22:33:95:7F Discovering: yes
+[NEW] Device AA:BB:CC:A4:AA:CD My Bluetooth Speaker
+[NEW] Device 44:44:FF:2A:20:DC My Neighbor's TV
+@dots{}
+
+[bluetooth]# pair AA:BB:CC:A4:AA:CD
+Attempting to pair with AA:BB:CC:A4:AA:CD
+[CHG] Device AA:BB:CC:A4:AA:CD Connected: yes
+
+[My Bluetooth Speaker]# [CHG] Device AA:BB:CC:A4:AA:CD UUIDs: 0000110b-0000-1000-8000-00xxxxxxxxxx
+[CHG] Device AA:BB:CC:A4:AA:CD UUIDs: 0000110c-0000-1000-8000-00xxxxxxxxxx
+[CHG] Device AA:BB:CC:A4:AA:CD UUIDs: 0000110e-0000-1000-8000-00xxxxxxxxxx
+[CHG] Device AA:BB:CC:A4:AA:CD Paired: yes
+Pairing successful
+
+[CHG] Device AA:BB:CC:A4:AA:CD Connected: no
+
+[bluetooth]# 
+[bluetooth]# trust AA:BB:CC:A4:AA:CD
+[bluetooth]# [CHG] Device AA:BB:CC:A4:AA:CD Trusted: yes
+Changing AA:BB:CC:A4:AA:CD trust succeeded
+
+[bluetooth]# 
+[bluetooth]# connect AA:BB:CC:A4:AA:CD
+Attempting to connect to AA:BB:CC:A4:AA:CD
+[bluetooth]# [CHG] Device AA:BB:CC:A4:AA:CD RSSI: -63
+[CHG] Device AA:BB:CC:A4:AA:CD Connected: yes
+Connection successful
+
+[My Bluetooth Speaker]# scan off
+[CHG] Device AA:BB:CC:A4:AA:CD RSSI is nil
+Discovery stopped
+[CHG] Controller 00:11:22:33:95:7F Discovering: no
+@end example
+
+Congratulations, you can now automatically connect to your Bluetooth
+speaker!
+
+It is now time to configure ALSA to use the @emph{bluealsa} Bluetooth
+module, so that you can define an ALSA pcm device corresponding to your
+Bluetooth speaker.  For a headless server using @emph{bluealsa} with a
+fixed Bluetooth device is likely simpler than configuring Pulseaudio and
+its stream switching behavior.  We configure ALSA by crafting a custom
+@code{alsa-configuration} for the @code{alsa-service-type}.  The
+configuration will declare a @code{pcm} type @code{bluealsa} from the
+@code{bluealsa} module provided by the @code{bluez-alsa} package, and
+then define a @code{pcm} device of that type for your Bluetooth speaker.
+
+All that is left then is to make MPD send audio data to this ALSA
+device.  We also add a secondary MPD output that makes the currently
+played audio files available as a stream through a web server on port
+8080.  When enabled a device on the network could listen to the audio
+stream by connecting any capable media player to the HTTP server on port
+8080, independent of the status of the Bluetooth speaker.
+
+What follows is the outline of an @code{operating-system} declaration
+that should accomplish the above-mentioned tasks:
+
+@lisp
+(use-modules (gnu))
+(use-service-modules audio dbus sound #;… etc)
+(use-package-modules audio linux #;… etc)
+(operating-system
+  ;; …
+  (packages (cons* bluez bluez-alsa
+                   %base-packages))
+  (services
+   ;; …
+   (service mpd-service-type
+            (mpd-configuration
+             (user "your-username")
+             (music-dir "/path/to/your/music")
+             (address "192.168.178.20")
+             (outputs (list (mpd-output
+                             (type "alsa")
+                             (name "MPD")
+                             (extra-options
+                              ;; Use the same name as in the ALSA
+                              ;; configuration below.
+                              '((device . "pcm.btspeaker"))))
+                            (mpd-output
+                             (type "httpd")
+                             (name "streaming")
+                             (enabled? #false)
+                             (always-on? #true)
+                             (tags? #true)
+                             (mixer-type 'null)
+                             (extra-options
+                              '((encoder . "vorbis")
+                                (port    . "8080")
+                                (bind-to-address . "192.168.178.20")
+                                (max-clients . "0") ;no limit
+                                (quality . "5.0")
+                                (format  . "44100:16:1"))))))))
+   (dbus-service #:services (list bluez-alsa))
+   (bluetooth-service #:auto-enable? #t)
+   (service alsa-service-type
+            (alsa-configuration
+             (pulseaudio? #false) ;we don't need it
+             (extra-options
+              #~(string-append "\
+# Declare Bluetooth audio device type \"bluealsa\" from bluealsa module
+pcm_type.bluealsa @{
+    lib \""
+#$(file-append bluez-alsa "/lib/alsa-lib/libasound_module_pcm_bluealsa.so") "\"
+@}
+
+# Declare control device type \"bluealsa\" from the same module
+ctl_type.bluealsa @{
+    lib \""
+#$(file-append bluez-alsa "/lib/alsa-lib/libasound_module_ctl_bluealsa.so") "\"
+@}
+
+# Define the actual Bluetooth audio device.
+pcm.btspeaker @{
+    type bluealsa
+    device \"AA:BB:CC:A4:AA:CD\" # unique device identifier
+    profile \"a2dp\"
+@}
+
+# Define an associated controller.
+ctl.btspeaker @{
+    type bluealsa
+@}
+"))))))
+@end lisp
+
+Enjoy the music with the MPD client of your choice or a media player
+capable of streaming via HTTP!
+
+@node Session lock
+@subsection Session lock
+@cindex sessionlock
+
+Depending on your environment, locking the screen of your session might come built in
+or it might be something you have to set up yourself. If you use a desktop environment
+like GNOME or KDE, it's usually built in. If you use a plain window manager like
+StumpWM or EXWM, you might have to set it up yourself.
+
+@menu
+* Xorg::
+@end menu
+
+@node Xorg
+@subsubsection Xorg
+
+If you use Xorg, you can use the utility
+@uref{https://www.mankier.com/1/xss-lock, xss-lock} to lock the screen of your session.
+xss-lock is triggered by DPMS which since Xorg 1.8 is auto-detected and enabled if
+ACPI is also enabled at kernel runtime.
+
+To use xss-lock, you can simple execute it and put it into the background before
+you start your window manager from e.g. your @file{~/.xsession}:
+
+@example
+xss-lock -- slock &
+exec stumpwm
+@end example
+
+In this example, xss-lock uses @code{slock} to do the actual locking of the screen when
+it determines it's appropriate, like when you suspend your device.
+
+For slock to be allowed to be a screen locker for the graphical session, it needs to
+be made setuid-root so it can authenticate users, and it needs a PAM service. This
+can be achieved by adding the following service to your @file{config.scm}:
+
+@lisp
+(service screen-locker-service-type
+         (screen-locker-configuration
+          (name "slock")
+          (program (file-append slock "/bin/slock"))))
+@end lisp
+
+If you manually lock your screen, e.g. by directly calling slock when you want to lock
+your screen but not suspend it, it's a good idea to notify xss-lock about this so no
+confusion occurs. This can be done by executing @code{xset s activate} immediately
+before you execute slock.
+
+
+@node Guix System Customization
+@section Guix System Customization
 
 @node Customizing the Kernel
-@section Customizing the Kernel
+@subsection Customizing the Kernel
 
 Guix is, at its core, a source based distribution with substitutes
 (@pxref{Substitutes,,, guix, GNU Guix Reference Manual}), and as such building
@@ -3081,7 +3602,7 @@ kernel, since certain modules which are expected to be built may not be
 available for inclusion into the initrd.
 
 @node Guix System Image API
-@section Guix System Image API
+@subsection Guix System Image API
 
 Historically, Guix System is centered around an @code{operating-system}
 structure.  This structure contains various fields ranging from the
@@ -3297,260 +3818,9 @@ guix system image --image-type=hurd-qcow2 my-hurd-os.scm
 
 will instead produce a Hurd QEMU image.
 
-@node Using security keys
-@section Using security keys
-@cindex 2FA, two-factor authentication
-@cindex U2F, Universal 2nd Factor
-@cindex security key, configuration
-
-The use of security keys can improve your security by providing a second
-authentication source that cannot be easily stolen or copied, at least
-for a remote adversary (something that you have), to the main secret (a
-passphrase -- something that you know), reducing the risk of
-impersonation.
-
-The example configuration detailed below showcases what minimal
-configuration needs to be made on your Guix System to allow the use of a
-Yubico security key.  It is hoped the configuration can be useful for
-other security keys as well, with minor adjustments.
-
-@subsection Configuration for use as a two-factor authenticator (2FA)
-
-To be usable, the udev rules of the system should be extended with
-key-specific rules.  The following shows how to extend your udev rules
-with the @file{lib/udev/rules.d/70-u2f.rules} udev rule file provided by
-the @code{libfido2} package from the @code{(gnu packages
-security-token)} module and add your user to the @samp{"plugdev"} group
-it uses:
-
-@lisp
-(use-package-modules ... security-token ...)
-...
-(operating-system
- ...
- (users (cons* (user-account
-               (name "your-user")
-               (group "users")
-               (supplementary-groups
-		'("wheel" "netdev" "audio" "video"
-                  "plugdev"))           ;<- added system group
-               (home-directory "/home/your-user"))
-              %base-user-accounts))
- ...
- (services
-  (cons*
-   ...
-   (udev-rules-service 'fido2 libfido2 #:groups '("plugdev")))))
-@end lisp
-
-After re-configuring your system and re-logging in your graphical
-session so that the new group is in effect for your user, you can verify
-that your key is usable by launching:
-
-@example
-guix shell ungoogled-chromium -- chromium chrome://settings/securityKeys
-@end example
-
-and validating that the security key can be reset via the ``Reset your
-security key'' menu.  If it works, congratulations, your security key is
-ready to be used with applications supporting two-factor authentication
-(2FA).
-
-@subsection Disabling OTP code generation for a Yubikey
-@cindex disabling yubikey OTP
-If you use a Yubikey security key and are irritated by the spurious OTP
-codes it generates when inadvertently touching the key (e.g. causing you
-to become a spammer in the @samp{#guix} channel when discussing from
-your favorite IRC client!), you can disable it via the following
-@command{ykman} command:
-
-@example
-guix shell python-yubikey-manager -- ykman config usb --force --disable OTP
-@end example
-
-Alternatively, you could use the @command{ykman-gui} command provided by
-the @code{yubikey-manager-qt} package and either wholly disable the
-@samp{OTP} application for the USB interface or, from the
-@samp{Applications -> OTP} view, delete the slot 1 configuration, which
-comes pre-configured with the Yubico OTP application.
-
-@subsection Requiring a Yubikey to open a KeePassXC database
-@cindex yubikey, keepassxc integration
-The KeePassXC password manager application has support for Yubikeys, but
-it requires installing a udev rules for your Guix System and some
-configuration of the Yubico OTP application on the key.
-
-The necessary udev rules file comes from the
-@code{yubikey-personalization} package, and can be installed like:
-
-@lisp
-(use-package-modules ... security-token ...)
-...
-(operating-system
- ...
- (services
-  (cons*
-   ...
-   (udev-rules-service 'yubikey yubikey-personalization))))
-@end lisp
-
-After reconfiguring your system (and reconnecting your Yubikey), you'll
-then want to configure the OTP challenge/response application of your
-Yubikey on its slot 2, which is what KeePassXC uses.  It's easy to do so
-via the Yubikey Manager graphical configuration tool, which can be
-invoked with:
-
-@example
-guix shell yubikey-manager-qt -- ykman-gui
-@end example
-
-First, ensure @samp{OTP} is enabled under the @samp{Interfaces} tab,
-then navigate to @samp{Applications -> OTP}, and click the
-@samp{Configure} button under the @samp{Long Touch (Slot 2)} section.
-Select @samp{Challenge-response}, input or generate a secret key, and
-click the @samp{Finish} button.  If you have a second Yubikey you'd like
-to use as a backup, you should configure it the same way, using the
-@emph{same} secret key.
-
-Your Yubikey should now be detected by KeePassXC.  It can be added to a
-database by navigating to KeePassXC's @samp{Database -> Database
-Security...}  menu, then clicking the @samp{Add additional
-protection...} button, then @samp{Add Challenge-Response}, selecting the
-security key from the drop-down menu and clicking the @samp{OK} button
-to complete the setup.
-
-@node Dynamic DNS mcron job
-@section Dynamic DNS mcron job
-
-@cindex dynamic DNS, DDNS
-If your @acronym{ISP, Internet Service Provider} only provides dynamic
-IP addresses, it can be useful to setup a dynamic @acronym{DNS, Domain
-Name System} (also known as @acronym{DDNS, Dynamic DNS}) service to
-associate a static host name to a public but dynamic (often changing) IP
-address.  There are multiple existing services that can be used for
-this; in the following mcron job, @url{https://duckdns.org, DuckDNS} is
-used.  It should also work with other dynamic DNS services that offer a
-similar interface to update the IP address, such as
-@url{https://freedns.afraid.org/}, with minor adjustments.
-
-The mcron job is provided below, where @var{DOMAIN} should be
-substituted for your own domain prefix, and the DuckDNS provided token
-associated to @var{DOMAIN} added to the
-@file{/etc/duckdns/@var{DOMAIN}.token} file.
-
-@lisp
-(define duckdns-job
-  ;; Update personal domain IP every 5 minutes.
-  #~(job '(next-minute (range 0 60 5))
-	 #$(program-file
-            "duckdns-update"
-            (with-extensions (list guile-gnutls) ;required by (web client)
-              #~(begin
-                  (use-modules (ice-9 textual-ports)
-                               (web client))
-                  (let ((token (string-trim-both
-                                (call-with-input-file "/etc/duckdns/@var{DOMAIN}.token"
-                                  get-string-all)))
-                        (query-template (string-append "https://www.duckdns.org/"
-                                                       "update?domains=@var{DOMAIN}"
-                                                       "&token=~a&ip=")))
-                    (http-get (format #f query-template token))))))
-         "duckdns-update"
-         #:user "nobody"))
-@end lisp
-
-The job then needs to be added to the list of mcron jobs for your
-system, using something like:
-
-@lisp
-(operating-system
- (services
-  (cons* (service mcron-service-type
-           (mcron-configuration
-             (jobs (list duckdns-job ...))))
-         ...
-         %base-services)))
-@end lisp
-
-@node Connecting to Wireguard VPN
-@section Connecting to Wireguard VPN
-
-To connect to a Wireguard VPN server you need the kernel module to be
-loaded in memory and a package providing networking tools that support
-it (e.g.  @code{wireguard-tools} or @code{network-manager}).
-
-Here is a configuration example for Linux-Libre < 5.6, where the module
-is out of tree and need to be loaded manually---following revisions of
-the kernel have it built-in and so don't need such configuration:
-
-@lisp
-(use-modules (gnu))
-(use-service-modules desktop)
-(use-package-modules vpn)
-
-(operating-system
-  ;; …
-  (services (cons (simple-service 'wireguard-module
-                                  kernel-module-loader-service-type
-                                  '("wireguard"))
-                  %desktop-services))
-  (packages (cons wireguard-tools %base-packages))
-  (kernel-loadable-modules (list wireguard-linux-compat)))
-@end lisp
-
-After reconfiguring and restarting your system you can either use
-Wireguard tools or NetworkManager to connect to a VPN server.
-
-@subsection Using Wireguard tools
-
-To test your Wireguard setup it is convenient to use @command{wg-quick}.
-Just give it a configuration file @command{wg-quick up ./wg0.conf}; or
-put that file in @file{/etc/wireguard} and run @command{wg-quick up wg0}
-instead.
-
-@quotation Note
-Be warned that the author described this command as a: “[…] very quick
-and dirty bash script […]”.
-@end quotation
-
-@subsection Using NetworkManager
-
-Thanks to NetworkManager support for Wireguard we can connect to our VPN
-using @command{nmcli} command.  Up to this point this guide assumes that
-you're using Network Manager service provided by
-@code{%desktop-services}.  Ortherwise you need to adjust your services
-list to load @code{network-manager-service-type} and reconfigure your
-Guix system.
-
-To import your VPN configuration execute nmcli import command:
-
-@example shell
-# nmcli connection import type wireguard file wg0.conf
-Connection 'wg0' (edbee261-aa5a-42db-b032-6c7757c60fde) successfully added
-@end example
-
-This will create a configuration file in
-@file{/etc/NetworkManager/wg0.nmconnection}.  Next connect to the
-Wireguard server:
-
-@example shell
-$ nmcli connection up wg0
-Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/6)
-@end example
-
-By default NetworkManager will connect automatically on system boot.  To
-change that behaviour you need to edit your config:
-
-@example shell
-# nmcli connection modify wg0 connection.autoconnect no
-@end example
-
-For more specific information about NetworkManager and wireguard
-@uref{https://blogs.gnome.org/thaller/2019/03/15/wireguard-in-networkmanager/,see
-this post by thaller}.
 
 @node Customizing a Window Manager
-@section Customizing a Window Manager
+@subsection Customizing a Window Manager
 @cindex wm
 
 @menu
@@ -3606,56 +3876,75 @@ Then you need to add the following code to a StumpWM configuration file
                                    :subfamily "Book" :size 11))
 @end lisp
 
-@node Session lock
-@subsection Session lock
-@cindex sessionlock
+@node Getting substitutes from Tor
+@subsection Getting substitutes from Tor
 
-Depending on your environment, locking the screen of your session might come built in
-or it might be something you have to set up yourself. If you use a desktop environment
-like GNOME or KDE, it's usually built in. If you use a plain window manager like
-StumpWM or EXWM, you might have to set it up yourself.
+Guix daemon can use a HTTP proxy to get substitutes, here we are
+configuring it to get them via Tor.
 
-@menu
-* Xorg::
-@end menu
+@quotation Warning
+@emph{Not all} Guix daemon's traffic will go through Tor!  Only
+HTTP/HTTPS will get proxied; FTP, Git protocol, SSH, etc connections
+will still go through the clearnet.  Again, this configuration isn't
+foolproof some of your traffic won't get routed by Tor at all.  Use it
+at your own risk.
 
-@node Xorg
-@subsubsection Xorg
+Also note that the procedure described here applies only to package
+substitution. When you update your guix distribution with
+@command{guix pull}, you still need to use @command{torsocks} if
+you want to route the connection to guix's git repository servers
+through Tor.
+@end quotation
 
-If you use Xorg, you can use the utility
-@uref{https://www.mankier.com/1/xss-lock, xss-lock} to lock the screen of your session.
-xss-lock is triggered by DPMS which since Xorg 1.8 is auto-detected and enabled if
-ACPI is also enabled at kernel runtime.
-
-To use xss-lock, you can simple execute it and put it into the background before
-you start your window manager from e.g. your @file{~/.xsession}:
-
-@example
-xss-lock -- slock &
-exec stumpwm
-@end example
-
-In this example, xss-lock uses @code{slock} to do the actual locking of the screen when
-it determines it's appropriate, like when you suspend your device.
-
-For slock to be allowed to be a screen locker for the graphical session, it needs to
-be made setuid-root so it can authenticate users, and it needs a PAM service. This
-can be achieved by adding the following service to your @file{config.scm}:
+Guix's substitute server is available as a Onion service, if you want
+to use it to get your substitutes through Tor configure your system as
+follow:
 
 @lisp
-(service screen-locker-service-type
-         (screen-locker-configuration
-          (name "slock")
-          (program (file-append slock "/bin/slock"))))
+(use-modules (gnu))
+(use-service-module base networking)
+
+(operating-system
+  …
+  (services
+    (cons
+      (service tor-service-type
+              (tor-configuration
+                (config-file (plain-file "tor-config"
+                                         "HTTPTunnelPort 127.0.0.1:9250"))))
+      (modify-services %base-services
+        (guix-service-type
+          config => (guix-configuration
+                      (inherit config)
+                      ;; ci.guix.gnu.org's Onion service
+                      (substitute-urls "\
+@value{SUBSTITUTE-TOR-URL}")
+                      (http-proxy "http://localhost:9250")))))))
 @end lisp
 
-If you manually lock your screen, e.g. by directly calling slock when you want to lock
-your screen but not suspend it, it's a good idea to notify xss-lock about this so no
-confusion occurs. This can be done by executing @code{xset s activate} immediately
-before you execute slock.
+This will keep a tor process running that provides a HTTP CONNECT tunnel
+which will be used by @command{guix-daemon}.  The daemon can use other
+protocols than HTTP(S) to get remote resources, request using those
+protocols won't go through Tor since we are only setting a HTTP tunnel
+here.  Note that @code{substitutes-urls} is using HTTPS and not HTTP or
+it won't work, that's a limitation of Tor's tunnel; you may want to use
+@command{privoxy} instead to avoid such limitations.
+
+If you don't want to always get substitutes through Tor but using it just
+some of the times, then skip the @code{guix-configuration}.  When you
+want to get a substitute from the Tor tunnel run:
+
+@example
+sudo herd set-http-proxy guix-daemon http://localhost:9250
+guix build \
+  --substitute-urls=@value{SUBSTITUTE-TOR-URL} @dots{}
+@end example
+
+@node System Deployment
+@section System Deployment
 
 @node Running Guix on a Linode Server
-@section Running Guix on a Linode Server
+@subsection Running Guix on a Linode Server
 @cindex linode, Linode
 
 To run Guix on a server hosted by @uref{https://www.linode.com, Linode},
@@ -3896,7 +4185,7 @@ down-size the Guix image to 6144MB, to save it as an image.  Then you
 can resize it again to the max size.
 
 @node Running Guix on a Kimsufi Server
-@section Running Guix on a Kimsufi Server
+@subsection Running Guix on a Kimsufi Server
 @cindex kimsufi, Kimsufi, OVH
 
 To run Guix on a server hosted by @uref{https://www.kimsufi.com/,
@@ -4141,9 +4430,12 @@ guix@@@var{server-ip-address>} -i @var{path-to-your-ssh-key}}
 
 You should have a Guix system up and running on Kimsufi;
 congratulations!
+@node System Administration
+@section System Administration
+@cindex System Administration
 
 @node Setting up a bind mount
-@section Setting up a bind mount
+@subsection Setting up a bind mount
 
 To bind mount a file system, one must first set up some definitions
 before the @code{operating-system} section of the system definition.  In
@@ -4196,316 +4488,58 @@ mount itself.
                 ))
 @end lisp
 
-@node Getting substitutes from Tor
-@section Getting substitutes from Tor
+@node Dynamic DNS mcron job
+@subsection Dynamic DNS mcron job
 
-Guix daemon can use a HTTP proxy to get substitutes, here we are
-configuring it to get them via Tor.
+@cindex dynamic DNS, DDNS
+If your @acronym{ISP, Internet Service Provider} only provides dynamic
+IP addresses, it can be useful to setup a dynamic @acronym{DNS, Domain
+Name System} (also known as @acronym{DDNS, Dynamic DNS}) service to
+associate a static host name to a public but dynamic (often changing) IP
+address.  There are multiple existing services that can be used for
+this; in the following mcron job, @url{https://duckdns.org, DuckDNS} is
+used.  It should also work with other dynamic DNS services that offer a
+similar interface to update the IP address, such as
+@url{https://freedns.afraid.org/}, with minor adjustments.
 
-@quotation Warning
-@emph{Not all} Guix daemon's traffic will go through Tor!  Only
-HTTP/HTTPS will get proxied; FTP, Git protocol, SSH, etc connections
-will still go through the clearnet.  Again, this configuration isn't
-foolproof some of your traffic won't get routed by Tor at all.  Use it
-at your own risk.
-
-Also note that the procedure described here applies only to package
-substitution. When you update your guix distribution with
-@command{guix pull}, you still need to use @command{torsocks} if
-you want to route the connection to guix's git repository servers
-through Tor.
-@end quotation
-
-Guix's substitute server is available as a Onion service, if you want
-to use it to get your substitutes through Tor configure your system as
-follow:
+The mcron job is provided below, where @var{DOMAIN} should be
+substituted for your own domain prefix, and the DuckDNS provided token
+associated to @var{DOMAIN} added to the
+@file{/etc/duckdns/@var{DOMAIN}.token} file.
 
 @lisp
-(use-modules (gnu))
-(use-service-module base networking)
-
-(operating-system
-  …
-  (services
-    (cons
-      (service tor-service-type
-              (tor-configuration
-                (config-file (plain-file "tor-config"
-                                         "HTTPTunnelPort 127.0.0.1:9250"))))
-      (modify-services %base-services
-        (guix-service-type
-          config => (guix-configuration
-                      (inherit config)
-                      ;; ci.guix.gnu.org's Onion service
-                      (substitute-urls "\
-@value{SUBSTITUTE-TOR-URL}")
-                      (http-proxy "http://localhost:9250")))))))
+(define duckdns-job
+  ;; Update personal domain IP every 5 minutes.
+  #~(job '(next-minute (range 0 60 5))
+	 #$(program-file
+            "duckdns-update"
+            (with-extensions (list guile-gnutls) ;required by (web client)
+              #~(begin
+                  (use-modules (ice-9 textual-ports)
+                               (web client))
+                  (let ((token (string-trim-both
+                                (call-with-input-file "/etc/duckdns/@var{DOMAIN}.token"
+                                  get-string-all)))
+                        (query-template (string-append "https://www.duckdns.org/"
+                                                       "update?domains=@var{DOMAIN}"
+                                                       "&token=~a&ip=")))
+                    (http-get (format #f query-template token))))))
+         "duckdns-update"
+         #:user "nobody"))
 @end lisp
 
-This will keep a tor process running that provides a HTTP CONNECT tunnel
-which will be used by @command{guix-daemon}.  The daemon can use other
-protocols than HTTP(S) to get remote resources, request using those
-protocols won't go through Tor since we are only setting a HTTP tunnel
-here.  Note that @code{substitutes-urls} is using HTTPS and not HTTP or
-it won't work, that's a limitation of Tor's tunnel; you may want to use
-@command{privoxy} instead to avoid such limitations.
-
-If you don't want to always get substitutes through Tor but using it just
-some of the times, then skip the @code{guix-configuration}.  When you
-want to get a substitute from the Tor tunnel run:
-
-@example
-sudo herd set-http-proxy guix-daemon http://localhost:9250
-guix build \
-  --substitute-urls=@value{SUBSTITUTE-TOR-URL} @dots{}
-@end example
-
-@node Setting up NGINX with Lua
-@section Setting up NGINX with Lua
-@cindex nginx, lua, openresty, resty
-
-NGINX could be extended with Lua scripts.
-
-Guix provides NGINX service with ability to load Lua module and specific
-Lua packages, and reply to requests by evaluating Lua scripts.
-
-The following example demonstrates system definition with configuration
-to evaluate @file{index.lua} Lua script on HTTP request to
-@uref{http://localhost/hello} endpoint:
-
-@example
-local shell = require "resty.shell"
-
-local stdin = ""
-local timeout = 1000  -- ms
-local max_size = 4096  -- byte
-
-local ok, stdout, stderr, reason, status =
-   shell.run([[/run/current-system/profile/bin/ls /tmp]], stdin, timeout, max_size)
-
-ngx.say(stdout)
-@end example
-
-@lisp
-(use-modules (gnu))
-(use-service-modules #;… web)
-(use-package-modules #;… lua)
-(operating-system
-  ;; …
-  (services
-   ;; …
-   (service nginx-service-type
-            (nginx-configuration
-             (modules
-              (list
-               (file-append nginx-lua-module "/etc/nginx/modules/ngx_http_lua_module.so")))
-             (lua-package-path (list lua-resty-core
-                                     lua-resty-lrucache
-                                     lua-resty-signal
-                                     lua-tablepool
-                                     lua-resty-shell))
-             (lua-package-cpath (list lua-resty-signal))
-             (server-blocks
-              (list (nginx-server-configuration
-                     (server-name '("localhost"))
-                     (listen '("80"))
-                     (root "/etc")
-                     (locations (list
-                                 (nginx-location-configuration
-                                  (uri "/hello")
-                                  (body (list #~(format #f "content_by_lua_file ~s;"
-                                                        #$(local-file "index.lua"))))))))))))))
-@end lisp
-
-@node Music Server with Bluetooth Audio
-@section Music Server with Bluetooth Audio
-@cindex mpd
-@cindex music server, headless
-@cindex bluetooth, ALSA configuration
-
-MPD, the Music Player Daemon, is a flexible server-side application for
-playing music.  Client programs on different machines on the network ---
-a mobile phone, a laptop, a desktop workstation --- can connect to it to
-control the playback of audio files from your local music collection.
-MPD decodes the audio files and plays them back on one or many outputs.
-
-By default MPD will play to the default audio device.  In the example
-below we make things a little more interesting by setting up a headless
-music server.  There will be no graphical user interface, no Pulseaudio
-daemon, and no local audio output.  Instead we will configure MPD with
-two outputs: a bluetooth speaker and a web server to serve audio streams
-to any streaming media player.
-
-Bluetooth is often rather frustrating to set up.  You will have to pair
-your Bluetooth device and make sure that the device is automatically
-connected as soon as it powers on.  The Bluetooth system service
-returned by the @code{bluetooth-service} procedure provides the
-infrastructure needed to set this up.
-
-Reconfigure your system with at least the following services and
-packages:
+The job then needs to be added to the list of mcron jobs for your
+system, using something like:
 
 @lisp
 (operating-system
-  ;; …
-  (packages (cons* bluez bluez-alsa
-                   %base-packages))
-  (services
-   ;; …
-   (dbus-service #:services (list bluez-alsa))
-   (bluetooth-service #:auto-enable? #t)))
+ (services
+  (cons* (service mcron-service-type
+           (mcron-configuration
+             (jobs (list duckdns-job ...))))
+         ...
+         %base-services)))
 @end lisp
-
-Start the @code{bluetooth} service and then use @command{bluetoothctl}
-to scan for Bluetooth devices.  Try to identify your Bluetooth speaker
-and pick out its device ID from the resulting list of devices that is
-indubitably dominated by a baffling smorgasbord of your neighbors' home
-automation gizmos.  This only needs to be done once:
-
-@example
-$ bluetoothctl 
-[NEW] Controller 00:11:22:33:95:7F BlueZ 5.40 [default]
-
-[bluetooth]# power on
-[bluetooth]# Changing power on succeeded
-
-[bluetooth]# agent on
-[bluetooth]# Agent registered
-
-[bluetooth]# default-agent
-[bluetooth]# Default agent request successful
-
-[bluetooth]# scan on
-[bluetooth]# Discovery started
-[CHG] Controller 00:11:22:33:95:7F Discovering: yes
-[NEW] Device AA:BB:CC:A4:AA:CD My Bluetooth Speaker
-[NEW] Device 44:44:FF:2A:20:DC My Neighbor's TV
-@dots{}
-
-[bluetooth]# pair AA:BB:CC:A4:AA:CD
-Attempting to pair with AA:BB:CC:A4:AA:CD
-[CHG] Device AA:BB:CC:A4:AA:CD Connected: yes
-
-[My Bluetooth Speaker]# [CHG] Device AA:BB:CC:A4:AA:CD UUIDs: 0000110b-0000-1000-8000-00xxxxxxxxxx
-[CHG] Device AA:BB:CC:A4:AA:CD UUIDs: 0000110c-0000-1000-8000-00xxxxxxxxxx
-[CHG] Device AA:BB:CC:A4:AA:CD UUIDs: 0000110e-0000-1000-8000-00xxxxxxxxxx
-[CHG] Device AA:BB:CC:A4:AA:CD Paired: yes
-Pairing successful
-
-[CHG] Device AA:BB:CC:A4:AA:CD Connected: no
-
-[bluetooth]# 
-[bluetooth]# trust AA:BB:CC:A4:AA:CD
-[bluetooth]# [CHG] Device AA:BB:CC:A4:AA:CD Trusted: yes
-Changing AA:BB:CC:A4:AA:CD trust succeeded
-
-[bluetooth]# 
-[bluetooth]# connect AA:BB:CC:A4:AA:CD
-Attempting to connect to AA:BB:CC:A4:AA:CD
-[bluetooth]# [CHG] Device AA:BB:CC:A4:AA:CD RSSI: -63
-[CHG] Device AA:BB:CC:A4:AA:CD Connected: yes
-Connection successful
-
-[My Bluetooth Speaker]# scan off
-[CHG] Device AA:BB:CC:A4:AA:CD RSSI is nil
-Discovery stopped
-[CHG] Controller 00:11:22:33:95:7F Discovering: no
-@end example
-
-Congratulations, you can now automatically connect to your Bluetooth
-speaker!
-
-It is now time to configure ALSA to use the @emph{bluealsa} Bluetooth
-module, so that you can define an ALSA pcm device corresponding to your
-Bluetooth speaker.  For a headless server using @emph{bluealsa} with a
-fixed Bluetooth device is likely simpler than configuring Pulseaudio and
-its stream switching behavior.  We configure ALSA by crafting a custom
-@code{alsa-configuration} for the @code{alsa-service-type}.  The
-configuration will declare a @code{pcm} type @code{bluealsa} from the
-@code{bluealsa} module provided by the @code{bluez-alsa} package, and
-then define a @code{pcm} device of that type for your Bluetooth speaker.
-
-All that is left then is to make MPD send audio data to this ALSA
-device.  We also add a secondary MPD output that makes the currently
-played audio files available as a stream through a web server on port
-8080.  When enabled a device on the network could listen to the audio
-stream by connecting any capable media player to the HTTP server on port
-8080, independent of the status of the Bluetooth speaker.
-
-What follows is the outline of an @code{operating-system} declaration
-that should accomplish the above-mentioned tasks:
-
-@lisp
-(use-modules (gnu))
-(use-service-modules audio dbus sound #;… etc)
-(use-package-modules audio linux #;… etc)
-(operating-system
-  ;; …
-  (packages (cons* bluez bluez-alsa
-                   %base-packages))
-  (services
-   ;; …
-   (service mpd-service-type
-            (mpd-configuration
-             (user "your-username")
-             (music-dir "/path/to/your/music")
-             (address "192.168.178.20")
-             (outputs (list (mpd-output
-                             (type "alsa")
-                             (name "MPD")
-                             (extra-options
-                              ;; Use the same name as in the ALSA
-                              ;; configuration below.
-                              '((device . "pcm.btspeaker"))))
-                            (mpd-output
-                             (type "httpd")
-                             (name "streaming")
-                             (enabled? #false)
-                             (always-on? #true)
-                             (tags? #true)
-                             (mixer-type 'null)
-                             (extra-options
-                              '((encoder . "vorbis")
-                                (port    . "8080")
-                                (bind-to-address . "192.168.178.20")
-                                (max-clients . "0") ;no limit
-                                (quality . "5.0")
-                                (format  . "44100:16:1"))))))))
-   (dbus-service #:services (list bluez-alsa))
-   (bluetooth-service #:auto-enable? #t)
-   (service alsa-service-type
-            (alsa-configuration
-             (pulseaudio? #false) ;we don't need it
-             (extra-options
-              #~(string-append "\
-# Declare Bluetooth audio device type \"bluealsa\" from bluealsa module
-pcm_type.bluealsa @{
-    lib \""
-#$(file-append bluez-alsa "/lib/alsa-lib/libasound_module_pcm_bluealsa.so") "\"
-@}
-
-# Declare control device type \"bluealsa\" from the same module
-ctl_type.bluealsa @{
-    lib \""
-#$(file-append bluez-alsa "/lib/alsa-lib/libasound_module_ctl_bluealsa.so") "\"
-@}
-
-# Define the actual Bluetooth audio device.
-pcm.btspeaker @{
-    type bluealsa
-    device \"AA:BB:CC:A4:AA:CD\" # unique device identifier
-    profile \"a2dp\"
-@}
-
-# Define an associated controller.
-ctl.btspeaker @{
-    type bluealsa
-@}
-"))))))
-@end lisp
-
-Enjoy the music with the MPD client of your choice or a media player
-capable of streaming via HTTP!
 
 
 @c *********************************************************************
