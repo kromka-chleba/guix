@@ -42,6 +42,7 @@
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
+;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -97,6 +98,7 @@
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
@@ -121,7 +123,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system guile)
   #:use-module (guix build-system meson)
-  #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system scons)
   #:use-module (guix deprecation)
@@ -1893,30 +1895,23 @@ PNG, and performs PNG integrity checks and corrections.")
     (version "2.9")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "imgp" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jarun/imgp")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0avdgr4fx643jg9wzwm65y14s56bnrn3hmkw7v0mcyvxn88vxwiq"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f                      ;there are no tests
-       #:phases
-       (modify-phases %standard-phases
-         ;; setup.py expects the file to be named 'imgp'.
-         (add-after 'unpack 'rename-imgp
-           (lambda _
-             (rename-file "imgp.py" "imgp"))))))
-    (inputs
-     (list python-pillow))
+        (base32 "1848cjp6ax4zhmclhzywhfgcnp4gmi148r76i5yiks37w36823f9"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;there are no tests
+    (native-inputs (list python-setuptools))
+    (inputs (list python-pillow))
     (home-page "https://github.com/jarun/imgp")
     (synopsis "High-performance CLI batch image resizer & rotator")
     (description
      "@code{imgp} is a command line image resizer and rotator for JPEG and PNG
 images.  It can resize (or thumbnail) and rotate thousands of images in a go
-while saving significantly on storage.
-
-This package may optionally be built with @code{python-pillow-simd} in place
-of @code{python-pillow} for SIMD parallelism.")
+while saving significantly on storage.")
     (license license:gpl3+)))
 
 (define-public pngsuite
@@ -2955,36 +2950,50 @@ GIF, TIFF, WEBP, BMP, PNG, XPM formats.")
               (sha256
                (base32
                 "05mvay73vb9d2sh1ckv4vny45n059dmsps1jcppjizfmrpbkgr7k"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:imported-modules ((guix build glib-or-gtk-build-system)
-                           ,@%python-build-system-modules)
-       #:modules ((guix build python-build-system)
+     (list
+      #:imported-modules `((guix build glib-or-gtk-build-system)
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build pyproject-build-system)
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build utils))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'python3.11-compatibility
-           (lambda _
-             (substitute* "setup.py"
-               (("\"rU\"") "\"r\""))))
-         (add-after 'install 'glib-or-gtk-wrap
-           (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
-         (add-after 'install 'wrap-program
-           (lambda* (#:key outputs inputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (gdk-pixbuf (assoc-ref inputs "gdk-pixbuf"))
-                    (gtk+ (assoc-ref inputs "gtk+")))
-               (wrap-program (string-append out "/bin/mypaint")
-                 `("GI_TYPELIB_PATH" ":" prefix
-                   (,(getenv "GI_TYPELIB_PATH")))))))
-         (add-before 'check 'pre-check
-           (lambda _
-             ;; Tests need writing access
-             (setenv "HOME" "/tmp"))))))
+      ;; Don't know why it is necessary to spell the tests out.
+      #:test-flags
+      #~(list "tests/__init__.py"
+              "tests/fill.py"
+              "tests/mypaintlib.py"
+              "tests/rendering.py"
+              "tests/compositeops.py"
+              "tests/localedata.py"
+              "tests/paths.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'python3.11-compatibility
+            (lambda _
+              (substitute* "setup.py"
+                (("\"rU\"") "\"r\""))))
+          (add-after 'install 'glib-or-gtk-wrap
+            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
+          (add-after 'install 'wrap-program
+            (lambda* (#:key outputs inputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (gdk-pixbuf (assoc-ref inputs "gdk-pixbuf"))
+                     (gtk+ (assoc-ref inputs "gtk+")))
+                (wrap-program (string-append out "/bin/mypaint")
+                  `("GI_TYPELIB_PATH" ":" prefix
+                    (,(getenv "GI_TYPELIB_PATH")))))))
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; Need to get the 'lib' in 'build/'.
+              (delete-file-recursively "lib")
+              ;; Tests need writing access
+              (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list pkg-config
            gobject-introspection
+           python-pytest
+           python-setuptools
            swig
            gettext-minimal))
     (inputs
@@ -2999,7 +3008,7 @@ GIF, TIFF, WEBP, BMP, PNG, XPM formats.")
            python-numpy
            python-pycairo
            python-pygobject))
-    (home-page "http://mypaint.org/")
+    (home-page "https://mypaint.org/")
     (synopsis "Fast and simple painting app for artists")
     (description
      "MyPaint is a simple drawing and painting program that works well with
