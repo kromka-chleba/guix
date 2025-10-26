@@ -1220,38 +1220,40 @@ of Bitcoin BIP-0039.")
 (define-public python-ledgerblue
   (package
     (name "python-ledgerblue")
-    (version "0.1.54")
+    (version "0.1.55")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ledgerblue" version))
        (sha256
-        (base32 "0ghpvxgih1zarp788qi1xh5xmprv6yhaxglfbix4974i7r4pszqy"))))
+        (base32 "1cyjk2rjgqjfb8jc4p7hyrs2hp597np51xychg2ai4z2qpqrbkga"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:tests? #f
+      #:tests? #f ;no tests in PyPI or Git
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'pretend-version
             (lambda _
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
                       #$version))))))
-    (native-inputs (list python-setuptools python-setuptools-scm python-wheel))
-    (propagated-inputs (list python-bleak
-                             python-pyelftools
-                             python-pycryptodome
-                             python-ecpy
-                             python-future
-                             python-gnupg
-                             python-hidapi
-                             python-nfcpy
-                             python-pillow
-                             python-protobuf
-                             python-pycryptodomex
-                             python-pyscard
-                             python-u2flib-host
-                             python-websocket-client))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-bleak
+           python-ecpy
+           python-future
+           python-gnupg
+           python-hidapi
+           python-nfcpy
+           python-pillow
+           python-protobuf-6
+           python-pycryptodome
+           python-pycryptodomex
+           python-pyelftools
+           python-u2flib-host
+           python-websocket-client))
     (home-page "https://github.com/LedgerHQ/blue-loader-python")
     (synopsis "Python library to communicate with Ledger Blue/Nano S")
     (description "@code{ledgerblue} is a Python library to communicate with
