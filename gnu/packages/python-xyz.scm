@@ -3162,6 +3162,9 @@ Markdown.  It also includes initial support for Google-formatted docstrings.")
               (sha256
                (base32
                 "00j9xgd43yzx5yiijnlmpaqpa58m5lscjglsgzg48dibhr69br0l"))))
+    ;; XXX: Build fails when using pyproject-build-system:
+    ;;     opts = cfg.get(key) or []
+    ;; AttributeError: 'list' object has no attribute 'get'
     (build-system python-build-system)
     (arguments
      (list
@@ -3237,7 +3240,7 @@ Markdown.  It also includes initial support for Google-formatted docstrings.")
                         "--keep"
                         "--mysql-topdir=/tmp/datadir"
                         "--unix-socket=/tmp/datadir")))))))
-    (propagated-inputs (list python-protobuf))
+    (propagated-inputs (list python-protobuf-3))
     (inputs (list mysql protobuf-3.20 openssl-1.1 zlib))
     (home-page "https://dev.mysql.com/doc/connector-python/en/index.html")
     (synopsis "MySQL driver written in Python")
