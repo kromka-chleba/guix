@@ -1362,26 +1362,32 @@ TREZOR Hardware Wallet.")
 (define-public python-keepkey
   (package
     (name "python-keepkey")
-    (version "6.0.3")
+    (version "7.2.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "keepkey" version))
-        (sha256
-          (base32
-            "0z3d0m6364v9dv0njs4cd5m5ai6j6v35xaaxfxl90m9vmyxy81vd"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/keepkey/python-keepkey")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00hqppdj3s9y25x4ad59y8axq94dd4chhw9zixq32sdrd9v8z55a"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (apply invoke "python" (find-files "tests/unit" "\\.py$")))))))
+     (list #:test-backend #~'unittest
+           #:test-flags #~(list "discover" "tests/unit")))
+    (native-inputs
+     (list python-semver
+           python-setuptools))
     (propagated-inputs
-     (list python-ecdsa python-hidapi python-libusb1 python-mnemonic
-           python-protobuf))
+     (list python-ecdsa
+           python-hidapi
+           python-libusb1
+           python-mnemonic
+           ;; XXX: See:
+           ;; <https://github.com/keepkey/python-keepkey/issues/146>.
+           python-protobuf-3
+           python-requests))
     (home-page "https://github.com/keepkey/python-keepkey")
     (synopsis "Python library for communicating with KeepKey Hardware Wallet")
     (description "@code{keepkey} is a Python library for communicating with
