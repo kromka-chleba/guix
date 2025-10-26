@@ -112,7 +112,7 @@ Scheme tutorials
 
 Packaging
 
-* Packaging Tutorial::          A tutorial on how to add packages to Guix.
+* General Packaging Tutorial::  A tutorial on how to add packages to Guix.
 * Packaging Workflows::         Real life examples on working with specific build systems.
 
 Packaging Tutorial
@@ -1228,12 +1228,14 @@ package definitions in Guile Scheme, organizing them in package modules,
 and building them.
 
 @menu
-* Packaging Tutorial::          A tutorial on how to add packages to Guix.
+* General Packaging Tutorial::  A tutorial on how to add packages to Guix.
 * Packaging Workflows::         Real life examples on working with specific build systems.
 @end menu
 
-@node Packaging Tutorial
-@section Packaging Tutorial
+@node General Packaging Tutorial
+@section General Packaging Tutorial
+@cindex General Packaging Tutorial
+@cindex packaging
 
 GNU Guix stands out as the @emph{hackable} package manager, mostly because it
 uses @uref{https://www.gnu.org/software/guile/, GNU Guile}, a powerful
