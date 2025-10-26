@@ -527,16 +527,21 @@ You'll find more books, tutorials and other resources at
 @url{https://schemers.org/}.
 @end quotation
 
-@c Tooling - Emacs setup
-@node The Perfect Setup
-@section The Perfect Setup
+@node Emacs setup
+@section Emacs Setup
 @cindex Emacs Setup
+@cindex Perfect Setup
 
-The Perfect Setup to hack on Guix is basically the perfect setup used
-for Guile hacking (@pxref{Using Guile in Emacs,,, guile, Guile Reference
-Manual}).  First, you need more than an editor, you need
-@url{https://www.gnu.org/software/emacs, Emacs}, empowered by the
-wonderful @url{https://nongnu.org/geiser/, Geiser}.  To set that up, run:
+Emacs is by far the widest adapted IDE for hacking GNU Guix --- hence it
+was dubbed the ``Perfect Setup'' in earlier versions of our manual.  It
+may not be the best fitting tool for you and your needs, but for many of
+us it is, and with the following instructions it could very well become
+yours.
+
+It closely resembles the setup for GNU Guile hacking (@pxref{Using Guile
+in Emacs,,, guile, Guile Reference Manual}).  Apart from Emacs you will
+need adequate libraries to work on Guile Scheme, notably the ``geiser''
+and ``geiser-guile'' packages.  To give it a try, simply invoke:
 
 @example
 guix install emacs guile emacs-geiser emacs-geiser-guile
@@ -625,26 +630,8 @@ copyright-update}.  If you want to do it automatically after each buffer
 save then add @code{(add-hook 'after-save-hook 'copyright-update)} in
 Emacs.
 
-@node Alternative Setups
-@section Alternative Setups
-
-Alternative setups than Emacs may let you work on Guix with a
-similar development experience and they might work better with the
-tools you currently use or help you make the transition to Emacs.
-
-The options listed below only provide the alternatives to the Emacs
-based setup, which is the most widely used in the Guix community.  If
-you want to really understand how the perfect setup for Guix development
-is supposed to work, we encourage you to read the section before this
-regardless of the editor you choose to use.
-
-@menu
-* Guile Studio::                First step in your transition to Emacs.
-* Vim and NeoVim::              When you are evil to the root.
-@end menu
-
-@node Guile Studio
-@subsection Guile Studio
+@node Guile Studio setup
+@section Guile Studio
 
 Guile Studio is a pre-configured Emacs with mostly everything you need
 to start hacking in Guile. If you are not familiar with Emacs it makes
@@ -656,12 +643,10 @@ guix install guile-studio
 
 Guile Studio comes with Geiser preinstalled and prepared for action.
 
-@node Vim and NeoVim
-@subsection Vim and NeoVim
+@node Vim and NeoVim setup
+@section Vim and NeoVim
 
-
-Vim (and NeoVim) are also packaged in Guix, just in case you decided
-to go for the evil path.
+Vim (and NeoVim) are also packaged in Guix, just in case.
 
 @example
 guix install vim
