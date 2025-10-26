@@ -756,24 +756,24 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
 (define-public electron-cash
   (package
     (name "electron-cash")
-    (version "4.4.1")
+    (version "4.4.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/Electron-Cash/Electron-Cash")
-             (commit version)))
+              (url "https://github.com/Electron-Cash/Electron-Cash")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11xhlssr7bvdv3p256k87y35vjzyfd93p72w8f2xy7j5jh6abhp1"))))
-    (build-system python-build-system)
+        (base32 "07gg6hv3y728sd1sgfd7v6jqahax4zd8qk2lps6r7s2jxg2qz9l6"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? #f                       ; no tests
-      #:modules '((guix build python-build-system)
+      #:modules '((guix build pyproject-build-system)
                   (guix build qt-utils)
                   (guix build utils))
-      #:imported-modules `(,@%python-build-system-modules
+      #:imported-modules `(,@%pyproject-build-system-modules
                            (guix build qt-utils))
       #:phases
       #~(modify-phases %standard-phases
@@ -791,11 +791,20 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
               (substitute* "contrib/requirements/requirements.txt"
                 (("python-dateutil<2\\.9")
                  "python-dateutil"))))
+          (add-before 'build 'generate-proto-electroncash
+            (lambda _
+              (invoke "protoc"
+                      "--proto_path=electroncash/"
+                      "--python_out=electroncash/"
+                      "electroncash/paymentrequest.proto")))
           (add-after 'install 'wrap-qt
             (lambda* (#:key outputs inputs #:allow-other-keys)
               (let ((out (assoc-ref outputs "out")))
                 (wrap-qt-program "electron-cash"
                                  #:output out #:inputs inputs)))))))
+    (native-inputs
+     (list protobuf
+           python-setuptools))
     (inputs
      (list bash-minimal
            libevent
@@ -811,7 +820,7 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
            python-pathvalidate
            python-protobuf
            python-pyaes
-           python-pyqt
+           python-pyqt ;; XXX: depends on Qt5 still
            python-pysocks
            python-qdarkstyle
            python-qrcode
