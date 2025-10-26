@@ -249,11 +249,18 @@ programmatically.  You can use Guile Scheme to generate package
 definitions, to modify them, to build them, to deploy whole operating
 systems and much more.
 
-Knowing the basics of how to program in Scheme will unlock many of the
-advanced features Guix provides --- and you don't even need to be an
-experienced programmer to use them!
+Knowing the basics of how to program in Scheme is essential to unlocking
+many of the advanced features Guix provides.  Setting up a development
+environment for Guile Scheme is essential to assist you with upcoming
+tasks.  Emacs provides the most features and is the most widely adapted
+throughout our community, but its learning curve is often considered
+rather steep.
 
-Let's get started!
+The other setups listed below provide alternatives to the Emacs based
+setup.  If you want to really understand how the perfect setup for Guix
+development is supposed to work, we encourage you to read the section
+before this regardless of the editor you choose to use.
+
 
 @menu
 * A Scheme Crash Course:: The main prerequisite to work on Guix.
