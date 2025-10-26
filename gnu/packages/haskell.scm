@@ -25,6 +25,7 @@
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1616,5 +1617,96 @@ interactive environment for the functional language Haskell.")
               (files (list (string-append "lib/ghc-" version)))
               (file-pattern ".*\\.conf\\.d$")
               (file-type 'directory)))))))
+
+(define malcolm-wallace-universe
+  (let ((commit "18eb14b598f5f65d32ee21cc73dd32e28f949a22"))
+    (origin (method git-fetch)
+            (uri
+              (git-reference
+                (url "https://github.com/hackage-trustees/malcolm-wallace-universe")
+                (commit commit)))
+            (file-name (git-file-name "malcolm-wallace-universe" (git-version "0.0.0" "0" commit)))
+            (sha256 (base32 "04j2lm3a6y9sbx22d4k3kb04rz5kavcxcbny53dff023j8b4pgg5")))))
+
+(define microcabal
+  (let ((commit "0569eac6e1c9f6f8900e3559eaa012fd2ae4653c"))
+    (origin (method git-fetch)
+            (uri
+              (git-reference
+                (url "https://github.com/augustss/MicroCabal")
+                (commit commit)))
+            (file-name (git-file-name "MicroCabal" (git-version "0.0.0" "0" commit)))
+            (sha256 (base32 "06s61x3jgms0447rv9xy4jbhjhnw4lvj5wm2fanmdpk4xlwlvmdl")))))
+
+(define-public microhs
+  (package
+    (name "microhs")
+    (version "0.14.20.0")
+    (source
+     (origin (method git-fetch)
+             (uri
+              (git-reference
+                (url "https://github.com/augustss/MicroHs")
+                (commit (string-append "v" version))))
+             (file-name (git-file-name name version))
+             (sha256 (base32 "035xbk8nwjiqkqqi1yxvmfha4l38kngd0r01in55fvsn0rql16cz"))))
+
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target)))
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'pre-build
+            (lambda* (#:key make-flags #:allow-other-keys)
+              (apply invoke "make" make-flags)
+              (apply invoke "make" "generated/mhs.c" make-flags)
+                (apply invoke "make" "generated/cpphs.c" make-flags)
+                (apply invoke "make" "generated/mcabal.c" make-flags)
+                (apply invoke "make" "clean" make-flags)))
+          (add-after 'unpack 'patch-paths
+            (lambda _
+              (substitute* "paths/Paths_MicroHs.hs"
+                (("^getDataDir =.+")
+                 (format #f "getDataDir = return ~s"
+                         (string-append #$output "/lib/mhs"))))))
+          (replace 'install
+            (lambda* (#:key make-flags #:allow-other-keys)
+              (apply invoke "make" "oldinstall" make-flags)))
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (symlink (assoc-ref inputs "microcabal") "MicroCabal")
+              (symlink (assoc-ref inputs "malcolm-wallace-universe")
+                       "cpphssrc/malcom-wallace-universe")
+              (substitute* "Makefile"
+                (("PREFIX=.*")
+                 (string-append "PREFIX=" #$output))
+                (("^#MHSGMPCCFLAGS=.*$")
+                 "MHSGMPCCFLAGS=-DWANT_GMP=1\n")
+                (("^#MHSGMP=")
+                 "MHSGMP=")
+                (("^#MCABALGMP=")
+                 "MCABALGMP=")
+                (("^#MHSGMPCCLIBS=.*$")
+                 (string-append "MHSGMPCCLIBS=-L"
+                                (assoc-ref inputs "gmp") "/lib -lgmp -I"
+                                (assoc-ref inputs "gmp") "/include\n"))
+                (("cp bin/mhs" all)
+                 (string-append all " bin/mcabal"))
+                (("git submodule")
+                 "true")))))))
+    (inputs
+     (list
+      (list "microcabal" microcabal)
+      (list "malcolm-wallace-universe" malcolm-wallace-universe)
+      (list "gmp" gmp)))
+    (home-page "https://github.com/augustss/MicroHs")
+    (synopsis "Haskell implemented with combinators")
+    (description "An implementation of an extended subset of Haskell.  It uses
+combinators for the runtime execution.")
+    (license license:asl2.0)))
 
 ;;; haskell.scm ends here
