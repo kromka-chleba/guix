@@ -36391,6 +36391,7 @@ path.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-backend #~'unittest
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-themes-in-output
