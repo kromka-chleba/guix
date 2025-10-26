@@ -2965,7 +2965,7 @@ GNOME and KDE desktops to the icon names proposed in the specification.")
     (home-page "https://gitlab.gnome.org/GNOME/adwaita-icon-theme")
     (synopsis "GNOME icon theme")
     (description "Icons for the GNOME desktop.")
-    (license license:lgpl3))) ; or Creative Commons BY-SA 3.0
+    (license (list license:lgpl3 license:cc-by-sa3.0))))
 
 (define-deprecated-package gnome-icon-theme
   adwaita-icon-theme)
