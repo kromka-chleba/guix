@@ -709,6 +709,7 @@ source tree as a whole.
 * Running Guix Before It Is Installed::  Running guix from a local build.
 
 * Update a package::            A simple use case.
+* Fix Broken Packages::         General approach, tips and tricks.
 * General Packaging Tutorial::  A tutorial on how to add packages to Guix.
 * Packaging Workflows::         Real life examples on working with specific build systems.
 
@@ -1230,6 +1231,7 @@ and building them.
 
 @menu
 * Update a package::            A simple use case.
+* Fix Broken Packages::         General approach, tips and tricks.
 * General Packaging Tutorial::  A tutorial on how to add packages to Guix.
 * Packaging Workflows::         Real life examples on working with specific build systems.
 @end menu
@@ -1278,6 +1280,63 @@ main repository.  Please open a Pull Request (PR) on Codeberg for that.
 Sometimes so-called version bumps of software also include adjusting the
 build procedure(s) for the package, which can mean anything from adding
 inputs over fixing issues in the code with additional build phases.
+
+@node Fix Broken Packages
+@section Fix Broken Packages
+@cindex Fix Broken Packages
+@cindex fix packages
+
+In this section we assume that the Issue has already been reported on
+Codeberg and you intend to @emph{fix} the issue.
+
+If a package's build fails because one of its inputs fails building, it
+should go without saying that we (first) need to fix the failing
+dependency.
+
+Fixing packages can range everywhere from pretty easy to advanced, but
+usually we start with the following strategies (in no particular order):
+
+@itemize
+@item
+Check whether the packaged software could be upgraded (@pxref{Update a
+package}) and thereby addressing the issue.  This is often the easiest
+and simplest strategy.
+
+@item
+Read the build log, carefully.  Start from the bottom and try to find
+the error message --- there is at least one.  Identify the first one
+(possibly causing others).  If you do not know what causes this error
+(like it usually happens to me) try searching the web for indications.
+Don't hold back to log your research on the issue on Codeberg.
+
+@item
+Bisect the git history until you find the breaking change --- the one
+commit before which the build succeeds and with which the build starts
+failing.  The failure @emph{has to relate} to this very change in our
+code.  For example, to efficiently find which commit broke the ``hello''
+package (you know it used to build just fine with commit a13b12c11d), do
+the following from a working (and ready to be built) git checkout.
+
+@example
+$ git bisect start
+$ git bisect good a13b12c11d
+$ git bisect bad HEAD
+$ git bisect run ./pre-inst-env guix build python-splicekit
+@end example
+
+This may take a while but will eventually produce desired insight.
+
+@item
+Ask people in our IRC channel, members of specific teams (you can tag
+whole teams in Codeberg issues) or the general (developer) community
+through our mailing list.
+@end itemize
+
+Don't forget: we are in this together!  Even when you can not fix a
+package, still share what you tried and what didn't work.  Any progress
+is progress that can and will be picked up by the next person trying
+their luck.
+
 
 @node General Packaging Tutorial
 @section General Packaging Tutorial
