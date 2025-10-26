@@ -1290,36 +1290,43 @@ track models to multi-body models.")
 (define-public python-commonroad-io
   (package
     (name "python-commonroad-io")
-    (version "2022.3")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "commonroad-io" version))
-              (sha256
-               (base32
-                "1cj9zj567mca8xb8sx9h3nnl2cccv6vh8h73imgpq61cimk9mvas"))))
-    (build-system python-build-system)
+    (version "2024.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "commonroad_io" version))
+       (sha256
+        (base32 "1wqzn4vj5xmcgz606f59xmd57zzahaky3j6gfn352gp8d524cqcm"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-setup.py
-                 (lambda _
-                   (substitute* "setup.py"
-                     (("protobuf==3.20.1") "protobuf >= 3.20.1"))
-                   #$%commonroad-dont-install-license-at-root)))))
-    (propagated-inputs (list python-commonroad-vehicle-models
-                             python-iso3166
-                             python-lxml
-                             python-matplotlib
-                             python-networkx
-                             python-numpy
-                             python-omegaconf
-                             python-pillow
-                             python-protobuf
-                             python-rtree
-                             python-scipy
-                             python-shapely
-                             python-tqdm))
-    (native-inputs (list python-lxml python-pytest))
+     (list
+     ;; PyPI does not provide tests, GitHub does not contain latest tag,
+     ;; upstream still depends on python-protobuf@3, see:
+     ;; <https://github.com/CommonRoad/commonroad-io/issues/15>.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("protobuf = \"==3.20.2\"") "protobuf = \">= 3.20.2\"")))))))
+    (native-inputs
+     (list python-lxml
+           python-poetry-core))
+    (propagated-inputs
+     (list python-commonroad-vehicle-models
+           python-iso3166
+           python-lxml
+           python-matplotlib
+           python-networkx
+           python-numpy
+           python-omegaconf
+           python-pillow
+           python-protobuf-3
+           python-rtree
+           python-scipy
+           python-shapely
+           python-tqdm))
     (home-page "https://commonroad.in.tum.de/")
     (synopsis "Read, write, and visualize CommonRoad scenarios")
     (description "This package provides methods to read, write, and visualize
