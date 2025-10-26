@@ -255,7 +255,10 @@ experienced programmer to use them!
 Let's get started!
 
 @menu
-* A Scheme Crash Course::
+* A Scheme Crash Course:: The main prerequisite to work on Guix.
+* Emacs setup::           The most widely used in our community.
+* Guile Studio setup::
+* Vim and NeoVim setup::
 @end menu
 
 @node A Scheme Crash Course
