@@ -2993,6 +2993,7 @@ Freedesktop Icon Naming Specification.")
                  ;; Don't create 'icon-theme.cache'.
                  (lambda _ (substitute* "meson.build"
                         (("gtk4?-update-icon-cache") "true")))))))
+    (propagated-inputs (list adwaita-icon-theme-legacy))
     (home-page "https://gitlab.gnome.org/GNOME/adwaita-icon-theme")
     (synopsis "GNOME icon theme")
     (description "Icons for the GNOME desktop.")
