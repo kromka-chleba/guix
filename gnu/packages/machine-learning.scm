@@ -513,7 +513,7 @@ transforms.")
 (define-public python-ml-collections
   (package
     (name "python-ml-collections")
-    (version "1.0.0")
+    (version "1.1.0")
     (source
      (origin
        (method git-fetch)
@@ -521,11 +521,13 @@ transforms.")
              (url "https://github.com/google/ml_collections")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1f3rwbgnnvgh2jgnkwxfjdw18yly41hlx9fy56h0x36zyy8p0j21"))))
+        (base32 "1lv7vs84v4zwyrqg2zdlkrx3x6w08j9lyz74m8vk55ysl4399pqv"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags '(list "--pyargs" "ml_collections/config_dict/tests")))
+      #:test-flags
+      #~(list "-n" "auto" "ml_collections"
+              "--ignore=ml_collections/config_dict/examples/examples_test.py")))
     (propagated-inputs
      (list python-absl-py python-pyyaml python-six))
     (native-inputs (list python-pylint
