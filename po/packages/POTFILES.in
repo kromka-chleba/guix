@@ -273,7 +273,6 @@ gnu/packages/ninja.scm
 gnu/packages/nss.scm
 gnu/packages/ntp.scm
 gnu/packages/nutrition.scm
-gnu/packages/nvi.scm
 gnu/packages/nx.scm
 gnu/packages/opencl.scm
 gnu/packages/openkinect.scm
