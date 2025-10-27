@@ -16,6 +16,7 @@
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 Hennadii Stepanov <hebasto@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -339,29 +340,40 @@ static analysis of the ELF binaries at hand.")
                "02s7ap86rx6yagfh9xwp96sgsj0p6hp99vhiq9wn4mxshakv4lhr"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           ;; Our GCC code ensures that RUNPATH is never empty, it includes
-           ;; at least glibc/lib and gcc:lib/lib.
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "tests/no-rpath.sh"
-               ;; Disable checking for an empty runpath:
-               (("^if test.*") "")
-               ;; Find libgcc_s.so, which is necessary for the test:
-               (("/xxxxxxxxxxxxxxx") (string-append (assoc-ref inputs "gcc:lib")
-                                                    "/lib")))
-             (substitute* "tests/replace-needed.sh"
-               ;; This test assumes that only libc will be linked alongside
-               ;; libfoo, but we also link libgcc_s.
-               (("grep -v 'foo\\\\.so'") "grep -E 'libc.*\\.so'"))
-             (substitute* "tests/set-empty-rpath.sh"
-               ;; Binaries with empty RPATHs cannot run on Guix, because
-               ;; we still need to find libgcc_s (see above).
-               (("^\"\\$\\{SCRATCH\\}\"\\/simple.$") ""))
-             ;; Skip this test for now.
-             (substitute* "tests/Makefile.in"
-               ((".*shared-rpath\\.sh \\.*") "")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            ;; Our GCC code ensures that RUNPATH is never empty, it includes
+            ;; at least glibc/lib and gcc:lib/lib.
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "tests/no-rpath.sh"
+                ;; Disable checking for an empty runpath:
+                (("^if test.*") "")
+                ;; Find libgcc_s.so, which is necessary for the test:
+                (("/xxxxxxxxxxxxxxx") (string-append (assoc-ref inputs "gcc:lib")
+                                                     "/lib")))
+              (substitute* "tests/replace-needed.sh"
+                ;; This test assumes that only libc will be linked alongside
+                ;; libfoo, but we also link libgcc_s.
+                (("grep -v 'foo\\\\.so'") "grep -E 'libc.*\\.so'"))
+              (substitute* "tests/set-empty-rpath.sh"
+                ;; Binaries with empty RPATHs cannot run on Guix, because
+                ;; we still need to find libgcc_s (see above).
+                (("^\"\\$\\{SCRATCH\\}\"\\/simple.$") ""))
+              ;; Skip this test for now.
+              (substitute* "tests/Makefile.in"
+                ((".*shared-rpath\\.sh \\.*") ""))))
+          #$@(if (target-riscv64?)
+                 #~((add-after 'fix-tests 'fix-tests-for-riscv64
+                      (lambda _
+                        ;; On some RISC-V machines, tests may fail when
+                        ;; the test executables are not built as PIE.
+                        (substitute* "tests/Makefile.in"
+                          (("^AM_CFLAGS = -fpic") "AM_CFLAGS = -fpic -pie")
+                          (("^simple_CFLAGS = ") "simple_CFLAGS = -fpic -pie")
+                          (("^simple_execstack_CFLAGS = ") "simple_execstack_CFLAGS = -fpic -pie")))))
+                 #~()))))
     (native-inputs
      `(("gcc:lib" ,gcc "lib")))
     (home-page "https://nixos.org/patchelf.html")
