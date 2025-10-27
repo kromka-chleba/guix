@@ -7,6 +7,7 @@
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2022 Philip McGrath <philip@philipmcgrath.com>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
+;;; Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -63,7 +64,7 @@
 (define importers '("composer" "cpan" "cran" "crate" "egg" "elm" "elpa"
                     "gem" "gnu" "go" "hackage" "hexpm" "json" "luanti"
                     "minetest"          ; deprecated
-                    "npm-binary" "nuget" "opam" "pypi" "stackage" "texlive"))
+                    "npm-binary" "nuget" "opam" "pypi" "rebar" "stackage" "texlive"))
 
 (define (resolve-importer name)
   (let ((module (resolve-interface
@@ -143,7 +144,7 @@ PROC callback."
     ((or ("-i" file importer args ...)
          ("--insert" file importer args ...))
      (let* ((define-prefixes
-             `(,@(if (member importer '("crate"))
+             `(,@(if (member importer '("crate" "rebar"))
                      '(define)
                      '())
                define-public))

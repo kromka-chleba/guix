@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,9 +19,12 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix build-system rebar)
+  #:use-module (guix diagnostics)
+  #:use-module (guix download)
   #:use-module (guix store)
   #:use-module (guix utils)
   #:use-module (guix gexp)
+  #:use-module (guix i18n)
   #:use-module (guix packages)
   #:use-module (guix monads)
   #:use-module (guix search-paths)
@@ -30,7 +34,11 @@
             hexpm-package-url
             %rebar-build-system-modules
             rebar-build
-            rebar-build-system))
+            rebar-build-system
+            beam-name->package-name ; TODO: import this from (guix build-system mix)
+            hexpm-source            ; TODO: import this from (guix build-system mix)
+            define-rebar-inputs
+            rebar-inputs))
 
 ;;;
 ;;; Definitions for the hex.pm repository,
@@ -99,6 +107,10 @@ and VERSION."
                        (rebar-flags ''("skip_deps=true" "-vv"))
                        (tests? #t)
                        (test-target "eunit")
+                       (vendorize? #f)
+                       (vendor-symlinks? #t)
+                       (vendor-dir "_checkouts")
+                       (vendor-inputs '())
                        ;; TODO: install-name  ; default: based on guix package name
                        (install-profile "default")
                        (phases '(@ (guix build rebar-build-system)
@@ -124,6 +136,10 @@ and VERSION."
                       #:rebar-flags #$rebar-flags
                       #:tests? #$tests?
                       #:test-target #$test-target
+                      #:vendorize? #$vendorize?
+                      #:vendor-symlinks? #$vendor-symlinks?
+                      #:vendor-dir #$vendor-dir
+                      #:vendor-inputs '#$vendor-inputs
                       ;; TODO: #:install-name #$install-name
                       #:install-profile #$install-profile
                       #:phases #$(if (pair? phases)
@@ -150,3 +166,45 @@ and VERSION."
     (name 'rebar)
     (description "The standard Rebar build system")
     (lower lower)))
+
+(define (beam-name->package-name name)
+  (downstream-package-name "beam-" name))
+
+;; NOTE: Only use this procedure in (gnu packages beam-packages).
+(define* (hexpm-source package-name hexpm-name hexpm-version hexpm-hash
+                       #:key (patches '()) (snippet #f))
+  (origin
+    (method url-fetch)
+    (uri (hexpm-uri hexpm-name hexpm-version))
+    (file-name
+     (string-append "beam-" package-name "-" hexpm-version ".tar"))
+    (sha256 (base32 hexpm-hash))
+    (modules '((guix build utils)))
+    (patches patches)
+    (snippet snippet)))
+
+(define-syntax define-rebar-inputs
+  (syntax-rules (=>)
+    ((_ lookup inputs ...)
+     (define lookup
+       (let ((table (make-hash-table)))
+         (letrec-syntax ((record
+                          (syntax-rules (=>)
+                            ((_) #t)
+                            ((_ (name => lst) rest (... ...))
+                             (begin
+                               (hashq-set! table 'name (filter identity lst))
+                               (record rest (... ...)))))))
+           (record inputs ...)
+           (lambda (name)
+             "Return the inputs for NAME."
+             (hashq-ref table name))))))))
+
+(define* (rebar-inputs name #:key (module '(gnu packages beam-packages)))
+  "Lookup Rebar inputs for NAME defined in MODULE, return an empty list if
+unavailable."
+  (let ((lookup (module-ref (resolve-interface module) 'lookup-rebar-inputs)))
+    (or (lookup name)
+        (begin
+          (warning (G_ "no Rebar inputs available for '~a'~%") name)
+          '()))))

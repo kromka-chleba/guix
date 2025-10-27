@@ -323,6 +323,8 @@ MODULES =					\
   guix/import/opam.scm				\
   guix/import/print.scm				\
   guix/import/pypi.scm				\
+  guix/import/rebar.scm				\
+  guix/import/rebar/rebar-lock.scm		\
   guix/import/stackage.scm			\
   guix/import/test.scm   			\
   guix/import/texlive.scm   			\
@@ -378,6 +380,7 @@ MODULES =					\
   guix/scripts/import/npm-binary.scm		\
   guix/scripts/import/opam.scm			\
   guix/scripts/import/pypi.scm			\
+  guix/scripts/import/rebar.scm			\
   guix/scripts/import/stackage.scm		\
   guix/scripts/import/texlive.scm  		\
   guix/scripts/environment.scm			\
@@ -580,6 +583,7 @@ SCM_TESTS =					\
   tests/import/opam.scm				\
   tests/import/print.scm			\
   tests/import/pypi.scm				\
+  tests/import/rebar.scm			\
   tests/import/texlive.scm			\
   tests/import/utils.scm			\
   tests/home-import.scm				\
