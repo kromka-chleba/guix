@@ -970,9 +970,10 @@ justifying, auto-indentation, bracket matching, interactive search-and-replace
     (source
      (origin
        (method url-fetch)
-       (uri          ;; sites.google.coma/bostic.com/keithbostic/vi is stale.
-        (string-append "http://harrier.slackbuilds.org/misc/nvi-" version
-                       ".tar.bz2"))
+       ;; home-page does not provide the latest version
+       (uri
+        (string-append "http://harrier.slackbuilds.org/misc/nvi-"
+                       version ".tar.bz2"))
        (sha256
         (base32 "0nbbs1inyrqds0ywn3ln5slv54v5zraq7lszkg8nsavv4kivhh9l"))
        (patches (search-patches "nvi-assume-preserve-path.patch"
@@ -1043,7 +1044,8 @@ systems.  Nvi is intended as a \"bug-for-bug compatible\" clone of the
 original BSD vi editor.  As such, it doesn't have a lot of snazzy features as
 do some of the other vi clones such as elvis and vim.  However, if all you
 want is vi, this is the one to get.")
-    (home-page "https://sites.google.com/a/bostic.com/keithbostic/vi")
+    (home-page
+     "https://sites.google.com/a/bostic.com/keithbostic/the-berkeley-vi-editor-home-page")
     (license license:bsd-3)))
 
 (define-public qemacs
