@@ -193,6 +193,7 @@
 (define-module (gnu packages python-xyz)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
+  #:use-module (gnu packages admin)
   #:use-module (gnu packages adns)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages attr)
@@ -1277,6 +1278,30 @@ be displayed on the terminal, with color if possible, for logging purposes.")
     (description
      "This package provides static memory-efficient and fast Trie-like structures
 for Python.")
+    (license license:expat)))
+
+(define-public python-mock-ssh-server
+  (package
+    (name "python-mock-ssh-server")
+    (version "0.9.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/carletes/mock-ssh-server")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fmnn2ddfagi0qybnw1n10hn29jawnj01bgwl4p9lnwx71c7x5y8"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-paramiko))
+    (native-inputs (list inetutils openssh python-pytest python-setuptools))
+    (home-page "https://github.com/carletes/mock-ssh-server")
+    (synopsis "Mock SSH server for testing purposes")
+    (description
+     "@code{mock-ssh-server} packs a Python context manager that implements an
+SSH server for testing purposes.  It is built on top of paramiko, so it does not
+need OpenSSH binaries to be installed.")
     (license license:expat)))
 
 (define-public python-multiplex
