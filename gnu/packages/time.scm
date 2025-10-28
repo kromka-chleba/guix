@@ -545,10 +545,7 @@ timezone for given coordinates on earth entirely offline.")
     (propagated-inputs
      (list python-tzdata))
     (native-inputs
-     (list python-check-manifest
-           python-pytest
-           python-pytest-cov
-           python-pytest-mock))
+     (list python-pytest python-pytest-mock python-setuptools))
     (home-page "https://github.com/regebro/tzlocal")
     (synopsis "Local timezone information for Python")
     (description
