@@ -2699,6 +2699,18 @@ based on the Haskell library, Quickcheck, and is designed to integrate
 seamlessly into your existing Python unit testing work flow.")
     (license license:mpl2.0)))
 
+(define-public python-hypothesis-6.60
+  (package
+    (inherit python-hypothesis)
+    (name "python-hypothesis")
+    (version "6.60.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hypothesis" version))
+       (sha256
+        (base32 "0ldprr508i67mw83y7pah3p89yyki59s8ykw1lw084j9kza6rh1r"))))))
+
 (define-deprecated/public-alias python-hypothesis-next
   python-hypothesis)                   ;may be removed after 2025-12-01
 
