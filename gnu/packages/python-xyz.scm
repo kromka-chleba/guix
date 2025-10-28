@@ -28340,6 +28340,50 @@ behavior and not have to worry about the specific internal implementation
 decisions with any given backend.")
     (license license:bsd-3)))
 
+(define-public python-sshfs
+  (package
+    (name "python-sshfs")
+    (version "2025.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fsspec/sshfs")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mwr4087jm3z0qgd2d3csapb2kpib8if52pw04yllknzsbfmmm9v"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                      #$version))))))
+    (propagated-inputs (list python-asyncssh python-bcrypt python-fsspec))
+    (native-inputs (list python-importlib-metadata
+                         python-mock-ssh-server
+                         python-pytest
+                         python-pytest-asyncio
+                         python-setuptools
+                         python-setuptools-scm))
+    (home-page "https://github.com/fsspec/sshfs")
+    (synopsis "SSH/SFTP implementation for fsspec")
+    (description
+     "This package provides an implementation of fsspec for the SFTP protocol
+using asyncssh, with the following features:
+
+@itemize
+@item A complete implementation of the fsspec protocol through SFTP
+@item Supports features outside of the SFTP
+@item Quite fast
+@item Builtin Channel Management
+@item Async
+@end itemize")
+    (license license:asl2.0)))
+
 (define-public python-ilinkedlist
   (package
     (name "python-ilinkedlist")
