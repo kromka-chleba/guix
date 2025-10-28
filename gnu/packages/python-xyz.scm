@@ -33905,11 +33905,9 @@ compatible with a wide range of versions of the Stripe API.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-appdirs
-           python-covdefaults
            python-hatchling
            python-hatch-vcs
            python-pytest
-           python-pytest-cov
            python-pytest-mock))
     (home-page "https://github.com/platformdirs/platformdirs")
     (synopsis "Determine the appropriate platform-specific directories")
