@@ -257,7 +257,7 @@ were a single file.")
             python-pytest
             python-pytest-xdist
             python-numpy
-            python-hypothesis
+            python-hypothesis-6.60
             rust
             `(,rust "cargo"))
       (or (and=> (%current-target-system)
