@@ -18266,7 +18266,6 @@ drafts 04, 06 and 07.")
            python-traitlets))
     (native-inputs
      (list python-hatchling
-           python-pep440
            python-pytest
            python-testpath))
     (home-page "https://jupyter.org")
