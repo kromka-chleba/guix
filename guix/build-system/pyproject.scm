@@ -23,15 +23,18 @@
   #:use-module (guix store)
   #:use-module (guix utils)
   #:use-module (guix gexp)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix monads)
   #:use-module (guix packages)
   #:use-module (guix search-paths)
   #:use-module (guix build-system)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system trivial)
   #:use-module (srfi srfi-1)
   #:export (%pyproject-build-system-modules
             default-python
+            default-guix-pytest-plugin
             default-sanity-check.py
             pyproject-build
             pyproject-build-system
@@ -63,6 +66,35 @@
   "Return the default guile-json package, resolved lazily."
   (@* (gnu packages guile) guile-json-4))
 
+(define (default-guix-pytest-plugin python)
+  (let* ((effective (version-major+minor (package-version python)))
+         (site (string-append "lib/python" effective "/site-packages/")))
+    (package
+      (name "python-pytest-guix")
+      (version "0.0.1")
+      (source (local-file
+               (search-auxiliary-file "python/guix-pytest-plugin.py")))
+      (build-system trivial-build-system)
+      (arguments
+       (list
+        #:modules '((guix build utils))
+        #:builder
+        #~(begin
+            (use-modules (guix build utils))
+            (let* ((site (string-append #$output "/" #$site "pytest_guix"))
+                   (dist (string-append site "-" #$version ".dist.info")))
+              (for-each mkdir-p (list dist site))
+              (copy-file #$source (string-append site "/__init__.py"))
+              (call-with-output-file (string-append dist "/entry_points.txt")
+                (lambda (port)
+                  (format port "[pytest11]~%guix=pytest_guix~%")))))))
+      (home-page "https://guix.gnu.org/")
+      (synopsis "Ignore selected pytest options")
+      (description
+       "This package provides the script to cleanly ignore pytest options at the
+build-system level.")
+      (license license:gpl3+))))
+
 ;; TODO: On the next iteration of python-team, migrate the sanity-check to
 ;; importlib_metadata instead of setuptools.
 (define (default-sanity-check.py)
@@ -71,12 +103,14 @@
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
                 (python (default-python))
+                (python-pytest-guix (default-guix-pytest-plugin python))
                 (sanity-check.py (default-sanity-check.py))
                 #:allow-other-keys
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:target #:python #:inputs #:native-inputs #:sanity-check.py))
+    '(#:target #:python #:inputs #:native-inputs
+      #:python-pytest-guix #:sanity-check.py))
 
   (and (not target)                               ;XXX: no cross-compilation
        (bag
@@ -91,6 +125,9 @@
                         ,@(standard-packages)))
          (build-inputs `(("python" ,python)
                          ("sanity-check.py" ,sanity-check.py)
+                         ,@(if (member "python-pytest" (map car native-inputs))
+                               `(("python-pytest-guix" ,python-pytest-guix))
+                               `())
                          ,@native-inputs))
          (outputs (append outputs '(wheel)))
          (build pyproject-build)
