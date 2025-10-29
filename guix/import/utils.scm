@@ -74,10 +74,12 @@
             peekable-lambda
             peek-body
 
+            git-repository-url?
             download-git-repository
             git-origin
             git->origin
             default-git-error
+            generate-git-source
 
             package-names->package-inputs
             maybe-inputs
@@ -186,6 +188,19 @@ thrown."
 (define (peek-body proc)
   (procedure-property proc 'body))
 
+(define (git-repository-url? url)
+  "Guess if the URL looks like a Git repository."
+  (or (string-prefix? "https://github.com/" url) ; Most common.
+      (string-prefix? "https://cgit." url)
+      (string-prefix? "https://git." url)
+      (string-prefix? "https://gitlab." url)
+      (string-prefix? "https://codeberg.org/" url)
+      (string-prefix? "https://git.sr.ht/" url)
+      (string-prefix? "https://bitbucket.org/" url)
+      (string-prefix? "https://framagit.org/" url)
+      ;; Fallback.
+      (string-suffix? ".git" url)))
+
 (define (download-git-repository url ref)
   "Fetch the given REF from the Git repository at URL.  Return three values :
 the commit hash, the downloaded directory and its content hash."
@@ -225,8 +240,9 @@ be a procedure with a 'body property, used to generate the origin sexp."
                 (values #f #f #f))))
     (values (git-origin url (peek-body proc) hash) directory)))
 
-(define (default-git-error home-page)
-  "Return a procedure to be passed to a `git-error' `catch' for HOME-PAGE."
+(define* (default-git-error home-page #:optional location)
+  "Return a procedure to be passed to a `git-error' `catch' for HOME-PAGE at
+LOCATION."
   (match-lambda*
     (('git-error error)
      (warning location
@@ -236,6 +252,24 @@ be a procedure with a 'body property, used to generate the origin sexp."
      #f)
     (_
      #f)))
+
+(define (generate-git-source repository version error-procedure)
+  "Try to download a given VERSION from a REPOSITORY url twice.  Call
+ERROR-PROCEDURE if both attempts fail."
+  (catch 'git-error
+    (lambda ()
+      (git->origin repository
+                   (peekable-lambda (version)
+                     (string-append "v" version))
+                   version))
+    (lambda (key . args)
+      ;; If tag fails, try with plain version string.
+      (catch 'git-error
+        (lambda ()
+          (git->origin repository
+                       (peekable-lambda (version) version)
+                       version))
+        error-procedure))))
 
 (define %spdx-license-identifiers
   ;; https://spdx.org/licenses/

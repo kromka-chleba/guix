@@ -56,6 +56,7 @@
   #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages serialization)
+  #:use-module (gnu packages time)
   #:use-module (srfi srfi-1))
 
 (define-public fstrm
@@ -564,7 +565,12 @@ mechanism for serializing structured data.")
        (sha256
         (base32
          "1wh5f4rnzbv46xy1rx62cprhg5hqf2py06s9b7rfpzwwki12fd1f"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ; no tests provided for Python variant
+    (native-inputs
+     (list python-setuptools))
     ;; The C++ implementation is not compatible with Python 3.11, so we cannot
     ;; pass --cpp_implementation any more.
     (inputs (list protobuf-3.20))
@@ -578,30 +584,27 @@ mechanism for serializing structured data.")
 (define-public python-pure-protobuf
   (package
     (name "python-pure-protobuf")
-    (version "2.0.1")
+    (version "3.1.5")
     (source
      (origin
-       ;; The PyPI tarball is broken: it has no tests.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/eigenein/protobuf")
-             (commit version)))
+              (url "https://github.com/eigenein/protobuf")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15dp5pvazd0jx4wzzh79080ah7hkpd3axh40al9vhzs2hf3v90hx"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-flake8 python-pytest python-pytest-cov python-isort))
+        (base32 "1ab665h5nmvg52zqdaa0pnmvimh6m6zis2l2vz3lqjd0jqm5zghs"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "--cov-report" "term-missing" "--cov"
-                     "pure_protobuf")
-             (invoke "flake8" "pure_protobuf" "tests"
-                     "--ignore=F541")
-             (invoke "isort" "-rc" "-c" "pure_protobuf" "tests"))))))
+     (list
+      #:build-backend "poetry.core.masonry.api"))
+    (native-inputs
+     (list python-poetry-core
+           python-poetry-dynamic-versioning
+           python-pydantic-2
+           python-pytest
+           python-pytest-benchmark
+           python-pytest-cov))
     (home-page "https://pypi.org/project/pure-protobuf/")
     (synopsis "Protobuf implementation using dataclasses")
     (description
@@ -614,15 +617,27 @@ structured data.")
 (define-public python-proto-plus
   (package
     (name "python-proto-plus")
-    (version "1.20.3")
+    (version "1.26.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "proto-plus" version))
+       (uri (pypi-uri "proto_plus" version))
        (sha256
-        (base32 "1raad9qnmfva94nm33k40bcwrckgljbfky5pdwh4xhg6r5dj52zj"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-protobuf))
+        (base32 "04m0jsy1cf7fqzafswvcqvwihgfyp9xkrqlr71vql260qjj1b991"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Not packaged <https://github.com/google/pytype>:
+      ;; ModuleNotFoundError: No module named 'google.type'
+      #~(list "--deselect=tests/test_fields_enum.py::test_unwrapped_enum_fields")))
+    (native-inputs
+     (list python-pytest
+           ;; python-pytype
+           python-pytz
+           python-setuptools))
+    (propagated-inputs
+     (list python-protobuf))
     (home-page "https://github.com/googleapis/proto-plus-python.git")
     (synopsis "Pythonic protocol buffers")
     (description "This is a wrapper around protocol buffers.  Protocol buffers

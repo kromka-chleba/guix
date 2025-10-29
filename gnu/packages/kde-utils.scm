@@ -361,6 +361,45 @@ your computer.")
      "This package provides a tool to write ISO files to USB disks.")
     (license license:gpl3+)))
 
+(define-public kaichat
+  (package
+    (name "kaichat")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde//stable/kaichat/kaichat-" version
+                           ".tar.xz"))
+       (sha256
+        (base32 "18bwannb0p40fpqw0ygiq8m9wfl3k6561l10s7754x7a4lgpfshn"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list kcoreaddons
+           kcrash
+           kdbusaddons
+           ki18n
+           kiconthemes
+           kio
+           knotifications
+           knotifyconfig
+           kstatusnotifieritem
+           ktextaddons
+           kwidgetsaddons
+           kwindowsystem
+           kxmlgui
+           purpose
+           python
+           sonnet))
+    (home-page "https://apps.kde.org/kaichat/")
+    (synopsis "Chat interface for AI models")
+    (description "KAIChat is a chat interface which allows you to chat with AI
+models such as Ollama.")
+    (license license:gpl3+)))
+
 (define-public kamera
   (package
     (name "kamera")
@@ -801,6 +840,51 @@ with support for QR scanning.")
 @end itemize")
       (license ;GPL for programs, LGPL for libraries
        (list license:gpl2+ license:lgpl2.0)))))
+
+(define-public komodo
+  (package
+    (name "komodo")
+    (version "1.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/komodo/" version
+                           "/komodo-" version ".tar.xz"))
+       (sha256
+        (base32 "1xdn3k71a5s801p2cpddyvjbpb8ki8i4y2mig15am0v1r2ag16mi"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list kcolorscheme
+           kconfig
+           kcoreaddons
+           kdbusaddons
+           kguiaddons
+           ki18n
+           kiconthemes
+           kirigami
+           kirigami-addons
+           kitemmodels
+           qqc2-desktop-style
+           qtdeclarative))
+    (home-page "https://apps.kde.org/komodo/")
+    (synopsis "To-do manager that uses todo.txt")
+    (description "KomoDo is a to-do manager that uses
+@uref{https://github.com/todotxt/todo.txt/blob/master/README.md, todo.txt
+specification}.  It parses any compliant @uref{https://todotxt.org/, todo.txt}
+files and turns them into easy to use list of tasks.  It also has built-in help
+for the todo.txt specification.
+
+It's features include:
+@itemize
+@item Open and create new todo.txt files
+@item Add, delete and edit tasks
+@item Filter and search tasks
+@end itemize")
+    (license license:gpl2+)))
 
 (define-public kongress
   (package
@@ -1322,49 +1406,44 @@ redone.")
      (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
 
 (define-public rsibreak
-  (let ((commit "6795af6339e5e7c0fdf469290eafdb0f9365a96b")
-        (revision "0"))
-    (package
-      (name "rsibreak")
-      (version (git-version "0.12.15" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                       (url "https://invent.kde.org/utilities/rsibreak.git/")
-                       (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0p3xxbiwdmbp1cxagl1bnqicr8wv2mlzb5d5f4x6l7m7qzkicga4"))))
-      (build-system qt-build-system)
-      (native-inputs
-       (list extra-cmake-modules kdoctools))
-      (inputs
-       (list breeze-icons ;; default icon set
-             kcolorscheme
-             kconfig
-             kconfigwidgets
-             kcoreaddons
-             kcrash
-             kdbusaddons
-             ki18n
-             kidletime
-             knotifications
-             knotifyconfig
-             kstatusnotifieritem
-             ktextwidgets
-             kwindowsystem
-             kxmlgui
-             qtwayland))
-      (arguments (list #:qtbase qtbase))
-      (home-page "https://apps.kde.org/rsibreak/")
-      (synopsis "Assists in the Recovery and Prevention of Repetitive Strain
-Injury")
-      (description "Repetitive Strain Injury is an illness which can occur as a
+  (package
+    (name "rsibreak")
+    (version "0.13.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/rsibreak/" version
+                           "/rsibreak-" version ".tar.xz"))
+              (sha256
+               (base32
+                "086ipa9jbpiaj8j79cygk2p5bgpbgpw9bsh8hcbya3vxql4wxcka"))))
+    (build-system qt-build-system)
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list breeze-icons ;; default icon set
+           kcolorscheme
+           kconfig
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           kdbusaddons
+           ki18n
+           kidletime
+           knotifications
+           knotifyconfig
+           kstatusnotifieritem
+           ktextwidgets
+           kwindowsystem
+           kxmlgui
+           qtwayland))
+    (arguments (list #:qtbase qtbase))
+    (home-page "https://apps.kde.org/rsibreak/")
+    (synopsis "Recovery and Repetitive Strain Injury prevention assistsant")
+    (description "Repetitive Strain Injury is an illness which can occur as a
 result of working with a mouse and keyboard.  This utility can be used to
 remind you to take a break now and then.")
-      (license ;; GPL for programs, FDL for documentation
-       (list license:gpl2+ license:fdl1.2+)))))
+    (license ;; GPL for programs, FDL for documentation
+     (list license:gpl2+ license:fdl1.2+))))
 
 (define-public sweeper
   (package

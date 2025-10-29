@@ -278,6 +278,30 @@ compatible Zig code based on the @acronym{LSP, Language Server Protocol} meta
 model.")
       (license license:expat))))
 
+(define-public zig-lsp-kit-for-zls-0.15
+  (let ((commit "6274eebace9a6a82ce182e24468fef88e0b95f37")
+        (revision "0"))
+    (package
+      (name "zig-lsp-kit")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/zigtools/lsp-kit")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0g4jdvj2pj6qbg912fxifk8rq6bg62kpgpcm0nfmi2h1h34cwp53"))))
+      (build-system zig-build-system)
+      (arguments (list #:skip-build? #t))
+      (home-page "https://zigtools.github.io/lsp-kit/")
+      (synopsis "Develop Language Server Protocol implementations in Zig")
+      (description
+       "Zig @acronym{LSP, Language Server Protocol} Kit provides the necessary
+building blocks to develop LSP implementations in Zig.")
+      (license license:expat))))
+
 (define-public zig-diffz
   (let ((commit "420fcb22306ffd4c9c3c761863dfbb6bdbb18a73")
         (revision "0"))
@@ -318,6 +342,23 @@ model.")
                 (sha256
                  (base32
                   "0ah1m8mjqjc2szl5lx62zqj69irkbb3y245z14pknikxgg8xdzg7")))))))
+
+(define-public zig-diffz-for-zls-0.15
+  (let ((commit "a20dd1f11b10819a6f570f98b42e1c91e3704357")
+        (revision "0"))
+    (package
+      (inherit zig-diffz)
+      (name "zig-diffz")
+      (version (git-version "0.0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/ziglibs/diffz")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1qz7jqdh4f5dcrzkxipdmsgkfs37k450r9gm7ik7r72dfvjs9c6b")))))))
 
 (define-public zig-known-folders
   (let ((commit "1cceeb70e77dec941a4178160ff6c8d05a74de6f")
@@ -362,6 +403,27 @@ across several operating systems.")
       (arguments
        (substitute-keyword-arguments (package-arguments base)
          ((#:zig _ #f) zig-0.14))))))
+
+(define-public zig-known-folders-for-zls-0.15
+  (let ((commit "92defaee76b07487769ca352fd0ba95bc8b42a2f")
+        (revision "0")
+        (base zig-known-folders))
+    (package
+      (inherit base)
+      (name "zig-known-folders")
+      (version (git-version "0.7.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ziglibs/known-folders")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1bwv7kndr4lv7khrrjwg2vgg3cy41y28rmv7rbv7jy06shqy4nzq"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base)
+         ((#:zig _ #f) zig-0.15))))))
 
 (define-public zig-pixman
   (package
@@ -618,5 +680,35 @@ Language Server Protocol} for the Zig programming language.")
          (prepend zig-lsp-codegen)
          (replace "zig-diffz" zig-diffz-for-zig-zls-0.14)
          (replace "zig-known-folders" zig-known-folders-for-zig-0.14))))))
+
+(define-public zig-zls-0.15
+  (let ((base zig-zls-0.14))
+    (package
+      (inherit base)
+      (name "zig-zls")
+      (version "0.15.0")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/zigtools/zls")
+                      (commit version)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0ydnaxf29mj3gamig9phf991s1civfk6jkydn2xiqwv394fx4p0q"))
+                (snippet
+                 (rename-zig-dependencies
+                  '(("diffz" . "zig-diffz")
+                    ("known_folders" . "zig-known-folders")
+                    ("lsp_kit" . "zig-lsp-kit"))))))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "zig" zig-0.15)))
+      (inputs
+       (modify-inputs (package-inputs base)
+         (prepend zig-lsp-kit-for-zls-0.15)
+         (delete "zig-lsp-codegen")
+         (replace "zig-diffz" zig-diffz-for-zls-0.15)
+         (replace "zig-known-folders" zig-known-folders-for-zls-0.15))))))
 
 (define-public zig-zls zig-zls-0.13)

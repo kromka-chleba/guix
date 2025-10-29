@@ -23,6 +23,7 @@
 ;;; Copyright © 2017 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2015, 2016 David Thompson <davet@gnu.org>
 ;;; Copyright © 2017 Mark Meyer <mark@ofosos.org>
+;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2018, 2019, 2021, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2018 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -313,6 +314,60 @@ and JSON.
 @item A cross-platform framework, using the most modern versions of Python.
 @item Good performance.
 @end itemize")
+    (license license:expat)))
+
+(define-public python-cloudpathlib
+  (package
+    (name "python-cloudpathlib")
+    (version "0.23.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/drivendataorg/cloudpathlib")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dqwml269lpz51drgg3s27sqmvwa1vldw2rj34ssnqppcmc5h5lm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 977 passed, 15 skipped, 8642 warnings
+      #:test-flags
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              ;; TODO: Package azure-identity (required for this file)
+              "--ignore=tests/test_azure_specific.py"
+              ;; TypeError: Retry.__init__() got an unexpected keyword
+              ;; argument 'timeout'
+              "--deselect=tests/test_gs_specific.py::test_timeout_and_retry")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("addopts =.*") "")))))))
+    (native-inputs
+     (list ;; python-azure-identity
+           python-dotenv
+           python-flit-core
+           python-pydantic-2
+           python-pytest
+           python-pytest-cases
+           python-pytest-xdist
+           python-shortuuid
+           python-tenacity))
+    (propagated-inputs
+     (list python-azure-storage-blob
+           python-azure-storage-file-datalake
+           python-boto3
+           python-google-cloud-storage
+           python-typing-extensions))
+    (home-page "https://github.com/drivendataorg/cloudpathlib")
+    (synopsis "Pathlib-style classes for cloud storage services")
+    (description
+     "This package provides a Python library with classes that mimic
+@code{pathlib.Path}'s interface for URIs from different cloud storage
+services.")
     (license license:expat)))
 
 (define-public python-devpi-common
@@ -1477,7 +1532,7 @@ in Python 3.13 by PEP-594.")
            python-pytest
            python-setuptools))
     (propagated-inputs
-     (list python-pathlib-abc
+     (list python-pathlib-abc-for-python-pathy
            python-smart-open-6
            python-typer))
     (home-page "https://github.com/justindujardin/pathy")
@@ -1616,30 +1671,18 @@ by calling @code{FrozenList.freeze}.")
 (define-public python-aiobotocore
   (package
     (name "python-aiobotocore")
-    (version "2.17.0")
+    (version "2.25.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "aiobotocore" version))
        (sha256
-        (base32 "1hlwgy1z6ln6bh7b2i9syv7q2bagjkjbws247gbgkgv5qlri6153"))))
+        (base32 "1g7dv81bw7vq55gv3c5jxdw7wp7dp6dwjbh79y3fiv6ppwwyg6za"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; Too many tests fail seemingly because they need Internet access.
-      #:tests? #false
-      #:test-flags
-      '(list
-        ;; No module named 'tests'
-        "--ignore=tests/test_config.py"
-        ;; function uses no argument 's3_verify'
-        "--ignore=tests/test_basic_s3.py"
-        ;; function uses no argument 'signature_version'
-        "--ignore=tests/test_dynamodb.py"
-        ;; attempted relative import with no known parent package
-        "--ignore=tests/test_stubber.py"
-        ;; No module named 'pip'
-        "--ignore=tests/test_version.py")))
+      ;; TODO: Too many tests fail seemingly because they need Internet access.
+      #:tests? #false))
     (propagated-inputs (list python-aiohttp
                              python-aioitertools
                              python-botocore
@@ -1649,15 +1692,7 @@ by calling @code{FrozenList.freeze}.")
                              python-urllib3
                              python-wrapt))
     (native-inputs
-     (list python-dill
-           python-docutils
-           python-moto
-           python-pytest
-           python-pytest-asyncio
-           python-requests
-           python-setuptools
-           python-werkzeug
-           python-wheel))
+     (list python-setuptools))
     (home-page "https://pypi.org/project/aiobotocore/")
     (synopsis "Async client for AWS services using botocore and aiohttp")
     (description "This package provides an async client for Amazon services
@@ -1828,7 +1863,7 @@ for adding, removing and dropping callbacks.")
            python-yarl))
     (native-inputs
      (list gunicorn-bootstrap
-           python-cython-3
+           python-cython
            python-freezegun
            python-pytest
            python-pytest-cov
@@ -2790,7 +2825,7 @@ AWS S3 Service using boto3 S3 resource as a driver.")
     (native-inputs
      (list python-aiofiles
            python-cbor2
-           python-cython-3                ;for faster binaries
+           python-cython                ;for faster binaries
            python-fakeredis
            python-httpx
            python-mujson
@@ -3930,6 +3965,65 @@ high-speed transfers via libcurl and frequently outperforms alternatives.")
     ;; under the terms of LGPLv2.1+ or Expat.
     (license (list license:lgpl2.1+ license:expat))))
 
+(define-public python-tldextract
+  (package
+    (name "python-tldextract")
+    (version "5.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tldextract" version))
+       (sha256
+        (base32 "02c6cyh8f3dagcw786m9nl5y0n3xa98p5mb7d7xfr84l2l5bglmk"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list nss-certs-for-test
+           python-pytest
+           python-pytest-mock
+           python-responses
+           python-setuptools
+           python-setuptools-scm
+           python-syrupy))
+    (propagated-inputs
+     (list python-filelock
+           python-idna
+           python-requests
+           python-requests-file))
+    (home-page "https://github.com/john-kurkowski/tldextract")
+    (synopsis
+     "Separate the TLD from the registered domain and subdomains of a URL")
+    (description
+     "TLDExtract accurately separates the TLD from the registered domain and
+subdomains of a URL, using the Public Suffix List.  By default, this includes
+the public ICANN TLDs and their exceptions.  It can optionally support the
+Public Suffix List's private domains as well.")
+    (license license:bsd-3)))
+
+(define-public python-tracerite
+  (package
+    (name "python-tracerite")
+    (version "1.1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tracerite" version))
+       (sha256
+        (base32 "07mkg0sl0h335kj6yjvxki2c19gxhb7rkks1zgzh7aj0y83c17qi"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;no tests in PyPI or Git
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-html5tagger))
+    (home-page "https://github.com/sanic-org/tracerite")
+    (synopsis "Human-readable HTML tracebacks")
+    (description
+     "@code{tracerite} converts Python tracebacks into useful error messages
+in human-readable HTML format.")
+    (license license:unlicense)))
+
 (define-public python-trio-websocket
   (package
     (name "python-trio-websocket")
@@ -4196,6 +4290,47 @@ desired
      "Waitress is meant to be a production-quality pure-Python WSGI server
 with very acceptable performance.")
     (license license:zpl2.1)))
+
+(define-public python-weasel
+  (package
+    (name "python-weasel")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "weasel" version))
+       (sha256
+        (base32 "1aas113r29y6yxrmdlsw80rj8w4kgw1jhfjw9rsgc4rf0w7j3g5a"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Network access is required.
+      #~(list #$@(map (lambda (test) (string-append "--deselect="
+                                                    "weasel/tests/cli/"
+                                                    test))
+                      (list "test_cli.py::test_project_git_dir_asset"
+                            "test_cli.py::test_project_git_file_asset"
+                            "test_cli_app.py::test_project_assets")))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-cloudpathlib
+           python-confection
+           python-packaging
+           python-pydantic-2
+           python-requests
+           python-smart-open
+           python-srsly
+           python-typer
+           python-wasabi))
+    (home-page "https://github.com/explosion/weasel/")
+    (synopsis "Small and easy workflow system")
+    (description
+     "This package provides a minimalistic  workflow system to manage and
+share end-to-end workflows for different use cases and domains.")
+    (license license:expat)))
 
 (define-public python-webencodings
   (package
@@ -6658,32 +6793,29 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
   (package
     ;; Note: updating awscli typically requires updating botocore as well.
     (name "awscli")
-    (version "1.36.32")
+    (version "1.42.61")
     (source
      (origin
-       (method git-fetch)               ; no tests in PyPI release
+       (method git-fetch)
        (uri (git-reference
              (url "https://github.com/aws/aws-cli")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1b4bfv7mgrxw7nfbv9ag97qcsqch2p7raip6111rqg5vdhvsck19"))))
+        (base32 "1fbqh4w7jj5abn87nbhyir25hdviirj0lblcdsqqkadcjh67877h"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 2692 passed, 40 warnings 
       #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count))
-              ;; Tests require networking.
-              "--ignore" "tests/integration"
-              ;; It struggles to set PYTHONPATH.
-              ;;
-              ;; AssertionError: 'argument operation: Invalid choice, valid
-              ;; choices are:' not found in '
-              "-k"
-              (string-append "not test_subscribe_to_shard_removed"
-                             " and not test_start_conversation_removed"
-                             ;; Tests fail during mocking.
-                             " and not test_no_groff_or_mandoc_exists"))
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              ;; Compete test suite is huge and compute hungry, run just unit
+              ;; tests.
+              "--ignore=tests/dependencies"
+              "--ignore=tests/functional"
+              "--ignore=tests/integration"
+              ;; TypeError: 'Mock' object is not subscriptable.
+              "-k" "not test_no_groff_or_mandoc_exists")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-reference-to-groff
@@ -6710,9 +6842,9 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
      (list groff-minimal
            python-botocore
            python-colorama
-           python-docutils-0.16
+           python-docutils-0.19
            python-pyyaml
-           python-rsa
+           python-rsa-for-awscli-1
            python-s3transfer))
     (home-page "https://aws.amazon.com/cli/")
     (synopsis "Command line client for AWS")
@@ -7396,13 +7528,13 @@ S3.")
 (define-public python-s3transfer
   (package
     (name "python-s3transfer")
-    (version "0.10.3")
+    (version "0.14.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "s3transfer" version))
        (sha256
-        (base32 "032bjky1q8r5x80mvb0ah60g0zq4snwf0xa4c7779m44mdsfsl2g"))))
+        (base32 "09a17scf96zfdw2chb22yyvmnj4anfijgkncfi89id68wxj25wgg"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -8297,7 +8429,7 @@ name resolutions asynchronously.")
                (("build_inplace=False") "build_inplace=True")))))))
     (native-inputs
      (list python-covdefaults
-           python-cython-3
+           python-cython
            python-expandvars
            python-pytest
            python-pytest-cov
@@ -8936,7 +9068,7 @@ hard or impossible to fix in cssselect.")
                 (delete-file-recursively "uvloop")))))))
     (native-inputs
      (list python-aiohttp
-           python-cython-3
+           python-cython
            python-psutil
            python-pyopenssl
            python-pytest
@@ -11061,13 +11193,13 @@ Python.")
 (define-public python-azure-storage-blob
   (package
     (name "python-azure-storage-blob")
-    (version "12.26.0")
+    (version "12.27.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "azure_storage_blob" version))
        (sha256
-        (base32 "07ypg1ny5rivy51f4q9h2xajd60wc19jf0zbpw0dxxr48a1dgmsx"))))
+        (base32 "16nb17f6bi0k53qlxybwqxdld3nj742hmsk4qcq3jwka5b6y5s4r"))))
     (build-system pyproject-build-system)
     (arguments
     ;; XXX: devtools_testutils is not provided as a proper package on PyPI,
@@ -11086,6 +11218,38 @@ Python.")
     (home-page "https://github.com/Azure/azure-sdk-for-python/")
     (synopsis "Microsoft Azure Blob Storage client library for Python")
     (description "This package provides the Microsoft Azure Blob Storage
+Client Library for Python.")
+    (license license:expat)))
+
+(define-public python-azure-storage-file-datalake
+  (package
+    (name "python-azure-storage-file-datalake")
+    (version "12.22.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "azure_storage_file_datalake" version))
+       (sha256
+        (base32 "0xxg94684b630p8jrz38sg7mdcwp1wa0p5di27mswyrjycshvvcs"))))
+    (build-system pyproject-build-system)
+    (arguments
+    ;; XXX: devtools_testutils is not provided as a proper package on PyPI,
+    ;; Git does not contains setup.py, setup.cfg or pyproject.toml which makes
+    ;; it hard to package in Guix.
+    ;; <https://raw.githubusercontent.com/Azure/azure-sdk-for-python/refs/
+    ;; heads/main/tools/azure-sdk-tools/devtools_testutils/README.md>.
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-azure-core
+           python-azure-storage-blob
+           python-isodate
+           python-typing-extensions))
+    (home-page "https://github.com/Azure/azure-sdk-for-python")
+    (synopsis "Microsoft Azure File DataLake Storage Client Library for Python")
+    (description
+     "This package provides the Microsoft Azure File @code{DataLake} Storage
 Client Library for Python.")
     (license license:expat)))
 
@@ -11691,8 +11855,8 @@ as Flask.")
            python-pytest-sugar
            python-pytest-trio))
     (propagated-inputs
-     (list python-exceptiongroup
-           python-hypercorn
+     (list hypercorn
+           python-exceptiongroup
            python-quart
            python-trio))
     (home-page "https://github.com/pgjones/quart-trio")
@@ -11787,30 +11951,28 @@ regular expressions.")
 (define-public python-scrapy
   (package
     (name "python-scrapy")
-    (version "2.13.1")
+    (version "2.13.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "scrapy" version))
        (sha256
-        (base32 "18anr8jjjqyv6pfzdm4fr5hx4vddb8qclyja0y874f5slcnsfsrx"))))
+        (base32 "0k90pni6vkj7axx3cji0b2x7yg4yfh5kh1csqiq9ssp42265h5xz"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
            #~(list "--numprocesses" (number->string (parallel-job-count))
-                   ;; Tests requiring a display.
-                   "-k" (string-append
-                         "not " (string-join
-                                 (list "test_pformat"
-                                       "test_pformat_old_windows"
-                                       "test_pformat_windows"
-                                       ;; AssertionError.
-                                       "test_start_deprecated_super"
-                                       ;; Connection refused.
-                                       "test_persist")
-                                 " and not "))
-                   ;; Connection refused to some local FTP server.
-                   "--ignore=tests/test_feedexport.py"
+                   "-k" (string-join
+                         ;; ConnectionRefusedError: [Errno 111] Connection
+                         ;; refused
+                         (list "not test_append"
+                               "test_append_active_mode"
+                               "test_overwrite"
+                               "test_overwrite_active_mode"
+                               "test_persist"
+                               ;; AssertionError
+                               "test_start_deprecated_super")
+                         " and not ")
                    ;; Skip documentation testing.
                    "--ignore=docs")
            #:phases
@@ -11830,24 +11992,22 @@ regular expressions.")
            python-protego
            python-pydispatcher
            python-pyopenssl
+           python-pypydispatcher
            python-queuelib
            python-service-identity
            python-tldextract
-           python-typing-extensions
            python-twisted
            python-w3lib
            python-zope-interface))
     (native-inputs
      (list nss-certs-for-test
            python-hatchling
-           python-mypy
            python-pexpect
            python-pytest
            python-pytest-xdist
            python-setuptools
            python-sybil
-           python-testfixtures
-           python-wheel))
+           python-testfixtures))
     (home-page "https://scrapy.org")
     (synopsis "High-level Web crawling and Web scraping framework")
     (description "Scrapy is a fast high-level web crawling and web
@@ -12778,3 +12938,42 @@ you download the entire Wayback Machine archive for a given URL.")
 repository of available XYZ services offering raster basemap tiles.  The
 repository is provided via Python API and as a compressed JSON file.")
     (license license:bsd-3)))
+
+(define-public s3cmd
+  (package
+    (name "s3cmd")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/s3tools/s3cmd")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "168c49d1v8r7azv66zz0w07jalf434c2jpg2xzads5jnxzmiy73k"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ; XXX: Tests require network access.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'hide-wrapping
+            (lambda _
+              (substitute* "S3/MultiPart.py"
+                (("sys\\.argv\\[0\\]")
+                 "\"s3cmd\""))
+              (substitute* "s3cmd"
+                (("optparser\\.get_prog_name\\(\\)")
+                 "\"s3cmd\"")))))))
+    (native-inputs (list python-setuptools))
+    (inputs (list python-dateutil python-magic))
+    (home-page "https://s3tools.org/s3cmd")
+    (synopsis "Command line tool for S3-compatible storage services")
+    (description
+     "S3cmd is a command line tool for uploading, retrieving and managing data
+in storage services that are compatible with the Amazon Simple Storage
+Service (S3) protocol, including S3 itself.  It supports rsync-like backup,
+GnuPG encryption, and more.  It also supports management of Amazon's
+CloudFront content delivery network.")
+    (license license:gpl2+)))

@@ -407,13 +407,13 @@ Server.")
 (define-public erlang-p1-acme
   (package
     (name "erlang-p1-acme")
-    (version "1.0.25")
+    (version "1.0.28")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "p1_acme" version))
        (sha256
-        (base32 "136h8nkfd62xd76p8p4mgdiz8hxdqcg4arayl6c4znsx953mpdd7"))))
+        (base32 "08v4shjng4gdq6nffsvckhs9lcj5rcipbs5ghp95z79zvs36js6f"))))
     (build-system rebar-build-system)
     (inputs (list erlang-base64url erlang-idna erlang-jiffy erlang-jose
                   erlang-yconf))
@@ -450,13 +450,13 @@ Server.")
 (define-public erlang-p1-utils
   (package
     (name "erlang-p1-utils")
-    (version "1.0.26")
+    (version "1.0.28")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "p1_utils" version))
        (sha256
-        (base32 "0k5hfqrjrvgh7gknqj5pzpra9k1g0bgc2ac19zb8pfan2669wdyh"))))
+        (base32 "0cq0gwd4vy51j1qq2c6p1i6nv98agvfjdy0sd6bdj2m4qi5x96y4"))))
     (build-system rebar-build-system)
     (synopsis "ProcessOne utility modules for Erlang")
     (description "This package provides ProcessOne utility modules for Erlang.")
@@ -466,13 +466,13 @@ Server.")
 (define-public erlang-p1-mysql
   (package
     (name "erlang-p1-mysql")
-    (version "1.0.25")
+    (version "1.0.26")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "p1_mysql" version))
        (sha256
-        (base32 "0d7438sfzzh57d0fxq165k75khja6krfcglgx2c60wjvx7x7y676"))))
+        (base32 "1v7xz81wqx2c6ndl9rd3kq0v125209cbz7alrywijiy5ya1q04za"))))
     (build-system rebar-build-system)
     (synopsis "Pure Erlang MySQL driver")
     (description "This package provides pure Erlang @code{MySQL} driver.")
@@ -482,13 +482,13 @@ Server.")
 (define-public erlang-p1-pgsql
   (package
     (name "erlang-p1-pgsql")
-    (version "1.1.29")
+    (version "1.1.35")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "p1_pgsql" version))
        (sha256
-        (base32 "1h9qigb3qfys46rqpqm6s5a0r7cz38hscgnsjlw3z6bln7l5izx6"))))
+        (base32 "1hjmw82f6k2dpchgdn2i0j0bvi7m6qihcnvrjq36c721di2995g9"))))
     (build-system rebar-build-system)
     (inputs (list erlang-xmpp))
     (synopsis "PostgreSQL driver for Erlang")
@@ -582,13 +582,13 @@ Erlang-based systems.")
 (define-public erlang-stringprep
   (package
     (name "erlang-stringprep")
-    (version "1.0.30")
+    (version "1.0.33")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "stringprep" version))
        (sha256
-        (base32 "16hb49f9ghx8sqrs7928fjig9wyah22z7cl91y1pff50hhrrpz7n"))))
+        (base32 "1h4qvajlsfqfg61c9f0rjf3rmha8sahvqiivnc2zd1q8ql5v7y4n"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc))
@@ -665,13 +665,13 @@ dispatch them as Telemetry events.")
 (define-public erlang-cache-tab
   (package
     (name "erlang-cache-tab")
-    (version "1.0.31")
+    (version "1.0.33")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "cache_tab" version))
        (sha256
-        (base32 "0lb35g3p3ybij5f7fnilq3ni37nfgzhajnrmhvplgch9985bd0l5"))))
+        (base32 "002rqgikbdnzfkzw4n2wi6k03155pcqf4j68w2mjmcjhn2g00n22"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc))
@@ -691,13 +691,13 @@ dispatch them as Telemetry events.")
 (define-public erlang-eimp
   (package
     (name "erlang-eimp")
-    (version "1.0.23")
+    (version "1.0.26")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "eimp" version))
        (sha256
-        (base32 "12k2df0mwq16rh77ziiahq9mjd9cy2jfdnsbzkj96a6b4c07hz4h"))))
+        (base32 "0k04abnna5vqd0r248car4xkfjc83p5z0iqy4w7w9pxrfa2lwvfr"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc))
@@ -717,13 +717,13 @@ dispatch them as Telemetry events.")
 (define-public erlang-mqtree
   (package
     (name "erlang-mqtree")
-    (version "1.0.17")
+    (version "1.0.19")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "mqtree" version))
        (sha256
-        (base32 "18z23c1axn6y9799f0ydb0m29wxvq956b57bzk886ixwiz7vgs2z"))))
+        (base32 "0g6fz25j942ryc6m6c6iyb9hvs22v3i5l2pq28l8i8a9biqna468"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc))
@@ -743,13 +743,13 @@ dispatch them as Telemetry events.")
 (define-public erlang-ezlib
   (package
     (name "erlang-ezlib")
-    (version "1.0.13")
+    (version "1.0.15")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "ezlib" version))
        (sha256
-        (base32 "1fxz584ry1ib35r74hbmapwq71j5iv5rymm927ys0mgdz2rjmrly"))))
+        (base32 "1arfjvipmfvz52szlsy6gn4s1x25spip6gljwv7za6jj29nbl56x"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc))
@@ -769,13 +769,13 @@ dispatch them as Telemetry events.")
 (define-public erlang-fast-tls
   (package
     (name "erlang-fast-tls")
-    (version "1.1.22")
+    (version "1.1.25")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "fast_tls" version))
        (sha256
-        (base32 "0ns8wbl5gxprficlm653ql6d51z6fy0fy3r3am3mrcbszfp7jmz6"))))
+        (base32 "08d894ckv6flwagngk5zwmgrwxz7nmrycsxap010wrqffjsq7qar"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils openssl))
     (native-inputs (list erlang-pc openssl))
@@ -809,13 +809,13 @@ for Erlang/Elixir.")
 (define-public erlang-stun
   (package
     (name "erlang-stun")
-    (version "1.2.15")
+    (version "1.2.21")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "stun" version))
        (sha256
-        (base32 "1vzdq3mpajv4y7g54nq4dswn44k6rk07ddjqwqn3zlczl90sbn7n"))))
+        (base32 "1n8j3vf8g2aq7i271lcm5202vzvvif5vz9m9d8528nyhp7pyhzrx"))))
     (build-system rebar-build-system)
     (inputs (list erlang-fast-tls erlang-p1-utils))
     (synopsis "STUN and TURN library for Erlang/Elixir")
@@ -827,13 +827,13 @@ Erlang/Elixir.")
 (define-public erlang-fast-xml
   (package
     (name "erlang-fast-xml")
-    (version "1.1.55")
+    (version "1.1.57")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "fast_xml" version))
        (sha256
-        (base32 "11czr4iqv2m9b5msigwxf26q6ny90qzrawzcrmkzbm8fg0xf5ww3"))))
+        (base32 "0fcwj8yifwhr5m5maqa0ifwp7vad05d67ayxsmky9bxcmn84xhzf"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc))
@@ -854,13 +854,13 @@ parsing library.")
 (define-public erlang-xmpp
   (package
     (name "erlang-xmpp")
-    (version "1.9.1")
+    (version "1.11.1")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "xmpp" version))
        (sha256
-        (base32 "1p3m6a8x89j8gsfpxf13hdxh9syd276g1jlhpz4a9hg4yqd47cfj"))))
+        (base32 "05ipgf53dnz5d7hfz0bvmv1lxs0c85737ni5ak0wxcsaj3gk7jd5"))))
     (build-system rebar-build-system)
     (inputs (list erlang-ezlib
                   erlang-fast-tls
@@ -886,13 +886,13 @@ for Erlang/Elixir.")
 (define-public erlang-esip
   (package
     (name "erlang-esip")
-    (version "1.0.56")
+    (version "1.0.59")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "esip" version))
        (sha256
-        (base32 "07ys2n43fdg3cka6v7lh6633a177yiwmrkcd6vvj7dlkxw66dwwy"))))
+        (base32 "1rpvsfm5y932wfra1mvkqhdabikmwqlh65bky52b3h4x6hy2xpqb"))))
     (build-system rebar-build-system)
     (inputs (list erlang-fast-tls erlang-p1-utils erlang-stun))
     (native-inputs (list erlang-pc))
@@ -914,13 +914,13 @@ Erlang.")
 (define-public erlang-fast-yaml
   (package
     (name "erlang-fast-yaml")
-    (version "1.0.37")
+    (version "1.0.39")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "fast_yaml" version))
        (sha256
-        (base32 "0sd72nal5i6mbmicsmb494mr4g0gvs719lzp2hj1gqpp3dr6is4d"))))
+        (base32 "13d7n1zjgvnkrxjk7riignqssrh952hs5x259vb6k4ibksmvkir4"))))
     (build-system rebar-build-system)
     (inputs (list erlang-p1-utils))
     (native-inputs (list erlang-pc libyaml))
@@ -945,13 +945,13 @@ Erlang/Elixir.")
 (define-public erlang-yconf
   (package
     (name "erlang-yconf")
-    (version "1.0.17")
+    (version "1.0.21")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri "yconf" version))
        (sha256
-        (base32 "098s6if76z37amcqi99m0xq30h5i1znbjmw4ri39li216a994a6x"))))
+        (base32 "0v093p002l0zw8v8g4f3l769fkr0ihv2xk39nj2mv1w6zpqsa965"))))
     (build-system rebar-build-system)
     (inputs (list erlang-fast-yaml))
     (synopsis "YAML configuration processor")

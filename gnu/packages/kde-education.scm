@@ -89,16 +89,14 @@ charts.")
 (define-public analitza
   (package
     (name "analitza")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://invent.kde.org/education/analitza")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/analitza-" version ".tar.xz"))
        (sha256
-        (base32 "0q9jfkvs1xyxl7fmw0jzh7fh7rd278825i5w61cikqpwnjmp5jzf"))))
+        (base32 "0sbhmgv5fm7g6gzpwmsybkhx9wxlyv6b84j60pr0769w36i0qvnp"))))
     (native-inputs (list extra-cmake-modules qttools))
     (inputs (list eigen qtbase qtdeclarative qtsvg))
     (build-system qt-build-system)
@@ -174,16 +172,14 @@ Currently available boards include:
 (define-public kalgebra
   (package
     (name "kalgebra")
-    (version "25.08.1")
+    (version "25.08.2")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://invent.kde.org/education/kalgebra")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kalgebra-" version ".tar.xz"))
        (sha256
-        (base32 "00cryk135104pdid6sai763yxh6ghlzgg9rfi5qxlb0nidia0mgl"))))
+        (base32 "042gf5d9fb1gryx9lp94bdrz0zrndxnf1aifyjrv8vl7cpwv8212"))))
     (build-system qt-build-system)
     (arguments
      (list

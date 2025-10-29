@@ -4571,17 +4571,9 @@ into separate processes; and more.")
         (base32
          "1bv25qhr1dwym2j7llsd3ggnjb9l3h4bchng7bp7cq57s9g0bnjz"))))
     (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-biopython
-           python-matplotlib
-           python-pybio
-           python-scipy
-           python-seaborn))
-    (native-inputs
-     (list python-setuptools
-           python-wheel))
     (arguments
      (list
+      #:tests? #f                       ; There are none.
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'set-HOME
@@ -4594,6 +4586,14 @@ into separate processes; and more.")
                 (copy-file
                  data-file
                  (string-append data-dir "/" (basename data-file)))))))))
+    (propagated-inputs
+     (list python-biopython
+           python-matplotlib
+           python-pybio
+           python-scipy
+           python-seaborn))
+    (native-inputs
+     (list python-setuptools))
     (synopsis "Tool for creating a RNA RBP heatmap in Python")
     (description "python-scanrbp is a Python package that provides the scanRBP
 tool that loads RNA-protein binding motif PWM and computes the log-odds scores
@@ -4645,9 +4645,7 @@ the scores.")
               (substitute* "setup.py"
                 ;; bs4 is an alternative name for beautifulsoup4, only used to
                 ;; avoid name squatting on pypi.
-                (("bs4") "beautifulsoup4")
-                ;; levenshtein can only be found as python-levenshtein
-                (("levenshtein") "python-levenshtein"))))
+                (("bs4") "beautifulsoup4"))))
           ;; fireducks seems to be a binary-only python-panda replacement
           (add-after 'unpack 'remove-fireducks
             (lambda _
@@ -4895,7 +4893,10 @@ consensus sequences.")
                         (("'argparse[^']*',")
                          "") ;only for python2
                         (("==")
-                         ">="))))
+                         ">=")
+                        ;; This package changed names.
+                        (("python-Levenshtein")
+                         "levenshtein"))))
                   (add-before 'build 'build-libssw
                     (lambda _
                       (with-directory-excursion "libs/striped_smith_waterman"
@@ -8133,17 +8134,29 @@ exploration.")
 (define-public python-illumina-utils
   (package
     (name "python-illumina-utils")
-    (version "2.12")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "illumina-utils" version))
-              (sha256
-               (base32
-                "0z9g0prj7pmgl5z4vdpxv3v30grzhc194801qnf0wqzgy7w3aj2s"))))
+    (version "2.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/meren/illumina-utils")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15cyb5slw07va5siq8nzc0nwcgnvx1hmqqrgwk2v0fxy250fp9v4"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #false))  ;there are none
-    (propagated-inputs (list python-matplotlib python-numpy python-levenshtein))
-    (native-inputs (list python-setuptools python-wheel python-pip))
+    (arguments
+     (list
+      #:tests? #f                       ;there are none
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'adjust-requirements
+            (lambda _
+              (substitute* "requirements.txt"
+                (("python-Levenshtein")
+                 "levenshtein")))))))
+    (propagated-inputs (list python-levenshtein python-matplotlib python-numpy))
+    (native-inputs (list python-pip python-setuptools))
     (home-page "https://github.com/meren/illumina-utils")
     (synopsis "Library and scripts to work with Illumina paired-end data")
     (description
@@ -9989,7 +10002,7 @@ sequencing tag position and orientation.")
            python-scikit-learn
            python-scipy))
     (native-inputs
-     (list python-cython-3
+     (list python-cython
            python-pytest
            python-setuptools
            python-wheel
@@ -20056,7 +20069,7 @@ bgzipped text file that contains a pair of genomic coordinates per line.")
     (propagated-inputs (list python-archspec))
     (native-inputs
      (list cmake-minimal
-           python-cython-3
+           python-cython
            python-scikit-build-core))
     (home-page "https://github.com/althonos/pyrodigal")
     (synopsis "Cython bindings and Python interface for Prodigal")

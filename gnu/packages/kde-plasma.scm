@@ -89,6 +89,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages package-management) ; flatpak
   #:use-module (gnu packages rdesktop)
+  #:use-module (gnu packages sdl)
   #:use-module (gnu packages unicode)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vpn)
@@ -170,6 +171,42 @@
 script engines.")
     ;; dual licensed
     (license (list license:gpl2+ license:lgpl2.1+))))
+
+(define-public aurorae
+  (package
+    (name "aurorae")
+    (version "6.5.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/plasma/" version "/"
+                                  name "-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0nzvn21fx0d6mj6sci40cgpw338m7rdbb52f7cjhfg2dvzrfclcf"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
+    (native-inputs
+     (list extra-cmake-modules qttools))
+    (inputs
+     (list kcmutils
+           kcolorscheme
+           kconfig
+           kdecoration
+           ki18n
+           knewstuff
+           kpackage
+           ksvg
+           qtdeclarative))
+    (synopsis "Themeable window decoration for KWin")
+    (description
+     "Aurorae is a themeable window decoration for KWin.  It supports theme
+files consisting of several SVG files for decoration and buttons.  Themes can
+be installed and selected directly in the configuration module of KWin
+decorations.")
+    (home-page "https://invent.kde.org/plasma/aurorae")
+    (license license:gpl2+)))
 
 (define-public bluedevil
   (package
@@ -463,6 +500,43 @@ games, and tools.")
     (home-page "https://invent.kde.org/plasma/drkonqi")
     (license license:gpl2+)))
 
+(define-public flatpak-kcm
+  (package
+    (name "flatpak-kcm")
+    (version "6.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/plasma/" version
+                           "/flatpak-kcm-" version ".tar.xz"))
+       (sha256
+        (base32 "0i8qlmvf33c48khyw50dfgkbj9c5idzbqf7n2bxzv9jvrx8snfnk"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules pkg-config))
+    (inputs
+     (list flatpak
+           kcmutils
+           kconfig
+           kcoreaddons
+           ki18n
+           kitemmodels
+           kservice
+           libostree     ;required by flatpak
+           qtdeclarative
+           qtsvg))
+    (home-page "https://invent.kde.org/plasma/flatpak-kcm")
+    (synopsis "Flatpak permission management KCM")
+    (description "This package provides a KCModule to configure permissions for
+portal interactions.  It also allows changing @code{flatpak} settings via the
+subsumed Flatpak KCM.
+
+Note: Some permissions don't make sense to show for non-sandboxed apps as they
+are only roxying @code{dbus}.")
+    (license license:gpl3+)))
+
 (define-public kactivitymanagerd
   (package
     (name "kactivitymanagerd")
@@ -747,6 +821,7 @@ KDE Frameworks 5 to better interact with the system.")
                   knotifications
                   krunner
                   kservice
+                  ksvg
                   kunitconversion
                   knewstuff
                   libplasma
@@ -976,6 +1051,34 @@ computer's hardware.")
     (description "This package provides menu editor for Plasma Workspaces.")
     (home-page "https://invent.kde.org/plasma/kmenuedit")
     (license license:gpl2+)))
+
+(define-public knighttime
+  (package
+    (name "knighttime")
+    (version "6.5.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/plasma/"
+                                  version "/" name "-" version
+                                  ".tar.xz"))
+              (sha256
+               (base32
+                "1bxss7ail0ini8y7nk7y3hgirn1xf9cdfjf8f7y9p88wl1lg2ymc"))))
+    (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
+    (native-inputs (list extra-cmake-modules qttools))
+    (inputs (list kconfig
+                  kcoreaddons
+                  kdbusaddons
+                  kholidays
+                  ki18n
+                  qtpositioning))
+    (synopsis "Helpers for scheduling the dark-light cycle")
+    (description "KNightTime provides helpers for scheduling the dark-light
+cycle.  It can be used to implement features such as adjusting the screen color
+temperature based on time of day, etc.")
+    (home-page "https://invent.kde.org/plasma/knighttime")
+    (license license:lgpl3+)))
 
 (define-public koi
   (package
@@ -1310,6 +1413,7 @@ the running system.")
     (arguments
      (list
       #:qtbase qtbase
+      #:test-exclude "kscreen-testqscreenbackend"
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'check-env-setup
@@ -1329,8 +1433,7 @@ the running system.")
                       "testPreferredBackend"
                       "testFallback"
                       "testModeSwitching"
-                      "verifyConfig"
-                      "verifyScreen"))))))))))
+                      "verifyConfig"))))))))))
     (native-inputs
      (list extra-cmake-modules
            pkg-config
@@ -1526,8 +1629,16 @@ KDE Frameworks components.")
                            "kwin-testLibinputDevice"
                            "kwin-testX11Window"
                            "kwin-testXwaylandInput"
-                           "kwin-testWindowRules")
-                         "|"))
+                           "kwin-testWindowRules"
+
+                           "kwin-testXdgShellWindowRules"
+                           "kwin-testStickyKeys"
+                           "kwin-testFractionalRepaint"
+                           "kwin-testDrmLegacy"
+                           "kwin-testInputCapture"
+                           "kwin-testMockDrm")
+                         "|")
+                     ")")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch
@@ -1585,13 +1696,13 @@ KDE Frameworks components.")
                          python-minimal
                          ;; for QtWaylandScanner
                          qtwayland))
-    (inputs (list breeze
+    (inputs (list aurorae
+                  breeze
                   eudev
                   fontconfig
                   freetype
-
                   hwdata
-                  plasma-activities
+                  kauth
                   kcmutils
                   kcompletion
                   kconfig
@@ -1602,12 +1713,14 @@ KDE Frameworks components.")
                   kdecoration
                   kglobalaccel
                   kglobalacceld
+                  kguiaddons
                   ki18n
                   kiconthemes
                   kidletime
                   kio
                   kirigami
                   knewstuff
+                  knighttime
                   knotifications
                   kpackage
                   kpipewire
@@ -1618,17 +1731,18 @@ KDE Frameworks components.")
                   kwindowsystem
                   kxmlgui
                   ksvg
-                  kauth
-                  kguiaddons
-                  libqaccessibilityclient
                   lcms
                   libcanberra
                   libcap
+                  libdisplay-info
+                  libei
                   libepoxy
                   libinput
+                  libplasma
+                  libqaccessibilityclient
                   libxkbcommon
                   pipewire
-                  libplasma
+                  plasma-activities
                   plasma-wayland-protocols
                   qt5compat
                   qtdeclarative
@@ -1638,12 +1752,12 @@ KDE Frameworks components.")
                   qtsvg
                   wayland
                   xcb-util ;fails at build time without this
+                  xcb-util-cursor
                   xcb-util-keysyms
                   xcb-util-wm
                   xcmsdb
                   xinput ;XXX: Says disabled in configure phase
                   xorg-server-xwayland
-                  libdisplay-info
                   zlib))
     ;; Runtime-only dependency needed for mapping monitor hardware vendor IDs to full names
     ;; * QtQuick.Controls-QMLModule, QML module 'QtQuick.Controls' is a runtime dependency.
@@ -1840,7 +1954,8 @@ for xdg-desktop-portal that is using Qt/KF5.")
      (list #:builder #~(begin
                          (mkdir #$output))))
     ;; TODO: cleanup, check what is no need
-    (propagated-inputs (list baloo
+    (propagated-inputs (list aurorae
+                             baloo
                              bluedevil
                              breeze
                              breeze-gtk
@@ -2126,6 +2241,7 @@ the KDE Plasma 6 desktop.")
                   knotifyconfig
                   kpackage
                   kpeople
+                  kpipewire
                   krunner
                   kscreenlocker
                   ktexteditor
@@ -2162,7 +2278,9 @@ the KDE Plasma 6 desktop.")
                   qqc2-desktop-style
                   qt5compat
                   qtdeclarative
+                  qtshadertools
                   qtwayland
+                  sdl2
                   wayland
                   wayland-protocols
                   xcb-util
@@ -2179,7 +2297,12 @@ the KDE Plasma 6 desktop.")
                   libxkbfile
                   libxcursor
                   libxkbcommon))
-    (propagated-inputs (list iso-codes/pinned kirigami kcmutils plasma-workspace))
+    (propagated-inputs (list font-google-noto-emoji
+                             iso-codes/pinned
+                             kirigami
+                             kirigami-addons
+                             kcmutils
+                             plasma-workspace))
     (arguments
      (list #:qtbase qtbase
            #:test-exclude
@@ -2436,6 +2559,7 @@ connections.")
     (native-inputs (list extra-cmake-modules pkg-config qttools))
     (inputs (list bash-minimal
                   eudev
+                  kauth
                   kcmutils
                   kdbusaddons
                   kdeclarative
@@ -2456,6 +2580,7 @@ connections.")
                   modemmanager-qt
                   networkmanager-qt
                   plasma-activities
+                  plasma-wayland-protocols
                   plasma-workspace
                   qcoro-qt6
                   qtbase
@@ -2531,39 +2656,34 @@ PulseAudio.")
     (license (list license:lgpl2.1 license:lgpl3))))
 
 (define-public plasma-pass
-  ;; Port to Plasma 6.
-  (let ((commit "74c011b634f3bdbdcd80a74b252e6499774756f2")
-        (revision "0"))
-    (package
-      (name "plasma-pass")
-      (version (git-version "1.2.2" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://invent.kde.org/plasma/plasma-pass")
-                      (commit commit)))
-                (sha256
-                 (base32
-                  "1hfwpnyijkmm05rq9yyq0bzh0ls1d3wcg68ssy69qm3xf6b0g1qf"))
-                (file-name (git-file-name name version))))
-      (build-system qt-build-system)
-      (native-inputs (list extra-cmake-modules))
-      (inputs (list ki18n kitemmodels kwindowsystem kio
-                    oath-toolkit
-                    plasma5support
-                    qgpgme-qt6))
-      (propagated-inputs
-       ;; QML modules need to be propagated so that QML files can find them in
-       ;; $QML_IMPORT_PATH.
-       (list kirigami libplasma qtdeclarative))
-      (arguments (list #:qtbase qtbase
-                       #:tests? #f
-                       #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")))
-      (home-page "https://invent.kde.org/plasma/plasma-pass")
-      (synopsis "Plasma applet for the Pass password manager")
-      (description
-       "This package provides a Plasma applet for the Pass password manager.")
-      (license license:lgpl2.1+))))
+  (package
+    (name "plasma-pass")
+    (version "1.3.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/plasma-pass/"
+                                  "plasma-pass-" version ".tar.xz"))
+              (sha256
+               (base32
+                "03ydwkk7qvw8hlr3phh5gzy6zf3rmh872a0n703h5dlacc4jbcwi"))))
+    (build-system qt-build-system)
+    (native-inputs (list extra-cmake-modules))
+    (inputs (list ki18n kitemmodels kwindowsystem kio
+                  oath-toolkit
+                  plasma5support
+                  qgpgme-qt6))
+    (propagated-inputs
+     ;; QML modules need to be propagated so that QML files can find them in
+     ;; $QML_IMPORT_PATH.
+     (list kirigami libplasma qtdeclarative))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f
+                     #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")))
+    (home-page "https://invent.kde.org/plasma/plasma-pass")
+    (synopsis "Plasma applet for the Pass password manager")
+    (description
+     "This package provides a Plasma applet for the Pass password manager.")
+    (license license:lgpl2.1+)))
 
 (define-public plasma-phonebook
   (package
@@ -2771,15 +2891,14 @@ sensors, process information and other system resources.")
                   breeze
                   breeze-icons
                   dbus
+                  eudev
                   fontconfig
+                  gmp
+                  gpsd
                   icu4c
                   iso-codes/pinned
-                  plasma-activities
-                  plasma-activities-stats
                   karchive
                   kauth
-                  ksvg
-                  kstatusnotifieritem
                   kcmutils
                   kcoreaddons
                   kcrash
@@ -2795,25 +2914,25 @@ sensors, process information and other system resources.")
                   kiconthemes
                   kidletime
                   kio
-                  lsof
-                  xdotool                     ;for X11
-                  qqc2-desktop-style
-                  qcoro-qt6
-                  kirigami-addons
                   kio-extras
-                  kitemmodels
                   kirigami
                   kirigami-addons
+                  kirigami-addons
+                  kitemmodels
                   knewstuff
+                  knighttime
                   knotifications
                   knotifyconfig
-                  kquickcharts
                   kpackage
                   kpeople
                   kpipewire
                   kquickcharts
+                  kquickcharts
                   krunner
+                  kscreen                     ;qml dependency
                   kscreenlocker
+                  kstatusnotifieritem
+                  ksvg
                   ktexteditor
                   ktextwidgets
                   kuserfeedback
@@ -2821,55 +2940,55 @@ sensors, process information and other system resources.")
                   kwayland
                   kwin
                   layer-shell-qt
+                  libkexiv2
                   libkscreen
                   libksysguard
+                  libplasma
                   libqalculate
-                  gmp
-                  mpfr
-                  eudev
                   libsm
                   libxcrypt
+                  libxcursor
                   libxft
                   libxkbcommon
                   libxrender
                   libxtst
+                  lsof
+                  mpfr
                   networkmanager-qt
+                  packagekit-qt6
                   phonon
                   pipewire
-                  libplasma
-                  plasma5support
-                  plasma-workspace-wallpapers
+                  plasma-activities
+                  plasma-activities-stats
+                  plasma-nm                   ;qml dependency
+                  plasma-pa                   ;qml dependency
                   plasma-wayland-protocols
+                  plasma-workspace-wallpapers
+                  plasma5support
+                  polkit-qt6
                   prison
-                  qtlocation
+                  qcoro-qt6
+                  qqc2-desktop-style
                   qt5compat
-                  qtsvg
-                  qtshadertools
                   qtdeclarative
-                  qttools
+                  qtlocation
                   qtpositioning
+                  qtshadertools
+                  qtsvg
+                  qttools
                   qtwayland
+                  ucd
                   wayland
                   wayland-protocols
                   xcb-util
+                  xcb-util-cursor
                   xcb-util-image
                   xcb-util-keysyms
-                  xrdb
+                  xdotool                     ;for X11
                   xmessage
+                  xrdb
                   xsetroot
-                  polkit-qt6
-                  ucd
-
-                  xcb-util-cursor
-                  libxcursor
-                  libkexiv2
-                  gpsd
-                  zlib
-
-                  ;; qml dependency
-                  plasma-nm
-                  plasma-pa
-                  kscreen))
+                  zlib))
     (arguments
      (list #:qtbase qtbase
            #:configure-flags
@@ -2882,23 +3001,9 @@ sensors, process information and other system resources.")
                              "/libexec/kglobalacceld"))
            #:phases
            #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-workspace-bins
+               (add-after 'unpack 'patch-qttools-path
                  (lambda* (#:key inputs #:allow-other-keys)
-                   (let ((xmessage (search-input-file inputs "/bin/xmessage"))
-                         (xsetroot (search-input-file inputs "/bin/xsetroot"))
-                         (xrdb (search-input-file inputs "/bin/xrdb"))
-                         (qttools #$(this-package-input "qttools")))
-                     (substitute* "applets/devicenotifier/plugin/\
-deviceerrormonitor_p.cpp"
-                       (("lsof") (search-input-file inputs "/bin/lsof")))
-                     (substitute* "startkde/startplasma.cpp"
-                       (("xmessage") xmessage))
-                     (substitute* "kcms/krdb/krdb.cpp"
-                       (("xsetroot") xsetroot))
-                     (substitute* (list "kcms/fonts/fontinit.cpp"
-                                        "kcms/fonts/fonts.cpp"
-                                        "kcms/krdb/krdb.cpp")
-                       (("xrdb") xrdb))
+                   (let ((qttools #$(this-package-input "qttools")))
                      ;; QT_INSTALL_BINS refers to qtbase, but qdbus is in
                      ;; qttools.
                      (substitute* "CMakeLists.txt"

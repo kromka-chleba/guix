@@ -1767,48 +1767,32 @@ instant messenger with audio and video chat capabilities.")
 (define-public qtox
   (package
     (name "qtox")
-    (version "1.17.6")
+    (version "1.18.3")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/qTox/qTox/releases"
-                                  "/download/v" version
-                                  "/v" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/TokTok/qTox")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ml8z1xpp3qhip4vkr375jf7y5kc18g0apm91n5am6ricx37c01r"))
-              (file-name (string-append name "-" version ".tar.gz"))))
-    (build-system cmake-build-system)
+                "0qxaq5nzsjmxa3w4nl04p7ydfzyjq15scnyrjlzdwxh9vgsgg4g6"))))
+    (build-system qt-build-system)
     (arguments
-     (list #:phases
+     (list #:qtbase qtbase
+           #:phases
            #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-reproducibility-issues
-                 (lambda _
-                   (substitute* "src/main.cpp"
-                     (("__DATE__") "\"\"")
-                     (("__TIME__") "\"\"")
-                     (("TIMESTAMP") "\"\""))))
                (add-after 'unpack 'disable-network-tests
                  (lambda _
-                   ;; These tests require network access.
+                   ;; This test requires network access.
                    (substitute* "cmake/Testing.cmake"
-                     (("auto_test\\(core core\\)") "# auto_test(core core)")
-                     (("auto_test\\(net bsu\\)") "# auto_test(net bsu)"))))
-               ;; Ensure that icons are found at runtime.
-               (add-after 'install 'wrap-executable
-                 (lambda* (#:key inputs outputs #:allow-other-keys)
-                   (let ((out (assoc-ref outputs "out")))
-                     (wrap-program (string-append out "/bin/qtox")
-                       `("QT_PLUGIN_PATH" prefix
-                         ,(list (search-input-directory
-                                 inputs "lib/qt5/plugins/"))))))))))
+                     (("auto_test\\(net bsu") "# auto_test(net bsu")))))))
     (native-inputs
-     (list pkg-config qttools-5))
+     (list pkg-config qttools))
     (inputs
      (list bash-minimal
            ffmpeg
            filteraudio
-           glib
-           gtk+-2
            libsodium
            c-toxcore
            libvpx
@@ -1818,8 +1802,8 @@ instant messenger with audio and video chat capabilities.")
            sqlite
            openal
            qrencode
-           qtbase-5
-           qtsvg-5
+           qtsvg
+           sonnet
            sqlcipher))
     (home-page "https://qtox.github.io/")
     (synopsis "Tox chat client using Qt")
@@ -3612,7 +3596,7 @@ a text snippet), using @code{libphonenumber}.")
 (define-public ejabberd
   (package
     (name "ejabberd")
-    (version "24.12")
+    (version "25.08")
     (source
      (origin
        (method git-fetch)
@@ -3621,7 +3605,7 @@ a text snippet), using @code{libphonenumber}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1l82d8l4ck60vijzirl4xkyc2wv28jnq6amwi8dralm7r218hg7m"))))
+        (base32 "0cr9s37a1v06i3bqb471r4dw1hdv49ph3pwjjrmnm8xkhyplaaly"))))
     (build-system rebar-build-system)
     (inputs (list bash-minimal coreutils procps sed))
     (native-inputs

@@ -5955,7 +5955,7 @@ the ability to jump forward and backward to the next bookmark.")
 (define-public emacs-calfw
   (package
     (name "emacs-calfw")
-    (version "1.6")
+    (version "2.0")
     (source
      (origin
        (method git-fetch)
@@ -5965,8 +5965,9 @@ the ability to jump forward and backward to the next bookmark.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0r42cagvmvvib76kd15nd9ix55ys6i549vxnls4z16s864695zpa"))))
+         "0vmd9dl1hnmwjfr9gy8n91724bl05walhjx2myszh6qs28xay0z4"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ; no tests
     (propagated-inputs
      (list emacs-howm))
     (home-page "https://github.com/kiwanami/emacs-calfw/")
@@ -14543,7 +14544,7 @@ completion using Consult.")
 (define-public emacs-consult-denote
   (package
     (name "emacs-consult-denote")
-    (version "0.3.1")
+    (version "0.4.0")
     (source
      (origin
        (method git-fetch)
@@ -14551,20 +14552,15 @@ completion using Consult.")
               (url "https://github.com/protesilaos/consult-denote/")
               (commit version)))
        (sha256
-        (base32 "1wj0aylm0jzh5mmkzayqgzw22dlavd9bliggjq2s4cs5lv77w05l"))))
+        (base32 "1glkb9jz2549x8n9wfkzg654gqkpgx2imq1iwv9c4l0bryk47cg6"))))
     (build-system emacs-build-system)
     (arguments
      (list
       #:tests? #f ;no tests
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'build-info-manual
-            (lambda* (#:key outputs #:allow-other-keys)
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-consult emacs-denote))
     (home-page "https://github.com/protesilaos/consult-denote")
@@ -20143,7 +20139,7 @@ components required by the produced @file{.tex} file.")
 (define-public emacs-org-contrib
   (package
     (name "emacs-org-contrib")
-    (version "0.6")
+    (version "0.7")
     (source
      (origin
        (method git-fetch)
@@ -20152,12 +20148,11 @@ components required by the produced @file{.tex} file.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08m3aa8vsrlkacbvindjwqzviv5r8i9a0vzsrl8rx01xq5b0zd42"))))
+        (base32 "1mjgfpjs32hnsj631mvmwrwxqvdb6clj3j077xmfrrp80r25gvqx"))))
     (build-system emacs-build-system)
     (arguments
-     (list #:lisp-directory "lisp"))
-    (propagated-inputs
-     (list emacs-org))
+     (list #:tests? #f                  ;no tests
+           #:lisp-directory "lisp"))
     (home-page "https://git.sr.ht/~bzg/org-contrib")
     (synopsis "Unmaintained add-ons for Org mode")
     (description
@@ -20880,15 +20875,16 @@ view your Denote directory.")
 (define-public emacs-denote-org
   (package
     (name "emacs-denote-org")
-    (version "0.1.1")
+    (version "0.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/denote-org-" version
                            ".tar"))
        (sha256
-        (base32 "0nwyyzx96d5k6dw4jb8bvni9fjr1plip57mdsyabrha19p6n282d"))))
+        (base32 "05jyy4gmd4nhgbh0cfjnjspwjzdkrljgl12wygqlai4d4hpv54mr"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ; no tests
     (propagated-inputs (list emacs-denote))
     (home-page "https://github.com/protesilaos/denote-org")
     (synopsis "Denote extensions for Org mode")
@@ -21089,42 +21085,41 @@ are common in Chromium-derived projects.")
     (license license:bsd-3)))
 
 (define-public emacs-gnosis
-  (let ((commit "0c1a5dc92e4495976fc2d952dbea59873a4db797"))
-    (package
-      (name "emacs-gnosis")
-      (version "0.5.5")
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-                (url "https://git.thanosapollo.org/gnosis")
-                (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "05cdaa3n61c361lxp3hz2v1zwa6dlrihakz1xb3mf06fy2vbxib1"))))
-      (build-system emacs-build-system)
-      (arguments (list #:test-command #~(list "make" "test")
-                       #:emacs emacs   ; tests require built-in SQLite support
-                       #:phases
-                       #~(modify-phases %standard-phases
-                           (add-before 'check 'set-home
-                             (lambda _
-                               (setenv "HOME" (getenv "TMPDIR"))
-                               (mkdir-p (string-append (getenv "HOME")
-                                                       "/.emacs.d"))))
-                           (add-before 'install 'make-info
-                             (lambda _ (invoke "make" "doc"))))))
-      (native-inputs (list texinfo))
-      (propagated-inputs
-       (list emacs-compat emacs-emacsql emacs-org-gnosis emacs-transient))
-      (home-page "https://thanosapollo.org/projects/gnosis")
-      (synopsis "Spaced repetition system for GNU Emacs")
-      (description
-       "Gnosis is a spaced repetition system for note-taking and self-testing
+  (package
+    (name "emacs-gnosis")
+    (version "0.5.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.thanosapollo.org/gnosis")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mri7rwfakjg7fgy50vdfap85a84d5088fx5bjrz4wi95lx7j2kj"))))
+    (build-system emacs-build-system)
+    (arguments (list #:test-command #~(list "make" "test")
+                     #:emacs emacs   ; tests require built-in SQLite support
+                     #:phases
+                     #~(modify-phases %standard-phases
+                         (add-before 'check 'set-home
+                           (lambda _
+                             (setenv "HOME" (getenv "TMPDIR"))
+                             (mkdir-p (string-append (getenv "HOME")
+                                                     "/.emacs.d"))))
+                         (add-before 'install 'make-info
+                           (lambda _ (invoke "make" "doc"))))))
+    (native-inputs (list texinfo))
+    (propagated-inputs
+     (list emacs-compat emacs-emacsql emacs-org-gnosis emacs-transient))
+    (home-page "https://thanosapollo.org/projects/gnosis")
+    (synopsis "Spaced repetition system for GNU Emacs")
+    (description
+     "Gnosis is a spaced repetition system for note-taking and self-testing
 where notes are formatted as Question/Answer/Explanation.  Notes are reviewed
 at spaced intervals based on the success or failure in recalling the answer to
 each question.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-drag-stuff
   (package

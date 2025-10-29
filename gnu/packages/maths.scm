@@ -3017,7 +3017,7 @@ and quadratic objectives using the Simplex algorithm.")
     (propagated-inputs (list python-numpy python-pytest python-scipy))
     (inputs (list cbc))
     (native-inputs (list pkg-config
-                         python-cython-3
+                         python-cython
                          python-hypothesis
                          python-numpy
                          python-pytest
@@ -4334,47 +4334,35 @@ summation in K-fold precision.")
 (define-public python-blis
   (package
     (name "python-blis")
-    (version "0.9.1")
+    (version "1.2.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "blis" version))
               (sha256
                (base32
-                "0vrnzk9jx7fcl56q6zpa4w4mxkr4iknxs42fngn9g78zh1kc9skw"))))
+                "0nknjrd4pp8l5n68vpmcxfpr8mp0imjl51yj5g1468fwpvnvwrhh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'build 'build-ext
-           (lambda _
-             (invoke "python" "setup.py" "build_ext" "--inplace"
-                     "-j" (number->string (parallel-job-count))))))))
-    (propagated-inputs
-     (list python-numpy))
+      #~(modify-phases %standard-phases
+          (add-before 'check 'remove-local-blis
+            (lambda _
+              (copy-recursively "blis/tests" "tests")
+              ;; This would otherwise interfere with finding the installed
+              ;; blis when running tests.
+              (delete-file-recursively "blis"))))))
     (native-inputs
      (list python-cython
+           python-numpy-2
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (home-page "https://github.com/explosion/cython-blis")
     (synopsis "Blis as a self-contained C-extension for Python")
     (description
      "This package provides the Blis BLAS-like linear algebra library, as a
 self-contained C-extension for Python.")
     (license license:bsd-3)))
-
-(define-public python-blis-for-thinc
-  (package
-    (inherit python-blis)
-    (name "python-blis")
-    (version "0.7.8")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "blis" version))
-              (sha256
-               (base32
-                "0mvcif9g69424bk8xiflacxzpvz802ns791v2r8a6fij0sxl3mgp"))))))
 
 (define-public python-cvxopt
   (package
@@ -4651,7 +4639,7 @@ can return results in exact arithmetic.")
                  (lambda* (#:key tests? #:allow-other-keys)
                    (when tests?
                      (invoke "python" "test/runtests.py")))))))
-    (native-inputs (list python-cython-3))
+    (native-inputs (list python-cython))
     (inputs (list petsc-openmpi python-numpy))
     (home-page "https://bitbucket.org/petsc/petsc4py/")
     (synopsis "Python bindings for PETSc")
@@ -4681,7 +4669,7 @@ bindings to almost all functions of PETSc.")
      (list #:tests? #f)) ; there are no tests
     (native-inputs
      (list python-cysignals
-           python-cython-3
+           python-cython
            python-setuptools
            python-wheel))
     (inputs
@@ -4948,7 +4936,7 @@ arising after the discretization of partial differential equations.")
                  (lambda* (#:key tests? #:allow-other-keys)
                    (when tests?
                      (invoke "python" "test/runtests.py")))))))
-    (native-inputs (list python-cython-3))
+    (native-inputs (list python-cython))
     (inputs (list python-numpy python-petsc4py petsc-openmpi slepc-openmpi))
     (home-page "https://bitbucket.org/slepc/slepc4py/")
     (synopsis "Python bindings for SLEPc")

@@ -24437,6 +24437,41 @@ recognizers) at run time.")
     (description "Package memory implements a memory allocator.")
     (license license:bsd-3)))
 
+(define-public go-modernc-org-libc
+  (package
+    (name "go-modernc-org-libc")
+    (version "1.66.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/libc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01xj0flqcy5sx75ddcgjvwilbi87gn9wy33k76p88m5f820ldf4d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/libc"
+      ;; Tests require modernc.org/ccgo/v4/lib, which is not packaged yet
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-google-uuid
+           go-github-com-ncruces-go-strftime
+           go-github-com-remyoudompheng-bigfft
+           go-golang-org-x-exp
+           go-golang-org-x-sys
+           go-modernc-org-mathutil
+           go-modernc-org-memory))
+    (home-page "https://modernc.org/libc")
+    (synopsis "C standard library implementation in Go")
+    (description
+     "Package libc provides a C standard library implementation for use
+with ccgo-generated code.")
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-opt
   (package
     (name "go-modernc-org-opt")
@@ -24483,6 +24518,41 @@ recognizers) at run time.")
     (description
      "Package sortutil provides utilities supplementing the standard
 @code{sort} package.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-sqlite
+  (package
+    (name "go-modernc-org-sqlite")
+    (version "1.38.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/sqlite")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0579vip4vn488jppjpadryxyimkw2jr8ywr4j0piqcm2zs40h509"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/sqlite"
+      ;; Tests require modernc.org/ccgo/v4/lib, which is not packaged yet
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-google-uuid
+           go-github-com-ncruces-go-strftime
+           go-github-com-remyoudompheng-bigfft
+           go-golang-org-x-sys
+           go-modernc-org-libc
+           go-modernc-org-mathutil
+           go-modernc-org-memory))
+    (home-page "https://modernc.org/sqlite")
+    (synopsis "CGo-free port of SQLite")
+    (description
+     "Package sqlite is a CGo-free port of SQLite.  It is a drop-in
+replacement for mattn/go-sqlite3.")
     (license license:bsd-3)))
 
 (define-public go-modernc-org-strutil
@@ -24731,6 +24801,31 @@ described at https://golang.org/s/re2syntax, except for @code{\\C.}")
     (description
      "Goversion scans a directory tree and, for every executable it finds,
 prints the Go version used to build that executable.")
+    (license license:bsd-3)))
+
+(define-public go-rsc-io-script
+  (package
+    (name "go-rsc-io-script")
+    (version "0.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rsc/script")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05yl5nqhcjhp4sjdh7a9m9s6w4lm4qhn4bhi7v6hhsbfn348jxfh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "rsc.io/script"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://rsc.io/script")
+    (synopsis "Small scripting language for Go")
+    (description
+     "Package script implements a small, customizable, platform-agnostic
+scripting language.")
     (license license:bsd-3)))
 
 (define-public go-sigs-k8s-io-json

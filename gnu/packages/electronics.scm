@@ -23,6 +23,7 @@
 ;;; Copyright © 2022, 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025, Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;; Copyright © 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -75,6 +76,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages gettext)
@@ -1076,7 +1078,7 @@ which allows one to install the M8 firmware on any Teensy.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.18.0")
+    (version "1.18.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1085,7 +1087,7 @@ which allows one to install the M8 firmware on any Teensy.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1b8bsmxv2p9v8g7yzdj8s22l5bx9n58kmbklgnj17gd362lai51y"))))
+                "1l4aiaf2009wak7bccpm8x2pr27pr2b5w2naz874y8k98wqq5zlr"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t
@@ -1393,8 +1395,8 @@ The following features are currently available:
 
 (define-public opensta
   ;; There are no releases, we use last commit.
-  (let ((commit "12f03395ec80d3593f4796b2a3cf5480e75735bd")
-        (revision "0"))
+  (let ((commit "6e29fcb3f0d8a73af3a0913eb945b665a72e69cb")
+        (revision "1"))
     (package
       (name "opensta")
       ;; The version string is taken from the CMakeLists.txt.
@@ -1407,7 +1409,7 @@ The following features are currently available:
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1gka50p4wv2b49d8jbw5fs3qg7cppa8ynl3diqgdf8mqgskwapzf"))))
+          (base32 "1drhgp4s6q8j4fhsbxn6szmxl48xdlq0x5z4g6z72img453qvglx"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -1909,7 +1911,7 @@ design.")
 (define-public python-vsg
   (package
     (name "python-vsg")
-    (version "3.34.0")
+    (version "3.35.0")
     (source
      (origin
        (method git-fetch)
@@ -1918,7 +1920,7 @@ design.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0sryf1wv4r5maxj4di5rpsmzcxins3gq8aksv7cpw6ywvdk1nj5l"))))
+        (base32 "01hwida51bdyzv6wy71nby9cllf6nbvin5a0lhl4dizvnp3h4mb4"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2127,6 +2129,8 @@ input and outputs an XML dataset.")
           (add-after 'unpack 'adjust-default-settings
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "qucs/settings.cpp"
+                (("\"/usr/local/Xyce.*\"")
+                 (format #f "~s" (search-input-file inputs "bin/Xyce")))
                 (("\"ngspice\"")
                  (format #f "~s" (search-input-file inputs "bin/ngspice")))
                 (("\"octave\"")
@@ -2137,11 +2141,20 @@ input and outputs an XML dataset.")
                 `("PATH" ":" prefix
                   (,(string-append #$(this-package-input "ngspice") "/bin")
                    ,(string-append
-                     #$(this-package-input "qucsator-rf") "/bin")))))))))
+                     #$(this-package-input "qucsator-rf") "/bin")
+                   ,(string-append
+                     #$(this-package-input "xyce-serial") "/bin")))))))))
     (native-inputs (list qttools))
     (inputs
-     ;; TODO Add xyce-serial to the list.
-     (list bash-minimal octave qtbase qtcharts qtsvg qtwayland qucsator-rf ngspice))
+     (list bash-minimal
+           ngspice
+           octave
+           qtbase
+           qtcharts
+           qtsvg
+           qtwayland
+           qucsator-rf
+           xyce-serial))
     (synopsis "GUI for different circuit simulation kernels")
     (description
      "@acronym{Qucs-S, Quite universal circuit simulator with SPICE} provides
@@ -2236,7 +2249,7 @@ suite.")
 (define-public sch-rnd
   (package
     (name "sch-rnd")
-    (version "1.0.9")
+    (version "1.0.10")
     (source
      (origin
        (method url-fetch)
@@ -2244,7 +2257,7 @@ suite.")
                            "releases/sch-rnd-" version ".tar.gz"))
        (sha256
         (base32
-         "07a1ik0rpsa5cscg9l7i5rnipx76543s7cdnkg802747rral7yj5"))))
+         "1wa43jhgzlchqpql9qdz7q4ps4wfk88akrl3pqgcb61mdwy51s20"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      (list
@@ -2459,6 +2472,96 @@ using different abstraction levels.")
 VPI Interface, Elaborator, Serialization, Visitor and Listener.")
     (license license:asl2.0)))
 
+(define trilinos-serial-xyce
+  ;; Note: This is a Trilinos containing only the packages Xyce needs, so we
+  ;; keep it private.  See
+  ;; <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27344#248>.
+  ;; TODO: Remove when we have modular Trilinos packages?
+  (package
+    (name "trilinos-serial-xyce")
+    (version "12.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/trilinos/Trilinos")
+             (commit (string-append "trilinos-release-"
+                                    (string-map (lambda (chr)
+                                                  (case chr
+                                                    ((#\.) #\-)
+                                                    (else chr)))
+                                                version)))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1smz3wlpfyjn0czmpl8bj4hw33p1zi9nnfygpsx7jl1523nypa1n"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Delete unneeded tribits(build system) directory which makes
+          ;; validate-runpath phase to fail.
+          (add-before 'validate-runpath 'delete-tribits
+            (lambda _
+              (delete-file-recursively
+               (string-append #$output "/lib/cmake/tribits")))))
+      #:configure-flags
+      #~(list "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
+              "-DCMAKE_C_FLAGS=-O3 -fPIC"
+              "-DCMAKE_Fortran_FLAGS=-O3 -fPIC"
+              "-DTrilinos_ENABLE_NOX=ON"
+              "-DNOX_ENABLE_LOCA=ON"
+              "-DTrilinos_ENABLE_EpetraExt=ON"
+              "-DEpetraExt_BUILD_BTF=ON"
+              "-DEpetraExt_BUILD_EXPERIMENTAL=ON"
+              "-DEpetraExt_BUILD_GRAPH_REORDERINGS=ON"
+              "-DTrilinos_ENABLE_TrilinosCouplings=ON"
+              "-DTrilinos_ENABLE_Ifpack=ON"
+              "-DTrilinos_ENABLE_Isorropia=ON"
+              "-DTrilinos_ENABLE_AztecOO=ON"
+              "-DTrilinos_ENABLE_Belos=ON"
+              "-DTrilinos_ENABLE_Teuchos=ON"
+              "-DTeuchos_ENABLE_COMPLEX=ON"
+              "-DTrilinos_ENABLE_Amesos=ON"
+              "-DAmesos_ENABLE_KLU=ON"
+              "-DAmesos_ENABLE_UMFPACK=ON"
+              "-DTrilinos_ENABLE_Sacado=ON"
+              "-DTrilinos_ENABLE_Kokkos=OFF"
+              "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF"
+              "-DTPL_ENABLE_AMD=ON"
+              "-DTPL_ENABLE_UMFPACK=ON"
+              "-DTPL_ENABLE_BLAS=ON"
+              "-DTPL_ENABLE_LAPACK=ON")))
+    (native-inputs (list gfortran swig))
+    (inputs (list boost lapack suitesparse))
+    (home-page "https://trilinos.org")
+    (synopsis "Engineering and scientific problems algorithms")
+    (description
+     "The Trilinos Project is an effort to develop algorithms and enabling
+technologies within an object-oriented software framework for the solution of
+large-scale, complex multi-physics engineering and scientific problems.  A
+unique design feature of Trilinos is its focus on packages.")
+    (license (list license:lgpl2.1+
+                   license:bsd-3))))
+
+(define trilinos-parallel-xyce
+  (package
+    (inherit trilinos-serial-xyce)
+    (name "trilinos-parallel-xyce")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments trilinos-serial-xyce)
+       ((#:configure-flags flags)
+        #~(cons* "-DTrilinos_ENABLE_ShyLU=ON"
+                 "-DTrilinos_ENABLE_Zoltan=ON"
+                 "-DTPL_ENABLE_MPI=ON"
+                 #$flags))))
+    (inputs
+     (modify-inputs (package-inputs trilinos-serial-xyce)
+       (prepend openmpi)))))
+
 (define-public verilator
   (package
     (name "verilator")
@@ -2544,6 +2647,68 @@ from ALSA, ESD, and COMEDI sources.  This package currently does not include
 support for ESD or COMEDI sources.")
     (home-page "https://xoscope.sourceforge.net/")
     (license license:gpl2+))))
+
+(define-public xyce-serial
+  (package
+    (name "xyce-serial")
+    (version "6.8")
+    (source
+     (origin (method url-fetch)
+             (uri (string-append "https://archive.org/download/Xyce-"
+                                 version "/Xyce-" version ".tar.gz"))
+             (sha256
+              (base32
+               "09flp1xywbb2laayd9rg8vd0fjsh115y6k1p71jacy0nrbdvvlcg"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:configure-flags
+      #~(list
+         "CXXFLAGS=-O3"
+         (string-append "CFLAGS="
+                        " -Wno-error=builtin-declaration-mismatch"
+                        " -Wno-error=implicit-function-declaration"
+                        " -Wno-error=implicit-int")
+         (string-append "ARCHDIR=" #$trilinos-serial-xyce))))
+    (native-inputs
+     (list bison-3.0                    ;'configure' fails with Bison 3.4
+           flex
+           gfortran))
+    (inputs
+     (list fftw lapack suitesparse trilinos-serial-xyce))
+    (home-page "https://xyce.sandia.gov/")
+    (synopsis "High-performance analog circuit simulator")
+    (description
+     "Xyce is a SPICE-compatible, high-performance analog circuit simulator,
+capable of solving extremely large circuit problems by supporting large-scale
+parallel computing platforms.  It also supports serial execution.")
+    (license license:gpl3+)))
+
+(define-public xyce-parallel
+  (package
+    (inherit xyce-serial)
+    (name "xyce-parallel")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments xyce-serial)
+       ((#:configure-flags flags)
+        #~(list "CXXFLAGS=-O3"
+                "CXX=mpiCC"
+                "CC=mpicc"
+                "F77=mpif77"
+                "--enable-mpi"
+                (string-append
+                 "CFLAGS="
+                 " -Wno-error=builtin-declaration-mismatch"
+                 " -Wno-error=implicit-function-declaration"
+                 " -Wno-error=implicit-int")
+                (string-append "ARCHDIR=" #$trilinos-parallel-xyce)))))
+    (propagated-inputs (list openmpi))
+    (inputs
+     (modify-inputs (package-inputs xyce-serial)
+       (append zlib)
+       (replace "trilinos-serial-xyce" trilinos-parallel-xyce)))))
 
 (define-public yosys
   (package

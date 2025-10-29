@@ -367,8 +367,8 @@ operations in 3D space.")
   (sbcl-package->clasp-package sbcl-3d-matrices))
 
 (define-public sbcl-3d-quaternions
-  (let ((commit "b79c15cca8d9c409216a6cee8ec9e182dcdec9e2")
-        (revision "0"))
+  (let ((commit "f477801d1c85020f8173d2951a54e7be10460048")
+        (revision "1"))
     (package
       (name "sbcl-3d-quaternions")
       (version (git-version "1.0.0" revision commit))
@@ -376,17 +376,17 @@ operations in 3D space.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-quaternions")
+               (url "https://codeberg.org/shinmera/3d-quaternions")
                (commit commit)))
          (file-name (git-file-name "cl-3d-quaternions" version))
          (sha256
-          (base32 "1mrq6yhb90mhvxdkg3fx58ci5yj5xlixbbzf1q6p76wyq40qjv76"))))
+          (base32 "1vyagfn432d8gzhfcg1wy38zygks78by8q75qiybv4iarg41lm8i"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
       (inputs
        (list sbcl-3d-matrices sbcl-3d-vectors sbcl-documentation-utils))
-      (home-page "https://shinmera.github.io/3d-quaternions/")
+      (home-page "https://codeberg.org/shinmera/3d-quaternions")
       (synopsis "Quaternion and dual-quaternion functionality in Common Lisp")
       (description
        "This is a library for quaternions.  It contains most of the quaternion
@@ -400,11 +400,12 @@ most modern systems and compilers.")
 (define-public cl-3d-quaternions
   (sbcl-package->cl-source-package sbcl-3d-quaternions))
 
-;; TODO: Build failure:
-;; https://github.com/Shinmera/3d-quaternions/issues/2
-;;
-;; (define-public ecl-3d-quaternions
-;;   (sbcl-package->ecl-package sbcl-3d-quaternions))
+(define-public ecl-3d-quaternions
+  (package
+    (inherit (sbcl-package->ecl-package sbcl-3d-quaternions))
+    (arguments
+     ;; See <https://codeberg.org/shinmera/3d-quaternions/issues/1>.
+     (list #:tests? #f))))
 
 (define-public clasp-3d-quaternions
   (sbcl-package->clasp-package sbcl-3d-quaternions))
@@ -3702,7 +3703,7 @@ initialization methods.")
 (define-public sbcl-charje.loop
   (package
     (name "sbcl-charje.loop")
-    (version "1.0.1")
+    (version "1.1.0")
     (source
      (origin
        (method git-fetch)
@@ -3712,7 +3713,7 @@ initialization methods.")
        (file-name (git-file-name "cl-charje.loop" version))
        (sha256
         (base32
-         "0gp4v2awlrrqpvf2hamp51590flfin212dfccqjjxdhf4hkm8450"))))
+         "111y4g9l39s6pmbwglas9ivz7lzpzxbix1d52d7iapmpx61nim0f"))))
     (build-system asdf-build-system/sbcl)
     (inputs
      (list sbcl-alexandria
@@ -3735,6 +3736,46 @@ non-consing when possible.")
 
 (define-public clasp-charje.loop
   (sbcl-package->clasp-package sbcl-charje.loop))
+
+(define-public sbcl-charje.lambda-list
+  (package
+    (name "sbcl-charje.lambda-list")
+    (version "0.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.sr.ht/~charje/lambda-list")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name "cl-charje.lambda-list" version))
+       (sha256
+        (base32
+         "1yb96w6alaqg7lllwpl9m5lmcq6r03bhcn84wnhxdzmy3vh93dkd"))))
+    (build-system asdf-build-system/sbcl)
+    (inputs
+     (list
+      sbcl-binding-arrows
+      sbcl-charje.loop
+      sbcl-ctype))
+    (home-page "https://git.sr.ht/~charje/lambda-list")
+    (synopsis "Common Lisp lambda list parsing and manipulation library")
+    (description
+     "charje.lambda-list can parse every kind of lambda list defined in the
+ANSI Common Lisp standard.  Parsing yields only one object that has all the
+parsed parts of the lambda list inside.  New kinds of lambda lists can be made
+too.")
+    (license license:agpl3+)))
+
+(define-public cl-charje.lambda-list
+  (sbcl-package->cl-source-package sbcl-charje.lambda-list))
+
+;; TODO: Waiting on next ecl release.
+;; See: https://gitlab.com/embeddable-common-lisp/ecl/-/issues/750
+;; (define-public ecl-charje.lambda-list
+;;   (sbcl-package->ecl-package sbcl-charje.lambda-list))
+
+(define-public clasp-charje.lambda-list
+  (sbcl-package->clasp-package sbcl-charje.lambda-list))
 
 (define-public sbcl-chemboy
   (package
@@ -3871,8 +3912,8 @@ the format used by the popular compression tool bzip2.")
   (sbcl-package->clasp-package sbcl-chipz))
 
 (define-public sbcl-chirp
-  (let ((commit "01c79fa41939688216d1f86d0766a687becb0654")
-        (revision "1"))
+  (let ((commit "49050a0765736ffbed82ccd09cafdfdcf42884c1")
+        (revision "2"))
     (package
       (name "sbcl-chirp")
       (version (git-version "0.2.0" revision commit))
@@ -3880,11 +3921,11 @@ the format used by the popular compression tool bzip2.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/chirp")
+               (url "https://codeberg.org/shinmera/chirp")
                (commit commit)))
          (file-name (git-file-name "chirp" version))
          (sha256
-          (base32 "10xlz1vwdv3jv48kmpndpnrg6672m0r5vsjgm2pksfl8bc05j2m0"))))
+          (base32 "0f6syqam0vsldnqdbccfzx4zqw0jcqyv8yw947qlm9n8zpkhhm06"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        `(#:asd-systems '("chirp-core" "chirp-dexador" "chirp-drakma" "chirp")))
@@ -3901,7 +3942,7 @@ the format used by the popular compression tool bzip2.")
          ("split-sequence" ,sbcl-split-sequence)
          ("uuid" ,sbcl-uuid)
          ("yason" ,sbcl-yason)))
-      (home-page "https://shinmera.github.io/chirp/")
+      (home-page "https://codeberg.org/shinmera/chirp")
       (synopsis "Twitter client library for Common Lisp")
       (description
        "This package provides a Common Lisp Twitter client featuring full API
@@ -8387,8 +8428,8 @@ Common Lisp with support of other audio formats available on GNU/Linux systems:
   (sbcl-package->ecl-package sbcl-cl-mixed))
 
 (define-public sbcl-cl-modio
-  (let ((commit "2fd288af27b574f448357fa6de4b42acf44e2f11")
-        (revision "1"))
+  (let ((commit "b1322bbfb306f5fbd39ef3141150a213603c5d22")
+        (revision "2"))
     (package
       (name "sbcl-cl-modio")
       (version (git-version "1.0.0" revision commit))
@@ -8396,10 +8437,10 @@ Common Lisp with support of other audio formats available on GNU/Linux systems:
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/cl-modio/")
+               (url "https://codeberg.org/shinmera/cl-modio")
                (commit commit)))
          (sha256
-          (base32 "0hz87v81pi8kr2c7az30czpdf7v757lkzlsmdcc59p94pipca7m9"))
+          (base32 "11njccizmpak57fxprvf84xbx45r03xgyrqbdjdhwrj1r1k9fdny"))
          (file-name (git-file-name "cl-modio" version))))
       (build-system asdf-build-system/sbcl)
       (inputs
@@ -8416,7 +8457,7 @@ Common Lisp with support of other audio formats available on GNU/Linux systems:
 for games and other applications.  It covers the full v1 API and includes
 convenience methods to make interacting with the API as well as syncing mods
 and so on easy.")
-      (home-page "https://shinmera.github.io/cl-modio/")
+      (home-page "https://codeberg.org/shinmera/cl-modio")
       (license license:zlib))))
 
 (define-public cl-modio
@@ -10187,8 +10228,8 @@ Development into CL+SSL was done by David Lichteblau.")
          ((#:tests? _ #f) #f))))))
 
 (define-public sbcl-cl-steamworks
-  (let ((commit "9d6a4de653a8cc256ae35e0298912b518aa92ba3")
-        (revision "1"))
+  (let ((commit "95f25ae89d6ecc1a9461720d91d208e537eb8f17")
+        (revision "2"))
     (package
       (name "sbcl-cl-steamworks")
       (version (git-version "1.0.0" revision commit))
@@ -10196,10 +10237,10 @@ Development into CL+SSL was done by David Lichteblau.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/cl-steamworks/")
+               (url "https://codeberg.org/shinmera/cl-steamworks")
                (commit commit)))
          (sha256
-          (base32 "1fzj3rlqw1kwdlmh0ga0y71p2n1adflcamzx4yp9kga552c1db5j"))
+          (base32 "1h9qz603ab62sw0j7yyixb20z05pfgxqpg8mhd8zxhgmfm7cccy7"))
          (file-name (git-file-name "cl-steamworks" version))))
       (build-system asdf-build-system/sbcl)
       (inputs
@@ -10208,13 +10249,14 @@ Development into CL+SSL was done by David Lichteblau.")
              sbcl-cffi
              sbcl-documentation-utils
              sbcl-float-features
+             sbcl-pathname-utils
              sbcl-trivial-features
              sbcl-trivial-garbage
              sbcl-trivial-gray-streams))
       (synopsis "Wrapper for the Valve SteamWorks API")
       (description "This is a wrapper library to allow you to interface with
 the Valve SteamWorks API.")
-      (home-page "https://shinmera.github.io/cl-steamworks/")
+      (home-page "https://shinmera.com/docs/cl-steamworks")
       (license license:zlib))))
 
 (define-public cl-steamworks
@@ -12953,8 +12995,8 @@ collecting values easier.")
   (sbcl-package->ecl-package sbcl-collectors))
 
 (define-public sbcl-colored
-  (let ((commit "bee87efb0b047da0f071f5cf1457997ab5f93feb")
-        (revision "1"))
+  (let ((commit "54e6184da4aca380cc7240c417f1e2a0d76b3a84")
+        (revision "2"))
     (package
       (name "sbcl-colored")
       (version (git-version "1.0.0" revision commit))
@@ -12962,11 +13004,11 @@ collecting values easier.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/colored/")
+               (url "https://codeberg.org/shinmera/colored")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0mpg91r6yfb9xqccd4r8z3hl2qzjhdj6daswb1cinrm8ffxrvy5k"))))
+          (base32 "1n9k8rh2p7kb2ikxpgw8sywaxw0n5m3iky808dwc4hqz04piqmmh"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
@@ -12976,7 +13018,7 @@ collecting values easier.")
       (description
        "This is a library for representing and mapping colours between their
 various spaces.")
-      (home-page "https://shinmera.github.io/colored/")
+      (home-page "https://shinmera.com/docs/colored")
       (license license:zlib))))
 
 (define-public cl-colored
@@ -13715,8 +13757,8 @@ the ncurses terminal library.")
   (sbcl-package->ecl-package sbcl-croatoan))
 
 (define-public sbcl-crypto-shortcuts
-  (let ((commit "7efd22d80e867cd8c9f8f363d4fe7b51ee2dadc0")
-        (revision "1"))
+  (let ((commit "9b77282d7d52ff89753bd71b5584169b53942dbc")
+        (revision "2"))
     (package
       (name "sbcl-crypto-shortcuts")
       (version (git-version "2.0.0" revision commit))
@@ -13724,19 +13766,19 @@ the ncurses terminal library.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/crypto-shortcuts")
+               (url "https://codeberg.org/shinmera/crypto-shortcuts")
                (commit commit)))
          (file-name (git-file-name "crypto-shortcuts" version))
          (sha256
-          (base32 "0c0m0ar04jn7qf2v8c4sivamlzki03r13rnxy8b3n27rh9r6hgin"))))
+          (base32 "1b0dzf84xzw444kib1744sls4l24zh3nx1cz77xbc8qphic0m0ms"))))
       (build-system asdf-build-system/sbcl)
       (inputs
-       (list sbcl-cl-base64 sbcl-flexi-streams sbcl-ironclad))
+       (list sbcl-cl-base64 sbcl-cl-base32 sbcl-flexi-streams sbcl-ironclad))
       (synopsis "Collection of common cryptography functions")
       (description
        "This is a collection of common cryptography functions for Common
 Lisp.")
-      (home-page "https://shinmera.github.io/crypto-shortcuts/")
+      (home-page "https://shinmera.com/docs/crypto-shortcuts")
       (license license:zlib))))
 
 (define-public cl-crypto-shortcuts

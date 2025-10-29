@@ -14,7 +14,7 @@
 # Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 # Copyright © 2018 Alex Vong <alexvong1995@gmail.com>
 # Copyright © 2019, 2023 Efraim Flashner <efraim@flashner.co.il>
-# Copyright © 2020, 2021, 2023 Maxim Cournoyer <maxim@guixotic.coop>
+# Copyright © 2020, 2021, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 # Copyright © 2021 Chris Marusich <cmmarusich@gmail.com>
 # Copyright © 2021 Andrew Tropin <andrew@trop.in>
 # Copyright © 2023 Clément Lassieur <clement@lassieur.org>
@@ -450,6 +450,10 @@ AUX_FILES =						\
   gnu/packages/aux-files/findclass.php			\
   gnu/packages/aux-files/guix.vim			\
   gnu/packages/aux-files/guix-nvim.vim			\
+  gnu/packages/aux-files/linux-libre/6.17-arm64.conf	\
+  gnu/packages/aux-files/linux-libre/6.17-i686.conf	\
+  gnu/packages/aux-files/linux-libre/6.17-riscv.conf	\
+  gnu/packages/aux-files/linux-libre/6.17-x86_64.conf	\
   gnu/packages/aux-files/linux-libre/6.16-arm.conf	\
   gnu/packages/aux-files/linux-libre/6.16-arm64.conf	\
   gnu/packages/aux-files/linux-libre/6.16-riscv.conf	\
@@ -586,6 +590,7 @@ SCM_TESTS =					\
   tests/http-client.scm				\
   tests/inferior.scm				\
   tests/ipfs.scm				\
+  tests/ld-wrapper.scm				\
   tests/lint.scm				\
   tests/modules.scm				\
   tests/monads.scm				\

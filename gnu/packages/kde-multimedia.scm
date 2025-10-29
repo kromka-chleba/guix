@@ -369,13 +369,13 @@ This package is part of the KDE multimedia module.")
 (define-public haruna
   (package
     (name "haruna")
-    (version "1.5.0")
+    (version "1.6.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/haruna/" version
                                   "/haruna-" version ".tar.xz"))
               (sha256
-               (base32 "0pgg90z8jykzndmgb32j0avlwrw0n0x3n9gmbs58c238ydi4xryk"))))
+               (base32 "1nlzilqajdiwf6daa9g7kiw6s0lc10q1zb23icq5ckc61492cwhq"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1232,3 +1232,33 @@ CDs.")
     (description "This package provides YouTube video player based
 on QtMultimedia and @command{yt-dlp}.")
     (license license:gpl3+)))
+
+(define-public rattlesnake
+  (let ((commit "2f0631f201f16e1c17bcf82af24087370b799562") ;no tags
+         (revision "0"))
+    (package
+      (name "rattlesnake")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://invent.kde.org/multimedia/rattlesnake")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0iaandlbv2v4a6wsdxk19ynj77axd3kc72nw28bvbsfb0kqc0mai"))))
+      (build-system qt-build-system)
+      (arguments
+       (list #:qtbase qtbase
+             #:tests? #f)) ;no tests
+      (native-inputs
+       (list extra-cmake-modules))
+      (inputs
+       (list kirigami qtdeclarative qtmultimedia qtwayland))
+      (propagated-inputs
+       (list gstreamer gst-plugins-base gst-plugins-good))
+      (home-page "https://invent.kde.org/multimedia/rattlesnake")
+      (synopsis "Metronome")
+      (description "Rattlesnake is a metronome app.")
+      (license license:gpl3+))))

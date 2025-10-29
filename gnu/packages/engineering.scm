@@ -722,12 +722,21 @@ multipole-accelerated algorithm.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "083nz7vj7a334575smjry6257535h68gglh8a381xxa36dw96aqs"))))
+        (base32 "083nz7vj7a334575smjry6257535h68gglh8a381xxa36dw96aqs"))
+       (patches (search-patches "fritzing-0.9.6-fix-types.patch"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-files
+            (lambda _
+              ;; Trick the internal mechanism to load the parts
+              (substitute* "src/version/partschecker.cpp"
+                ((".*git_libgit2_init.*")
+                 "return \"083nz7vj7a334575smjry6257535h68gglh8a381xxa36dw96aqs\";"))
+              (substitute* "src/utils/textutils.cpp"
+                (("QUuid::createUuid\\(\\)") "QUuid()"))))
           (replace 'configure
             (lambda _
               ;; Integrate parts library
@@ -744,17 +753,22 @@ multipole-accelerated algorithm.")
                   "INCLUDEPATH += $$LIBGIT2INCLUDE\n"
                   "LIBS += -L$$LIBGIT2LIB -lgit2\n"))
                 (("^.*pri/libgit2detect.pri.") ""))
-              ;; Trick the internal mechanism to load the parts
-              (substitute* "src/version/partschecker.cpp"
-                ((".*git_libgit2_init.*")
-                 "return \"083nz7vj7a334575smjry6257535h68gglh8a381xxa36dw96aqs\";"))
-              ;; XXX: NixOS and Gento have a phase where they generate part
-              ;; SQLite library, have proper investigation if it's required in
-              ;; Guix as well.
               (invoke "qmake"
                       (string-append "QMAKE_LFLAGS_RPATH=-Wl,-rpath," #$output "/lib")
                       (string-append "PREFIX=" #$output)
-                      "phoenix.pro"))))))
+                      "phoenix.pro")))
+          (add-after 'install 'generate-parts-db
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out"))
+                    (env-qt-qpa-platform (getenv "QT_QPA_PLATFORM"))
+                    (env-qt-hash-seed (getenv "QT_HASH_SEED")))
+                (setenv "QT_QPA_PLATFORM" "offscreen")
+                (setenv "QT_HASH_SEED" "0")
+                (invoke (string-append out "/bin/Fritzing")
+                        "-db" (string-append out "/share/fritzing/parts/parts.db")
+                        "-folder" (string-append out "/share/fritzing"))
+                (setenv "QT_QPA_PLATFORM" env-qt-qpa-platform)
+                (setenv "QT_HASH_SEED" env-qt-hash-seed)))))))
     (native-inputs
      (list fritzing-parts))
     (inputs
@@ -2271,151 +2285,6 @@ and a fallback for environments without libc for Zydis.")
      "ASCO brings circuit optimization capabilities to existing SPICE simulators using a
 high-performance parallel differential evolution (DE) optimization algorithm.")
     (license license:gpl2+)))
-
-(define trilinos-serial-xyce
-  ;; Note: This is a Trilinos containing only the packages Xyce needs, so we
-  ;; keep it private.  See
-  ;; <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27344#248>.
-  ;; TODO: Remove when we have modular Trilinos packages?
-  (package
-    (name "trilinos-serial-xyce")
-    (version "12.12.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/trilinos/Trilinos")
-             (commit (string-append "trilinos-release-"
-                                    (string-map (lambda (chr)
-                                                  (case chr
-                                                    ((#\.) #\-)
-                                                    (else chr)))
-                                                version)))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1smz3wlpfyjn0czmpl8bj4hw33p1zi9nnfygpsx7jl1523nypa1n"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:out-of-source? #t
-       #:phases
-       (modify-phases %standard-phases
-         ;; Delete unneeded tribits(build system) directory which makes validate-runpath
-         ;; phase to fail.
-         (add-before 'validate-runpath 'delete-tribits
-           (lambda* (#:key outputs #:allow-other-keys)
-             (delete-file-recursively
-              (string-append (assoc-ref outputs "out")
-                             "/lib/cmake/tribits")))))
-       #:configure-flags
-       (list "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
-             "-DCMAKE_C_FLAGS=-O3 -fPIC"
-             "-DCMAKE_Fortran_FLAGS=-O3 -fPIC"
-             "-DTrilinos_ENABLE_NOX=ON"
-             "-DNOX_ENABLE_LOCA=ON"
-             "-DTrilinos_ENABLE_EpetraExt=ON"
-             "-DEpetraExt_BUILD_BTF=ON"
-             "-DEpetraExt_BUILD_EXPERIMENTAL=ON"
-             "-DEpetraExt_BUILD_GRAPH_REORDERINGS=ON"
-             "-DTrilinos_ENABLE_TrilinosCouplings=ON"
-             "-DTrilinos_ENABLE_Ifpack=ON"
-             "-DTrilinos_ENABLE_Isorropia=ON"
-             "-DTrilinos_ENABLE_AztecOO=ON"
-             "-DTrilinos_ENABLE_Belos=ON"
-             "-DTrilinos_ENABLE_Teuchos=ON"
-             "-DTeuchos_ENABLE_COMPLEX=ON"
-             "-DTrilinos_ENABLE_Amesos=ON"
-             "-DAmesos_ENABLE_KLU=ON"
-             "-DAmesos_ENABLE_UMFPACK=ON"
-             "-DTrilinos_ENABLE_Sacado=ON"
-             "-DTrilinos_ENABLE_Kokkos=OFF"
-             "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF"
-             "-DTPL_ENABLE_AMD=ON"
-             "-DTPL_ENABLE_UMFPACK=ON"
-             "-DTPL_ENABLE_BLAS=ON"
-             "-DTPL_ENABLE_LAPACK=ON")))
-    (native-inputs (list gfortran swig))
-    (inputs (list boost lapack suitesparse))
-    (home-page "https://trilinos.org")
-    (synopsis "Engineering and scientific problems algorithms")
-    (description
-     "The Trilinos Project is an effort to develop algorithms and enabling
-technologies within an object-oriented software framework for the solution of
-large-scale, complex multi-physics engineering and scientific problems.  A
-unique design feature of Trilinos is its focus on packages.")
-    (license (list license:lgpl2.1+
-                   license:bsd-3))))
-
-(define-public xyce-serial
-  (package
-    (name "xyce-serial")
-    (version "6.8")
-    (source
-     (origin (method url-fetch)
-             (uri (string-append "https://archive.org/download/Xyce-"
-                                 version "/Xyce-" version ".tar.gz"))
-             (sha256
-              (base32
-               "09flp1xywbb2laayd9rg8vd0fjsh115y6k1p71jacy0nrbdvvlcg"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:tests? #f
-       #:configure-flags
-       (list
-        "CXXFLAGS=-O3"
-        (string-append "ARCHDIR="
-                       (assoc-ref %build-inputs "trilinos")))))
-    (native-inputs
-     `(("bison" ,bison-3.0)                  ;'configure' fails with Bison 3.4
-       ("flex" ,flex)
-       ("fortran" ,gfortran)))
-    (inputs
-     `(("fftw" ,fftw)
-       ("suitesparse" ,suitesparse)
-       ("lapack" ,lapack)
-       ("trilinos" ,trilinos-serial-xyce)))
-    (home-page "https://xyce.sandia.gov/")
-    (synopsis "High-performance analog circuit simulator")
-    (description
-     "Xyce is a SPICE-compatible, high-performance analog circuit simulator,
-capable of solving extremely large circuit problems by supporting large-scale
-parallel computing platforms.  It also supports serial execution.")
-    (license license:gpl3+)))
-
-(define trilinos-parallel-xyce
-  (package (inherit trilinos-serial-xyce)
-    (name "trilinos-parallel-xyce")
-    (arguments
-     `(,@(substitute-keyword-arguments (package-arguments trilinos-serial-xyce)
-           ((#:configure-flags flags)
-            `(append (list "-DTrilinos_ENABLE_ShyLU=ON"
-                           "-DTrilinos_ENABLE_Zoltan=ON"
-                           "-DTPL_ENABLE_MPI=ON")
-                     ,flags)))))
-    (inputs
-     `(("mpi" ,openmpi)
-       ,@(package-inputs trilinos-serial-xyce)))))
-
-(define-public xyce-parallel
-  (package (inherit xyce-serial)
-    (name "xyce-parallel")
-    (arguments
-     `(,@(substitute-keyword-arguments (package-arguments xyce-serial)
-           ((#:configure-flags flags)
-            `(list "CXXFLAGS=-O3"
-                   "CXX=mpiCC"
-                   "CC=mpicc"
-                   "F77=mpif77"
-                   "--enable-mpi"
-                   (string-append
-                    "ARCHDIR="
-                    (assoc-ref %build-inputs "trilinos")))))))
-    (propagated-inputs
-     `(("mpi" ,openmpi)))
-    (inputs
-     `(("trilinos" ,trilinos-parallel-xyce)
-       ,@(alist-delete "trilinos"
-                       (package-inputs xyce-serial))))))
 
 (define-public librepcb
   (package

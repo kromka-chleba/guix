@@ -604,6 +604,38 @@ Satisfiability modulo theories} solver explore viable execution paths and find
 counterexamples for you.")
     (license (list license:asl2.0 license:expat license:psfl))))
 
+(define-public python-cucumber-expressions
+  (package
+    (name "python-cucumber-expressions")
+    (version "18.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cucumber/cucumber-expressions")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1syxa142v9sajy7n2az7d0jc6lsjg93kw659pxfs3g6ddrngpdri"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Project's repository contains go, java, javascript, perl, python
+          ;; and ruby implementations.
+          (add-after 'unpack 'chdir-python
+            (lambda _
+              (chdir "python"))))))
+    (native-inputs
+     (list python-poetry-core python-pytest python-pyyaml))
+    (home-page "https://github.com/cucumber/cucumber-expressions")
+    (synopsis "A simpler alternative to Regular Expressions")
+    (description
+     "This package provides an alternative to Regular Expressions with a more
+intuitive syntax.")
+    (license license:expat)))
+
 (define-public python-cucumber-tag-expressions
   (package
     (name "python-cucumber-tag-expressions")
@@ -629,13 +661,12 @@ counterexamples for you.")
             (lambda _
               (chdir "python"))))))
     (native-inputs
-     (list python-pathpy
+     (list python-path
            python-pytest
            python-pytest-html
            python-pyyaml
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (home-page "https://github.com/cucumber/tag-expressions")
     (synopsis "Tag-expression parser for cucumber/behave")
     (description
@@ -1339,7 +1370,7 @@ result documents that can be read by tools such as Jenkins or Bamboo.")
       ;; sync. kernprof.line_profiler = . kernprof.__version__ = 4.2.0.
       #~(list "--deselect=tests/test_cli.py::test_version_agreement")))
     (native-inputs
-     (list python-cython-3
+     (list python-cython
            python-pytest
            python-setuptools
            python-ubelt
@@ -2158,6 +2189,36 @@ rounds that are calibrated to the chosen timer.")
 Python code formatter \"black\".")
     (license license:expat)))
 
+(define-public python-pytest-cases
+  (package
+    (name "python-pytest-cases")
+    (version "3.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_cases" version))
+       (sha256
+        (base32 "13vzivzca36g3rbz3k3zny7jqv35vsl2z0fl32ik3j95npqq3qf4"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest-asyncio
+           python-pytest-bootstrap
+           python-pytest-harvest
+           python-pytest-steps
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-decopatch
+           python-makefun
+           python-packaging))
+    (home-page "https://github.com/smarie/python-pytest-cases")
+    (synopsis "Separate test code from test cases in pytest.")
+    (description
+     "This package provides a Pytest plugin which leverages
+@code{@@pytest.mark.parametrize} decorator separating test cases from test
+functions.")
+    (license license:bsd-3)))
+
 (define-public python-pytest-celery
   (package
     (name "python-pytest-celery")
@@ -2656,6 +2717,35 @@ times and detect flakyness.")
      "Pytest plugin providing a fixture interface for
 @url{https://github.com/spulec/freezegun, freezegun}.")
     (license license:expat)))
+
+(define-public python-pytest-harvest
+  (package
+    (name "python-pytest-harvest")
+    (version "1.10.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-harvest" version))
+       (sha256
+        (base32 "066lqx46hqlvllq6ppmyi47fjc1dww7jwa4wfkkx2hrf3z7s9kr7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;XXX: cycle with python-pytest-harvest
+    (native-inputs
+     (list python-pytest-bootstrap
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-decopatch
+           python-makefun
+           python-packaging))
+    (home-page "https://github.com/smarie/python-pytest-harvest")
+    (synopsis "Pytest plugin to store data during runs")
+    (description
+     "This package implements a functionality to store data created during your
+pytest tests execution, and retrieve it at the end of the session, e.g. for
+applicative benchmarking purposes.")
+    (license license:bsd-3)))
 
 (define-public python-pytest-helpers-namespace
   (package
@@ -3482,6 +3572,33 @@ unexpectedly.")
      "This package provides Pytest extension which disables all network calls flowing
 through Python's socket interface")
     (license license:expat)))
+
+(define-public python-pytest-steps
+  (package
+    (name "python-pytest-steps")
+    (version "1.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-steps" version))
+       (sha256
+        (base32 "05r2ch7191saj7sw6d47bfa5vnyyj157dl8hvlcc78xx6jyxy46j"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;XXX: cycles with python-pytest-harvest
+    (native-inputs
+     (list python-pytest-bootstrap
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-makefun
+           python-wrapt))
+    (home-page "https://github.com/smarie/python-pytest-steps")
+    (synopsis "Pytest plugin to create step-wise / incremental tests")
+    (description
+     "This package implements a functionality to share a state / intermediate
+ results across test steps.")
+    (license license:bsd-3)))
 
 (define-public python-pytest-subprocess
   (package

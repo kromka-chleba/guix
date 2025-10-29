@@ -2060,11 +2060,16 @@ that allows you to run services and through them access the Bitcoin Cash network
     (arguments
      (list
       #:test-flags
-      #~(list "-k" (string-append
-                    ;; ModuleNotFoundError: No module named 'pytest'
-                    "not test_parse_stdin"
-                    ;; AssertionError: 5 not greater than 20
-                    " and not test_setup"))
+      #~(list
+         ;; These tests require network.
+         "--ignore=beancount/web/web_test.py"
+         "-k" (string-join
+               (list "not test_parse_stdin" ; ModuleNotFoundError: 'pytest'
+                     "test_setup" ; AssertionError: 5 not greater than 20
+                     ;; Require network
+                     "test_bake_archive__known"
+                     "test_bake_directory")
+               " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
@@ -2380,7 +2385,7 @@ trading, and risk management in real-life.")
 (define-public optionmatrix
   (package
     (name "optionmatrix")
-    (version "1.4.3")
+    (version "1.4.4")
     (source
      (origin
        (method url-fetch)
@@ -2388,7 +2393,7 @@ trading, and risk management in real-life.")
              "mirror://sourceforge/optionmatrix/optionmatrix-"
              version ".tar.xz"))
        (sha256
-        (base32 "1zd0pfiphnijh1l94swb3mjrpmjsn37z11mklamd7zw6h2d4zh4d"))))
+        (base32 "0ijwj798jli5rw1dj8dkz6sqbsa4hia407imicrk3djqmhn1ky3z"))))
     (build-system gnu-build-system)
     (inputs
      (list gsl gtk+ ncurses))
@@ -2432,7 +2437,7 @@ interactive controls.  This package provides a GTK+ graphical user interface
                        (invoke "make" "cython"))))))
     (inputs (list ta-lib))
     (propagated-inputs (list python-numpy))
-    (native-inputs (list python-cython-3
+    (native-inputs (list python-cython
                          python-pandas
                          python-pytest
                          python-setuptools

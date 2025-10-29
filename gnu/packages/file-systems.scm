@@ -49,6 +49,7 @@
   #:use-module (guix build-system go)
   #:use-module (guix build-system linux-module)
   #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system qt)
   #:use-module (guix build-system trivial)
   #:use-module (guix utils)
   #:use-module (gnu packages)
@@ -2441,7 +2442,7 @@ filtering and ordering functionality.
 (define-public sirikali
   (package
     (name "sirikali")
-    (version "1.6.0")
+    (version "1.8.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2449,19 +2450,21 @@ filtering and ordering functionality.
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
-               (base32
-                "06cl7srxaqpzv7gcd17cl78qhrpqhdvpfcj4pr73fr5hhackrf52"))))
-    (build-system cmake-build-system)
+               (base32 "0z144ki7664aclnv3p0bpjlzknlsgldl85v76hs2bhnk1jjlgf5y"))))
+    (build-system qt-build-system)
     (arguments
-     '(#:tests? #f ;No tests
-       #:configure-flags '("-DQT5=true" "-DCMAKE_BUILD_TYPE=RELEASE")))
-    (inputs (list xdg-utils libpwquality libgcrypt libsecret qtbase-5))
+     (list
+      #:tests? #f                       ;No tests
+      #:qtbase qtbase
+      #:configure-flags #~(list "-DBUILD_WITH_QT6=true")))
+    (inputs (list xdg-utils libpwquality libgcrypt libsecret qtwayland))
     (native-inputs (list pkg-config))
     (home-page "https://mhogomchungu.github.io/sirikali/")
-    (synopsis "GUI front end to sshfs, ecryptfs, cryfs, gocryptfs, securefs, fscrypt and encfs")
-    (description "@dfn{SiriKali} is a Qt/C++ GUI application that manages
-+ecryptfs, cryfs, encfs, gocryptfs, fscrypt and securefs
-+based encrypted folders.")
+    (synopsis "GUI front end to file system encryption utilities")
+    (description
+     "SiriKali is a Qt/C++ GUI application for managing encrypted folders.  It
+supports various backends, including eCryptfs, CryFS, EncFS, gocryptfs, fscrypt,
+securefs, SSHFS, and Cryptomator.")
     (license license:gpl3+)))
 
 (define-public watcher

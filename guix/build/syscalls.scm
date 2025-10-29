@@ -10,6 +10,7 @@
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2024 Noah Evans <noahevans256@gmail.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -41,6 +42,7 @@
   #:use-module (ice-9 regex)
   #:use-module (ice-9 match)
   #:use-module (ice-9 ftw)
+  #:use-module (ice-9 threads)
   #:export (MS_RDONLY
             MS_NOSUID
             MS_NODEV
@@ -144,7 +146,11 @@
             CLONE_NEWUSER
             CLONE_NEWPID
             CLONE_NEWNET
+            CLONE_SIGHAND
+            CLONE_THREAD
+            CLONE_VM
             clone
+            safe-clone
             unshare
             setns
             get-user-ns
@@ -1146,6 +1152,9 @@ caller lacks root privileges."
 (define CLONE_NEWUSER        #x10000000)
 (define CLONE_NEWPID         #x20000000)
 (define CLONE_NEWNET         #x40000000)
+(define CLONE_SIGHAND	     #x00000800)
+(define CLONE_THREAD	     #x00010000)
+(define CLONE_VM	     #x00000100)
 
 (define %set-automatic-finalization-enabled?!
   ;; When using a statically-linked Guile, for instance in the initrd, we
@@ -1162,16 +1171,44 @@ caller lacks root privileges."
 Turning finalization off shuts down the finalization thread as a side effect."
       (->bool ((force proc) (if enabled? 1 0))))))
 
-(define-syntax-rule (without-automatic-finalization exp)
-  "Turn off automatic finalization within the dynamic extent of EXP."
+(define-syntax-rule (without-automatic-finalization body ...)
+  "Turn off automatic finalization within the dynamic extent of BODY.  This is
+useful to ensure there is no finalization thread."
   (let ((enabled? #t))
     (dynamic-wind
       (lambda ()
         (set! enabled? (%set-automatic-finalization-enabled?! #f)))
       (lambda ()
-        exp)
+        body ...)
       (lambda ()
         (%set-automatic-finalization-enabled?! enabled?)))))
+
+(define-syntax-rule (without-garbage-collection body ...)
+  "Turn off garbage collection within the dynamic extent of BODY.  This is useful
+to avoid the creation new garbage collection thread.  Note that pre-existing
+GC marker threads are only disabled, not terminated."
+  (dynamic-wind
+    (lambda ()
+      (gc-disable))
+    (lambda ()
+      body ...)
+    (lambda ()
+      (gc-enable))))
+
+(define-syntax-rule (without-threads body ...)
+  "Ensure the Guile finalizer thread is stopped and that garbage collection does
+not run.  Note that pre-existing GC marker threads are only disabled, not
+terminated.  This also leaves the signal handling thread to be disabled by
+another means, since there is no Guile API to do so."
+  ;; Note: the three kind of threads that Guile can spawn are the finalization
+  ;; thread, the signal thread, or the GC marker threads.
+  (without-automatic-finalization
+   (without-garbage-collection body ...)))
+
+(define (ensure-signal-delivery-thread)
+  "Ensure the signal delivery thread is spawned and its state set
+ to 'RUNNING'.  This is valid as of the implementation as of Guile 3.0.9."
+  (sigaction SIGUSR1))                  ;could be any signal
 
 ;; The libc interface to sys_clone is not useful for Scheme programs, so the
 ;; low-level system call is wrapped instead.  The 'syscall' function is
@@ -1215,22 +1252,58 @@ are shared between the parent and child processes."
                    (list err))
             ret)))))
 
+(define (safe-clone flags child parent)
+  "This is a raw clone syscall wrapper that ensures no Guile thread will be
+spawned during execution of the child.  `clone' is called with FLAGS.  CHILD
+is a thunk to run in the child process.  PARENT is procedure that accepts the
+child PID as argument.  This is useful in many contexts, such as when calling
+`unshare' or async-unsafe procedures in the child when the parent process
+memory (CLONE_VM) or threads (CLONE_THREAD) are shared with it."
+  ;; TODO: Contribute `clone' to Guile, and handle these complications there,
+  ;; similarly to how it's handled for scm_fork in posix.c.
+
+  ;; XXX: This is a hack: as of Guile 3.0.9, by starting the signal delivery
+  ;; thread in the parent, its state will be known as RUNNING, and the child
+  ;; won't attempt to start it itself.
+  (ensure-signal-delivery-thread)
+  (match (clone flags)
+    (0   (without-threads (child)))
+    (pid (parent pid))))
+
+(define (thread-count)
+  "Return the complete thread count of the current process.  Unlike
+`all-threads', this also counts the Guile signal delivery, and finalizer
+threads."
+  (scandir "/proc/self/task"
+           (negate (cut member <> '("." "..")))))
+
 (define unshare
   (let ((proc (syscall->procedure int "unshare" (list int))))
     (lambda (flags)
       "Disassociate the current process from parts of its execution context
-according to FLAGS, which must be a logical or of CLONE_NEW* constants.
-
-Note that CLONE_NEWUSER requires that the calling process be single-threaded,
-which is possible if and only if libgc is running a single marker thread; this
-can be achieved by setting the GC_MARKERS environment variable to 1.  If the
-calling process is multi-threaded, this throws to 'system-error' with EINVAL."
-      (let-values (((ret err)
-                    (without-automatic-finalization (proc flags))))
-        (unless (zero? ret)
-          (throw 'system-error "unshare" "~a: ~A"
-                 (list flags (strerror err))
-                 (list err)))))))
+according to FLAGS, which must be a logical or of CLONE_* constants.  When
+CLONE_NEWUSER, CLONE_SIGHAND, CLONE_THREAD or CLONE_VM are specified, this
+wrapper verifies the caller's environment is single-threaded.  If this
+requirement is not met, it produces a warning and throws to 'system-error'
+with EINVAL."
+      (let* ((require-single-thread? (logtest (logior CLONE_NEWUSER
+                                                      CLONE_SIGHAND
+                                                      CLONE_THREAD
+                                                      CLONE_VM)
+                                              flags))
+             (warn/maybe (lambda ()
+                           (when (and require-single-thread?
+                                      (< 1 (length (thread-count))))
+                             (format (current-warning-port)
+                                     "warning: unshare single-thread \
+requirement violated~%")))))
+        (let-values (((ret err) (begin
+                                  (warn/maybe)
+                                  (proc flags))))
+          (unless (zero? ret)
+            (throw 'system-error "unshare" "~a: ~A"
+                   (list flags (strerror err))
+                   (list err))))))))
 
 (define setns
   ;; Some systems may be using an old (pre-2.14) version of glibc where there

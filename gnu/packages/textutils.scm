@@ -25,6 +25,8 @@
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2021 Bonface Munyoki Kilyungi <me@bonfacemunyoki.com>
+;;; Copyright © 2021 Tanguy Le Carrour <tanguy@bioneland.org>
+;;; Copyright © 2022, 2024 kiasoc5 <kiasoc5@disroot.org>
 ;;; Copyright © 2022 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022 M <matf@disr.it>
@@ -32,8 +34,9 @@
 ;;; Copyright © 2023 Reza Housseini <reza@housseini.me>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2024 Timotej Lazar <timotej.lazar@araneo.si>
-;;; Copyright © 2024-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 John Khoo <johnkhootf@gmail.com>
@@ -99,6 +102,7 @@
   #:use-module (gnu packages ruby)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages slang)
+  #:use-module (gnu packages sphinx)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
@@ -1169,6 +1173,48 @@ Eclipse and NetBeans.  Completion information is typically specified in an XML
 file, but can even be dynamic.")
     (license license:bsd-3)))
 
+(define-public tldr
+  (package
+    (name "tldr")
+    (version "3.4.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tldr-pages/tldr-python-client")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06rhpywaypqwakw8v187cdf52yl5c7fm19f1q7nbbsydbs0ndmb1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This test fails. It tries to open a network socket.
+      #:test-flags #~(list "-k" "not test_error_message")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'build-doc
+            (lambda _
+              (invoke "make" "-C" "docs"))))))
+    (native-inputs
+     (list python-hatchling
+           python-pytest
+           python-sphinx-argparse))
+    (inputs
+     (list python-colorama
+           python-termcolor
+           python-shtab))
+    (home-page "https://github.com/tldr-pages/tldr-python-client")
+    (synopsis "Command-line client for tldr pages")
+    (description "This package provides the @code{tldr} command allowing users
+to view @code{tldr} pages from a shell.  The @code{tldr} pages are a community
+effort to simplify the man pages with practical examples described in
+@url{https://tldr.sh/}.")
+    (license license:expat)))
+
+(define-public python-tldr
+  (deprecated-package "python-tldr" tldr))
+
 (define-public txt2tags
   (package
     (name "txt2tags")
@@ -1338,97 +1384,52 @@ OpenDocument presentations (*.odp).")
 (define-public cobib
   (package
     (name "cobib")
-    (version "5.4.0")
+    (version "6.0.1")
     (source
      (origin
-       (method git-fetch)               ;no tests in PyPI archive
+       (method git-fetch)
        (uri (git-reference
               (url "https://gitlab.com/cobib/cobib")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0amyfacm97av9srpwxvif16hcg8w9psdl4v70syihbwchyrbcsg9"))))
+        (base32 "0fsbhhkghjs6frbfz1x152ypd32vpkn8na9v54gldfhjk5xfzkmg"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 302 passed, 43 skipped, 403 deselected
+      ;; tests: 563 passed, 33 skipped
       #:test-flags
       #~(list
-         "-k" (string-join
-               ;; Tests trying to access api.zotero.org.
-               (list "not test_cache"
-                     "test_command"
-                     "test_event_post_zotero_import"
-                     "test_event_pre_zotero_import"
-                     "test_fetch"
-                     "test_fetch_custom_user_id"
-                     ;; XXX: Various tests fail which require git history.
-                     "test_cmdline"
-                     "test_command"
-                     "test_event_post_redo_command"
-                     "test_event_post_undo_command"
-                     "test_event_pre_redo_command"
-                     "test_event_pre_undo_command"
-                     "test_skipping_redone_commits"
-                     "test_skipping_undone_commits"
-                     "test_overwrite_label"
-                     "test_configured_label_default"
-                     "test_disambiguate_label"
-                     "test_command_yes"
-                     "test_command_edit"
-                     "test_command_edit_no_changes"
-                     "test_command_skip"
-                     "test_command_fields"
-                     "test_command_context"
-                     "test_command_inline"
-                     "test_event_pre_git_commit"
-                     "test_warn_insufficient_config"
-                     "test_event_pre_init_command"
-                     "test_lint_auto_format"
-                     "test_field_cmdline_switch"
-                     "test_command_resume"
-                     "test_command_resume_graceful"
-                     "test_stringify"
-                     "test_handling_of_missing_schema"
-                     "test_main"
-                     "test_config_theme"
-                     "test_config_syntax"
-                     "test_config_user_tags"
-                     "test_log"
-                     "test_help"
-                     "test_empty_database"
-                     "test_prompt_action"
-                     "test_prompt_ask"
-                     "test_catch_invalid_command"
-                     "test_jump"
-                     "test_jump_missing"
-                     "test_jump_out_of_view"
-                     "test_sort"
-                     "test_sort_twice"
-                     "test_filter"
-                     "test_preset"
-                     "test_delete"
-                     "test_note_edit"
-                     "test_note_reset"
-                     "test_note_unsaved_quit"
-                     "test_note_unsaved_open_another"
-                     "test_search"
-                     "test_empty_results"
-                     "test_expand_all"
-                     "test_motion"
-                     "test_select"
-                     "test_open"
-                     "test_absolute_path")
-               " and not ")
-         "tests")
+         ;; Most of the tests fail to compare "/tmp" and "~/" paths.
+         #$@(map (lambda (file) (string-append "--ignore=" "tests/" file))
+                 (list "commands/test_add.py"
+                       "commands/test_lint.py"
+                       "commands/test_man.py"
+                       "commands/test_open.py"
+                       "database/test_entry.py"
+                       "importers/test_bibtex.py"
+                       "ui/shell/test_general.py"
+                       "ui/tui/test_general.py"
+                       "ui/tui/test_list.py"
+                       "ui/tui/test_note.py"
+                       "ui/tui/test_search.py"
+                       "ui/tui/test_select.py"
+                       "utils/test_rel_path.py")))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'pre-check
             (lambda _
               (setenv "COBIB_CONFIG" "0")
+              (setenv "GIT_AUTHOR_EMAIL" "you@example.com")
+              (setenv "GIT_AUTHOR_NAME" "Your Name")
+              (setenv "GIT_COMMITTER_EMAIL" "you@example.com")
+              (setenv "GIT_COMMITTER_NAME" "Your Name")
               (setenv "HOME" "/tmp")
               (setenv "TERM" "linux")
-              (setenv "TMPDIR" "/tmp"))))))
+              (setenv "TMPDIR" "/tmp")
+              (invoke "git" "config" "--global" "user.email" "you@example.com")
+              (invoke "git" "config" "--global" "user.name" "Your Name")
+              (invoke "git" "init"))))))
     (native-inputs
      (list git-minimal/pinned
            nss-certs-for-test
@@ -1440,9 +1441,10 @@ OpenDocument presentations (*.odp).")
      (list python-beautifulsoup4
            python-bibtexparser
            python-lxml
+           python-mdit-py-plugins ;XXX: for sanity-check
+           python-natsort
            python-pylatexenc
            python-requests
-           python-requests-oauthlib
            python-rich
            python-ruamel.yaml
            python-text-unidecode
@@ -1699,34 +1701,6 @@ Mainland China, Taiwan, and Hong-Kong.")
 hosts and terminals.  It converts input kanji code to designated kanji code
 such as ISO-2022-JP, Shift_JIS, EUC-JP, UTF-8, UTF-16 or UTF-32.")
       (license license:zlib))))
-
-(define-public python-pandocfilters
-  (package
-    (name "python-pandocfilters")
-    (version "1.5.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pandocfilters" version))
-       (sha256
-        (base32 "17lknixjja23jczlv8afgfky94m4gwl7wc36iczw1sz4brallaq0"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:tests? #f))        ;require pandoc to run tests
-    (native-inputs
-     (list python-setuptools))
-    (home-page "https://github.com/jgm/pandocfilters")
-    (synopsis "Python module for writing Pandoc filters")
-    (description "Pandoc is a powerful utility to transform various
-input formats into a wide range of output formats.  To alter the
-exported output document, Pandoc allows the usage of filters, which
-are pipes that read a JSON serialization of the Pandoc AST from stdin,
-transform it in some way, and write it to stdout.  It allows therefore
-to alter the processing of Pandoc's supported input formats, for
-instance one can add new syntax elements to markdown, etc.
-
-This package provides Python bindings.")
-    (license license:bsd-3)))
 
 (define-public aha
   (package
@@ -2003,32 +1977,6 @@ hackers and programmers by being fast, ignoring VCS directories, letting a user
 easily specify file types, match highlighting, Perl-Compatible Regular
 Expressions, and being faster to type than grep.")
     (license license:artistic2.0)))
-
-(define-public python-panflute
-  (package
-    (name "python-panflute")
-    (version "2.3.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "panflute" version))
-              (sha256
-               (base32
-                "07wg5md93jcdkpiqljwr3p1xzvm6nf7vbiay0bp84fgg6hmd06sz"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:tests? #f))        ;require pandoc to run tests
-    (native-inputs
-     (list python-setuptools))
-    (propagated-inputs
-     (list python-click
-           python-pyyaml))
-    (home-page "http://scorreia.com/software/panflute/")
-    (synopsis "Pythonic Pandoc filters")
-    (description
-     "Panflute is a Python package that makes Pandoc filters fun to
-write.  It is a pythonic alternative to John MacFarlane's pandocfilters, from
-which it is heavily inspired.")
-    (license license:bsd-3)))
 
 (define-public pandoc-include
   (package

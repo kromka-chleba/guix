@@ -1034,7 +1034,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
 (define-public hydrogen
   (package
     (name "hydrogen")
-    (version "1.2.4")
+    (version "1.2.6")
     (source
      (origin
        (method git-fetch)
@@ -1043,22 +1043,23 @@ settings (aliasing, linear interpolation and cubic interpolation).")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1i5gz5zck8s0kskjgnx9c75gh7zx0kbjsqzl2765f99p9svprirq"))))
+        (base32 "0fwyabkvrh1q30sqyhylly0c28cryq39lnqzgsv69jqvcc001bi4"))))
     (build-system qt-build-system)
     (arguments
-     `(#:tests? #f ; require audio subsystem
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-data-directory
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "CMakeLists.txt"
-               (("/usr/share/pixmaps")
-                (string-append (assoc-ref outputs "out")
-                               "/share/pixmaps"))))))))
+     (list
+      #:tests? #f                       ; require audio subsystem
+      #:configure-flags #~(list "-DWANT_QT6=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-data-directory
+            (lambda* (#:key outputs #:allow-other-keys)
+              (substitute* "CMakeLists.txt"
+                (("/usr/share/pixmaps")
+                 (string-append #$output "/share/pixmaps"))))))))
     (native-inputs
      (list cppunit
            pkg-config
-           qttools-5))
+           qttools))
     (inputs
      (list alsa-lib
            jack-1
@@ -1068,10 +1069,9 @@ settings (aliasing, linear interpolation and cubic interpolation).")
            libsndfile
            lrdf
            pulseaudio
-           qtbase-5
-           qtsvg-5
-           qtxmlpatterns-5
-           qtwayland-5
+           qtbase
+           qtsvg
+           qtwayland
            zlib))
     (home-page "http://hydrogen-music.org/")
     (synopsis "Drum machine")
@@ -2026,16 +2026,17 @@ with a selectable pattern matrix size.")
   (package
     (inherit bsequencer)
     (name "bchoppr")
-    (version "1.12.0")
+    (version "1.12.6")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/sjaehn/BChoppr")
-             (commit version)))
+             (commit version)
+             (recursive? #t))) ;for BWidgets
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jfp98qa0frmdybrg71fn8wxn1b3ginkbkcg9cz9y83j1m0jqrif"))))
+        (base32 "010z75zn07ab907rbbg5srr5jmpqc8ww4rfz56asxfsn98nyi8px"))))
     (synopsis "Audio stream-chopping LV2 plugin")
     (description "B.Choppr cuts the audio input stream into a repeated
 sequence of up to 16 chops.  Each chop can be leveled up or down (gating).
@@ -2088,7 +2089,7 @@ re-sequencer LV2 plugin.")
   (package
     (inherit bsequencer)
     (name "bschaffl")
-    (version "1.4.8")
+    (version "1.4.10")
     (source
      (origin
        (method git-fetch)
@@ -2097,7 +2098,7 @@ re-sequencer LV2 plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kfc75xhj365fwl8cbvhg5chwz1snzcvf4929flds02ljylc7k6d"))))
+        (base32 "1az938a2bwpsmy39rcsayz41pyi2i1yvbnbfay3xal0ygrh4zy6d"))))
     (inputs
      `(("cairo" ,cairo)
        ("fontconfig" ,fontconfig)
@@ -2357,7 +2358,7 @@ a JACK session.")
 (define-public mixxx
   (package
     (name "mixxx")
-    (version "2.5.2")
+    (version "2.5.3")
     (source
      (origin
        (method git-fetch)
@@ -2366,7 +2367,7 @@ a JACK session.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08j0xaqxn01w7q72smlnvv7iq7p6jrjfg3dk5mkpg2l3fagkgabl"))
+        (base32 "1k1lz001774q0m78bd41qr0yfrqy0hd9v1fnikkh5jhma9p2hrjs"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete libraries that we already have or don't need.
@@ -2405,7 +2406,7 @@ a JACK session.")
                   eudev
                   libxkbcommon          ;required by qtbase
                   faad2
-                  ffmpeg-4              ;XXX: chromaprint linked with ffmpeg-4
+                  ffmpeg
                   fftw
                   flac
                   glu
@@ -2434,6 +2435,7 @@ a JACK session.")
                   qtkeychain-qt6
                   qtsvg
                   qtshadertools
+                  qtwayland
                   qt5compat
                   rubberband
                   soundtouch
@@ -2452,7 +2454,7 @@ perform creative live mixes with digital music files.")
 (define-public synthv1
   (package
     (name "synthv1")
-    (version "1.2.0")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -2460,7 +2462,7 @@ perform creative live mixes with digital music files.")
                               "/synthv1-" version ".tar.gz"))
               (sha256
                (base32
-                "1p1lsm199xzr747sy8m7smx2f33kjqgvny4w2j2spsxa3appviwm"))))
+                "1ii836ajvlpriml7169c36lcnbcmc71kmn8kkrpw6g3rv4jn0b5l"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2484,7 +2486,7 @@ oscillators and stereo effects.")
 (define-public drumkv1
   (package
     (name "drumkv1")
-    (version "1.2.0")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -2492,7 +2494,7 @@ oscillators and stereo effects.")
                               "/drumkv1-" version ".tar.gz"))
               (sha256
                (base32
-                "1r9hp4p4vh9ml00n5fy12n2z6rgb00sv5vbhl0hw1i3dm3c17hj2"))))
+                "0yardssnvrbkg1gmb1k14qbbnljf1lirvv8yarjr806jnaapvlb7"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2517,7 +2519,7 @@ effects.")
 (define-public samplv1
   (package
     (name "samplv1")
-    (version "1.2.0")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -2525,7 +2527,7 @@ effects.")
                               "/samplv1-" version ".tar.gz"))
               (sha256
                (base32
-                "06k8bhkkfwm86kcji4hprjzzm0l2zskg7vwfn5gw1mcld02gmixc"))))
+                "0n44006jx7mxvi4fpj4crv4app86wfhh6p87ia06plqg23snsb30"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2550,7 +2552,7 @@ effects.")
 (define-public padthv1
   (package
     (name "padthv1")
-    (version "1.2.0")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -2558,7 +2560,7 @@ effects.")
                               "/padthv1-" version ".tar.gz"))
               (sha256
                (base32
-                "155q82rib92jpxahwihklfv4a1dck76bmnji6qdvxdir0fn4v7lw"))))
+                "1lvgwzg4r351m0ycnhlva4lvq7wd08806abwb3mv5ypx7s64jymi"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -3262,18 +3264,51 @@ MIDI files, based on libsmf.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:tests? #f)) ;no tests included
+      #:tests? #f ;no tests included
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'generate-xdg-files
+            ;; Steps are taken from .github/workflows/release.yml.
+            (lambda _
+              (invoke "python" "i18n/mo-gen.py")
+              (invoke "msgfmt" "--desktop"
+                      "-d" "i18n/frescobaldi"
+                      "--template" "linux/org.frescobaldi.Frescobaldi.desktop.in"
+                      "-o" "linux/org.frescobaldi.Frescobaldi.desktop")
+              (invoke "msgfmt" "--xml"
+                      "-d" "i18n/frescobaldi"
+                      "--template" "linux/org.frescobaldi.Frescobaldi.metainfo.xml.in"
+                      "-o" "linux/org.frescobaldi.Frescobaldi.metainfo.xml")))
+          (add-after 'wrap 'wrap-executable
+            (lambda _
+              ;; Ensure that icons are found at runtime.
+              (wrap-program (string-append #$output "/bin/frescobaldi")
+                `("QT_PLUGIN_PATH" prefix
+                  ,(list (string-append
+                          (string-join
+                           (list #$(this-package-input "qtbase")
+                                 #$(this-package-input "qtsvg")
+                                 #$(this-package-input "qtwayland"))
+                           "/lib/qt6/plugins:")
+                          "/lib/qt6/plugins")))))))))
     (native-inputs
-     (list python-hatchling))
-    (inputs (list bash-minimal
-                  lilypond
-                  poppler
-                  portmidi-2
-                  python-ly
-                  python-pyqt-6
-                  python-pyqt6-sip
-                  python-pyqtwebengine-6
-                  qpageview))
+     (list appstream            ;for appstreamctl
+           desktop-file-utils   ;for desktop-file-validate
+           gettext-minimal      ;for msgfmt
+           python-hatchling))
+    (inputs
+     (list bash-minimal
+           lilypond
+           poppler
+           portmidi-2
+           python-ly
+           python-pyqt-6
+           python-pyqt6-sip
+           python-pyqtwebengine-6
+           qpageview
+           qtbase
+           qtsvg
+           qtwayland))
     (home-page "https://www.frescobaldi.org/")
     (synopsis "LilyPond sheet music text editor")
     (description
@@ -3329,14 +3364,14 @@ backends, including ALSA, OSS, Network and FluidSynth.")
 (define-public vmpk
   (package
     (name "vmpk")
-    (version "0.9.0")
+    (version "0.9.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/vmpk/vmpk/"
                                   version "/vmpk-" version ".tar.bz2"))
               (sha256
                (base32
-                "1ndwmshw3skfcxb3f606hv4y80hfisfp5bdc81a0f0qrpx6f2zn4"))))
+                "1p28dnxsyamzdm9zaxfhman6245js22r4h4yxhnprs5aan1qiyrv"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -3700,14 +3735,14 @@ from the command line.")
 (define-public qtractor
   (package
     (name "qtractor")
-    (version "1.4.0")
+    (version "1.5.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/qtractor/qtractor/"
                                   version "/qtractor-" version ".tar.gz"))
               (sha256
                (base32
-                "0h466cvx8v1h8fsynlic47njzkacfvn9vy3bdc0ggjxnn6vb46yl"))))
+                "1m1flmjqq19v3zvrhqm0m1qc33kwbw6bj2v4lv0m317c8xn7wwww"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no "check" target
@@ -5602,7 +5637,7 @@ studio.")
 (define-public gsequencer
   (package
     (name "gsequencer")
-    (version "7.7.6")
+    (version "8.1.24")
     (source
      (origin
        (method git-fetch)
@@ -5611,7 +5646,7 @@ studio.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03rahab7vcdmzajkv3v8x0czbg76aykqjqz37x8jggv71f3djni2"))))
+        (base32 "0rpidmawdrnaqrddy5vlfpybkgdfcg0ybfl9pcdqrd03yc1hhalp"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:phases
@@ -5698,7 +5733,7 @@ specification and header.")
 (define-public rosegarden
   (package
     (name "rosegarden")
-    (version "24.12")
+    (version "25.06")
     (source
      (origin
        (method url-fetch)
@@ -5706,20 +5741,15 @@ specification and header.")
                            (version-major+minor version) "/"
                            "rosegarden-" version ".tar.xz"))
        (sha256
-        (base32 "1k0mpxpakcywss7pi50nzn54ak90svjavr4qk6yi9bq9dc9ncgvz"))))
+        (base32 "0vf3ln51f9layj7ann8nykl1rvimbnz58j8f9g6735490nq55zkm"))))
     (build-system qt-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DCMAKE_BUILD_TYPE=Release")
+      #:qtbase qtbase
+      #:configure-flags #~(list "-DUSE_QT6=ON")
+      #:test-exclude "test_notationview_selection"
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-tests
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                (("(BUILD_TESTING .* )OFF" _ prefix)
-                 (string-append prefix "ON"))
-                ;; Make tests work.
-                ((" -fvisibility=hidden") ""))))
           (add-after 'unpack 'fix-references
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "src/gui/general/ProjectPackager.cpp"
@@ -5747,15 +5777,11 @@ specification and header.")
               (substitute* "src/CMakeLists.txt"
                 (("COMMAND [$][{]QT_RCC_EXECUTABLE[}]")
                  "COMMAND ${QT_RCC_EXECUTABLE} --format-version 1")
-                ;; Extraneous.
-                ;;(("qt5_add_resources[(]rg_SOURCES ../data/data.qrc[)]")
-                ;; "qt5_add_resources(rg_SOURCES ../data/data.qrc OPTIONS --format-version 1)")
                 )
               ;; Make hashtable traversal order predicable.
               (setenv "QT_RCC_TEST" "1"))) ; important
           (add-before 'check 'prepare-check
             (lambda _
-              (setenv "QT_QPA_PLATFORM" "offscreen")
               ;; Tests create files in $HOME/.local/share/rosegarden and
               ;; expect permissions set to 0700.
               (mkdir-p "/tmp/foo")
@@ -5763,10 +5789,10 @@ specification and header.")
               (setenv "HOME" "/tmp/foo")
               (setenv "XDG_RUNTIME_DIR" "/tmp/foo")))
           (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
+            (lambda* (#:key tests? (test-exclude "") #:allow-other-keys)
               (when tests?
                 ;; Skip a failing test.
-                (invoke "ctest" "-E" "test_notationview_selection")))))))
+                (invoke "ctest" "-E" test-exclude)))))))
     (inputs
      (list alsa-lib
            bash-minimal
@@ -5777,17 +5803,19 @@ specification and header.")
            ladspa
            liblo
            libsamplerate
+           lilv
            lilypond
            lrdf
-           qtbase-5
-           qtwayland-5
+           lv2
+           qt5compat
+           qtwayland
            shared-mime-info
            tar
            lirc
            wavpack
            zlib))
     (native-inputs
-     (list pkg-config qttools-5))       ;for qtlinguist
+     (list pkg-config qttools))       ;for qtlinguist
     (synopsis "Music composition and editing environment based around a MIDI
 sequencer")
     (description "Rosegarden is a music composition and editing environment
@@ -5919,10 +5947,17 @@ your favorite sampled sounds and bashing away on a MIDI controller.")
 the electronic or dubstep genre.")
       (license license:gpl3+))))
 
+(define soundfont-airfont-340
+  (origin
+    (method url-fetch)
+    (uri "http://www.ronimusic.com/sf2/Airfont_340.dls")
+    (sha256
+     (base32 "011vg0y6s3zribkkwk143nlp251nn26xsvzkvzs1xicz7jgf7cxy"))))
+
 (define-public sonivox
   (package
     (name "sonivox")
-    (version "3.6.14")
+    (version "3.6.16")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5931,10 +5966,18 @@ the electronic or dubstep genre.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zn9v4lxjpnpdlpnv2px8ch3z0xagmqlvff5pd39pss3mxfp32g0"))))
+                "0yxgyzx5144f5rfqsqhlsfzjxy6a27605dr1g874y8wra6dsbrfq"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:tests? (not (%current-target-system)))) ; run unless cross-compiling
+     (list #:tests? (not (%current-target-system)) ; run unless cross-compiling
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'symlink-soundfont
+                 (lambda _
+                   (setenv "TEMP" (getcwd))
+                   (symlink #$soundfont-airfont-340
+                            (string-append (getenv "TEMP")
+                                           "/soundfont.dls")))))))
     (native-inputs
      (list googletest))
     (home-page "https://github.com/pedrolcl/sonivox")
@@ -5948,7 +5991,7 @@ real time GM synthesizer.")
 (define-public sonivox-eas
   (package
     (name "sonivox-eas")
-    (version "1.5.1")
+    (version "1.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5957,7 +6000,7 @@ real time GM synthesizer.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "1y67bi2vcwb1avwz18i41q85cmqx9svwx4q3kpmh951l49s9k8vz"))))
+                "1dzknbc9b4cbf1smql3b7g9smg45z1z8qrq0y6m4659k0jc3svs4"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -6657,7 +6700,7 @@ and reverb.")
 (define-public lsp-plugins
   (package
     (name "lsp-plugins")
-    (version "1.2.21")
+    (version "1.2.24")
     (source
       (origin
         (method url-fetch)
@@ -6665,7 +6708,7 @@ and reverb.")
                             "/releases/download/" version
                             "/lsp-plugins-src-" version ".tar.gz"))
         (sha256
-         (base32 "1n8jdvbkd8kgr50s8alw75g2k8202837k9sl3lvlbmkyap8a2bdf"))))
+         (base32 "0qxlvdzryf494qyx2d8c36g1qs84aza41in1cm5yjswizbf9ycmc"))))
     (build-system gnu-build-system)
     (arguments
      (list

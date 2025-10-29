@@ -9,6 +9,7 @@
 ;;; Copyright © 2018, 2022 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2019-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2020-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2020 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Greg Hogan <code@greghogan.com>
@@ -2406,7 +2407,7 @@ Evapotranspiration using various standard methods.")
               (with-directory-excursion (site-packages inputs outputs)
                 (for-each delete-file (find-files "." "test*"))))))))
     (native-inputs
-     (list python-cython-3 python-pytest python-setuptools python-wheel))
+     (list python-cython python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/storpipfugl/pykdtree")
@@ -2591,7 +2592,7 @@ factorization routine for quasi-definite linear system.")
                 (with-directory-excursion #$output
                   (apply invoke "pytest" "-vv" test-flags))))))))
     (propagated-inputs (list python-numpy python-packaging python-scipy))
-    (native-inputs (list python-cython-3
+    (native-inputs (list python-cython
                          python-numpy
                          python-packaging
                          python-pytest
@@ -2975,7 +2976,7 @@ logic, also known as grey logic.")
                              python-spin))
     (native-inputs (list gfortran
                          pkg-config
-                         python-cython-3
+                         python-cython
                          python-meson-python
                          python-numpy
                          python-pytest
@@ -3106,7 +3107,7 @@ be accessible and easy to use in many contexts.")
               ;; permission.
               (setenv "HOME" "/tmp"))))))
     (native-inputs
-     (list python-cython-3
+     (list python-cython
            python-pandas
            python-pytest
            python-setuptools
@@ -3839,7 +3840,7 @@ tissue-specificity metrics for gene expression.")
     (native-inputs
      (list meson-python
            python-beautifulsoup4
-           python-cython-3
+           python-cython
            python-html5lib
            python-lxml
            python-matplotlib
@@ -4590,7 +4591,7 @@ readable.")
            python-six
            python-tabulate))
     (native-inputs
-     (list python-pytest python-cython-3 python-setuptools python-wheel))
+     (list python-pytest python-cython python-setuptools python-wheel))
     (home-page "https://www.github.com/maartenbreddels/vaex")
     (synopsis "Core of Vaex library for exploring tabular datasets")
     (description "Vaex is a high performance Python library for lazy
@@ -5912,6 +5913,42 @@ abstractions to use in dvc and dvc-data.")
 and PySide6.  It is intended for use in mathematics, scientific or engineering
 applications.")
     (license license:expat)))
+
+(define-public pyzo
+  (package
+    (name "pyzo")
+    (version "4.20.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pyzo/pyzo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a82k7hjmv20lrwiwsdrvczrm21wq16m4snwsirwhj0jh5k1x9iw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--ignore-glob=pyzo/yoton/tests/*"     ; XXX: yoton is outdated.
+              "--ignore=pyzo/codeeditor/_test.py"))) ; XXX: cannot import qt.
+    (native-inputs
+     (list python-flit-core
+           python-pytest
+           python-setuptools))
+    (inputs (list python-pyside-6))
+    (home-page "https://pyzo.org")
+    (synopsis "Python IDE for scientific computing")
+    (description
+     "Pyzo is a Python IDE focused on interactivity and introspection,which
+makes it very suitable for scientific computing.  Its practical design is
+aimed at simplicity and efficiency.
+
+It consists of two main components, the editor and the shell, and uses a set
+of pluggable tools to help the programmer in various ways.  Some example tools
+are source structure, project manager, interactive help, workspace...")
+    (license license:bsd-2)))
 
 (define-public snakemake
   (package

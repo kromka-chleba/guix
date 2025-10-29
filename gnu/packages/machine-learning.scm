@@ -1532,56 +1532,60 @@ natural language processing framework.")
 (define-public python-spacy
   (package
     (name "python-spacy")
-    (version "3.6.1")
+    (version "3.8.7")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "spacy" version))
               (sha256
                (base32
-                "0ri1cz62kswawsa4hflh0ah8f63mnnqah0sbd5hmabdf0s3sj8v3"))))
+                "0269wj9wpy9a8g206q6q9m6f5jjkpdq8xi22w5mjfln5qrsd23vh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 3534 passed, 1232 skipped, 5 deselected, 24 xfailed, 7 xpassed, 62118
       #:test-flags
-      '(list "-k"
-             (string-append
-              ;; We don't do that around here.
-              "not test_download_compatibility"
-              ;; This needs to download a model.
-              " and not test_validate_compatibility_table"
-              ;; This tries to run the application with typer, which fails
-              ;; with an unspecified error, possibly because the build
-              ;; container doesn't have /bin/sh.
-              " and not test_project_assets"))
+      #~(list "-k" (string-append
+                    ;; We don't do that around here.
+                    "not test_download_compatibility"
+                    ;; This needs to download a model.
+                    " and not test_validate_compatibility_table"
+                    ;; This tries to run the application with typer, which fails
+                    ;; with an unspecified error, possibly because the build
+                    ;; container doesn't have /bin/sh.
+                    " and not test_project_assets"
+                    ;; DeprecationWarning: SelectableGroups dict interface is
+                    ;; deprecated. Use select.
+                    " and not test_pass_doc_to_pipeline[2]"
+                    ;; AssertionError: Registry 'loggers' missing entries.
+                    " and not test_registry_entries"))
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'build 'build-ext
-           (lambda _
-             (invoke "python" "setup.py" "build_ext" "--inplace"
-                     "-j" (number->string (parallel-job-count))))))))
+      #~(modify-phases %standard-phases
+          (add-before 'check 'remove-local-spacy
+            (lambda _
+              (copy-recursively "spacy/tests" "tests")
+              ;; This would otherwise interfere with finding the installed
+              ;; spacy when running tests.
+              (delete-file-recursively "spacy"))))))
     (propagated-inputs (list python-catalogue
                              python-cymem
                              python-jinja2
                              python-langcodes
                              python-murmurhash
-                             python-numpy
+                             python-numpy-2
                              python-packaging
-                             python-pathy
                              python-preshed
                              python-pydantic-2
                              python-requests
-                             python-setuptools
-                             python-smart-open
                              python-spacy-legacy
                              python-spacy-loggers
                              python-srsly
                              python-thinc
                              python-tqdm
                              python-typer
-                             python-typing-extensions
-                             python-wasabi))
+                             python-wasabi
+                             python-weasel))
     (native-inputs
-     (list python-cython python-pytest python-mock python-wheel))
+     (list python-cython python-pytest python-mock))
     (home-page "https://spacy.io")
     (synopsis "Natural Language Processing (NLP) in Python")
     (description
@@ -2117,7 +2121,7 @@ computing environments.")
     (native-inputs
      (list gfortran
            meson-python
-           python-cython-3
+           python-cython
            python-pandas
            python-pytest
            python-pytest-xdist))
@@ -2203,35 +2207,39 @@ and are compatible with its API.")
 (define-public python-thinc
   (package
     (name "python-thinc")
-    (version "8.1.12")
+    (version "8.3.4")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "thinc" version))
               (sha256
                (base32
-                "0lx37vl84y2jcsfn9sphdzbjny2jjyfb85llrrvz0xmig5f2rlcx"))))
+                "1n7zyqasnbb67bcr67l96pvihn4ibjrpbqvi0z56vfwb961594mm"))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'build-ext
-           (lambda _
-             (invoke "python" "setup.py" "build_ext" "--inplace"
-                     "-j" (number->string (parallel-job-count))))))))
-    (propagated-inputs (list python-blis-for-thinc
+     (list
+      ;; tests: 1215 passed, 113 skipped, 1657 warnings
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'remove-local-thinc
+            (lambda _
+              (copy-recursively "thinc/tests" "tests")
+              ;; This would otherwise interfere with finding the installed
+              ;; thinc when running tests.
+              (delete-file-recursively "thinc"))))))
+    (propagated-inputs (list python-blis
                              python-catalogue
                              python-confection
                              python-cymem
                              python-murmurhash
-                             python-numpy
+                             python-numpy-2
                              python-packaging
                              python-preshed
                              python-pydantic-2
                              python-setuptools
                              python-srsly
                              python-wasabi))
-    (native-inputs (list python-cython python-mock python-pytest
-                         python-setuptools python-wheel))
+    (native-inputs (list python-cython-0 python-mock python-pytest
+                         python-setuptools))
     (home-page "https://github.com/explosion/thinc")
     (synopsis "Functional take on deep learning")
     (description
@@ -2360,7 +2368,7 @@ for k-neighbor-graph construction and approximate nearest neighbor search.")
               (setenv "NUMBA_CACHE_DIR" "/tmp")
               ;; Rebuild extensions to run tests.
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (native-inputs (list python-cython-3 python-pytest python-setuptools
+    (native-inputs (list python-cython python-pytest python-setuptools
                          python-wheel))
     (inputs (list fftw))
     (propagated-inputs (list python-numpy python-pynndescent

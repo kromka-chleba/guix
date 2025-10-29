@@ -529,6 +529,21 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
+(define-public linux-libre-6.17-version "6.17.5")
+(define-public linux-libre-6.17-gnu-revision "gnu")
+(define deblob-scripts-6.17
+  (linux-libre-deblob-scripts
+   linux-libre-6.17-version
+   linux-libre-6.17-gnu-revision
+   (base32 "15qc7p6axs5l9syizbcbnksw8lxm8nnlcrl3q4k8cbs3lrxacpjv")
+   (base32 "14fypjidk49l0799dbi1pacy37ks94k0bs38cck2y4glxfpbfqr6")))
+(define-public linux-libre-6.17-pristine-source
+  (let ((version linux-libre-6.17-version)
+        (hash (base32 "1kibm4b3dvncw8dzxllxiza0923q6f2xlsng4gkln5n2x4vaypy0")))
+   (make-linux-libre-source version
+                            (%upstream-linux-source version hash)
+                            deblob-scripts-6.17)))
+
 (define-public linux-libre-6.16-version "6.16.12")
 (define-public linux-libre-6.16-gnu-revision "gnu")
 (define deblob-scripts-6.16
@@ -548,7 +563,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.52")
+(define-public linux-libre-6.12-version "6.12.55")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -558,12 +573,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1ccyd9h9i3xia1gqq0mggis5yv04c9ys44xp707wfcm0f3v0r1dl")))
+        (hash (base32 "17zv8ail05wnbfl9yhgs4llapyk3f6qjjbfqbwx0clx61138z3rj")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.111")
+(define-public linux-libre-6.6-version "6.6.114")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -573,12 +588,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1is6nrm5x54bw8zn8l5akp8ign185i19biks442yynfn63hp1i04")))
+        (hash (base32 "0z5r1kmzf3ib0r5rbcmp3cgjyagf6wgdjynpjbhkm5727jh7ahfa")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.155")
+(define-public linux-libre-6.1-version "6.1.157")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -588,12 +603,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0f3jgbfd2j7sz7h1hb30s1r9147g1cbb3ia09k9834fvbiz1ihaa")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "0wsw99h2jsrcx9fff59nqjx66l40vywj8qi3j6yvqpq8xsp8g4y2")))
+        (hash (base32 "0vpnjrk5kjc03sk5m66i9bv677xfy9mfrjvzx3jcrbr10bhq98d0")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.194")
+(define-public linux-libre-5.15-version "5.15.195")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -603,7 +618,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0rg65s6kd9gxxa3wl6180pr39rb6zbcicwjik4kygs2ns0247y56")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0zi6ihvjmaf940arnc7jjvdqrjf3cvkc9mqc8n24dz85vam6z39l")))
+        (hash (base32 "0hd4p76qv29zlr0iik4j9y9qynyqisk6bgfiqcwkk7gr6bf81l13")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
@@ -665,6 +680,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (inherit source)
     (patches (append (origin-patches source)
                      patches))))
+
+(define-public linux-libre-6.17-source
+  (source-with-patches linux-libre-6.17-pristine-source
+                       (list %boot-logo-patch
+                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
 (define-public linux-libre-6.16-source
   (source-with-patches linux-libre-6.16-pristine-source
@@ -792,6 +812,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (description "Headers of the Linux-Libre kernel.")
     (license license:gpl2)))
 
+(define-public linux-libre-headers-6.17
+  (make-linux-libre-headers* linux-libre-6.17-version
+                             linux-libre-6.17-gnu-revision
+                             linux-libre-6.17-source))
+
 (define-public linux-libre-headers-6.16
   (make-linux-libre-headers* linux-libre-6.16-version
                              linux-libre-6.16-gnu-revision
@@ -837,7 +862,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; linux-libre-headers-latest points to the latest headers package
 ;; and should be used as a dependency for packages that depend on
 ;; the headers.
-(define-public linux-libre-headers-latest linux-libre-headers-6.16)
+(define-public linux-libre-headers-latest linux-libre-headers-6.17)
 
 
 ;;;
@@ -1163,6 +1188,14 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 ;;;
 ;;; Generic kernel packages.
 ;;;
+
+(define-public linux-libre-6.17
+  (make-linux-libre* linux-libre-6.17-version
+                     linux-libre-6.17-gnu-revision
+                     linux-libre-6.17-source
+                     '("x86_64-linux" "i686-linux" "armhf-linux"
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                     #:configuration-file kernel-config))
 
 (define-public linux-libre-6.16
   (make-linux-libre* linux-libre-6.16-version
@@ -8066,7 +8099,7 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
 (define-public rdma-core
   (package
     (name "rdma-core")
-    (version "54.0")
+    (version "59.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/linux-rdma/rdma-core"
@@ -8074,7 +8107,7 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0q1gd4wrn7sb1l6qj6mqqlf8k4pk865b96cfnbgfxbgfs9q4jjm5"))))
+                "1rbw0nxn7h9984r44pcwvnbdz2ycdn5wsmzrbwxxr31i7fqnkhg2"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;no tests
@@ -10055,63 +10088,62 @@ Currently the Linux driver itself is missing from this package.")
       (license license:gpl2+))))
 
 (define-public libcxi
-  (let ((commit "5b6f8b5d57017c7963debb379d5693c59aca63ed")
-        (revision "0"))
-    (package
-      (name "libcxi")
-      (version (git-version "1.0.1" revision commit))
-      (home-page "https://github.com/HewlettPackard/shs-libcxi")
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference (url home-page) (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1h3dhird8p11q4ziaxzg1hr5gxcgwx1limzdcyildyaw50dy549g"))))
-      (build-system gnu-build-system)
-      (arguments
-       (list #:configure-flags
-             #~(list "--disable-static"
-                     (string-append "--with-udevrulesdir="
-                                    #$output "/lib/udev/rules.d"))
+  (package
+    (name "libcxi")
+    (version "12.0.1")
+    (home-page "https://github.com/HewlettPackard/shs-libcxi")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url home-page)
+                           (commit (string-append "release/shs-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pk2mdkkgiic7nnmhx3iwvgrnxva3qqk2wyni0yhxjciln0hq7s7"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-static"
+                   (string-append "--with-udevrulesdir="
+                                  #$output "/lib/udev/rules.d"))
 
-             #:phases
-             #~(modify-phases %standard-phases
-                 (add-before 'configure 'set-cassini-file-names
-                   (lambda* (#:key inputs #:allow-other-keys)
-                     (substitute* "utils/cxi_dump_csrs.py"
-                       (("/usr/share/cassini-headers/csr_defs.json")
-                        (search-input-file
-                         inputs
-                         "/share/cassini-headers/csr_defs.json"))))))))
-      (native-inputs (list autoconf
-                           automake
-                           libtool
-                           pkg-config
-                           python-wrapper))
-      (inputs (list libconfig
-                    libuv
-                    fuse-2
-                    libyaml
-                    libnl
-                    numactl
-                    eudev
-                    (list lm-sensors "lib")))
-      (propagated-inputs (list cassini-headers cxi-driver))
-      (synopsis "Interface to the Cassini/Slingshot high-speed interconnect")
-      (description
-       "Libcxi provides applications with a low-level interface to the
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'set-cassini-file-names
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "utils/cxi_dump_csrs.py"
+                     (("/usr/share/cassini-headers/csr_defs.json")
+                      (search-input-file
+                       inputs
+                       "/share/cassini-headers/csr_defs.json"))))))))
+    (native-inputs (list autoconf
+                         automake
+                         libtool
+                         pkg-config
+                         python-wrapper))
+    (inputs (list libconfig
+                  libuv
+                  fuse-2
+                  libyaml
+                  libnl
+                  numactl
+                  eudev
+                  (list lm-sensors "lib")))
+    (propagated-inputs (list cassini-headers cxi-driver))
+    (synopsis "Interface to the Cassini/Slingshot high-speed interconnect")
+    (description
+     "Libcxi provides applications with a low-level interface to the
 Cray/HPE Cassini high-speed @acronym{NIC, network interface controller}, also
 known as Slingshot.")
 
-      ;; License is spelled out in 'cray-libcxi.spec' and in source file
-      ;; headers.
-      (license (list license:lgpl2.1+ license:bsd-3))))) ;dual-licensed
+    ;; License is spelled out in 'cray-libcxi.spec' and in source file
+    ;; headers.
+    (license (list license:lgpl2.1+ license:bsd-3)))) ;dual-licensed
 
 (define-public libfabric
   (package
     (name "libfabric")
-    (version "1.22.0")
+    (version "2.3.0")
     (source
      (origin
        (method url-fetch)
@@ -10119,7 +10151,7 @@ known as Slingshot.")
         (string-append "https://github.com/ofiwg/libfabric/releases/download/v"
                        version "/libfabric-" version ".tar.bz2"))
        (sha256
-        (base32 "1znmw83rmippv0fwz0x7lgylfk17dr9ckll8lrm4z7kclspnqpj8"))))
+        (base32 "02gb12ijj19aad4c3dwckrrnjlsmy9fizkgw8a5zdzpqd3lgq60x"))))
     (build-system gnu-build-system)
     (inputs
      (let ((if-supported                          ;XXX: modified from openmpi
@@ -10168,6 +10200,19 @@ exports the user-space API of OFI, and is typically the only software that
 applications deal with directly.  It works in conjunction with provider
 libraries, which are often integrated directly into libfabric.")
     (license (list license:bsd-2 license:gpl2)))) ;dual
+
+(define-public libfabric-1                        ;needed by Open MPI 4.x
+  (package
+    (inherit libfabric)
+    (version "1.22.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://github.com/ofiwg/libfabric/releases/download/v"
+                       version "/libfabric-" version ".tar.bz2"))
+       (sha256
+        (base32 "1znmw83rmippv0fwz0x7lgylfk17dr9ckll8lrm4z7kclspnqpj8"))))))
 
 (define-public psm
   (package

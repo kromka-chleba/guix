@@ -828,7 +828,7 @@ the API, and provides features such as:
       #:tests? #f
       #:build-backend "setuptools.build_meta"))
     (native-inputs
-     (list python-cython-3
+     (list python-cython
            python-setuptools
            python-wheel))
     (propagated-inputs
@@ -1042,25 +1042,32 @@ autocompletion and syntax highlighting.")
 (define-public mycli
   (package
     (name "mycli")
-    (version "1.25.0")
+    (version "1.37.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mycli" version))
        (sha256
-        (base32 "0231v7f6q84mjmi1h0ni3s55m2g8p5d7x5q49bgkxlaz2bc2xwgy"))))
-    (build-system python-build-system)
+        (base32 "03kvw0n6s3f06whr7prjfwp1arl66mahlxizv27i9dkm5ibv1qrz"))))
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #f))                    ; tests expect a running MySQL
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
     (propagated-inputs
      (list python-cli-helpers
-           python-click
+           python-click-7
            python-configobj
+           python-cryptography
            python-prompt-toolkit
            python-pyaes
+           python-pyfzf
            python-pygments
            python-pymysql
            python-pyperclip
+           python-sqlglot
+           python-sqlglotrs
            python-sqlparse))
     (home-page "https://www.mycli.net")
     (synopsis
@@ -4772,7 +4779,7 @@ with the @code{psycopg} PostgreSQL driver.")
 	          (invoke "psql" "-h" dbdir "-d" "postgres"
                           "-c" "CREATE DATABASE nixbld;"))))))))
     (native-inputs
-     (list python-cython-3
+     (list python-cython
            python-mypy
            python-psycopg-pool
            python-pytest
@@ -5582,7 +5589,7 @@ __version_tuple__ = version_tuple = (~a)~%" version version-tuple))))))
     (native-inputs
      (list cmake ;needs 3.25
            pkg-config
-           python-cython-3
+           python-cython
            python-pytest
            python-pytest-runner
            python-setuptools-scm))
@@ -6149,16 +6156,16 @@ mechanism of @code{dogpile}.")
 (define-public datasette
   (package
     (name "datasette")
-    (version "1.0a16")
-    (source (origin
-              (method git-fetch)        ;for tests
-              (uri (git-reference
-                    (url "https://github.com/simonw/datasette")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "10c754idn9ka5hhai1qwjwlxw4dajdlrh162k71i5gwn4cgq6wr5"))))
+    (version "1.0a19")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/simonw/datasette")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wb73iksrc5vg2lnq3q4vr7yhlzxwr711jfmjdndd0s77996zsfh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -6168,7 +6175,14 @@ mechanism of @code{dogpile}.")
                     ;; These contain two unexpected extra items.
                     "not test_searchable"
                     " and not test_searchmode")
-              "-n" (number->string (parallel-job-count)))))
+              "--ignore=tests/test_black.py"
+              "-n" (number->string (parallel-job-count)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("\"pip\",") "")))))))
     (propagated-inputs
      (list python-aiofiles
            python-asgi-csrf
@@ -6190,17 +6204,14 @@ mechanism of @code{dogpile}.")
     (native-inputs
      (list nss-certs-for-test
            python-beautifulsoup4
-           python-black
            python-cogapp
-           python-pip
            python-pytest
-           python-pytest-asyncio
+           python-pytest-asyncio-0.26
            python-pytest-runner
            python-pytest-timeout
            python-pytest-xdist
            python-setuptools
-           python-trustme
-           python-wheel))
+           python-trustme))
     (home-page "https://datasette.io/")
     (synopsis "Multi-tool for exploring and publishing data")
     (description "Datasette is a tool for exploring and publishing data.

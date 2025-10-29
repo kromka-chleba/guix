@@ -14,6 +14,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020, 2021, 2023, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Lars-Dominik Braun <ldb@leibniz-psychology.org>
+;;; Copyright © 2022 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
@@ -45,6 +46,7 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages curl)
@@ -237,7 +239,7 @@ the real span of the lattice.")
     (inputs
      (list fplll gmp mpfr pari-gp))
     (propagated-inputs
-     (list python-cysignals python-cython-3 python-flake8 python-numpy))
+     (list python-cysignals python-cython python-flake8 python-numpy))
     (home-page "https://github.com/fplll/fpylll")
     (synopsis "Python interface for fplll")
     (description "fpylll is a Python wrapper for fplll.")
@@ -550,7 +552,7 @@ fast arithmetic.")
     (native-inputs
      (list meson-python
            pkg-config
-           python-cython-3
+           python-cython
            python-pytest))
     (inputs
      (list gmp
@@ -1052,6 +1054,34 @@ algorithms from the FORTRAN library MINPACK.")
 Optional thin wrappers allow usage of the library from other languages.")
     (license (list license:expat        ;SymEngine
                    license:bsd-3))))    ;3rd party code
+
+(define-public python-symengine
+  (package
+    (name "python-symengine")
+    (version "0.14.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "symengine" version))
+       (sha256
+        (base32 "1w7hwavbxgikljy9m3p89k3x2zdhv81h9bh330aw4wb3qm74p7jf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "--pyargs" "symengine")))
+    (native-inputs
+     (list cmake-minimal
+           python-cython
+           python-pytest
+           python-setuptools))
+    (inputs
+     (list symengine))
+    (home-page "https://github.com/symengine/symengine.py")
+    (synopsis "Python library providing wrappers to SymEngine")
+    (description
+     "This library provides a Python wrapper to SymEngine, a fast C++ symbolic
+manipulation library.")
+    (license license:expat)))
 
 (define-public ginac
   (package

@@ -4,6 +4,7 @@
 ;;; Copyright © 2021 Calum Irwin <calumirwin1@gmail.com>
 ;;; Copyright © 2022-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2023, 2024 Hilton Chain <hako@ultrarare.space>
+;;; Copyright © 2025 dan <i@dan.games>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2009,25 +2010,21 @@ toolchain.  Among other features it provides
     (method git-fetch)
     (uri (git-reference
           (url "https://github.com/ziglang/libc-abi-tools")
-          (commit "21993a6036cc165485b20229589340dff9d4fc3c")))
+          (commit "ec46122c7b8c7854f08e67e108083907d09996f5")))
     (file-name "libc-abi-tools")
     (sha256
-     (base32 "0miwb0zfgfmm4bh2bs7982wpk0wp5vj2mz10x9c3m8fw7zzcyvbh"))
-    (modules '((guix build utils)))
-    (snippet
-     #~(substitute* "netbsd/consolidate.zig"
-         ((".write_buffer = buffer") ".write_buffer = &buffer")))))
+     (base32 "0s46f1wbqg53wxlrljb9afw4s8j5cl5vz5xhajy6fagy05xns2bc"))))
 
 (define-public zig-0.15
   (package
     (inherit zig-0.14)
     (name "zig")
-    (version "0.15.1")
+    (version "0.15.2")
     (source
      (origin
        (inherit (zig-source
                  version version
-                 "1cp18plf0x5wip4rnxiqavaqnqxnqzhipb34in6zd3y7wihwjmj4"))
+                 "0kr8y1xzb7ffqg4yy7ncg4jh6kndxn5xfqf2viy5gvqdqqql8ymv"))
        (patches
         (search-patches
          "zig-0.14-use-baseline-cpu-by-default.patch"

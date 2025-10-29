@@ -4,7 +4,7 @@
 ;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2017-2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2018-2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2018-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2020 Robert Smith <robertsmith@posteo.net>
 ;;; Copyright © 2020 Guy Fleury Iteriteka <gfleury@disroot.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
@@ -13,6 +13,7 @@
 ;;; Copyright © 2022 Luis Felipe López Acevedo <luis.felipe.la@protonmail.com>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Luis Higino <luishenriquegh2701@gmail.com>
+;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,6 +37,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages django)
@@ -452,100 +454,42 @@ specialized device.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:qtbase qtbase
       #:tests? #f                       ;no tests
-      #:modules '((guix build qt-build-system)
-                  ((guix build gnu-build-system) #:prefix gnu:)
-                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'set-initial-values
-            ;; Remove useless "Check for updates" action from menu.  Also
-            ;; prevent pop-up window about importing Open Sankore documents
-            ;; since we don't package OpenBoard-Importer.
+            ;; Remove useless "Check for updates" action from menu.
             (lambda _
               (substitute* "src/core/UBSettings.cpp"
                 (("(appHideCheckForSoftwareUpdate = .*?)false(\\);)" _ beg end)
-                 (string-append beg "true" end))
-                (("(appLookForOpenSankoreInstall = .*?)true(\\);)" _ beg end)
-                 (string-append beg "false" end)))))
-          (add-after 'unpack 'fix-hard-coded-env
-            (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "src/frameworks/UBPlatformUtils_linux.cpp"
-                (("/usr/bin/env") (search-input-file inputs "/bin/env")))))
-          (add-after 'unpack 'fix-library-path
-            (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "OpenBoard.pro"
-                (("/usr/include/quazip5")
-                 (search-input-directory inputs "/include/QuaZip-Qt5-1.5/quazip"))
-                (("-lquazip5")
-                 "-lquazip1-qt5")
-                (("/usr/include/poppler")
-                 (search-input-directory inputs "/include/poppler")))))
-          (replace 'configure
-            (lambda _
-              (invoke "qmake" "OpenBoard.pro")))
-          (replace 'build (assoc-ref gnu:%standard-phases 'build))
-          (replace 'install
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let* ((share (string-append #$output "/share"))
-                     (openboard (string-append share "/openboard"))
-                     (i18n (string-append openboard "/i18n")))
-                ;; Install data.
-                (with-directory-excursion "resources"
-                  (for-each (lambda (directory)
-                              (let ((target
-                                     (string-append openboard "/" directory)))
-                                (mkdir-p target)
-                                (copy-recursively directory target)))
-                            '("customizations" "etc" "library"))
-                  (mkdir-p i18n)
-                  (for-each (lambda (f)
-                              (install-file f i18n))
-                            (find-files "i18n" "\\.qm$")))
-                ;; Install desktop file an icon.
-                (install-file "resources/images/OpenBoard.png"
-                              (string-append share
-                                             "/icons/hicolor/64x64/apps/"))
-                (make-desktop-entry-file
-                 (string-append share "/applications/" #$name ".desktop")
-                 #:name "OpenBoard"
-                 #:comment "Interactive whiteboard application"
-                 #:exec "openboard %f"
-                 #:icon "OpenBoard"
-                 #:mime-type "application/ubz"
-                 #:categories '("Education"))
-                ;; Install executable.
-                (install-file "build/linux/release/product/OpenBoard" openboard)
-                (let ((bin (string-append #$output "/bin")))
-                  (mkdir-p bin)
-                  (symlink (string-append openboard "/OpenBoard")
-                           (string-append bin "/openboard")))))))))
+                 (string-append beg "true" end))))))))
     (native-inputs
-     (list qttools-5))
+     (list pkg-config qttools))
     (inputs
      (list alsa-lib
            coreutils-minimal            ;for patched 'env' shebang
-           ffmpeg-4
+           cups-minimal
+           ffmpeg
            freetype
            lame
            libass
            libfdk
-           libressl
            libtheora
            libva
            libvorbis
            libvpx
            libx264
+           openssl
            opus
            poppler
-           qtbase-5
-           qtdeclarative-5
-           qtmultimedia-5
-           qtsvg-5
-           qtwebchannel-5
-           qtwebengine-5
-           qtxmlpatterns-5
-           quazip-5
+           qt5compat
+           qtdeclarative
+           qtmultimedia
+           qtsvg
+           qtwebchannel
+           qtwebengine
+           quazip
            sdl
            zlib))
     (home-page "https://openboard.ch/")
@@ -560,7 +504,7 @@ a pen-tablet display and a beamer.")
 (define-public fet
   (package
     (name "fet")
-    (version "6.28.4")
+    (version "7.5.4")
     (source
      (origin
        (method url-fetch)
@@ -569,7 +513,7 @@ a pen-tablet display and a beamer.")
               (list (string-append directory base)
                     (string-append directory "old/" base))))
        (sha256
-        (base32 "11mcbgi8lima4fng78lqdkd5km212drkk5l4bkzz1pz1k7wcykfn"))))
+        (base32 "0vjjvr9vs3vxncrikchmk60qa99d5wyxja6b3p46vgfaziv1nj31"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -596,7 +540,7 @@ algorithm.
 Usually, FET is able to solve a complicated timetable in maximum 5-20 minutes.
 For extremely difficult timetables, it may take a longer time, a matter of
 hours.")
-    (license license:agpl3+)))
+    (license license:agpl3)))
 
 (define-public klavaro
   (package
