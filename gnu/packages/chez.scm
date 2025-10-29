@@ -5,7 +5,7 @@
 ;;; Copyright © 2019 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2021-2025 Philip McGrath <philip@philipmcgrath.com>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -507,7 +507,7 @@ version of Chez Scheme.")
     (name "chez-scheme")
     ;; The version should match `(scheme-version-number #t)`.
     ;; See s/cmacros.ss c. line 360.
-    (version "10.2.0") ; expect a chez-nanopass-bootstrap update
+    (version "10.3.0") ; expect a chez-nanopass-bootstrap update
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -515,7 +515,7 @@ version of Chez Scheme.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "14iv4kfkyvrkigr1n2prf71n2l3vs0sf0549rvh6y4x2faa2l329"))
+                "062di5x6bp364in19f7qagywhgirhym25f7zwi27z2wfvy150wjc"))
               (file-name (git-file-name name version))
               (patches (search-patches "chez-scheme-bin-sh.patch"))
               (snippet #~(begin
@@ -841,8 +841,8 @@ User's Guix}, among other documents.")
   (hidden-package
    (package
      (name "chez-nanopass")
-     (version "1.9.2")
-     (properties `((chez-nanopass-release-date . "October 18, 2020")))
+     (version "1.9.3")
+     (properties `((chez-nanopass-release-date . "August 31, 2022")))
      (source
       (origin
         (method git-fetch)
@@ -850,7 +850,7 @@ User's Guix}, among other documents.")
               (url "https://github.com/nanopass/nanopass-framework-scheme")
               (commit (string-append "v" version))))
         (sha256
-         (base32 "16vjsik9rrzbabbhbxbaha51ppi3f9n8rk59pc6zdyffs0vziy4i"))
+         (base32 "0757x3a3b4kcd3jk52h4ikqzv7cc1mvphlw592f0r5pz99bkxiin"))
         (file-name (git-file-name "nanopass-framework-scheme" version))
         (snippet
          #~(begin
