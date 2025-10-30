@@ -59,6 +59,10 @@
   ;; Using python-toolchain here might cause dependency cycles.
   (@* (gnu packages python) python-sans-pip-wrapper))
 
+(define (default-python-packaging)
+  "Return the default guile-json package, resolved lazily."
+  (@* (gnu packages python-xyz) python-packaging))
+
 (define (pyproject-guile-json)
   "Return the default guile-json package, resolved lazily."
   (@* (gnu packages guile) guile-json-4))
@@ -66,17 +70,22 @@
 ;; TODO: On the next iteration of python-team, migrate the sanity-check to
 ;; importlib_metadata instead of setuptools.
 (define (default-sanity-check.py)
-  (local-file (search-auxiliary-file "python/sanity-check.py")))
+  (local-file (search-auxiliary-file "python/importlib-sanity-check.py")))
 
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
+                (sanity-check? #t)
                 (python (default-python))
+                (python-packaging (default-python-packaging))
                 (sanity-check.py (default-sanity-check.py))
                 #:allow-other-keys
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:target #:python #:inputs #:native-inputs #:sanity-check.py))
+    '(#:target #:python #:inputs #:native-inputs
+      #:python-packaging #:sanity-check.py))
+  (define native-inputs-labels (map car native-inputs))
+
 
   (and (not target)                               ;XXX: no cross-compilation
        (bag
@@ -89,9 +98,17 @@
 
                         ;; Keep the standard inputs of 'gnu-build-system'.
                         ,@(standard-packages)))
-         (build-inputs `(("python" ,python)
-                         ("sanity-check.py" ,sanity-check.py)
-                         ,@native-inputs))
+         (build-inputs
+          `(("python" ,python)
+            ,@(if sanity-check?
+                  `(("sanity-check.py" ,sanity-check.py)
+                    ,@(if (or (null? inputs)
+                              (member "python-packaging-bootstrap"
+                                      native-inputs-labels))
+                          `()
+                          `(("python-packaging" ,python-packaging))))
+                  `())
+            ,@native-inputs))
          (outputs (append outputs '(wheel)))
          (build pyproject-build)
          (arguments (strip-keyword-arguments private-keywords arguments)))))
@@ -99,6 +116,7 @@
 (define* (pyproject-build name inputs
                           #:key source
                           (tests? #t)
+                          (sanity-check? #t)
                           (configure-flags ''())
                           (backend-path #f)
                           (build-backend #f)
@@ -133,6 +151,7 @@
                    #:test-backend #$test-backend
                    #:test-flags #$test-flags
                    #:tests? #$tests?
+                   #:sanity-check? #$sanity-check?
                    #:phases #$(if (pair? phases)
                                   (sexp->gexp phases)
                                   phases)

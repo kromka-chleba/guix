@@ -88,8 +88,7 @@ matching of file paths.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (home-page "https://pypi.org/project/pluggy/")
     (synopsis "Plugin and hook calling mechanism for Python")
     (description
@@ -109,7 +108,9 @@ stripped of Pytest specific details.")
         (base32 "13z6rff86bzdpl094x0vmfvls779931xj90dlbs9kpfm138s3gdk"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f))                     ;no tests suite in release
+     (list
+      #:tests? #f                       ;no tests suite in release
+      #:sanity-check? #f))
     (native-inputs
      (list python-setuptools))
     (home-page "https://github.com/uiri/toml")
@@ -169,7 +170,10 @@ write-only counterpart to Tomli, which is a read-only TOML parser.")
         (base32 "1zq58p2bplyf0xpi9fnyn4w6vc1fkw8whkj0yxhcwdf8g7ff2ifd"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f))                      ;disabled to avoid extra dependencies
+     ;; XXX: disabled to avoid extra dependencies
+     (list
+      #:tests? #f
+      #:sanity-check? #f))
     (native-inputs (list python-flit-core-bootstrap))
     (home-page "https://github.com/hukkin/tomli")
     (synopsis "Small and fast TOML parser")
@@ -192,7 +196,7 @@ write-only counterpart to Tomli, which is a read-only TOML parser.")
     (arguments
      (list #:build-backend "setuptools.build_meta"
            #:tests? #f))      ;keep dependencies to a minimum
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/pypa/trove-classifiers")
     (synopsis "Canonical source for classifiers on PyPI")
     (description "This package is the canonical source for classifiers use on
@@ -318,7 +322,10 @@ Python Package Index (PyPI).")
     (build-system pyproject-build-system)
     ;; FIXME: Tests require pytest, which itself relies on setuptools.
     ;; One could bootstrap with an internal untested setuptools.
-    (arguments (list #:tests? #f))
+    (arguments
+     (list
+      #:tests? #f
+      #:sanity-check? #f))
     (home-page "https://pypi.org/project/setuptools/")
     (synopsis "Library designed to facilitate packaging Python projects")
     (description "Setuptools is a fully-featured, stable library designed to
@@ -474,7 +481,11 @@ that client code uses to construct the grammar directly in Python code.")
        (sha256
         (base32 "0kzwn2ar4ndm90qrvgyjcbkqz3klrg0ziwm1yrhbyxynk0n8fhyl"))))
     (build-system pyproject-build-system)
-    (arguments `(#:tests? #f))         ;disabled to avoid extra dependencies
+    (arguments
+     ;; XXX: disabled to avoid extra dependencies
+     (list
+      #:tests? #f
+      #:sanity-check? #f))
     (native-inputs
      (list python-flit-core))
     (home-page "https://github.com/pypa/packaging")
@@ -583,6 +594,7 @@ compatible build front-ends to build Poetry managed projects.")
       ;; flit-core has a test suite, but it requires Pytest.  Disable it so
       ;; as to not pull pytest as an input.
       #:tests? #f
+      #:sanity-check? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-license
@@ -599,8 +611,7 @@ compatible build front-ends to build Poetry managed projects.")
             ;; the checkout sources and Python.
             (lambda _
               (chdir "flit_core")
-              (invoke "python" "build_dists.py")))
-          (delete 'sanity-check))))
+              (invoke "python" "build_dists.py"))))))
     (propagated-inputs
      (list python-toml))
     (home-page "https://github.com/pypa/flit")
@@ -648,6 +659,8 @@ specified by PEP 517, @code{flit_core.buildapi}.")
             (lambda _
               (substitute* "pyproject.toml"
                 (("flit_scm:buildapi") "flit_core.buildapi")))))))
+    (native-inputs
+     (list python-packaging-bootstrap))
     (propagated-inputs
      (list python-flit-core
            python-setuptools-scm
@@ -676,6 +689,8 @@ system, then @code{flit_core} to build the package.")
       ;; pyproject-build-system will error handle forms such as
       ;; "module:object", so we set it.
       #:build-backend "setuptools.build_meta"))
+    (native-inputs
+     (list python-packaging-bootstrap))
     (propagated-inputs
      (list python-packaging-bootstrap
            python-setuptools))
@@ -740,7 +755,7 @@ reflected in the package visible to Python, without needing a reinstall.")
             (lambda _
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (native-inputs
-     (list python-flit-scm))
+     (list python-flit-scm python-packaging-bootstrap))
     (propagated-inputs
      (list python-typing-extensions))
     (home-page "https://github.com/agronholm/exceptiongroup")
@@ -762,6 +777,8 @@ reflected in the package visible to Python, without needing a reinstall.")
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f))                  ;to keep dependencies to a minimum
+    (native-inputs
+     (list python-packaging-bootstrap))
     (propagated-inputs
      (list python-packaging-bootstrap
            python-pathspec
@@ -837,6 +854,7 @@ package docstring.")
         (base32 "0i803kq80qx0k1lj3z69zw40ynqxml4p1qsc851izmchzwyysn4w"))))
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))      ;avoid extra test dependencies
+    (native-inputs (list python-packaging-bootstrap))
     (propagated-inputs (list python-hatchling python-tomli))
     (home-page "https://github.com/hynek/hatch-fancy-pypi-readme")
     (synopsis "Fancy PyPI READMEs with Hatch")
@@ -877,6 +895,7 @@ from requirements.txt.")
         (base32 "1yczh2aqrf9p3gs1dayswz5pp9z2yhmlld0c14ah4d20d49gm583"))))
     (arguments (list #:tests? #f))      ;avoid extra test dependencies
     (build-system pyproject-build-system)
+    (native-inputs (list python-packaging-bootstrap))
     (propagated-inputs (list python-hatchling python-setuptools-scm))
     (home-page "https://github.com/ofek/hatch-vcs")
     (synopsis "Hatch plugin for versioning with your preferred VCS")

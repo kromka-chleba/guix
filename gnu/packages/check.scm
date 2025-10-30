@@ -1597,10 +1597,10 @@ interfaces and processes.")
      (list bash
            python-attrs-bootstrap
            python-hypothesis
+           python-packaging-bootstrap
            python-setuptools
            python-setuptools-scm
-           python-xmlschema
-           python-wheel))
+           python-xmlschema))
     (propagated-inputs
      (list python-iniconfig
            python-packaging-bootstrap
@@ -1625,7 +1625,8 @@ and many external plugins.")
     (name "python-pytest-bootstrap")
     (arguments (list #:tests? #f))
     (native-inputs
-     (list python-setuptools
+     (list python-packaging-bootstrap
+           python-setuptools
            python-setuptools-scm))))
 
 (define-public python-pytest-cov
@@ -2699,12 +2700,11 @@ instantly.")
      ;; XXX: Tests are not distributed with the PyPI archive.
      (list #:tests? #f))
     (native-inputs
-     (list python-pytest-bootstrap      ;to pass sanity check
-           python-setuptools
-           python-wheel))
+     (list python-packaging-bootstrap
+           python-pytest-bootstrap      ;to pass sanity check
+           python-setuptools))
     (propagated-inputs
      (list python-attrs-bootstrap
-           python-exceptiongroup
            python-sortedcontainers))
     (home-page "https://hypothesis.works/")
     (synopsis "Library for property based testing")

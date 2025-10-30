@@ -195,6 +195,17 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
           (else (raise (condition (&test-system-not-found))))))
       (format #t "test suite not run~%")))
 
+(define* (sanity-check #:key sanity-check? inputs outputs #:allow-other-keys)
+  "Ensure packages depending on this package via setuptools work properly,
+their advertised endpoints work and their top level modules are importable
+without errors."
+  (if sanity-check?
+      (let ((sanity-check.py (assoc-ref inputs "sanity-check.py")))
+        ;; Make sure the working directory is empty (i.e. no Python modules in it)
+        (with-directory-excursion "/tmp"
+          (invoke "python" sanity-check.py (site-packages inputs outputs))))
+      (format #t "sanity check not run~%")))
+
 (define* (install #:key inputs outputs #:allow-other-keys)
   "Install a wheel file according to PEP 427."
   ;; See <https://packaging.python.org/en/latest/specifications/\

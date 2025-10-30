@@ -1870,6 +1870,7 @@ The central program included in this package is @code{onsgmls}, which replaces
                       (search-input-directory inputs "lib/locale")))))))
     (native-inputs
      (list glibc-locales
+           python-packaging-bootstrap
            python-setuptools
            python-lxml
            python-xmlschema-bootstrap))
@@ -1902,7 +1903,7 @@ because lxml.etree already has its own implementation of XPath 1.0.")
                       (when tests?
                         (invoke "make" "test")))))))
     (native-inputs
-     (list python-setuptools))
+     (list python-packaging-bootstrap python-setuptools))
     (inputs
      (list libxml2 libxslt))
     (home-page "https://lxml.de/")
@@ -2015,6 +2016,7 @@ XML document to a Python object.")
     (arguments (list #:test-backend #~'unittest))
     (native-inputs
      (list python-lxml
+           python-packaging-bootstrap
            python-setuptools))
     (propagated-inputs
      (list python-elementpath))
@@ -2033,9 +2035,7 @@ XML data to JSON and other formats.")
    (package/inherit python-xmlschema
      (arguments
       (list #:tests? #f
-            #:phases
-            #~(modify-phases %standard-phases
-                (delete 'sanity-check))))
+            #:sanity-check? #f))
      (propagated-inputs '()))))
 
 (define-public python-xmltodict

@@ -6308,9 +6308,9 @@ in the current session, Python, and the OS.")
         (base32 "109ajcsfhrz33lbwbb337w34crc3lb9rjnxrcpnbczlf8rfk6w7z"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest-bootstrap
-           python-setuptools
-           python-wheel))
+     (list python-packaging-bootstrap
+           python-pytest-bootstrap
+           python-setuptools))
     (home-page "https://pypi.org/project/six/")
     (synopsis "Python 2 and 3 compatibility utilities")
     (description
@@ -9034,7 +9034,7 @@ with Python.")
    (package/inherit python-pygments
      (name "python-pygments-bootstrap")
      (native-inputs
-      (list python-hatchling))
+      (list python-hatchling python-packaging-bootstrap))
      (arguments `(#:tests? #f))))
 
 (define-public python-pygtrie
@@ -17930,7 +17930,8 @@ invoked on those path objects directly.")
         (base32 "156l685r9mg7i4xyrk9ql3sxk088irxlg8x7md5i0d05hdw1z8rs"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest
+     (list python-packaging-bootstrap
+           python-pytest
            python-setuptools))
     (home-page "https://github.com/alex/pretend")
     (synopsis "Library for stubbing in Python")
@@ -24650,7 +24651,8 @@ instead of servers and network commands.")
     (native-inputs (list python-hatchling
                          python-hatch-fancy-pypi-readme
                          python-hatch-vcs))
-    (arguments `(#:tests? #f))))
+    (arguments (list #:tests? #f
+                     #:sanity-check? #f))))
 
 (define-public python-cliapp
   (package
@@ -24865,7 +24867,8 @@ command line utility, a python library and plugins for various editors.")
     (arguments (list #:tests? #f))      ;no tests in PyPI, tests introduce cycle with pytest
     (native-inputs
      (list python-hatch-vcs
-           python-hatchling))
+           python-hatchling
+           python-packaging-bootstrap))
     (home-page "https://github.com/RonnyPfannschmidt/iniconfig")
     (synopsis "Simple INI-file parser")
     (description "The @code{iniconfig} package provides a small and simple
@@ -25177,12 +25180,8 @@ manipulation, or @code{stdout}.")
   (package/inherit python-packaging-bootstrap
     (name "python-packaging")
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "pytest" "-vv")
-                          (format #t "test suite not run~%")))))))
+     (list
+      #:sanity-check? #f))
     (native-inputs
      (list python-flit-core
            python-pretend python-pytest))
@@ -28292,7 +28291,9 @@ that is accessible to other projects developed in Cython.")
     (arguments
      (list #:test-flags #~(list "--pyargs" "sortedcontainers")))
     (native-inputs
-     (list python-pytest-bootstrap python-setuptools))
+     (list python-packaging-bootstrap
+           python-pytest-bootstrap
+           python-setuptools))
     (home-page "https://grantjenks.com/docs/sortedcontainers/")
     (synopsis "Sorted List, Sorted Dict, Sorted Set")
     (description
