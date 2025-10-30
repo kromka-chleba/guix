@@ -31,6 +31,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-35)
+  #:use-module (srfi srfi-37)
   #:export (%standard-phases
             add-installed-pythonpath
             site-packages
@@ -144,6 +145,57 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
             wheel-dir
             config-settings)))
 
+(define (parse-unittest-args args)
+  "Parse some `python -m unittest discover' command-line arguments and convert
+them in a format understood by `unittest.TestLoader().discover'.  This helps
+us avoid running no tests successfully."
+  (let* ((options (list (option '(#\s "start-directory") #t #f
+                                 (lambda (opt name arg result)
+                                   (acons 'start_dir arg result)))
+                        (option '(#\p "pattern") #t #f
+                                 (lambda (opt name arg result)
+                                   (acons 'pattern arg result)))
+                        (option '(#\t "top-level-directory") #t #f
+                                 (lambda (opt name arg result)
+                                   (acons 'top_level_dir arg result)))))
+         (parsed (args-fold args options
+                            ;; Ignore unrecognized options
+                            (lambda (opt name arg result)
+                              result)
+                            ;; Ignore operands (test names, etc.)
+                            (lambda (operand result)
+                              result)
+                            '())))
+    ;; TestLoader.discover() requires this argument.
+    (if (assq 'start_dir parsed)
+        parsed
+        (acons 'start_dir "." parsed))))
+
+(define (unittest-script loader-method)
+  "Return a script for `unittest' using the LOADER-METHOD of
+`unittest.TestLoader' to check if tests are found using it."
+  (format #f "\
+from unittest import TestLoader
+exit(TestLoader()~a.countTestCases() == 0)"
+          loader-method))
+
+(define (unittest-found?)
+  "Check if tests can be found for the unittest backend.
+This procedure behaves like `python -m unittest'."
+  (let ((script (unittest-script ".loadTestsFromModule(None)")))
+    (zero? (system* "python" "-c" script))))
+
+(define (unittest-discover-found? test-flags)
+  "Check if tests can be found for the unittest-discover backend.
+This procedure behaves like `python -m unittest discover'."
+  (call-with-output-file ".unittest-args.json"
+    (cut scm->json (parse-unittest-args test-flags) <>))
+  (zero? (system* "python" "-c" (string-append "\
+import json
+from pathlib import Path
+config = json.loads(Path('.unittest-args.json').read_text())
+" (unittest-script ".discover(**config)")))))
+
 (define* (check #:key inputs tests? test-backend test-flags #:allow-other-keys)
   "Run the test suite of a given Python package."
   (if tests?
@@ -153,11 +205,6 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
              (nosetests (which "nosetests"))
              (nose2 (which "nose2"))
              (stestr (which "stestr"))
-             (have-setup-py (file-exists? "setup.py"))
-             ;; unittest default pattern
-             ;; See https://docs.python.org/3/library/unittest.html\
-             ;; #cmdoption-unittest-discover-p
-             (tests-found (find-files "." "test.*\\.py$"))
              (use-test-backend
               (or test-backend
                   ;; By order of preference.
@@ -166,35 +213,35 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
                   (and pytest 'pytest)
                   (and stestr 'stestr)
                   (and nosetests 'nose)
+                  (and (unittest-found?) 'unittest)
+                  (and (unittest-discover-found? test-flags)
+                       'unittest-discover)
+                  ;; Deprecated fallback commands, kept for older inputs.
                   (and nose2 'nose2)
-                  ;; Fall back to setup.py. The command is deprecated, but is
-                  ;; a superset of unittest, so should work for most packages.
-                  ;; Keep it until setuptools removes `setup.py test'.
-                  ;; See https://setuptools.pypa.io/en/latest/deprecated/\
-                  ;; commands.html#test-build-package-and-run-a-unittest-suite
-                  (and have-setup-py 'setup.py)
-                  (and tests-found 'unittest))))
-        (format #t "Using ~a~%" use-test-backend)
+                  (and (file-exists? "setup.py") 'setup.py))))
+        (format #t "Using ~a test-backend~%" use-test-backend)
         (match use-test-backend
           ('pytest-with-guix-plugin
-           (apply invoke pytest "-vv" "-p" "pytest_guix" test-flags))
+            (apply invoke pytest "-vv" "-p" "pytest_guix" test-flags))
           ('pytest
-           (apply invoke pytest "-vv" test-flags))
+            (apply invoke pytest "-vv" test-flags))
           ('nose
-           (apply invoke nosetests "-v" test-flags))
+            (apply invoke nosetests "-v" test-flags))
           ('nose2
-           (apply invoke nose2 "-v" "--pretty-assert" test-flags))
+            (apply invoke nose2 "-v" "--pretty-assert" test-flags))
           ('setup.py
-           (apply invoke "python" "setup.py"
-                  (if (null? test-flags)
-                      '("test" "-v")
-                      test-flags)))
+            (apply invoke "python" "setup.py"
+                   (if (null? test-flags)
+                       '("test" "-v")
+                        test-flags)))
           ('stestr
-           (apply invoke stestr "run" test-flags))
+            (apply invoke stestr "run" test-flags))
           ('unittest
-           (apply invoke "python" "-m" "unittest" test-flags))
+            (apply invoke "python" "-m" "unittest" test-flags))
+          ('unittest-discover
+            (apply invoke "python" "-m" "unittest" "discover" test-flags))
           ('custom
-           (apply invoke "python" test-flags))
+            (apply invoke "python" test-flags))
           ;; The developer should explicitly disable tests in this case.
           (else (raise (condition (&test-system-not-found))))))
       (format #t "test suite not run~%")))
