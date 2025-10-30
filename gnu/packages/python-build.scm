@@ -41,6 +41,7 @@
 (define-module (gnu packages python-build)
   #:use-module (gnu packages)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix gexp)
@@ -375,6 +376,34 @@ facilitate packaging Python projects, where packaging includes:
                    license:expat        ;six, appdirs, pyparsing
                    license:asl2.0       ;packaging is dual ASL2/BSD-2
                    license:bsd-2))))
+
+(define-public python-setuptools-bootstrap
+  (package/inherit python-setuptools
+    (name "python-setuptools-bootstrap")
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;disabled to avoid extra dependencies
+      ;; Essentially a lighter copy of the former python-build-system.
+      ;; Using it rather than pyproject-build-system allows to edit the latter
+      ;; without a world rebuild (for the meson package in particular).
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'bootstrap)
+          (delete 'configure)
+          (replace 'build
+            (lambda _
+              (invoke "python" "./setup.py" "build")))
+          (replace 'install
+            (lambda _
+              (invoke "python" "./setup.py" "install"
+                      (string-append "--prefix=" #$output) "--no-compile")
+              (invoke "python" "-m" "compileall"
+                      "--invalidation-mode=unchecked-hash" #$output))))))
+    (native-inputs (list))
+    ;; Avoid introducing an additional module-dependency.
+    (inputs (list (module-ref (resolve-interface '(gnu packages python))
+                              'python-wrapper)))))
 
 (define-public python-setuptools-67
   (package
