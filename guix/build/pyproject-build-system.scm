@@ -269,14 +269,16 @@ builder.build_wheel(sys.argv[3], config_settings=config_settings)"
                             files)))
               bindirs)))
 
-(define* (sanity-check #:key tests? inputs outputs #:allow-other-keys)
+(define* (sanity-check #:key sanity-check? inputs outputs #:allow-other-keys)
   "Ensure packages depending on this package via setuptools work properly,
 their advertised endpoints work and their top level modules are importable
 without errors."
-  (let ((sanity-check.py (assoc-ref inputs "sanity-check.py")))
-    ;; Make sure the working directory is empty (i.e. no Python modules in it)
-    (with-directory-excursion "/tmp"
-      (invoke "python" sanity-check.py (site-packages inputs outputs)))))
+  (if sanity-check?
+      (let ((sanity-check.py (assoc-ref inputs "sanity-check.py")))
+        ;; Make sure the working directory is empty (i.e. no Python modules in it)
+        (with-directory-excursion "/tmp"
+          (invoke "python" sanity-check.py (site-packages inputs outputs))))
+      (format #t "sanity check not run~%")))
 
 (define* (check #:key tests? test-backend test-flags #:allow-other-keys)
   "Run the test suite of a given Python package."
