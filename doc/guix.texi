@@ -145,6 +145,7 @@ Copyright @copyright{} 2025 jgart@*
 Copyright @copyright{} 2025 Artur Wroblewski@*
 Copyright @copyright{} 2025 Edouard Klein@*
 Copyright @copyright{} 2025 Rodion Goritskov@*
+Copyright @copyright{} 2025 Romain Garbage@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -363,6 +364,7 @@ Utilities
 * Invoking guix container::     Process isolation.
 * Invoking guix weather::       Assessing substitute availability.
 * Invoking guix processes::     Listing client processes.
+* Invoking guix diff::          Package differences between revisions.
 
 Invoking @command{guix build}
 
@@ -13274,6 +13276,7 @@ the Scheme programming interface of Guix in a convenient way.
 * Invoking guix container::     Process isolation.
 * Invoking guix weather::       Assessing substitute availability.
 * Invoking guix processes::     Listing client processes.
+* Invoking guix diff::          Package differences between revisions.
 @end menu
 
 @node Invoking guix build
@@ -17326,6 +17329,80 @@ Session_PID: 4278
 @end example
 @end table
 @end table
+
+@node Invoking guix diff
+@section Invoking @command{guix diff}
+
+@cindex @command{guix diff}
+
+The @command{guix diff} command lists the new/updated packages between
+two sets of Guix channels. The base set of channels is shown by the
+command @command{guix describe} (@pxref{Invoking guix describe}), the head set is the one defined with the arguments.
+
+Assuming the current Guix revision consists of the Guix channel at
+commit @var{266ad5b8ba9bb4dcff557f7780ae7b7287d57a00}, the following
+command lists the packages that were added or updated in the Guix
+channel at commit @var{a677cc54477e7383c56d8d968120f51cf430e767}:
+
+@example
+guix diff --commit=a677cc54477e7383c56d8d968120f51cf430e767
+@end example
+
+In order to get the list of new or updated packages between two specific
+commits @var{a677cc54477e7383c56d8d968120f51cf430e767} and
+@var{dc256a2d681d16627a4781e33d1fb4f2d9451eb6}, @command{guix
+time-machine} can be used to set the base revision:
+
+@example
+guix time-machine -q --commit=a677cc54477e7383c56d8d968120f51cf430e767 -- \
+     diff --commit=dc256a2d681d16627a4781e33d1fb4f2d9451eb6
+@end example
+
+Here are the main @var{options}, some of them shared with @command{guix
+time-machine} (@pxref{Invoking guix time-machine}):
+
+@table @code
+@item --channels=@var{file}
+@itemx -C @var{file}
+Compare against Guix built from the list of channels from @var{file}.
+@var{file} must contain Scheme code that evaluates to a list of channel
+objects.  @xref{Channels} for more information.
+
+@item --url=@var{url}
+@itemx --commit=@var{commit}
+@itemx --branch=@var{branch}
+Use the @code{guix} channel from the specified @var{url}, at the
+given @var{commit} (a valid Git commit ID represented as a hexadecimal
+string or the name of a tag), or @var{branch}.
+
+@item --disable-authentication
+Allow pulling channel code without authenticating it (see @pxref{Channel
+Authentication})
+
+@quotation Note
+Make sure you understand its security implications before using
+@option{--disable-authentication}.
+@end quotation
+
+@item --no-check-certificate
+Do not validate the X.509 certificates of HTTPS servers.
+
+When using this option, you have @emph{absolutely no guarantee} that you
+are communicating with the authentic server responsible for the given
+URL.  Unless the channel is authenticated, this makes you vulnerable to
+``man-in-the-middle'' attacks.
+
+@item --reverse
+@itemx -r
+Reverse diff, considering that the head is the revision tied to the
+@command{guix} command and the base is the revision defined by
+@command{guix diff} arguments.
+@end table
+
+Note that @command{guix diff} can trigger builds of channels and their
+dependencies, and these are controlled by the standard build options
+(@pxref{Common Build Options}).
+
 
 @node Foreign Architectures
 @chapter Foreign Architectures
