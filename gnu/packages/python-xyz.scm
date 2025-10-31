@@ -637,6 +637,37 @@ line drawing algorithm}.")
 understanding ECMA script.")
     (license license:expat)))
 
+(define-public python-canonicaljson
+  (package
+    (name "python-canonicaljson")
+    (version "2.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "canonicaljson" version))
+       (sha256
+        (base32 "0gqi5z8j3myfblrc96l0jykdsk863gad1lwvnnf5vp7sszqsxzg2"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'custom
+                     #:test-flags #~(list "-m" "nose2")))
+    (native-inputs (list python-nose2 python-setuptools))
+    (home-page "https://github.com/matrix-org/python-canonicaljson")
+    (synopsis "Canonical JSON")
+    (description
+     "Deterministically encode JSON.
+
+@itemize
+@item Encodes objects and arrays as RFC 7159 JSON.
+@item Sorts object keys so that you get the same result each time.
+@item Has no insignificant whitespace to make the output as small as possible.
+@item Escapes only the characters that must be escaped, U+0000 to
+ U+0019 / U+0022 / U+0056, to keep the output as small as possible.
+@item Uses the shortest escape sequence for each escaped character.
+@item Encodes the JSON as UTF-8.
+@item Can encode frozendict immutable dictionaries.
+@end itemize")
+    (license license:asl2.0)))
+
 (define-public python-chameleon
   (package
     (name "python-chameleon")
@@ -30649,37 +30680,6 @@ replacement for dictionaries where immutability is desired.")
      "This Python module returns the CPU info by using the best sources of
 information for your operating system.")
     (license license:expat)))
-
-(define-public python-canonicaljson
-  (package
-    (name "python-canonicaljson")
-    (version "2.0.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "canonicaljson" version))
-       (sha256
-        (base32 "0gqi5z8j3myfblrc96l0jykdsk863gad1lwvnnf5vp7sszqsxzg2"))))
-    (build-system pyproject-build-system)
-    (arguments (list #:test-backend #~'custom
-                     #:test-flags #~(list "-m" "nose2")))
-    (native-inputs (list python-nose2 python-setuptools))
-    (home-page "https://github.com/matrix-org/python-canonicaljson")
-    (synopsis "Canonical JSON")
-    (description
-     "Deterministically encode JSON.
-
-@itemize
-@item Encodes objects and arrays as RFC 7159 JSON.
-@item Sorts object keys so that you get the same result each time.
-@item Has no insignificant whitespace to make the output as small as possible.
-@item Escapes only the characters that must be escaped, U+0000 to
- U+0019 / U+0022 / U+0056, to keep the output as small as possible.
-@item Uses the shortest escape sequence for each escaped character.
-@item Encodes the JSON as UTF-8.
-@item Can encode frozendict immutable dictionaries.
-@end itemize")
-    (license license:asl2.0)))
 
 (define-public python-signedjson
   (package
