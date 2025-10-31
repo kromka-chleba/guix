@@ -33461,6 +33461,8 @@ statements in OFX files.")
     (license license:expat)))
 
 (define-public python-platformdirs
+  ;; Try to update simultaneously with the bootstrap version in
+  ;; (gnu packages python-build).
   (package
     (name "python-platformdirs")
     (version "4.3.6")
