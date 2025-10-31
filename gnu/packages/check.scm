@@ -1581,6 +1581,7 @@ interfaces and processes.")
 (define-public python-pytest
   (package
     (name "python-pytest")
+    ;; Keep in sync with python-pytest-bootstrap in (gnu packages python-build)
     (version "9.0.2")
     (source
      (origin
@@ -1624,14 +1625,6 @@ interfaces and processes.")
 and functions, detailed info on failing assert statements, modular fixtures,
 and many external plugins.")
     (license license:expat)))
-
-(define-public python-pytest-bootstrap
-  (package/inherit python-pytest
-    (name "python-pytest-bootstrap")
-    (arguments (list #:tests? #f))
-    (native-inputs
-     (list python-setuptools
-           python-setuptools-scm))))
 
 (define-public python-pytest-cov
   (package
