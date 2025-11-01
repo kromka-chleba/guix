@@ -9,7 +9,7 @@
 ;;; Copyright © 2017 nee <nee-git@hidamari.blue>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2019 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2019, 2022, 2023 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2019, 2022, 2023, 2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2019, 2020, 2022 Guy Fleury Iteriteka <gfleury@disroot.org>
 ;;; Copyright © 2019 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2020 Peng Mei Yu <pengmeiyu@riseup.net>
@@ -651,7 +651,7 @@ and WebP.")
 (define-public luminance-hdr
   (package
     (name "luminance-hdr")
-    (version "2.6.0")
+    (version "2.6.1.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -659,7 +659,7 @@ and WebP.")
                     version "/luminance-hdr-" version ".tar.bz2"))
               (sha256
                (base32
-                "188q0l63nfasqfvwbq4mwx2vh7wsfi2bq9n5nksddspl1qz01lnp"))))
+                "18ihaggdp9zwylvk6kwcqii46l1p5s6143c8an2zicpfcb0np2qc"))))
     (build-system cmake-build-system)
     (native-inputs
      (list pkg-config qttools-5))
@@ -809,7 +809,7 @@ Poppler-Qt5 binding, PDF documents.")
 (define-public qview
   (package
     (name "qview")
-    (version "6.1")
+    (version "7.1")
     (source
      (origin
        (method git-fetch)
@@ -818,7 +818,7 @@ Poppler-Qt5 binding, PDF documents.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1c719ivzdm0m8apbqx8h0wi796k5myrm4q3vl16vxwzjcx5ball7"))))
+        (base32 "1lpjajgdckjh3a0xs6iqpjfg0p1nhjxy8l7iddbvf110jz0f3i8i"))))
     (build-system qt-build-system)
     (arguments
      (list

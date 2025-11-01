@@ -124,6 +124,33 @@ fuzzing engine that provides an array or slice of bytes can be used with
 go-fuzz-headers.")
     (license license:asl2.0)))
 
+(define-public go-github-com-adamkorcz-go-118-fuzz-build
+  (package
+    (name "go-github-com-adamkorcz-go-118-fuzz-build")
+    (version "0.0.0-20250520111509-a70c2aa677fa")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/AdamKorcz/go-118-fuzz-build")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1523sncv9q82abhhmixj27l1frxw1srkkzv7nfsfmkhp9wgdn9b3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AdamKorcz/go-118-fuzz-build"))
+    (propagated-inputs
+     (list go-github-com-adalogics-go-fuzz-headers
+           go-golang-org-x-tools))
+    (home-page "https://github.com/AdamKorcz/go-118-fuzz-build")
+    (synopsis "Fuzzy testing for Golang")
+    (description
+     "This package implements a tool to compile native Golang fuzzers to
+@code{libFuzzer} fuzzers.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-alecthomas-assert-v2
   (package
     (name "go-github-com-alecthomas-assert-v2")
@@ -3058,7 +3085,36 @@ advanced Go linter.")
     (synopsis "Continuation of ccorpus using @code{embed.FS}")
     (description
      "This package provides a test corpus of C code.")
+    ;; TODO: assets directory provides a lot of example sources for testing
+    ;; taken from other projects, check it covered by the licenses.
     (license license:bsd-3)))
+
+(define-public go-modernc-org-scannertest
+  (package
+    (name "go-modernc-org-scannertest")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/scannertest")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06hk8pqaihhmfxfprg1fmdl2y8ffvrblm10z7qq3l921jjxc1ch7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/scannertest"))
+    (propagated-inputs
+     (list go-modernc-org-lex
+           go-modernc-org-lexer))
+    (home-page "https://gitlab.com/cznic/scannertest")
+    (synopsis "Helpers for automated testing of scanners/lexers/tokenizers")
+    (description
+     "This package provides helpers for automated testing of
+scanners/lexers/tokenizers.")
+    (license license:expat)))
 
 (define-public go-mvdan-cc-unparam
   (package

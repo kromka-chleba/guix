@@ -854,29 +854,6 @@ information about the current request and response as a toolbar on the
 rendered page.")
     (license license:bsd-3)))
 
-(define-public python-django-debug-toolbar-alchemy
-  (package
-    (name "python-django-debug-toolbar-alchemy")
-    (version "0.1.5")
-    (home-page "https://github.com/miki725/django-debug-toolbar-alchemy")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-debug-toolbar-alchemy" version))
-              (sha256
-               (base32
-                "1kmpzghnsc247bc1dl22s4y62k9ijgy1pjms227018h5a4frsa5b"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;XXX: 'make check' does "echo TODO"
-    (propagated-inputs
-     (list python-django python-django-debug-toolbar python-jsonplus
-           python-six python-sqlalchemy))
-    (synopsis "Django Debug Toolbar panel for SQLAlchemy")
-    (description
-     "This package completely mimics the default Django Debug Toolbar SQL
-panel (internally it is actually subclassed), but instead of displaying
-queries done via the Django ORM, SQLAlchemy generated queries are displayed.")
-    (license license:expat)))
-
 (define-public python-django-gravatar2
   (package
     (name "python-django-gravatar2")
@@ -1045,29 +1022,6 @@ applications with a @var{SEARCH_URL} variable.")
     (home-page "https://github.com/gintas/django-picklefield")
     (synopsis "Pickled object field for Django")
     (description "Pickled object field for Django")
-    (license license:expat)))
-
-(define-public python-django-bulk-update
-  (package
-    (name "python-django-bulk-update")
-    (version "2.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-bulk-update" version))
-              (sha256
-               (base32
-                "0dxkmrm3skyw82i0qa8vklxw1ma1y308kh9w2hcnvhpacn5cxdss"))))
-    (build-system python-build-system)
-    (arguments
-     ;; XXX: Tests require a Postgres database.
-     `(#:tests? #f))
-    (propagated-inputs
-     (list python-django))
-    (home-page "https://github.com/aykut/django-bulk-update")
-    (synopsis "Simple bulk update over Django ORM or with helper function")
-    (description
-      "Simple bulk update over Django ORM or with helper function.  This
-project aims to bulk update given objects using one query over Django ORM.")
     (license license:expat)))
 
 (define-public python-django-contact-form

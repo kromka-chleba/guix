@@ -1726,7 +1726,7 @@ or an Ethernet connection.")
 (define-public harminv
   (package
     (name "harminv")
-    (version "1.4.1")
+    (version "1.4.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -1735,7 +1735,7 @@ or an Ethernet connection.")
                               name "-" version ".tar.gz"))
               (sha256
                (base32
-                "0w1n4d249vlpda0hi6z1v13qp21vlbp3ykn0m8qg4rd5132j7fg1"))))
+                "18n71d3wj0jnldh72vb9lfj3vv64s1i2rmnhcpq4494p23vip6js"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-shared")
@@ -1806,7 +1806,17 @@ for scientific simulations.")
        (list (string-append "--with-libctl="
                             (assoc-ref %build-inputs "libctl")
                             "/share/libctl")
-             "--enable-shared")))
+             "--enable-shared")
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'configure 'relax-gcc-14-strictness
+           (lambda _
+             (setenv "CFLAGS"
+                     (string-join
+                      (list "-Wno-error=incompatible-pointer-types"
+                            "-Wno-error=implicit-function-declaration"
+                            "-Wno-error=int-conversion")
+                      " ")))))))
     (native-inputs
      `(("fortran" ,gfortran)
        ("pkg-config" ,pkg-config)
@@ -2257,6 +2267,15 @@ and a fallback for environments without libc for Zydis.")
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)
+         (add-before 'build 'relax-gcc-14-strictness
+           (lambda _
+             (substitute* (find-files "." "Makefile")
+               (("CFLAGS = (.*)$" all options)
+                (string-append "CFLAGS = "
+                               " -Wno-error=incompatible-pointer-types"
+                               " -Wno-error=implicit-function-declaration"
+                               " "
+                               options)))))
          (add-before 'build 'fix-paths
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((coreutils (assoc-ref inputs "coreutils-minimal")))
@@ -3069,7 +3088,7 @@ but also adds new features and improves existing ones.")
 (define-public emacs-scad-mode
   (package
     (name "emacs-scad-mode")
-    (version "96.0")
+    (version "97.0")
     (source
      (origin
        (method git-fetch)
@@ -3077,7 +3096,7 @@ but also adds new features and improves existing ones.")
              (url "https://github.com/openscad/emacs-scad-mode")
              (commit version)))
        (sha256
-        (base32 "0vsidz3qws89z8blq5nng7mvzn3kj06lw9417aymhykyjgjn5f8m"))
+        (base32 "1h86z2qn9q7ww2m7p992fx8abzdffcd3bcp3bmck3c9q2aksjl5j"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat))

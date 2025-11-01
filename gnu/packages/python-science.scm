@@ -75,6 +75,7 @@
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
+  #:use-module (gnu packages jupyter)
   #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
@@ -1595,6 +1596,83 @@ Features:
 @end itemize")
     (license license:bsd-2)))
 
+(define-public python-iminuit
+  (package
+    (name "python-iminuit")
+    (version "2.31.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "iminuit" version))
+       (sha256
+        (base32 "066y0khk5bv56jv0p5bkkmya3rwijskz9yq9ch3jlgfqzzqh9q6m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags #~(list "-k" "not test_interactive_pyside6")))
+    (native-inputs
+     (list cmake-minimal
+           pybind11
+           python-annotated-types
+           python-boost-histogram
+           python-ipykernel
+           python-jacobi
+           python-joblib
+           python-pydantic-2
+           python-pytest
+           python-resample
+           python-scikit-build-core
+           python-tabulate))
+    ;; All inputs besides python-numpy are optional but greatly improve
+    ;; the package.
+    ;; FIXME: Numba segfaults Python in some tests.
+    (propagated-inputs
+     (list python-ipywidgets
+           python-matplotlib
+           ;; python-numba
+           ;; python-numba-stats
+           python-numpy
+           python-scipy
+           python-unicodeitplus))
+    (home-page "https://github.com/scikit-hep/iminuit")
+    (synopsis "Python interface for MINUIT2")
+    (description
+     "@code{iminuit} is a Jupyter-friendly Python interface for the @code{Minuit2}
+C++ library maintained by CERN's ROOT team.
+
+Minuit was designed to optimize statistical cost functions, for
+maximum-likelihood and least-squares fits.  It provides the best-fit
+parameters and error estimates from likelihood profile analysis.
+
+Optionally, Iminuit supports SciPy minimizers as alternatives to Minuit's
+MIGRAD algorithm and Numba accelerated functions.")
+    ;; Python interface under MIT Expat, Iminuit C++ library under LGPL v2.1+.
+    (license (list license:expat license:lgpl2.1+))))
+
+(define-public python-jacobi
+  (package
+    (name "python-jacobi")
+    (version "0.9.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jacobi" version))
+       (sha256
+        (base32 "0a08680q6rnl6b1azq0lzd8r08pgnjd9ynwivb1g2vi4ccb4h7y1"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-benchmark
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/hdembinski/jacobi")
+    (synopsis "Compute numerical derivatives")
+    (description
+     "This package provides fast numerical derivatives for analytic
+functions with arbitrary round-off error and error propagation.")
+    (license license:expat)))
+
 (define-public python-legendkit
   (package
     (name "python-legendkit")
@@ -2028,6 +2106,53 @@ ECAT and Philips PAR/REC.  In addition, NiBabel also supports FreeSurfer’s
 MGH, geometry, annotation and morphometry files, and provides some limited
 support for DICOM.")
     (license license:expat))) ; and other non-copyleft licenses
+
+(define-public python-numba-stats
+  (package
+    (name "python-numba-stats")
+    (version "1.11.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "numba_stats" version))
+       (sha256
+        (base32 "1m5gwrc3liqydpix5ckyc7s5ysvgvinbznnkcvk2xjz13lwfy2s8"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-numba
+           python-numpy
+           python-scipy))
+    (home-page "https://github.com/scikit-hep/numba-stats")
+    (synopsis "Accelerated implementations of SciPy probability distributions")
+    (description
+     "This package provides Numba-accelerated implementations of common SciPy
+probability distributions and others used in particle physics.
+
+The supported distributions are:
+
+@itemize
+@item Uniform
+@item (Truncated) Normal
+@item Log-normal
+@item Poisson
+@item Binomial
+@item (Truncated) Exponential
+@item Student's t
+@item Voigtian
+@item Crystal Ball
+@item Generalised double-sided Crystal Ball
+@item Tsallis-Hagedorn, a model for the minimum bias pT distribution
+@item Q-Gaussian
+@item Bernstein density (not normalized to unity)
+@item Cruijff density (not normalized to unity)
+@item CMS-Shape
+@item Generalized Argus
+@end itemize")
+    (license license:expat)))
 
 (define-public python-numdifftools
   (package

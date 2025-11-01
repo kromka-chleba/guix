@@ -53,7 +53,9 @@
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages graphviz)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages iso-codes)
   #:use-module (gnu packages java)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pcre)
@@ -1115,36 +1117,30 @@ safest way, on a file image.")
 (define-public python-androguard
   (package
     (name "python-androguard")
-    (version "3.2.1")
+    (version "3.3.5")    ;TODO: It was released in 2019, there is a fresh version
     (source
-      (origin
-        ;; The pypi release doesn't have the tests, but the tests use
-        ;; packaged binaries, so we skip them.
-        (method url-fetch)
-        (uri (pypi-uri "androguard" version))
-        (sha256
-         (base32
-          "0ndsw00pkyda4i2s3wi5ap8gbk6a9d23xhhxpdbk02padv8sxkfv"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "androguard" version))
+       (sha256
+        (base32 "18nd08rbvc4d1p9r70qp76rcbldvpv89prsi15alrmxdlnimqrgh"))))
+    (build-system pyproject-build-system)
+    ;; XXX: The pypi release doesn't have the tests, but the tests use
+    ;; packaged binaries, so we skip them.
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           ;; Adapted from .travis.yml
-           (lambda _
-             (invoke "nosetests" "--with-coverage" "--with-timer"
-                     "--timer-top-n" "50"))))))
+     (list #:tests? #f))
     (native-inputs
-     (list python-codecov python-coverage python-mock python-nose
-           python-nose-timer))
+     (list python-setuptools))
     (propagated-inputs
      (list python-asn1crypto
+           python-click
            python-colorama
            python-future
            python-ipython
            python-lxml
            python-matplotlib
            python-networkx
+           python-pydot
            python-pygments
            python-pyperclip))
     (home-page "https://github.com/androguard/androguard")
@@ -1196,49 +1192,49 @@ for communicating with Xiaomi smart appliances over miIO and MIoT protocols.")
 (define-public fdroidserver
   (package
     (name "fdroidserver")
-    (version "1.1.9")
+    (version "2.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "fdroidserver" version))
        (sha256
         (base32
-         "0m07f791z45w7r2dzx4yb6s54b3c3wykm3w9hn25p2jcyax082a2"))))
-    (build-system python-build-system)
+         "06xybginrwi5c7bw000wz5s5hzi0aqrxskzwh8qc6wv463w2djax"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-versioning
-           (lambda _
-             (substitute* "setup.py"
-               (("0.2.1") ,(package-version python-pyasn1-modules))
-               ;; The dependency on docker has been removed upstream by
-               ;; a fairly large patch:
-               ;; https://gitlab.com/fdroid/fdroidserver/-/commit/89614851250c79a05db84070feca6dea033af334
-               ;; that is not in a release yet. It appears we can compile with
-               ;; a newer version.
-               (("docker-py >= 1.9, < 2.0") "docker >= 1.9"))
-             #t)))))
+     (list
+      #:tests? #f                       ;requires Android SDK
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-env
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-androguard
            python-apache-libcloud
+           python-argcomplete
+           python-asn1crypto
            python-clint
            python-defusedxml
            python-docker
            python-gitpython
            python-mwclient
+           python-oscrypto
            python-paramiko
            python-pillow
+           python-platformdirs
+           python-puremagic
            python-pyasn1
            python-pyasn1-modules
            python-pyyaml
            python-qrcode
-           python-ruamel.yaml
            python-requests
-           python-vagrant))
+           python-ruamel.yaml-0.16
+           python-vagrant
+           python-yamllint
+           sdkmanager))
     (native-inputs
-     (list python-babel python-bcrypt python-docker-pycreds python-pynacl
-           python-websocket-client))
+     (list python-babel python-setuptools))
     (home-page "https://f-droid.org")
     (synopsis "F-Droid server tools")
     (description

@@ -169,6 +169,7 @@
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages netpbm)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages parallel)
@@ -2362,6 +2363,45 @@ installing this filter, you can read and write HDF5 files with
 Blosc-compressed datasets.")
     (license license:expat)))
 
+(define-public highfive
+  (package
+    (name "highfive")
+    (version "2.10.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/BlueBrain/HighFive")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yp9bah6prhy31p2xbj4yv7p0p1k0ifjhb0z9i36ki3zx5nsgzrn"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DHIGHFIVE_EXAMPLES=OFF"
+              ;; TODO: maybe build with hdf5-parallel-openmpi
+              ;; "-DHIGHFIVE_PARALLEL_HDF5=ON"
+              "-DHIGHFIVE_UNIT_TESTS=ON"
+              "-GNinja")))
+    (native-inputs
+     (list boost
+           catch2-3
+           ninja))
+    (inputs
+     (list hdf5))
+    (home-page "https://bluebrain.github.io/HighFive/")
+    (synopsis "Header-only C++ HDF5 interface")
+    (description
+     "HighFive is a header-only C++11 friendly interface for @code{libhdf5}.
+ It supports STL vector/string, @code{Boost::UBLAS}, @code{Boost::Multi-array}
+and Xtensor; and handles C++ from/to HDF5 with automatic type
+mapping. HighFive does not require additional libraries.")
+    ;; Boost Software License (BSL) - Version 1.0 - August 17th, 2003
+    (license (license:x11-style "https://www.boost.org/LICENSE_1_0.txt"
+                                "Some components have other similar licences."))))
+
 (define-public itex2mml
   (package
     (name "itex2mml")
@@ -3887,7 +3927,7 @@ September 2004}")
 (define-public petsc
   (package
     (name "petsc")
-    (version "3.21.4")
+    (version "3.24.0")
     (source
      (origin
       (method url-fetch)
@@ -3895,7 +3935,7 @@ September 2004}")
       (uri (string-append "https://web.cels.anl.gov/projects/petsc/download/release-snapshots/"
                           "petsc-lite-" version ".tar.gz"))
       (sha256
-       (base32 "1394ybnchawb2kghx4xk36gw26930aa73lxyw96diiqp8rnhgbm9"))))
+       (base32 "10q9bnf7j6nr3fn9x7b8l0c3hqa9mhmsk1j5sdyshg5f1kc6746c"))))
     (outputs '("out"                    ; libraries and headers
                "examples"))             ; ~30MiB of examples
     (build-system gnu-build-system)
@@ -4069,12 +4109,6 @@ scientific applications modeled by partial differential equations.")
             ,@(delete "--with-mpi=0" #$cf)))
        ((#:phases phases)
         #~(modify-phases #$phases
-            (add-before 'configure 'adjust-pt-scotch-library-names
-              (lambda _
-                ;; Adjust to the library name changes in Scotch 7.0.
-                (substitute* "config/BuildSystem/config/packages/PTScotch.py"
-                  (("libptesmumps") "libesmumps")
-                  (("libptscotchparmetis") "libptscotchparmetisv3"))))
             (add-before 'configure 'mpi-setup
               #$%openmpi-setup)
             (add-after 'install 'patch-header-inclusions
@@ -4616,14 +4650,14 @@ can return results in exact arithmetic.")
 (define-public python-petsc4py
   (package
     (name "python-petsc4py")
-    (version "3.21.4")
+    (version "3.24.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "petsc4py" version))
         (sha256
           (base32
-           "1kffxhcwkx6283n2p83ymanz6m8j2xmz5kpa5s8qc4f9iiah59sb"))))
+           "06wi2r43drlfj3hml5392pckn2n99rjfb1p1hz75n3d84z5jrj9x"))))
     (build-system python-build-system)
     (arguments
      (list #:phases
@@ -4798,7 +4832,7 @@ integration of real-, complex-, and vector-valued functions.")
 (define-public slepc
   (package
     (name "slepc")
-    (version "3.21.1")
+    (version "3.24.0")
     (source
      (origin
        (method url-fetch)
@@ -4806,7 +4840,7 @@ integration of real-, complex-, and vector-valued functions.")
                            version ".tar.gz"))
        (sha256
         (base32
-         "12kdgnw9lm5q6bq5wp27ygdp1bjdz3fhkb8m9ds83kn32l53zcxy"))))
+         "1sdl9hv34pckwkxjq2spiyc6k5czd9y4m852k338l4x9ib4i8bbf"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("python" ,python)
@@ -4912,14 +4946,14 @@ arising after the discretization of partial differential equations.")
 (define-public python-slepc4py
   (package
     (name "python-slepc4py")
-    (version "3.21.1")
+    (version "3.24.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "slepc4py" version))
         (sha256
           (base32
-            "01vvpl8g73knkwnh6mbxd45vwcs4zsw814147fvgkvj30qkhx3mw"))))
+            "1wiqcwgr9mq81dd68glsnwn57gqmgahcvcchqqqq3ns7bykvdjah"))))
     (build-system python-build-system)
     (arguments
      (list #:phases
@@ -9730,7 +9764,7 @@ management via the GIMPS project's Primenet server.")
 (define-public nauty
   (package
     (name "nauty")
-    (version "2.8.9")
+    (version "2.9.1")
     (source
      (origin
        (method url-fetch)
@@ -9738,7 +9772,7 @@ management via the GIMPS project's Primenet server.")
              "https://pallini.di.uniroma1.it/"
              "nauty" (string-join (string-split version #\.) "_") ".tar.gz"))
        (sha256
-        (base32 "1vn4abz498h8fbh27z0l5jrs4z04d693xklbb5mai5l7yhmv8yn9"))))
+        (base32 "0gl7rpl2viahrqmjrrgv0iq31xz093p5sk1ns9r2qdqas43ak3s8"))))
     (build-system gnu-build-system)
     (outputs '("out" "lib"))
     (arguments
@@ -9751,11 +9785,7 @@ management via the GIMPS project's Primenet server.")
             (lambda _
               (substitute* "makefile.in"
                 (("^(pkgconfigexecdir=).*" _ prefix)
-                 (string-append prefix "${libdir}/pkgconfig\n")))))
-          (add-after 'unpack 'fix-failing-test
-            (lambda _
-              (substitute* "runalltests.in"
-                ((" uniqg") " ./uniqg")))))))
+                 (string-append prefix "${libdir}/pkgconfig\n"))))))))
     (inputs (list gmp))                 ;for sumlines
     (home-page "https://pallini.di.uniroma1.it/")
     (synopsis "Library for graph automorphisms")

@@ -1161,7 +1161,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/dbus-helper-search-path.patch		\
   %D%/packages/patches/dbus-c++-gcc-compat.patch		\
   %D%/packages/patches/dbus-c++-threading-mutex.patch		\
-  %D%/packages/patches/dbxfs-remove-sentry-sdk.patch		\
   %D%/packages/patches/ddd-build.patch				\
   %D%/packages/patches/debops-setup-py-avoid-git.patch	\
   %D%/packages/patches/dee-vapi.patch			\
@@ -1584,6 +1583,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/hurd-startup.patch			\
   %D%/packages/patches/hwloc-1-test-btrfs.patch			\
   %D%/packages/patches/i7z-gcc-10.patch				\
+  %D%/packages/patches/icecat-adjust-mozilla-desktop.patch      \
   %D%/packages/patches/icecat-makeicecat.patch			\
   %D%/packages/patches/icecat-avoid-bundled-libraries.patch	\
   %D%/packages/patches/icecat-compare-paths.patch		\

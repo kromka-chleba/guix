@@ -1102,35 +1102,6 @@ Ideographs Extension B of Unicode.
 of Unicode.
 @end itemize\n")))
 
-;; In past, TW-Kai and TW-Sung are distributed in same zip archive.  But now
-;; they are already separated in font-cns11643-kai and font-cns11643-sung.
-;; This package exists as a backward-compatible definition.
-(define-public font-cns11643
-  (package
-    (inherit font-cns11643-sung)
-    (name "font-cns11643")
-    (source #f)
-    (build-system trivial-build-system)
-    (arguments
-     (list
-      #:modules '((guix build union))
-      #:builder
-      #~(begin
-          (use-modules (ice-9 match)
-                       (guix build union))
-          (match %build-inputs
-            (((names . directories) ...)
-             (union-build #$output directories))))))
-    (inputs (list font-cns11643-kai font-cns11643-sung))
-    (synopsis "CJK TrueType fonts, TW-Kai and TW-Sung")
-    (description
-     "@code{CNS 11643} character set (Chinese National Standard, or Chinese
-Standard Interchange Code) is the standard character set of the Republic of
-China (Taiwan) for Chinese Characters and other Unicode symbols.
-
-This package is an amalgamation of @code{font-cns11643-sung} and
-@code{font-cns11643-kai}.")))
-
 (define-public font-cns11643-swjz
   (package
     (name "font-cns11643-swjz")
@@ -1310,7 +1281,7 @@ heavier printing.")
 (define-public font-amiri
   (package
     (name "font-amiri")
-    (version "1.000")
+    (version "1.003")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1319,7 +1290,7 @@ heavier printing.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0c4yg1b03aihdqvz6w5ak8wapni3l8p18mw6bkqhblmm75jb5kif"))))
+                "0hi3d6s42wk2hgk2x8niga84h1kpk9p4vxkyich1mzmw5b7kq8hw"))))
     (build-system gnu-build-system)
     (arguments
      (list

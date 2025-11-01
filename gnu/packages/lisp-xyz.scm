@@ -29198,7 +29198,7 @@ running into parallelism problems when having to change directory.")
 (define-public sbcl-simple-matrix
   (package
     (name "sbcl-simple-matrix")
-    (version "3.3")
+    (version "3.4")
     (source
      (origin
        (method git-fetch)
@@ -29207,7 +29207,7 @@ running into parallelism problems when having to change directory.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-matrix" version))
        (sha256
-        (base32 "1ph3bfjrazqhlpyasyg3c1000ca6xlyj3gyrc5a56hl54s0q64v8"))))
+        (base32 "1zxan2v4rcqdplxwfy02ylawlm59j1583jk894jl2aa946v66zxj"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (synopsis "Matrix library for Common Lisp")
@@ -29260,6 +29260,36 @@ library are feedforward neural networks trained using backpropagation.")
 
 (define-public ecl-simple-neural-network
   (sbcl-package->ecl-package sbcl-simple-neural-network))
+
+(define-public sbcl-simple-optimization
+  (package
+    (name "sbcl-simple-optimization")
+    (version "1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/glv/cl-simple-optimization")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "cl-simple-optimization" version))
+       (sha256
+        (base32 "1iy6qihc5fjdg1nxr439shln82gg1k4r5ji033paqbfas6bxdahj"))))
+    (build-system asdf-build-system/sbcl)
+    (native-inputs (list sbcl-fiveam))
+    (inputs (list sbcl-simple-matrix))
+    (synopsis "Solving unconstrained optimization problems in Common Lisp")
+    (description
+     "@code{simple-optimization} is a Common Lisp library providing a function
+to solve unconstrained optimization problems numerically using either the
+gradient descent or a quasi-Newton method.")
+    (home-page "https://codeberg.org/glv/cl-simple-optimization")
+    (license license:gpl3+)))
+
+(define-public cl-simple-optimization
+  (sbcl-package->cl-source-package sbcl-simple-optimization))
+
+(define-public ecl-simple-optimization
+  (sbcl-package->ecl-package sbcl-simple-optimization))
 
 (define-public sbcl-simple-parallel-tasks
   (let ((commit "ce7b60f788d8f68dfb69b24aac54c0e3b63379a6")

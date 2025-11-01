@@ -20092,6 +20092,34 @@ storage system.")
 @url{https://en.wikipedia.org/wiki/Bloom_filter, bloom filter}.")
     (license license:bsd-2)))
 
+(define-public go-github-com-tchap-go-patricia-v2
+  (package
+    (name "go-github-com-tchap-go-patricia-v2")
+    (version "2.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tchap/go-patricia")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a6scgr6474654mvhg26sj0xl1q6js0q9q4wrzs79ivj07ap4278"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; patricia_dense_test.go:279: Heap space leak, grew 20632 bytes (256488
+      ;; to 277120)
+      #:test-flags #~(list "-skip" "TestTrie_DeleteLeakageDense")
+      #:import-path "github.com/tchap/go-patricia/v2"))
+    (home-page "https://github.com/tchap/go-patricia")
+    (synopsis "Generic patricia trie (radix tree) implemented in Golang")
+    (description
+     "This package implements a generic patricia trie (also called
+@url{https://en.wikipedia.org/wiki/Radix_tree, radix tree}).")
+    (license license:expat)))
+
 (define-public go-github-com-tdewolff-argp
   (package
     (name "go-github-com-tdewolff-argp")
@@ -24131,6 +24159,33 @@ dependencies.")
 XML, Apple Binary, OpenStep, and GNUStep) from/to arbitrary Go types.")
     (license license:giftware)))
 
+(define-public go-k8s-io-api
+  (package
+    (name "go-k8s-io-api")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kubernetes/api")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1skg38mksg282jlbmf3asmsyij27r9257h3vixqrk50v7rp45zi5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "k8s.io/api"))
+    (propagated-inputs
+     (list go-github-com-gogo-protobuf
+           go-k8s-io-apimachinery))
+    (home-page "https://k8s.io/api")
+    (synopsis "Kubernetes API definition")
+    (description
+     "This package provides schema of the external API types that are served
+by the Kubernetes API server.")
+    (license license:asl2.0)))
+
 (define-public go-k8s-io-apimachinery
   (package
     (name "go-k8s-io-apimachinery")
@@ -24184,6 +24239,66 @@ dependency for servers and clients to work with Kubernetes API infrastructure
 without direct type dependencies. Its first consumers are
 @code{k8s.io/kubernetes}, @code{k8s.io/client-go}, and
 @code{k8s.io/apiserver}.")
+    (license license:asl2.0)))
+
+(define-public go-k8s-io-client-go
+  (package
+    (name "go-k8s-io-client-go")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kubernetes/client-go")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s3pfrqjk1zjg7hyn90ykgkn5ak5x1r5w5jfcr0sdlv9p42q0yqi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "k8s.io/client-go"
+      #:test-flags
+      #~(list "-skip"
+              (string-join
+               ;; Two tests failed while setting up networking.
+               (list "TestFallbackClient_WebSocketHTTPSProxyNoFallback"
+                     "TestWebSocketClient_ProxySucceeds")
+               "|"))))
+    (native-inputs
+     (list go-github-com-gogo-protobuf
+           go-github-com-google-go-cmp
+           go-github-com-stretchr-testify
+           go-go-uber-org-goleak
+           go-sigs-k8s-io-randfill))
+    (propagated-inputs
+     (list go-github-com-go-logr-logr
+           go-github-com-google-gnostic-models
+           go-github-com-google-uuid
+           go-github-com-gorilla-websocket
+           go-github-com-gregjones-httpcache
+           go-github-com-munnerz-goautoneg
+           go-github-com-peterbourgon-diskv
+           go-github-com-spf13-pflag
+           go-golang-org-x-net
+           go-golang-org-x-oauth2
+           go-golang-org-x-term
+           go-golang-org-x-time
+           go-google-golang-org-protobuf
+           go-gopkg-in-evanphx-json-patch-v4
+           go-k8s-io-api
+           go-k8s-io-apimachinery
+           go-k8s-io-klog-v2
+           go-k8s-io-kube-openapi
+           go-k8s-io-utils
+           go-sigs-k8s-io-json
+           go-sigs-k8s-io-structured-merge-diff-v6
+           go-sigs-k8s-io-yaml))
+    (home-page "https://k8s.io/client-go")
+    (synopsis "Golang client for Kubernetes")
+    (description
+     "This package provides Go clients for talking to a
+@url{http://kubernetes.io/,kubernetes} cluster.")
     (license license:asl2.0)))
 
 (define-public go-k8s-io-gengo-v2
@@ -24362,6 +24477,209 @@ follows the GNU
 Program Argument Syntax Conventions}.")
     (license license:gpl3)))
 
+(define-public go-modernc-org-cc-v3
+  ;; XXX: Project distributes v2, v3, v4 and v5 as the same source without Golang
+  ;; subdir tags.
+  (package
+    (name "go-modernc-org-cc-v3")
+    (version "4.27.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/cc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hdaaksa2lkad6hfqxcmmmni8pagd8qd5w73gncrr45sj6cj5cg6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/cc/v3"
+      #:unpack-path "modernc.org/cc"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-submodules
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (for-each delete-file-recursively
+                          (list "v2" "v4" "v5"))))))))
+    (native-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-google-go-cmp))
+    (propagated-inputs
+     (list go-lukechampine-com-uint128
+           go-modernc-org-mathutil
+           go-modernc-org-strutil
+           go-modernc-org-token))
+    (home-page "https://gitlab.com/cznic/cc")
+    (synopsis "C99 compiler front end for Golang")
+    (description
+     "This package provides a C99 compiler front end.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-cc-v4
+  (package/inherit go-modernc-org-cc-v3
+    (name "go-modernc-org-cc-v4")
+    (arguments
+     (list
+      #:import-path "modernc.org/cc/v4"
+      #:unpack-path "modernc.org/cc"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'copy-source-assets
+            ;; TODO: Implement in go-build-system to embed the whole
+            ;; directory (fix-embed-files procedure).
+            (lambda _
+              ;; Remove symlinks, to resolve embed files.
+              (delete-file-recursively "src/modernc.org/ccorpus2/assets")
+              (copy-recursively
+               (string-append #$(this-package-native-input
+                                 "go-modernc-org-ccorpus2")
+                              "/src/modernc.org/ccorpus2/assets")
+               "src/modernc.org/ccorpus2/assets"))))))
+    (native-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-pbnjay-memory
+           go-github-com-pmezard-go-difflib
+           go-modernc-org-ccorpus2))
+    (propagated-inputs
+     (list go-modernc-org-mathutil
+           go-modernc-org-opt
+           go-modernc-org-sortutil
+           go-modernc-org-strutil
+           go-modernc-org-token))))
+
+(define-public go-modernc-org-cc-v5
+  (package/inherit go-modernc-org-cc-v4
+    (name "go-modernc-org-cc-v5")
+    (arguments
+     (list
+      #:tests? #f ;XXX: tests compile a lot of extra.
+      #:import-path "modernc.org/cc/v5"
+      #:unpack-path "modernc.org/cc"))))
+
+(define-public go-modernc-org-ccgo-v3
+  ;; XXX: Project distributes v2, v3 and v4 as the same source without Golang
+  ;; subdir tags.
+  (package
+    (name "go-modernc-org-ccgo-v3")
+    (version "4.30.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/ccgo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11s0n7l10pqbdp8j02naqjiad0xad5s1zlwvy6mnxq00pra7h1b0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Test and build require go-modernc-org-ccgo-v4.
+      #:tests? #f
+      #:skip-build? #t
+      #:import-path "modernc.org/ccgo/v3"
+      #:unpack-path "modernc.org/ccgo"))
+    (propagated-inputs
+     (list go-github-com-kballard-go-shellquote
+           go-golang-org-x-sys
+           go-golang-org-x-tools
+           go-modernc-org-libc
+           go-modernc-org-cc-v3
+           go-modernc-org-mathutil
+           go-modernc-org-opt))
+    (home-page "https://gitlab.com/cznic/ccgo")
+    (synopsis "CC ASTs to Golang source code translator")
+    (description
+     "This package implements a functionality to translate C to Go source
+code.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-ccgo-v4
+  (package/inherit go-modernc-org-ccgo-v3
+    (name "go-modernc-org-ccgo-v4")
+    (source (origin
+              (inherit (package-source go-modernc-org-ccgo-v3))
+              (modules '((guix build utils)
+                         (ice-9 ftw)
+                         (srfi srfi-26)))
+              (snippet
+               #~(begin
+                   (define (delete-all-but directory . preserve)
+                     (with-directory-excursion directory
+                       (let* ((pred (negate (cut member <>
+                                                 (cons* "." ".." preserve))))
+                              (items (scandir "." pred)))
+                         (for-each (cut delete-file-recursively <>) items))))
+                   (delete-all-but "." "v4")))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-modernc-org-ccgo-v3)
+       ((#:import-path _) "modernc.org/ccgo/v4")))
+    (propagated-inputs
+     (list go-golang-org-x-mod
+           go-golang-org-x-tools
+           go-modernc-org-cc-v4
+           go-modernc-org-gc-v2
+           go-modernc-org-gc-v3
+           go-modernc-org-mathutil
+           go-modernc-org-opt
+           go-modernc-org-strutil))))
+
+(define-public go-modernc-org-ebnf
+  (package
+    (name "go-modernc-org-ebnf")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/ebnf")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "089gz09mcch505fkg9dfb480dkd659dlglpyan2qpic8by4xzagw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/ebnf"))
+    (home-page "https://gitlab.com/cznic/ebnf")
+    (synopsis "EBNF grammars for Golang")
+    (description
+     "This package provides a library for @acronym{extended Backus–Naur form, EBNF}
+grammars.  The input is text @code{[]byte} satisfying the following
+grammar (represented itself in EBNF):.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-ebnfutil
+  (package
+    (name "go-modernc-org-ebnfutil")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/ebnfutil")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12hwaqy4c83q3yqj7qakysm7wr3l9cn9925pywssmflixm9cw19s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/ebnfutil"))
+    (propagated-inputs
+     (list  go-modernc-org-ebnf
+            go-modernc-org-strutil))
+    (home-page "https://gitlab.com/cznic/ebnfutil")
+    (synopsis "Utilities for messing with EBNF grammars")
+    (description
+     "This package provides some utilities for messing with @acronym{extended
+Backus–Naur form, EBNF} grammars.")
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-fileutil
   (package
     (name "go-modernc-org-fileutil")
@@ -24384,6 +24702,171 @@ Program Argument Syntax Conventions}.")
     (home-page "https://gitlab.com/cznic/fileutil")
     (synopsis "File utility functions")
     (description "Package fileutil collects some file utility functions.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-gc
+  ;; XXX: Project distributes v2 and v3 as the same source without Golang
+  ;; subdir tags.
+  (package
+    (name "go-modernc-org-gc")
+    (version "3.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/gc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19z7ihk76rg40l3wgy6ajm819k4mlz8pf5ib3p38mv8pxs7q1y8p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Tests, probably, depend on deprecated std submodules:
+      ;; <...>-go-1.24.3/lib/go/test: no such file or directory
+      #:tests? #f
+      #:import-path "modernc.org/gc"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-submodules
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file-recursively (list "v2" "v3"))))))))
+    (propagated-inputs
+     (list go-github-com-edsrzf-mmap-go
+           go-modernc-org-token))
+    (home-page "https://gitlab.com/cznic/gc")
+    (synopsis "Golang compiler front end")
+    (description
+     "This package provides a Go compiler front end.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-gc-v2
+  (package/inherit go-modernc-org-gc
+    (name "go-modernc-org-gc-v2")
+    (arguments
+     (list
+      #:import-path "modernc.org/gc/v2"
+      #:unpack-path "modernc.org/gc"
+      ;; all_test.go:274: open normalized.go.ebnf: permission denied
+      #:test-flags #~(list "-skip" "Test0")))
+    (native-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-pmezard-go-difflib
+           go-modernc-org-ebnf
+           go-modernc-org-ebnfutil
+           go-modernc-org-scannertest))
+    (propagated-inputs
+     (list go-modernc-org-token))))
+
+(define-public go-modernc-org-gc-v3
+  (package/inherit go-modernc-org-gc
+    (name "go-modernc-org-gc-v3")
+    (arguments
+     (list
+      #:import-path "modernc.org/gc/v3"
+      #:unpack-path "modernc.org/gc"
+      #:test-flags
+      #~(list "-vet=off"   ;Go@1.24 forces vet, but tests are not ready yet.
+              ;; all_test.go:119: open peg.ebnf.fs: permission denied
+              "-skip" "TestPEGEBNF")))
+    (native-inputs
+     (list go-github-com-pmezard-go-difflib
+           go-golang-org-x-tools
+           go-modernc-org-ebnfutil))
+    (propagated-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-dustin-go-humanize
+           go-github-com-hashicorp-golang-lru-v2
+           go-golang-org-x-exp
+           go-modernc-org-mathutil
+           go-modernc-org-strutil
+           go-modernc-org-token))))
+
+(define-public go-modernc-org-goabi0
+  (package
+    (name "go-modernc-org-goabi0")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/goabi0")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nf3mcql5vjfymhy7l867zan2ynjg3wc3jplh4k1gby077h7jb3h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/goabi0"))
+    (home-page "https://gitlab.com/cznic/goabi0")
+    (synopsis "Helpers for generating Go assembler ABI0 code")
+    (description
+     "This package provides helpers for generating Go assembler
+@url{https://go.dev/doc/asm, ABI0} code.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-golex
+  (package
+    (name "go-modernc-org-golex")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/golex")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01izinzm5j5210z09r6k8rygybw7s442hrhk0kv726ig9l9si7fi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/golex"
+      #:test-flags
+      #~(list "-vet=off"   ;Go@1.24 forces vet, but tests are not ready yet.
+              ;; Cant's parce "\xff".
+              "-skip" "Example_completeGeneratedProgram")))
+    (propagated-inputs
+     (list go-modernc-org-lex
+           go-modernc-org-lexer))
+    (home-page "https://gitlab.com/cznic/golex")
+    (synopsis "Lex/flex like (not fully POSIX lex compatible) utility")
+    (description
+     "Golex is a lex/flex like (not fully POSIX lex compatible) utility.  It
+renders @code{.l}
+@url{https://westes.github.io/flex/manual/Format.html#Format, formated data}
+to Go source code.  The @code{.l} data can come from a file named in a command
+line argument.  If no non-opt args are given, golex reads stdin.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-lex
+  (package
+    (name "go-modernc-org-lex")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/lex")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fad093cdkgdwk3sf0vklk05qzkis1ivri3hig1wigv4z908nmdj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/lex"))
+    (propagated-inputs
+     (list go-modernc-org-fileutil
+           go-modernc-org-lexer))
+    (home-page "https://gitlab.com/cznic/lex")
+    (synopsis "Support for a @code{*nix (f)lex} like tool on @code{.l} sources")
+    (description
+     "This package provides a support for a @code{*nix (f)lex} like tool on
+@code{.l} sources.  The syntax is similar to a subset of @code{}(f)lex}, see
+also: @url{https://github.com/westes/flex}.")
     (license license:bsd-3)))
 
 (define-public go-modernc-org-lexer
@@ -24454,8 +24937,14 @@ recognizers) at run time.")
     (arguments
      (list
       #:import-path "modernc.org/libc"
-      ;; Tests require modernc.org/ccgo/v4/lib, which is not packaged yet
-      #:tests? #f))
+      ;; all_musl_test.go:479: FAIL err=exit status 1 out=go: modules disabled
+      ;; by GO111MODULE=off; see 'go help modules'
+      #:test-flags #~(list "-skip" "TestLibc")))
+    (native-inputs
+     (list go-golang-org-x-tools
+           go-modernc-org-ccgo-v4
+           go-modernc-org-fileutil
+           go-modernc-org-goabi0))
     (propagated-inputs
      (list go-github-com-dustin-go-humanize
            go-github-com-google-uuid
@@ -24494,6 +24983,61 @@ with ccgo-generated code.")
     (description "Package opt implements command-line flag parsing.")
     (license license:bsd-3)))
 
+(define-public go-modernc-org-parser
+  (package
+    (name "go-modernc-org-parser")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/parser")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mawi7qqd5pkpg1a9k3isnkm6c524ig83awmpc132x47qsxd2a6g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "modernc.org/parser"))
+    (propagated-inputs
+     (list go-modernc-org-golex
+           go-modernc-org-scanner
+           go-modernc-org-strutil))
+    (home-page "https://gitlab.com/cznic/parser")
+    (synopsis "Collection of Golang parsers")
+    (description
+     "This package provides an imlementation of @code{nquads} and @code{yacc}
+parsers.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-scanner
+  (package
+    (name "go-modernc-org-scanner")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/scanner")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nj7iy8gr9f5vwmg5fvpvxsjy9668mkm9dyc8ajx8imvlx4n1lvw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/scanner"))
+    (propagated-inputs
+     (list go-modernc-org-token))
+    (home-page "https://gitlab.com/cznic/scanner")
+    (synopsis "Common source code scanner for Golang")
+    (description
+     ;; XXX: Project provides nearly 0 documentation.
+     "This package provides some common scanner stuff.")
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-sortutil
   (package
     (name "go-modernc-org-sortutil")
@@ -24528,8 +25072,8 @@ with ccgo-generated code.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/cznic/sqlite")
-             (commit (string-append "v" version))))
+              (url "https://gitlab.com/cznic/sqlite")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0579vip4vn488jppjpadryxyimkw2jr8ywr4j0piqcm2zs40h509"))))
@@ -24537,8 +25081,17 @@ with ccgo-generated code.")
     (arguments
      (list
       #:import-path "modernc.org/sqlite"
-      ;; Tests require modernc.org/ccgo/v4/lib, which is not packaged yet
-      #:tests? #f))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'check 'post-check-remove-test-data
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "testdata")))))))
+    (native-inputs
+     (list go-github-com-google-pprof
+           go-github-com-mattn-go-sqlite3
+           go-modernc-org-fileutil
+           go-modernc-org-mathutil))
     (propagated-inputs
      (list go-github-com-dustin-go-humanize
            go-github-com-google-uuid
@@ -24546,7 +25099,6 @@ with ccgo-generated code.")
            go-github-com-remyoudompheng-bigfft
            go-golang-org-x-sys
            go-modernc-org-libc
-           go-modernc-org-mathutil
            go-modernc-org-memory))
     (home-page "https://modernc.org/sqlite")
     (synopsis "CGo-free port of SQLite")
@@ -24581,6 +25133,35 @@ replacement for mattn/go-sqlite3.")
     (description
      "Package strutil collects utils supplemental to the standard
 @code{strings} package.")
+    (license license:bsd-3)))
+
+(define-public go-modernc-org-y
+  (package
+    (name "go-modernc-org-y")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/y")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vp9dzw7m64yhf8j0sxir9lpn8zis1z06ia95iah62h6p0c3q9ys"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/y"))
+    (propagated-inputs
+     (list go-modernc-org-mathutil
+           go-modernc-org-parser
+           go-modernc-org-sortutil
+           go-modernc-org-strutil))
+    (home-page "https://gitlab.com/cznic/y")
+    (synopsis "Converter of @code{.y} (yacc) source files")
+    (description
+     "This package implements a functionality to convert @code{.y} (yacc[2])
+source files to data suitable for a parser generator.")
     (license license:bsd-3)))
 
 (define-public go-mvdan-cc-editorconfig
@@ -25066,6 +25647,58 @@ system calls.
 
 It allows one to safely call Unveil / Pledge on non-OpenBSD operating systems.")
     (license license:isc)))
+
+(define-public go-tags-cncf-io-container-device-interface
+  (package
+    (name "go-tags-cncf-io-container-device-interface")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cncf-tags/container-device-interface")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wpp8fsrfjmgfkwwanakbigf68khwycdxbmr82k309fawfpbz7fj"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - tags.cncf.io/container-device-interface/cmd/cdi
+            ;; - tags.cncf.io/container-device-interface/specs-go
+            ;; - tags.cncf.io/container-device-interface/schema
+            ;; - tags.cncf.io/container-device-interface/cmd/validate
+            (for-each delete-file-recursively
+                      (list"cmd" "schema"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "tags.cncf.io/container-device-interface"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-fsnotify-fsnotify
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-opencontainers-runtime-tools
+           go-golang-org-x-mod
+           go-golang-org-x-sys
+           go-gopkg-in-yaml-v3
+           go-sigs-k8s-io-yaml))
+    (home-page "https://tags.cncf.io/container-device-interface")
+    (synopsis "CNCF's Container Device Interface")
+    (description
+     "This package provides @acronym{Cloud Native Computing Foundation, CNCF}'s
+@acronym{CDI, Container Device Interface} specification, for
+container-runtimes, to support third-party devices. It also includes
+@code{tags.cncf.io/container-device-interface/specs-go} submodule.")
+    (license license:asl2.0)))
+
+;; To make importer happy.
+(define-public go-tags-cncf-io-container-device-interface-specs-go
+  go-tags-cncf-io-container-device-interface)
 
 (define-public go-zgo-at-jfmt
   (package

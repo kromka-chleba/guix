@@ -84,6 +84,7 @@
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;; Copyright © 2025 Artur Wroblewski <wrobell@riseup.net>
+;;; Copyright © 2025 Allan Adair <allan@adair.no>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1221,6 +1222,45 @@ of a fake DNS resolver.")
 datasets and other repos on the @url{huggingface.co} hub.")
     (license license:asl2.0)))
 
+(define-public python-kubernetes
+  (package
+    (name "python-kubernetes")
+    (version "34.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "kubernetes" version))
+       (sha256
+        (base32 "04ir03887spls3wqspvbsivqjrbwz0innn86mkrs546jnnqfvs4g"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; The following tests expect a local running Kubernetes cluster.
+         "--ignore=kubernetes/e2e_test"
+         "--ignore=kubernetes/dynamic")))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-certifi
+           python-dateutil
+           python-durationpy
+           python-google-auth
+           python-pyyaml
+           python-requests
+           python-requests-oauthlib
+           python-six           ;XXX: hard dependency
+           python-urllib3-1.26  ;sanity check, requires urllib3<2.4.0,>=1.24.2
+           python-websocket-client))
+    (home-page "https://github.com/kubernetes-client/python")
+    (synopsis "Python client for Kubernetes")
+    (description
+     "This package provides an official Python client library for
+@url{http://kubernetes.io, Kubernetes}.")
+    (license license:asl2.0)))
+
 (define-public python-lazr-restfulclient
   (package
     (name "python-lazr-restfulclient")
@@ -1977,6 +2017,41 @@ to the absence of the @samp{motor} and @samp{aioboto3} package dependencies.")
      "This library implements @acronym{CORS, Cross Origin Resource Sharing}
 support for aiohttp asyncio-powered asynchronous HTTP server.")
     (license license:asl2.0)))
+
+(define-public python-aiohttp-retry
+  (package
+    (name "python-aiohttp-retry")
+    (version "2.9.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/inyutin/aiohttp_retry")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r5lxnxc4s8js7l86pfmdxl455v9lg3m41nz6m1xg4kwwf6j0bpi"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-aiohttp
+           python-setuptools))
+    (propagated-inputs
+     (list python-aiohttp))
+    (home-page "https://github.com/inyutin/aiohttp_retry")
+    (synopsis "Simple retry client for aiohttp")
+    (description
+     "This package implements @code{RetryClient} for @code{aiohttp} to retry
+connection to provided endpoint with timeouts logic or use:
+
+@itemize
+@item @code{ExponentialRetry} with exponential backoff
+@item @code{RandomRetry} for random backoff
+@item @code{ListRetry} with backoff you predefine by list
+@item @code{FibonacciRetry} with backoff that looks like fibonacci sequence
+@item @code{JitterRetry} exponential retry with a bit of randomness
+@end itemize")
+    (license license:expat)))
 
 (define-public python-aiohttp-socks
   (package
@@ -3976,6 +4051,15 @@ high-speed transfers via libcurl and frequently outperforms alternatives.")
        (sha256
         (base32 "02c6cyh8f3dagcw786m9nl5y0n3xa98p5mb7d7xfr84l2l5bglmk"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"requests-file.*\",")
+                 "\"requests-file\",")))))))
     (native-inputs
      (list nss-certs-for-test
            python-pytest
@@ -8792,37 +8876,33 @@ such as IoT applications or multi-user database-driven business applications.")
 (define-public python-ws4py
   (package
     (name "python-ws4py")
-    (version "0.5.1")
+    (version "0.6.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "ws4py" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Lawouach/WebSocket-for-Python")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "10slbbf2jm4hpr92jx7kh7mhf48sjl01v2w4d8z3f1p0ybbp7l19"))))
-    (build-system python-build-system)
+         "00y6s8gk20936njqbxr8vjliviiz7r7pqrlwg7xi8zzs6903xvv6"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'python3.7-compatibility
-           (lambda _
-             (substitute* '("ws4py/server/tulipserver.py"
-                            "ws4py/async_websocket.py")
-               (("asyncio.async")
-                "asyncio.ensure_future"))
-             #t))
-         ;; We don't have a package for cherrypy.
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
          (add-after 'unpack 'remove-cherrypy-support
            (lambda _
              (delete-file "ws4py/server/cherrypyserver.py")
-             #t)))))
+             (delete-file "test/test_cherrypy.py"))))))
+    (native-inputs (list python-setuptools python-pytest))
     (propagated-inputs
      (list python-gevent python-tornado))
     (home-page "https://github.com/Lawouach/WebSocket-for-Python")
     (synopsis "WebSocket client and server library")
     (description
-     "This package provides a WebSocket client and server library for
-Python.")
+     "This package provides a WebSocket client and server library for Python.")
     (license license:bsd-3)))
 
 (define-public python-slowapi
@@ -9782,10 +9862,10 @@ Built on top of @code{asyncio}, Python's standard asynchronous I/O framework,
 it provides an elegant coroutine-based API.")
     (license license:bsd-3)))
 
-(define-public python-selenium
+(define-public selenium-manager
   (package
-    (name "python-selenium")
-    (version "4.28.1")
+    (name "selenium-manager")
+    (version "4.34.2")
     (source
      (origin
        (method git-fetch)
@@ -9794,7 +9874,36 @@ it provides an elegant coroutine-based API.")
               (commit (string-append "selenium-" version "-python"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1q52qdd33wadxa8ir34kl5nxlrgjbqqk2yx2m1v5xxjf0agazjfl"))))
+        (base32 "14fg8r4rm9d7169rlm29l5yn08wgllmqk1zc6six3dlrzzf5mxil"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      ;; XXX: Almost all tests require either browsers or network access.
+      #:tests? #f
+      #:install-source? #f              ; Most likely intended as a leaf.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "rust"))))))
+    (native-inputs (list pkg-config))
+    (inputs (cons* (list zstd "lib") xz
+                   (cargo-inputs 'selenium-manager)))
+    (home-page "https://www.selenium.dev")
+    (synopsis "CLI tool to manager the browser test infrastructure")
+    (description
+     "Selenium simplifies web browser automation.  It specifically provides
+infrastructure for the W3C WebDriver specification — a platform and
+language-neutral coding interface compatible with all major web browsers.
+
+Selenium Manager is a CLI tool that automatically manages the browser/driver
+infrastructure required by Selenium.")
+    (license license:asl2.0)))
+
+(define-public python-selenium
+  (package/inherit selenium-manager
+    (name "python-selenium")
+    (build-system pyproject-build-system)
     (arguments
      (list
       ;; XXX: Disable failing tests.
@@ -9810,28 +9919,41 @@ it provides an elegant coroutine-based API.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _
-              (chdir "py"))))))
-    (build-system pyproject-build-system)
+              (chdir "py")))
+          (add-after 'chdir 'inject-selenium-manager-binary
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "selenium/webdriver/common/selenium_manager.py"
+                (("compiled_path = Path.*")
+                 (format #f "return Path(~s)~%"
+                         (search-input-file inputs "bin/selenium-manager"))))
+              (substitute* "pyproject.toml"
+                (("\\[\\[tool\\.setuptools-rust\\.bins\\]\\]")
+                 "")
+                (("target = \"selenium\\.webdriver\\.common.*\"")
+                 ""))))
+          (add-after 'chdir 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"(typing_extensions|trio)~=.*\"," _ target)
+                 (format #f "~s," target))))))))
     (propagated-inputs (list python-certifi
                              python-trio
                              python-trio-websocket
                              python-typing-extensions
                              python-urllib3
                              python-websocket-client))
+    (inputs (list selenium-manager))
     (native-inputs (list python-filetype
                          python-pytest
                          python-pytest-mock
                          python-pytest-trio
                          python-setuptools
-                         python-setuptools-rust
-                         python-wheel))
-    (home-page "https://www.selenium.dev")
+                         python-setuptools-rust))
     (synopsis "Python bindings for Selenium")
-    (description "Selenium enables web browser automation.
-Selenium specifically provides infrastructure for the W3C WebDriver specification
-— a platform and language-neutral coding interface compatible with all
-major web browsers.")
-    (license license:asl2.0)))
+    (description
+     "Selenium enables web browser automation.  It specifically provides
+infrastructure for the W3C WebDriver specification — a platform and
+language-neutral coding interface compatible with all major web browsers.")))
 
 (define-public python-rapidjson
   (package
@@ -10067,6 +10189,214 @@ changed the process is restarted.")
      "Pyramid makes it easy to write web applications.  From minimal
 request/response web apps to larger, grown applications.")
     (license license:repoze)))
+
+(define-public python-pyramid-chameleon
+  ;; PyPI lacks a fresh release, use the latest commit assosiated with
+  ;; unrleased version, see:
+  ;; <https://github.com/Pylons/pyramid_chameleon/issues/27>
+  (let ((commit "956c77ba37120c430e871c834d3cd4ed5ac8dccf")
+        (revision "0"))
+    (package
+      (name "python-pyramid-chameleon")
+      (version (git-version "0.4.dev0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Pylons/pyramid_chameleon")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0rsb921xi7736h1xikc904bq2zzmrj1g8qgyimjw5wxdcd8927b1"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-setuptools))
+      (propagated-inputs
+       (list python-chameleon
+             python-pyramid))
+      (home-page "https://github.com/Pylons/pyramid_chameleon")
+      (synopsis "Chameleon template compiler for pyramid")
+      (description
+       "These package provides bindings for the Chameleon templating system
+ for the Pyramid web framework.")
+      (license license:repoze))))
+
+(define-public python-pyramid-debugtoolbar
+  (package
+    (name "python-pyramid-debugtoolbar")
+    (version "4.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyramid_debugtoolbar" version))
+       (sha256
+        (base32 "0gdlc7vcga4vzma53h5csnhh4gwfmv3w8v9y5fhwqpy8979qis3i"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Large diff assertion not equal faileurs.
+      #~(list #$@(map (lambda (test)
+                        (string-append "--deselect=tests"
+                                       "/test_panels/test_sqla.py::" test))
+                      (list "TestSimpleSelect::test_panel"
+                            "TestTransactionCommit::test_panel"
+                            "TestTransactionRollback::test_panel")))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-webtest))
+    (propagated-inputs
+     (list python-pyramid
+           python-pyramid-chameleon
+           python-pyramid-jinja2
+           python-pyramid-mako
+           ;; python-selenium ; see: guix/guix#3478
+           python-sqlalchemy
+           python-waitress))
+    (home-page "https://github.com/Pylons/pyramid_debugtoolbar")
+    (synopsis "Pyramid debug toolbar")
+    (description
+     "This package provides an interactive HTML debugger for Pyramid application
+development.")
+    (license license:bsd-3)))
+
+(define-public python-pyramid-jinja2
+  (package
+    (name "python-pyramid-jinja2")
+    (version "2.10.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyramid_jinja2" version))
+       (sha256
+        (base32 "0xqnqbqhx9bkrg2ic3blflsk8xc8kh7i2dm2kha9apqkbjrqql4c"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Two tests failed with assertion not equal.
+      #~(list "-k" "not test_it_relative_to_package and not test_options")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "setup.cfg"
+                ((" --cov") "")))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-webtest))
+    (propagated-inputs
+     (list python-jinja2
+           python-markupsafe
+           python-pyramid
+           python-zope-deprecation))
+    (home-page "https://github.com/Pylons/pyramid_jinja2")
+    (synopsis "Jinja2 template bindings for the Pyramid web framework")
+    (description "This package provides Jinja2 template bindings for the
+Pyramid web framework.")
+    (license license:repoze)))
+
+(define-public python-pyramid-mako
+  ;; 1.1.0 was released in 2019, there a lot of compatability changes on
+  ;; master, us the latest commit for now.
+  (let ((commit "1a6f4c00c7134530d2975f34d904b64a41b28b21")
+        (revision "0"))
+    (package
+      (name "python-pyramid-mako")
+      (version (git-version "1.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Pylons/pyramid_mako")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0v0571z2gby4apsalkdk83gs0d5mw79d56518h3bwwxzbq32kkns"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-pytest-config
+              (lambda _
+                (substitute* "pyproject.toml"
+                  ((" --cov --cov-report=term-missing") "")))))))
+      (native-inputs
+       (list python-pytest
+             python-setuptools))
+      (propagated-inputs
+       (list python-mako
+             python-pyramid))
+      (home-page "https://github.com/Pylons/pyramid_mako")
+      (synopsis "Mako template bindings for the Pyramid web framework")
+      (description
+       "This package provides Mako template bindings for the Pyramid web
+framework.")
+      (license license:repoze))))
+
+(define-public python-pyramid-retry
+  (package
+    (name "python-pyramid-retry")
+    (version "2.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyramid_retry" version))
+       (sha256
+        (base32 "1jf07v6zhli0abgm2qajzfwg68bl9zy4xygjwl4svawbwrm2ga5s"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-webtest))
+    (propagated-inputs
+     (list python-pyramid
+           python-zope-interface))
+    (home-page "https://github.com/Pylons/pyramid_retry")
+    (synopsis "Pyramid execution policy supporting retrying failed requests")
+    (description
+     "@code{pyramid_retry} is an execution policy for Pyramid that wraps requests
+and can retry them a configurable number of times under certain \"retryable\"
+error conditions before indicating a failure to the client.")
+    (license license:expat)))
+
+(define-public python-pyramid-tm
+  (package
+    (name "python-pyramid-tm")
+    (version "2.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyramid_tm" version))
+       (sha256
+        (base32 "173hg16hldfh5n3mn482xx64nldk308dzri31jd0qa4528cx4j41"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "setup.cfg"
+                ((" --cov") "")))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-webtest))
+    (propagated-inputs
+     (list python-pyramid
+           python-transaction))
+    (home-page "https://github.com/Pylons/pyramid_tm")
+    (synopsis "Centralized transaction management for Pyramid")
+    (description
+     "@code{pyramid_tm} is a package which allows Pyramid requests to join the
+active @url{https://pypi.org/project/transaction/, transaction} as provided by
+the Python transaction package.")
+      (license license:repoze)))
 
 (define-public python-random-user-agent
   (package
@@ -12184,6 +12514,10 @@ resources using Web Application Description Language (WADL) files as guides.")
       '(modify-phases %standard-phases
          (add-after 'unpack 'compatibility
            (lambda _
+             ;; Relax requests-file requirement.
+             (substitute* "pyproject.toml"
+               (("\"requests-file.*\",")
+                "\"requests-file\","))
              ;; httpx removed the "proxies" keyword.  It's now either "mounts"
              ;; or "proxy".  See https://github.com/encode/httpx/pull/2879.
              (substitute* "src/zeep/transports.py"

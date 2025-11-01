@@ -2204,10 +2204,21 @@ Format (GFF) with Biopython integration.")
      '((upstream-name . "bcbio-gff")))
     (license (license:non-copyleft "http://www.biopython.org/DIST/LICENSE"))))
 
-(define-public python-bcbio-gff/biopython-1.73
+(define-public python-bcbio-gff-for-python-cmseq
   (hidden-package
    (package
      (inherit python-bcbio-gff)
+     (name "python-bcbio-gff")
+     (version "0.6.9")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/chapmanb/bcbb")
+               (commit (string-append "bcbio-gff-v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "131hiir94jkm9jj2wfpybwndgzn8k0zc1ji1qjn5cz7w48x3ri13"))))
      (propagated-inputs
       (modify-inputs (package-propagated-inputs python-bcbio-gff)
         (replace "python-biopython" python-biopython-1.73))))))
@@ -2671,9 +2682,11 @@ cell types and subtypes.")
              (substitute* "cmseq/cmseq.py"
                (("'samtools'")
                 (string-append "'" (search-input-file inputs "/bin/samtools") "'"))))))))
+    (native-inputs
+     (list python-setuptools))
     (inputs (list samtools))
     (propagated-inputs
-     (list python-bcbio-gff/biopython-1.73
+     (list python-bcbio-gff-for-python-cmseq
            python-biopython-1.73
            python-numpy
            python-pandas
@@ -3333,25 +3346,40 @@ phylogenetic trees also goes by the name simulationmethods for phylogenetic
 trees, synthetic data generation, or just phylogenetic tree simulation.")
     (license license:expat)))
 
-;; XXX: Probably unmaintained, build fails with Python 3.11, see
-;; <https://github.com/cancerit/parabam/issues/10>.
 (define-public python-parabam
   (package
     (name "python-parabam")
-    (version "3.0.1")
+    ;; XXX: Upstream works on modernization of the project, use the latest
+    ;; commit providing fixes.
+    ;; See: <https://github.com/cancerit/parabam/issues/10>.
+    (properties '((commit . "be5bd35012d37df8cfa88771325a0273519c8c98")
+                  (revision . "0")))
+    (version (git-version "3.0.1"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "parabam" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cancerit/parabam")
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1cy9q3gzdawi1kilycpd7waymjmrwsg8czwycfp13g301ir9xyp3"))
-       (modules '((guix build utils)))
-       (snippet
-        '(substitute* "setup.py"
-           (("'argparse',") "")))))
+        (base32 "1x0c1zhlfplhm4n07vibvh4jprjsdlypnlig87a8r07d26d4qphh"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f        ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'cythonize
+            (lambda _
+              (with-directory-excursion "parabam"
+                (for-each (lambda (file)
+                            (invoke "cython" "-3" file "-I" "."))
+                          (find-files "." ".*\\.pyx$"))))))))
     (propagated-inputs (list python-numpy python-pysam))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-cython python-setuptools))
     (home-page "https://github.com/cancerit/parabam")
     (synopsis "Parallel BAM File Analysis")
     (description "Parabam is a tool for processing sequencing files in
@@ -3897,54 +3925,57 @@ operators such as union, intersection, and difference.")
 (define-public python-ega-download-client
   (package
     (name "python-ega-download-client")
-    (version "5.1.0")
+    (version "5.2.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/EGA-archive/ega-download-client")
-             (commit (string-append "v" version))))
+              (url "https://github.com/EGA-archive/ega-download-client")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0k9rfq2yyvfxs5sq9lsm8krp9ddx4s18hv85ikf3b37zv24kpwjk"))))
+        (base32 "0wz36ii6sb65nknh56vr5ss6b446zy9iibz7jv3irgfas955jlrc"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 78 passed, 2 deselected, 1 warning
       #:test-flags
-      '(list
-        ;; These tests fail because they require internet access.
-        "--ignore=tests/functional/test_download.py"
-        "--ignore=tests/functional/test_htsget.py"
-        "-k"
-        (string-append "not test_error_5xx"
-                       " and not test_error_too_many_requests"
-                       ;; Something's wrong here.  On some powerful machines
-                       ;; (but not on my laptop) these fail, and tests like
-                       ;; test_file_is_saved_into_an_existing_directory_which_was_specified_by_the_user
-                       ;; take a *very* long time to complete.
-                       ;;
-                       ;; It looks like "dataset_in_fire.download" takes an
-                       ;; unusually long time on those machines.  We disable
-                       ;; tests that fail under these conditions.
-                       " and not test_download_file"
-                       " and not test_output_file_is_removed_if_md5_was_invalid"
-                       " and not test_post_stats_if_download_succeeded"))
+      ;; Test suite does a lot of fake os mocking and extensively hash
+      ;; checking on a large amount of generated files (up to 150GiB each)
+      ;; which would take some extra compute resources, therefor functional
+      ;; and some of unit tests are excluded to relax the load.
+      #~(list #$@(map (lambda (file) (string-append "--ignore="
+                                                    "tests/"
+                                                    file))
+                      (list "functional/"
+                            "unit/test_save_to_with_dataset.py"
+                            "unit/test_save_to_with_file.py"
+                            "unit/test_verify_output_dir.py"))
+              #$@(map (lambda (test) (string-append "--deselect="
+                                                    "tests/unit/"
+                                                    "test_commands.py::"
+                                                    test))
+                      ;; requests.exceptions.RetryError: None: Max retries
+                      ;; exceeded with url:
+                      ;; https://test.data.server/metadata/datasets (Caused by
+                      ;; ResponseError('too many 503 error responses'))
+                      (list "test_error_5xx"
+                            "test_error_too_many_requests")))
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("==") ">=")))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("==") ">=")))))))
     (propagated-inputs (list python-htsget python-psutil python-requests
                              python-tqdm python-urllib3))
     (native-inputs
-     (list python-coverage
+     (list nss-certs-for-test
            python-mock
            python-pyfakefs
            python-pytest
            python-responses
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (home-page "https://github.com/EGA-archive/ega-download-client")
     (synopsis "EGA download client")
     (description "PyEGA3 is a tool for viewing and downloading files from
@@ -4741,17 +4772,30 @@ sequences, and reconstructing germline sequences.")
 (define-public python-fastalite
   (package
     (name "python-fastalite")
-    (version "0.3")
+    (version "0.4.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "fastalite" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/nhoffman/fastalite")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1qli6pxp77i9xn2wfciq2zaxhl82bdxb33cpzqzj1z25yd036wqj"))))
-    (build-system python-build-system)
+        (base32 "19sps1l8k2vp7sj943gccabfkr2h3fn1n93sn28h9gay2ywc41ly"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)) ; Test data is not distributed.
+     (list
+      #:test-backend #~'unittest
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              ;; This version file is expected to be created with git describe.
+              (mkdir-p "fastalite/data")
+              (with-output-to-file "fastalite/data/ver"
+                (lambda () (display #$version))))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/nhoffman/fastalite")
     (synopsis "Simplest possible FASTA parser")
     (description "This library implements a FASTA and a FASTQ parser without
@@ -5747,7 +5791,7 @@ well as many of the command line options.")
 (define-public bwa-meth
   (package
     (name "bwa-meth")
-    (version "0.2.3")
+    (version "0.2.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5756,10 +5800,11 @@ well as many of the command line options.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0c695lkrr0996zwkibl7324wg2vxmn6522sz30xv4a9gaf0lnbh3"))))
-    (build-system python-build-system)
+                "0192h6rdaxa1rx16hgkanwsp3qv9knsmnghy07ya1231qia8h67p"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #f      ;no tests
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'keep-references-to-bwa
            (lambda* (#:key inputs #:allow-other-keys)
@@ -5768,10 +5813,11 @@ well as many of the command line options.")
                 (string-append (which "bwa") " " command))
                ;; There's an ill-advised check for "samtools" on PATH.
                (("^checkX.*") "")))))))
-    (inputs
-     (list bwa))
     (native-inputs
-     (list python-toolshed))
+     (list python-setuptools))
+    (inputs
+     (list bwa
+           python-toolshed))
     (home-page "https://github.com/brentp/bwa-meth")
     (synopsis "Fast and accurante alignment of BS-Seq reads")
     (description
@@ -6066,7 +6112,7 @@ also includes an interface for tabix.")
 (define-public python-twobitreader
   (package
     (name "python-twobitreader")
-    (version "3.1.6")
+    (version "3.1.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6075,12 +6121,11 @@ also includes an interface for tabix.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qbxvv1h58cismbk1anpjrkpghsaiy64a11ir3lhy6qch6xf8n62"))))
-    (build-system python-build-system)
-    ;; Tests are not included
-    (arguments '(#:tests? #f))
+                "1yk86vgdh43wpg8wv4riiff3qv0nrmizxzv774ghjkgiss4g1l2q"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-sphinx))
+     (list python-pytest
+           python-setuptools))
     (home-page "https://github.com/benjschiller/twobitreader")
     (synopsis "Python library for reading .2bit files")
     (description
@@ -6402,7 +6447,15 @@ files.  The code was previously part of the cutadapt tool.")
               (sha256
                (base32
                 "1xnl80nblysj6dylj4683wgrfa425rkx4dp5k65hvwdns9pw753x"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--pyargs" "deeptoolsintervals"
+              "--doctest-modules")))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
     (inputs
      (list zlib))
     (home-page "https://github.com/deeptools/deeptools_intervals")
@@ -9672,7 +9725,7 @@ data.  It also provides the @command{bgzip}, @command{htsfile}, and
               ;; Delete generated C code.
               (snippet
                '(begin (delete-file "idr/inv_cdf.c") #t))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     ;; There is only one test ("test_inv_cdf.py") and it tests features that
     ;; are no longer part of this package.  It also asserts False, which
     ;; causes the tests to always fail.
@@ -9680,7 +9733,8 @@ data.  It also provides the @command{bgzip}, @command{htsfile}, and
     (propagated-inputs
      (list python-scipy python-sympy python-numpy python-matplotlib))
     (native-inputs
-     (list python-cython))
+     (list python-cython
+           python-setuptools))
     (home-page "https://github.com/nboley/idr")
     (synopsis "Tool to measure the irreproducible discovery rate (IDR)")
     (description

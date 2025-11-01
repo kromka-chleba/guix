@@ -1333,13 +1333,13 @@ the PDF pages.")
 (define-public img2pdf
   (package
     (name "img2pdf")
-    (version "0.5.1")
+    (version "0.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "img2pdf" version))
        (sha256
-        (base32 "158bgnk2jhjnpyld4z3jq8v2j8837vh4j0672g8mnjrg4i3px13k"))))
+        (base32 "12gjd98gnx117d5v36gpw55iplgvm6bvd532gnfibg1jp2g2fvih"))))
     (build-system python-build-system)
     (propagated-inputs
      (list python-pikepdf python-pillow
@@ -1550,7 +1550,7 @@ manage or manipulate PDFs.")
 (define-public pdfarranger
   (package
     (name "pdfarranger")
-    (version "1.11.0")
+    (version "1.12.1")
     (source
      (origin
        (method git-fetch)
@@ -1559,7 +1559,7 @@ manage or manipulate PDFs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "045a6j5mh2ixrx3awrpfqh6l3x61i4jrv8r73xz1mvw0bc97lxbc"))))
+        (base32 "04l74zp0smxzd9yhprdk70sshz3bvib8glla4z0s4zwvzfs65zd1"))))
     (build-system pyproject-build-system)
     (arguments
      (list

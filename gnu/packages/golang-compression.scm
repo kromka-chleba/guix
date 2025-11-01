@@ -67,6 +67,38 @@ the @code{c2go} tool at
 @url{https://github.com/andybalholm/c2go,https://github.com/andybalholm/c2go}.")
     (license license:expat)))
 
+(define-public go-github-com-containerd-stargz-snapshotter-estargz
+  (package
+    (name "go-github-com-containerd-stargz-snapshotter-estargz")
+    (version "0.18.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/stargz-snapshotter")
+              (commit (go-version->git-ref version
+                                           #:subdir "estargz"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0058acl307d8gkkp0iyd9w290kwixi9362ji48azl5cp7mx4l27f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/stargz-snapshotter/estargz"
+      #:unpack-path "github.com/containerd/stargz-snapshotter"))
+    (propagated-inputs
+     (list go-github-com-klauspost-compress
+           go-github-com-opencontainers-go-digest
+           go-github-com-vbatts-tar-split
+           go-golang-org-x-sync))
+    (home-page "https://github.com/containerd/stargz-snapshotter")
+    (synopsis "Reader/writer library for eStargz container image format")
+    (description
+     "This package implements reader/writer library
+@url{https://github.com/containerd/stargz-snapshotter/blob/v0.18.0/docs/estargz.md,
+eStargz} - a lazily-pullable image format.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-datadog-zstd
   (package
     (name "go-github-com-datadog-zstd")
@@ -567,6 +599,38 @@ decompressing data.  The package is completely written in Go and doesn't have
 any dependency on any C code.")
     (license license:bsd-3)))
 
+(define-public go-github-com-vbatts-tar-split
+  (package
+    (name "go-github-com-vbatts-tar-split")
+    (version "0.12.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/vbatts/tar-split")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08zf59nsfkfndjb2hgf4ccvpsi8aijd1daa5v19my2bfiabqf0za"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/vbatts/tar-split"))
+    (native-inputs
+     (list go-github-com-fatih-color
+           go-github-com-magefile-mage
+           go-github-com-sirupsen-logrus
+           go-github-com-stretchr-testify
+           go-github-com-urfave-cli))
+    (home-page "https://github.com/vbatts/tar-split")
+    (synopsis "Checksum-reproducible tar archives")
+    (description
+     "This package implements a functionality for pristinely disassembling a tar
+archive, and stashing needed raw bytes and offsets to reassemble a validating
+original archive.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-xi2-xz
   (package
     (name "go-github-com-xi2-xz")
@@ -626,6 +690,20 @@ tool."))))
      (string-append (package-description go-github-com-pierrec-lz4-v4)
                     "  This package provides an additional command line
 interface tool to compress and decompress LZ4 files."))))
+
+(define-public go-tar-split
+  (package/inherit go-github-com-vbatts-tar-split
+    (name "go-tar-split")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-vbatts-tar-split)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:import-path _) "github.com/vbatts/tar-split/cmd/tar-split")
+       ((#:unpack-path _ "") "github.com/vbatts/tar-split")))
+    (propagated-inputs '())
+    (inputs '())))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

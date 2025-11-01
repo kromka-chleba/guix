@@ -80,6 +80,7 @@
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system pyproject)
@@ -154,6 +155,86 @@ allows one to create a set of tests using @emph{pairwise combinations} method,
 reducing a number of combinations of variables into a lesser set that covers
 most situations.")
     (license license:expat)))
+
+(define-public python-approval-utilities
+  (package
+    (name "python-approval-utilities")
+    (version "15.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/approvals/ApprovalTests.Python")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mkvrx252xc140n4rrvgbqc1hrlw1gq7nx5hr1z4rxkaxvr8prkh"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f  ; Tests are run in the python-approvaltests package.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'setup
+            (lambda _
+              (rename-file "setup/setup.approval_utilities.py"
+                           "setup.py")
+              (substitute* "setup.py"
+                (("from setup_utils import get_version")
+                 "")
+                (("version=get_version\\(\\),")
+                 (format #f "version=~s," #$version))))))))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/approvals/ApprovalTests.Python")
+    (synopsis "Utilities for @code{python-approvaltests}")
+    (description
+     "This package provides utilities for production code that work well with
+@code{python-approvaltests}.")
+    (license license:asl2.0)))
+
+(define-public python-approvaltests
+  (package/inherit python-approval-utilities
+    (name "python-approvaltests")
+    (version (package-version python-approval-utilities))
+    (arguments
+     (list
+      #:tests? #f  ; Tests are run in the python-approvaltests package.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (substitute* "setup/setup_utils.py"
+                (("version=get_version\\(\\),")
+                 (format #f "version=~s," #$version))
+                (("\\(get_parent_directory\\(\\)\\.parent / ")
+                 "Path("))
+              (rename-file "setup/setup.py"
+                           "setup.py")
+              ;; Assume the chdir.
+              (substitute* "setup.py"
+                (("\\.\\.")
+                 "."))
+              (rename-file "setup/setup_utils.py"
+                           "setup_utils.py"))))))
+    (native-inputs (list python-setuptools))
+    (propagated-inputs
+     (list python-allpairspy
+           python-approval-utilities
+           python-beautifulsoup4
+           python-empty-files
+           python-mock
+           python-pyperclip
+           python-pytest
+           python-testfixtures
+           python-typing-extensions))
+    (home-page "https://github.com/approvals/ApprovalTests.Python")
+    (synopsis "Assertion/verification library to aid testing")
+    (description
+     "This package provides tools verify objects that require more than a
+simple assert including long strings, large arrays, and complex hash
+structures and objects, i.e. when you need a more granular look at the test
+failure.")
+    (license license:asl2.0)))
 
 (define-public python-assay
   ;; No release yet.
@@ -818,6 +899,31 @@ at runtime.  They are similar to assertions, and are verified automatically at
 various well-defined points in the program.  Contracts can be specified on
 functions and on classes.")
     (license license:lgpl3+)))
+
+(define-public python-empty-files
+  (package
+    (name "python-empty-files")
+    (version "0.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/approvals/EmptyFiles.Python")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w3pkhymkh9wl4g8x5pssbsxr78bzb6qix95mxqqfwbx0g42iz1z"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Circular dependency on python-approvaltests for tests.
+    (arguments (list #:tests? #f))
+    (propagated-inputs (list python-requests))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/approvals/EmptyFiles.Python")
+    (synopsis "Serve empty files of many types")
+    (description "This project will create an empty file of a type
+requested.  If possible, that file will be the smallest valid file for that
+type.  For example, an empty jpg will be a 1x1 pixel jpg.")
+    (license license:asl2.0)))
 
 (define-public python-eradicate
   (package

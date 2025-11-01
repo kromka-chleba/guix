@@ -21,7 +21,7 @@
 ;;; Copyright © 2022 Dhruvin Gandhi <contact@dhruvin.dev>
 ;;; Copyright © 2022 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2022 Leo Nikkilä <hello@lnikki.la>
-;;; Copyright © 2022 jgart via Guix-patches via <guix-patches@gnu.org>
+;;; Copyright © 2022, 2025 jgart via Guix-patches via <guix-patches@gnu.org>
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022, 2023, 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
@@ -70,6 +70,7 @@
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages crypto)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
@@ -273,6 +274,42 @@ API service accounts for Go.")
      "Package gitea implements a client for the Gitea API. The version
 corresponds to the highest supported version of the gitea API, but
 backwards-compatibility is mostly given.")
+    (license license:expat)))
+
+(define-public go-codeberg-org-tslocum-gmitohtml
+  (package
+    (name "go-codeberg-org-tslocum-gmitohtml")
+    (version "1.0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://codeberg.org/tslocum/gmitohtml.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04dxnvrygxxm0z4vvyh11qv3cscjlfwp9wm6wkcibxra3qa7a0vb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: There a no tests, upstream have no keen to write documentation
+      ;; or unit tests, see <https://codeberg.org/tslocum/gmitohtml/issues/1>.
+      #:tests? #f
+      #:import-path "codeberg.org/tslocum/gmitohtml"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-xdg-command
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/codeberg.org/tslocum/gmitohtml/main.go"
+                (("xdg-open")
+                 (search-input-file inputs "bin/xdg-open"))))))))
+    (inputs (list xdg-utils))
+    (propagated-inputs
+     (list go-gopkg-in-yaml-v2))
+    (home-page "https://codeberg.org/tslocum/gmitohtml")
+    (synopsis "Gemini to HTML conversion tool and daemon")
+    (description
+     "This package provides a Gemini to HTML conversion tool and daemon.")
     (license license:expat)))
 
 (define-public go-connectrpc-com-connect
@@ -2283,6 +2320,197 @@ Wasm}.
      "This Go package provides the gRPC API for containerd.")
     (license license:asl2.0)))
 
+(define-public go-github-com-containerd-go-cni
+  (package
+    (name "go-github-com-containerd-go-cni")
+    (version "1.1.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/go-cni")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09j4arw5x8qx2blck9g5m6a7bwmfsyjpcmfznilklyypaqn7ri5z"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/containerd/go-cni/integration
+            (delete-file-recursively "integration")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/go-cni"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-containernetworking-cni
+           go-github-com-sasha-s-go-deadlock))
+    (home-page "https://github.com/containerd/go-cni")
+    (synopsis "Generic CNI library to provide APIs for CNI plugin interactions")
+    (description
+     "This package provides a generic @acronym{Container Network Interface, CNI}
+library to provide APIs for CNI plugin interactions.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-containerd-nri
+  (package
+    (name "go-github-com-containerd-nri")
+    (version "0.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/nri")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h08xvph1z237qw5djhadk35n2w4ivvsgzl4dlm0pgy340qpvg8w"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/containerd/nri/examples
+            ;; - github.com/containerd/nri/plugins/device-injector
+            ;; - github.com/containerd/nri/plugins/differ
+            ;; - github.com/containerd/nri/plugins/hook-injector
+            ;; - github.com/containerd/nri/plugins/logger
+            ;; - github.com/containerd/nri/plugins/network-device-injector
+            ;; - github.com/containerd/nri/plugins/network-logger
+            ;; - github.com/containerd/nri/plugins/template
+            ;; - github.com/containerd/nri/plugins/ulimit-adjuster
+            ;; - github.com/containerd/nri/plugins/v010-adapter
+            ;; - github.com/containerd/nri/plugins/wasm
+            (for-each delete-file-recursively
+                      (list "examples"
+                            "plugins/device-injector"
+                            "plugins/differ"
+                            "plugins/hook-injector"
+                            "plugins/logger"
+                            "plugins/network-device-injector"
+                            "plugins/network-logger"
+                            "plugins/template"
+                            "plugins/ulimit-adjuster"
+                            "plugins/v010-adapter"
+                            "plugins/wasm"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/nri"))
+    (native-inputs
+     (list go-github-com-stretchr-testify
+           go-github-com-onsi-gomega
+           go-github-com-onsi-ginkgo-v2))
+    (propagated-inputs
+     (list go-github-com-containerd-ttrpc
+           go-github-com-google-go-cmp
+           go-github-com-knqyf263-go-plugin
+           go-github-com-moby-sys-mountinfo
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-opencontainers-runtime-tools
+           go-github-com-sirupsen-logrus
+           go-github-com-tetratelabs-wazero
+           go-golang-org-x-sys
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/containerd/nri")
+    (synopsis "Node Resource Interface")
+    (description
+     "This package implements a functionality plugin domain or vendor specific
+custom logic into OCI - compatible runtimes.  This logic can make controlled
+changes to containers or perform extra actions outside the scope of OCI at
+certain points in a containers lifecycle.  This can be used, for instance, for
+improved allocation and management of devices and other container resources.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-containerd-otelttrpc
+  (package
+    (name "go-github-com-containerd-otelttrpc")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/otelttrpc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1npi48pj4g0w1s1wwqky146xc10i4r9dpc5mcgm0nbjpk1f0ixwb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/otelttrpc"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "example")))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-containerd-ttrpc
+           go-go-opentelemetry-io-otel
+           go-go-opentelemetry-io-otel-metric
+           go-go-opentelemetry-io-otel-sdk
+           go-go-opentelemetry-io-otel-trace
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/containerd/otelttrpc")
+    (synopsis "Opentelemetry instrumentation support for ttRPC")
+    (description
+     "This package implements Opentelemetry instrumentation support for
+@code{ttRPC}.  The interceptors can be passed as @code{ttrpc.ClientOpts} and
+ttrpc.@code{ServerOpt} to @code{ttRPC} during client and server creation.  The
+interceptors then automatically handle generating trace spans for all called
+and served unary method calls.  If the rest of the code is properly set up to
+collect and export tracing data to opentelemetry, these spans should show up
+as part of the collected traces.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-containerd-protobuild
+  (package
+    (name "go-github-com-containerd-protobuild")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containerd/protobuild")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1f44q37qlzh1fkqx4fvhw00fdy191j0253lpjzw5icakjxir3dkp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/protobuild"
+      ;; rewrite_test.go:45: expected "//hello\npackage main\n\nfunc GetCPU()
+      ;; {}\n", but got "// hello\npackage main\n\nfunc GetCPU() {}\n"
+      #:test-flags #~(list "-skip" "TestRewrite/Simple")))
+    (propagated-inputs
+     (list go-github-com-golang-protobuf
+           go-github-com-pelletier-go-toml
+           go-golang-org-x-tools
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/containerd/protobuild")
+    (synopsis "Protobufs builder")
+    (description
+     "@code{protobuild} works by scanning the Golang package in a project and
+emitting correct protoc commands, configured with the plugins, packages and
+details of your choice.  The main benefit is that it makes it much easier to
+consume external types from vendored projects.  By integrating the protoc
+include paths with Go's vendoring and GOPATH, builds are much easier to keep
+consistent across a project.  This package provides a source library and built
+command @command{protobuild}.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-containerd-ttrpc
   (package
     (name "go-github-com-containerd-ttrpc")
@@ -2366,6 +2594,47 @@ Any}.")
     (propagated-inputs
      (list go-github-com-gogo-protobuf
            go-google-golang-org-protobuf))))
+
+(define-public go-github-com-containernetworking-cni
+  (package
+    (name "go-github-com-containernetworking-cni")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containernetworking/cni")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1x4apykvfwbx282hgrc9151rb1kx9w40kzfv78x548hrryqa7rn5"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/containernetworking/cni/plugins/debug
+            (delete-file-recursively "plugins/debug")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/containernetworking/cni"
+      #:test-flags
+      ;; Some tests depend on go modules
+      #~(list "-skip" "TestLibcni|TestInvoke|TestLegacyExamples|TestTesthelpers")))
+    (native-inputs
+     (list go-github-com-onsi-ginkgo-v2
+           go-github-com-onsi-gomega))
+    (propagated-inputs
+     (list go-github-com-vishvananda-netns))
+    (home-page "https://www.cni.dev/")
+    (synopsis "Container Network Interface")
+    (description
+     "This package provides a specification and libraries for writing plugins to
+configure network interfaces in Linux containers, along with a number of
+supported plugins.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-coreos-go-oidc
   (package
@@ -5045,6 +5314,60 @@ responses.  It is only suitable for use as a \"private\" cache (i.e. for a
 web-browser or an API-client and not for a shared proxy).")
     (license license:expat)))
 
+(define-public go-github-com-grpc-ecosystem-go-grpc-middleware
+  (package
+    (name "go-github-com-grpc-ecosystem-go-grpc-middleware")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/grpc-ecosystem/go-grpc-middleware")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04g3yw8ywfjcgg6rli0vij2z6b9dd5vpsh39l33ysnr6zdrb76np"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/grpc-ecosystem/go-grpc-middleware"
+      #:test-flags
+      #~(list "-vet=off")  ;Go@1.24 forces vet, but tests are not ready yet.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-failing-tests
+            ;; panic: proto: message mwitkow.testproto.PingRequest is already
+            ;; registered See
+            ;; https://protobuf.dev/reference/go/faq#namespace-conflict FAIL
+            ;; github.com/grpc-ecosystem/go-grpc-middleware/tags 0.006s
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file
+                          (find-files "tags" ".*_test\\.go$"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-go-kit-log
+           go-github-com-gogo-protobuf
+           go-github-com-golang-protobuf
+           go-github-com-opentracing-opentracing-go
+           go-github-com-sirupsen-logrus
+           go-go-uber-org-zap
+           go-golang-org-x-net
+           go-golang-org-x-oauth2
+           go-google-golang-org-grpc))
+    (home-page "https://github.com/grpc-ecosystem/go-grpc-middleware")
+    (synopsis "Golang gRPC Middlewares")
+    (description
+     "This package provides gRPC Go Middlewares: interceptors, helpers and
+utilities - middleware that is executed either on the gRPC Server before the
+request is passed onto the user's application logic, or on the gRPC client
+either around the user call.  It is a perfect way to implement common
+patterns: auth, logging, tracing, metrics, validation, retries, rate limiting
+and more, which can be a great generic building blocks that make it easy to
+build multiple microservices easily.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-grpc-ecosystem-grpc-gateway-v2
   (package
     (name "go-github-com-grpc-ecosystem-grpc-gateway-v2")
@@ -6107,6 +6430,65 @@ router.")
     (synopsis "Middleware chaining for Golang")
     (description
      "Package alice provides a convenient way to chain HTTP handlers.")
+    (license license:expat)))
+
+(define-public go-github-com-knqyf263-go-plugin
+  (package
+    (name "go-github-com-knqyf263-go-plugin")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/knqyf263/go-plugin")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c81xa5zcwzbi5r1lf1phh53vpzgc1hq0lymwa741xn9qmj9g0ac"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:build-flags
+      #~(list (string-append "-ldflags=-X"
+                             " github.com/knqyf263/go-plugin/version.Version="
+                             #$version))
+      #:test-flags
+      ;; TODO: Figure out how to generate wasm files:
+      ;; open plugin/plugin.wasm: no such file or directory
+      #~(list "-skip" (string-join
+                       (list "TestEmpty"
+                             "TestEmptyRequest"
+                             "TestErrorResponse"
+                             "TestFields"
+                             "TestHostFunctions"
+                             "TestImport"
+                             "TestStd"
+                             "TestWellKnownTypes")
+                       "|"))
+      #:import-path "github.com/knqyf263/go-plugin"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "examples")))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-planetscale-vtprotobuf
+           go-github-com-tetratelabs-wazero
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/knqyf263/go-plugin")
+    (synopsis "Golang Plugin System over WebAssembly")
+    (description
+     "This package provides a plugin system over @code{WebAssembly}.  As a
+ plugin is compiled to Wasm, it can be size-efficient, memory-safe, sandboxed
+and portable.  The plugin system auto-generates Go SDK for plugins from
+@url{https://developers.google.com/protocol-buffers/docs/overview, Protocol
+Buffers} files.  While it is powered by Wasm, plugin authors/users don't have
+to be aware of the Wasm specification since the raw Wasm APIs are capsulated
+by the SDK.")
     (license license:expat)))
 
 (define-public go-github-com-kolo-xmlrpc
@@ -9832,6 +10214,42 @@ implementation, as described in
 @url{https://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt},
 for Go.")
     (license license:bsd-2)))
+
+(define-public go-github-com-planetscale-vtprotobuf
+  (package
+    (name "go-github-com-planetscale-vtprotobuf")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/planetscale/vtprotobuf")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qd76dcy5ij49cvrqjnbr9smfkhzrl2s9czx9kz5g3530nhrgn2s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/planetscale/vtprotobuf"
+      #:test-flags
+      ;; TODO: Generate proto files to complete tests, see Makefile.
+      ;; conformance_test.go:56: execution error: fork/exec
+      ;; conformance/conformance-test-runner: no such file or directory
+      #~(list "-skip" "Test")))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/planetscale/vtprotobuf")
+    (synopsis "Protocol Buffers compiler for ProtoBuf APIv2 Golang code")
+    (description
+     "This package provides @@code{protoc-gen-go-vtproto} plug-in for
+@code{protoc}, which is used by Vitess to generate optimized marshall &
+unmarshal code.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-pquerna-cachecontrol
   (package
@@ -14010,6 +14428,33 @@ etc)
               ;; longer maintained since Feb 21, 2024.
               license:asl2.0))))
 
+(define-public go-modernc-org-ccorpus
+  (package
+    (name "go-modernc-org-ccorpus")
+    (version "1.11.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/cznic/ccorpus")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18d5npw8aw5qzy6qcrlrili2zxvmc2v4kkwjps6c3ayvi7aj7j09"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/ccorpus"))
+    (propagated-inputs (list go-modernc-org-httpfs))
+    (home-page "https://gitlab.com/cznic/ccorpus")
+    (synopsis "Test body of C code for Golang")
+    (description
+     "This package provides a test corpus of C code as subset of
+@code{modernc.org/httpfs}.")
+    ;; TODO: assets directory provides a lot of example sources for testing
+    ;; taken from other projects, check it covered by the licenses.
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-httpfs
   (package
     (name "go-modernc-org-httpfs")
@@ -14340,6 +14785,43 @@ carries no encryption keys and cannot decode the traffic that it proxies.")))
        ((#:tests? _ #t) #f)))
     (native-inputs (package-propagated-inputs
                     go-google-golang-org-grpc-cmd-protoc-gen-go-grpc))
+    (propagated-inputs '())
+    (inputs '())))
+
+(define-public protoc-gen-go-plugin
+  (package/inherit go-github-com-knqyf263-go-plugin
+    (name "protoc-gen-go-plugin")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-knqyf263-go-plugin)
+       ((#:install-source? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:tests? _ #t) #f)
+       ((#:import-path _)
+        "github.com/knqyf263/go-plugin/cmd/protoc-gen-go-plugin")
+       ((#:unpack-path _ "") "github.com/knqyf263/go-plugin")
+       ((#:phases %standard-phases)
+        #~(modify-phases %standard-phases
+            (delete 'remove-examples)))))
+    (native-inputs (package-propagated-inputs
+                    go-github-com-knqyf263-go-plugin))
+    (propagated-inputs '())
+    (inputs '())))
+
+(define-public protoc-gen-go-vtproto
+  (package/inherit go-github-com-planetscale-vtprotobuf
+    (name "protoc-gen-go-vtproto")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-planetscale-vtprotobuf)
+       ((#:install-source? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:tests? _ #t) #f)
+       ((#:import-path _)
+        "github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto")
+       ((#:unpack-path _ "") "github.com/planetscale/vtprotobuf")))
+    (native-inputs (package-propagated-inputs
+                    go-github-com-planetscale-vtprotobuf))
     (propagated-inputs '())
     (inputs '())))
 

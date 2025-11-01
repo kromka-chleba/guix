@@ -613,8 +613,8 @@ accurately in real time at any rate desired.")
 
 (define-public celestia-content
   ;; No rleases or version tags.
-  (let ((commit "10bd43b0e8925f6ee9bb9687522708a95338d664")
-        (revision "0"))
+  (let ((commit "ea14adef2617536df5ed793fe4bfb61b8818d1ee")
+        (revision "1"))
     (package
       (name "celestia-content")
       (version (git-version "0.0.0" revision commit))
@@ -626,7 +626,7 @@ accurately in real time at any rate desired.")
                 (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1gah823hdf0lhyql6ln6cmivfl9d8dr7yp3mrc1rcw7bm4hbb2qq"))))
+          (base32 "0vk22kq8j0zw9gsagvj02w8hwb4s3iz63slhsr03l5zbd7gqhslz"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -651,7 +651,7 @@ accurately in real time at any rate desired.")
 (define-public cfitsio
   (package
     (name "cfitsio")
-    (version "4.6.2")
+    (version "4.6.3")
     (source
      (origin
        (method url-fetch)
@@ -659,7 +659,7 @@ accurately in real time at any rate desired.")
              "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/"
              "cfitsio-" version ".tar.gz"))
        (sha256
-        (base32 "1jz2bldpnfcz9pc5lfhx6sjj2m40sr30s4jbsjq9da5yq260gzb6"))))
+        (base32 "001nh63i3fadjk42yadr48kkd5n5qcxzy3qcrkzsbpag4zzlzm7s"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -972,6 +972,86 @@ document}.")
     (license (license:non-copyleft "file://License.txt"
                                    "See License.txt in the distribution."))))
 
+(define-public genetic
+  (package
+    (name "genetic")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pynbody/genetic")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pwvr8bvnbp6d16f51hy981pdlrqz9yf9fh2wvxl958ikyjmaaiy"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'link-highfive
+            (lambda _
+              (rmdir "genetIC/HighFive")
+              (symlink #+(package-source (this-package-native-input "highfive"))
+                       (string-append (getcwd) "/HighFive"))))
+          (add-before 'check 'delete-problematic-tests
+            (lambda _
+              (with-directory-excursion "../source/genetIC/tests"
+                (for-each delete-file-recursively
+                          ;; XXX: Some NumPy related tests failed with "Arrays
+                          ;; are not almost equal to <...> decimals", it
+                          ;; might need attention.
+                          (list "test_06c_stray_subsampling"
+                                "test_09a_border_safety"
+                                "test_10a_gadget"
+                                "test_10b_gadget_zoom_varimass"
+                                "test_10c_gadget_zoom_ptype"
+                                "test_10d_gadget_flagged_particles"
+                                "test_10e_gadget_zoom_ptype_resample"
+                                "test_10g_gadget_multifile_baryons"
+                                "test_10h_gadget_zoom_ptype_gas"
+                                "test_10i_gadget_zoom_ptype_autopad"
+                                "test_14_velocity_modif"
+                                "test_17_reversal"
+                                "test_19_rounding_errors"
+                                "test_22_angular_momentum_modif"
+                                "test_26_gadgethdf"
+                                "test_26a_gadgethdf_multifile_baryons"
+                                ;; Error "File zoomtest.txt not found" on line
+                                ;; 27 ("idfile zoomtest.txt")
+                                "test_10f_gadget_multifile")))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "../source/genetIC/tests"
+                  ;; Matplotlib needs to write access.
+                  (setenv "HOME" "/tmp")
+                  (invoke "./run_tests.sh"))))))))
+    (native-inputs
+     (list boost
+           git-minimal/pinned
+           highfive
+           pkg-config
+           python-pynbody
+           python-wrapper))
+    (inputs
+     (list fftw
+           fftwf
+           gsl
+           hdf5))
+    (home-page "https://github.com/pynbody/genetic")
+    (synopsis "Genetically-modified initial conditions generator")
+    (description
+     "GenetIC is a code to generate initial conditions for cosmological
+simulations, especially for zoom simulations of galaxies.  It provides support
+for \"genetic modifications\" as described by e.g.
+@url{https://arxiv.org/abs/1504.07250, Roth et al 2015},
+@url{https://arxiv.org/abs/1706.04615, Rey & Pontzen 2018}.  It also supports
+'splicing' as described by @url{https://arxiv.org/abs/2107.03407, Cadiou et al
+2021}.")
+    (license license:gpl3+)))
+
 (define-public ginga
   (package
     (name "ginga")
@@ -1257,7 +1337,7 @@ backward), and manual time control
      (list pkg-config autoconf automake))
     (inputs
      (list cfitsio))
-    (home-page "https://healpix.jpl.nasa.gov/")
+    (home-page "https://healpix.sourceforge.io/")
     (synopsis "Representation of spherical data")
     (description
      "@acronym{HEALPix, Hierarchical Equal Area isoLatitude Pixelation} of a
@@ -1343,7 +1423,7 @@ floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
 (define-public indi
   (package
     (name "indi")
-    (version "2.1.5.1")
+    (version "2.1.6")
     (source
      (origin
        (method git-fetch)
@@ -1352,7 +1432,7 @@ floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wak0wnd05grc357wa4snyx3f7nc8ymbpfndialhywfi6a43gdlr"))))
+        (base32 "1a0yc4svs18gd182flwbyl7cc8v2b8kgsvxas2w27hzk4bj45xar"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2211,8 +2291,8 @@ Astropy objects.")
 
 (define-public python-asdf-compression
   ;; TODO: No release, change to tag when it's ready.
-  (let ((commit "579c153a453dc0d650f2cca01d2c5dae0dc02051")
-        (revision "3"))
+  (let ((commit "18d462518b513d5901c737f30b315a3cb1b12a31")
+        (revision "4"))
     (package
       (name "python-asdf-compression")
       (version (git-version "0.0.1" revision commit))
@@ -2224,7 +2304,7 @@ Astropy objects.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "03cq4x40xy5micipg4qp2j0v1h6hxqrrzpzyjybm6j82zi92c770"))))
+          (base32 "0g9jayswx3pxnjm3y4lk9kk5ynm1g6f3wmw40wivsfbssq67mgfw"))))
       (build-system pyproject-build-system)
       (arguments
        (list
@@ -2237,8 +2317,7 @@ Astropy objects.")
        (list python-numpy
              python-pytest
              python-setuptools
-             python-setuptools-scm
-             python-wheel))
+             python-setuptools-scm))
       (propagated-inputs
        (list python-asdf
              python-blosc
@@ -2531,30 +2610,28 @@ elevation, solar azimuth, rahukaalam, and the phases of the moon.")
 (define-public python-astroalign
   (package
     (name "python-astroalign")
-    (version "2.6.1")
+    (version "2.6.2")
     (source
      (origin
-       ;; There are no tests in the PyPI tarball.
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/quatrope/astroalign")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r65n0jx3gvr43c8svswcpvjdjwz85xcvxrrxmvxzv0w2bd6xcc9"))))
+        (base32 "0jcnv0gll0p7aqykmn9qffyzfq4gm3py5g20v6xxwf91vr85xrl3"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-astropy
+     (list python-astropy-minimal
            python-ccdproc
            python-pillow
            python-pytest
            python-setuptools))
     (propagated-inputs
-     (list python-bottleneck
-           python-numpy
+     (list python-numpy
            python-scikit-image
            python-scipy
-           python-sep-pjw))
+           python-sep))
     (home-page "https://astroalign.readthedocs.io/")
     (synopsis "Astrometric Alignment of Images")
     (description
@@ -2829,13 +2906,13 @@ constraints (i.e., altitude, airmass, moon separation/illumination, etc.)
 (define-public python-astropy
   (package
     (name "python-astropy")
-    (version "7.1.0")
+    (version "7.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy" version))
        (sha256
-        (base32 "1iakikzhw173djb2p24229ndpvzpbcanyg9h4k7viccm48r59wn8"))
+        (base32 "1y5hip9pkndx13yrq9ssw4gcmr6hz65ld11l25q4zhz20l08y4kd"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -2872,7 +2949,7 @@ constraints (i.e., altitude, airmass, moon separation/illumination, etc.)
               (substitute* "pyproject.toml"
                 (("xfail_strict = true") "xfail_strict = false"))
               ;; Replace reference to external ply.
-              (substitute* "astropy/utils/parsing.py"
+              (substitute* (find-files "." "\\.py$")
                 (("astropy.extern.ply") "ply"))
               ;; Replace reference to external configobj.
               (substitute* "astropy/config/configuration.py"
@@ -2916,17 +2993,15 @@ constraints (i.e., altitude, airmass, moon separation/illumination, etc.)
            python-ply            ;to replace custom module
            python-pyerfa
            python-pyyaml
-           ;; [recommended]
+           ;; [optional]
            python-matplotlib
            python-scipy
-           ;; [jupyter]
            ;; python-ipydatagrid         ;no packaged
            python-ipykernel
            python-ipython
            python-ipywidgets
            python-jupyter-core
            python-pandas
-           ;; [optional]
            python-asdf
            python-asdf-astropy
            python-beautifulsoup4
@@ -3012,13 +3087,13 @@ astronomy and astrophysics.")
 (define-public python-astropy-iers-data
   (package
     (name "python-astropy-iers-data")
-    (version "0.2025.9.15.0.37.0")
+    (version "0.2025.10.13.0.37.17")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy_iers_data" version))
        (sha256
-        (base32 "1n4i60fni2l6bph2kj2smy9rzcjhl3s79ihw9v1sgdf1zpf17r9k"))))
+        (base32 "1xhdrnbsp3910w34kkk9j826xsnzpll0lj89lf426zj0zjlcdv61"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f)) ; no tests
@@ -3654,12 +3729,12 @@ with Docker/Shifter and Singularity).")
 
 (define-public python-colossus
   ;; There is no source distribution in PyPI and no version tags, use the
-  ;; commit pointing to the version 1.3.8.
-  (let ((commit "e51408a3eaffef073da1df767160cb2441177cc0")
+  ;; commit pointing to the version 1.3.9.
+  (let ((commit "f585ffe12d0689e370a112d88ca9a27be5b22ef4")
         (revision "0"))
     (package
       (name "python-colossus")
-      (version (git-version "1.3.8" revision commit))
+      (version (git-version "1.3.9" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -3668,7 +3743,7 @@ with Docker/Shifter and Singularity).")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0lz4n4i4frgsdspmka4pk6q4zq6j1z37g5xx7pr3xzgl9qfiiad2"))))
+          (base32 "17niawiqsvns6qfrplxyl5n7dhsmrdl8ycfgvr73iwpp4jdlhkki"))))
       (build-system pyproject-build-system)
       (arguments
        (list
@@ -3686,8 +3761,7 @@ with Docker/Shifter and Singularity).")
              python-jsonpickle
              python-pytest
              python-scikit-image
-             python-setuptools
-             python-wheel))
+             python-setuptools))
       (propagated-inputs
        (list python-numpy
              python-scipy))
@@ -3836,53 +3910,59 @@ Spectrograph}.")
 (define-public python-crds
   (package
     (name "python-crds")
-    (version "13.0.4")
+    (version "13.0.6")
+    ;; Git: <https://github.com/spacetelescope/crds>
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "crds" version))
        (sha256
-        (base32 "02901rqzvgd8ssw1rv3skinqbxp0nycwx75k7n3bn3fjyfn2g2zc"))))
+        (base32 "1i0si0z400grdwrkni8fcp58m8f8n2k18n319cwfdlasbw6r2pr5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 26 passed, 3 skipped
       #:test-flags
       ;; XXX: Tests require a complex set up and test data, try to run some
       ;; minimal portion of unit tests to persist package comparability during
-      ;; updates.
-      #~(map
-         (lambda (ignore) (format #f "--ignore=~a" ignore))
-         ;; Introduce cycle: python-crds -> python-stdatamodels -> python-crds
-         (list "test/bestrefs/test_bestrefs.py"
-               ;; Network is required to access <https://hst-crds.stsci.edu>.
-               "test/bestrefs/"
-               "test/submit/"
-               ;; XXX: Ignoring files which tests fail the most, maybe find a
-               ;; way how to enable/fix some of them.
-               "test/certify/test_certify.py"
-               "test/core/test_cmdline.py"
-               "test/core/test_heavy_client.py"
-               "test/core/test_reftypes.py"
-               "test/core/test_rmap.py"
-               "test/core/test_substitutions.py"
-               "test/misc/test_check_archive.py"
-               "test/misc/test_synphot.py"
-               "test/refactoring/test_refactor.py"
-               "test/roman/test_roman.py"
-               "test/test_bad_files.py"
-               "test/test_build6.py"
-               "test/test_diff.py"
-               "test/test_list.py"
-               "test/test_matches.py"
-               "test/test_rowdiff.py"
-               "test/test_sync.py"))))
+      ;; updates, see:
+      ;; <https://github.com/spacetelescope/crds/blob/13.0.6/TESTING>.
+      #~(list #$@(map (lambda (file) (string-append "--ignore=" file))
+                      ;; Network acces to <https://hst-crds.stsci.edu> or
+                      ;; additional test data is required.
+                      (list "test/bestrefs/test_bestrefs.py"
+                            "test/bestrefs/test_special.py"
+                            "test/bestrefs/test_table_effects.py"
+                            "test/certify/test_certify.py"
+                            "test/core/test_cmdline.py"
+                            "test/core/test_heavy_client.py"
+                            "test/core/test_reftypes.py"
+                            "test/core/test_rmap.py"
+                            "test/core/test_substitutions.py"
+                            "test/misc/test_check_archive.py"
+                            "test/misc/test_synphot.py"
+                            "test/misc/test_uniqname.py"
+                            "test/refactoring/test_checksum.py"
+                            "test/refactoring/test_newcontext.py"
+                            "test/refactoring/test_refactor.py"
+                            "test/roman/test_roman.py"
+                            "test/submit/test_submit.py"
+                            "test/test_bad_files.py"
+                            "test/test_build6.py"
+                            "test/test_diff.py"
+                            "test/test_list.py"
+                            "test/test_matches.py"
+                            "test/test_rowdiff.py"
+                            "test/test_sync.py")))))
     (native-inputs
      (list python-mock
            python-pytest
            python-pytest-astropy
            python-pytest-doctestplus
            python-setuptools
-           python-setuptools-scm))
+           python-setuptools-scm
+           python-stdatamodels-minimal
+           python-stsynphot))
     (propagated-inputs
      (list python-astropy
            python-numpy
@@ -3909,6 +3989,72 @@ the assignment of references for each type and instrument configuration.  CRDS
 has web sites corresponding to each project @url{http://hst-crds.stsci.edu} or
 @url{https://jwst-crds.stsci.edu/} which record information about reference
 files and provide related services.")
+    (license license:bsd-3)))
+
+;; A bare minimal package, mainly to use in tests and reduce closure
+;; size. Tests are left out in the main package to slim down native-inputs.
+(define-public python-crds-minimal
+  (package/inherit python-crds
+    (name "python-crds-minimal")
+    (arguments
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy
+           python-filelock
+           python-asdf
+           python-requests
+           python-parsley))))
+
+(define-public python-ctapipe
+  (package
+    (name "python-ctapipe")
+    (version "0.27.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ctapipe" version))
+       (sha256
+        (base32 "0flcrq6agmvpfb3wbixrmsizsna5vinb5w9k9r3vrx3i7hx2zfld"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; TODO: The most of the tests require external data, check if it may be
+      ;; packaged of some portion of unit test may be run without it.
+      #:tests? #f))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-astropy
+           python-docutils
+           python-joblib
+           python-numba
+           python-numpy
+           python-packaging
+           python-psutil
+           python-pyyaml
+           python-requests
+           python-scikit-learn
+           python-scipy
+           python-tables
+           python-tqdm
+           python-traitlets
+           ;; [poptional]
+           python-bokeh
+           python-eventio
+           ;; python-iminuit ;see guix/guix#2381
+           python-matplotlib
+           python-pyirf))
+    (home-page "https://github.com/cta-observatory/ctapipe/")
+    (synopsis "Low-level data processing pipeline software for CTAO")
+    (description
+     "Event reconstruction framework for Imaging Atmospheric Cherenkov
+Telescopes developed for @acronym{CTAO, Cherenkov Telescope Array
+Observatory}.")
     (license license:bsd-3)))
 
 (define-public python-czml3
@@ -3949,16 +4095,17 @@ Cesium.")
 (define-public python-dkist
   (package
     (name "python-dkist")
-    (version "1.15.0")
+    (version "1.16.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "dkist" version))
        (sha256
-        (base32 "0j5jxf624s746syam472k2xz3m77p66z9d7c8rz19f0xv3792xql"))))
+        (base32 "1n0qr28linf72xri5l26m0dgciczk5nc60yysg19iijwfh7y0m1x"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 443 passed, 7 skipped
       #:test-flags
       #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
               ;; When python-pytest-benchmark is added: Benchmarks are
@@ -4087,7 +4234,7 @@ code to be greatly simplified.")
     (native-inputs
      (list python-astropy
            python-ci-watson
-           python-crds
+           python-crds-minimal
            python-pytest
            python-pytest-remotedata
            python-setuptools
@@ -4300,16 +4447,16 @@ tools for astronomers.")
 (define-public python-eventio
   (package
     (name "python-eventio")
-    (version "1.16.1")
+    (version "2.0.0")
     (source
      (origin
-       (method git-fetch) ; no test data in the PyPI tarball
+       (method git-fetch) 
        (uri (git-reference
-             (url "https://github.com/cta-observatory/pyeventio")
-             (commit (string-append "v" version))))
+              (url "https://github.com/cta-observatory/pyeventio")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jg2zgs0z5jfkdkbgxiiclxkyxrz4zhb57x1ji0c5pd2vsrn4g92"))))
+        (base32 "10d2gmniwrljwgrs936v06gf5biz6h5zsjrc6kqk9qb1rcrb6gpw"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4342,6 +4489,22 @@ tools for astronomers.")
      "Python read-only implementation of the @code{EventIO} file format.")
     (license license:expat)))
 
+;; 2.0.0 introduced breaching changes in API.
+(define-public python-eventio-1
+  (package
+    (inherit python-eventio)
+    (name "python-eventio")
+    (version "1.16.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cta-observatory/pyeventio")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jg2zgs0z5jfkdkbgxiiclxkyxrz4zhb57x1ji0c5pd2vsrn4g92"))))))
+
 (define-public python-extinction
   (package
     (name "python-extinction")
@@ -4370,6 +4533,40 @@ tools for astronomers.")
     (description
      "This package provides a cython-optimized implementations of empirical dust
 exitinction laws found in the literature.")
+    (license license:expat)))
+
+(define-public python-fits-schema
+  (package
+    (name "python-fits-schema")
+    (version "0.5.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fits_schema" version))
+       (sha256
+        (base32 "1y6an115k7x31hbb67bfp513k802c1nfz2rxy418qkf832blnqfd"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; TODO: It's removed on Git's master.
+          ;; ModuleNotFoundError: No module named 'eschool21_demo'
+          (add-after 'unpack 'fix-setup.cfg
+            (lambda _
+              (substitute* "setup.cfg"
+                (("fibonacci = eschool21_demo.__main__:main") "")))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy))
+    (home-page "https://github.com/VODF/fits_schema")
+    (synopsis "Schemata for FITS files")
+    (description
+     "This package provides a Python definition and validation schemata for FITS
+files.")
     (license license:expat)))
 
 (define-public python-fitsblender
@@ -4511,17 +4708,17 @@ Python.")
 (define-public python-glue-astronomy
   (package
     (name "python-glue-astronomy")
-    (version "0.12.0")
+    (version "0.14.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "glue_astronomy" version))
        (sha256
-        (base32 "0b65kybnknrnz1nh1kjvsh9k9smia0gyigwn5rc3zrg1qys3wlk4"))))
+        (base32 "0f2849jyhyxldrxlls00gpq9qckrfvxrkn796j5zb8j92l2qjgnp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; 77 passed, 3 deselected
+      ;; tests: 77 passed, 2 skipped, 3 deselected
       #:test-flags
       #~(list "--pyargs" "glue_astronomy"
               "-k" (string-join
@@ -4533,18 +4730,20 @@ Python.")
                           "test_spectrum1d_2d_data[2]"
                           "test_spectrum1d_2d_data[3]")
                     " and not "))))
-    (propagated-inputs
-     (list python-astropy
-           python-glue-core
-           python-glue-qt
-           python-regions
-           python-specreduce
-           python-spectral-cube
-           python-specutils))
     (native-inputs
      (list python-mock
            python-pytest-astropy
+           python-setuptools
            python-setuptools-scm))
+    (propagated-inputs
+     (list python-astropy
+           python-glue-core
+           python-pyqt  ;PyQt5
+           python-regions
+           python-reproject
+           python-specreduce
+           python-spectral-cube
+           python-specutils))
     (home-page "https://github.com/glue-viz/glue-astronomy")
     (synopsis "Astronomy-specific plugins for glue")
     (description
@@ -4555,13 +4754,13 @@ astronomy-specific functionality")
 (define-public python-glue-core
   (package
     (name "python-glue-core")
-    (version "1.23.0")
+    (version "1.24.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "glue_core" version))
        (sha256
-        (base32 "0g79gw6ffz4bsby5kazv9a1mbrwa6b75kkal2bi2wjwz855nqsh6"))))
+        (base32 "062l4bhh1dvsazrlnjc4kr3qj9g3s8qmcs0kqb1libiimy6rdbkk"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest
@@ -4727,21 +4926,17 @@ specifically pulsar timing array signals.")
 (define-public python-gwcs
   (package
     (name "python-gwcs")
-    (version "0.25.2")
+    (version "0.26.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "gwcs" version))
        (sha256
-        (base32 "12hs7qa03blpxp2i97n3wckvih7zcmpm4k4ia0p3hird49qq7l44"))))
+        (base32 "0r9r6ns4gcszq199pwiw4pb4lydp16i4zdp136az8y6f994lrzqb"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 1021 passed, 10 skipped, 1 deselected, 9 warnings
-      #:test-flags
-      ;; XXX: This is worth checking out more closely:
-      ;;   Not equal to tolerance rtol=1e-07, atol=0.
-      #~(list "-k" "not test_fitswcs_imaging[fits_wcs_imaging_simple2]")
+      ;; tests: 1023 passed, 10 skipped, 10 warnings 
       #:phases
       #~(modify-phases %standard-phases
          (add-after 'unpack 'relax-requirements
@@ -4754,8 +4949,7 @@ specifically pulsar timing array signals.")
            python-pytest-astropy
            python-pyyaml
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-asdf
            python-asdf-astropy
@@ -5053,17 +5247,17 @@ observationally-derived galaxy merger catalogs.")
 (define-public python-irispy-lmsal
   (package
     (name "python-irispy-lmsal")
-    (version "0.4.0")
+    (version "0.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "irispy_lmsal" version))
        (sha256
-        (base32 "1al7nyw2d2175gbij7ab2q0ks3wsf4b7n6g89ic2mpg4v1ybyxw5"))))
+        (base32 "131n2wvb5pdg0qx5chfwkcvcy025840cs01pvcg5i4nlqv995h1q"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 68 passed, 1 skipped, 9 deselected, 2 warnings
+      ;; tests: 65 passed, 1 skipped, 9 deselected
       #:test-flags
       ;; See: <https://github.com/LM-SAL/irispy-lmsal/issues/83>.
       ;; Expected:
@@ -5071,7 +5265,7 @@ observationally-derived galaxy merger catalogs.")
       ;; Got:
       ;;     0.33
       #~(list "--deselect=irispy/obsid.py::irispy.obsid.ObsID"
-              ;; TODO: Report upstram.
+              ;; TODO: NumPy 2+ is required to fully resolve this.
               ;; Arrays are not almost equal to 4 decimals
               ;; Mismatched elements: 42 / 3601 (1.17%)
               ;; Max absolute difference: 0.34272391
@@ -5092,6 +5286,7 @@ observationally-derived galaxy merger catalogs.")
      (list ffmpeg
            python-pooch
            python-pytest-astropy
+           python-pytest-mpl
            python-setuptools
            python-setuptools-scm))
     (propagated-inputs
@@ -5177,13 +5372,13 @@ milliarcsecond).")
 (define-public python-jwst
   (package
     (name "python-jwst")
-    (version "1.19.2")
+    (version "1.20.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jwst" version))
        (sha256
-        (base32 "08c6wm7nchdq3cha9267h0i49s81yq0rz5y6nsbmganx0i9sg2aq"))
+        (base32 "0p5f1rng1hm3291j6a5bjbkvwzhxb40anjavc38ngz3iiy0rmxq6"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -5208,22 +5403,11 @@ milliarcsecond).")
           (add-before 'build 'relax-requirements
             (lambda _
               (substitute* "pyproject.toml"
-                ;; asdf>=4.0,<5
-                ((">=4.0,<5") ">=4.0")
-                ;; drizzle>=2.0.1,<2.1.0
-                ((">=2.0.1,<2.1.0") ">=2.0.1")
-                ;; stcal>=1.14.1,<1.15.0
-                ((">=1.14.1,<1.15.0") "")
                 ;; scipy>=1.14.1
                 (("1.14.1") "1.12.0")
                 ;; XXX: Can't detect opencv-python version. The input opencv
                 ;; might not set the version correctly.
-                ((".*opencv-python-headless.*") "")
-                ;; Remove broken scripts, see
-                ;; <https://github.com/spacetelescope/jwst/issues/9401>.
-                (("asn_gather = .*") "")
-                (("create_data = .*") "")
-                (("csvconvert = .*") "")))))))
+                ((".*opencv-python-headless.*") "")))))))
     (native-inputs
      (list python-ci-watson
            python-pysiaf
@@ -5237,11 +5421,11 @@ milliarcsecond).")
     (propagated-inputs
      ;; opencv provides OpenCV-Python which is Listed as install requirement.
      (list opencv
-           python-asdf-4
+           python-asdf
            python-asdf-astropy
            python-astropy
            python-bayesicfitting
-           python-crds
+           python-crds-minimal
            python-drizzle
            python-gwcs
            python-importlib-metadata
@@ -5807,39 +5991,32 @@ Carlo.")
 (define-public python-ndcube
   (package
     (name "python-ndcube")
-    (version "2.3.2")
+    (version "2.3.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ndcube" version))
        (sha256
-        (base32 "0bv073jfdkyh9nqgijw7ihl46000i124ar912lv67pbcq8wpjwz8"))))
+        (base32 "0nwy0h1xvs6gw13nygfqx34nqkiixj40pf913n6h7bjfvqkyg2f1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 393 passed, 7 skipped, 10 xfailed
+      ;; tests: 397 passed, 7 skipped, 10 xfailed
       #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count))
-              "-k" (string-join
-                    (list
-                     ;; Break cycle: python-ndcube -> python-specutils ->
-                     ;; python-ndcube, see
-                     ;; <https://github.com/sunpy/ndcube/issues/733>.
-                     "not test_rebin_specutils"
-                     ;; Introduced with astropy 6.1.3, see
-                     ;; <https://github.com/sunpy/ndcube/issues/758>.
-                     "test_2d[celestial_2d_ape14_wcs]"
-                     "test_2d[celestial_2d_fitswcs]"
-                     ;; XXX: Not sure why it fails: ValueError: Too many input
-                     ;; arguments - expected 1, got 2.
-                     "test_slice_drop_dimensions")
-                    " and not "))
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              #$@(map (lambda (test) (string-append "--deselect="
+                                                    "ndcube/wcs/wrappers/tests/"
+                                                    "test_resampled_wcs.py::"
+                                                    test))
+                      ;; ResampledLowLevelWCS Transformation
+                      ;; This transformation has 2 pixel and 2 world dimensions
+                      ;;
+                      ;; - Array shape (Numpy order): (2.3333333333333335, 15.0)
+                      ;; + Array shape (Numpy order): (2, 15)
+                      (list "test_2d[celestial_2d_ape14_wcs]"
+                            "test_2d[celestial_2d_fitswcs]")))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'break-cycle
-            (lambda _
-              (substitute* "ndcube/tests/test_ndcube.py"
-                (("from specutils import Spectrum1D") ""))))
           (add-before 'check 'set-home-env
             (lambda _
               ;; Tests require HOME to be set.
@@ -5853,17 +6030,18 @@ Carlo.")
            python-pytest-mpl
            ;; python-pytest-memray ; not packaged yet
            python-pytest-xdist
-           python-scipy
            python-setuptools
            python-setuptools-scm
-           python-sunpy-minimal
-           python-wheel))
+           python-specutils
+           python-sunpy-minimal))
     (propagated-inputs
      (list python-astropy
            python-gwcs
+           python-numpy
+           python-scipy
+           ;; [optional]
            python-matplotlib
            python-mpl-animators
-           python-numpy
            python-reproject))
     (home-page "https://docs.sunpy.org/projects/ndcube/")
     (synopsis "Multi-dimensional contiguous and non-contiguous coordinate aware arrays")
@@ -5879,6 +6057,43 @@ spectral, etc.) whose relationship between the array elements and the real
 world can be described by @acronym{WCS, World Coordinate System}
 translations.")
     (license license:bsd-2)))
+
+;; A bare minimal package, mainly to use in tests and reduce closure
+;; size. Tests are left out in the main package to slim down native-inputs.
+(define-public python-ndcube-minimal
+  (package/inherit python-ndcube
+    (name "python-ndcube-minimal")
+    (arguments
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))))
+
+(define-public python-ogadf-schema
+  (package
+    (name "python-ogadf-schema")
+    (version "0.2.4.post1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ogadf_schema" version))
+       (sha256
+        (base32 "02v5r5vnr40ggp2mccxnx600gkl3mvv77zslpf9dj96jcd8pk117"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;no tests
+    (native-inputs
+     (list python-poetry-core
+           python-setuptools))
+    (propagated-inputs
+     (list python-fits-schema))
+    (home-page "https://github.com/open-gamma-ray-astro/ogadf-schema")
+    (synopsis
+     "Definition of the open gamma ray astronomy data formats using fits-schema")
+    (description
+     "This package provides schema definitions for the Data Formats For Gamma-Ray
+Astronomy.")
+    (license license:expat)))
 
 (define-public python-petrofit
   (package
@@ -6115,13 +6330,13 @@ and the use of a modern programming language, techniques, and libraries
 (define-public python-pixell
   (package
     (name "python-pixell")
-    (version "0.30.0")
+    (version "0.30.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pixell" version))
        (sha256
-        (base32 "0ncqqwvpg47yihlplzmhn8za8y7wab5k71n87nz8bcvzj8gnmpvw"))))
+        (base32 "1xcrwjh20rlaw3wqv2clq4d6mwh5lrr1c6vddfxdm64yrzis6fwn"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -6130,6 +6345,7 @@ and the use of a modern programming language, techniques, and libraries
                  ;; XXX: To prevent sanity check faileur in dependent
                  ;; packages, Cython, Coveralls and Pytests are not required
                  ;; during runtime.
+                 ;; See: <https://github.com/simonsobs/pixell/pull/313>.
                  (lambda _
                    (substitute* "pyproject.toml"
                      (("    'cython',") "")
@@ -6592,6 +6808,49 @@ also transltes halo properties (mass, concentration, redshift, etc) into
 angular units for lensing computations with lenstronomy.")
     (license license:expat)))
 
+(define-public python-pyirf
+  (package
+    (name "python-pyirf")
+    (version "0.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyirf" version))
+       (sha256
+        (base32 "17z8czdqk6c742ww9274x9inx0q201908la0i27gv7r1496l0l0b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; It fails to load optional Gammapy, remove when it's packaged.
+      #:test-flags
+      #~(list "--ignore=pyirf/io/tests/test_gadf.py"
+              ;; fixture 'prod5_irfs' not found
+              "-k" (string-append "not test_EnergyDispersionEstimator"
+                                  " and not test_EffectiveAreaEstimator_prod5"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (delete-file "pyirf/conftest.py"))))))
+    (native-inputs
+     (list python-ogadf-schema
+           python-pytest
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-astropy
+           ;; python-gammapy    ;not packaged yet in Guix
+           python-numpy
+           python-packaging
+           python-scipy
+           python-tqdm))
+    (home-page "https://github.com/cta-observatory/pyirf")
+    (synopsis "Python IRF builder")
+    (description
+     "This package provides a python library to calculate IACT IRFs
+and Sensitivities.")
+    (license license:expat)))
+
 (define-public python-pynbody
   (package
     (name "python-pynbody")
@@ -6864,23 +7123,27 @@ natively in Siril.")
 (define-public python-pysm3
   (package
     (name "python-pysm3")
-    (version "3.4.2")
+    (version "3.4.3")
     (source
      (origin
-       (method git-fetch) ; no tests data in the PyPI tarball
+       (method git-fetch)
        (uri (git-reference
               (url "https://github.com/galsci/pysm")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r8njxss389hqz1nxixamhclays6blyrq7qnrzs2776w9c0cv6vb"))))
+        (base32 "1qi01g71m0biqchdy1v7sk54kg1w3s75qfbf2s50ifsmprajjs5r"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 44 passed, 2 skipped, 97 deselected, 3 warnings
       #:test-flags
-      ;; Tests requiring additional FITS files.
-      ;; <https://healpy.github.io/healpy-data>
-      ;; <https://portal.nersc.gov/project/cmb/pysm-data>
+      ;; XXX: Tests requiring additional FITS files, check if they may be
+      ;; packages:
+      ;; - <http://www.astropy.org/astropy-data>
+      ;; - <https://github.com/healpy/healpy-data>
+      ;; - <https://healpy.github.io/healpy-data>
+      ;; - <https://portal.nersc.gov/project/cmb/pysm-data>
       #~(list "-k" (string-join
                     (list "not test_bandpass_unit_conversion"
                           "test_bandpass_unit_conversion_CMB2MJysr"
@@ -6902,7 +7165,10 @@ natively in Siril.")
                           "test_highfreq_dust_model"
                           "test_model"
                           "test_model_d12"
+                          "test_no_quadrupole"
                           "test_presmoothed"
+                          "test_print_quadrupole_amplitudes"
+                          "test_quadrupole_corrected_freqs"
                           "test_read_map_unit"
                           "test_read_map_unit_dimensionless"
                           "test_s6_vs_s5"
@@ -7010,13 +7276,13 @@ spectra, and data.")
 (define-public python-pyvo
   (package
     (name "python-pyvo")
-    (version "1.7")
+    (version "1.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyvo" version))
        (sha256
-        (base32 "0813ws6g6mns3g3k4xgj54pcp6hw42q47psm7q8jswqhskpxkym6"))))
+        (base32 "1zr1vwcpypr6hr9h02gprchrhcah1vffcxjvqg9xl2yxj48qzpa1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -7035,8 +7301,7 @@ spectra, and data.")
            python-pytest-doctestplus
            python-requests-mock
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-astropy
            python-defusedxml ; extra requirements
@@ -7150,17 +7415,17 @@ wiggles are caused by resampling noise or aliasing artifacts.")
 (define-public python-rad
   (package
     (name "python-rad")
-    (version "0.27.0")
+    (version "0.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "rad" version))
        (sha256
-        (base32 "04vzqkcw6la5n2jw92khmqnizs2nf5vb27nknn3c6wj1jwfwl6bv"))))
+        (base32 "0va7yfy3pcd6fp49ni7388lic3fv77n3qhvaxk6jw535v41by381"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 1253 passed, 1 skipped
+      ;; tests: 1798 passed, 1 skipped, 17 xfailed
       #:test-flags
       ;; Ignore tests requiring python-crds to break cycle:
       ;; python-rad -> python-roman-datamodels -> python-crds -> python-rad
@@ -7331,8 +7596,7 @@ solar physics.")
      (list python-pytest
            python-pytest-mpl
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-astropy
            python-h5py
@@ -7340,7 +7604,7 @@ solar physics.")
            python-numpy
            python-scikit-image
            python-scipy
-           python-sep-pjw))
+           python-sep))
     (home-page "https://github.com/punch-mission/regularizepsf")
     (synopsis "Point spread function modeling and regularization")
     (description
@@ -7351,7 +7615,7 @@ PSF} describing how the optical system spreads light from sources.")
 (define-public python-reproject
   (package
     (name "python-reproject")
-    (version "0.14.1")
+    (version "0.14.1") ;XXX: Newer versions need to be build with NumPy 2+
     (source
      (origin
        (method url-fetch)
@@ -7361,64 +7625,50 @@ PSF} describing how the optical system spreads light from sources.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 2062 passed, 398 skipped, 3 warnings
       #:test-flags
       #~(list "--arraydiff"
               "--arraydiff-default-format=fits"
-              "--numprocesses" (number->string (parallel-job-count))
-              "--pyargs" "reproject")
+              "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              "--pyargs" "reproject"
+              ;; ValueError: Could not determine celestial frame corresponding
+              ;; to the specified WCS object
+              "-k" "not test_solar_wcs")
       #:phases
       #~(modify-phases %standard-phases
-          ;; setup.py was removed in a659a260bdd7635cddc8f33c4ea04a3b6d8c1f84
-          ;; for some unknown reason, which caused the package to fail to
-          ;; build. It is being recreated based on that commit.
-          ;; TODO: Check how to implement it in python-build-system.
-          (add-after 'unpack 'create-setup.py
-            (lambda _
-              (call-with-output-file "setup.py"
-                (lambda (port)
-                  (format port "from setuptools import setup
-from extension_helpers import get_extensions
-setup(ext_modules=get_extensions())")))))
-          (add-before 'install 'writable-compiler
-            (lambda _
-              (make-file-writable "reproject/_compiler.c")))
-          (add-before 'check 'writable-compiler
-            (lambda _
-              (make-file-writable "reproject/_compiler.c")))
-          (add-before 'check 'prepare-test-environment
-            (lambda _
-              (setenv "HOME" "/tmp")
-              ;; Cython extensions have to be built before running the tests.
-              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs
+          ;; Use built library for tests.
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion #$output
+                  (setenv "HOME" "/tmp")
+                  (apply invoke "pytest" "-vv" test-flags))))))))
+    (native-inputs
+     (list python-cython
+           python-extension-helpers
+           python-pytest-astropy
+           python-pytest-xdist
+           python-setuptools-scm))
+    (inputs
      (list python-asdf
-           python-astropy
+           python-gwcs
+           python-pyvo
+           python-shapely
+           python-sunpy-minimal))
+    (propagated-inputs
+     (list python-astropy
            python-astropy-healpix
            python-cloudpickle
            python-dask
            python-fsspec
-           python-gwcs
            python-numpy
-           python-pyvo
            python-scipy
-           python-shapely
            python-zarr))
-    (native-inputs
-     (list python-cython
-           python-extension-helpers
-           python-asdf
-           python-gwcs
-           python-pytest-astropy
-           python-pytest-xdist
-           python-pyvo
-           ;; python-sunpy ; circular dependencies, test optional
-           python-setuptools-scm
-           python-wheel))
     (home-page "https://reproject.readthedocs.io")
     (synopsis "Astronomical image reprojection in Python")
     (description
-     "This package provides a functionality to reproject astronomical images using
-various techniques via a uniform interface, where reprojection is the
+     "This package provides a functionality to reproject astronomical images
+using various techniques via a uniform interface, where reprojection is the
 re-gridding of images from one world coordinate system to another e.g.
 changing the pixel resolution, orientation, coordinate system.")
     (license license:bsd-3)))
@@ -7426,17 +7676,17 @@ changing the pixel resolution, orientation, coordinate system.")
 (define-public python-roman-datamodels
   (package
     (name "python-roman-datamodels")
-    (version "0.27.0")
+    (version "0.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "roman_datamodels" version))
        (sha256
-        (base32 "1631jpv7mcrcka6bfxp04ih43wlm9pmqsqxckqyv6y9jgsipjxy3"))))
+        (base32 "0wfd3ggi23dd98qj3ks7fxr4dc01h2yrb082b51fdfasaaf29ws1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 4185 passed, 1 skipped, 1 xfailed
+      ;; tests: 4618 passed, 1 skipped, 11 xfailed
       #:test-flags
       #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
@@ -7451,8 +7701,7 @@ changing the pixel resolution, orientation, coordinate system.")
            python-pytest-env
            python-pytest-xdist
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-asdf
            python-asdf-astropy
@@ -7477,58 +7726,56 @@ pipelines.")
     (license license:bsd-3)))
 
 (define-public python-romancal
+  ;; The latest update is not released yet which is compatible with
+  ;; python-roman-datamodels@0.28.0.
+  (let ((commit "5089f94daa8160c06b4f499677086177243f9238")
+        (revision "0"))
   (package
     (name "python-romancal")
-    (version "0.20.2")
+    (version (git-version "0.20.2" revision commit))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
               (url "https://github.com/spacetelescope/romancal")
-              (commit version)))
+              (commit commit)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16aa8ylq6281k1z3yz0lzbw0ca9l7fgci1s14jqd9ymcmssnf4q4"))))
+        (base32 "01xz9il1rgi657p0441l2dmrglh5zba571x057ksi9ms5p49d6rm"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       #~(list "--color=no"
-              "--numprocesses" (number->string (min 8 (parallel-job-count)))
-              ;; XXX: Tests requiring network access or additional setup,
-              ;; check how to run them locally.
-              "--ignore=romancal/assign_wcs/tests/test_wcs.py"
-              "--ignore=romancal/dark_current/tests/test_dark.py"
-              "--ignore=romancal/dq_init/tests/test_dq_init.py"
-              "--ignore=romancal/flatfield/tests/test_flatfield.py"
-              "--ignore=romancal/flux/tests/test_flux_step.py"
-              "--ignore=romancal/lib/engdb/tests/test_engdb_tools.py"
-              "--ignore=romancal/linearity/tests/test_linearity.py"
-              "--ignore=romancal/multiband_catalog/tests/test_multiband_catalog.py"
-              "--ignore=romancal/orientation/tests/test_set_telescope_pointing.py"
-              "--ignore=romancal/photom/tests/test_photom.py"
-              "--ignore=romancal/ramp_fitting/tests/test_ramp_fit_cas22.py"
-              "--ignore=romancal/ramp_fitting/tests/test_ramp_fit_likelihood.py"
-              "--ignore=romancal/refpix/tests/test_step.py"
-              "--ignore=romancal/resample/tests/test_resample.py"
-              "--ignore=romancal/saturation/tests/test_saturation.py"
-              "--ignore=romancal/skycell/tests/test_skycell.py"
-              "--ignore=romancal/skycell/tests/test_skycell_match.py"
-              "--ignore=romancal/skymatch/tests/test_skymatch.py"
-              "--ignore=romancal/source_catalog/tests/test_psf.py"
-              "--ignore=romancal/source_catalog/tests/test_source_catalog.py"
-              "--ignore=romancal/stpipe/tests/test_core.py"
-              "--ignore=romancal/tweakreg/tests/test_tweakreg.py")
+              #$@(map (lambda (file) (string-append "--ignore=" file))
+                      (list "romancal/tweakreg/tests/test_tweakreg.py"
+                            "romancal/assign_wcs/tests/test_wcs.py"
+                            "romancal/dark_current/tests/test_dark.py"
+                            "romancal/dq_init/tests/test_dq_init.py"
+                            "romancal/flatfield/tests/test_flatfield.py"
+                            "romancal/flux/tests/test_flux_step.py"
+                            "romancal/linearity/tests/test_linearity.py"
+                            "romancal/multiband_catalog/tests/test_multiband_catalog.py"
+                            "romancal/photom/tests/test_photom.py"
+                            "romancal/pipeline/tests/test_exposure_pipeline.py"
+                            "romancal/ramp_fitting/tests/test_ramp_fit_cas22.py"
+                            "romancal/ramp_fitting/tests/test_ramp_fit_likelihood.py"
+                            "romancal/refpix/tests/test_step.py"
+                            "romancal/resample/tests/test_resample.py"
+                            "romancal/saturation/tests/test_saturation.py"
+                            "romancal/skycell/tests/test_skycell.py"
+                            "romancal/skycell/tests/test_skycell_match.py"
+                            "romancal/skymatch/tests/test_skymatch.py"
+                            "romancal/source_catalog/tests/test_psf.py"
+                            "romancal/source_catalog/tests/test_source_catalog.py"
+                            "romancal/stpipe/tests/test_core.py")))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
             (lambda _
               (substitute* "pyproject.toml"
                 ;; XXX: scipy >=1.14.1
-                ((" >=1.14.1") "")
-                (("stsci.imagestats >= 1.8.3")
-                 ;; Cant' find the version even if it's added.
-                 "stsci.imagestats"))))
+                ((" >=1.14.1") ""))))
           (add-before 'build 'set-version
             (lambda _
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
@@ -7537,10 +7784,8 @@ pipelines.")
      (list nss-certs-for-test
            python-ci-watson
            python-deepdiff
-           ;; python-edp      ;not packaged
            python-pytest
            python-pytest-astropy
-           python-pytest-xdist
            python-setuptools
            python-setuptools-scm
            python-stpreview))
@@ -7573,7 +7818,7 @@ pipelines.")
     (description
      "This package implements a functionality for calibration of science
 observations from the Nancy Grace Roman Space Telescope.")
-    (license license:bsd-3)))
+    (license license:bsd-3))))
 
 (define-public python-sbpy
   (package
@@ -8225,16 +8470,17 @@ of axis order, spatial projections, and spectral units that exist in the wild.
 (define-public python-specutils
   (package
     (name "python-specutils")
-    (version "2.1.0")
+    (version "2.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "specutils" version))
        (sha256
-        (base32 "02yf0s0qcwhj7qn0l3glvdlap4pr15s4hm2ki14py2k5sfv8j0ab"))))
+        (base32 "1zcyv8aqmj86nxk2qrvci4wvdylmv5ql16vv1wjq8s6akdsxpmzb"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; 571 passed, 130 skipped, 2 deselected, 3 xfailed
       #:test-flags
       #~(list "-k" (string-join
                     (list
@@ -8272,7 +8518,7 @@ of axis order, spatial projections, and spectral units that exist in the wild.
            python-asdf-astropy
            python-astropy
            python-gwcs
-           python-ndcube
+           python-ndcube-minimal
            python-numpy
            python-scipy))
     (home-page "https://specutils.readthedocs.io/")
@@ -8407,31 +8653,14 @@ over many parameters:
 (define-public python-statmorph
   (package
     (name "python-statmorph")
-    (version "0.7.0")
+    (version "0.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "statmorph" version))
        (sha256
-        (base32 "0qrxm0aigsjsqv39vxc85jv1id8b7sry76dx44143ii9hpd9dg4l"))))
+        (base32 "1c4srrmfzx8iszcc140ylljs0dzqs6d9ya2z7wic96p6y6gixb9h"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; See <https://github.com/vrodgom/statmorph/issues/13>.
-      #~(list "-k" (string-join
-                    (list "not test_no_psf"
-                          "test_psf"
-                          "test_weightmap")
-                    " and not "))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "setup.py"
-                ;; scikit-image>=0.25.0; tests passed, remove when python-team
-                ;; is merged.
-                ((">=0.25.2") ">=0.23.2")))))))
     (native-inputs
      (list python-pytest
            python-setuptools
@@ -8440,8 +8669,10 @@ over many parameters:
      (list python-astropy
            python-numpy
            python-photutils
-           python-scikit-image
-           python-scipy))
+           python-scikit-image-next
+           python-scipy
+           ;; [extras-require]
+           python-matplotlib))
     (home-page "https://github.com/vrodgom/statmorph")
     (synopsis "Non-parametric morphological diagnostics of galaxy images")
     (description
@@ -8453,13 +8684,13 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
 (define-public python-stcal
   (package
     (name "python-stcal")
-    (version "1.15.0")
+    (version "1.15.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stcal" version))
        (sha256
-        (base32 "0q27dw3gsv03kik63rclpg0si8qb2k7l8lhszi2b1948kb0spwnn"))))
+        (base32 "0lzwp06399fwxi8m82cmj5009s2xyvmzmvxw64qfbm39mxkhbw51"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -8524,19 +8755,19 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
 (define-public python-stdatamodels
   (package
     (name "python-stdatamodels")
-    (version "4.0.1")
+    (version "4.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stdatamodels" version))
        (sha256
-        (base32 "1lyxwfq55ngnsjr25bj3v6mjibx17074z28qi3xc9wpib5dn887i"))))
+        (base32 "1gwa7gh2hyv3770sv514w51c5s7c8zwjr3scx2b240z4c9pbgmq0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       ;; 1571 passed
       #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count))
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
               ;; Disable tests requiring access to CRDS servers to download
               ;; ~500MiB of data.
               "-k" "not test_crds_selectors_vs_datamodel and not test_report")
@@ -8547,7 +8778,7 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
               (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list nss-certs-for-test
-           python-crds
+           python-crds-minimal
            python-psutil
            python-pytest
            python-pytest-asdf-plugin
@@ -8555,32 +8786,42 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
            python-pytest-xdist
            python-scipy
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-asdf-4
+           python-asdf-transform-schemas
            python-asdf-astropy
            python-astropy
            python-numpy))
     (home-page "https://github.com/spacetelescope/stdatamodels")
-    (synopsis
-     "Core support for DataModel classes used in calibration pipelines")
+    (synopsis "STScI DataModel classes used in calibration pipelines")
     (description
      "Provides @code{DataModel}, which is the base class for data models
 implemented in the @acronym{JWST, James Webb Space Telescope} and
 @acronym{Roman, Nancy Grace Roman Space Telescope} calibration software.")
     (license license:bsd-3)))
 
+;; A bare minimal package, mainly to use in tests and reduce closure
+;; size. Tests are left out in the main package to slim down native-inputs.
+(define-public python-stdatamodels-minimal
+  (package/inherit python-stdatamodels
+    (name "python-stdatamodels-minimal")
+    (arguments
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))))
+
 (define-public python-stpipe
   (package
     (name "python-stpipe")
-    (version "0.10.0")
+    (version "0.11.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stpipe" version))
        (sha256
-        (base32 "1z5y8sbpkzxccvxwv19as2a8c69f3l01kgmicsk472p91bbm8v31"))
+        (base32 "1and1hjlwbmqb2nkw04gmp7q0nrnc0s22vgkq6bfs78c77z7cswf"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -8595,8 +8836,7 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
      (list python-pytest
            python-pytest-doctestplus
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-asdf
            python-astropy
@@ -8604,7 +8844,7 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
            python-importlib-metadata
            python-pyyaml))
     (home-page "https://github.com/spacetelescope/stpipe")
-    (synopsis "Framework for calibration pipeline software")
+    (synopsis "STScI framework for calibration pipeline software")
     (description
      "This package provides base classes and command-line tools for
 implementing calibration pipeline software.")
@@ -8722,24 +8962,29 @@ Telescope Science Institute} image array manipulation functions.")
   (package
     (name "python-stsci-imagestats")
     (version "1.8.3")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "stsci.imagestats" version))
-              (sha256
-               (base32
-                "1nmya85bf2747c9ggya6my5b1slk6g2a7bk16rdv8r5a4ah9hda5"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stsci.imagestats" version))
+       (sha256
+        (base32 "1nmya85bf2747c9ggya6my5b1slk6g2a7bk16rdv8r5a4ah9hda5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list "--pyargs" "stsci.imagestats")
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'check 'build-extensions
+          (add-after 'unpack 'set-version
             (lambda _
-              ;; Cython extensions have to be built before running the tests.
-              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-pytest python-setuptools python-wheel
-                         python-setuptools-scm))
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                      #$(version-major+minor+point version)))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "https://stsciimagestats.readthedocs.io/en/latest/")
     (synopsis "Compute sigma-clipped statistics on data arrays")
     (description
@@ -8856,13 +9101,13 @@ Institute, STScI} utility functions.")
 (define-public python-stsynphot
   (package
     (name "python-stsynphot")
-    (version "1.4.0")
+    (version "1.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stsynphot" version))
        (sha256
-        (base32 "02xaglg1kv3mk6gqjcs1283mmy9b42fgsga8g2z8768lkgwmmg9j"))))
+        (base32 "1hkpk27wrkhfxngzq1qdpza0i95lcs9bvxsyyf1bn45nw85ljajy"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -8870,14 +9115,16 @@ Institute, STScI} utility functions.")
       ;; disable them for now.  astropy.utils.exceptions.AstropyUserWarning:
       ;; Failed to load Vega spectrum from
       ;; /grp/redcat/trds/calspec/alpha_lyr_stis_010.fits;
+      ;;
+      ;; Data is availalbe by the lnks: <https://ssb.stsci.edu/trds/calspec/>,
+      ;; <https://archive.stsci.edu/hlsp/reference-atlases>.
       #:tests? #f))
     (native-inputs
      (list python-pytest
            python-pytest-astropy
            python-pytest-astropy-header
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-astropy
            python-beautifulsoup4
@@ -9122,17 +9369,17 @@ SunPy.")
 (define-public python-sunpy
   (package
     (name "python-sunpy")
-    (version "7.0.1")
+    (version "7.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunpy" version))
        (sha256
-        (base32 "1q7z74jf9r65clrq7g6mqqap6455krfp4mxbjs3039jk5gs8d47m"))))
+        (base32 "1frd7cw18cxmkrflzkwda4nxxbidn64n9q45ldn6jvk6nn8bwy6q"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 2439 passed, 3 xfailed, 35 warnings
+      ;; tests: 2448 passed, 3 xfailed, 35 warnings
       #:test-flags
       #~(list "--pyargs" "sunpy"
               "--numprocesses" (number->string (min 8 (parallel-job-count)))
@@ -9166,12 +9413,11 @@ SunPy.")
                   (apply invoke "pytest" "-vv" test-flags))))))))
     (native-inputs
      (list nss-certs-for-test
-           opencv ; For tests, includes OpenCV-Python
            python-aiohttp
            python-extension-helpers
            python-hvpy
            python-jplephem
-           ;; python-mplcairo ; Not packed yet in Guix
+           python-pytest-asdf-plugin
            python-pytest-astropy
            python-pytest-mock
            python-pytest-mpl
@@ -9179,27 +9425,33 @@ SunPy.")
            python-setuptools
            python-setuptools-scm))
     (propagated-inputs
-     (list python-asdf
+     (list python-astropy
+           python-numpy
+           python-packaging
+           python-parfive
+           python-pyerfa
+           python-requests
+           python-fsspec
+           ;; [optional]
+           opencv
+           python-aiobotocore
+           python-asdf
            python-asdf-astropy
-           python-astropy
            python-beautifulsoup4
            python-cdflib
+           python-contourpy
            python-dask
-           python-dateutil
            python-drms
+           python-fsspec
            python-glymur
            python-h5netcdf
            python-h5py
-           python-hypothesis
+           python-lxml
            python-matplotlib
            python-mpl-animators
-           python-numpy
-           python-packaging
            python-pandas
-           python-parfive
-           python-pyerfa
+           python-beautifulsoup4
            python-reproject
-           python-requests
            python-scikit-image
            python-scipy
            ;; python-spiceypy ; Not packed yet in Guix, long journey.
@@ -9215,23 +9467,22 @@ to the SolarSoft data analysis environment.")
 ;; A bare minimal package, mainly to use in tests and reduce closure
 ;; size. Tests are left out in the main package to slim down native-inputs.
 (define-public python-sunpy-minimal
-  (hidden-package
-   (package/inherit python-sunpy
-     (name "python-sunpy-minimal")
-     (arguments
-      (substitute-keyword-arguments (package-arguments python-sunpy)
-        ((#:tests? _ #t) #f)))
-     (native-inputs
-      (list python-setuptools
-            python-setuptools-scm
-            python-wheel))
-     (propagated-inputs
-      (list python-astropy-minimal
-            python-fsspec
-            python-mpl-animators
-            python-parfive
-            python-pyerfa
-            python-requests)))))
+  (package/inherit python-sunpy
+    (name "python-sunpy-minimal")
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-sunpy)
+       ((#:tests? _ #t) #f)))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy-minimal
+           python-fsspec
+           python-mpl-animators
+           python-parfive
+           python-pyerfa
+           python-requests))))
 
 (define-public python-sunpy-soar
   (package
@@ -9304,13 +9555,13 @@ to the SolarSoft data analysis environment.")
 (define-public python-sunraster
   (package
     (name "python-sunraster")
-    (version "0.6.2")
+    (version "0.7.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunraster" version))
        (sha256
-        (base32 "0rpxarw108igdgxvdz1g63yhyam6mgkpp7l1kkcxqyqv9najnrh4"))))
+        (base32 "11i4kssm9r2364s35jjy29y42qlcdxaf8h64l9ggrqgbg02anckz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -9432,20 +9683,19 @@ of the old packages.")
 (define-public python-tweakwcs
   (package
     (name "python-tweakwcs")
-    (version "0.8.11")
+    (version "0.8.12")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tweakwcs" version))
        (sha256
-        (base32 "0bw9wricq5nkal9h4mdpyzl4f4mq2c5ywadmxjffyyd0c0hpfpzd"))))
+        (base32 "1p7kbx7ih4ch04gxzv3pm8zkrv45my0c43k42iar5k5jihjhqhx6"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest
            python-scipy
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-astropy
            python-gwcs
@@ -10217,7 +10467,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
 (define-public stellarium
   (package
     (name "stellarium")
-    (version "25.2")
+    (version "25.3")
     (source
      (origin
        (method git-fetch)
@@ -10226,7 +10476,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fxdvybdcnlkjkyx1kqc7gg7p55qd4h1ri0mmn1xj2g5fxsbs0nr"))))
+        (base32 "05r3faqarhi4jipaphs6yh4aq6jy2aln67kg53kcqjlxbyxkmr7n"))))
     (build-system qt-build-system)
     ;; TODO: Complete documentation build and split into dedicated outputs.
     (arguments
@@ -10453,6 +10703,106 @@ controlled sockets
      "SWarp is a program that resamples and co-adds together FITS images using
 any arbitrary astrometric projection defined in the WCS standard.")
     (license license:gpl3+)))
+
+(define-public tangos
+  (package
+    (name "tangos")
+    (version "1.9.1")   ;1.10.0+ requires python-pynbody 2+
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pynbody/tangos")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vmjkhmqnr6abg7mybib1gllqbimv4ylgzvwxnsw0kk6cvv4qgl9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Full integration tests require running database, see projects
+      ;; CI, unit tests are quite compute instance.
+      ;;
+      ;; tests: 279 passed, 1 deselected, 105 warnings
+      #:test-flags
+      #~(list "--ignore=mpi_tests"
+              ;; OSError: File 'test_simulations/test_tipsy/tiny.000640':
+              ;; format not understood or does not exist
+              "--deselect=tests/test_bh_reader.py::test_bhlog")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-broken-scripts
+            (lambda _
+              ;; TODO: Report upstram.
+              ;; I could not find "Simpy" module, see:
+              ;; - URL: <https://github.com/pynbody/tangos/commit>
+              ;; - commit: 7de987e27d756278c4571dc65f36d377027fa29d
+              ;; - comment: #commitcomment-167855052
+              (delete-file "tangos/scripts/preprocess_bh.py")
+              (substitute* "setup.py"
+                ;; ModuleNotFoundError: No module named
+                ;; 'tangos.scripts.bh_timelink'
+                ((".*tangos_bh_timelink =.*") "")
+                ;; It looks this script uses not a publicly available module:
+                ;; import Simpy.BlackHoles.orbit.
+                ((".*tangos_preprocess_bh =.*") "")))))))
+    (native-inputs
+     (list python-pymysql
+           python-pynbody
+           python-pyquery
+           python-pytest
+           python-setuptools
+           python-webtest
+           python-yt))
+    (inputs
+     (list python-hupper
+           python-matplotlib
+           python-more-itertools
+           python-numpy
+           python-packaging
+           python-pastedeploy
+           python-plaster
+           python-plaster-pastedeploy
+           python-pyparsing
+           python-pyramid
+           python-pyramid-debugtoolbar
+           python-pyramid-jinja2
+           python-pyramid-retry
+           python-pyramid-tm
+           python-repoze-lru
+           python-scipy
+           python-setuptools
+           python-sqlalchemy
+           python-tblib
+           python-tqdm
+           python-translationstring
+           python-venusian
+           python-waitress
+           python-webob
+           python-zope-deprecation
+           python-zope-interface
+           python-zope-sqlalchemy))
+    (home-page "https://github.com/pynbody/tangos")
+    (synopsis "Agile numerical galaxy organisation system")
+    (description
+     "TANGOS is a tool to build a database (along the lines of
+@url{http://icc.dur.ac.uk/Eagle/database.php, Eagle} or
+@url{https://www.cosmosim.org/cms/documentation/projects/multidark-bolshoi-project/,
+MultiDark}) for cosmological and zoom simulations.
+
+Features:
+@itemize
+@item designed to store and manage results from custom analysis code
+@item provides web and Python interfaces
+@item science-focussed queries across entire merger trees, without requiring
+any knowledge of SQL
+@item manages the process of populating the database with science data,
+including auto-parallelising custom analysis
+@item customization with multiple Python modules such as @code{pynbody} or
+@code{yt} to process raw simulation data
+@item suports file-based database SQLite, server-based MySQL and PostgreSQL
+@end itemize")
+    (license license:bsd-3)))
 
 (define-public tempo
   (package
@@ -10713,8 +11063,8 @@ adjusted with command line option @code{-b}, by default set to store path.")
 
 (define-public uranimator
   ;; No release or version tags.
-  (let ((commit "f50558c6fbcec4a8e749c37f2368c21170d5bb48")
-        (revision "0"))
+  (let ((commit "d96f0084c029667f313ec72aade9968fa5bb506e")
+        (revision "1"))
     (package
       (name "uranimator")
       (version (git-version "0.0.0" revision commit))
@@ -10726,7 +11076,7 @@ adjusted with command line option @code{-b}, by default set to store path.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1icb4c3mfm63zqicixpbaks7a96s82d7q8c5j8kdb548rpsrcxqp"))))
+          (base32 "1yf1ghzzpnh0v1ra6dv4l135jgbs28pzadqig8cy8bwi9jq5wlrn"))))
       (build-system go-build-system)
       (arguments
        (list

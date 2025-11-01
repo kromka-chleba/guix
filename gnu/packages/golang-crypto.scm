@@ -62,7 +62,8 @@
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages password-utils)
   #:use-module (gnu packages security-token)
-  #:use-module (gnu packages specifications))
+  #:use-module (gnu packages specifications)
+  #:use-module (gnu packages tls))
 
 ;;; Commentary:
 ;;;
@@ -624,6 +625,61 @@ Cryptography (ECC).")
      "This package provides a drop-in replacement of the Golang standard
 @code{encoding/base64} library.")
     (license (list license:asl2.0 license:asl2.0))))
+
+(define-public go-github-com-containers-ocicrypt
+  (package
+    (name "go-github-com-containers-ocicrypt")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containers/ocicrypt")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hy08qfb68hggw343axaj2k262zv40a7gb464kvp5j0f4qi43p74"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containers/ocicrypt"
+      #:test-flags
+      #~(list "-skip" (string-join
+                       ;; pkcs11helpers_test.go:72: No module could be found;
+                       ;; it's just empty test file.
+                       (list "TestParsePkcs11KeyFileGood"
+                             ;; Tests search for gnutls, when added still
+                             ;; failing.
+                             "TestKeyWrapPkcs11Invalid"
+                             "TestKeyWrapPkcs11Success"
+                             "TestPkcs11EncryptDecrypt"
+                             "TestPkcs11EncryptDecryptPubkey")
+                       "|"))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-go-jose-go-jose-v4
+           go-github-com-golang-protobuf
+           go-github-com-miekg-pkcs11
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec
+           go-github-com-sirupsen-logrus
+           go-github-com-smallstep-pkcs7
+           go-github-com-stefanberger-go-pkcs11uri
+           go-golang-org-x-crypto
+           go-golang-org-x-term
+           go-google-golang-org-grpc
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/containers/ocicrypt")
+    (synopsis "Encryption libraries for Encrypted OCI Container images")
+    (description
+     "The @code{ocicrypt} library is the OCI image spec implementation of container
+image encryption.  More details of the spec can be seen in the
+@url{https://github.com/opencontainers/image-spec/pull/775, OCI repository}.
+The purpose of this library is to encode spec structures and consts in code,
+as well as provide a consistent implementation of image encryption across
+container runtimes and build tools.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-davidlazar-go-crypto
   (package
@@ -2418,6 +2474,54 @@ adding the ability to obtain the list of host key algorithms for a known
 host.")
     (license license:asl2.0)))
 
+(define-public go-github-com-smallstep-pkcs7
+  (package
+    (name "go-github-com-smallstep-pkcs7")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/smallstep/pkcs7")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h8l7aabaxmgzixz4wn0k9f0v4hld86kzis6dpjz2zgf61czk7ri"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/smallstep/pkcs7"
+      #:test-flags
+      ;; XXX: Two test fails in validation certificates.
+      #~(list "-skip" (string-append
+                       ;; sign_test.go:130: test SHA1-RSA/SHA1-RSA/SHA1-RSA:
+                       ;; cannot add signer: pkcs7: certificate signature from
+                       ;; parent is invalid: x509: cannot verify signature:
+                       ;; insecure algorithm SHA1-RSA
+                       "TestSign"
+                       ;; verify_test.go:825: Verify failed with
+                       ;; error: pkcs7: failed to verify
+                       ;; certificate chain: x509: certificate
+                       ;; signed by unknown authority (possibly
+                       ;; because of "x509: cannot verify
+                       ;; signature: insecure algorithm
+                       ;; SHA1-RSA" while trying to verify
+                       ;; candidate authority certificate "PKCS7
+                       ;; Test Intermediate Cert")
+                       "|TestSignWithOpenSSLAndVerify"))))
+    (native-inputs
+     (list openssl))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/smallstep/pkcs7")
+    (synopsis
+     "Subset of PKCS #7 / Cryptographic Message Syntax implemented in Golang")
+    (description
+     "This package implements a subset of PKCS #7 / Cryptographic Message
+Syntax (@url{https://www.rfc-editor.org/rfc/rfc2315, RFC 2315},
+@url{https://www.rfc-editor.org/rfc/rfc5652, RFC 5652}).")
+    (license license:expat)))
+
 (define-public go-github-com-spaolacci-murmur3
   (package
     (name "go-github-com-spaolacci-murmur3")
@@ -2442,6 +2546,31 @@ host.")
 revision (aka MurmurHash3).  Reference algorithm has been slightly hacked as
 to support the streaming mode required by Go's standard Hash interface.")
     (license license:bsd-3)))
+
+(define-public go-github-com-stefanberger-go-pkcs11uri
+  (package
+    (name "go-github-com-stefanberger-go-pkcs11uri")
+    (version "0.0.0-20230803200340-78284954bff6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/stefanberger/go-pkcs11uri")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05gdfpb2h69fypp91dz1m8mff7mzg5x0kg1vsqh4wwd9cxwdhj10"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/stefanberger/go-pkcs11uri"))
+    (home-page "https://github.com/stefanberger/go-pkcs11uri")
+    (synopsis "Golang pkcs11 URI library")
+    (description
+     "This package implements @url{https://tools.ietf.org/html/rfc7512,
+ RFC 7512} - the PKCS #11 URI Scheme; and
+@url{https://www.rfc-editor.org/errata/rfc7512, errata} specifications.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-tjfoc-gmsm
   (package
