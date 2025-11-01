@@ -30,17 +30,17 @@ if [ -d "$abs_top_srcdir/.git" ]
 then
     # Since we're in a Git checkout, we can at least check that these things
     # work.
-    guix describe | grep -i "checkout"
+    guix describe | grep -e '\(checkout:\|^  guix \)'
     if git --version > /dev/null 2>&1
     then
-	result="`guix describe | grep commit: | cut -d : -f 2-`"
-	commit="`git log | head -1 | cut -c 7-`"
-	test "x$result" = "x$commit"
+        result="`guix describe | grep -A3 -e '\(checkout:\|  guix \)' | grep commit: | cut -d : -f 2-`"
+        commit="`git log | head -1 | cut -c 7-`"
+        test "x$result" = "x$commit"
     fi
     guix describe -f channels
     case "`guix describe -f channels | grep url`" in
-	*"(url \"$abs_top_srcdir/\")") true;;
-	*) false;;
+        *"(url \"$abs_top_srcdir/\")"*) true;;
+        *) false;;
     esac
 else
     exit 77
