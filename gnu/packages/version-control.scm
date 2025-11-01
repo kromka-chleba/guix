@@ -198,16 +198,16 @@
        (sha256
         (base32
          "0fxv7ca6qbrj6bvrbfgjrd9ldppa8zq8hc461rikh85c5xg9rjqi"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:modules
       '(((guix build cargo-build-system) #:prefix cargo:)
-        (guix build python-build-system)
+        (guix build pyproject-build-system)
         (guix build utils))
       #:imported-modules
       `(,@%cargo-build-system-modules
-        ,@%python-build-system-modules)
+        ,@%pyproject-build-system-modules)
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'prepare-cargo-build-system
