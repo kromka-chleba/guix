@@ -7452,7 +7452,7 @@ freedesktop.org help system specification.")
     (arguments
      (list #:configure-flags #~'("-Dhelp=true")))
     (native-inputs
-     (list gettext-minimal pkg-config python python-lxml))
+     (list gettext-minimal pkg-config python python-lxml/pinned))
     (inputs
      (list yelp-xsl))
     (propagated-inputs
