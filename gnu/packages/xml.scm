@@ -1886,6 +1886,47 @@ For lxml.etree this package can be useful for providing XPath 2.0 selectors,
 because lxml.etree already has its own implementation of XPath 1.0.")
     (license license:expat)))
 
+(define-public python-lxml/pinned
+  (package
+    (name "python-lxml-for-texlive")
+    (version "6.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lxml" version))
+       (sha256
+        (base32 "14064h0pxdsx36nhyjzrw0v16ygz977qf6l0ydnh5p97pwp8hfib"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      ;; Essentially a lighter copy of the former python-build-system.
+      ;; Using it rather than pyproject-build-system allows to edit the latter
+      ;; without a texlive + haskell world rebuild.
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'bootstrap)
+          (delete 'configure)
+          (replace 'build
+            (lambda _
+              (invoke "python" "./setup.py" "build")))
+          (replace 'install
+            (lambda _
+              (invoke "python" "./setup.py" "install"
+                      (string-append "--prefix=" #$output) "--no-compile")
+              (invoke "python" "-m" "compileall"
+                      "--invalidation-mode=unchecked-hash" #$output))))))
+    (native-inputs
+     (list python-wrapper python-setuptools-bootstrap))
+    (inputs
+     (list libxml2 libxslt))
+    (home-page "https://lxml.de/")
+    (synopsis "Python XML processing library")
+    (description
+     "The lxml XML toolkit is a Pythonic binding for the C libraries
+libxml2 and libxslt.")
+    (license license:bsd-3)))
+
 (define-public python-lxml
   (package
     (name "python-lxml")
