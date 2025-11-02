@@ -3209,243 +3209,256 @@ Python.")
       (license license:bsd-2))))
 
 (define-public tensorflow-lite
-  (package
-    (name "tensorflow-lite")
-    (version "2.14.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tensorflow/tensorflow")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "07f4x4g3kwhfjz7iadhqrv97zmw0blacixvca1gdqkqqi7aipxis"))))
-    (build-system cmake-build-system)
-    (outputs (list "out" "python"))
-    (arguments
-     (list
-      #:build-type "Release"
-      #:imported-modules (append %cmake-build-system-modules
-                                 %pyproject-build-system-modules)
-      #:modules '((ice-9 match)
-                  (guix build utils)
-                  (guix build cmake-build-system)
-                  ((guix build pyproject-build-system) #:prefix py:))
-      #:configure-flags
-      #~(list
-         ;; "-DTFLITE_KERNEL_TEST=ON"  ; TODO: build tests
-         ;; so cmake can be used to find this from other packages
-         "-DTFLITE_ENABLE_INSTALL=ON"
+  (let* ((farmhash-commit "816a4ae622e964763ca0862d9dbd19324a1eaf45")
+         (farmhash-src
+          (origin
+            (method url-fetch)
+            (uri (string-append "https://mirror.bazel.build/github.com/google/"
+                                "farmhash/archive/" farmhash-commit ".tar.gz"))
+            (file-name (git-file-name "farmhash"
+                                      (string-take farmhash-commit 8)))
+            (sha256
+             (base32
+              "185b2xdxl4d4cnsnv6abg8s22gxvx8673jq2yaq85bz4cdy58q35"))))
+         (fft2d-src
+          (origin
+            (method url-fetch)
+            (uri (string-append "https://storage.googleapis.com/"
+                                "mirror.tensorflow.org/github.com/petewarden/"
+                                "OouraFFT/archive/v1.0.tar.gz"))
+            (file-name "fft2d.tar.gz")
+            (sha256
+             (base32
+              "1jfflzi74fag9z4qmgwvp90aif4dpbr1657izmxlgvf4hy8fk9xd")))))
+    (package
+      (name "tensorflow-lite")
+      (version "2.14.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/tensorflow/tensorflow")
+                (commit (string-append "v" version))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "07f4x4g3kwhfjz7iadhqrv97zmw0blacixvca1gdqkqqi7aipxis"))))
+      (build-system cmake-build-system)
+      (outputs (list "out" "python"))
+      (arguments
+       (list
+        #:build-type "Release"
+        #:imported-modules (append %cmake-build-system-modules
+                                   %pyproject-build-system-modules)
+        #:modules '((ice-9 match)
+                    (srfi srfi-26)
+                    (guix build utils)
+                    (guix build cmake-build-system)
+                    ((guix build pyproject-build-system) #:prefix py:))
+        #:configure-flags
+        #~(list
+           ;; Access some OpenCL functions in mesa-headers
+           "-DCMAKE_C_FLAGS=-DCL_ENABLE_BETA_EXTENSIONS=1"
+           "-DCMAKE_CXX_FLAGS=-DCL_ENABLE_BETA_EXTENSIONS=1"
+           ;; "-DTFLITE_KERNEL_TEST=ON"  ; TODO: build tests
+           ;; so cmake can be used to find this from other packages
+           "-DTFLITE_ENABLE_INSTALL=ON"
 
-         ;; Use Guix's own packages as dependencies.
-         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
+           ;; Use Guix's own packages as dependencies.
+           "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
 
-         "-DTFLITE_ENABLE_GPU=ON"
-         "-DTFLITE_ENABLE_RUY=ON"
-         "-DTFLITE_ENABLE_XNNPACK=ON"
+           "-DTFLITE_ENABLE_GPU=ON"
+           "-DTFLITE_ENABLE_RUY=ON"
+           "-DTFLITE_ENABLE_XNNPACK=ON"
 
-         "-DSYSTEM_PTHREADPOOL=ON"
-         ;; TODO: turn on Farmhash
-         ;;"-DSYSTEM_FARMHASH=ON"
-         (string-append "-Dabsl_DIR=" #$(this-package-input "abseil-cpp")
-                        "/lib/cmake/absl")
-         (string-append "-DEigen3_DIR=" #$(this-package-input "eigen")
-                        "/share/eigen3/cmake")
-         (string-append "-DFlatBuffers_DIR="
-                        #$(this-package-input "flatbuffers")
-                        "/lib/cmake/flatbuffers")
-         (string-append "-DNEON_2_SSE_DIR=" #$(this-package-input "neon2sse")
-                        "/lib/cmake/NEON_2_SSE")
-         (string-append "-Dcpuinfo_DIR=" #$(this-package-input "cpuinfo")
-                        "/share/cpuinfo")
-         (string-append "-Druy_DIR=" #$(this-package-input "ruy")
-                        "/lib/cmake/ruy")
-         (string-append "-DML_DTYPES_LIBRARY_DIRS="
-                        #$(this-package-input "python-ml-dtypes") "/lib")
+           "-DSYSTEM_PTHREADPOOL=ON"
+           ;; TODO: turn on Farmhash
+           ;;"-DSYSTEM_FARMHASH=ON"
+           (string-append "-Dabsl_DIR=" #$(this-package-input "abseil-cpp")
+                          "/lib/cmake/absl")
+           (string-append "-DEigen3_DIR=" #$(this-package-input "eigen")
+                          "/share/eigen3/cmake")
+           (string-append "-DFlatBuffers_DIR="
+                          #$(this-package-input "flatbuffers")
+                          "/lib/cmake/flatbuffers")
+           (string-append "-DNEON_2_SSE_DIR=" #$(this-package-input "neon2sse")
+                          "/lib/cmake/NEON_2_SSE")
+           (string-append "-Dcpuinfo_DIR=" #$(this-package-input "cpuinfo")
+                          "/share/cpuinfo")
+           (string-append "-Druy_DIR=" #$(this-package-input "ruy")
+                          "/lib/cmake/ruy")
+           (string-append "-DML_DTYPES_LIBRARY_DIRS="
+                          #$(this-package-input "python-ml-dtypes") "/lib")
 
-         ;; Don't fetch the sources.  We have these already
-         "-Dml_dtypes_POPULATED=ON"
-         "-Dgemmlowp_POPULATED=TRUE"
-         "-Degl_headers_POPULATED=TRUE"
-         "-Dfp16_headers_POPULATED=TRUE"
-         "-Dopencl_headers_POPULATED=TRUE"
-         "-Dopengl_headers_POPULATED=TRUE"
-         "-Dvulkan_headers_POPULATED=TRUE"
-         "-Dgoogletest_POPULATED=TRUE"
-         "-Dgoogle_benchmark_POPULATED=TRUE"
-         "-Dnsync_POPULATED=TRUE"
-         "-Dre2_POPULATED=TRUE"
-         "-Dxnnpack_POPULATED=TRUE"
+           ;; Don't fetch the sources.  We have these already
+           "-Dml_dtypes_POPULATED=ON"
+           "-Dgemmlowp_POPULATED=TRUE"
+           "-Degl_headers_POPULATED=TRUE"
+           "-Dfp16_headers_POPULATED=TRUE"
+           "-Dopencl_headers_POPULATED=TRUE"
+           "-Dopengl_headers_POPULATED=TRUE"
+           "-Dvulkan_headers_POPULATED=TRUE"
+           "-Dgoogletest_POPULATED=TRUE"
+           "-Dgoogle_benchmark_POPULATED=TRUE"
+           "-Dnsync_POPULATED=TRUE"
+           "-Dre2_POPULATED=TRUE"
+           "-Dxnnpack_POPULATED=TRUE"
 
-         "-DFFT2D_SOURCE_DIR=/tmp/fft2d"
-         "-DFARMHASH_SOURCE_DIR=/tmp/farmhash"
-         (string-append "-Dgemmlowp_ROOT=" #$(this-package-input "gemmlowp")))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'chdir
-            (lambda _ (chdir "tensorflow/lite")))
-          (add-after 'chdir 'unbundle-gemmlowp
-            (lambda _
-              (call-with-output-file "tools/cmake/modules/gemmlowp.cmake"
-                (lambda (port)
-                  (display "\
+           "-DFFT2D_SOURCE_DIR=/tmp/fft2d"
+           "-DFARMHASH_SOURCE_DIR=/tmp/farmhash"
+           (string-append "-Dgemmlowp_ROOT=" #$(this-package-input "gemmlowp")))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _ (chdir "tensorflow/lite")))
+            (add-after 'chdir 'unbundle-gemmlowp
+              (lambda _
+                (call-with-output-file "tools/cmake/modules/gemmlowp.cmake"
+                  (lambda (port)
+                    (display "\
 add_library(gemmlowp INTERFACE IMPORTED)
 include_directories(\"${gemmlowp_ROOT}/include/gemmlowp\")" port)))
-              (call-with-output-file "tools/cmake/modules/ml_dtypes.cmake"
-                (lambda (port)
-                  (display "\
+                (call-with-output-file "tools/cmake/modules/ml_dtypes.cmake"
+                  (lambda (port)
+                    (display "\
 add_library(ml_dtypes INTERFACE IMPORTED)
 find_library(ML_DTYPES_LIBRARIES
   NAMES ml_dtypes.so
   PATHS \"${ML_DTYPES_LIBRARY_DIRS}\"
   NO_DEFAULT_PATH)" port)))))
-          (add-after 'chdir 'copy-sources
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; Don't fetch source code; we already have everything we need.
-              (substitute* '("tools/cmake/modules/fft2d.cmake"
-                             "tools/cmake/modules/farmhash.cmake"
-                             "tools/cmake/modules/gemmlowp.cmake")
-                (("^ *OverridableFetchContent_Populate.*") ""))
+            (add-after 'chdir 'copy-sources
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; Don't fetch source code; we already have everything we need.
+                (substitute* '("tools/cmake/modules/fft2d.cmake"
+                               "tools/cmake/modules/farmhash.cmake"
+                               "tools/cmake/modules/gemmlowp.cmake")
+                  (("^ *OverridableFetchContent_Populate.*") ""))
 
-              (mkdir-p "/tmp/farmhash")
-              (with-directory-excursion "/tmp/farmhash"
-                (invoke "tar" "--strip-components=1"
-                        "-xf" (assoc-ref inputs "farmhash-src")))
+                (mkdir-p "/tmp/farmhash")
+                (with-directory-excursion "/tmp/farmhash"
+                  (invoke "tar" "--strip-components=1"
+                          "-xf" #$farmhash-src))
 
-              (mkdir-p "/tmp/fft2d")
-              (with-directory-excursion "/tmp/fft2d"
-                (invoke "tar" "--strip-components=1"
-                        "-xf" (assoc-ref inputs "fft2d-src")))))
-          (add-after 'copy-sources 'opencl-fix
-            (lambda _ (substitute* "delegates/gpu/cl/opencl_wrapper.h"
-              (("cl_ndrange_kernel_command_properties_khr")
-               "cl_command_properties_khr"))))
-          (add-after 'opencl-fix 'absl-fix
-            (lambda _ (substitute* '(
-                        "delegates/gpu/cl/cl_operation.h"
-                        "delegates/gpu/common/task/qcom_thin_filter_desc.cc"
-                        "delegates/gpu/common/tasks/special/thin_pointwise_fuser.cc")
-              (("#include <vector>")
-               "#include <vector>\n\n#include \"absl/strings/str_cat.h\"\n"))))
-          (add-after 'opencl-fix 'stdint-fix
-            (lambda _ (substitute* "kernels/internal/spectrogram.cc"
-              (("#include <math.h>")
-               "#include <math.h>\n#include <cstdint>\n"))))
-          (add-after 'stdint-fix 'gemmlowp-fix
-            (lambda _
-              (substitute* "kernels/internal/common.h"
-                (("#include \"fixedpoint/fixedpoint\\.h\"")
-                 "#include <fixedpoint/fixedpoint.h>"))))
-          (add-after 'build 'build-shared-library
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (mkdir-p "c")
-              (with-directory-excursion "c"
-                (apply invoke "cmake" (append configure-flags (list "../../lite/c")))
-                (invoke "cmake" "--build" "." "-j" (number->string
-                                                    (parallel-job-count))))))
-          (add-after 'build-shared-library 'build-benchmark-model
-            (lambda _
-              (invoke "cmake" "--build" "." "--target" "benchmark_model"
-                      "-j" (number->string (parallel-job-count)))))
-          (add-after 'build-benchmark-model 'build-python
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (let ((script (string-append "../lite/tools/pip_package/"
-                                           "build_pip_package_with_cmake.sh")))
-                (substitute* script
-                  (("\"\\$\\{TENSORFLOW_LITE_DIR\\}\"" all)
-                   (string-append "${CMAKE_ADDITIONAL_CONFIGURE_FLAGS} "
-                                  all)))
-                (setenv "BUILD_NUM_JOBS" (number->string (parallel-job-count)))
-                (setenv "CMAKE_ADDITIONAL_CONFIGURE_FLAGS"
-                        (string-join configure-flags " "))
-                (invoke "sh" script))))
-          (add-after 'install 'install-extra
-            (lambda _
-              (install-file "../build/c/libtensorflowlite_c.so"
-                            (string-append #$output "/lib"))
-              (install-file "../build/tools/benchmark/benchmark_model"
-                            (string-append #$output "/bin"))))
-          (add-after 'install-extra 'install-python
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (with-directory-excursion
-                  "../lite/tools/pip_package/gen/tflite_pip/python3"
-                ((assoc-ref py:%standard-phases 'install)
+                (mkdir-p "/tmp/fft2d")
+                (with-directory-excursion "/tmp/fft2d"
+                  (invoke "tar" "--strip-components=1"
+                          "-xf" #$fft2d-src))))
+            (add-after 'copy-sources 'opencl-fix
+              (lambda _ (substitute* "delegates/gpu/cl/opencl_wrapper.h"
+                          (("cl_ndrange_kernel_command_properties_khr")
+                           "cl_command_properties_khr"))))
+            (add-after 'opencl-fix 'absl-fix
+              (lambda _
+                (substitute*
+                    '("delegates/gpu/cl/cl_operation.h"
+                      "delegates/gpu/common/task/qcom_thin_filter_desc.cc"
+                      "delegates/gpu/common/tasks/special/thin_pointwise_fuser.cc")
+                  (("#include <vector>")
+                   "#include <vector>\n\n#include \"absl/strings/str_cat.h\"\n"))))
+            (add-after 'opencl-fix 'stdint-fix
+              (lambda _ (substitute* "kernels/internal/spectrogram.cc"
+                          (("#include <math.h>")
+                           "#include <math.h>\n#include <cstdint>\n"))))
+            (add-after 'stdint-fix 'gemmlowp-fix
+              (lambda _
+                (substitute* "kernels/internal/common.h"
+                  (("#include \"fixedpoint/fixedpoint\\.h\"")
+                   "#include <fixedpoint/fixedpoint.h>"))))
+            (add-after 'build 'build-shared-library
+              (lambda* (#:key configure-flags #:allow-other-keys)
+                (mkdir-p "c")
+                (with-directory-excursion "c"
+                  (apply invoke "cmake" (append configure-flags (list "../../lite/c")))
+                  (invoke "cmake" "--build" "." "-j" (number->string
+                                                      (parallel-job-count))))))
+            (add-after 'build-shared-library 'build-benchmark-model
+              (lambda _
+                (invoke "cmake" "--build" "." "--target" "benchmark_model"
+                        "-j" (number->string (parallel-job-count)))))
+            (add-after 'build-benchmark-model 'build-python
+              (lambda* (#:key configure-flags #:allow-other-keys)
+                (let ((script (string-append "../lite/tools/pip_package/"
+                                             "build_pip_package_with_cmake.sh")))
+                  (substitute* script
+                    (("\"\\$\\{TENSORFLOW_LITE_DIR\\}\"" all)
+                     (string-append "${ADDITIONAL_CMAKE_FLAGS} " all))
+                    (("-D(CMAKE_C[X]*_FLAGS)=\"\\$\\{BUILD_FLAGS\\}"
+                      all flag)
+                     (string-append all " ${ADDITIONAL_" flag "}")))
+                  (setenv "BUILD_NUM_JOBS"
+                          (number->string (parallel-job-count)))
+                  (let* ((config (map (cut string-split <> #\=) configure-flags))
+                         (c-flags (assoc-ref config "-DCMAKE_C_FLAGS"))
+                         (config (alist-delete "-DCMAKE_C_FLAGS" config))
+                         (cxx-flags (assoc-ref config "-DCMAKE_CXX_FLAGS"))
+                         (config (alist-delete "-DCMAKE_CXX_FLAGS" config)))
+                    (setenv "ADDITIONAL_CMAKE_C_FLAGS"
+                            (string-join c-flags "="))
+                    (setenv "ADDITIONAL_CMAKE_CXX_FLAGS"
+                            (string-join cxx-flags "="))
+                    (setenv "ADDITIONAL_CMAKE_FLAGS"
+                            (string-join (map (cut string-join <> "=") config)
+                                         " ")))
+                  (invoke "sh" script))))
+            (add-after 'install 'install-extra
+              (lambda _
+                (install-file "../build/c/libtensorflowlite_c.so"
+                              (string-append #$output "/lib"))
+                (install-file "../build/tools/benchmark/benchmark_model"
+                              (string-append #$output "/bin"))))
+            (add-after 'install-extra 'install-python
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (with-directory-excursion
+                    "../lite/tools/pip_package/gen/tflite_pip/python3"
+                  ((assoc-ref py:%standard-phases 'install)
+                   #:inputs inputs
+                   #:outputs `(("out" . ,#$output:python))))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "ctest" "-L" "plain"))))
+            (add-after 'install-python 'add-install-to-pythonpath
+              (lambda* (#:key inputs #:allow-other-keys)
+                ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
                  #:inputs inputs
-                 #:outputs `(("out" . ,#$output:python))))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "ctest" "-L" "plain"))))
-          (add-after 'install-python 'add-install-to-pythonpath
-            (lambda* (#:key inputs #:allow-other-keys)
-              ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
-               #:inputs inputs
-               #:outputs `(("out" . ,#$output:python)))))
-          (add-after 'add-install-to-pythonpath 'python-sanity-check
-            (lambda* (#:key tests? inputs #:allow-other-keys)
-              ((assoc-ref py:%standard-phases 'sanity-check)
-               #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
-                          ,@inputs)
-               #:outputs `(("out" . ,#$output:python))))))))
-    (inputs
-     (list abseil-cpp
-           cpuinfo
-           eigen
-           fp16
-           flatbuffers-23.5
-           gemmlowp
-           mesa-headers
-           neon2sse
-           nsync
-           opencl-clhpp
-           opencl-headers
-           opencl-icd-loader
-           pthreadpool
-           python-wrapper
-           python-ml-dtypes
-           ruy
-           re2
-           xnnpack
-           vulkan-headers
-           zlib))
-    (propagated-inputs
-     (list python-numpy))
-    (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("googletest" ,googletest)
-       ("pybind11" ,pybind11)
-       ("python-wheel" ,python-wheel)
-       ("swig" ,swig)
-       ("farmhash-src"
-        ,(let ((commit "816a4ae622e964763ca0862d9dbd19324a1eaf45"))
-           (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://mirror.bazel.build/github.com/google/farmhash/archive/"
-                   commit ".tar.gz"))
-             (file-name (git-file-name "farmhash" (string-take commit 8)))
-             (sha256
-              (base32
-               "185b2xdxl4d4cnsnv6abg8s22gxvx8673jq2yaq85bz4cdy58q35")))))
-       ("fft2d-src"
-        ,(origin
-           (method url-fetch)
-           (uri (string-append "https://storage.googleapis.com/"
-                               "mirror.tensorflow.org/github.com/petewarden/"
-                               "OouraFFT/archive/v1.0.tar.gz"))
-           (file-name "fft2d.tar.gz")
-           (sha256
-            (base32
-             "1jfflzi74fag9z4qmgwvp90aif4dpbr1657izmxlgvf4hy8fk9xd"))))))
-    (home-page "https://www.tensorflow.org")
-    (synopsis "Machine learning framework")
-    (description
-     "TensorFlow is a flexible platform for building and training machine
+                 #:outputs `(("out" . ,#$output:python)))))
+            (add-after 'add-install-to-pythonpath 'python-sanity-check
+              (lambda* (#:key tests? inputs #:allow-other-keys)
+                ((assoc-ref py:%standard-phases 'sanity-check)
+                 #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
+                            ,@inputs)
+                 #:outputs `(("out" . ,#$output:python))))))))
+      (inputs
+       (list abseil-cpp
+             cpuinfo
+             eigen
+             fp16
+             flatbuffers-23.5
+             gemmlowp
+             mesa-headers
+             neon2sse
+             nsync
+             opencl-icd-loader
+             pthreadpool
+             python                     ; for its /lib
+             python-ml-dtypes
+             ruy
+             re2
+             xnnpack
+             vulkan-headers
+             zlib))
+      (propagated-inputs
+       (list python-numpy))
+      (native-inputs
+       (list googletest pkg-config pybind11 python-setuptools swig
+             python-wrapper))           ; for its /bin
+      (home-page "https://www.tensorflow.org")
+      (synopsis "Machine learning framework")
+      (description
+       "TensorFlow is a flexible platform for building and training machine
 learning models.  This package provides the \"lite\" variant for mobile
 devices.")
-    (license license:asl2.0)))
+      (license license:asl2.0))))
 
 (define-public python-tflite-runtime
   (package
