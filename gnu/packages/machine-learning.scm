@@ -3222,7 +3222,7 @@ Python.")
         (base32
          "07f4x4g3kwhfjz7iadhqrv97zmw0blacixvca1gdqkqqi7aipxis"))))
     (build-system cmake-build-system)
-    (outputs (list "out" "python"))
+    (outputs (list "out"))  ; "python"  ; not building, disable for now
     (arguments
      (list
       #:build-type "Release"
@@ -3280,6 +3280,8 @@ Python.")
 
          "-DFFT2D_SOURCE_DIR=/tmp/fft2d"
          "-DFARMHASH_SOURCE_DIR=/tmp/farmhash"
+         "-DCMAKE_C_FLAGS=-DCL_ENABLE_BETA_EXTENSIONS=1"  ; for accessing some OpenCL functions in mesa-headers
+         "-DCMAKE_CXX_FLAGS=-DCL_ENABLE_BETA_EXTENSIONS=1"  ; for accessing some OpenCL functions in mesa-headers
          (string-append "-Dgemmlowp_ROOT=" #$(this-package-input "gemmlowp")))
       #:phases
       #~(modify-phases %standard-phases
@@ -3348,46 +3350,48 @@ find_library(ML_DTYPES_LIBRARIES
             (lambda _
               (invoke "cmake" "--build" "." "--target" "benchmark_model"
                       "-j" (number->string (parallel-job-count)))))
-          (add-after 'build-benchmark-model 'build-python
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (let ((script (string-append "../lite/tools/pip_package/"
-                                           "build_pip_package_with_cmake.sh")))
-                (substitute* script
-                  (("\"\\$\\{TENSORFLOW_LITE_DIR\\}\"" all)
-                   (string-append "${CMAKE_ADDITIONAL_CONFIGURE_FLAGS} "
-                                  all)))
-                (setenv "BUILD_NUM_JOBS" (number->string (parallel-job-count)))
-                (setenv "CMAKE_ADDITIONAL_CONFIGURE_FLAGS"
-                        (string-join configure-flags " "))
-                (invoke "sh" script))))
+          ;(add-after 'build-benchmark-model 'build-python
+          ;  (lambda* (#:key configure-flags #:allow-other-keys)
+          ;    (let ((script (string-append "../lite/tools/pip_package/"
+          ;                                 "build_pip_package_with_cmake.sh")))
+          ;      (substitute* script
+          ;        (("\"\\$\\{TENSORFLOW_LITE_DIR\\}\"" all)
+          ;         (string-append "${CMAKE_ADDITIONAL_CONFIGURE_FLAGS} "
+          ;                        all)))
+          ;      (setenv "BUILD_NUM_JOBS" (number->string (parallel-job-count)))
+          ;      (setenv "CMAKE_ADDITIONAL_CONFIGURE_FLAGS"
+          ;              (string-join configure-flags " "))
+          ;      (invoke "sh" script))))
           (add-after 'install 'install-extra
             (lambda _
               (install-file "../build/c/libtensorflowlite_c.so"
                             (string-append #$output "/lib"))
               (install-file "../build/tools/benchmark/benchmark_model"
                             (string-append #$output "/bin"))))
-          (add-after 'install-extra 'install-python
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (with-directory-excursion
-                  "../lite/tools/pip_package/gen/tflite_pip/python3"
-                ((assoc-ref py:%standard-phases 'install)
-                 #:inputs inputs
-                 #:outputs `(("out" . ,#$output:python))))))
+          ;(add-after 'install-extra 'install-python
+          ;  (lambda* (#:key inputs outputs #:allow-other-keys)
+          ;    (with-directory-excursion
+          ;        "../lite/tools/pip_package/gen/tflite_pip/python3"
+          ;      ((assoc-ref py:%standard-phases 'install)
+          ;       #:inputs inputs
+          ;       #:outputs `(("out" . ,#$output:python))))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (invoke "ctest" "-L" "plain"))))
-          (add-after 'install-python 'add-install-to-pythonpath
-            (lambda* (#:key inputs #:allow-other-keys)
-              ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
-               #:inputs inputs
-               #:outputs `(("out" . ,#$output:python)))))
-          (add-after 'add-install-to-pythonpath 'python-sanity-check
-            (lambda* (#:key tests? inputs #:allow-other-keys)
-              ((assoc-ref py:%standard-phases 'sanity-check)
-               #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
-                          ,@inputs)
-               #:outputs `(("out" . ,#$output:python))))))))
+          ;(add-after 'install-python 'add-install-to-pythonpath
+          ;  (lambda* (#:key inputs #:allow-other-keys)
+          ;    ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
+          ;     #:inputs inputs
+          ;     #:outputs `(("out" . ,#$output:python)))))
+          ;(add-after 'add-install-to-pythonpath 'python-sanity-check
+          ;  (lambda* (#:key tests? inputs #:allow-other-keys)
+          ;    ((assoc-ref py:%standard-phases 'sanity-check)
+          ;     #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
+          ;                ,@inputs)
+          ;     #:outputs `(("out" . ,#$output:python)))))
+
+          )))
     (inputs
      (list abseil-cpp
            cpuinfo
@@ -3398,8 +3402,8 @@ find_library(ML_DTYPES_LIBRARIES
            mesa-headers
            neon2sse
            nsync
-           opencl-clhpp
-           opencl-headers
+           ;;opencl-clhpp   ;;
+           ;;opencl-headers   ; mesa-headers have OpenCL headers.  should these be removed?
            opencl-icd-loader
            pthreadpool
            python-wrapper
@@ -3416,6 +3420,7 @@ find_library(ML_DTYPES_LIBRARIES
        ("googletest" ,googletest)
        ("pybind11" ,pybind11)
        ("python-wheel" ,python-wheel)
+       ("python" ,python)
        ("swig" ,swig)
        ("farmhash-src"
         ,(let ((commit "816a4ae622e964763ca0862d9dbd19324a1eaf45"))
