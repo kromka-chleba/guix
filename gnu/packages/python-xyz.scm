@@ -12945,7 +12945,7 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
            python-pytest
            python-setuptools
            python-wheel))
-    (inputs (list ffmpeg))
+    (inputs (list ffmpeg-7))
     (home-page "https://github.com/PyAV-Org/PyAV")
     (synopsis "Pythonic bindings for FFmpeg's libraries")
     (description
