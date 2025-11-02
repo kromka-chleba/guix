@@ -3232,7 +3232,7 @@ Python.")
               "1jfflzi74fag9z4qmgwvp90aif4dpbr1657izmxlgvf4hy8fk9xd")))))
     (package
       (name "tensorflow-lite")
-      (version "2.14.0")
+      (version "2.15.1")
       (source
        (origin
          (method git-fetch)
@@ -3242,7 +3242,7 @@ Python.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "07f4x4g3kwhfjz7iadhqrv97zmw0blacixvca1gdqkqqi7aipxis"))))
+           "01cjdilxxr2h0q3sbjwhy0p5b82sbyvi224s5vx5gn2gix3nhdyx"))))
       (build-system cmake-build-system)
       (outputs (list "out" "python"))
       (arguments
