@@ -194,7 +194,8 @@
           (map ->list (package-propagated-inputs guile-3.0-latest))))
   (let* ((inferior (open-inferior %top-builddir
                                   #:command "scripts/guix"))
-         (guile    (first (lookup-inferior-packages inferior "guile")))
+         (guile    (first (lookup-inferior-packages inferior
+                            (package-name guile-3.0-latest))))
          (->list   (match-lambda
                      ((label (? inferior-package? package) . rest)
                       `(,label
