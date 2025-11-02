@@ -4,6 +4,7 @@
 ;;; Copyright © 2023, 2024 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
 ;;; Copyright © 2025 André Batista <nandre@riseup.net>
+;;; Copyright © 2025 Evgenii Klimov <eugene.dev@lipklim.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -31,6 +32,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu build chromium-extension)
   #:use-module (gnu build icecat-extension)
+  #:use-module (gnu packages)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages password-utils)
@@ -381,6 +383,51 @@ selected.")
 
 (define-public privacy-redirect/icecat
   (make-icecat-extension privacy-redirect))
+
+(define vimium
+  (package
+    (name "vimium")
+    (version "2.3")
+    (home-page "https://github.com/philc/vimium")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (modules '((guix build utils)))
+              (snippet #~(begin
+                           (delete-file "make.js")
+                           (delete-file-recursively "build_scripts")
+                           (delete-file-recursively "test_harnesses")
+                           (delete-file-recursively "tests")))
+              (sha256
+               (base32
+                "1sy1fdq6zgprfjar1d15vixpw84b4bcay3bc0gwbzrn7z30i3nv2"))))
+    (build-system copy-build-system)
+    (outputs '("firefox" "chromium"))
+    (arguments
+     (list #:install-plan
+           #~'(("."
+                #$(assq-ref (package-properties this-package) 'addon-id)
+                #:output "firefox")
+               ("." "" #:output "chromium"))))
+    (synopsis "Vim-like keyboard shortcuts for web navigation and control")
+    (description
+     "Vimium is a browser extension that provides keyboard-based navigation
+and control of the web in the spirit of the Vim editor.
+
+Emacs key-bindings can also be defined via custom key mappings option.")
+    (license license:expat)
+    (properties '((addon-id . "{d7742d87-e61d-4b78-b8a1-b469842139fa}")))))
+
+(define-public vimium/chromium
+  (make-chromium-extension vimium "chromium"))
+
+(define-public vimium/icecat
+  (make-icecat-extension
+   (package-with-patches vimium (search-patches "vimium-icecat-manifest.patch"))
+   "firefox"))
 
 (define-public web-eid-host
   (package
