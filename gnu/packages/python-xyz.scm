@@ -5022,8 +5022,8 @@ untrusted sources, pickling is avoided in this package.")
                   "1kk7gv582w72spnz6agr0pz0hlpgchp3l7zxzzjarwfllwjrmjml"))))
     (build-system pyproject-build-system)
     (arguments
-      (list #:test-backend 'custom
-            #:test-flags '("test_prctl.py")
+      (list #:test-backend ''custom
+            #:test-flags ''("test_prctl.py")
             #:phases
             #~(modify-phases %standard-phases
                 (add-after 'unpack 'patch-tests
@@ -5034,7 +5034,7 @@ untrusted sources, pickling is avoided in this package.")
                       ;; test_no_new_privs assumes existance of /bin/ping, but
                       ;; can never run anyway due to it requiring setuid ping.
                       ;; just short circuit it instead.
-                      (("os.stat\\('/bin/ping'\\)") "0")))))))
+                      (("os.stat\\('/bin/ping'\\)\\.st_mode") "0")))))))
     (inputs (list libcap))
     (native-inputs (list python-setuptools))
     (supported-systems (filter target-linux? %supported-systems))
@@ -5043,6 +5043,33 @@ untrusted sources, pickling is avoided in this package.")
     (description "This package provides a Python library for controlling Linux
 capabilities and attributes, similar to the prctl syscall.")
     (license license:gpl3+)))
+
+(define-public python-pyhimitsu
+  (package
+    (name "python-pyhimitsu")
+    (version "0.0.9")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "py_himitsu" version))
+              (sha256
+                (base32
+                  "1kljxhjvfy945zij8fif3s6xzgcyslxz99mv460iy0anzj433pj5"))))
+    (build-system pyproject-build-system)
+    (arguments
+      (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda _
+                ;; (setenv "PYTHONPATH" (getenv "GUIX_PYTHONPATH"))
+                (invoke "make" "check"))))))
+    (native-inputs (list python-hatchling))
+    (propagated-inputs (list python-pyxdg))
+    (home-page "https://git.sr.ht/~apreiml/py-himitsu")
+    (synopsis "Himitsu client protocol implementation in Python")
+    (description "This package provides a library for writing Himitsu client
+programs in Python.")
+    (license license:expat)))
 
 (define-public python-hjson
   ;; Using commit from master branch as the PyPI version does not contain
