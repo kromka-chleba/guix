@@ -10,7 +10,7 @@
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 wrobell <wrobell@riseup.net>
 ;;; Copyright © 2023 Tim Johann <t1m@phrogstar.de>
-;;; Copyright © 2024, 2025 Igor Goryachev <igor@goryachev.org>
+;;; Copyright © 2024, 2025 Igorj Gorjaĉev <igor@goryachev.org>
 ;;; Copyright © 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -50,7 +50,7 @@
 (define-public erlang
   (package
     (name "erlang")
-    (version "27.3.4.3")
+    (version "28.1.1")
     (source (origin
               (method git-fetch)
               ;; The tarball from http://erlang.org/download contains many
@@ -62,7 +62,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "040wayc6q8g8fspvyq7l3ckd9p1q2zc6ycrnm6mmwghd5rb3fvyi"))
+                "0d97mmd6ja77rc7b82sx1vf6prfy9fn9jgvl92h2dm47s5pi1i8h"))
               (patches (search-patches "erlang-man-path.patch"))))
     (build-system gnu-build-system)
     (native-inputs
@@ -75,7 +75,7 @@
                                "/OTP-" version "/otp_doc_man_" version ".tar.gz"))
            (sha256
             (base32
-             "0dy4wv0vqy5dy7j4sj7zld2g6yirwmg0f465db6qzgzx6lpjwk82"))))))
+             "10bcgin2b6ll23ww0cyxdhx0vp8npandx7l6g94b7lc58bcfb9wh"))))))
     (inputs
      (list ncurses openssl wxwidgets))
     (propagated-inputs
