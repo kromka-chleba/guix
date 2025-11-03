@@ -45,6 +45,7 @@
 ;;; Copyright © 2025 Samuel Sehnert <mail@buffersquid.com>
 ;;; Copyright © 2025 Julian Flake <julian@flake.de>
 ;;; Copyright © 2025 Ahmad Jarara <ajarara@fastmail.com>
+;;; Copyright © 2025 dan <i@dan.games>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -103,6 +104,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages libffi)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ninja)
   #:use-module (gnu packages shells)
@@ -4387,3 +4389,39 @@ $(which espanso)}.  On a Guix system, you can define the following in your
       #:features '(list "modulo" "vendored-tls" "wayland")))
     (inputs (modify-inputs (package-inputs espanso-x11)
               (append wl-clipboard)))))
+
+(define-public ncspot
+  (package
+    (name "ncspot")
+    (version "1.3.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/hrkfdn/ncspot")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "04gddwm156l1sny7lfnh4w0rqn3yd809x1s3lz7zs386dhlbwv4y"))))
+    (build-system cargo-build-system)
+    (inputs
+     (cons* dbus
+            libxcb
+            ncurses
+            openssl
+            pulseaudio
+            (cargo-inputs 'ncspot)))
+    (native-inputs
+     (list pkg-config python))
+    (arguments
+     (list #:install-source? #f
+           #:rust rust-1.88
+           #:tests? #f))
+    (home-page "https://github.com/hrkfdn/ncspot")
+    (synopsis "Ncurses Spotify client written in Rust")
+    (description
+     "@command{ncspot} is an ncurses Spotify client written in Rust using
+librespot.  It is heavily inspired by ncurses MPD clients, such as
+@command{ncmpc}.  It provides a simple and resource friendly alternative to
+the official client.")
+    (license license:bsd-2)))
