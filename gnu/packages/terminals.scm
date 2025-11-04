@@ -70,6 +70,7 @@
   #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system zig)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix gexp)
@@ -81,10 +82,12 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dlang)
   #:use-module (gnu packages docbook)
+  #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fribidi)
@@ -120,9 +123,13 @@
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages toolkits)
+  #:use-module (gnu packages vulkan)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu packages zig)
+  #:use-module (gnu packages zig-xyz)
   #:use-module (srfi srfi-26))
 
 (define-public libptytty
@@ -894,6 +901,89 @@ eye-candy, customizable, and reasonably lightweight.")
 display server.  It is designed to be fast, lightweight, and independent of
 desktop environments.  It can be used as a standalone terminal and also has
 a server/client mode.")
+    (license license:expat)))
+
+(define-public ghostty
+  (package
+    (name "ghostty")
+    (version "1.2.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ghostty-org/ghostty")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0z9gljmr3c6484ynxgz3smsx7873pbvsfhpnfgalkb5bj0w8pnfj"))))
+    (build-system zig-build-system)
+    (arguments
+     (list
+      #:zig zig-0.15
+      ;; #:zig-release-type "fast"
+      #:zig-build-flags
+      #~(list
+         ;; Use --system to run zig in offline mode, pointing to our local
+         ;; checkouts of sources.
+         "--system" "zig-cache/p"
+              (string-append "-Dversion-string=" #$version)
+              ;; "-Dapp-runtime="
+              ;; "-Dfont-backend="
+              ;; "-Dgtk-adwaita="
+              ;; "-Drenderer="
+              ;; "-Demit-docs"
+              ;; "-Dpie=true"
+              )
+      #:modules
+      '((ice-9 match)
+        (guix build utils)
+        (guix build zig-build-system))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'check-zig-version
+            (lambda _
+              (invoke "zig" "version")))
+          (add-before 'build 'unpack-dependencies
+            (lambda* (#:key inputs #:allow-other-keys)
+              (mkdir-p "zig-cache/p")
+              (for-each (match-lambda
+                          ((name . dest)
+                           (copy-recursively (assoc-ref inputs name)
+                                             (string-append "zig-cache/p/" dest))))
+                        '(("imgui" . "N-V-__8AAH0GaQC8a52s6vfIxg88OZgFgEW6DFxfSK4lX_l3")
+                          ("zig-wayland" . "wayland-0.4.0-dev-lQa1kjfIAQCmhhQu3xF0KH-94-TzeMXOqfnP0-Dg6Wyy")
+                          ("font-jetbrains-mono" . "N-V-__8AAIC5lwAVPJJzxnCAahSvZTIlG-HhtOvnM1uh-66x")
+                          ("font-nerd-font-symbols-only" . "N-V-__8AAMVLTABmYkLqhZPLXnMl-KyN38R8UVYqGrxqO26s")
+                          ("glslang" . "N-V-__8AABzkUgISeKGgXAzgtutgJsZc0-kkeqBBscJgMkvy")
+                          ("libxml2" . "N-V-__8AAG3RoQEyRC2Vw7Qoro5SYBf62IHn3HjqtNVY6aWK")
+                          ("google-highway" . "N-V-__8AAGmZhABbsPJLfbqrh6JTHsXhY6qCaLAQyx25e0XE")
+                          ("spirv-cross" . "N-V-__8AANb6pwD7O1WG6L5nvD_rNMvnSc9Cpg1ijSlTYywv"))))))
+      ))
+    (native-inputs
+     (list ncurses
+           imgui
+           zig-wayland
+           ;; pandoc
+           google-highway
+           pkg-config
+           libxml2
+           spirv-cross
+           glib))
+    (inputs
+     (list glslang
+           bzip2
+           fontconfig
+           freetype
+           harfbuzz
+           font-jetbrains-mono
+           font-nerd-font-symbols-only))
+    (home-page "https://ghostty.org/")
+    (synopsis "Fast, native, feature-rich terminal emulator pushing modern features")
+    (description
+     "Ghostty is a terminal emulator that differentiates itself by being fast,
+feature-rich, and native.  While there are many excellent terminal emulators
+available, they all force you to choose between speed, features, or native UIs.
+Ghostty provides all three.")
     (license license:expat)))
 
 (define-public havoc
