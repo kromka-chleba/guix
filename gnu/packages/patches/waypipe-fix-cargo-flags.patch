@@ -1,0 +1,25 @@
+diff --git a/compile_wrapper.sh b/compile_wrapper.sh
+index db027ec..3852cef 100644
+--- a/compile_wrapper.sh
++++ b/compile_wrapper.sh
+@@ -18,5 +18,5 @@ features:
+   zstd: $8
+   dmabuf: $9
+   video: ${10}"
+-env WAYPIPE_VERSION="$version" cargo build --frozen -v --bin waypipe --profile "$1" --manifest-path "$2" --no-default-features --target-dir "$3" --features "$4"
++env WAYPIPE_VERSION="$version" cargo build --offline -v --bin waypipe --profile "$1" --manifest-path "$2" --no-default-features --target-dir "$3" --features "$4"
+ cp "$3/$1/waypipe" "$5"
+diff --git a/meson.build b/meson.build
+index d081d4f..1eabe2c 100644
+--- a/meson.build
++++ b/meson.build
+@@ -166,7 +166,7 @@ if get_option('build_rs')
+         cargo,
+         args: [
+             'test',
+-            '--frozen',
++            '--offline',
+             '--bin',
+             'waypipe',
+             '--test',
+
