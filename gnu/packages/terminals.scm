@@ -98,6 +98,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages golang-check)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages image)
@@ -1272,6 +1273,92 @@ and ligatures, a tiling layout system, multiple windows and tabs, extensive
 keyboard customization, and Unicode support.  The kitten command-line utilities
 are provided by the separate @code{kitten} package.")
     (license license:gpl3+)))
+
+(define-public kitten
+  (package
+    (name "kitten")
+    (version "0.43.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kovidgoyal/kitty")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mvka4rpfzy0v8kkifs80avsjss9mycjd1zvqh1rmrq6bd1vbpjr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #t
+      #:import-path "github.com/kovidgoyal/kitty/tools/cmd"
+      #:unpack-path "github.com/kovidgoyal/kitty"
+      #:embed-files #~(list ".*\\.xml" ".*\\.json" ".*\\.txt" ".*\\.css" ".*\\.html")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare-build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "HOME" (getcwd))
+              (setenv "GOTOOLCHAIN" "local")
+              (setenv "GOPROXY" "off")
+              (setenv "GOSUMDB" "off")
+              ;; Point to the kitty binary from the kitty package
+              (setenv "KITTY_PATH_TO_KITTY_EXE"
+                      (search-input-file inputs "/bin/kitty"))))
+
+          (add-before 'build 'generate-code
+            (lambda* (#:key inputs #:allow-other-keys)
+              (with-directory-excursion "src/github.com/kovidgoyal/kitty"
+                ;; Generate C headers
+                (invoke "python3" "-c"
+                        "import sys; sys.path.insert(0, '.'); \
+from setup import build_ref_map, build_cli_parser_specs, build_uniforms_header; \
+build_ref_map(False); build_cli_parser_specs(False); build_uniforms_header(False)")
+                ;; Use the kitty binary from inputs to generate Go code
+                (setenv "ASAN_OPTIONS" "detect_leaks=0")
+                (invoke (search-input-file inputs "/bin/kitty") "+launch"
+                        (string-append (getcwd) "/gen/go_code.py")))))
+
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" (getcwd))
+                (mkdir-p "test-tmp")
+                (setenv "TMPDIR" (string-append (getcwd) "/test-tmp"))
+                ;; Run Go tests using the full import path
+                ;; This way Go can find all dependencies in $GOPATH/src/
+                (invoke "go" "test" "-v"
+                        "github.com/kovidgoyal/kitty/tools/..."
+                        "-skip" "TestKittyRunning|TestDisplay|TestSSH")))))))
+    (native-inputs (list python python-pillow kitty))  ; kitty needed for Go code gen
+    (inputs
+     (list go-github-com-alecthomas-chroma-v2
+           go-github-com-altree-bigfloat
+           go-github-com-bmatcuk-doublestar-v4
+           go-github-com-dlclark-regexp2
+           go-github-com-google-go-cmp
+           go-github-com-google-uuid
+           go-github-com-kovidgoyal-dbus
+           go-github-com-kovidgoyal-exiffix
+           go-github-com-kovidgoyal-imaging
+           go-github-com-rwcarlsen-goexif
+           go-github-com-seancfoley-bintree
+           go-github-com-seancfoley-ipaddress-go
+           go-github-com-shirou-gopsutil-v3
+           go-github-com-zeebo-xxh3
+           go-golang-org-x-exp
+           go-golang-org-x-image
+           go-golang-org-x-sys
+           go-golang-org-x-text
+           go-howett-net-plist))
+    (home-page "https://sw.kovidgoyal.net/kitty/")
+    (synopsis "Command-line utilities for Kitty terminal")
+    (description "Kitten provides command-line utilities for the Kitty terminal
+emulator, including image viewing, diff viewing, SSH integration, clipboard
+management, and other terminal enhancements written in Go.  This package depends
+on the @code{kitty} package and runs Go tests for the kitten utilities.")
+    (license license:gpl3+)))
+
 
 (define-public eternalterminal
   (package
