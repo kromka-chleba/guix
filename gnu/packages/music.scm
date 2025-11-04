@@ -893,6 +893,7 @@ It is a fork of Clementine aimed at music collectors and audiophiles.")
            libcue
            libmad
            libmodplug
+           libmp4v2
            libmpcdec
            libsamplerate
            libvorbis
