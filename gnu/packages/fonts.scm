@@ -1278,6 +1278,32 @@ to the Regular weight of Computer Modern, it provides a Book weight for
 heavier printing.")
     (license license:gfl1.0)))
 
+(define-public font-nerd-font-symbols-only
+  (package
+    (name "font-nerd-font-symbols-only")
+    (version "3.4.0")
+    (source
+     (origin
+       ;; Use url-fetch instead of git-fetch since Git repo is enormous
+       (method url-fetch)
+       (uri (string-append "https://github.com/ryanoasis/nerd-fonts/releases/download/v"
+                           version "/NerdFontsSymbolsOnly.zip"))
+       (sha256
+        (base32
+         "0iscas5bvb8bgk5pcls95nfwjl7yi23q05mili43dzl0p427jqcf"))))
+    (build-system font-build-system)
+    (home-page "https://www.nerdfonts.com")
+    (synopsis "ust the Nerd Font Icons. I.e Symbol font only")
+    (description
+     "")
+    (license
+     (list license:expat
+           license:silofl1.1
+           license:cc-by4.0
+           license:cc-by-sa4.0
+           license:asl2.0
+           (license:non-copyleft "https://github.com/ryanoasis/nerd-fonts/blob/master/license-audit.md")))))
+
 (define-public font-amiri
   (package
     (name "font-amiri")
