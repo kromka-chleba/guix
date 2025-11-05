@@ -47,6 +47,7 @@
   #:export (%test-libvirt
             %test-qemu-guest-agent
             %test-xe-guest-utilities
+            %test-xen-guest-agent
             %test-childhurd
             %test-childhurd64
             %test-build-vm))
@@ -678,3 +679,73 @@ Xen vCPU."
 xe-guest-utilities guest agent.")
    (value (run-xe-guest-utilities-test))))
 
+(define (run-xen-guest-agent-test)
+  "Run tests for xen-guest-agent in a VM running under a QEMU emulating a
+Xen vCPU."
+  (define os
+    (marionette-operating-system
+     (simple-operating-system
+      (service xen-guest-agent-service-type)
+      (service dhcpcd-service-type))
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define vm
+    (virtual-machine
+     (operating-system os)
+     (port-forwardings '())))
+
+  (define test
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          ;; TODO: Verify that I need these modules.
+          ;; srfi-64 is DEFINITELY needed, since it is the unit test one.
+          (use-modules (srfi srfi-11) (srfi srfi-64)
+                       (gnu build marionette))
+          (define marionette
+            (make-marionette
+             ;; Arguments can be provided as the non-car element of the list to
+             ;; make-marionette, and they get appended onto the QEMU command
+             ;; itself.
+             (list #$vm "--accel" "kvm,xen-version=0x40011,kernel-irqchip=split")))
+
+          (test-runner-current (system-test-runner #$output))
+          (test-begin "xen-guest-agent")
+
+          ;; Verify that Linux provided /dev/xen/xenbus, which gives us a good
+          ;; indication that the vCPU that is hosting this VM presented itself
+          ;; as a Xen vCPU to the guest.
+          ;; This serves as a sanity check, since the guest utilities also
+          ;; check for this file and will not start themself if the VM is not
+          ;; running on a Xen-presenting host.
+          (test-assert "xenbus available"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                ;; Raise an exception on an error, which happens when the file
+                ;; cannot be found or is not readable.
+                (stat "/dev/xen/xenbus" #t))
+             marionette))
+
+          (test-assert "service running"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                (match (start-service 'xen-guest-agent)
+                  (#f #f)
+                  (('service response-parts ...)
+                   (match (assq-ref response-parts 'running)
+                     ((pid) pid)))))
+             marionette))
+
+          (test-end))))
+
+  (gexp->derivation "xen-guest-agent-test" test))
+
+(define %test-xen-guest-agent
+  (system-test
+   (name "xen-guest-agent")
+   (description
+    "Run commands in a Xen guest domain (virtual machine) using the
+xen-guest-agent guest agent.")
+   (value (run-xen-guest-agent-test))))
