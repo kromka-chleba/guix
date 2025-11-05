@@ -2794,6 +2794,52 @@ Features:
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-danielgtaylor-huma-v2
+  (package
+    (name "go-github-com-danielgtaylor-huma-v2")
+    (version "2.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/danielgtaylor/huma")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rwmyxihrdznfn6iqxrb4lmlfijblapnpxavmcgavylixwigyrdk"))
+       (modules '((guix build utils)))
+       (snippet #~(begin
+                    ;; Submodules with their own go.mod files and packaged separately:
+                    (delete-file-recursively "examples")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/danielgtaylor/huma/v2"
+      #:tests? #f)) ;tests broken. reenable after update
+    (propagated-inputs (list go-github-com-uptrace-bunrouter
+                             go-github-com-stretchr-testify
+                             go-github-com-spf13-pflag
+                             go-github-com-spf13-cobra
+                             go-github-com-labstack-echo-v4
+                             go-github-com-julienschmidt-httprouter
+                             go-github-com-gorilla-mux
+                             go-github-com-google-uuid
+                             go-github-com-gofiber-fiber-v2
+                             go-github-com-go-chi-chi-v5
+                             go-github-com-gin-gonic-gin
+                             go-github-com-fxamacker-cbor-v2
+                             go-github-com-evanphx-json-patch-v5
+                             go-github-com-danielgtaylor-shorthand-v2))
+    (home-page "https://github.com/danielgtaylor/huma")
+    (synopsis "Sponsors")
+    (description
+     "Package huma provides a framework for building REST APIs in Go.  It is designed
+to be simple, fast, and easy to use.  It is also designed to generate
+@code{OpenAPI} 3.1 specifications and JSON Schema documents describing the API
+and providing a quick & easy way to generate docs, mocks, SDKs, CLI clients, and
+more.")
+    (license license:expat)))
+
 (define-public go-github-com-datadog-datadog-go
   (package
     (name "go-github-com-datadog-datadog-go")
