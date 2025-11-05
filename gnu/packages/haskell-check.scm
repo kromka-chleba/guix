@@ -732,6 +732,22 @@ be used to extend Hspec's functionality.")
 used to test the in-development version of Hspec.")
     (license license:expat)))
 
+(define-public ghc-hspec-meta-2.11
+  (package
+    (inherit ghc-hspec-meta)
+    (name "ghc-hspec-meta")
+    (version "2.11.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec-meta" version))
+       (sha256
+        (base32 "1mi1sfmxqf01dxkw8c56ywiclnl1pk6m5g1cj53w3mq8j7mywqz5"))))
+    (inputs (modify-inputs (package-inputs ghc-hspec-meta)
+              (prepend ghc-haskell-lexer)
+              (prepend ghc-hspec-expectations-0.8.4)
+              (prepend ghc-tf-random)))))
+
 (define-public ghc-hspec
   (package
     (name "ghc-hspec")
