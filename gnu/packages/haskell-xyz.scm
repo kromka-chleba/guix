@@ -33,6 +33,7 @@
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
+;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5517,6 +5518,27 @@ functions for Haskell.")
 network services while abstracting over the use of SOCKS5 and TLS (via
 OpenSSL)")
     (license license:isc)))
+
+(define-public ghc-hosc
+  (package
+    (name "ghc-hosc")
+    ;; Stackage LTS version 0.19.1 depends on the deprecated data-binary-ieee754
+    ;; package
+    (version "0.21.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hosc" version))
+       (sha256
+        (base32 "1a01vp7d29503wa7sq0zy2az6zpyapjlmjszv50g2ykgb6as919v"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "hosc")))
+    (inputs (list ghc-blaze-builder ghc-network ghc-safe))
+    (home-page "https://rohandrape.net/?t=hosc")
+    (synopsis "Haskell Open Sound Control")
+    (description
+     "hosc implements a subset of the Open Sound Control byte protocol.")
+    (license license:gpl3)))
 
 (define-public ghc-hostname
   (package
