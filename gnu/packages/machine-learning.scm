@@ -2642,22 +2642,23 @@ adjoint method for constant memory cost.")
                (base32
                 "0jlvyn7k81dzrh9ij3zw576wbgiwmmr26rzpdxjn1dbpc3njpvzi"))
               (file-name (git-file-name name version))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DUSE_MPI=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (with-directory-excursion "../source"
+                (invoke "pytest" "tests/c_api_test/test_.py")))))))
     (native-inputs
-     (list python-pytest python-nose python-minimal-wrapper))
+     (list python-nose python-minimal-wrapper python-pytest))
     (inputs
      (list openmpi))
     (propagated-inputs
      (list python-numpy python-scipy))
-    (arguments
-     `(#:configure-flags
-       '("-DUSE_MPI=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (with-directory-excursion "../source"
-               (invoke "pytest" "tests/c_api_test/test_.py")))))))
-    (build-system cmake-build-system)
     (home-page "https://github.com/Microsoft/LightGBM")
     (synopsis "Gradient boosting framework based on decision tree algorithms")
     (description "LightGBM is a gradient boosting framework that uses tree
