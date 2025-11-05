@@ -707,6 +707,24 @@ runs Hspec tests.")
 be used to extend Hspec's functionality.")
     (license license:expat)))
 
+(define-public ghc-hspec-core-2.11
+  (package
+    (inherit ghc-hspec-core)
+    (name "ghc-hspec-core")
+    (version "2.11.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec-core" version))
+       (sha256
+        (base32 "0hnbvcjkylims4xcmajhmwaicnalgi5a93ayk47gvc5z02pgs299"))))
+    (inputs (modify-inputs (package-inputs ghc-hspec-core)
+              (delete "ghc-hspec-expectations")
+              (prepend ghc-hspec-expectations-0.8.4)))
+    (native-inputs (modify-inputs (package-native-inputs ghc-hspec-core)
+                     (delete "ghc-hspec-meta")
+                     (prepend ghc-hspec-meta-2.11)))))
+
 (define-public ghc-hspec-meta
   (package
     (name "ghc-hspec-meta")
