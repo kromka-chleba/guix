@@ -11834,6 +11834,36 @@ extract data from those paths.")
 encoding library for the MessagePack, CBOR, JSON and the Binc formats.")
     (license license:expat)))
 
+(define-public go-github-com-uptrace-bunrouter
+  (package
+    (name "go-github-com-uptrace-bunrouter")
+    (version "1.0.23")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/uptrace/bunrouter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q02f9bmz7qrwd6j7kdlxsskwapcrpvngkiw28dwf86zikzfnwxa"))
+       (modules '((guix build utils)))
+       (snippet #~(begin
+                    ;; Submodules with their own go.mod files and packaged separately:
+                    (delete-file-recursively "example")
+                    (delete-file-recursively "extra")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/uptrace/bunrouter"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/uptrace/bunrouter")
+    (synopsis "Fast and flexible HTTP router for Go")
+    (description
+     "@@strong{TLDR} @code{BunRouter} is as fast as httprouter, but supports
+middlewares, routing rules priority, and error handling.")
+    (license license:expat)))
+
 (define-public go-github-com-urfave-negroni
   (package
     (name "go-github-com-urfave-negroni")
