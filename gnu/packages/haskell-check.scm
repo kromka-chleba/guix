@@ -677,6 +677,21 @@ JUnit tool for Java.")
 runs Hspec tests.")
     (license license:expat)))
 
+(define-public hspec-discover-2.11
+  (package
+    (inherit hspec-discover)
+    (name "hspec-discover")
+    (version "2.11.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec-discover" version))
+       (sha256
+        (base32 "1bj3nln0cblrhwy7rjnr9qk068mkmn5wzxkh5sr32vm20nr1frwd"))))
+    (native-inputs (modify-inputs (package-native-inputs hspec-discover)
+                     (delete "ghc-hspec-meta")
+                     (prepend ghc-hspec-meta-2.11)))))
+
 (define-public ghc-hspec-core
   (package
     (name "ghc-hspec-core")
