@@ -166,7 +166,7 @@ environment with the store shared with the host.  MAPPINGS is a list of
   (define virtual-file-systems
     (cons (file-system
             (mount-point "/")
-            (device "/dev/vda1")
+            (device "/dev/xvda1")
             (type "ext4"))
 
           (append (map mapping->file-system mappings)
@@ -248,7 +248,7 @@ with '-virtfs' options for the host file systems listed in SHARED-FS."
      "-drive"
      #$(if rw-image?
            #~(format #f "file=~a,format=qcow2,if=virtio" #$image)
-           #~(format #f "file=~a,format=~a,if=virtio,cache=writeback,werror=report,readonly=on"
+           #~(format #f "file=~a,format=~a,if=xen,cache=writeback,readonly=on"
                      #$image #$image-format))))
 
 (define* (system-qemu-image/shared-store-script os
@@ -295,7 +295,7 @@ useful when FULL-BOOT?  is true."
                                         (volatile-root? volatile?)))))
     (define kernel-arguments
       #~(list #$@(if graphic? #~() #~("console=ttyS0"))
-              #$@(operating-system-kernel-arguments os "/dev/vda1")))
+              #$@(operating-system-kernel-arguments os "/dev/xvda1")))
 
     (define rw-image
       #~(format #f "/tmp/guix-image-~a" (basename #$base-image)))
@@ -373,7 +373,7 @@ host."
 
   (define kernel-arguments
     #~(list #$@(if graphic? #~() #~("console=ttyS0"))
-            #$@(operating-system-kernel-arguments os "/dev/vda1")))
+            #$@(operating-system-kernel-arguments os "/dev/xvda1")))
 
   #~`(#+(file-append qemu "/bin/"
                      (qemu-command (or target system)))
