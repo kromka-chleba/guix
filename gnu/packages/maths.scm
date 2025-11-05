@@ -9106,32 +9106,34 @@ easily be incorporated into existing simulation codes.")
                                 "combinatorial-blas-io-fix.patch"))))
     (build-system cmake-build-system)
     (inputs
-     `(("mpi" ,openmpi)
-       ("test-data" ,(origin
-                       (method url-fetch)
-                       (uri (string-append "https://people.eecs.berkeley.edu/~aydin/"
-                                           "CombBLAS_FILES/testdata_combblas1.6.1.tgz"))
-                       (sha256
-                        (base32
-                         "01y2781cy3fww7znmidrp85mf8zx0c905w5vzvk1mgrmhhynim87"))))))
+     (list openmpi
+           (origin
+             (method url-fetch)
+             (uri (string-append "https://people.eecs.berkeley.edu/~aydin/"
+                                 "CombBLAS_FILES/testdata_combblas1.6.1.tgz"))
+             (sha256
+              (base32
+               "01y2781cy3fww7znmidrp85mf8zx0c905w5vzvk1mgrmhhynim87"))
+             (file-name "test-data"))))
     (arguments
-     `(#:configure-flags '("-DBUILD_SHARED_LIBS:BOOL=YES"
-                           "-DCMAKE_CXX_FLAGS=-DUSE_FUNNEL")
-       #:parallel-tests? #f             ;tests use 'mpiexec -n4'
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           (lambda _
-             ;; Skip failing tests (SIGFPE and SIGSEGV).
-             (substitute* "ReleaseTests/CMakeLists.txt"
-               (("^.*SpAsgnTest.*$") "")
-               (("^.*IndexingTest.*$") ""))))
-         (add-before 'check 'mpi-setup
-           ,%openmpi-setup)
-         (add-before 'check 'test-setup
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "OMP_NUM_THREADS" "2")
-             (invoke "tar" "xf" (assoc-ref inputs "test-data")))))))
+     (list #:configure-flags
+           #~(list "-DBUILD_SHARED_LIBS:BOOL=YES"
+                   "-DCMAKE_CXX_FLAGS=-DUSE_FUNNEL")
+           #:parallel-tests? #f         ;tests use 'mpiexec -n4'
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-tests
+                 (lambda _
+                   ;; Skip failing tests (SIGFPE and SIGSEGV).
+                   (substitute* "ReleaseTests/CMakeLists.txt"
+                     (("^.*SpAsgnTest.*$") "")
+                     (("^.*IndexingTest.*$") ""))))
+               (add-before 'check 'mpi-setup
+                 #$%openmpi-setup)
+               (add-before 'check 'test-setup
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (setenv "OMP_NUM_THREADS" "2")
+                   (invoke "tar" "xf" #$(this-package-input "test-data")))))))
     (home-page "https://people.eecs.berkeley.edu/~aydin/CombBLAS/html/")
     (synopsis "Linear algebra primitives for graph analytics")
     (description "The Combinatorial BLAS (CombBLAS) is an extensible
