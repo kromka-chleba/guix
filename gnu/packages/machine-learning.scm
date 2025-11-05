@@ -2638,33 +2638,56 @@ adjoint method for constant memory cost.")
               (uri (git-reference
                      (url "https://github.com/Microsoft/LightGBM")
                      (commit (string-append "v" version))
-                     ;; Required by
-                     ;; - fast-double-parser
-                     ;; - boostorg/compute
-                     ;; - eigen TODO: unbundle
-                     ;; - fmt TODO: unbundle
+                     ;; Required by fast-double-parser
+                     ;; It is in maintenance mode and replaced by fast-float,
+                     ;; but LightGBM did not port to fast-float yet, see:
+                     ;; https://github.com/microsoft/LightGBM/issues/5579
+                     ;; it doesn't seem worth packaging it now only for
+                     ;; LightGBM.
                      (recursive? #t)))
               (sha256
                (base32
                 "1q3ibs9yscz5hh7jxgmfbwngsm5sjd1wnsa4mf6m32rvryad7bxy"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   ;; Delete vendored libraries except for fast-double-parser.
+                   (with-directory-excursion "external_libs"
+                     (for-each delete-file-recursively
+                               (list "compute" "eigen" "fmt")))))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(list "-DUSE_MPI=ON")
+      #~(list
+         "-DUSE_MPI=ON"
+         "-DUSE_GPU=ON" ;using OpenCL
+         (string-append
+          "-DBOOST_COMPUTE_HEADER_DIR=" #$(this-package-input "boost")
+          "/include/boost/numeric/odeint/external/compute")
+         (string-append
+          "-DFMT_INCLUDE_DIR=" #$(this-package-input "fmt") "/include"))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'unbundle-eigen
+            (lambda _
+              ;; XXX: Falling back to substituting Eigen directory because
+              ;; setting -DEIGEN_DIR above did not work.
+              (substitute* "CMakeLists.txt"
+                (("\\$\\{PROJECT_SOURCE_DIR\\}/external_libs/eigen")
+                 (string-append
+                  #$(this-package-input "eigen") "/include/eigen3")))))
           (replace 'check
             (lambda _
               (with-directory-excursion "../source"
                 (invoke "pytest" "tests/c_api_test/test_.py")))))))
     (native-inputs
-     (list python-nose python-minimal-wrapper python-pytest))
+     (list opencl-headers python-minimal-wrapper python-pytest))
     (inputs
-     (list openmpi))
+     (list boost eigen fmt openmpi))
     (propagated-inputs
-     (list python-numpy python-scipy))
+     (list opencl-icd-loader python-numpy python-scipy))
     (home-page "https://github.com/Microsoft/LightGBM")
     (synopsis "Gradient boosting framework based on decision tree algorithms")
     (description "LightGBM is a gradient boosting framework that uses tree
