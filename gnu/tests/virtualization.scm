@@ -5,6 +5,7 @@
 ;;; Copyright © 2021 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,6 +46,7 @@
   #:use-module (guix modules)
   #:export (%test-libvirt
             %test-qemu-guest-agent
+            %test-xe-guest-utilities
             %test-childhurd
             %test-childhurd64
             %test-build-vm))
@@ -580,3 +582,99 @@ sure that the childhurd boots and runs its SSH server.")
    (description
     "Offload to a virtual build machine over SSH.")
    (value (run-build-vm-test))))
+
+
+;;;
+;;; Xen Guest Agent/Utilities.
+;;;
+;;; Guix system tests use QEMU virtual machine to build up and tear down
+;;; ephemeral systems. When QEMU is running under a host with KVM support,
+;;; QEMU and KVM can play together to emulate a Xen host, making the guest VM
+;;; believe it is actually a Xen guest.
+;;; <https://www.qemu.org/docs/master/system/i386/xen.html>
+;;;
+;;; We rely on this feature because Linux includes kernel modules (which are
+;;; also in linux-libre) for paravirtualizing itself under Xen. This means that
+;;; the guest Linux exposes several file-like devices that are backed by
+;;; XenStore, shared memory via grant tables, and doorbells via "interdomain"
+;;; event channels. The guest utilities/agent send and receive information
+;;; through/from these devices to interact with the hypervisor. If Linux were
+;;; run under QEMU without these Xen flags, Linux would not populated these
+;;; devices, and the guest utilities/agent would fail.
+;;;
+
+(define (run-xe-guest-utilities-test)
+  "Run tests for xe-guest-utilities in a VM running under a QEMU emulating a
+Xen vCPU."
+  (define os
+    (marionette-operating-system
+     (simple-operating-system
+      (service xe-guest-utilities-service-type)
+      (service dhcpcd-service-type))
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define vm
+    (virtual-machine
+     (operating-system os)
+     (port-forwardings '())))
+
+  (define test
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          ;; TODO: Verify that I need these modules.
+          ;; srfi-64 is DEFINITELY needed, since it is the unit test one.
+          (use-modules (srfi srfi-11) (srfi srfi-64)
+                       (gnu build marionette))
+          (define marionette
+            (make-marionette
+             ;; Arguments can be provided as the non-car element of the list to
+             ;; make-marionette, and they get appended onto the QEMU command
+             ;; itself.
+             (list #$vm "--accel" "kvm,xen-version=0x40011,kernel-irqchip=split")))
+
+          (test-runner-current (system-test-runner #$output))
+          (test-begin "xe-guest-utilities")
+
+          ;; Verify that Linux provided /dev/xen/xenbus, which gives us a good
+          ;; indication that the vCPU that is hosting this VM presented itself
+          ;; as a Xen vCPU to the guest.
+          ;; This serves as a sanity check, since the guest utilities also
+          ;; check for this file and will not start themself if the VM is not
+          ;; running on a Xen-presenting host.
+          (test-assert "xenbus available"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                ;; Raise an exception on an error, which happens when the file
+                ;; cannot be found or is not readable.
+                (stat "/dev/xen/xenbus" #t))
+             marionette))
+
+          (test-assert "service running"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                ;; NOTE: xe-guest-utilities provides a shepherd-service that
+                ;; has provision set to xen-guest-agent so that
+                ;; xe-guest-utilities and xen-guest-agent are effectively
+                ;; "interchangeable".
+                (match (start-service 'xen-guest-agent)
+                  (#f #f)
+                  (('service response-parts ...)
+                   (match (assq-ref response-parts 'running)
+                     ((pid) pid)))))
+             marionette))
+
+          (test-end))))
+
+  (gexp->derivation "xe-guest-utilities-test" test))
+
+(define %test-xe-guest-utilities
+  (system-test
+   (name "xe-guest-utilities")
+   (description
+    "Run commands in a Xen guest domain (virtual machine) using the
+xe-guest-utilities guest agent.")
+   (value (run-xe-guest-utilities-test))))
+
