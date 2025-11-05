@@ -12840,6 +12840,27 @@ datatypes reachable from an initial datatype, and passing these names to some
 function which generates instances.")
     (license license:bsd-3)))
 
+(define-public ghc-tidal-link
+  (package
+    (name "ghc-tidal-link")
+    ;; Stackage LTS version 1.0.1 transitively depends on the deprecated
+    ;; data-binary-ieee754 package
+    (version "1.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "tidal-link" version))
+       (sha256
+        (base32 "15sqmdafz8ha2rlk4k327pjfc2kpcvq211avchanmmlvn7dflvsv"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "tidal-link")))
+    (inputs (list ghc-hosc))
+    (home-page "https://hackage.haskell.org/package/tidal-link")
+    (synopsis "Ableton Link integration for Tidal")
+    (description
+     "This package provides the Ableton Link integration for Tidal.")
+    (license license:gpl3)))
+
 (define-public ghc-time-compat
   (package
     (name "ghc-time-compat")
