@@ -801,6 +801,25 @@ used to test the in-development version of Hspec.")
 Haskell, inspired by the Ruby library RSpec.")
     (license license:expat)))
 
+(define-public ghc-hspec-2.11
+  (package
+    (inherit ghc-hspec)
+    (name "ghc-hspec")
+    (version "2.11.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec" version))
+       (sha256
+        (base32 "13zzcrjc6537f848c7b39bn61iwlniiymzjsbn5kfrx6hhxlgb6i"))))
+    (inputs (modify-inputs (package-inputs ghc-hspec)
+              (delete "ghc-hspec-core")
+              (delete "hspec-discover")
+              (delete "ghc-hspec-expectations")
+              (prepend ghc-hspec-core-2.11)
+              (prepend hspec-discover-2.11)
+              (prepend ghc-hspec-expectations-0.8.4)))))
+
 (define-public ghc-hspec-contrib
   (package
     (name "ghc-hspec-contrib")
