@@ -2643,7 +2643,7 @@ adjoint method for constant memory cost.")
                 "0jlvyn7k81dzrh9ij3zw576wbgiwmmr26rzpdxjn1dbpc3njpvzi"))
               (file-name (git-file-name name version))))
     (native-inputs
-     (list python-pytest python-nose))
+     (list python-pytest python-nose python-minimal-wrapper))
     (inputs
      (list openmpi))
     (propagated-inputs
