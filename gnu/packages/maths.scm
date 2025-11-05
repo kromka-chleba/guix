@@ -9089,25 +9089,22 @@ easily be incorporated into existing simulation codes.")
 (define-public combinatorial-blas
   (package
     (name "combinatorial-blas")
-    (version "1.6.2")
+    (version "2.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "http://eecs.berkeley.edu/~aydin/CombBLAS_FILES/"
-                           "CombBLAS_beta_"
-                           (match (string-split version #\.)
-                            ((major minor patch)
-                             (string-append major minor "_" patch))) ;e.g. "16_2"
-                           ".tgz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/PASSIONLab/CombBLAS")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0gzxgd2ybnh49h57rh47vrqnsyk11jn206j5kf9y7p5vksc79ffz"))
-       (patches (search-patches "combinatorial-blas-awpm.patch"
-                                "combinatorial-blas-io-fix.patch"))))
+         "0blrlpqahyq1gf7cq8x4crwq11qspalid2c42qirf8bn2xnnw0qh"))))
     (build-system cmake-build-system)
     (inputs
-     (list openmpi
-           (origin
+     (list openmpi))
+    (native-inputs
+     (list (origin
              (method url-fetch)
              (uri (string-append "https://people.eecs.berkeley.edu/~aydin/"
                                  "CombBLAS_FILES/testdata_combblas1.6.1.tgz"))
@@ -9131,10 +9128,10 @@ easily be incorporated into existing simulation codes.")
                (add-before 'check 'mpi-setup
                  #$%openmpi-setup)
                (add-before 'check 'test-setup
-                 (lambda* (#:key inputs #:allow-other-keys)
+                 (lambda _
                    (setenv "OMP_NUM_THREADS" "2")
-                   (invoke "tar" "xf" #$(this-package-input "test-data")))))))
-    (home-page "https://people.eecs.berkeley.edu/~aydin/CombBLAS/html/")
+                   (invoke "tar" "xf" #$(this-package-native-input "test-data")))))))
+    (home-page "https://github.com/PASSIONLab/CombBLAS")
     (synopsis "Linear algebra primitives for graph analytics")
     (description "The Combinatorial BLAS (CombBLAS) is an extensible
 distributed-memory parallel graph library offering a small but powerful set of
