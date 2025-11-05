@@ -46,6 +46,7 @@
   #:use-module (gnu packages package-management)
   #:use-module (gnu packages ratpoison)
   #:use-module (gnu packages suckless)
+  #:use-module (gnu packages terminals)
   #:use-module (gnu packages virtualization)
   #:use-module (gnu packages wm)
   #:use-module (gnu packages xorg)
@@ -2061,13 +2062,15 @@ build (current-guix) and then store a couple of full system images.")
     (packages (append
                (list icewm openbox awesome i3-wm i3status
                      dmenu st ratpoison xterm
-                     emacs emacs-exwm emacs-desktop-environment)
+                     emacs emacs-exwm emacs-desktop-environment
+                     sway wmenu foot)
                %base-packages))
     (services
      (append
       (list (service gnome-desktop-service-type)
             (service xfce-desktop-service-type)
             (service mate-desktop-service-type)
+            (service plasma-desktop-service-type)
             (set-xorg-configuration
              (xorg-configuration
               (keyboard-layout keyboard-layout)))
@@ -2147,7 +2150,7 @@ build (current-guix) and then store a couple of full system images.")
                              #:encrypted? #t)
                             ;; XXX: The disk-image size guess is too low. Use
                             ;; a constant value until this is fixed.
-                            #:install-size (* 8000 MiB)
-                            #:target-size (* 9000 MiB)))
+                            #:install-size (* 15000 MiB)
+                            #:target-size (* 15000 MiB)))
 
 ;;; install.scm ends here

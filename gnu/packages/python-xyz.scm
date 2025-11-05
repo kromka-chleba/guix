@@ -322,6 +322,45 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
 
+(define-public python-anaconda-cli-base
+  (package
+    (name "python-anaconda-cli-base")
+    (version "0.5.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "anaconda_cli_base" version))
+       (sha256
+        (base32 "01kspqfyqhzlb3hkxrvdlasch5ai87lizn6yz4g25ff4x7k5b4qx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((".*--cov.*") "")))))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-pytest-mock
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-click
+           python-packaging
+           python-pydantic-settings
+           python-readchar
+           python-rich
+           python-tomli
+           python-typer))
+    (home-page "https://anaconda.github.io/anaconda-cli-base/")
+    (synopsis "Base CLI entrypoint Anaconda CLI plugins")
+    (description
+     "This package provides a base CLI entrypoint supporting Anaconda CLI plugins.")
+    (license license:bsd-3)))
+
 (define-public python-annexremote
   (package
     (name "python-annexremote")
@@ -620,6 +659,89 @@ templates language.")
     ;; Project is duo licensed, see: LICENSE.txt.
     (license (list license:zpl2.1
                    license:psfl))))
+
+(define-public python-conda-content-trust
+  (package
+    (name "python-conda-content-trust")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/conda/conda-content-trust")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yvfwm7i18sfvgdasibdgnghvj5w5p4hr6i37v0cspwmkczgna7z"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; XXX: Not packaged yet:
+      ;; <https://github.com/secure-systems-lab/securesystemslib>.
+      ;;
+      ;; ImportError: The securesystemslib library is required, which appears
+      ;; to be unavailable.
+      #~(list #$@(map (lambda (test) (string-append "--deselect="
+                                                    "tests/test_root.py::"
+                                                    test))
+                      (list "test_sign_root_metadata_dict_via_gpg"
+                            "test_sign_root_metadata_via_gpg"
+                            "test_gpg_pubkey_in_ssl_format")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "setup.cfg"
+                (("--cov.*") ""))))
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest))
+    (propagated-inputs
+     (list python-cryptography))
+    (home-page "https://github.com/conda/conda-content-trust")
+    (synopsis "Signing and verification tools for Conda")
+    (description
+     "This package implements a functionalit of signing and verification tools
+for Conda.  @url{https://theupdateframework.io/, Based on The Update
+Framework (TUF)}, conda-content-trust is intended to ensure that when users in
+the conda ecosystem obtain a package or data about that package, they can know
+whether or not it is trustworthy (e.g. originally comes from a reliable source
+and has not been tampered with).  A basic library and basic CLI are included
+to provide signing, verification, and trust delegation functionality.")
+    (license license:bsd-3)))
+
+(define-public python-conda-inject
+  (package
+    (name "python-conda-inject")
+    (version "1.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/koesterlab/conda-inject")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1aig9l676wc2sjb20y7rdqf0hfcfjhh92yfiy82mf7kfnv7rp3rk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; tests require setting up Conda
+    (native-inputs
+     (list python-poetry-core))
+    (propagated-inputs
+     (list python-pyyaml))
+    (home-page "https://github.com/koesterlab/conda-inject")
+    (synopsis "Inject a conda environment into the current python environment")
+    (description
+     "This package provides helper functions for injecting a conda
+environment into the current python environment (by modifying @code{sys.path},
+without actually changing the current python environment).")
+    (license license:expat)))
 
 (define-public python-copydetect
   (package
@@ -1299,6 +1421,86 @@ comparison operators, as defined in the original
 @url{http://goessner.net/articles/JsonPath/, JSONPath} proposal.")
     (license license:asl2.0)))
 
+(define-public python-keeper-secrets-manager-core
+  ;; released from a monorepo with other packages following various versioning
+  ;; schemes. This commit was selected because some failing tests were fixed
+  ;; since the most recent release of the Python SDK packages.
+  (let ((commit "2c9a63d433721dee129a3647077d59bb243b52ec")
+        (revision "0"))
+    (package
+      (name "python-keeper-secrets-manager-core")
+      (version (git-version "17.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Keeper-Security/secrets-manager")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1mqx0xv28xyljd4s7wwi154h8v22ayi8k337afhhw0pg2c8150pp"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "sdk/python/core"))))))
+      (propagated-inputs
+       (list python-cryptography
+             python-importlib-metadata
+             python-requests))
+      (native-inputs
+       (list python-pytest
+             python-setuptools))
+      (home-page "https://github.com/Keeper-Security/secrets-manager")
+      (synopsis "Keeper Secrets Manager for Python SDK")
+      (description
+       "The Keeper Secrets Manager Python SDK provides access to
+@url{https://www.keepersecurity.com/secrets-manager.html, Keeper Secrets
+Management} services.")
+      (license license:expat))))
+
+(define-public python-keeper-secrets-manager-helper
+  ;; released alongside keeper-secrets-manager-core, but with a different
+  ;; versioning scheme.
+  (let ((commit "2c9a63d433721dee129a3647077d59bb243b52ec")
+        (revision "0"))
+    (package
+      (name "python-keeper-secrets-manager-helper")
+      (version (git-version "1.0.6" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Keeper-Security/secrets-manager")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1mqx0xv28xyljd4s7wwi154h8v22ayi8k337afhhw0pg2c8150pp"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "sdk/python/helper"))))))
+      (propagated-inputs
+       (list python-iso8601
+             python-keeper-secrets-manager-core
+             python-pyyaml))
+      (native-inputs
+       (list python-pytest
+             python-setuptools))
+      (home-page "https://github.com/Keeper-Security/secrets-manager")
+      (synopsis "Keeper Secrets Manager for Python SDK helper for managing records")
+      (description
+       "Keeper Secrets Manager SDK helper is for creating and managing secret
+records.  It is intended to be used with @code{keeper-secrets-manager-core}.")
+      (license license:expat))))
+
 (define-public python-language-data
   (package
     (name "python-language-data")
@@ -1372,6 +1574,38 @@ be displayed on the terminal, with color if possible, for logging purposes.")
      "This package provides static memory-efficient and fast Trie-like structures
 for Python.")
     (license license:expat)))
+
+(define-public python-menuinst
+  (package
+    (name "python-menuinst")
+    (version "2.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/conda/menuinst")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0606j3mwpcj4rqj8mifnrdqqhp8dqf802kagqkp7mmi2wffly27w"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ;tests need conda
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'pretend-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (home-page "https://conda.github.io/menuinst/")
+    (synopsis "Cross platform menu item installation")
+    (description
+     "This package provides cross platform menu item installation for conda
+packages.")
+    (license license:bsd-3)))
 
 (define-public python-multiplex
   (package
@@ -12600,6 +12834,17 @@ a general image processing tool.")
 and a plugin for Pillow.")
     (license license:bsd-3)))
 
+(define-public python-pillow-heif-0.22
+  (package
+    (inherit python-pillow-heif)
+    (version "0.22.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pillow_heif" version))
+       (sha256
+        (base32 "16mkap63d14f69105b3bm8pi64fvpdznncgn48vhgls0jf977m31"))))))
+
 (define-public python-pixelmatch
   (package
     (name "python-pixelmatch")
@@ -12877,6 +13122,8 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
                 (sha256 (base32 hash))))))
      '(("aac/latm_stereo_to_51.ts" .
         "05h8389i944gb7f2y9c7848vqn8xz1mnm602fwala85npj4z8p4m")
+       ("h264/extradata-reload-multi-stsd.mov" .
+        "1rwlkl9vxp925vzh13cq5dfr983jxbkng0w6ivaymqqwvi7bvg5m")
        ("amv/MTV_high_res_320x240_sample_Penguin_Joke_MTV_from_WMV.amv" .
         "1hiifhdmd0ygzny5mplqdxl3dh9g95384ilkr4ccwv5l9y7hrmiv")
        ("audio-reference/chorusnoise_2ch_44kHz_s16.wav" .
@@ -12895,6 +13142,8 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
         "07wg7mxa799z8dcvnbbrr9f0b5l6r42bd7d414isk3kc3jw0z6ka")
        ("mpeg2/mpeg2_field_encoding.ts" .
         "1f3waj8jhp6v655hnqpxi2bx3b36976vdjmr74hjr7jv2hx3724n")
+       ("vorbis/vorbis_chapter_extension_demo.ogg" .
+        "1prhhwi44psk9xji2mvk7rnvk899h5rx9wi3dmzkgwaz11r0cjdk")
        ("mxf/track_01_v02.mxf" .
         "04gpbma4kxvhn4dr1sh2k4pq2kbpmnmk2s2bdhq081jzap2983q1")
        ("png1/55c99e750a5fd6_50314226.png" .
@@ -12909,13 +13158,13 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
 (define-public python-av
   (package
     (name "python-av")
-    (version "14.4.0")
+    (version "16.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "av" version))
        (sha256
-        (base32 "0hjb0v8pqq2f7w64zcmz216ymykb1n1s1bgdq0lp5xpxlw1zijry"))))
+        (base32 "1gqxzwbgwj164x211lsjgqj8xx9rpjxhzq6rls4mhpqbz9wyfb6x"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -12925,14 +13174,15 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
       ;; - <https://github.com/PyAV-Org/PyAV/issues/1946>
       ;; - <https://github.com/PyAV-Org/PyAV/pull/1944>
       #:test-flags
+      ;; Writing to custom IO requires network access.
       #~(list "-k" "not test_writing_to_custom_io_dash")
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'check 'build-extensions
-            (lambda _
-              (invoke "python" "setup.py" "build_ext" "--inplace")))
           (add-before 'check 'pre-check
             (lambda _
+              ;; This would otherwise interfere with finding the installed
+              ;; av when running tests.
+              (delete-file-recursively "av")
               (setenv "PYAV_TESTDATA_DIR" #+python-av-testdata)
               (substitute* "tests/common.py"
                 (("^os\\.environ\\[\"PYAV_TESTDATA_DIR\"\\] = asset\\(\\)")
@@ -12943,8 +13193,7 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
            python-numpy
            python-pillow
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (inputs (list ffmpeg))
     (home-page "https://github.com/PyAV-Org/PyAV")
     (synopsis "Pythonic bindings for FFmpeg's libraries")
@@ -23545,50 +23794,6 @@ numbers and sorts them separately from strings.  It can also sort version
 numbers, real numbers, mixed types and more, and comes with a shell command
 @command{natsort} that exposes this functionality in the command line.")
     (license license:expat)))
-
-(define-public glances
-  (package
-    (name "glances")
-    (version "4.1.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/nicolargo/glances")
-              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "00xyixi3wrajmkmqgd1rlaqypi6c1wskm6q0xbrw2k1zc7wi3kxl"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-update-checks
-            (lambda _
-              ;; Glances phones PyPI for weekly update checks by default.
-              ;; Disable these.  The user can re-enable them if desired.
-              (substitute* "glances/outdated.py"
-                (("^(.*)self\\.load_config\\(config\\)\n" line
-                  indentation)
-                 (string-append indentation
-                                "self.args.disable_check_update = True\n"
-                                line)))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; XXX: Taken from tox.ini.
-                (invoke "python" "unittest-core.py")))))))
-    (native-inputs (list python-pytest python-setuptools))
-    (propagated-inputs (list python-defusedxml python-orjson python-packaging
-                             python-psutil))
-    (home-page "https://github.com/nicolargo/glances")
-    (synopsis "Cross-platform curses-based monitoring tool")
-    (description
-     "Glances is a curses-based monitoring tool for a wide variety of platforms.
-     Glances uses the PsUtil library to get information from your system.  It
-     monitors CPU, load, memory, network bandwidth, disk I/O, disk use, and more.")
-    (license license:lgpl3+)))
 
 (define-public python-graphql-core
   (package

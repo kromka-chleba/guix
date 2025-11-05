@@ -98,6 +98,7 @@
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
+  #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
@@ -556,6 +557,122 @@ BED, GFF/GTF, VCF.")
 whole-genome bisulfite sequencing (WGBS) reads from directional protocol.")
     (supported-systems '("x86_64-linux"))
     (license license:asl2.0)))
+
+(define-public ngs-bits
+  (package
+    (name "ngs-bits")
+    (version "2025_09")
+    (home-page "https://github.com/imgag/ngs-bits")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url home-page)
+                     (commit version)
+                     (recursive? #t))) ;for src/ cppCORE, cppGUI, ccpXML, cppTFW
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "18iphn4zxgs8iclk3kcahnb08581a6l01fhrrcql1z20fdh478np"))
+              (modules '((guix build utils)))
+              ;; This package bundles a modified copy of htslib, so we cannot
+              ;; unbundle it.
+              (snippet
+               '(for-each delete-file-recursively
+                          '("htslib"
+                            "libxml2")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:modules '((guix build gnu-build-system)
+                  (guix build utils)
+                  (srfi srfi-26)
+                  (ice-9 match))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (setenv "CPLUS_INCLUDE_PATH"
+                      (string-append
+                       #$(this-package-input "libxml2")
+                       "/include/libxml2"
+                       ":" (getenv "CPLUS_INCLUDE_PATH")))
+              (substitute* "src/base.pri"
+                (("QMAKE_LFLAGS [+]=" all)
+                 (string-append all " -Wl,-rpath=" #$output "/lib")))))
+          (replace 'build
+            (lambda _
+              (invoke "make" "build_libs_release")
+              (invoke "make" "build_tools_release")))
+          (add-after 'unpack 'patch-tests
+            (lambda _
+              ;; Programming exception: Requested key 'liftover_hg19_hg38' not
+              ;; found in settings!
+              (substitute* "src/tools-TEST/tools-TEST.pro"
+                (("BedLiftOver_Test.cpp") ""))
+              (let ((coreutils
+                     (match (assoc-ref '#$(standard-packages) "coreutils")
+                       ((package) package))))
+                (substitute* "src/cppCORE-TEST/Helper_Test.cpp"
+                  (("/usr/bin/whoami")
+                   (string-append coreutils "/bin/whoami"))))))
+          (replace 'check
+            (lambda _
+              ;; Could not create application data path
+              ;; '/homeless-shelter/.local/share/cppCORE-TEST'!
+              (setenv "HOME" "/tmp")
+              (invoke "make" "test_lib")
+              (invoke "make" "test_tools")))
+          (delete 'install)
+          (add-before 'check 'install   ;check creates garbage in bin/
+            (lambda _
+              (define (install-file* file target)
+                (let ((dest (string-append target "/" (basename file))))
+                  (format #t "`~a' -> `~a'~%" file dest)
+                  (mkdir-p (dirname dest))
+                  (let ((stat (lstat file)))
+                    (case (stat:type stat)
+                      ((symlink)
+                       (let ((target (readlink file)))
+                         (symlink target dest)))
+                      (else
+                       (copy-file file dest))))
+                  (delete-file file)))
+              (copy-recursively "bin" "tmp")
+              (let ((doc (string-append #$output "/share/doc/" #$name))
+                    (examples (find-files "tmp" "[.]example")))
+                (for-each (cute install-file* <> doc) examples))
+              ;; FIXME: .INI and .TSV files are read from the bin directory
+              ;; (let ((etc (string-append #$output "/etc"))
+              ;;       (ini (find-files "tmp" "[.]ini")))
+              ;;   (for-each (cute install-file* <> etc) ini))
+              (let ((lib (string-append #$output "/lib"))
+                    (libraries (find-files "tmp" "^lib.*so")))
+                (for-each (cute install-file* <> lib) libraries))
+              (let ((bin (string-append #$output "/bin"))
+                    (binaries (find-files "tmp")))
+                (for-each (cute install-file* <> bin) binaries))
+              (rmdir "tmp"))))))
+    (inputs (list
+             bzip2
+             curl
+             htslib
+             libdeflate
+             libxml2
+             lzip
+             openssl
+             qtbase-5
+             qtsvg-5
+             zlib))
+    (native-inputs (list libtool
+                         pkg-config
+                         python            ;for tests
+                         python-matplotlib ;for tests
+                         python-numpy))    ;for tests
+    (synopsis "Short-read and long-read sequencing tools for diagnostics")
+    (description
+     "Ngs-bits (Next-Generation Sequencing) is collection of short-read and
+long-read sequencing tools for diagnostics.")
+    (license license:expat)))
 
 (define-public bustools
   (package
@@ -3222,6 +3339,57 @@ highly customized logos illustrating the properties of DNA, RNA, or protein
 sequences.  Logos are rendered as vector graphics embedded within native
 matplotlib Axes objects, making them easy to style and incorporate into
 multi-panel figures.")
+    (license license:expat)))
+
+(define-public python-weblogo
+  (package
+    (name "python-weblogo")
+    (version "3.7.12")
+    (home-page "https://github.com/gecrooks/weblogo")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "weblogo" version))
+       (sha256
+        (base32
+         "0mw6aa0dq3kk9k1nakdvm64icz9504spqbvq4v2h0rb1cb52frkw"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list ghostscript
+                             python-numpy
+                             python-pluggy
+                             python-scipy))
+    (native-inputs (list ghostscript
+                         python-importlib-metadata
+                         python-importlib-resources
+                         python-pytest
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (arguments
+     (list
+      #:test-flags
+      '(list "-k"
+             ;; These tests fail because of circular imports
+             (string-append "not test_cli.py"
+                            " and not test_transformseq.py"))))
+    (synopsis "Sequence Logo Generator")
+    (description "WebLogo is a web based application designed to make the
+generation of sequence logos as easy and painless as possible.
+
+WebLogo can create output in several common graphics' formats, including the
+bitmap formats GIF and PNG, suitable for on-screen display, and the vector
+formats EPS and PDF, more suitable for printing, publication, and further
+editing.  Additional graphics options include bitmap resolution, titles,
+optional axis, and axis labels, antialiasing, error bars, and alternative
+symbol formats.
+
+A sequence logo is a graphical representation of an amino acid or nucleic acid
+multiple sequence alignment.  Each logo consists of stacks of symbols, one
+stack for each position in the sequence.  The overall height of the stack
+indicates the sequence conservation at that position, while the height of
+symbols within the stack indicates the relative frequency of each amino or
+nucleic acid at that position.  The width of the stack is proportional to the
+fraction of valid symbols in that position.")
     (license license:expat)))
 
 (define-public python-magic-impute
@@ -7768,7 +7936,7 @@ of nucleic acid binding proteins.")
 (define-public eigensoft
   (package
     (name "eigensoft")
-    (version "7.2.1")
+    (version "8.0.0")
     (source
      (origin
        (method git-fetch)
@@ -7778,7 +7946,7 @@ of nucleic acid binding proteins.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1c141fqvhnzibmnf22sv23vbmzm20kjjyrib44cfh75wyndp2d9k"))
+         "1zb62sahci407s02c8xx94v55ynfr9mc1zapqjmgwmc0p9ykq1z8"))
        (modules '((guix build utils)))
        ;; Remove pre-built binaries.
        (snippet '(begin
@@ -8141,6 +8309,31 @@ chromatin (scATAC-seq) and single-cell DNA methylation (for example scBS-seq)
 data.  EpiScanpy is the epigenomic extension of the very popular scRNA-seq
 analysis tool Scanpy (Genome Biology, 2018).")
     (license license:bsd-3)))
+
+(define-public python-modbedtools
+  (package
+    (name "python-modbedtools")
+    (version "0.1.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "modbedtools" version))
+       (sha256
+        (base32 "0c2f8fl0mi3wcvv4fygkf6jj1d0zavhc7v9wwbqchpyb7m23cmp9"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-pysam))
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (arguments (list #:tests? #f)) ;No tests
+    (home-page "https://github.com/lidaof/modbedtools")
+    (synopsis
+     "Generate modbed track files for visualization on WashU Epigenome Browser")
+    (description
+     "modbedtools is a python command line tool to generate modbed files for
+visualization on the WashU Epigenome Browser.")
+    (license license:expat)))
 
 (define-public python-ete3
   (package

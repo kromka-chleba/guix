@@ -1879,7 +1879,7 @@ times faster decoding.")
 (define-public go-github-com-nats-io-jwt-v2
   (package
     (name "go-github-com-nats-io-jwt-v2")
-    (version "2.7.4")
+    (version "2.8.0")
     (source
      (origin
        (method git-fetch)
@@ -1888,13 +1888,14 @@ times faster decoding.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gjfayslmvs5kpgrb7sscaafi5fsm2j6446vbjm830ak0nhq8df9"))))
+        (base32 "16fxmml1cw2y3cr87ry61k2q8421hab77cx6gpqz1qfy6sdh0vvz"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/nats-io/jwt/v2"
-      #:unpack-path "github.com/nats-io/jwt"))
+      #:unpack-path "github.com/nats-io/jwt"
+      #:test-flags
+      #~(list "-vet=off")))  ;Go@1.24 forces vet, but tests are not ready yet.
     (propagated-inputs (list go-github-com-nats-io-nkeys))
     (home-page "https://github.com/nats-io/jwt")
     (synopsis "Go library signing JWT tokens with NKeys for the NATS ecosystem")
@@ -1906,16 +1907,16 @@ JWT tokens.  Nkeys use Ed25519 to provide authentication of JWT claims.")
 (define-public go-github-com-nats-io-nkeys
   (package
     (name "go-github-com-nats-io-nkeys")
-    (version "0.4.10")
+    (version "0.4.11")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/nats-io/nkeys")
-             (commit (string-append "v" version))))
+              (url "https://github.com/nats-io/nkeys")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1max0dsjj92gfzc9g0dsnmk24y72drfhzkra3c1xnjwnw6lwha5x"))))
+        (base32 "0wrsrccc4sxzlrlngkw644p4n074vd54mkad8vzi9ylnw97hhabm"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/nats-io/nkeys"))

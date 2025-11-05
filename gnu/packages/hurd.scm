@@ -58,7 +58,7 @@
                  version ".tar.gz"))
 
 (define-public gnumach-headers
-  (let ((commit "v1.8+git20250304"))
+  (let ((commit "v1.8+git20250731"))
     (package
       (name "gnumach-headers")
       (version (string-drop commit 1))
@@ -71,7 +71,7 @@
          (patches (search-patches "gnumach-version.patch"))
          (file-name (git-file-name "gnumach" version))
          (sha256
-          (base32 "0sq15n7x05qk3rjx5c0dbiijysyvk4gqqqfkc6gjkpsy3mx7a9q0"))))
+          (base32 "1zfn2fvlrdm9pqz5bg8l4mq99xjnrfsacdv9lqz5d4c1mbwpffvd"))))
       (build-system gnu-build-system)
       (arguments
        `(#:phases
@@ -132,8 +132,8 @@ communication.")
     (license gpl2+)))
 
 (define-public hurd-headers
-  (let ((revision "4")
-        (commit "v0.9.git20250420"))
+  (let ((revision "5")
+        (commit "v0.9.git20251029"))
     (package
       (name "hurd-headers")
       (version (string-drop commit 1))
@@ -144,7 +144,7 @@ communication.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "09z9gj1z11wswmxy7jdzrbjmlplpy0fpbc6gaj09hh34j4y6yr91"))
+                  "09pi6ci375ivbjvxlgdqp6vpm47arfvlh325sr2a5dmwxhs9pnp9"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (native-inputs
@@ -180,6 +180,7 @@ communication.")
                              "ac_cv_func_exec_exec_paths=no"
                              "ac_cv_func__hurd_exec_paths=no"
                              "ac_cv_func__hurd_libc_proc_init=no"
+                             "ac_cv_func_mach_port_set_ktype=no"
                              "ac_cv_func_file_futimens=no"
                              "ac_cv_func_file_utimens=no"
                              "ac_cv_lib_acpica_acpi_init=no")
@@ -273,6 +274,11 @@ Hurd-minimal package which are needed for both glibc and GCC.")
   (package
     (inherit gnumach-headers)
     (name "gnumach")
+    (source (origin
+              (inherit (package-source gnumach-headers))
+              (patches (append (origin-patches
+                                (package-source gnumach-headers))
+                               (search-patches "gnumach-div0.patch")))))
     (arguments
      (substitute-keyword-arguments (package-arguments gnumach-headers)
        ((#:configure-flags flags ''())
@@ -338,8 +344,7 @@ Hurd-minimal package which are needed for both glibc and GCC.")
               (inherit (package-source hurd-headers))
               (patches (search-patches "hurd-refcounts-assert.patch"
                                        "hurd-rumpdisk-no-hd.patch"
-                                       "hurd-startup.patch"
-                                       "hurd-socket-activation.patch"))))
+                                       "hurd-startup.patch"))))
     (version (package-version hurd-headers))
     (arguments
      `(#:tests? #f                      ;no "check" target

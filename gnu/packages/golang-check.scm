@@ -824,6 +824,80 @@ tests.")
 tests.")
     (license license:expat)))
 
+(define-public go-github-com-gkampitakis-ciinfo
+  (package
+    (name "go-github-com-gkampitakis-ciinfo")
+    (version "0.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/gkampitakis/ciinfo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14pkbqirxsp14lb7yazpqrvlhm26kc7pwn3ldi8wxnfzscqvhba9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gkampitakis/ciinfo"
+      #:unpack-path "github.com/gkampitakis/ciinfo"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'generate-vendors-constants
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              ;; Matches the "make compile-constants" body
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (install-file "vendors.go" "compile-constants/")
+                (substitute* "compile-constants/vendors.go"
+                  (("ciinfo") "main"))))))))
+    (home-page "https://github.com/gkampitakis/ciinfo")
+    (synopsis "Get details about the current Continuous Integration environment")
+    (description
+     "This package provides @code{ciinfo}, a tool to get details about the
+current Continuous Integration environment, including checking if running in a
+CI system, which CI system, build id, and more.
+
+This is a reimplementation of @uref{https://github.com/watson/ci-info,
+ci-info} in Go.")
+    (license license:expat)))
+
+(define-public go-github-com-gkampitakis-go-snaps
+  ;; Updated version is not released yet, see:
+  ;; <https://github.com/gkampitakis/go-snaps/issues/140>.
+  (let ((commit "0832b79c205714d0e21108ab3848cc2715eed2d3")
+        (revision "0"))
+    (package
+      (name "go-github-com-gkampitakis-go-snaps")
+      (version (git-version "0.5.15" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/gkampitakis/go-snaps")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1djdcc2pkizpnv35q49y7ncll7yw0w8j3a347ybrqs6my7qv66lx"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:skip-build? #t
+        #:import-path "github.com/gkampitakis/go-snaps"))
+      (propagated-inputs
+       (list go-github-com-gkampitakis-ciinfo
+             go-github-com-goccy-go-yaml
+             go-github-com-kr-pretty
+             go-github-com-maruel-natural
+             go-github-com-sergi-go-diff
+             go-github-com-tidwall-gjson
+             go-github-com-tidwall-pretty
+             go-github-com-tidwall-sjson))
+      (home-page "https://github.com/gkampitakis/go-snaps")
+      (synopsis "Jest-like snapshot testing in Go")
+      (description "go-snaps is a Go implementation of Jest snapshot testing.")
+      (license license:expat))))
+
 (define-public go-github-com-go-playground-assert-v2
   (package
     (name "go-github-com-go-playground-assert-v2")
@@ -3219,6 +3293,20 @@ thoroughly
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-ciinfo
+  (package/inherit go-github-com-gkampitakis-ciinfo
+    (name "go-ciinfo")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-gkampitakis-ciinfo)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "github.com/gkampitakis/ciinfo/ciinfo")))
+    (native-inputs
+     (package-propagated-inputs go-github-com-gkampitakis-ciinfo))
+    (propagated-inputs '())
+    (inputs '())))
 
 (define-public go-ginkgo
   (package/inherit go-github-com-onsi-ginkgo-v2

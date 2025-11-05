@@ -952,18 +952,22 @@ X.509 host certificate; otherwise, warn about the problem and keep going."
   (maybe-remove-expired-cache-entries cache-directory
                                       cache-entries
                                       #:entry-expiration
-                                      (file-expiration-time ttl))
+                                      (file-expiration-time ttl stat:mtime))
 
   ;; Clean the legacy cache directory as well.  Remove this call once at least
   ;; one year has passed.
   (maybe-remove-expired-cache-entries %legacy-inferior-cache-directory
                                       cache-entries
                                       #:entry-expiration
-                                      (file-expiration-time ttl))
+                                      (file-expiration-time ttl stat:mtime))
 
 
   (if (file-exists? (cached commits))
-      (cached commits)
+      (let ((now (current-time))
+            (cached-directory (cached commits)))
+        ;; Update the mtime on CACHED to reflect usage.
+        (utime cached-directory now now 0 0 AT_SYMLINK_NOFOLLOW)
+        cached-directory)
       (run-with-store store
         (mlet* %store-monad ((instances
                               -> (latest-channel-instances store channels

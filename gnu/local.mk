@@ -648,6 +648,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/storage.scm			\
   %D%/packages/suckless.scm			\
   %D%/packages/sugar.scm			\
+  %D%/packages/swift.scm			\
   %D%/packages/swig.scm				\
   %D%/packages/sycl.scm				\
   %D%/packages/sync.scm			\
@@ -955,6 +956,7 @@ MODULES_NOT_COMPILED +=				\
 
 patchdir = $(guilemoduledir)/%D%/packages/patches
 dist_patch_DATA =						\
+  %D%/packages/patches/389-ds-base-legacy-version.patch		\
   %D%/packages/patches/8mq-enable-imx_hab_handler.patch		\
   %D%/packages/patches/8mq-move-stack-to-ocram_s.patch		\
   %D%/packages/patches/abcl-fix-build-xml.patch	\
@@ -1100,6 +1102,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-16-remove-crypt-interceptors.patch	\
   %D%/packages/patches/clang-17.0-libc-search-path.patch	\
   %D%/packages/patches/clang-17.0-link-dsymutil-latomic.patch	\
+  %D%/packages/patches/clang-17.0-fix-build-with-gcc-14-on-arm.patch    \
   %D%/packages/patches/clang-18.0-libc-search-path.patch	\
   %D%/packages/patches/clang-runtime-esan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-12-remove-crypt-interceptors.patch \
@@ -1305,6 +1308,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/fpc-reproducibility.patch		\
   %D%/packages/patches/fpc-glibc-2.34-compat.patch		\
   %D%/packages/patches/fritzing-0.9.6-fix-types.patch		\
+  %D%/packages/patches/freedink-engine-fix-const-char.patch	\
   %D%/packages/patches/freedict-tools-fix-determinism.patch	\
   %D%/packages/patches/freedink-engine-fix-sdl-hints.patch	\
   %D%/packages/patches/freeimage-libtiff-compat.patch		\
@@ -1461,10 +1465,12 @@ dist_patch_DATA =						\
   %D%/packages/patches/glibc-hurd-gettyent.patch		\
   %D%/packages/patches/glibc-hurd-mach-print.patch		\
   %D%/packages/patches/glibc-hurd-pthread_setcancelstate.patch	\
+  %D%/packages/patches/glibc-hurd-signal-fpe-exception.patch 	\
   %D%/packages/patches/glibc-hurd-signal-sa-siginfo.patch	\
   %D%/packages/patches/glibc-hurd-2.41-pthread-once.patch	\
   %D%/packages/patches/glibc-hurd-2.41-pthread-sigmask.patch	\
   %D%/packages/patches/glibc-hurd-2.41-symlink.patch		\
+  %D%/packages/patches/glibc-hurd-xstate.patch  		\
   %D%/packages/patches/glibc-hurd64-gcc-14.2-tls-bug.patch	\
   %D%/packages/patches/glibc-hurd64-intr-msg-clobber.patch	\
   %D%/packages/patches/glibc-ldd-powerpc.patch			\
@@ -1486,6 +1492,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gnome-session-support-elogind.patch	\
   %D%/packages/patches/gnome-tweaks-search-paths.patch		\
   %D%/packages/patches/gnulib-bootstrap.patch			\
+  %D%/packages/patches/gnumach-div0.patch			\
   %D%/packages/patches/gnumach-version.patch			\
   %D%/packages/patches/gnupg-default-pinentry.patch		\
   %D%/packages/patches/gnupg-1-build-with-gcc10.patch		\
@@ -1579,7 +1586,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/hugs-fix-build.patch			\
   %D%/packages/patches/hurd-refcounts-assert.patch		\
   %D%/packages/patches/hurd-rumpdisk-no-hd.patch		\
-  %D%/packages/patches/hurd-socket-activation.patch		\
   %D%/packages/patches/hurd-startup.patch			\
   %D%/packages/patches/hwloc-1-test-btrfs.patch			\
   %D%/packages/patches/i7z-gcc-10.patch				\
@@ -1831,6 +1837,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/maxima-defsystem-mkdir.patch		\
   %D%/packages/patches/maven-generate-component-xml.patch		\
   %D%/packages/patches/maven-generate-javax-inject-named.patch		\
+  %D%/packages/patches/mc2mt-add-packaging-support.patch	\
   %D%/packages/patches/mcrypt-CVE-2012-4409.patch			\
   %D%/packages/patches/mcrypt-CVE-2012-4426.patch			\
   %D%/packages/patches/mcrypt-CVE-2012-4527.patch			\
@@ -2284,6 +2291,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/seq24-rename-mutex.patch			\
   %D%/packages/patches/libsequoia-fix-ffi-Makefile.patch	\
   %D%/packages/patches/libsequoia-remove-store.patch		\
+  %D%/packages/patches/shaderc-for-pcsx2-changes.patch		\
   %D%/packages/patches/shakespeare-spl-fix-grammar.patch		\
   %D%/packages/patches/shared-mime-info-xdgmime-path.patch	\
   %D%/packages/patches/sharutils-CVE-2018-1000097.patch		\
@@ -2313,6 +2321,13 @@ dist_patch_DATA =						\
   %D%/packages/patches/superlu-dist-awpm-grid.patch		\
   %D%/packages/patches/superlu-dist-scotchmetis.patch		\
   %D%/packages/patches/supertux-unbundle-squirrel.patch		\
+  %D%/packages/patches/swift-5.7.3-sdk-path.patch			\
+  %D%/packages/patches/swift-5.7.3-sourcekit-rpath.patch		\
+  %D%/packages/patches/swift-6.2-cplus-include-path.patch		\
+  %D%/packages/patches/swift-6.2-exclude-scan-test.patch		\
+  %D%/packages/patches/swift-corelibs-libdispatch-5.6.3-lock-cpp.patch	\
+  %D%/packages/patches/swift-corelibs-libdispatch-5.7.3-modulemap.patch	\
+  %D%/packages/patches/swift-llvm-5.7.3-linux.patch	\
   %D%/packages/patches/swig-support-gcc-12.patch		\
   %D%/packages/patches/swish-e-search.patch			\
   %D%/packages/patches/swish-e-format-security.patch		\

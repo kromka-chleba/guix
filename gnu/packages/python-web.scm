@@ -2,6 +2,7 @@
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2015-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017 Christopher Baines <mail@cbaines.net>
+;;; Copyright © 2017 Muriithi Frederick Muriuki <fredmanglis@gmail.com>
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym+a@scratchpost.org>
 ;;; Copyright © 2013, 2014, 2015, 2016, 2020, 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016-2023 Marius Bakke <marius@gnu.org>
@@ -215,6 +216,59 @@ writing applications that talk to network enabled embedded
 @acronym{IoT,Internet of Things} devices.")
     (license license:expat)))
 
+(define-public python-anaconda-client
+  (package
+    (name "python-anaconda-client")
+    (version "1.13.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Anaconda-Platform/anaconda-client")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06nn3cwhrrajsbn9pils2539lzplfnyhn9java3xrpm3ksxq9g72"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--deselect=tests/utils/test_conda.py::test_find_conda"
+              "--deselect=tests/utils/test_conda.py::test_conda_vars")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "setup.cfg"
+                (("addopts=.*") "addopts=\n")))))))
+    (native-inputs
+     (list python-freezegun
+           python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-anaconda-cli-base
+           python-conda-package-handling
+           python-conda-package-streaming
+           python-dateutil
+           python-defusedxml
+           python-nbformat
+           python-pillow
+           python-platformdirs
+           python-pytz
+           python-pyyaml
+           python-requests
+           python-requests-toolbelt
+           python-setuptools
+           python-tqdm
+           python-urllib3))
+    (home-page "https://github.com/Anaconda-Platform/anaconda-client")
+    (synopsis "Anaconda Cloud command line client library")
+    (description
+     "Anaconda Cloud command line client library provides an interface to
+Anaconda Cloud.  Anaconda Cloud is useful for sharing packages, notebooks and
+environments.")
+    (license license:bsd-3)))
+
 (define-public python-apprise
   (package
     (name "python-apprise")
@@ -370,6 +424,62 @@ and JSON.
 @code{pathlib.Path}'s interface for URIs from different cloud storage
 services.")
     (license license:expat)))
+
+(define-public python-conda-package-handling
+  (package
+    (name "python-conda-package-handling")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/conda/conda-package-handling/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1l2zbbwlxp9azpshixvxnb9354xajxkn88934grpwl70blgb3yq2"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-bottle
+           python-mock
+           python-pytest
+           python-pytest-cov
+           python-pytest-mock
+           python-setuptools))
+    (propagated-inputs
+     (list python-conda-package-streaming))
+    (home-page "https://conda.io")
+    (synopsis "Create and extract conda packages of various formats")
+    (description
+     "This library is an abstraction of Conda package handling and a tool for
+extracting, creating, and converting between formats.")
+    (license license:bsd-3)))
+
+(define-public python-conda-package-streaming
+  (package
+    (name "python-conda-package-streaming")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "conda_package_streaming" version))
+       (sha256
+        (base32 "1fcyx83swx1wfndrl0vdk8c2pixshn54gkjy7xchkra13kw2yas2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; TODO: Cycles with python-conda-package-handling, implement bootstrap.
+     (list #:tests? #f))
+    (native-inputs
+     (list python-flit-core))
+    (propagated-inputs
+     (list python-requests
+           python-zstandard))
+    (home-page "https://conda.github.io/conda-package-streaming/")
+    (synopsis "Conda formats (@code{.conda}, @code{.tar.bz2}) reader library")
+    (description
+     "This package provides an efficient library to read from new and old format
+@code{.conda} and @code{.tar.bz2} conda packages.")
+    (license license:bsd-3)))
 
 (define-public python-devpi-common
   (package

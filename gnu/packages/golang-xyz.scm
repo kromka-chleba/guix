@@ -2423,6 +2423,31 @@ supports generating diffs in the
 Unified Format}.")
     (license license:expat)))
 
+(define-public go-github-com-baulk-chardet
+  (package
+    (name "go-github-com-baulk-chardet")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/baulk/chardet")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sjs572wri69fj97byhf1xmzw7fdrlpasp0k2mc96h5804fwm08l"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/baulk/chardet"
+      #:test-flags
+      #~(list "-vet=off"))) ;Go@1.24 forces vet, but tests are not ready yet.
+    (home-page "https://github.com/baulk/chardet")
+    (synopsis "Character set detection for Go")
+    (description
+     "The chardet package ports character set detection from ICU to Go.")
+    (license license:expat)))
+
 (define-public go-github-com-beorn7-perks
   (package
     (name "go-github-com-beorn7-perks")
@@ -6775,6 +6800,38 @@ suggested by Dariusz Górecki.  Using this instead of other, simpler, queue
 implementations
 (slice+append or linked list) provides substantial memory and time benefits, and
 fewer GC pauses.")
+    (license license:expat)))
+
+(define-public go-github-com-editorconfig-editorconfig-core-go-v2
+  (package
+    (name "go-github-com-editorconfig-core-go-v2")
+    (version "2.6.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/editorconfig/editorconfig-core-go")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0m8jjxj73l6hva5idpbawcm1f3jiyd2qpfj8n2h21w07virhlib2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/editorconfig/editorconfig-core-go/v2"))
+    (native-inputs
+     (list go-github-com-google-go-cmp))
+    (propagated-inputs
+     (list go-golang-org-x-mod
+           go-gopkg-in-ini-v1))
+    (home-page "https://editorconfig.org/")
+    (synopsis "EditorConfig core library for Golang")
+    (description
+     "EditorConfig makes it easy to maintain the correct coding style when
+switching between different text editors and between different projects.  It
+maintains a file format and plugins for various text editors which allow this
+file format to be read and used by those editors.")
     (license license:expat)))
 
 (define-public go-github-com-edsrzf-mmap-go
@@ -13913,6 +13970,31 @@ implementing features like:
 @end itemize")
       (license license:expat))))
 
+(define-public go-github-com-maruel-natural
+  (package
+    (name "go-github-com-maruel-natural")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/maruel/natural")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "040aikizdd7c4zm8xindb2ps16s60i0fkf8gkll2rir7lwv6q7ks"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/maruel/natural"))
+    (home-page "https://github.com/maruel/natural")
+    (synopsis "Natural sorting (natsort) in Golang")
+    (description
+     "This package implements a speed-optimized natural sorting (natsort) in
+Golang.  This implementation @emph{does not allocate memory}, does not depend
+on @code{sort} and hence doesn't depend on @code{reflect}.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-masterminds-goutils
   (package
     (name "go-github-com-masterminds-goutils")
@@ -16020,16 +16102,16 @@ sunset times from geographical coordinates and a date.")
 (define-public go-github-com-nats-io-nats-go
   (package
     (name "go-github-com-nats-io-nats-go")
-    (version "1.39.1")
+    (version "1.47.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/nats-io/nats.go")
-             (commit (string-append "v" version))))
+              (url "https://github.com/nats-io/nats.go")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "122y7n1xridlpy8048z0p7bv8192pc5yp9js1sspayi9rrn27z6i"))))
+        (base32 "1078dvnv61nck6kr0gjx7f37674v2wd0qxih7v0wldz5lkpdfspc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -16038,13 +16120,11 @@ sunset times from geographical coordinates and a date.")
       ;; root tests.
       #:test-subdirs #~(list ".")))
     (native-inputs
-     (list go-github-com-nats-io-jwt-v2))
+     (list go-google-golang-org-protobuf)) ; for encoders
     (propagated-inputs
      (list go-github-com-klauspost-compress
            go-github-com-nats-io-nkeys
-           go-github-com-nats-io-nuid
-           go-golang-org-x-text
-           go-google-golang-org-protobuf)) ; for encoders
+           go-github-com-nats-io-nuid))
     (home-page "https://github.com/nats-io/nats.go")
     (synopsis "Go Client for NATS server")
     (description
