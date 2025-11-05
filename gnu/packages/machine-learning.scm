@@ -2632,15 +2632,21 @@ adjoint method for constant memory cost.")
 (define-public lightgbm
   (package
     (name "lightgbm")
-    (version "2.0.12")
+    (version "4.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                      (url "https://github.com/Microsoft/LightGBM")
-                     (commit (string-append "v" version))))
+                     (commit (string-append "v" version))
+                     ;; Required by
+                     ;; - fast-double-parser
+                     ;; - boostorg/compute
+                     ;; - eigen TODO: unbundle
+                     ;; - fmt TODO: unbundle
+                     (recursive? #t)))
               (sha256
                (base32
-                "0jlvyn7k81dzrh9ij3zw576wbgiwmmr26rzpdxjn1dbpc3njpvzi"))
+                "1q3ibs9yscz5hh7jxgmfbwngsm5sjd1wnsa4mf6m32rvryad7bxy"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
