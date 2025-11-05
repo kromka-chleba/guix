@@ -416,6 +416,57 @@ HTTP.  Features:
 @end itemize")
     (license license:gpl2)))
 
+(define-public dgop
+  (package
+    (name "dgop")
+    (version "0.1.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AvengeMedia/dgop")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1nxwx7slkwyjidj38ij590n63l005z6s79wpbyszz24c9a8glvrf"))
+       (file-name (git-file-name name version))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AvengeMedia/dgop/cmd/cli"
+      #:unpack-path "github.com/AvengeMedia/dgop"
+      #:install-source? #f
+      #:test-subdirs
+      #~(list "../../...") ;test the whole libary
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'rename-cli
+            (lambda* (#:key output #:allow-other-keys)
+              (let* ((out #$output)
+                     (bin (string-append out "/bin")))
+                (rename-file (string-append bin "/cli")
+                             (string-append bin "/dgop"))))))))
+    (inputs (list go-github-com-fsnotify-fsnotify
+                  go-github-com-stretchr-testify
+                  go-github-com-charmbracelet-lipgloss
+                  go-github-com-charmbracelet-log
+                  go-github-com-shirou-gopsutil-v4
+                  go-github-com-charmbracelet-bubbles
+                  go-github-com-go-chi-chi-v5
+                  go-github-com-gorilla-schema
+                  go-github-com-spf13-cobra
+                  go-github-com-caarlos0-env
+                  go-github-com-danielgtaylor-huma-v2))
+    (home-page "https://github.com/AvengeMedia/dgop")
+    (synopsis "Stateless system monitoring CLI + REST API")
+    (description "dgop is a system monitoring tool.  It supports
+cursor-based sampling of CPU/memory/disk/network,
+plus an optional REST API server.  dgop supports cursor-based
+sampling for building real-time monitoring tools like htop.
+Instead of relying on instantaneous snapshots, you can track
+system state changes over time for more accurate CPU usage
+calculations and network/disk rates.")
+    (license license:expat)))
+
 (define-public python-whisper
   (package
     (name "python-whisper")
