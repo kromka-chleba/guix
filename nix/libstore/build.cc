@@ -2522,8 +2522,27 @@ void DerivationGoal::startBuilder()
         ctx.persona |= 0x0020000; /* == UNAME26 */
     }
 
-    /* Disable address space randomization for improved determinism. */
-    ctx.persona |= ADDR_NO_RANDOMIZE;
+    /* Check whether we can set ADDR_NO_RANDOMIZE, some container seccomp
+       policies block it. */
+    int currentPersonality = personality(0xffffffff);
+    if (currentPersonality == -1)
+      throw SysError("Unable to get current personality");
+
+    if (personality(currentPersonality | ADDR_NO_RANDOMIZE) == -1) {
+        if (errno == EINVAL)
+            throw SysError("Unexpectedly unable to add ADDR_NO_RANDOMIZE to personality");
+        if (!settings.allowASLR)
+            throw SysError("ADDR_NO_RANDOMIZE appears blocked and GUIX_ALLOW_ASLR is unset or 0, refusing to weaken reproducibility by default");
+        /* Some other, unexpected errno; seccomp is probably behind it. */
+        printMsg(lvlInfo, "The ADDR_NO_RANDOMIZE personality flag appears to be blocked, not using it");
+    }
+    else {
+        /* It worked, now first restore the original personality. */
+        if (personality(currentPersonality) == -1)
+            throw SysError("Unable to restore personality after testing for availability of ADDR_NO_RANDOMIZE");
+        /* Disable address space randomization for improved determinism. */
+        ctx.persona |= ADDR_NO_RANDOMIZE;
+    }
 
 #endif
 
