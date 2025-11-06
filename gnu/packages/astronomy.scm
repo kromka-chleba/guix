@@ -520,7 +520,7 @@ made to get a better separation of core libraries and applications.
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/ccfits/"
+             "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/ccfits/v2.7/"
              "CCfits-" version ".tar.gz"))
        (sha256
         (base32 "06mhvvdsaqvk3cc309gv6zd4lcxm5q5aialaq0n77gzczv94cdgn"))))
