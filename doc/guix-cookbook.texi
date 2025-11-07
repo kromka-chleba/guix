@@ -91,10 +91,8 @@ Manual}).
 * Coding::                      Building, running, patching, testing
 * System Management::           Configuration, customization,
 deployment and administrative tasks
-* Containers::                  Isolated environments and nested systems
-* Virtual Machines::            Virtual machines usage and configuration
-* Advanced package management::  Power to the users!
-* Software Development::        Environments, continuous integration, etc.
+* Containers and Emulation::    Clean and efficient work
+* Software Development::        Working with code
 * Environment management::      Control environment
 * Reproducible Research::       A foundation for reproducible research.
 * Installing Guix on a Cluster::  High-performance computing.
@@ -4535,8 +4533,8 @@ system, using something like:
 
 
 @c *********************************************************************
-@node Containers
-@chapter Containers
+@node Containers and Emulation
+@chapter Containers and Emulation
 
 The kernel Linux provides a number of shared facilities that are
 available to processes in the system.  These facilities include a shared
@@ -4559,9 +4557,28 @@ handy when using Guix on a foreign distribution to prevent interference
 from foreign libraries or configuration files that are available
 system-wide.
 
+Apart from that, Guix can produce disk images (@pxref{Invoking guix
+system,,, guix, GNU Guix Reference Manual}) that can be used with
+virtual machines solutions such as virt-manager, GNOME Boxes or the more
+bare QEMU, among others.
+
+This chapter aims to provide hands-on, practical examples that relates
+to the usage and configuration of virtual machines on a Guix System.
+
 @menu
+Profiles:
+
+
+Containers:
 * Guix Containers::             Perfectly isolated environments
 * Guix System Containers::      A system inside your system
+
+Virtualization:
+* Network bridge for QEMU::
+* Routed network for libvirt::
+* Custom NAT-based network for libvirt::
+* References: VM References.    Further reading on virtual machines.
+
 @end menu
 
 @node Guix Containers
@@ -4937,26 +4954,11 @@ sudo ip netns del $ns
 sudo ip link del $host
 @end example
 
-@c *********************************************************************
-@node Virtual Machines
-@chapter Virtual Machines
-
-Guix can produce disk images (@pxref{Invoking guix system,,, guix, GNU
-Guix Reference Manual}) that can be used with virtual machines solutions
-such as virt-manager, GNOME Boxes or the more bare QEMU, among others.
-
-This chapter aims to provide hands-on, practical examples that relates
-to the usage and configuration of virtual machines on a Guix System.
-
-@menu
-* Network bridge for QEMU::
-* Routed network for libvirt::
-* Custom NAT-based network for libvirt::
-* References: VM References.    Further reading on virtual machines.
-@end menu
+@node Virtualization
+@section Virtualization
 
 @node Network bridge for QEMU
-@section Network bridge for QEMU
+@subsection Network bridge for QEMU
 @cindex Network bridge interface
 @cindex networking, bridge
 @cindex qemu, network bridge
@@ -5080,7 +5082,7 @@ COMMIT
 @end example
 
 @node Routed network for libvirt
-@section Routed network for libvirt
+@subsection Routed network for libvirt
 @cindex Virtual network bridge interface
 @cindex networking, virtual bridge
 @cindex libvirt, virtual network switch
@@ -5179,7 +5181,7 @@ should work from within your VM; you can e.g.@: run @samp{ping gnu.org}
 to verify that it functions correctly.
 
 @node Custom NAT-based network for libvirt
-@section Custom NAT-based network for libvirt
+@subsection Custom NAT-based network for libvirt
 
 As mentioned in the preceding section (@pxref{Routed network for libvirt}),
 libvirt allows virtual networks to be defined via XML files and managed
@@ -5294,7 +5296,7 @@ Ensure that you have IPv4 forwarding enabled (you can use
 @code{sysctl-service-type} for this).
 
 @node VM References
-@section References
+@subsection References
 
 @itemize
 @item
@@ -5306,14 +5308,16 @@ this chapter have found it to be a valuable source of information.
 @end itemize
 
 @c *********************************************************************
-@node Advanced package management
-@chapter Advanced package management
+@node Software Development
+@chapter Software Development
 
-Guix is a functional package manager that offers many features beyond
-what more traditional package managers can do.  To the uninitiated,
-those features might not have obvious use cases at first.  The purpose
-of this chapter is to demonstrate some advanced package management
-concepts.
+A chapter on Profiles, Environments, Reproducibility and other tool sets
+provided by GNU Guix.
+
+Guix offers many features beyond what more traditional package managers
+can do.  To the uninitiated, those features might not have obvious use
+cases at first.  The purpose of this chapter is to demonstrate some
+advanced package management concepts.
 
 @pxref{Package Management,,, guix, GNU Guix Reference Manual} for a complete
 reference.
@@ -5714,8 +5718,8 @@ mkdir -p "$GUIX_EXTRA_PROFILES/my-project"
 It's safe to delete the Guix channel profile you've just installed with the
 channel specification, the project profile does not depend on it.
 
-@node Software Development
-@chapter Software Development
+@node Software Development Tutorial
+@chapter Software Development Tutorial
 
 @cindex development, with Guix
 @cindex software development, with Guix
