@@ -1904,7 +1904,7 @@ This package is part of the KDE games module.")
     (arguments
      (list #:builder #~(mkdir #$output)))
     (propagated-inputs
-     ;; TODO: kpat, klickety, katomic.
+     ;; TODO: klickety, katomic.
      (list bomber
            bovo
            granatier
@@ -1930,6 +1930,7 @@ This package is part of the KDE games module.")
            kolf
            kollision
            konquest
+           kpat
            kreversi
            kshisen
            ksirk
@@ -1947,4 +1948,6 @@ This package is part of the KDE games module.")
     (description "This metapackage includes a collection of games provided
 with the official release of KDE.")
     (license
-     (list license:gpl2+ license:lgpl2.0+ license:gpl3+ license:fdl1.2+))))
+     (list license:gpl2+ license:lgpl2.0+ license:gpl3+ license:fdl1.2+
+           (license:non-copyleft
+            "https://invent.kde.org/games/kpat/-/blob/master/COPYING")))))
