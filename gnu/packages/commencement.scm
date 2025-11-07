@@ -2186,7 +2186,8 @@ exec " gcc "/bin/" program
        #:implicit-inputs? #f
        #:guile ,%bootstrap-guile
        #:strip-binaries? #f
-       #:validate-runpath? #f))))
+       #:validate-runpath? #f
+       #:configure-flags '("--disable-year2038")))))
 
 (define sed-boot0
   (package
