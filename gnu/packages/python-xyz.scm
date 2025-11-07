@@ -28864,18 +28864,33 @@ access the system cron automatically and simply using a direct API.")
 (define-public python-apscheduler
   (package
     (name "python-apscheduler")
-    (version "3.10.4")
+    (version "3.11.1")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "APScheduler" version))
+              (uri (pypi-uri "apscheduler" version))
               (sha256
                (base32
-                "0jpg9jyx95jafkq0hz6sx7r4l2z5gc599ivb9278kgnr4wdhgpz6"))))
+                "08gjh0l7ba87yp23ilqigp3q004gnnw092p9gxsd310c83v7mdqd"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-pytz
-                             python-six
-                             python-tzlocal))
-    (native-inputs (list python-mock
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; FIXME: Investigate regressions with latest python-pytest-asyncio.
+         "--deselect=tests/test_executors.py::test_max_instances[processpool-pytz]"
+         "--deselect=tests/test_executors.py::test_max_instances[processpool-zoneinfo]"
+         "--deselect=tests/test_executors.py::test_submit_job[processpool-pytz-executed]"
+         "--deselect=tests/test_executors.py::test_submit_job[processpool-pytz-missed]"
+         "--deselect=tests/test_executors.py::test_submit_job[processpool-pytz-error]"
+         "--deselect=tests/test_executors.py::test_submit_job[processpool-zoneinfo-executed]"
+         "--deselect=tests/test_executors.py::test_submit_job[processpool-zoneinfo-missed]"
+         "--deselect=tests/test_executors.py::test_submit_job[processpool-zoneinfo-error]"
+         "--deselect=tests/test_executors.py::test_run_job_error[processpool-pytz]"
+         "--deselect=tests/test_executors.py::test_run_job_error[processpool-zoneinfo]"
+         "--deselect=tests/test_executors.py::test_broken_pool"
+         "--deselect=tests/test_executors.py::test_run_coroutine_job_tornado")))
+    (propagated-inputs (list python-tzlocal))
+    (native-inputs (list python-anyio
                          python-twisted
                          python-gevent
                          python-setuptools
@@ -28885,8 +28900,8 @@ access the system cron automatically and simply using a direct API.")
                          python-pytest
                          python-pytest-asyncio
                          python-pytest-cov
-                         python-pytest-tornado5
-                         python-wheel))
+                         python-pytz
+                         python-tornado))
     (home-page "https://github.com/agronholm/apscheduler")
     (synopsis "Task scheduling library for Python")
     (description "Advanced Python Scheduler (APScheduler) is a Python library
