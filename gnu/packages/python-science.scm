@@ -92,6 +92,7 @@
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages simulation)
   #:use-module (gnu packages sphinx)
@@ -109,6 +110,7 @@
   #:use-module (guix utils)
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject))
 
@@ -4722,6 +4724,142 @@ readable.")
     (description "Vaex is a high performance Python library for lazy
 Out-of-Core DataFrames (similar to Pandas), to visualize and explore big
 tabular datasets.  This package provides the core modules of Vaex.")
+    (license license:expat)))
+
+(define-public python-polars-runtime-64
+  (package
+    (name "python-polars-runtime-64")
+    (version "1.35.1")
+    ;;The pypi polars-runtime-32 packages does not build;
+    ;;we use upstream's git, which only has polars-runtime-32
+    (home-page "https://github.com/pola-rs/polars")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "py-" version))))
+       (file-name (git-file-name name version))
+       (patches (search-patches "python-polars-runtime-64.patch"))
+       (sha256
+        (base32 "0k37jrfx6ni0bbxqdslg58jiwf4lgq3px2v3z410dihkng50bi7s"))))
+    ;; The packaging system uses this to check existence
+    (properties '(("upstream-name" . "polars_runtime_64")
+                  ;; and then imports prefixing an underscore
+                  ("import-name" . "_polars_runtime_64")))
+    (build-system cargo-build-system)
+    (native-inputs (append (list pkg-config
+                                 python-wrapper
+                                 python-setuptools
+                                 python-setuptools-scm
+                                 `(,rust "cargo"))))
+    (inputs (append (list lz4
+                          `(,zstd "lib"))
+                    (cargo-inputs 'python-polars-runtime-64)))
+    (arguments
+     (list
+      #:install-source? #f
+      #:tests? #f                       ;no tests
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils)
+                  (srfi srfi-26)
+                  (ice-9 match))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-dependencies
+            (lambda _
+              (substitute* "Cargo.toml"
+                (("^tikv-jemallocator" all)
+                 (string-append "# " all))
+                (("^zstd =.*" all)
+                 (string-append all "tikv-jemallocator = \"^0.6.0\"\n")))))
+          (add-before 'build 'setenv
+            (lambda _
+              (let* ((bash (match (assoc-ref '#$(standard-packages) "bash")
+                             ((package) package)))
+                     (sh (string-append bash "/bin/sh")))
+                (setenv "CONFIG_SHELL" sh)
+                (setenv "SHELL" sh))))
+          (add-before 'build 'patch-tik-jemalloc-sys
+            (lambda _
+              (let ((bash (match (assoc-ref '#$(standard-packages) "bash")
+                            ((package) package)))
+                    (makefile.in (find-files "guix-vendor" "Makefile.in")))
+                (substitute* makefile.in
+                  (("/bin/sh" all) (string-append bash all))))))
+          (add-after 'build 'cd-to:py-polars/runtime
+            (lambda _
+              (chdir "py-polars/runtime")))
+          (replace 'install
+            (lambda _
+              (chdir "../..")
+              (let* ((site (string-append #$output "/lib/python"
+                                          #$(version-major+minor
+                                             (package-version python))
+                                          "/site-packages"))
+                     (name (assoc-ref '#$properties "import-name"))
+                     (pkg  (string-append site "/" name)))
+                (copy-file "target/release/libpolars_dylib.so"
+                           (string-append pkg "/_polars_runtime_64.so")))))
+          (add-after 'cd-to:py-polars/runtime 'remove-maturin ;we build crates with cargo
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("^(build-backend = ).*" all prefix)
+                 (string-append prefix "'setuptools.build_meta'\n"))
+                (("tool.maturin") "tool.fubar")
+                ((".*maturin.*") ""))))
+          (add-after 'remove-maturin 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
+          ;;build_feature_flags.py doesn't get build by pyproject
+          (add-after 'build-python-module 'build-build_feature_flags.py
+            (lambda args
+              (let ((name (assoc-ref '#$properties "import-name")))
+                (with-directory-excursion name
+                  (with-output-to-file "build_feature_flags.py"
+                    (lambda _ (display "BUILD_FEATURE_FLAGS = ''\n")))))
+              (apply (assoc-ref py:%standard-phases 'build) args)))
+          (add-after 'build-build_feature_flags.py 'install-python-module
+            (assoc-ref py:%standard-phases 'install))
+          (add-after 'install-python-module 'fix-dist-info
+            (lambda _
+              (let* ((site (string-append #$output "/lib/python"
+                                          #$(version-major+minor
+                                             (package-version python))
+                                          "/site-packages"))
+                     (name (assoc-ref '#$properties "upstream-name"))
+                     (dist-info
+                      (string-append site "/" name "-0.0.0.dist-info"))
+                     (versioned-dist-info
+                      (string-append site "/"  name "-" #$version ".dist-info")))
+                (substitute* (string-append dist-info "/METADATA")
+                  (("Version: 0.0.0")
+                   (string-append "Version: " #$version)))
+                (substitute* (string-append dist-info "/RECORD")
+                  (("0.0.0") #$version))
+                (rename-file dist-info versioned-dist-info))))
+          (add-after 'fix-dist-info 'install-py
+            (lambda _
+              (let* ((site (string-append #$output "/lib/python"
+                                          #$(version-major+minor
+                                             (package-version python))
+                                          "/site-packages"))
+                     (name (assoc-ref '#$properties "import-name"))
+                     (pkg (string-append site "/" name)))
+                (with-directory-excursion name
+                  (for-each (cute install-file <> pkg)
+                            '("__init__.py"
+                              "build_feature_flags.py"))))))
+          (add-after 'install-py 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (add-after 'add-install-to-pythonpath 'compile-python-module
+            (assoc-ref py:%standard-phases 'compile-bytecode)))))
+    (synopsis "Binary runtime library for python-polars")
+    (description
+     "Polars-runtime-64 contains the binary shared libraries that back the
+python-polars package.  Not meant for direct general consumption.")
     (license license:expat)))
 
 (define-public python-vector
