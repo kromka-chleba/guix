@@ -1915,7 +1915,10 @@ exec " gcc "/bin/" program
       (inherit pkg)
       (native-inputs
        `(("sed" ,sed-mesboot)
-         ,@(package-native-inputs pkg))))))
+         ,@(package-native-inputs pkg)))
+      (arguments (substitute-keyword-arguments (package-arguments pkg)
+                   ((#:configure-flags flags ''())
+                    `(cons "--disable-year2038" ,flags)))))))
 
 (define grep-mesboot
   (let ((pkg (mesboot-package "grep-mesboot" grep)))
