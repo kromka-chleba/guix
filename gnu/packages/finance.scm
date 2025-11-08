@@ -63,6 +63,7 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system emacs)
   #:use-module (guix build-system haskell)
@@ -2034,6 +2035,28 @@ This includes components like The Hub and Indexer which and various others
 that allows you to run services and through them access the Bitcoin Cash networks.")
     (license license:gpl3+)))
 
+(define-public beancount-language-server
+  (package
+    (name "beancount-language-server")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/polarmutex/beancount-language-server")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "0plldl148p2hy8z33h5a0dbz8vh8w6bbwa2i85zd7739639dh7vk"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:cargo-install-paths ''("crates/lsp")))
+    (inputs (cargo-inputs 'beancount-language-server))
+    (home-page "https://github.com/polarmutex/beancount-language-server")
+    (synopsis "Language server for the beancount language")
+    (description
+     "This package provides a language server for the beancount language.")
+    (license license:expat)))
 
 (define-public beancount
   (package
