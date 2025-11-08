@@ -16317,7 +16317,6 @@ allowing unprefixed keys to insert their respective characters as expected.")
                  "'(not claude-code-ide-mcp-server-test-ws-send-fix))"))))
       (propagated-inputs
        (list emacs-flycheck
-             emacs-eat
              emacs-transient
              emacs-vterm
              emacs-web-server
