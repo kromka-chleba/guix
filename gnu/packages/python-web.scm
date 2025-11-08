@@ -601,6 +601,24 @@ services QIDO-RS, WADO-RS and STOW-RS to search, retrieve and store
 DICOM objects over the web, respectively.")
     (license license:expat)))
 
+(define-public python-dnslib
+  (package
+    (name "python-dnslib")
+    (version "0.9.26")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dnslib" version))
+       (sha256
+        (base32 "1a7ia7xsfmdc44wwnmni26sfdidckc0p0llk0ayjy2rr6isqammy"))))
+    (build-system pyproject-build-system)
+    (arguments `(#:tests? #f))          ; No tests.
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/paulc/dnslib")
+    (synopsis "Simple library to encode/decode DNS wire-format packets")
+    (description "Simple library to encode/decode DNS wire-format packets.")
+    (license license:bsd-3)))
+
 (define-public python-docusign-esign
   (package
     (name "python-docusign-esign")
