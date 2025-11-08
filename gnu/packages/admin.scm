@@ -1211,6 +1211,30 @@ memory, disks, network and processes.  It's a Python port and continuation of
 @command{bashtop}.")
     (license license:asl2.0)))
 
+(define-public nvtop
+  (package
+    (name "nvtop")
+    (version "3.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Syllo/nvtop")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01ybnszqjd0i9bgwgs3sizzj5f6jya52qb8g3skx9n2bkr7s287j"))))
+    (build-system cmake-build-system)
+    (inputs (list eudev libdrm ncurses))
+    (native-inputs (list googletest pkgconf))
+    (home-page "https://github.com/Syllo/nvtop")
+    (synopsis "GPU & Accelerator process monitor")
+    (description
+     "NVTOP stands for Neat Videocard TOP, a (h)top like task monitor for GPUs
+and accelerators.  It can handle multiple GPUs and print information about them
+in an htop-familiar way.")
+    (license license:gpl3+)))
+
 (define-public pies
   (package
     (name "pies")
