@@ -3995,6 +3995,29 @@ Labwc has no reliance on any particular Desktop Environment, Desktop Shell or
 session.  Nor does it depend on any UI toolkits such as Qt or GTK.")
     (license license:gpl2)))
 
+(define-public lavalauncher
+  (package
+    (name "lavalauncher")
+    (version "2.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.sr.ht/~leon_plickat/lavalauncher")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hqlylvdmgivvxvsvxr3rx5mwl0p0hypdaqbfi16r6rxmdky31l6"))))
+    (build-system meson-build-system)
+    (inputs (list cairo librsvg libxkbcommon wayland wayland-protocols))
+    (native-inputs (list pkg-config scdoc))
+    (home-page "https://sr.ht/~leon_plickat/lavalauncher/")
+    (synopsis "Dock-like launcher panel for Wayland desktops")
+    (description "LavaLauncher is a simple launcher panel that displays a
+dynamically sized bar with user-defined buttons activating shell
+commands.  Features include multiple bars and touch screen compatibility.")
+    (license license:gpl3+)))
+
 (define-public hikari
   (package
     (name "hikari")
