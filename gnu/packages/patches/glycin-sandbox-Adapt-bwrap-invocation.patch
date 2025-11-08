@@ -15,6 +15,8 @@ Next, we change the /usr bind to be optional since there can be no
 Lastly, we add /gnu/store. I don’t think this is needed, but it is the
 upstream author’s wish with adding /nix/store. See also
 <https://gitlab.gnome.org/GNOME/glycin/-/issues/224>.
+
+Upstream-status: Not applicable.
 ---
  glycin/src/sandbox.rs | 7 +++++--
  1 file changed, 5 insertions(+), 2 deletions(-)
@@ -41,13 +43,14 @@ index 916a8f0..350ece3 100644
              "/usr",
              "/usr",
              // Make tmpfs dev available
-@@ -294,6 +294,9 @@ impl Sandbox {
+@@ -294,6 +294,10 @@ impl Sandbox {
              "--ro-bind-try",
              "/nix/store",
              "/nix/store",
 +            // Add /gnu/store on systems with Guix
-+            "/gnu/store",
-+            "/gnu/store",
++            "--ro-bind-try",
++            "@storedir@",
++            "@storedir@",
              // Create a fake HOME for glib to not throw warnings
              "--tmpfs",
              "/tmp-home",
