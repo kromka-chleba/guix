@@ -774,6 +774,30 @@ files rather than customizing the variable directly.")
 summarizing text using an LLM.")
       (license license:gpl3+))))
 
+(define-public emacs-gptel-got
+  (let ((commit "f25c56c4b3fae3bf435e3a82723438b49ac6878b")
+        (version "0.0.2")
+        (revision "1"))
+    (package
+      (name "emacs-gptel-got")
+      (version (git-version version revision commit))
+      (home-page "https://codeberg.org/bajsicki/gptel-got")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url home-page)
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256 (base32 "1n0gpzi1liz38xxy2l3cp2jwcw5j2qf1vfz5i29pvhvffqxsz4kh"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ;; no tests
+      (propagated-inputs (list emacs-gptel emacs-org-ql))
+      (synopsis "LLM Tools for org-mode interaction")
+      (description
+       "Expands the functionality of gptel for interacting with org-mode")
+      (license license:gpl3+))))
+
 (define-public emacs-chatgpt-shell
   (package
     (name "emacs-chatgpt-shell")
