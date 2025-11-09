@@ -1918,7 +1918,9 @@ exec " gcc "/bin/" program
          ,@(package-native-inputs pkg)))
       (arguments (substitute-keyword-arguments (package-arguments pkg)
                    ((#:configure-flags flags ''())
-                    `(cons "--disable-year2038" ,flags)))))))
+                    `(cons* "--disable-year2038"
+                            "utils_cv_avx2_intrinsic_exists=no"
+                            ,flags)))))))
 
 (define grep-mesboot
   (let ((pkg (mesboot-package "grep-mesboot" grep)))
