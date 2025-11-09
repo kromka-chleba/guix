@@ -1584,9 +1584,9 @@ Guile.")
 scores.")
     (license (package-license lilypond))))
 
-(define-public music21
+(define-public python-music21
   (package
-    (name "music21")
+    (name "python-music21")
     (version "9.3.0")
     (source
      (origin
@@ -1621,6 +1621,8 @@ scores.")
 listeners answer questions about music quickly and simply.")
     ;; Software is dual-licensed.
     (license (list license:bsd-3 license:lgpl3+))))
+
+(define-deprecated-package music21 python-music21)
 
 (define-public stk
   (package
