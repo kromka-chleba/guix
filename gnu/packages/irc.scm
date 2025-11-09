@@ -41,6 +41,7 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix utils)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
@@ -1125,6 +1126,33 @@ but can also be used independently as a logging bot.")
 server written in C++ for Unix-like operating systems.")
     (home-page "https://www.inspircd.org/")
     (license license:gpl2)))
+
+(define-public ellidri
+  (package
+    (name "ellidri")
+    (version "3.0.0-beta")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ellidri" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1hjrknp8zdaly6yl6vc9hylmdj0mqmpvjxqz7v9bi1xqc3lpim3y"))))
+    (build-system cargo-build-system)
+    (arguments (list #:install-source? #f))
+    (inputs (append (cargo-inputs 'ellidri)
+                    (list pkg-config openssl sqlite)))
+    (home-page "https://git.sr.ht/~taiite/ellidri")
+    (synopsis "Simple IRCv3 server")
+    (description
+     "@code{ellidri} is a simple, but feature-complete IRCv3 server with a
+hot-reloadable configuration and support for the following IRCv3 extensions:
+@code{account-notify}, @code{away-notify}, @code{batch}, @code{cap-notify},
+@code{echo-message}, @code{extended-join}, @code{invite-notify},
+@code{labeled-response}, @code{message-ids}, @code{message-tags},
+@code{multi-prefix}, @code{server-time}, @code{setname}, and
+@code{userhost-in-names}.")
+    (license license:isc)))
 
 (define-public snuik
   (package
