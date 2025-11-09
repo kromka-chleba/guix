@@ -15538,6 +15538,28 @@ output.")
 PNG and terminal output.")
     (license license:bsd-3)))
 
+(define-public python-qrcodegen
+  (package
+    (name "python-qrcodegen")
+    (version "1.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "qrcodegen" version ".zip"))
+       (sha256
+        (base32 "17kf33nyq20d213h10f2x4zxzbxx790vj5b1c3bscssv0vsn3nw2"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; No tests.
+    (native-inputs (list python-setuptools python-wheel
+                         unzip
+                         (@ (gnu packages compression) zip)))
+    (home-page "https://www.nayuki.io/page/qr-code-generator-library")
+    (synopsis "QR Code generator")
+    (description
+     "@code{python-qrcodegen} is a QR code generator library in Python.  The
+project also offers Java, Javascript, C, C++, and Rust implementations.")
+    (license license:expat)))
+
 (define-public python-seaborn
   (package
     (name "python-seaborn")
