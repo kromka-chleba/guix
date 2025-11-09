@@ -6997,9 +6997,9 @@ side panel;
     (license license:gpl2+)))
 
 ;; Also update (@ (gnu packages rust-sources) rust-glycin-3) when updating this.
-(define-public glycin
+(define-public glycin-loaders
   (package
-    (name "glycin")
+    (name "glycin-loaders")
     (version "2.0.3")
     (source
      (origin
@@ -7111,9 +7111,10 @@ side panel;
                    librsvg
                    (cargo-inputs 'glycin)))
     (home-page "https://gitlab.gnome.org/GNOME/glycin")
-    (synopsis "Sandboxed image decoding")
+    (synopsis "Rust library for sandboxed image decoding")
     (description "Glycin is a sandbox image decoder for image viewers and
-thumbnails to display untrusted content safely.")
+thumbnails to display untrusted content safely. This package provides the
+runtime image loader executables that are used inside the sandbox.")
     (license (list license:mpl2.0 license:lgpl2.1+))))
 
 (define-public libgudev
