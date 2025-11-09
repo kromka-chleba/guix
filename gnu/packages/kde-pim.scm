@@ -1060,7 +1060,6 @@ verifiedserverdialogtest" ;SEGFAULT
             akonadi-contacts
             akonadi-import-wizard
             akonadi-mime
-            akonadi-notes
             discount
             grantlee
             grantleetheme
