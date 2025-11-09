@@ -7741,6 +7741,37 @@ Interface} and @acronym{SSL, Secure Sockets Layer} support.  It can be
 embedded into C/C++ applications or used as a standalone web server.")
     (license license:expat)))
 
+(define-public copyparty
+  (package
+    (name "copyparty")
+    (version "1.19.20")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "copyparty" version))
+       (sha256
+        (base32 "0d5c7hiyjfwygm3ddfmaybiildmwq6lf4lcam79mndzrri6mjhxd"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; The modules in this directory are meant to be de-vendorable.
+        #~(delete-file-recursively "copyparty/stolen"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:phases #~(modify-phases %standard-phases
+                        ;; pyproject.toml refers to symlinked modules outside
+                        ;; of the project directory, making this test fail.
+                        (delete 'sanity-check))))
+    (propagated-inputs (list python-dnslib python-ifaddr python-jinja2
+                             python-qrcodegen))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/9001/copyparty")
+    (synopsis "Portable file server")
+    (description
+     "@code{copyparty} is a portable file server written in Python featuring
+accelerated resumable uploads, deduplication, WebDAV, FTP, zeroconf,
+video thumbnails, audio transcoding, and write-only folders.")
+    (license license:expat)))
+
 (define-public clearsilver
   (package
     (name "clearsilver")
