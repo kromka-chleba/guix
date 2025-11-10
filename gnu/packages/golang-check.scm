@@ -96,6 +96,67 @@ testing package automatically and requires to check the returning boolean
 value and call @code{t.Fatal()} if the assertion fails.")
     (license license:expat)))
 
+(define-public go-git-sr-ht-nelsam-correct
+  (package
+    (name "go-git-sr-ht-nelsam-correct")
+    (version "0.0.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.sr.ht/~nelsam/correct")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vzbcc7df22sagq229bvqjw1v1glh9kxfz77jjyxxnjpwik2y5rj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; Cycles with github.com/poy/onpar, and git.sr.ht/~nelsam/hel
+      #:tests? #f
+      #:import-path "git.sr.ht/~nelsam/correct"))
+    (propagated-inputs
+     (list go-github-com-fatih-color
+           go-golang-org-x-exp))
+    (home-page "https://git.sr.ht/~nelsam/correct")
+    (synopsis "Assertions for Golang")
+    (description
+     "Correct is a collection of assertion libraries for Golang, intended to be
+used together.  It tries not to strictly enforce that, though - most of
+correct should be customizeable either by changing some options or by using
+only some sub-packages of correct.")
+    (license license:mpl2.0)))
+
+(define-public go-git-sr-ht-nelsam-hel
+  (package
+    (name "go-git-sr-ht-nelsam-hel")
+    (version "0.8.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.sr.ht/~nelsam/hel")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fb9j4iycqxrsbv8pjy23df7njrkw93hj0m88b89q88qj4p3hv2w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "git.sr.ht/~nelsam/hel"))
+    (native-inputs
+     (list go-github-com-spf13-cobra)) ;for CLI
+    (propagated-inputs
+     (list go-git-sr-ht-nelsam-correct
+           go-github-com-poy-onpar))
+    (home-page "https://git.sr.ht/~nelsam/hel")
+    (synopsis "Mock generator for Golang")
+    (description
+     "In Norse mythology, Hel cares for the souls of people who didn't die in
+battle.  This little tool cares for mock implementations of interface types.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-adalogics-go-fuzz-headers
   (package
     (name "go-github-com-adalogics-go-fuzz-headers")
@@ -823,6 +884,80 @@ tests.")
      "Package tbltest implements helper functions to help write table driven
 tests.")
     (license license:expat)))
+
+(define-public go-github-com-gkampitakis-ciinfo
+  (package
+    (name "go-github-com-gkampitakis-ciinfo")
+    (version "0.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/gkampitakis/ciinfo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14pkbqirxsp14lb7yazpqrvlhm26kc7pwn3ldi8wxnfzscqvhba9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gkampitakis/ciinfo"
+      #:unpack-path "github.com/gkampitakis/ciinfo"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'generate-vendors-constants
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              ;; Matches the "make compile-constants" body
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (install-file "vendors.go" "compile-constants/")
+                (substitute* "compile-constants/vendors.go"
+                  (("ciinfo") "main"))))))))
+    (home-page "https://github.com/gkampitakis/ciinfo")
+    (synopsis "Get details about the current Continuous Integration environment")
+    (description
+     "This package provides @code{ciinfo}, a tool to get details about the
+current Continuous Integration environment, including checking if running in a
+CI system, which CI system, build id, and more.
+
+This is a reimplementation of @uref{https://github.com/watson/ci-info,
+ci-info} in Go.")
+    (license license:expat)))
+
+(define-public go-github-com-gkampitakis-go-snaps
+  ;; Updated version is not released yet, see:
+  ;; <https://github.com/gkampitakis/go-snaps/issues/140>.
+  (let ((commit "0832b79c205714d0e21108ab3848cc2715eed2d3")
+        (revision "0"))
+    (package
+      (name "go-github-com-gkampitakis-go-snaps")
+      (version (git-version "0.5.15" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/gkampitakis/go-snaps")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1djdcc2pkizpnv35q49y7ncll7yw0w8j3a347ybrqs6my7qv66lx"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:skip-build? #t
+        #:import-path "github.com/gkampitakis/go-snaps"))
+      (propagated-inputs
+       (list go-github-com-gkampitakis-ciinfo
+             go-github-com-goccy-go-yaml
+             go-github-com-kr-pretty
+             go-github-com-maruel-natural
+             go-github-com-sergi-go-diff
+             go-github-com-tidwall-gjson
+             go-github-com-tidwall-pretty
+             go-github-com-tidwall-sjson))
+      (home-page "https://github.com/gkampitakis/go-snaps")
+      (synopsis "Jest-like snapshot testing in Go")
+      (description "go-snaps is a Go implementation of Jest snapshot testing.")
+      (license license:expat))))
 
 (define-public go-github-com-go-playground-assert-v2
   (package
@@ -2131,6 +2266,32 @@ current goroutine's ID.")
 Go application.")
     (license license:bsd-2)))
 
+(define-public go-github-com-poy-onpar
+  (package
+    (name "go-github-com-poy-onpar")
+    (version "0.3.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/poy/onpar")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h4w1p846hw047gjlfqxh3ismdy6nripnkfqlrqvj2fvnakk2yhi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f       ;cycles with git.sr.ht/~nelsam/hel
+      #:import-path "github.com/poy/onpar"))
+    (propagated-inputs
+     (list go-github-com-fatih-color))
+    (home-page "https://github.com/poy/onpar")
+    (synopsis " Parallel testing framework for Golang")
+    (description
+     "This package implements a parallel testing framework for Go.")
+    (license license:expat)))
+
 (define-public go-github-com-prashantv-gostub
   (package
     (name "go-github-com-prashantv-gostub")
@@ -3219,6 +3380,20 @@ thoroughly
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-ciinfo
+  (package/inherit go-github-com-gkampitakis-ciinfo
+    (name "go-ciinfo")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-gkampitakis-ciinfo)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "github.com/gkampitakis/ciinfo/ciinfo")))
+    (native-inputs
+     (package-propagated-inputs go-github-com-gkampitakis-ciinfo))
+    (propagated-inputs '())
+    (inputs '())))
 
 (define-public go-ginkgo
   (package/inherit go-github-com-onsi-ginkgo-v2

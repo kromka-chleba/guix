@@ -1833,6 +1833,22 @@ code for possible problems.")
        (sha256
         (base32 "1rsx69wjpa73c6x2hacvvvbzdzxn7wg06gizf97kasjdlb7azmp3"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-c-standard
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CFLAGS=-g -O2"
+                              " -std=gnu17"))))))))))
     (home-page "https://github.com/jalvesaq/colorout")
     (synopsis "Colorize output in the R REPL")
     (description "@code{colorout} is an R package that colorizes R output when
@@ -9163,6 +9179,16 @@ statistical analyses or create publication-ready tables and plots.")
         (base32 "01ly4hxwa64a0ya5gla8rvv72s9mcknsfznivjkh937pbjwb7iih"))))
     (properties `((upstream-name . "parallelDist")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              (substitute* "src/Makevars"
+                (("CXX_STD = CXX11")
+                 "CXX_STD = CXX11
+PKG_CXXFLAGS=-g -O2 -Wno-error=changes-meaning")))))))
     (propagated-inputs (list r-rcpp r-rcpparmadillo r-rcppparallel))
     (native-inputs (list r-dtw r-ggplot2 r-proxy r-rcppxptrutils r-testthat))
     (home-page "https://github.com/alexeckert/parallelDist")
@@ -19558,6 +19584,22 @@ phylogenies and ancestral character states.")
         (base32 "0by01x4qpf1pin5l61wmm600bmsnlnns9knwb0qmjlj72pmwfkqh"))))
     (properties `((upstream-name . "dtwclust")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CXXFLAGS=-g -O2"
+                              " -Wno-error=changes-meaning\n"))))))))))
     (propagated-inputs
      (list r-clue
            r-cluster
@@ -21281,7 +21323,18 @@ provides some missing S-PLUS functionality in R.")
 #define ERROR	),error(R_problem_buf);}
 #define WARNING(x)		),warning(R_problem_buf);}
 #define WARN			WARNING(NULL)
-" m))))))))
+" m)))))
+         (add-before 'install 'fix-r-4.5.0
+            ;; Changes in R 4.5.0: C-Level Facilities.
+            ;; Strict R headers are now the default. This removes the legacy
+            ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+            ;; R_Calloc, R_Realloc or R_Free instead.
+            ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+            (lambda _
+              (substitute* "src/ut_alloc.c"
+                (("Calloc") "R_Calloc")
+                (("Free") "R_Free")
+                (("Realloc") "R_Realloc")))))))
     (propagated-inputs
      (list r-mass r-splus2r))
     (home-page "https://cran.r-project.org/web/packages/ifultools/")
@@ -25714,6 +25767,17 @@ cross-validation.")
         (base32 "00pxi5zj68796b3qkil3w66z446ib61xl2l5v1qia1mc9fznlzri"))))
     (properties `((upstream-name . "blavaan")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-gcc-14-strictness
+            (lambda _
+              (substitute* "configure"
+                ;; Modifying src/Makevars directly is overruled.
+                (("config\\(\\)\"")
+                 "config()\"
+echo \"PKG_CXXFLAGS+=-g -O2 -Wno-error=changes-meaning\" >> src/Makevars")))))))
     (propagated-inputs (list r-bayesplot
                              r-bh
                              r-coda
@@ -29716,7 +29780,15 @@ package provides a minimal R interface by relying on the Rcpp package.")
                   (lambda _
                     (display (string-append
                               "CXXFLAGS=-g -O2"
-                              " -Wno-error=changes-meaning\n"))))))))))
+                              " -Wno-error=changes-meaning\n")))))))
+          ;; This change lets us use GCC 13+.  We need to patch things here so
+          ;; that packages using RcppParallel to generate code can be compiled
+          ;; without errors.
+          (add-after 'install 'gcc-compatibility
+            (lambda _
+              (substitute* (string-append #$output "/site-library/RcppParallel/include/tbb/task.h")
+                (("task\\* next_offloaded")
+                 "tbb::task* next_offloaded")))))))
     (inputs (list tbb-2020))
     (native-inputs (list r-rcpp r-runit))
     (home-page "https://rcppcore.github.io/RcppParallel/")
@@ -32353,32 +32425,6 @@ the properties of models.  This is mainly for use by other package developers
 who want to include run-time testing features in their own packages.")
     (license license:gpl3+)))
 
-(define-public r-assertive-reflection
-  (package
-    (name "r-assertive-reflection")
-    (version "0.0-5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (cran-uri "assertive.reflection" version))
-       (sha256
-        (base32
-         "1g9lpwzy6r2xmyi2mlbcccnfgyzhzbmx5bsicf3vkffxrlkrpjn2"))))
-    (properties
-     `((upstream-name . "assertive.reflection")))
-    (build-system r-build-system)
-    (propagated-inputs
-     (list r-assertive-base))
-    (native-inputs (list r-testthat))
-    (home-page "https://bitbucket.org/richierocks/assertive.reflection")
-    (synopsis "Assertions for checking the state of R")
-    (description
-     "This package provides a set of predicates and assertions for checking
-the state and capabilities of R, the operating system it is running on, and
-the IDE being used.  This is mainly for use by other package developers who
-want to include run-time testing features in their own packages.")
-    (license license:gpl3+)))
-
 (define-public r-assertive-types
   (package
     (name "r-assertive-types")
@@ -32590,45 +32636,6 @@ their own packages.")
 the properties of (country independent) complex data types.  This is mainly
 for use by other package developers who want to include run-time testing
 features in their own packages.")
-    (license license:gpl3+)))
-
-(define-public r-assertive
-  (package
-    (name "r-assertive")
-    (version "0.3-6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (cran-uri "assertive" version))
-       (sha256
-        (base32
-         "02palil82idqhhshcdjsfsja9qkqnd0dczqzj5gbccy4hfg1c0y4"))))
-    (build-system r-build-system)
-    (propagated-inputs
-     (list r-assertive-base
-           r-assertive-code
-           r-assertive-data
-           r-assertive-data-uk
-           r-assertive-data-us
-           r-assertive-datetimes
-           r-assertive-files
-           r-assertive-matrices
-           r-assertive-models
-           r-assertive-numbers
-           r-assertive-properties
-           r-assertive-reflection
-           r-assertive-sets
-           r-assertive-strings
-           r-assertive-types
-           r-knitr))
-    (native-inputs
-     (list r-knitr r-testthat))
-    (home-page "https://bitbucket.org/richierocks/assertive")
-    (synopsis "Readable check functions to ensure code integrity")
-    (description
-     "This package provides lots of predicates (@code{is_*} functions) to
-check the state of your variables, and assertions (@code{assert_*} functions)
-to throw errors if they aren't in the right form.")
     (license license:gpl3+)))
 
 (define-public r-dotcall64
@@ -33017,7 +33024,21 @@ putative directions).")
     (build-system r-build-system)
     ;; FIXME: Error in genomePartition(reader, ref) : pCoords: begin must be
     ;; <= end!
-    (arguments (list #:tests? #false))
+    (arguments
+     (list
+      #:tests? #false
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'fix-r-4.5.0
+            ;; Changes in R 4.5.0: C-Level Facilities.
+            ;; Strict R headers are now the default. This removes the legacy
+            ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+            ;; R_Calloc, R_Realloc or R_Free instead.
+            ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+            (lambda _
+              (substitute* '("src/gapSiteList.h" "src/gapSiteListList.h")
+                (("Calloc") "R_Calloc")
+                (("Free") "R_Free")))))))
     (inputs (list zlib))
     (propagated-inputs
      (list r-refgenome))
@@ -35833,6 +35854,20 @@ lines.  It includes maximum likelihood and Bayesian tools.")
         (base32
          "0c4svyfd7xjx9k6pl40l7y9rc67zschs0nz1l386xi1m7arsp44n"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'fix-r-4.5.0
+            ;; Changes in R 4.5.0: C-Level Facilities.
+            ;; Strict R headers are now the default. This removes the legacy
+            ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+            ;; R_Calloc, R_Realloc or R_Free instead.
+            ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+            (lambda _
+              (substitute* "src/lsConstrain.c"
+                (("Calloc") "R_Calloc")
+                (("Free") "R_Free")))))))
     (home-page "https://www.mayo.edu/research/labs/\
 statistical-genetics-genetic-epidemiology/software")
     (synopsis "Regression methods for IBD linkage with covariates")
@@ -43039,13 +43074,13 @@ It also provides a small number of bug fixes to the original code.")
 (define-public r-torch
   (package
     (name "r-torch")
-    (version "0.14.2")
+    (version "0.16.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "torch" version))
        (sha256
-        (base32 "1j0wgxr25h91c7x48svmgd0pbjl2ljn8rv6rsgw5a56vdgr992nb"))))
+        (base32 "0gqjg9qhsrwh5cvdlk6lyqp2j1d3kr49im3m2ja4c3wkjpk9swhv"))))
     (properties
      '((upstream-name . "torch")
        (updater-ignored-native-inputs . ("r-aten"))
@@ -43072,8 +43107,7 @@ It also provides a small number of bug fixes to the original code.")
                     inputs "/lib/liblantern.so")
                    (string-append deps "/liblantern.so")))))))))
     (inputs
-     (list python-pytorch-for-r-torch
-           liblantern))
+     (list liblantern python-pytorch-for-r-torch))
     (propagated-inputs
      (list r-bit64
            r-callr
@@ -45565,7 +45599,13 @@ techniques to average Bayesian predictive distributions.")
              (setenv "TZ" "UTC+1")
              (setenv "TZDIR"
                      (search-input-directory inputs
-                                             "share/zoneinfo")))))))
+                                             "share/zoneinfo"))))
+         (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              (substitute* "src/Makevars"
+                (("CXX_STD = CXX17")
+                 "CXX_STD = CXX17
+PKG_CXXFLAGS+=-g -O2 -Wno-error=changes-meaning")))))))
     (native-inputs
      (list r-knitr
            r-matrix
@@ -46472,6 +46512,19 @@ download images.")
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'relax-gcc-14-strictness
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CFLAGS=-g -O2"
+                              " -std=gnu11"
+                              " -Wno-error=implicit-function-declaration\n")))))))
          (add-before 'install 'install-server-binary
            ;; Makevars tries to install to R's store directory.
            (lambda* (#:key outputs #:allow-other-keys)
@@ -48048,6 +48101,22 @@ importance measure as introduced in Kursa (2014)
              (base32
               "05x9wgzsmx4vb12lmcspymgmpb2xw8bwryb8ysg7vzg2nkh0ma3g"))))
    (build-system r-build-system)
+   (arguments
+    (list
+     #:phases
+     '(modify-phases %standard-phases
+        (add-before 'install 'fix-r-4.5.0
+          ;; Changes in R 4.5.0: C-Level Facilities.
+          ;; Strict R headers are now the default. This removes the legacy
+          ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+          ;; R_Calloc, R_Realloc or R_Free instead.
+          ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+          (lambda _
+            (substitute* '("src/featContrib.c"
+                           "src/featContribClass.c"
+                           "src/forest.c")
+              (("Calloc") "R_Calloc")
+              (("Free") "R_Free")))))))
    (propagated-inputs
     (list r-randomforest))
    (home-page "https://r-forge.r-project.org/projects/rffc/")
@@ -50482,6 +50551,20 @@ parabolic or user defined by custom scale factors.")
             "036cv56wf42q2p3d5h15hbrp5rc29xxy20qwv4k1qzhkq6hmw0qs"))))
     (properties `((upstream-name . "decon")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'fix-r-4.5.0
+            ;; Changes in R 4.5.0: C-Level Facilities.
+            ;; Strict R headers are now the default. This removes the legacy
+            ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+            ;; R_Calloc, R_Realloc or R_Free instead.
+            ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+            (lambda _
+              (substitute* "src/Ckernel.c"
+                (("pow\\(PI") "pow(M_PI")
+                (("fint/PI") "fint/M_PI")))))))
     (native-inputs
      (list gfortran))
     (home-page
@@ -50518,6 +50601,17 @@ Journal of Statistical Software, 39(10), 1-24.")
         (base32 "0ydnjyprv8fz037nkfvjd8w6hg4a19lbnq4kl7yankxksjfdyqc3"))))
     (properties `((upstream-name . "densEstBayes")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-gcc-14-strictness
+            (lambda _
+              (substitute* "configure"
+                ;; Modifying src/Makevars directly is overruled.
+                (("src/Makevars")
+                 "src/Makevars
+echo \"PKG_CXXFLAGS+=-g -O2 -Wno-error=changes-meaning\" >> src/Makevars")))))))
     (propagated-inputs
      (list r-bh
            r-mass
@@ -51536,18 +51630,16 @@ avoid system fonts to make sure your outputs are reproducible.")
                     "--without-harfbuzz")))))
        ("static-harfbuzz"
         ,(package
-           (inherit (static-package harfbuzz))
+           (inherit harfbuzz)
            (arguments
             `(#:tests? #false ; fail because shared library is disabled
               #:configure-flags
-              (list "--enable-static=yes"
-		    "--enable-shared=no"
-		    "--with-pic=yes"
-		    "--with-freetype=yes"
-		    "--without-icu"
-		    "--without-cairo"
-		    "--without-fontconfig"
-		    "--without-glib")))))))
+              (list "--default-library=static"
+                   "--default-both-libraries=static"
+                   "-Dfreetype=enabled"
+                   "-Dicu=disabled"
+                   "-Dcairo=disabled"
+                   "-Dglib=disabled")))))))
     (inputs
      (list zlib))
     (home-page "https://cran.r-project.org/package=freetypeharfbuzz")

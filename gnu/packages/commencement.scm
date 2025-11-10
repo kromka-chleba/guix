@@ -2723,7 +2723,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit gnumach-headers)
      (name "gnumach-headers-boot0")
-     (version "1.8+git20250304")
+     (version "1.8+git20250731")
      (source
       (origin
         (inherit (package-source gnumach-headers))
@@ -2737,7 +2737,7 @@ memoized as a function of '%current-system'."
                   "gnumach-" version ".tar.gz"))
             (sha256
              (base32
-              "1mmjlcbzk1fs64q6vz2p2irp7vgbmyvm5inj3bf522gx50b3v67q")))))))
+              "1dc40cf2s8jr6xhhbmy6khmig5zz1gpb4vc9c40aagccxf72jkpv")))))))
      (native-inputs (list autoconf-boot0 automake-boot0 texinfo-boot0))
      (arguments
       (substitute-keyword-arguments (package-arguments gnumach-headers)
@@ -2787,7 +2787,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit hurd-headers)
      (name "hurd-headers-boot0")
-     (version "0.9.git20250420")
+     (version "0.9.git20251029")
      (source
       (origin
         (inherit (package-source hurd-headers))
@@ -2797,10 +2797,10 @@ memoized as a function of '%current-system'."
             (method url-fetch)
             (uri (string-append
                   "https://git.savannah.gnu.org/cgit/hurd/hurd.git/snapshot/"
-                  "hurd-v" version ".tar.gz"))
+                  "hurd-" version ".tar.gz"))
             (sha256
              (base32
-              "14ldrijzgqkvnii873vjlsmrjr3kvs1aksyc5b4ha8anlnnvdkg1")))))))
+              "0pjxh4qln8m7jznqlzsz81vi38chjv64jj9824dj7wkm36gxbn3a")))))))
      (native-inputs
       (list autoconf-boot0 automake-boot0 mig-boot0))
      (inputs '()))))

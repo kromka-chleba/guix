@@ -77,6 +77,7 @@
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages prometheus)
   #:use-module (gnu packages specifications)
   #:use-module (gnu packages tls)
@@ -741,6 +742,52 @@ example @code{GOPPROF=http,block}.")
      "This package provides a client library for convenient access
 to the Anthropic REST API.  It includes support for message creation,
 streaming, tool calling, and integration with Amazon Bedrock.")
+    (license license:expat)))
+
+(define-public go-github-com-antithesishq-antithesis-sdk-go
+  (package
+    (name "go-github-com-antithesishq-antithesis-sdk-go")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/antithesishq/antithesis-sdk-go")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ac3p3y9905ryj4j3mfvspbdcj9lkap85l2fa8va3mw2svg0wv8d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:test-flags
+      #~(list "-vet=off")    ;Go@1.24 forces vet, but tests are not ready yet.
+      #:import-path "github.com/antithesishq/antithesis-sdk-go"))
+    (propagated-inputs
+     (list go-golang-org-x-tools
+           go-golang-org-x-mod))
+    (home-page "https://github.com/antithesishq/antithesis-sdk-go")
+    (synopsis "Antithesis SDK for Golang")
+    (description
+     "This package provides methods for Go programs to configure the
+@url{https://antithesis.com, Antithesis} platform.  Functionality is grouped
+into the Go packages:
+
+@itemize
+@item @code{assert} - to enable defining [test properties] about your program
+or [workload]. It is part of the [Antithesis Go SDK], which enables Go
+applications to integrate with the [Antithesis platform]
+
+@item @code{random} - to request both structured and unstructured randomness
+from the Antithesis environment. is part of the [Antithesis Go SDK], which
+enables Go applications to integrate with the [Antithesis platform]
+
+@item @code{lifecycle} - to lifecycle informs the Antithesis environment that
+particular test phases or milestones have been reached. It is part of the
+[Antithesis Go SDK], which enables Go applications to integrate with the
+[Antithesis platform]
+@end itemize")
     (license license:expat)))
 
 (define-public go-github-com-apex-log
@@ -1712,6 +1759,38 @@ differentiate between installs of Mozilla software in @code{installs.ini} and
 @code{profiles.ini}.")
     (license license:expat)))
 
+(define-public go-github-com-buger-jsonparser
+  (package
+    (name "go-github-com-buger-jsonparser")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/buger/jsonparser")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qv2lsh2biwxn927941gqiv5pqg7n4v58j0i536pjp7pr17pq7dp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/buger/jsonparser"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-benchmark
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "benchmark")))))))
+    (home-page "https://github.com/buger/jsonparser")
+    (synopsis
+     "Alternative JSON parser for Golang")
+    (description
+     "This package provides an alternative JSON parser for Go.  It does not
+require to know the structure of the payload (eg.  create structs), and allows
+accessing fields by providing the path to them.")
+    (license license:expat)))
+
 (define-public go-github-com-caddyserver-certmagic
   (package
     (name "go-github-com-caddyserver-certmagic")
@@ -2634,6 +2713,37 @@ Any}.")
      "This package provides a specification and libraries for writing plugins to
 configure network interfaces in Linux containers, along with a number of
 supported plugins.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-coreos-go-iptables
+  (package
+    (name "go-github-com-coreos-go-iptables")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/coreos/go-iptables")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xxzqz9np93d8iig5dwjjpb78pqdj74zr91qb11r7g30nkcak5sw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;tests need access to iptables
+      #:import-path "github.com/coreos/go-iptables"))
+    (home-page "https://github.com/coreos/go-iptables")
+    (synopsis "Wrapper around iptables utility for Golang")
+    (description
+     "This package provides Go bindings for iptables utility.  In-kernel
+netfilter does not have a good userspace API. The tables are manipulated via
+setsockopt that sets/replaces the entire table.  Changes to existing table
+need to be resolved by userspace code which is difficult and error-prone.
+Netfilter developers heavily advocate using iptables utlity for programmatic
+manipulation.  go-iptables wraps invocation of iptables utility with functions
+to append and delete rules; create, clear and delete chains.")
     (license license:asl2.0)))
 
 (define-public go-github-com-coreos-go-oidc
@@ -5545,6 +5655,57 @@ standard @code{net/http} client library and exposes nearly the same public
 API.")
     (license license:mpl2.0)))
 
+(define-public go-github-com-hashicorp-serf
+  (package
+    (name "go-github-com-hashicorp-serf")
+    (version "0.10.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hashicorp/serf")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q9rismcpd5ci5zg6aq5b3y53x4j90fpdsvfc5jjh6hqfnxi0hzj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:test-flags
+      #~(list "-skip"
+              (string-join
+               ;; panic: runtime error: invalid memory address or nil pointer
+               ;; dereference
+               (list "TestCommandRun_mDNS"
+                     ;; [ERR] agent: Error invoking script ...  fork/exec
+                     ;; /bin/sh: no such file or directory
+                     "TestScriptEventHandler"
+                     "TestScriptUserEventHandler"
+                     "TestScriptQueryEventHandler"
+                     "TestSnapshotter_forceCompact"
+                     ;; err: Unix syslog delivery error
+                     "TestSyslogFilter")
+               "|"))
+      #:import-path "github.com/hashicorp/serf"))
+    (propagated-inputs
+     (list go-github-com-armon-circbuf
+           go-github-com-hashicorp-go-metrics
+           go-github-com-hashicorp-go-msgpack-v2
+           go-github-com-hashicorp-go-syslog
+           go-github-com-hashicorp-logutils
+           go-github-com-hashicorp-mdns
+           go-github-com-hashicorp-memberlist
+           go-github-com-mitchellh-cli
+           go-github-com-mitchellh-mapstructure
+           go-github-com-ryanuber-columnize))
+    (home-page "https://github.com/hashicorp/serf")
+    (synopsis "Service discovery and orchestration for Golang")
+    (description
+     "Serf is a decentralized solution for service discovery and orchestration
+that is lightweight, highly available, and fault tolerant.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-hashicorp-go-sockaddr
   (package
     (name "go-github-com-hashicorp-go-sockaddr")
@@ -5590,6 +5751,42 @@ API.")
      "This package provides an implementation of the UNIX socket family data
 types and related helper functions.")
     (license license:mpl2.0)))
+
+(define-public go-github-com-hashicorp-mdns
+  (package
+    (name "go-github-com-hashicorp-mdns")
+    (version "1.0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hashicorp/mdns")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pl9b4h46vzkxsxg1sq9g01y4cmxwfcy07a4v3r5c5b125p57fg6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/mdns"
+      #:test-flags
+      #~(list "-skip"
+              (string-join
+               ;; err: no multicast listeners could be started
+               (list "TestServer_StartStop"
+                     "TestServer_Lookup")
+               "|"))))
+    (propagated-inputs
+     (list go-github-com-miekg-dns
+           go-golang-org-x-net))
+    (home-page "https://github.com/hashicorp/mdns")
+    (synopsis "Simple mDNS client/server library in Golang")
+    (description
+     "This package is a simple @acronym{mDNS,Multicast Domain Name Service}
+client/server library in Go. @code{mDNS} can be used to discover services on
+the local network without the use of an authoritative DNS server.  This
+enables peer-to-peer discovery.")
+    (license license:expat)))
 
 (define-public go-github-com-hashicorp-memberlist
   (package
@@ -8740,6 +8937,47 @@ multistream-select protocol.  The protocol is defined at
      "Package swift provides an easy to use interface to Swift / Openstack
 Object Storage / Rackspace Cloud Files.")
     (license license:expat)))
+
+(define-public go-github-com-networkplumbing-go-nft
+  (package
+    (name "go-github-com-networkplumbing-go-nft")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/networkplumbing/go-nft")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gx0xh9llgi600v6qacnaxwk3j0kmmwk7d2hm9j5jpmcm8whvp2w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/networkplumbing/go-nft"
+      #:test-flags
+      #~(list "-skip" (string-join
+                       ;; Root access is required to pass these tests.
+                       (list "TestConfig/#00"
+                             "TestConfig/#01"
+                             "TestConfig/#02"
+                             "TestConfig/#03"
+                             "TestNATExamples/#00"
+                             "TestNftlib/#00"
+                             "TestNoMacSpoofingExample/#00")
+                       "|"))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list nftables))
+    (home-page "https://github.com/networkplumbing/go-nft")
+    (synopsis "NFT utility bindings for Golang")
+    (description
+     "This package provides Go bindings for @command{nft} utility.
+go-nft wraps invocation of the @command{nft} utility with functions to append
+and delete rules; create, clear and delete tables and chains.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-nrdcg-goinwx
   (package
@@ -14586,6 +14824,43 @@ be used as both a binary and a library.")
 @@url{https://rfc-editor.org/rfc/rfc6455.html,RFC 6455} @code{WebSocket}
 protocol.")
     (license license:isc)))
+
+(define-public go-sigs-k8s-io-knftables
+  (package
+    (name "go-sigs-k8s-io-knftables")
+    (version "0.0.19")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kubernetes-sigs/knftables")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dx0flrdhxbvk8wxgk90px91gx731qjq4j2di3nyfnn2sp3yfz1d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "sigs.k8s.io/knftables"
+      ;; Tests are not copatible with Go 1.24+.
+      #:test-flags #~(list "-vet=off")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (substitute* (string-append "src/" import-path "/exec_test.go")
+                (("/bin/true") (which "true"))
+                (("/bin/false") (which "false"))))))))
+    (native-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-lithammer-dedent))
+    (home-page "https://github.com/kubernetes-sigs/knftables")
+    (synopsis "Golang nftables library for Kubernetes")
+    (description
+     "This package provides nftables bindings in Go. It is not intended to
+support arbitrary use cases, but instead specifically focuses on supporting
+Kubernetes components which are using nftables.")
+    (license license:asl2.0)))
 
 ;;;
 ;;; Executables:

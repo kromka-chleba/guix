@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2024 Rodion Goritskov <rodion.goritskov@gmail.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 IliaLuetin <antonstimmer@gmx.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,6 +39,31 @@
 ;;;
 ;;; Libraries:
 ;;;
+
+(define-public go-github-com-altree-bigfloat
+  (package
+    (name "go-github-com-altree-bigfloat")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ALTree/bigfloat")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jvqg5w4azwqv0ranir6vhlh6403pn6043jqbwsldan4vj6n5xmh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ALTree/bigfloat"))
+    (home-page "https://github.com/ALTree/bigfloat")
+    (synopsis "Arbitrary-precision operations for Golang's @code{big.Float}")
+    (description
+     "This package provides additional operations for the standard library's
+@code{big.Float} type, including natural logarithm, exponentiation, and power
+functions for arbitrary-precision floating-point numbers.")
+    (license license:expat)))
 
 (define-public go-github-com-aclements-go-gg
   (package
@@ -175,6 +201,31 @@ and GCC’s decimal extension.")
      (substitute-keyword-arguments
          (package-arguments go-github-com-cockroachdb-apd)
        ((#:import-path _) "github.com/cockroachdb/apd/v3")))))
+
+(define-public go-github-com-google-go-intervals
+  (package
+    (name "go-github-com-google-go-intervals")
+    (version "0.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/google/go-intervals")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v9i46g1vdbyinagj94jvaibw4bpgh2l9f9p5268wg6msf761jm9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/google/go-intervals"))
+    (home-page "https://github.com/google/go-intervals")
+    (synopsis "Operations on 1-dimensional intervals for Golang")
+    (description
+     "This package provides utilities for performing set operations on
+1-dimensional intervals, such as time ranges.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-johncgriffin-overflow
   (package

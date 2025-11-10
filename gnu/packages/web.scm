@@ -78,6 +78,7 @@
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Philippe Swartvagher <phil.swart@gmx.fr>
 ;;; Copyright © 2025 pinoaffe <pinoaffe@gmail.com>
+;;; Copyright © 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -466,7 +467,7 @@ one.")
                 "1zf921nd9xxdvvc8awzzfrljr0n29vi28mlam0jdwvsk0xv4gd7a"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:disallowed-references (,httpd)
+     `(#:disallowed-references ,(list (this-package-native-input "httpd"))
        #:tests? #f                 ; TODO: can't figure out if there are tests
        #:make-flags (list
                      (string-append "DESTDIR="
@@ -5559,8 +5560,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "7d17e56839313d228fc3dadcb36619017e7fb5b4")
-        (revision "73"))
+  (let ((commit "eb75964e76bb1b90c4239a912d2241849d2440d8")
+        (revision "74"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5572,7 +5573,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0ky9596d4cplws7kxhlyxq39ax97mfxk5llfi2bgr49rbhwxkj57"))))
+                  "1w6i23mgj2j817qd2f5hc2infn1lk024c5kqrpr5p7y246z832x9"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -9864,7 +9865,7 @@ tools:
 (define-public uriparser
   (package
     (name "uriparser")
-    (version "0.9.8")
+    (version "0.9.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9873,7 +9874,7 @@ tools:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0qr3rc0iz1zxim1ylwzf7zijgnxpzv4m35fzvv5kf66a8bqhrw2k"))))
+                "1cd7z37ap5s5ipr4vnwzfmwir9n1ir266rnxq9rjisfzy5gq903w"))))
     (build-system cmake-build-system)
     (native-inputs (list googletest doxygen graphviz))
     (arguments (if (%current-target-system)

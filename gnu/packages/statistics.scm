@@ -386,7 +386,7 @@ comparison and diagnostics.")
     (build-system gnu-build-system)
     (arguments
      (list
-      #:disallowed-references `(,tzdata-for-tests)
+      #:disallowed-references `(,(this-package-native-input "tzdata"))
       #:make-flags
       #~(list (string-append "CFLAGS=-g -O2"
                              " -Wno-error=implicit-function-declaration")
@@ -748,7 +748,7 @@ posteriors and evidences.")
      (substitute-keyword-arguments (package-arguments r-with-tests)
        ((#:tests? #f #f) #f)
        ((#:disallowed-references refs '())
-        (cons perl refs))
+        (cons (this-package-native-input "perl") refs))
        ((#:configure-flags flags)
         ;; Do not build the recommended packages.  The build system creates
         ;; random temporary directories and embeds their names in some
@@ -3590,7 +3590,10 @@ statistical summary in arrays and enumerables.")
                           ;; failed for 10th keyword liwork: dsyevr:liwork=1
                           "test_estimate"
                           "test_score_bnlearn"
-                          "test_score_manual")
+                          "test_score_manual"
+                          ;; FileNotFoundError in tearDown: removes missing
+                          ;; 'dog_problem.xml'.
+                          "test_get_edges")
                     " and not "))))
     (propagated-inputs (list python-daft
                              python-joblib
@@ -3609,7 +3612,6 @@ statistical summary in arrays and enumerables.")
                          python-pytest
                          python-pytest-xdist
                          python-setuptools
-                         python-wheel
                          python-xgboost))
     (home-page "https://github.com/pgmpy/pgmpy")
     (synopsis "Probabilistic Graphical Models library")

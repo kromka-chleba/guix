@@ -603,10 +603,19 @@ interface and is based on GNU Guile.")
                                "/bin/zstd")))))
     (native-inputs
      (modify-inputs (package-native-inputs shepherd-0.10)
-       (replace "guile-fibers" guile-fibers))) ;use latest guile-fibers available
+       (replace "guile-fibers"
+         ;; Work around <https://codeberg.org/guile/fibers/issues/89>.
+         ;; This affects any system without a functional real-time
+         ;; clock (RTC), but in practice these are typically
+         ;; single-board computers.
+         (if (or (target-arm?)
+                 (target-riscv64?))
+             guile-fibers-1.1
+             guile-fibers)))) ;use latest guile-fibers available
     (inputs
      (modify-inputs (package-inputs shepherd-0.10)
-       (replace "guile-fibers" guile-fibers) ;use latest guile-fibers available
+       (replace "guile-fibers"
+                (this-package-native-input "guile-fibers"))
        (append gzip zstd)))))
 
 (define-public shepherd shepherd-0.10)
@@ -2709,7 +2718,7 @@ command.")
       #:tests? #f ; no tests
       ;; Make sure the (rarely updated) package 'imagemagick/stable'
       ;; does not end up in the closure.
-      #:disallowed-references (list imagemagick/stable)
+      #:disallowed-references (list (this-package-native-input "imagemagick"))
       #:modules '((guix build qt-build-system)
                   ((guix build gnu-build-system) #:prefix gnu:)
                   (guix build utils))
@@ -3775,14 +3784,14 @@ rules is done with the @code{auditctl} utility.")
 (define-public nmap
   (package
     (name "nmap")
-    (version "7.97")
+    (version "7.98")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nmap.org/dist/nmap-" version
                                   ".tar.bz2"))
               (sha256
                (base32
-                "1h252sz1cqr0r440s7pxn9wwn1jffbrdvacnvmbw4w664mwz565g"))
+                "1rlpv238ixcj62d740w8xghcfmkvmg9453kh46gmr7mfx89p716f"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -4659,7 +4668,7 @@ information tool.")
 (define-public fastfetch-minimal
   (package
     (name "fastfetch-minimal")
-    (version "2.53.0")
+    (version "2.54.0")
     (source
      (origin
        (method git-fetch)
@@ -4668,7 +4677,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w260lscjy3rqahhr2637hb3fqsklv2qx59f2v66wy99nnmqvbha"))
+        (base32 "0iw58idc45x505rhix3mqymnfbk1r7jc10alyry9qypflalqwkqx"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -5143,7 +5152,7 @@ cache of unix and unix-like systems.")
 (define-public solaar
   (package
     (name "solaar")
-    (version "1.1.14")
+    (version "1.1.16")
     (source
      (origin
        (method git-fetch)
@@ -5152,7 +5161,7 @@ cache of unix and unix-like systems.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "000700waw4z6ab40naycapjgqz8yvz9ny1px94ni4pwf8f3kh0vh"))))
+        (base32 "1q05pcrl1pr6ls92m5k690qrwqb4nz1lganxvbj9b40w3c6nh5iy"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest
@@ -5389,7 +5398,7 @@ elogind's uaccess feature.")
 (define-public jc
   (package
     (name "jc")
-    (version "1.25.5")
+    (version "1.25.6")
     (source
      (origin
        ;; The PyPI tarball lacks the test suite.
@@ -5399,7 +5408,7 @@ elogind's uaccess feature.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16agzk47f1g72gni3lazqlcv7fs0nb2dwbagv6kxjbk36pm3mzmn"))))
+        (base32 "0bpna1hfwigv9r3i1xafl96jlj4335hrjq5rkrgh2nzc57453bly"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -5569,14 +5578,14 @@ Netgear devices.")
 (define-public atop
   (package
     (name "atop")
-    (version "2.12.0")
+    (version "2.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.atoptool.nl/download/atop-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "11ih6kan3j9kg83pjhy9yffgpr638b0mfg1fq90yzrhl1k4yq28d"))))
+                "1xhjpmaans63g0y4z9gzff09fxxf9sgmj64ycc2r9y7sbmyfdnsg"))))
     (build-system gnu-build-system)
     (arguments
      (list

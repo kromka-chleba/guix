@@ -581,7 +581,7 @@ reading the extensive documentation about BookmarkPlus on the Emacs Wiki.")
   (package
     (name "emacs-bqn-mode")
     ;; Upstream releases are tagged by date.
-    (version "2025-04-10")
+    (version "2025-07-06")
     (source
      (origin
        (method git-fetch)
@@ -590,7 +590,7 @@ reading the extensive documentation about BookmarkPlus on the Emacs Wiki.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zl6s0c0nd8m55f83yamgnl8kg1a9jrzl0wrmixrixzn7zmdj6qk"))))
+        (base32 "1b25k66nn4qa4ryhm8mzc53qvsvhgjzdngisw28cpdh109627iz3"))))
     (build-system emacs-build-system)
     (arguments
      (list #:tests? #f)) ;No tests found in source.
@@ -1597,14 +1597,14 @@ Emacs package archive}.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://mumble.net/~campbell/git/paredit.git")
+                    (url "https://paredit.org/paredit")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
                 "1hwl2jhv1fhsdrspfhprq77n763i4zsj350q024ajy0m2kaql6ws"))))
     (build-system emacs-build-system)
-    (home-page "https://mumble.net/~campbell/emacs/paredit/")
+    (home-page "https://paredit.org/")
     (synopsis "Emacs minor mode for editing parentheses")
     (description
      "ParEdit (paredit.el) is a minor mode for performing structured editing
@@ -6327,6 +6327,33 @@ eshell.")
     (home-page "https://repo.or.cz/emacs-capf-autosuggest")
     (license license:gpl3+)))
 
+(define-public emacs-org-block-capf
+  ;; There are no tagged releases upstream
+  (let ((commit "080cfd2ed630a6739633b07a8ab6b896a1b5ef4a")
+        (revision "0"))
+    (package
+      (name "emacs-org-block-capf")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/xenodium/org-block-capf")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1ryjnqbphpysms8ynjp2d83siq1q09ci7gd1gx2zl09b88mfw0w9"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f))                   ; no tests
+      (home-page "https://github.com/xenodium/org-block-capf")
+      (synopsis "Completion suggestions for Org-mode source blocks")
+      (description
+       "This package provides completions for Org-mode source blocks using
+completion at point function.")
+      (license license:gpl3+))))
+
 (define-public emacs-direnv
   (package
     (name "emacs-direnv")
@@ -9056,6 +9083,29 @@ for the Zig programming language in Emacs.")
 IRC bouncer with ERC.")
     (license license:expat)))
 
+(define-public emacs-erc-irc-format
+  (package
+    (name "emacs-erc-irc-format")
+    (version "0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/fmqa/erc-irc-format")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1l6jgj7rh8wzbvszlfn5h4dydkc7p5cfin9fm0jf9krlbiig67aj"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;no tests
+    (home-page "https://github.com/fmqa/erc-irc-format")
+    (synopsis "IRC formatting code extension package for ERC")
+    (description
+     "A @acronym{UI, User Interface} for
+@uref{https://modern.ircdocs.horse/formatting, @acronym{IRC, Internet
+Relay Chat} formatting control codes}, for usage within ERC.")
+    (license license:gpl3+)))
+
 (define-public emacs-erc-status-sidebar
   (let ((commit "ea4189a1dbfe60117359c36e681ad7c389e2968c")
         (revision "1"))
@@ -9435,8 +9485,8 @@ boxes, and more.")
 (define-public emacs-org-chef
   ;; Upstream does not tag version bumps.  Version is extracted from "Version"
   ;; keyword in main file.
-  (let ((commit "87e9a6c4844ff32f47c8d1108ec0f087a3148a8e")
-        (revision "0"))
+  (let ((commit "9f749324f7e8c51a2da8516820268c83e825c6c7")
+        (revision "1"))
     (package
       (name "emacs-org-chef")
       (version (git-version "0.1.3" revision commit))
@@ -9448,9 +9498,20 @@ boxes, and more.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0xdfaf3shl3iij7nnshb5ryccqq70rpk0zm0d3fdwdbfa8rf7fkp"))))
+          (base32 "0ii763fhfrd47ivkndml09ivn5s21vy35a182xasb42bji8mmqv8"))))
       (build-system emacs-build-system)
-      (propagated-inputs (list emacs-org))
+      (arguments
+       (list
+        #:emacs emacs-no-x                ;need libxml support
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'check 'patch-tests-to-include-full-file-path
+              (lambda _
+                (substitute* "tests/org-chef-json-ld-test.el"
+                  (("\"json-ld")
+                   "\"tests/json-ld")))))
+        #:test-command #~(list "ert-runner" "tests")))
+      (native-inputs (list emacs-ert-runner))
       (home-page "https://github.com/Chobbes/org-chef")
       (synopsis "Cookbook and recipe management with Emacs Org mode")
       (description
@@ -16270,6 +16331,60 @@ circumstances, and leaves the keys untouched outside of those situations,
 allowing unprefixed keys to insert their respective characters as expected.")
       (license license:gpl3+))))
 
+(define-public emacs-claude-code-ide
+  ;; Upstream does not make versioned releases.
+  (let ((commit "c5e2de1a343bc6c0444789e0a99ad822cd56cfbe"))
+    (package
+      (name "emacs-claude-code-ide")
+      (version "0.2.5")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/manzaltu/claude-code-ide.el")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "17rha7rvv72r75lpa2hz65mphrjrzkfn4pz3xf9lfvivg7fc7n0d"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'check 'set-home
+              (lambda _
+                (setenv "HOME" (getenv "TMPDIR")))))
+        #:test-command
+        #~(list "emacs" "-batch"
+                "-L" "."
+                "-l" "ert"
+                "-l" "claude-code-ide-tests.el"
+                "--eval"
+                ;; Exclude failing test (uncaught throw)
+                (string-append
+                 "(ert-run-tests-batch-and-exit "
+                 "'(not claude-code-ide-mcp-server-test-ws-send-fix))"))))
+      (propagated-inputs
+       (list emacs-flycheck
+             emacs-transient
+             emacs-vterm
+             emacs-web-server
+             emacs-websocket))
+      (home-page "https://github.com/manzaltu/claude-code-ide.el")
+      (synopsis "Claude Code IDE integration for Emacs")
+      (description
+       "This package provides native integration with Claude Code
+@acronym{CLI, command-line interface} through the @acronym{MCP, Model
+Context Protocol}.  It creates a bidirectional bridge between Claude and
+Emacs, enabling Claude to leverage Emacs features including @acronym{LSP,
+Language Server Protocol}, project management, tree-sitter, and custom
+Elisp functions.  Features include automatic project detection and
+session management, terminal integration with @code{vterm} or @code{eat},
+diagnostic integration with Flycheck and Flymake, advanced diff viewing
+with ediff, and an extensible MCP tools server for accessing Emacs
+commands such as xref and imenu.")
+      (license license:gpl3+))))
+
 (define-public emacs-clojure-mode
   (package
     (name "emacs-clojure-mode")
@@ -22378,7 +22493,7 @@ bit of zlib) in Emacs in a portable fashion.")
     (propagated-inputs
      (list emacs-defaultencrypt))
     (description
-     ;; TRANSLATORS: ExtendSMIME, DefaultEncrypt, and emacs-default-encrypt
+     ;; TRANSLATORS: ExtendSMIME, DefaultEncrypt, and emacs-defaultencrypt
      ;; should not be translated.  The name "emacs-defaultencrypt" refers to
      ;; the Guix package that provides DefaultEncrypt.
      "ExtendSMIME is designed to be used with Gnus in Emacs.  It enhances
@@ -31583,19 +31698,19 @@ A screenshot is taken for every user action.  Call
 the GIF result.")
     (license license:gpl3+)))
 
-(define-public emacs-go-translate
+(define-public emacs-gt
   (package
-    (name "emacs-go-translate")
-    (version "3.0.9")
+    (name "emacs-gt")
+    (version "3.2.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/lorniu/go-translate/")
+             (url "https://github.com/lorniu/gt.el/")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1j5knkb8h0wpr6pzvrb6kvisjkm4kkd7jzad6h566sn0si2x9y5g"))))
+        (base32 "1z9rvk9ksva2xpwgb7bgw9zy0lv9sr7sq77f6dpm9fkdwzpj38mi"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -31613,13 +31728,18 @@ the GIF result.")
                          (("\\(ert-deftest test--gt-valid-literally .*"
                            all)
                           (string-append all "(skip-unless nil)\n"))))))))
-    (home-page "https://github.com/lorniu/go-translate/")
+    (propagated-inputs
+     (list emacs-pdd))
+    (home-page "https://github.com/lorniu/gt.el/")
     (synopsis "Configurable and scalable translation framework")
     (description
      "This is a translation framework on Emacs, with high configurability
 and extensibility.  It can easily be extended to various Text-to-Text
 conversion scenarios.")
     (license license:gpl3+)))
+
+(define-deprecated-package emacs-go-translate
+  emacs-gt)
 
 (define-public emacs-google-translate
   (package
@@ -37587,6 +37707,34 @@ user interfaces for various built-in modes.")
 (define-deprecated-package emacs-casual-avy
   emacs-casual)
 
+(define-public emacs-calibre
+  (package
+    (name "emacs-calibre")
+    (version "1.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/calibre-" version
+                           ".tar"))
+       (sha256
+        (base32 "08rcwrydrlc995sdxn5ssm5f6ighxi5yr6i7bx9a1nf7n91mgbgh"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'build-info-manual
+            (lambda _
+              (invoke "makeinfo" "doc/calibre.texi"))))))
+    (propagated-inputs (list emacs-compat))
+    (native-inputs (list texinfo))
+    (home-page "https://git.disroot.org/kjartanoli/calibre.el")
+    (synopsis "Interact with Calibre libraries from Emacs")
+    (description "@code{Emacs-Calibre} is a package for interacting with
+@url{https://calibre-ebook.com/}{Calibre} libraries from Emacs.")
+    (license license:gpl3+)))
+
 (define-public emacs-calibredb
   (package
     (name "emacs-calibredb")
@@ -37654,8 +37802,8 @@ to be examined using Ediff.")
     (license license:expat)))
 
 (define-public emacs-info-plus
-  (let ((commit "34d54e58b6cbb4f135dc0583ebdce4437b052dce")
-        (revision "4"))
+  (let ((commit "a2322ad090676ccebad540ee8480103e01ca32c3")
+        (revision "5"))
     (package
       (name "emacs-info-plus")
       (version (git-version "0" revision commit))
@@ -37668,8 +37816,9 @@ to be examined using Ediff.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "0xkn26a2h47v5y4fgznbflsbh7vz61nz4j9kkshg3lv8wnkbipmv"))))
+           "0gv6fy92il3927i0wfdy6wccgxcz1k4mr6vhfj4fn84nszsx1k4m"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f))    ;no tests
       (home-page "https://github.com/emacsmirror/info-plus")
       (synopsis "Extensions to @file{info.el}")
       (description "This package extends Emacs' @file{info.el} by allowing
@@ -42799,6 +42948,30 @@ should replace it.  However, if you call them again immediately after, they
 restore that occurrence of the placeholder and move to the next.")
       (license license:gpl3+))))
 
+(define-public emacs-pdd
+  (package
+    (name "emacs-pdd")
+    (version "0.2.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/lorniu/pdd.el/")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0xap7i2x8mqpwr52xdqb8c6lhjmxm1d6car2533ynyr4k2fn4lw5"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list #:tests? #f))                ;tests require networking
+    (home-page "https://github.com/lorniu/pdd.el")
+    (synopsis "HTTP requests and asynchronous operations in Emacs")
+    (description "@code{pdd} provides a library for HTTP requests and
+asynchronous operations in Emacs.  It featuring a single, consistent API that
+works identically across different backends, maximizing code portability and
+simplifying development.")
+    (license license:gpl3+)))
+
 (define-public emacs-pddl-mode
   (package
     (name "emacs-pddl-mode")
@@ -44933,14 +45106,8 @@ hacker.")
                                               (search-input-file inputs
                                                                  "/bin/curl")
                                               space "\"")))))
-                        (add-after 'unpack 'makeinfo
-                          (lambda _
-                            (emacs-makeinfo
-                             "README.org"
-                             '(progn
-                               (require 'ox-texinfo)
-                               (setq org-texinfo-with-broken-links t)
-                               (org-texinfo-export-to-info))))))))
+                        (add-before 'install 'makeinfo
+                          (lambda _ (emacs-makeinfo))))))
     (inputs (list curl))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
@@ -45148,7 +45315,7 @@ for pdb allowing completion in a @code{*gud-pdb*} buffer.")
 (define-public emacs-bitbake-modes
   (package
    (name "emacs-bitbake-modes")
-   (version "0.5.3")
+   (version "0.8.0")
    (source
      (origin
        (method git-fetch)
@@ -45156,7 +45323,7 @@ for pdb allowing completion in a @code{*gud-pdb*} buffer.")
              (url "https://bitbucket.org/olanilsson/bitbake-modes")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1580cfpfmsjwiq6v2vsqjwhzj9m4lrhhf3nffmbzp36r6q5n8611"))
+        (base32 "11hrnkg2kn07hydjwvm1vax3wm34mvh4k0xl3cakfcih31wbkj1k"))
        (file-name (git-file-name name version))))
    (build-system emacs-build-system)
    (arguments (list #:tests? #f))       ; tests require networking

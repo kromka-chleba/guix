@@ -39,6 +39,7 @@
 ;;; Copyright © 2024, 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2025 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1082,7 +1083,7 @@ application suites.")
       #:modules '((guix build utils)
                   (guix build meson-build-system)
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:))
-      #:disallowed-references (list xorg-server-for-tests)
+      #:disallowed-references (list (this-package-native-input "xorg-server"))
       #:configure-flags
       #~(list "-Dcloudproviders=true"   ;for cloud-providers support
               "-Dcolord=yes"            ;for color printing support
@@ -2533,6 +2534,17 @@ misspelled words in a GtkTextView widget.")
        (sha256
         (base32 "05xi29v2y0rvb33fmvrz7r9j4l858qj7ngwd7dp4pzpkkaybjln0"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'relax-gcc-14-strictness
+                 (lambda _
+                   (setenv "CFLAGS"
+                           (string-join
+                            (list "-Wno-error=incompatible-pointer-types"
+                                  "-Wno-error=implicit-function-declaration"
+                                  "-Wno-error=int-conversion")
+                            " ")))))))
     (native-inputs
      (list autoconf automake intltool pkg-config))
     (inputs
@@ -2865,6 +2877,36 @@ displayed on the other side of the bus.")
     (synopsis "Library to create Wayland desktop components using the Layer
 Shell protocol")
     (description "Layer Shell is a Wayland protocol for desktop shell
+components, such as panels, notifications and wallpapers.  It can be used to
+anchor windows to a corner or edge of the output, or stretch them across the
+entire output.  It supports all Layer Shell features including popups and
+popovers.")
+    (license license:expat)))
+
+(define-public gtk4-layer-shell
+  (package
+    (name "gtk4-layer-shell")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wmww/gtk4-layer-shell")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xs5w8yvkfw4zp326ddnxcrxrb2fcd0zsn0yl8wmjn9c8lnnrrnq"))))
+    (build-system meson-build-system)
+    (arguments
+     ;; Smoke tests are disabled because they hang.
+     (list #:configure-flags
+           #~(list "-Dtests=true" "-Dsmoke-tests=false")))
+    (native-inputs (list pkg-config gobject-introspection vala))
+    (inputs (list wayland gtk))
+    (home-page "https://github.com/wmww/gtk-layer-shell")
+    (synopsis "Wayland protocol for desktop components")
+    (description
+     "Layer Shell is a Wayland protocol for desktop shell
 components, such as panels, notifications and wallpapers.  It can be used to
 anchor windows to a corner or edge of the output, or stretch them across the
 entire output.  It supports all Layer Shell features including popups and

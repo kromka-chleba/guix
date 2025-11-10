@@ -1806,6 +1806,36 @@ implementations are described in \"Fast SHA-256 Implementations on Intel
 Architecture Processors\" by J. Guilford et al.")
     (license license:asl2.0)))
 
+;; XXX: Deprecated in upstream: This repository has been archived by the owner
+;; on Jul 22, 2024. It is now read-only.
+;; Consider to remove when nothing is depend on it.
+(define-public go-github-com-mitchellh-hashstructure-v2
+  (package
+    (name "go-github-com-mitchellh-hashstructure-v2")
+    (version "2.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mitchellh/hashstructure")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yyr1igvyv7dzjxs9hbwk7qhshwxys0hq59sy2g2a46hjgi311iv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mitchellh/hashstructure/v2"))
+    (home-page "https://github.com/mitchellh/hashstructure")
+    (synopsis "Unique hash value for arbitrary values in Go")
+    (description
+     "This package is a Go library for creating a unique hash value for
+arbitrary values in Go. This can be used to key values in a hash (for use in a
+map, set, etc.) that are complex.  The most common use case is comparing two
+values without sending data across the network, caching values
+locally (de-dup), and so on.")
+    (license license:expat)))
+
 (define-public go-github-com-mr-tron-base58
   (package
     (name "go-github-com-mr-tron-base58")
@@ -1879,7 +1909,7 @@ times faster decoding.")
 (define-public go-github-com-nats-io-jwt-v2
   (package
     (name "go-github-com-nats-io-jwt-v2")
-    (version "2.7.4")
+    (version "2.8.0")
     (source
      (origin
        (method git-fetch)
@@ -1888,13 +1918,14 @@ times faster decoding.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gjfayslmvs5kpgrb7sscaafi5fsm2j6446vbjm830ak0nhq8df9"))))
+        (base32 "16fxmml1cw2y3cr87ry61k2q8421hab77cx6gpqz1qfy6sdh0vvz"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/nats-io/jwt/v2"
-      #:unpack-path "github.com/nats-io/jwt"))
+      #:unpack-path "github.com/nats-io/jwt"
+      #:test-flags
+      #~(list "-vet=off")))  ;Go@1.24 forces vet, but tests are not ready yet.
     (propagated-inputs (list go-github-com-nats-io-nkeys))
     (home-page "https://github.com/nats-io/jwt")
     (synopsis "Go library signing JWT tokens with NKeys for the NATS ecosystem")
@@ -1906,16 +1937,16 @@ JWT tokens.  Nkeys use Ed25519 to provide authentication of JWT claims.")
 (define-public go-github-com-nats-io-nkeys
   (package
     (name "go-github-com-nats-io-nkeys")
-    (version "0.4.10")
+    (version "0.4.11")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/nats-io/nkeys")
-             (commit (string-append "v" version))))
+              (url "https://github.com/nats-io/nkeys")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1max0dsjj92gfzc9g0dsnmk24y72drfhzkra3c1xnjwnw6lwha5x"))))
+        (base32 "0wrsrccc4sxzlrlngkw644p4n074vd54mkad8vzi9ylnw97hhabm"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/nats-io/nkeys"))
@@ -2393,6 +2424,35 @@ Boneh and Victor Shoup's cryptography book} (pg 789, PAKE2 protocol).")
     (description
      "Boiler-plate to securely @url{https://en.wikipedia.org/wiki/Random_seed,
 seed} Go's random number generator (if possible).")
+    (license license:expat)))
+
+(define-public go-github-com-serialx-hashring
+  (package
+    (name "go-github-com-serialx-hashring")
+    (version "0.0.0-20200727003509-22c0c7ab6b1b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/serialx/hashring")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dbqc69z6hjqvvbbls97cizb3rixil67jq37fnjw2pkf0zhs9i4q"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-vet=off")    ;Go@1.24 forces vet, but tests are not ready yet.
+      #:import-path "github.com/serialx/hashring"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/serialx/hashring")
+    (synopsis "Consistent hashing for Golang")
+    (description
+     "This package implements consistent hashing that can be used when the
+ number of server nodes increase or decrease (like in memcached).  The hashing
+ring is built using the same algorithm as libketama.")
     (license license:expat)))
 
 (define-public go-github-com-shadowsocks-go-shadowsocks2
@@ -2935,6 +2995,42 @@ vectorized version of BLAKE3 implementation in Golang.")
 @url{https://en.wikipedia.org/wiki/Permuted_congruential_generator, Permuted
 Congruential Generator} (PCG) algorithm.")
     (license license:cc0)))
+
+(define-public go-github-com-zeebo-xxh3
+  (package
+    (name "go-github-com-zeebo-xxh3")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/zeebo/xxh3")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gy666r5v1d1n2cfig9plhyp7z09f06k6mr5lrf0mk6psk6bnwgi"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/zeebo/xxh3/avo
+            ;; - github.com/zeebo/xxh3/internal/compare
+            (delete-file-recursively "avo")
+            (delete-file-recursively "internal/compare")))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/zeebo/xxh3"))
+    (native-inputs
+     (list go-github-com-zeebo-assert))
+    (propagated-inputs
+     (list go-github-com-klauspost-cpuid-v2))
+    (home-page "https://github.com/zeebo/xxh3")
+    (synopsis "XXH3 hash algorithm in Golang")
+    (description
+     "This package provides a port of the XXH3 hash algorithm to Golang.  XXH3
+is an extremely fast non-cryptographic hash algorithm.")
+    (license license:bsd-2)))
 
 (define-public go-gitlab-com-nyarla-go-crypt
   (package

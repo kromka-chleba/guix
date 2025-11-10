@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2014, 2015, 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015, 2025 宋文武 <iyzsong@envs.net>
-;;; Copyright © 2015, 2018, 2019, 2020, 2021, 2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2015, 2018-2021, 2023, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015-2019, 2024, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 Thomas Danckaert <post@thomasdanckaert.be>
@@ -281,15 +281,15 @@ window managers, that don't provide Qt integration by themselves.")
 (define-public qt6ct
   (package
     (name "qt6ct")
-    (version "0.9")
+    (version "0.11")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/trialuser02/qt6ct")
+             (url "https://www.opencode.net/trialuser/qt6ct")
              (commit version)))
        (sha256
-        (base32 "0dknk4qqzqc5wa763nclb1k6jkmvjh8kzz8kfp4iggy9jy0vnzgb"))))
+        (base32 "17hfx90wnc40a1sq0qcdp2hml5mkjhlj5rwm95pc40p03nicpn67"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -312,7 +312,7 @@ window managers, that don't provide Qt integration by themselves.")
     (description "Qt6CT is a program that allows users to configure Qt6
 settings (such as icons, themes, and fonts) in desktop environments or
 window managers, that don't provide Qt integration by themselves.")
-    (home-page "https://github.com/trialuser02/qt6ct")
+    (home-page "https://www.opencode.net/trialuser/qt6ct")
     (license license:bsd-2)))
 
 (define-public kddockwidgets
@@ -582,7 +582,7 @@ system, and the core design of Django is reused in Grantlee.")
            ;; TODO Move to ruby@3 on the next rebuild cycle.
            ruby-2.7))
     (arguments
-     `(#:disallowed-references ,(list python)
+     `(#:disallowed-references ,(list (this-package-native-input "python"))
        #:configure-flags
        (let ((out (assoc-ref %outputs "out")))
          (list "-verbose"

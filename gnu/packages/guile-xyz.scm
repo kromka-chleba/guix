@@ -143,7 +143,7 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages version-control)
-  #:use-module (gnu packages vim)  
+  #:use-module (gnu packages vim)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg)
@@ -685,6 +685,10 @@ pictures) for email addresses using the Libravatar specification.")
                                "/include/bash/include")
                 ;; The '.a' file is useless.
                 "--disable-static"
+
+                ;; Relax GCC 14 strictness.
+                "CFLAGS=-Wno-error=implicit-function-declaration"
+
                 ;; Install 'lib/bash' as Bash 4.4 expects.
                 (string-append "--libdir=" #$output "/lib/bash"))))
       (native-inputs
@@ -1026,7 +1030,7 @@ invocations."))))
 (define-public guile-dsv
   (package
     (name "guile-dsv")
-    (version "0.7.2")
+    (version "0.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1035,7 +1039,7 @@ invocations."))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1iavc1dg1899v519hvbzcmvdc16rahcwwvj68jycqdc5px5z285i"))))
+                "0mc4najwji8144xzhpnrljrmh7m9iiykf3bp3lzksrwqyhz8np2k"))))
     (build-system gnu-build-system)
     (native-inputs (list autoconf
                          automake

@@ -2,7 +2,7 @@
 ;;; Copyright © 2018 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2022, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2022, 2024, 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
@@ -78,51 +78,46 @@
                 #:prefix license:))
 
 (define-public cowsql
-  ;; Use the latest commit which includs
-  ;; <https://github.com/cowsql/cowsql/pull/37>, revert back to vertion tags
-  ;; when released.
-  (let ((commit "cb624d3263ca22b42ecfa8a1dd8a0c8d990db7b6")
-        (revision "0"))
-    (package
-      (name "cowsql")
-      (version (git-version "1.15.8" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-                (url "https://github.com/cowsql/cowsql")
-                (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0b4ymmsp9y9zzwanp739bc6p5qzl1h6ny2g50blhda99xcnlaf77"))))
-      (build-system gnu-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (replace 'bootstrap
-              (lambda _
-                (invoke "autoreconf" "-vfi"))))))
-      (native-inputs
-       (list autoconf
-             automake
-             libtool
-             pkg-config))
-      (inputs
-       (list cowsql-raft
-             libuv
-             sqlite))
-      (home-page "https://github.com/cowsql/cowsql")
-      (synopsis "Embeddable, replicated and fault tolerant SQL engine")
-      (description
-       "cowsql (/ˈkaʊ,siːkwəl/ listen) is a C library that implements an
+  (package
+    (name "cowsql")
+    (version "1.15.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cowsql/cowsql")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10pj422lzl0rbid4cxg80rhzgqbz3mnhnhx8s0zm54nniirdbn7d"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'bootstrap
+            (lambda _
+              (invoke "autoreconf" "-vfi"))))))
+    (native-inputs
+     (list autoconf
+           automake
+           libtool
+           pkg-config))
+    (inputs
+     (list cowsql-raft
+           libuv
+           sqlite))
+    (home-page "https://github.com/cowsql/cowsql")
+    (synopsis "Embeddable, replicated and fault tolerant SQL engine")
+    (description
+     "cowsql (/ˈkaʊ,siːkwəl/ listen) is a C library that implements an
 embeddable and replicated SQL database engine with high availability and
 automatic failover.
 
 cowsql extends SQLite with a network protocol that can connect together
 various instances of your application and have them act as a highly-available
 cluster, with no dependency on external databases.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public cowsql-raft
   (package
@@ -168,15 +163,16 @@ in threaded or blocking contexts as well.")
 (define-public haproxy
   (package
     (name "haproxy")
-    (version "3.1.1")
+    (version "3.2.7")
     (source
      (origin
        (method url-fetch)
+       ;; TODO: Switch to git-fetch: <https://git.haproxy.org/>.
        (uri (string-append "https://www.haproxy.org/download/"
                            (version-major+minor version)
                            "/src/haproxy-" version ".tar.gz"))
        (sha256
-        (base32 "0wyjyzazlwpi3hm4ri699lhyzbb703i5fp240bk7icm4kd1ms6wc"))))
+        (base32 "0y22ypxhiw7s2v7lc309w24asxq83a9xyk3frgay46dkn3gyj2hz"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -214,7 +210,7 @@ realistic with today's hardware.")
 (define-public libqb
   (package
     (name "libqb")
-    (version "2.0.8")
+    (version "2.0.9")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -222,7 +218,7 @@ realistic with today's hardware.")
                     version "/libqb-" version ".tar.xz"))
               (sha256
                (base32
-                "1rifa94zrdr7d5gsy4yvkgqfx8f4yx4xr96hqvs05b5q43y329dl"))))
+                "02r1dc5m0xjf8hq14x87injw0smmh677f5gnd5xa91lw359kga31"))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config))
     (inputs (list libxml2))
@@ -241,7 +237,7 @@ applications.")
 (define-public kronosnet
   (package
     (name "kronosnet")
-    (version "1.30")
+    (version "1.32")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -250,7 +246,7 @@ applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vpar3q49fb0s7g76kq39g4gzql38pcji6w71yf7c6n9k8vllcc9"))))
+                "1sn2y5z52y0z2bjh1rrv722lm6nma9bsk0dqwwri9397s6qpv1dc"))))
     (build-system gnu-build-system)
     (arguments
      ;; XXX: Multiple tests failed. Tests
@@ -301,16 +297,16 @@ applications.")
 (define-public nats-server
   (package
     (name "nats-server")
-    (version "2.10.26")
+    (version "2.12.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/nats-io/nats-server")
-             (commit (string-append "v" version))))
+              (url "https://github.com/nats-io/nats-server")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mpmbsq14l1fbyz9wrfks8acbdikpwi25whlxz5w9wn8w7bd5rwc"))))
+        (base32 "04dza8jqw4lhnqj1ip05jx47g9frb00x9s0yy1863qf88bvszv8z"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -328,7 +324,9 @@ applications.")
       #:test-subdirs
       #~(list "conf/..." "internal/..." "logger/..." "test/...")))
     (inputs
-     (list go-github-com-klauspost-compress
+     (list go-github-com-antithesishq-antithesis-sdk-go
+           go-github-com-google-go-tpm
+           go-github-com-klauspost-compress
            go-github-com-minio-highwayhash
            go-github-com-nats-io-jwt-v2
            go-github-com-nats-io-nats-go
@@ -479,7 +477,7 @@ lost.
 (define-public pacemaker
   (package
     (name "pacemaker")
-    (version "2.1.9")
+    (version "2.1.10") ;final for 2.*.* series
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -488,7 +486,7 @@ lost.
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "154wnh7yrblq3jlcyqy19yvncjcy5sh73nphakhm0kq8qq64m208"))))
+                "0b9d2i22ghyjarwi1c596q5mf7gj1k04k784hnmrd2d4x9hgv9ax"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags #~(list "--with-corosync" "--disable-static"
@@ -533,7 +531,7 @@ Virtually anything that can be scripted can be managed as part of a Pacemaker cl
 (define-public rabbitmq
   (package
     (name "rabbitmq")
-    (version "4.1.2")
+    (version "4.2.0")
     (source
      (origin
        (method url-fetch)
@@ -542,7 +540,7 @@ Virtually anything that can be scripted can be managed as part of a Pacemaker cl
              version "/rabbitmq-server-" version ".tar.xz"))
        (file-name (string-append name "-" version ".tar.xz"))
        (sha256
-        (base32 "1dl2x5v4bj6sl51gw50aj9nch9sy03qhrfjap3k9x9jpkhm6g946"))
+        (base32 "0g3wyp130cx3zvzpvppw4g6dh6hz7fn8dsg28jimqypyxkmyhqyf"))
        (patches (search-patches "rabbitmq-defaults.patch"))))
     (build-system gnu-build-system)
     (arguments

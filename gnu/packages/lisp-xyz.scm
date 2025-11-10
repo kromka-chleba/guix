@@ -448,8 +448,8 @@ lookup, particularly suited for games.")
   (sbcl-package->ecl-package sbcl-3d-spaces))
 
 (define-public sbcl-3d-transforms
-  (let ((commit "1d44509387d0747cd0351e95a533eca609058632")
-        (revision "0"))
+  (let ((commit "86e7e99fa9027c1d230adc83f3a2a74a2b83eb08")
+        (revision "1"))
     (package
       (name "sbcl-3d-transforms")
       (version (git-version "1.0.0" revision commit))
@@ -457,11 +457,11 @@ lookup, particularly suited for games.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-transforms")
+               (url "https://codeberg.org/shinmera/3d-transforms")
                (commit commit)))
          (file-name (git-file-name "cl-3d-transforms" version))
          (sha256
-          (base32 "03pmv7dh1j6kl16ch6lnvxzjrld4jbr3jx8slzkiipgzdxg74pcx"))))
+          (base32 "04z532aq5rwfg3z7nijxzxikmcv504d6xx7gwmc7blk7z3mjk7dd"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
@@ -470,7 +470,7 @@ lookup, particularly suited for games.")
              sbcl-3d-quaternions
              sbcl-3d-vectors
              sbcl-documentation-utils))
-      (home-page "https://shinmera.github.io/3d-transforms/")
+      (home-page "https://shinmera.com/docs/3d-transforms")
       (synopsis
        "Common structure to encapsulate spatial transformations in Common Lisp")
       (description
@@ -484,10 +484,13 @@ alternative 4x4 matrix representation.")
   (sbcl-package->cl-source-package sbcl-3d-transforms))
 
 ;; TODO: Build failure:
-;; https://github.com/Shinmera/3d-quaternions/issues/2
+;; https://codeberg.org/shinmera/3d-quaternions/issues/1
 ;;
 ;; (define-public ecl-3d-transforms
 ;;   (sbcl-package->ecl-package sbcl-3d-transforms))
+
+(define-public clasp-3d-transforms
+  (sbcl-package->clasp-package sbcl-3d-transforms))
 
 (define-public clasp-3d-transforms
   (sbcl-package->clasp-package sbcl-3d-transforms))
@@ -14441,23 +14444,24 @@ with a complex event filtering system.")
   (sbcl-package->ecl-package sbcl-deeds))
 
 (define-public sbcl-definitions
-  (let ((commit "1f4bd7a634a2299aea19cefb5da8041bbb27f2ec"))
+  (let ((commit "869796051d97bf67779f192733d52714929b48f1")
+        (revision "2"))
     (package
       (name "sbcl-definitions")
-      (version (git-version "1.0.0" "1" commit))
+      (version (git-version "1.0.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/definitions/")
+               (url "https://codeberg.org/shinmera/definitions")
                (commit commit)))
          (file-name (git-file-name "cl-definitions" version))
          (sha256
-          (base32 "16dh9iy3v344xj4qllsp47007px3yx26fxxh9gh2cvs8dqgk3kch"))))
+          (base32 "0vd32rj87f8icqglpkylgr0bs2m4qjsii3wd5i5ixiy5dz3918md"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-documentation-utils))
-      (home-page "https://shinmera.github.io/definitions")
+      (home-page "https://shinmera.com/docs/definitions")
       (synopsis "General definitions reflection library")
       (description
        "This system implements a general definitions introspection library.
@@ -29264,7 +29268,7 @@ library are feedforward neural networks trained using backpropagation.")
 (define-public sbcl-simple-optimization
   (package
     (name "sbcl-simple-optimization")
-    (version "1.0")
+    (version "1.1")
     (source
      (origin
        (method git-fetch)
@@ -29273,7 +29277,7 @@ library are feedforward neural networks trained using backpropagation.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-optimization" version))
        (sha256
-        (base32 "1iy6qihc5fjdg1nxr439shln82gg1k4r5ji033paqbfas6bxdahj"))))
+        (base32 "1ljzd7j1xak54l53vjdda7w7fcx9di5536kqa4hdp1s4269zch53"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (inputs (list sbcl-simple-matrix))

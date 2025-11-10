@@ -3,7 +3,7 @@
 ;;; Copyright © 2016 Mckinley Olsen <mck.olsen@gmail.com>
 ;;; Copyright © 2016, 2017, 2019 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
-;;; Copyright © 2016, 2017, 2019, 2020 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016-2017, 2019-2020, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016, 2017 José Miguel Sánchez García <jmi2k@openmailbox.org>
 ;;; Copyright © 2017–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Kei Kebreau <kkebreau@posteo.net>
@@ -321,10 +321,7 @@ compatibility to existing emulators like xterm, gnome-terminal, konsole, etc.")
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
-       `(;; The closure of MESA is huge so we'd rather avoid it.
-         #:disallowed-references (,mesa)
-
-         #:phases (modify-phases %standard-phases
+       `(#:phases (modify-phases %standard-phases
                     ;; Use elogind instead of systemd.
                     (add-before 'configure 'remove-systemd
                       (lambda _
@@ -995,7 +992,7 @@ minimalistic.")
 (define-public fzf
   (package
     (name "fzf")
-    (version "0.62.0")
+    (version "0.66.1")
     (source
      (origin
        (method git-fetch)
@@ -1004,7 +1001,7 @@ minimalistic.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kwia7dmsaq08048h3s6avrczvca2mpd8sa3m4r1y28wjqjxmkbk"))))
+        (base32 "1qwbr8kqg68zh0a8lwds7c2y6jz31yw18a2m3707xfw6jjdvinni"))))
     (build-system go-build-system)
     (arguments
      (list

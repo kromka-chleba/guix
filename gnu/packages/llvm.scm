@@ -30,6 +30,7 @@
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2025 Liam Hupfer <liam@hpfr.net>
+;;; Copyright © 2025 dan <i@dan.games>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -266,7 +267,14 @@ until LLVM/Clang 14."
                           version))
            (sha256 (base32 hash))
            (patches (map search-patch patches)))
-         (llvm-monorepo (package-version llvm))))
+         (if patches
+             (let ((llvm-source (llvm-monorepo (package-version llvm))))
+               (origin
+                 (inherit llvm-source)
+                 (patches
+                  (append (origin-patches llvm-source)
+                          (map search-patch patches)))))
+             (llvm-monorepo (package-version llvm)))))
     ;; Using cmake allows us to treat llvm as an external library.  There
     ;; doesn't seem to be any way to do this with clang's autotools-based
     ;; build system.
@@ -1080,6 +1088,7 @@ Library.")
 (define-public clang-17
   (clang-from-llvm
    llvm-17 clang-runtime-17
+   #:patches '("clang-17.0-fix-build-with-gcc-14-on-arm.patch")
    #:tools-extra
    (origin
      (method url-fetch)
@@ -2128,3 +2137,171 @@ Here's how to print @samp{\"Hello World!\"} using @command{cling}:
 cling '#include <stdio.h>' 'printf(\"Hello World!\\n\");'
 @end example")
     (license license:lgpl2.1+)))     ;for the combined work
+
+(define %swift-llvm-clang-version "5.7.3")
+
+(define-public swift-llvm
+  (package
+    (name "swift-llvm")
+    (version %swift-llvm-clang-version)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/apple/llvm-project.git")
+                    (commit (string-append "swift-" %swift-llvm-clang-version
+                                           "-RELEASE"))))
+              (file-name (git-file-name "swift-llvm" %swift-llvm-clang-version))
+              (sha256
+               (base32
+                "0ai460v5kqq3mhp0vz1f5rr2fcwqmx91bnwbkaksjp9cxlylnfr0"))
+              (patches (search-patches "swift-llvm-5.7.3-linux.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; Upstream build script doesn't test LLVM.
+      ;; LLVM_INCLUDE_TESTS=ON (default) builds test tools like FileCheck,
+      ;; but LLVM_BUILD_TESTS=OFF (default) means no tests run via ctest.
+      #:tests? #f
+      #:build-type "Release"
+      #:configure-flags
+      #~(list "-DCMAKE_C_FLAGS=-fno-stack-protector"
+              "-DCMAKE_CXX_FLAGS=-fno-stack-protector"
+              "-DCMAKE_C_FLAGS_RELWITHDEBINFO=-O2 -DNDEBUG"
+              "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -DNDEBUG"
+              "-DLLVM_TOOL_SWIFT_BUILD:BOOL=NO"
+              "-DINTERNAL_INSTALL_PREFIX=local"
+              "-DLLVM_INCLUDE_DOCS=YES"
+              "-DLLVM_ENABLE_LTO="
+              "-DLLVM_ENABLE_DUMP=ON"
+              "-DLLVM_ENABLE_PROJECTS=clang"
+              "-DLLVM_TARGETS_TO_BUILD=X86;ARM;AArch64;PowerPC;SystemZ;Mips"
+              ;; Python llvm.py adds this (not build-script-impl).
+              ;; This would also enable dump() by undefining NDEBUG.
+              ; FIXME: "-DLLVM_ENABLE_ASSERTIONS=TRUE"
+              "-DLLVM_LIT_ARGS=-sv -j 16"
+              (string-append "-DGCC_INSTALL_PREFIX="
+                             (assoc-ref %build-inputs "gcc-lib"))
+              (string-append "-DC_INCLUDE_DIRS="
+                             (assoc-ref %build-inputs "libc")
+                             "/include")
+              (string-append "-DCMAKE_INSTALL_PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'enter-llvm-directory
+            (lambda _
+              (chdir "llvm")))
+          (add-after 'enter-llvm-directory 'allow-config-h-install
+            (lambda _
+              ;; Swift needs llvm/Config/config.h, so remove the EXCLUDE.
+              (substitute* "CMakeLists.txt"
+                (("PATTERN \"config\\.h\" EXCLUDE")
+                 ""))))
+          (add-after 'allow-config-h-install 'fix-demangle-includes
+            (lambda _
+              (substitute* "include/llvm/Demangle/MicrosoftDemangleNodes.h"
+                (("#include <array>")
+                 "#include <array>\n#include <cstdint>\n#include <string>"))
+              (substitute* "utils/benchmark/src/benchmark_register.h"
+                (("#include <vector>")
+                 "#include <vector>\n#include <limits>"))
+              (substitute* "include/llvm/Support/Signals.h"
+                (("#include <string>")
+                 "#include <string>
+#include <cstdint>"))
+              ;; Work around Guix bug: libstdc++ was built without fenv.h support,
+              ;; so _GLIBCXX_HAVE_FENV_H is undefined, causing <fenv.h> wrapper to
+              ;; not include the actual header. Define it to bypass the wrapper.
+              ;; See <https://issues.guix.gnu.org/43579>
+              (substitute* "lib/Analysis/ConstantFolding.cpp"
+                (("#include \"llvm/Config/config.h\"")
+                 "#include \"llvm/Config/config.h\"\n#define _GLIBCXX_HAVE_FENV_H 1\n#include <fenv.h>"))))
+          (add-after 'fix-demangle-includes 'set-glibc-file-names
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((libc (assoc-ref inputs "libc"))
+                    (gcc (assoc-ref inputs "gcc")))
+                (substitute* "../clang/lib/Driver/ToolChains/Linux.cpp"
+                  ;; Make "LibDir" refer to <glibc>/lib so that it
+                  ;; uses the right dynamic linker file name.
+                  (("(^[[:blank:]]+LibDir = ).*" _ declaration)
+                   (string-append declaration "\"" libc "/lib\";\n"))
+                  ;; Make clang look for libstdc++ in the right location.
+                  (("LibStdCXXIncludePathCandidates\\[\\] = \\{")
+                   (string-append
+                    "LibStdCXXIncludePathCandidates[] = { \"" gcc
+                    "/include/c++\","))
+                  ;; Make sure libc's libdir is on the search path, to
+                  ;; allow crt1.o & co. to be found.
+                  (("@GLIBC_LIBDIR@")
+                   (string-append libc "/lib"))))))
+          (add-after 'install 'install-filecheck
+            (lambda _
+              ;; FileCheck is built but not installed by default.
+              ;; Swift needs it--so install it manually.
+              (install-file "bin/FileCheck"
+               (string-append #$output "/bin")))))))
+    (native-inputs
+     (list python-3))
+    (inputs
+     `(("libxml2" ,libxml2)
+       ("gcc-lib" ,gcc "lib")
+       ("gcc" ,gcc)
+       ("libc" ,glibc)
+       ("libffi" ,libffi)))
+    (propagated-inputs
+     (list zlib))
+    (home-page "https://swift.org/")
+    (synopsis "LLVM for Swift (Apple's fork)")
+    (description
+     "This is Apple's fork of LLVM with Swift-specific modifications,
+required to build Swift.")
+    (license license:ncsa)))
+
+;(define-public swift-clang-runtime
+;  (package
+;    (inherit (clang-runtime-from-llvm swift-llvm))
+;    (arguments
+;     (substitute-keyword-arguments (package-arguments (clang-runtime-from-llvm swift-llvm))
+;       ((#:configure-flags flags)
+;        #~(cons "-DCOMPILER_RT_INTERCEPT_LIBDISPATCH=ON"
+;                #$flags))))))
+
+(define-public swift-llvm-6.2
+  (package
+    (inherit swift-llvm)
+    (version "6.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/apple/llvm-project.git")
+                    (commit (string-append "swift-" version "-RELEASE"))))
+              (file-name (git-file-name "swift-llvm" version))
+              (sha256
+               (base32
+                "00bpplh8zd495n7dw5a64ncy23r2sgj7071kyhw7r9s53ihw1k1m"))
+              (patches (search-patches "clang-18.0-libc-search-path.patch"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments swift-llvm)
+       ((#:configure-flags flags)
+        #~(cons "-DUSE_DEPRECATED_GCC_INSTALL_PREFIX=ON" #$flags))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'fix-demangle-includes
+              (lambda _
+                (substitute* "include/llvm/Demangle/MicrosoftDemangleNodes.h"
+                  (("#include <array>")
+                   "#include <array>
+#include <cstdint>
+#include <string>"))
+                (substitute* "../third-party/benchmark/src/benchmark_register.h"
+                  (("#include <vector>")
+                   "#include <vector>
+#include <limits>"))
+                (substitute* "include/llvm/Support/Signals.h"
+                  (("#include <string>")
+                   "#include <string>
+#include <cstdint>"))
+                (substitute* "lib/Analysis/ConstantFolding.cpp"
+                  (("#include \"llvm/Config/config.h\"")
+                   "#include \"llvm/Config/config.h\"
+#define _GLIBCXX_HAVE_FENV_H 1
+#include <fenv.h>"))))))))))

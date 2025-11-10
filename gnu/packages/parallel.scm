@@ -4,7 +4,7 @@
 ;;; Copyright © 2015-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2016, 2020, 2021, 2022, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2020, 2021, 2022, 2023, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2017, 2018 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2018–2022 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -339,21 +339,37 @@ minimal slurm package BASE-SLURM."
 ;; As noted in the link, YY.MM is the release scheme, and the 'maintenance'
 ;; digit does not introduce incompatibilities.
 
-(define-public slurm-minimal-23.11
+(define-public slurm-minimal-24.05
   (package
    (inherit slurm-minimal)
-   (version "23.11.11")
+   (version "24.05.5")
     (source (origin
              (inherit (package-source slurm))
              (method url-fetch)
              (uri (string-append
                    "https://download.schedmd.com/slurm/slurm-"
                    version ".tar.bz2"))
-             (patches
-              (search-patches "slurm-23-salloc-fallback-shell.patch"))
              (sha256
               (base32
-               "0pg4liysbppfgynwsj3i1lzr60rnybnvzja37x6xgyjvxgf165sa"))))))
+               "0vxiymp40lgcb1z76cyqdpqpy7w14r483v54dk4aq84v0aw0mixl"))))))
+
+(define-public slurm-24.05 (make-slurm slurm-minimal-24.05))
+
+(define-public slurm-minimal-23.11
+  (package
+    (inherit slurm-minimal)
+    (version "23.11.11")
+    (source (origin
+              (inherit (package-source slurm))
+              (method url-fetch)
+              (uri (string-append
+                    "https://download.schedmd.com/slurm/slurm-"
+                    version ".tar.bz2"))
+              (patches
+               (search-patches "slurm-23-salloc-fallback-shell.patch"))
+              (sha256
+               (base32
+                "0pg4liysbppfgynwsj3i1lzr60rnybnvzja37x6xgyjvxgf165sa"))))))
 
 (define-public slurm-23.11 (make-slurm slurm-minimal-23.11))
 
@@ -377,7 +393,7 @@ minimal slurm package BASE-SLURM."
 (define-public slurm-drmaa
   (package
     (name "slurm-drmaa")
-    (version "1.1.3")
+    (version "1.1.5")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -385,7 +401,13 @@ minimal slurm package BASE-SLURM."
                     version "/slurm-drmaa-" version ".tar.gz"))
               (sha256
                (base32
-                "1fn3p4wjj0sgvx0isy3hiwi35vhxa2n2ksq5cn9sq2hg7yyb2phl"))))
+                "1vydd44wp1xns7dd6zh7yin7i5p0ia3x2bk7ql56wfzhi22yf9sd"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; This is a typo fixed in upstream commit
+               ;; d4a43450a42b25c491217ed8b8e0af79a538c6e3
+               '(substitute* "slurm_drmaa/util.h"
+                  (("slurmdrmaa__init") "slurmdrmaa_init")))))
     (build-system gnu-build-system)
     (arguments `(#:tests? #f)) ; The tests require "bats".
     (inputs

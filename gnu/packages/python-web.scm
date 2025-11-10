@@ -2,6 +2,7 @@
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2015-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017 Christopher Baines <mail@cbaines.net>
+;;; Copyright © 2017 Muriithi Frederick Muriuki <fredmanglis@gmail.com>
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym+a@scratchpost.org>
 ;;; Copyright © 2013, 2014, 2015, 2016, 2020, 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016-2023 Marius Bakke <marius@gnu.org>
@@ -215,6 +216,59 @@ writing applications that talk to network enabled embedded
 @acronym{IoT,Internet of Things} devices.")
     (license license:expat)))
 
+(define-public python-anaconda-client
+  (package
+    (name "python-anaconda-client")
+    (version "1.13.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Anaconda-Platform/anaconda-client")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06nn3cwhrrajsbn9pils2539lzplfnyhn9java3xrpm3ksxq9g72"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--deselect=tests/utils/test_conda.py::test_find_conda"
+              "--deselect=tests/utils/test_conda.py::test_conda_vars")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "setup.cfg"
+                (("addopts=.*") "addopts=\n")))))))
+    (native-inputs
+     (list python-freezegun
+           python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-anaconda-cli-base
+           python-conda-package-handling
+           python-conda-package-streaming
+           python-dateutil
+           python-defusedxml
+           python-nbformat
+           python-pillow
+           python-platformdirs
+           python-pytz
+           python-pyyaml
+           python-requests
+           python-requests-toolbelt
+           python-setuptools
+           python-tqdm
+           python-urllib3))
+    (home-page "https://github.com/Anaconda-Platform/anaconda-client")
+    (synopsis "Anaconda Cloud command line client library")
+    (description
+     "Anaconda Cloud command line client library provides an interface to
+Anaconda Cloud.  Anaconda Cloud is useful for sharing packages, notebooks and
+environments.")
+    (license license:bsd-3)))
+
 (define-public python-apprise
   (package
     (name "python-apprise")
@@ -369,6 +423,82 @@ and JSON.
      "This package provides a Python library with classes that mimic
 @code{pathlib.Path}'s interface for URIs from different cloud storage
 services.")
+    (license license:expat)))
+
+(define-public python-conda-package-handling
+  (package
+    (name "python-conda-package-handling")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/conda/conda-package-handling/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1l2zbbwlxp9azpshixvxnb9354xajxkn88934grpwl70blgb3yq2"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-bottle
+           python-mock
+           python-pytest
+           python-pytest-cov
+           python-pytest-mock
+           python-setuptools))
+    (propagated-inputs
+     (list python-conda-package-streaming))
+    (home-page "https://conda.io")
+    (synopsis "Create and extract conda packages of various formats")
+    (description
+     "This library is an abstraction of Conda package handling and a tool for
+extracting, creating, and converting between formats.")
+    (license license:bsd-3)))
+
+(define-public python-conda-package-streaming
+  (package
+    (name "python-conda-package-streaming")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "conda_package_streaming" version))
+       (sha256
+        (base32 "1fcyx83swx1wfndrl0vdk8c2pixshn54gkjy7xchkra13kw2yas2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; TODO: Cycles with python-conda-package-handling, implement bootstrap.
+     (list #:tests? #f))
+    (native-inputs
+     (list python-flit-core))
+    (propagated-inputs
+     (list python-requests
+           python-zstandard))
+    (home-page "https://conda.github.io/conda-package-streaming/")
+    (synopsis "Conda formats (@code{.conda}, @code{.tar.bz2}) reader library")
+    (description
+     "This package provides an efficient library to read from new and old format
+@code{.conda} and @code{.tar.bz2} conda packages.")
+    (license license:bsd-3)))
+
+(define-public python-dependency-groups
+  (package
+    (name "python-dependency-groups")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dependency_groups" version))
+       (sha256
+        (base32 "1zgymnk6k984h2wfdpp0vws2ihwqrr9lmxhrij9zs5q5140q61vq"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-packaging python-tomli))
+    (native-inputs (list python-flit-core))
+    (home-page "https://dependency-groups.readthedocs.io/")
+    (synopsis "Tools and library for resolving PEP 735 Dependency Group data")
+    (description
+     "This package provides a library which is able to parse dependency groups (PEP
+735), following includes, and provide that data as output.")
     (license license:expat)))
 
 (define-public python-devpi-common
@@ -4040,6 +4170,35 @@ high-speed transfers via libcurl and frequently outperforms alternatives.")
     ;; under the terms of LGPLv2.1+ or Expat.
     (license (list license:lgpl2.1+ license:expat))))
 
+(define-public python-stripe
+  (package
+    (name "python-stripe")
+    (version "13.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/stripe/stripe-python")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f0d1hqias3qylrhk56w055lqrlzjs9s7wxva30v54ykmn9nj6dx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     '(#:tests? #f))  ;; tests require network
+    (native-inputs
+     (list python-flit-core))
+    (propagated-inputs
+     (list python-httpx
+           python-requests))
+    (home-page "https://github.com/stripe/stripe-python")
+    (synopsis "Python bindings for the Stripe financial services' API")
+    (description "This package provides access to the Stripe financial
+services' API.  It includes a pre-defined set of classes for API resources
+that initialize themselves dynamically from API responses which makes it
+compatible with a wide range of versions of the Stripe API.")
+    (license license:expat)))
+
 (define-public python-tldextract
   (package
     (name "python-tldextract")
@@ -4957,27 +5116,6 @@ set out in RFC 7540 Section 5.3 (Stream Priority).")
      "This package provides language definitions used by
 @url{https://weblate.org/, Weblate}i.")
     (license license:expat)))
-
-;; XXX: See: <https://codeberg.org/guix/guix/issues/3321>.
-(define-public python-wget
-  (package
-    (name "python-wget")
-    (version "3.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "wget" version ".zip"))
-       (sha256
-        (base32
-         "0qb0y7ipby42m4m7h0ipazpdyc3bn9xi46lvifcwwl5albn31rim"))))
-    (build-system pyproject-build-system)
-    (arguments (list #:tests? #f)) ;no tests
-    (native-inputs (list python-setuptools unzip))
-    (home-page "https://bitbucket.org/techtonik/python-wget/")
-    (synopsis "Pure Python download utility")
-    (description "The python-wget library provides an API to download files
-with features similar to the @command{wget} utility.")
-    (license license:unlicense)))
 
 (define-public python-wikidata
   (package
@@ -8384,59 +8522,6 @@ package from WTForms.  The package has been renamed to
 @code{wtforms_sqlalchemy} but otherwise should function the same as
 @code{wtforms.ext.sqlalchemy} did.")
     (license license:bsd-3)))
-
-(define-public python-paste
-  (package
-    (name "python-paste")
-    (version "3.10.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "paste" version))
-       (sha256
-        (base32
-         "0jjyl39r5ncx98rwi855x71qrwvwm59idgn7q0c7m2jyb8314g8w"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-wheel))
-    (home-page "https://pythonpaste.readthedocs.io/")
-    (synopsis "Python web development tools, focusing on WSGI")
-    (description
-     "Paste provides a variety of web development tools and middleware which
-can be nested together to build web applications.  Paste's design closely
-follows ideas flowing from WSGI (Web Standard Gateway Interface).")
-    (license license:expat)))
-
-(define-public python-pastescript
-  (package
-    (name "python-pastescript")
-    (version "3.7.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pastescript" version))
-       (sha256
-        (base32 "08959bmp62pb2rlwr4wpwij15y83jcf9wa9jgg32jlvfzf6h4vsk"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags #~(list "--ignore=tests/appsetup/testfiles")))
-    (native-inputs
-     (list python-pytest
-           python-wheel))
-    (propagated-inputs
-     (list python-paste
-           python-pastedeploy
-           python-setuptools))
-    (home-page "https://github.com/pasteorg/pastescript")
-    (synopsis "Pluggable command line tool for serving web applications and more")
-    (description
-     "PasteScript is a plugin-friendly command line tool which provides a
-variety of features, from launching web applications to bootstrapping project
-layouts.")
-    (license license:expat)))
 
 (define-public python-urlgrabber
   (package

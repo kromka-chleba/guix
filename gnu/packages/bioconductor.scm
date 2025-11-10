@@ -5,7 +5,7 @@
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2017, 2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2018, 2019, 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2019, 2020, 2021, 2022, 2023 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2019-2023, 2025 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2020 Peter Lo <peterloleungyau@gmail.com>
 ;;; Copyright © 2020-2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
@@ -4992,6 +4992,23 @@ create an alternative mapping from sequences.")
                (base32
                 "0zx0brvcyi9id7xli9h5nk9an7j46p7zgjj3qmwr3jm4b95qahpl"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'fix-r-4.5.0
+            ;; Changes in R 4.5.0: C-Level Facilities.
+            ;; Strict R headers are now the default. This removes the legacy
+            ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+            ;; R_Calloc, R_Realloc or R_Free instead.
+            ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+            (lambda _
+              (substitute* '("src/densities.cpp"
+                             "src/loghmm.cpp"
+                             "src/scalehmm.cpp"
+                             "src/utility.cpp")
+                (("Calloc\\(") "R_Calloc(")
+                (("Free\\(") "R_Free(")))))))
     (native-inputs
      (list r-bsgenome-hsapiens-ucsc-hg19 r-knitr r-testthat))
     (propagated-inputs
@@ -10190,6 +10207,22 @@ at @url{https://github.com/kharchenkolab/hahmmr/}.")
                 "1jm0ia06ls1m7dsbzp1hk68qi5wbqzhcf6x66534bj1kxdll17k7"))))
     (properties `((upstream-name . "Harshlight")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-c-standard
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CFLAGS=-g -O2"
+                              " -std=gnu11"))))))))))
     (propagated-inputs
      (list r-affy
            r-altcdfenvs
@@ -11805,6 +11838,12 @@ specific parser.")
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'skip-bad-tests
+           (lambda _
+             ;; These tests need Internet access to load XML schemas.
+             (with-directory-excursion "inst/unitTests/"
+               (delete-file "test_isolationWindow.R")
+               (delete-file "test_mzid.R"))))
          (add-after 'unpack 'use-system-boost
            (lambda _
              (substitute* "src/Makevars"
@@ -15391,7 +15430,10 @@ posterior for individual coefficients.")
           r-rsamtools
           r-rtracklayer
           r-summarizedexperiment))
-   (native-inputs (list r-biocgenerics r-bsgenome-hsapiens-ucsc-hg19 r-runit))
+   (native-inputs (list r-biocgenerics
+                        r-biocstyle
+                        r-bsgenome-hsapiens-ucsc-hg19
+                        r-runit))
    (home-page "https://bioconductor.org/packages/GreyListChIP")
    (synopsis "Greylist artefact regions based on ChIP inputs")
    (description "This package identifies regions of ChIP experiments with high
@@ -17400,7 +17442,7 @@ to install interface to SYMPHONY.")
     (propagated-inputs
      (list r-biocgenerics r-fdrtool r-lpsymphony r-slam))
     (native-inputs
-     (list r-knitr r-testthat))
+     (list r-knitr r-ggplot2 r-testthat r-scales))
     (home-page "https://bioconductor.org/packages/IHW")
     (synopsis "Independent hypothesis weighting")
     (description
@@ -19922,7 +19964,9 @@ footprints.")
            r-rcpp
            r-vioplot))
     (native-inputs
-     (list r-knitr r-testthat))
+     (list r-knitr
+           r-homo-sapiens
+           r-testthat))
     (home-page "https://bioconductor.org/packages/GOfuncR/")
     (synopsis "Gene ontology enrichment using FUNC")
     (description
@@ -20347,6 +20391,22 @@ gene-specific binding is expected.")
         (base32
          "04a11dsqd5y4b39nny94acnh0qhdazjc6d1803izza4vrgmw2csb"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CFLAGS=-g -O2"
+                              " -Wno-error=incompatible-pointer-types\n"))))))))))
     (propagated-inputs
      (list r-affy r-biobase r-biocgenerics r-gcrma r-genefilter))
     (home-page "https://bioconductor.org/packages/simpleaffy/")
@@ -20974,7 +21034,7 @@ Gaussian distributions.")
                (add-after 'unpack 'patch-sources
                  (lambda _
                    (setenv "POPCNT_CAPABILITY" "0")))))))
-    (inputs (list))
+    (inputs (list zlib))
     (native-inputs
      (list r-knitr r-testthat))
     (home-page "https://bioconductor.org/packages/Rbowtie/")
@@ -25477,7 +25537,19 @@ decompression of raw bead-level data from the Illumina BeadArray platform.")
              (delete-file "tests/testthat/test_Axt.R")
              (substitute* "tests/testthat/test_CNE.R"
                ((".*test_CNE.*" m)
-                (string-append m "skip('guix')\n"))))))))
+                (string-append m "skip('guix')\n")))))
+         (add-before 'install 'fix-gcc-14-strictness
+           (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CFLAGS=-g -O2"
+                              " -std=gnu11 \n"))))))))))
     (build-system r-build-system)
     (inputs (list zlib))
     (propagated-inputs
@@ -26934,6 +27006,23 @@ the earlier snpMatrix package, allowing for uncertainty in genotypes.")
          "071aipwk1awr71hvzflps49dzp83p12zm1pbyx4l8d2v3wbj0dlz"))))
     (properties `((upstream-name . "chromstaR")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'fix-r-4.5.0
+            ;; Changes in R 4.5.0: C-Level Facilities.
+            ;; Strict R headers are now the default. This removes the legacy
+            ;; definitions of PI, Calloc, Realloc and Free: use M_PI,
+            ;; R_Calloc, R_Realloc or R_Free instead.
+            ;; https://cran.r-project.org/doc/manuals/r-release/NEWS.html
+            (lambda _
+              (substitute* '("src/densities.cpp"
+                             "src/scalehmm.cpp"
+                             "src/utility.cpp")
+                (("Calloc\\(") "R_Calloc(")
+                (("Free\\(") "R_Free(")
+                (("Realloc\\(") "R_Realloc(")))))))
     (propagated-inputs
      (list r-bamsignals
            r-biocgenerics
@@ -28177,6 +28266,16 @@ visualizing bisulfite sequencing data.")
                 "0lxva0lvh3xcpkrjalkg2ps8jlzaypnsy3ibd9mk4lnjpbn5hiii"))))
     (properties `((upstream-name . "dada2")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              (substitute* "src/Makevars"
+                (("CXX_STD = CXX11")
+                 "CXX_STD = CXX11
+PKG_CXXFLAGS=-g -O2 -Wno-error=changes-meaning")))))))
     (propagated-inputs
      (list r-biocgenerics
            r-biostrings

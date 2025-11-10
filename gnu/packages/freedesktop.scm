@@ -39,7 +39,7 @@
 ;;; Copyright © 2024-2025 Alvin Hsu <aurtzy@gmail.com>
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
-;;; Copyright © 2024 dan <i@dan.games>
+;;; Copyright © 2024, 2025 dan <i@dan.games>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -2114,7 +2114,14 @@ modems and setup connections with them.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "00ss14hf1qwb42648cldghmfjfn1nkjvpy508b7vaz322fj37qa4"))))
+           "00ss14hf1qwb42648cldghmfjfn1nkjvpy508b7vaz322fj37qa4"))
+         (modules '((guix build utils)))
+         (snippet
+          ;; Add missing 'const' qualifier to '_error' function.  This fixes
+          ;; an "incompatible pointer type" error with libxml2 2.14.
+          #~(substitute* "lib/ext/wocky/wocky/wocky-xmpp-reader.c"
+              (("xmlErrorPtr error")
+               "const xmlError *error")))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -2315,7 +2322,10 @@ share connections to real-time communication services without conflicting.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "195pz8dgwhyy1cygd0rlncyr3c4wzhnf99sfjj5qmc8j195j1k7a"))))
+           "195pz8dgwhyy1cygd0rlncyr3c4wzhnf99sfjj5qmc8j195j1k7a"))
+         (modules '((guix build utils)))
+         (snippet                                 ;for wocky
+          (origin-snippet (package-source telepathy-gabble)))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -3467,3 +3477,51 @@ supporting behavior like @samp{ssh -X}.")
 window decorations for them.  It aims to provide multiple backends that
 implements the decoration drawing.")
     (license license:expat)))
+
+(define-public iio-sensor-proxy
+  (package
+    (name "iio-sensor-proxy")
+    (version "3.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/hadess/iio-sensor-proxy")
+             (commit "3.8")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rk0si00g75068cqgwd8qfq935wymsjczvpxg3wmlspq13h9amk5"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-Dsystemdsystemunitdir=false"
+              (string-append "-Dudevrulesdir="
+                             #$output "/lib/udev/rules.d")
+              "-Dtests=true"
+              "-Dgtk-tests=true")
+      #:glib-or-gtk? #t
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-polkit-dir
+            (lambda _
+              (substitute* "meson.build"
+                (("polkit_gobject_dep\\..*")
+                 (string-append "'"
+                                #$output "/share/polkit-1/actions'"))))))))
+    (inputs (list glib libgudev polkit))
+    (native-inputs
+     (list dbus
+           (list glib "bin")
+           gobject-introspection
+           gtk+
+           pkg-config
+           python
+           python-dbusmock
+           python-psutil
+           umockdev))
+    (home-page "https://gitlab.freedesktop.org/hadess/iio-sensor-proxy")
+    (synopsis "IIO sensors to D-Bus proxy")
+    (description
+     "@code{iio-sensor-proxy} is a daemon which passes IIO sensor data to D-Bus.")
+    (license license:gpl3+)))

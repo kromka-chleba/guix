@@ -1498,51 +1498,46 @@ formats (e.g. Bibtex, RIS, etc.) using a common XML intermediate.")
 (define-public goawk
   (package
     (name "goawk")
-    (version "1.29.1")
+    (version "1.30.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/benhoyt/goawk")
-             (commit (string-append "v" version))))
+              (url "https://github.com/benhoyt/goawk")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1dn4f8a8wp765v0112vmj2qq2brv7z2c8gr16rfpklxq5p4ml2rx"))))
+        (base32 "0riimisq3y6pahl1yld5yjxywh39i0v0kd4vmybf5j09klqynbn3"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/benhoyt/goawk"
+      #:test-flags
+      #~(list "-vet=off" ;Go@1.24 forces vet, but tests are not ready yet.
+              ;; XXX: The most of the tests passed but some of the group fails
+              ;; to find additional commands or compare output of test data.
+              "-skip" "TestCommandLine|TestInterp")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-failing-tests
-            (lambda* (#:key tests? import-path #:allow-other-keys)
+          (add-before 'check 'pre-check
+            (lambda* (#:key import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
-                ;; Disable tests trying to setup up locale and requiring gawk
-                ;; executable.
-                (substitute* (find-files "." "\\_test.go$")
-                  (("TestShellCommand") "OffTestShellCommand")
-                  (("TestInterp") "OffTestInterp")
-                  (("TestCommandLine") "OffTestCommandLine")))))
-          (add-before 'check 'patch-paths
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (substitute* (list "interp/interp.go" "goawk_test.go")
+                (substitute* (list "interp/interp.go"
+                                   "interp/interp_test.go"
+                                   "goawk_test.go")
+                  (("/bin/cat") (which "cat"))
+                  (("/bin/echo") (which "echo"))
                   (("/bin/sh") (which "sh")))
                 (substitute* "goawk_test.go"
                   ;; During tests goawk tries to write to existing files,
                   ;; point to an empty directory instead.
-                  (("/testdata/output") "/testdata/output-tmp")))))
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (mkdir "testdata/output-tmp")
-                  (invoke "go" "test" "./...")
-                  ;; Make sure we have not left any generated articfacts
-                  ;; during tests and moved them to the store.
-                  (delete-file-recursively "testdata/output-tmp"))))))))
+                  (("/testdata/output") "/testdata/output-tmp"))
+                (mkdir "testdata/output-tmp"))))
+          (add-after 'check 'post-check-remove-output-temp
+            (lambda* (#:key  import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "testdata/output-tmp")))))))
     (home-page "https://github.com/benhoyt/goawk")
     (synopsis "AWK interpreter with CSV support")
     (description
@@ -1733,7 +1728,7 @@ of a Unix terminal to HTML code.")
 (define-public vale
   (package
     (name "vale")
-    (version "3.12.0")
+    (version "3.13.0")
     (source
      (origin
        (method git-fetch)
@@ -1741,7 +1736,7 @@ of a Unix terminal to HTML code.")
               (url "https://github.com/errata-ai/vale")
               (commit (string-append "v" version))))
        (sha256
-        (base32 "1w6216ap8sds6279h39ksjv27hakzahjmzlvbnsl67lwvldbqvcg"))
+        (base32 "0qa1maav2zf6z5ij1yg6i3gbkknngqhlrhlkxrypzdf7q10558kr"))
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments

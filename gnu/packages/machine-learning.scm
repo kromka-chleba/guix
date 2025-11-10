@@ -31,6 +31,7 @@
 ;;; Copyright © 2024 Andy Tai <atai@atai.org>
 ;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -512,25 +513,28 @@ transforms.")
 (define-public python-ml-collections
   (package
     (name "python-ml-collections")
-    (version "1.0.0")
+    (version "1.1.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/google/ml_collections")
-             (commit (string-append "v" version))))
+              (url "https://github.com/google/ml_collections")
+              (commit (string-append "v" version))))
        (sha256
-        (base32 "1f3rwbgnnvgh2jgnkwxfjdw18yly41hlx9fy56h0x36zyy8p0j21"))))
+        (base32 "1lv7vs84v4zwyrqg2zdlkrx3x6w08j9lyz74m8vk55ysl4399pqv"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags '(list "--pyargs" "ml_collections/config_dict/tests")))
+      ;; tests: 373 passed, 1 skipped, 81 warnings
+      #:test-flags
+      #~(list "--ignore=docs/"
+              "--ignore=ml_collections/config_dict/examples/examples_test.py")))
+    (native-inputs
+     (list python-flit-core
+           python-pytest))
     (propagated-inputs
-     (list python-absl-py python-pyyaml))
-    (native-inputs (list python-pylint
-                         python-pytest
-                         python-pytest-xdist
-                         python-flit-core))
+     (list python-absl-py
+           python-pyyaml))
     (home-page "https://github.com/google/ml_collections")
     (synopsis "Python collections designed for Machine Learning usecases")
     (description
@@ -1206,15 +1210,25 @@ It currently houses implementations of
 (define-public python-pot
   (package
     (name "python-pot")
-    (version "0.9.5")
+    (version "0.9.6")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pot" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PythonOT/POT")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0hk0dmjgnpwka0a7gyzrcq155wzlvzcrsav3qaizyg0wymzywi4n"))
-       (snippet '(delete-file "ot/lp/emd_wrap.cpp"))))
+        (base32 "1zzh6jsnagsmcmf91hhb0f1asnby11h2zc92h7myld4wik986bx7"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k"
+              ;; Semirelaxed GW init partitions by size via np.where(shapes <= N);
+              ;; dtype mix triggers str vs int TypeError under our NumPy.
+              "not test_entropic_semirelaxed_gromov"
+              "test")))
     (propagated-inputs
      (list python-autograd
            python-numpy
@@ -1224,8 +1238,9 @@ It currently houses implementations of
            python-scikit-learn
            python-scipy))
     (native-inputs (list python-cython
-                         python-setuptools
-                         python-wheel))
+                         python-pytest
+                         python-pytest-cov
+                         python-setuptools))
     (home-page "https://github.com/PythonOT/POT")
     (synopsis "Python Optimal Transport Library")
     (description "This Python library provides several solvers for
@@ -1859,12 +1874,18 @@ with a single function call.")
                    "--ignore=transformers/test_gpt2_to_onnx.py"
                    "--ignore=transformers/test_optimizer_huggingface_bert.py"
                    "--ignore=transformers/test_parity_huggingface_gpt_attention.py"
-                   "--ignore=transformers/test_shape_infer_helper.py"
-                   ;; XXX: onnxscript ModuleNotFound
-                   "--ignore=transformers/test_gelu_fusions.py"
-                   "--ignore=transformers/test_gemma3_vision.py"
-                   ;; XXX: Other failing tests.
-                   "-k" ,(string-append
+                  "--ignore=transformers/test_shape_infer_helper.py"
+                  ;; XXX: onnxscript ModuleNotFound
+                  "--ignore=transformers/test_gelu_fusions.py"
+                  "--ignore=transformers/test_gemma3_vision.py"
+                  ;; XXX: PyTorch 2.9 ONNX exporter requires python-onnxscript.
+                  ;; Skip exporter-dependent tests until packaged/enabled.
+                  "--ignore=test_pytorch_export_contrib_ops.py"
+                  "--ignore=transformers/test_parity_gelu.py"
+                  "--ignore=transformers/test_parity_layernorm.py"
+                  "--ignore=transformers/test_phi_vision.py"
+                  ;; XXX: Other failing tests.
+                  "-k" ,(string-append
                           "not test_gelu_is_fused_by_default"
                           " and not test_inverse"))))))
           (add-after 'check 'python-sanity-check
@@ -3210,17 +3231,17 @@ Python.")
 (define-public tensorflow-lite
   (package
     (name "tensorflow-lite")
-    (version "2.14.0")
+    (version "2.15.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/tensorflow/tensorflow")
-             (commit (string-append "v" version))))
+              (url "https://github.com/tensorflow/tensorflow")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "07f4x4g3kwhfjz7iadhqrv97zmw0blacixvca1gdqkqqi7aipxis"))))
+         "01cjdilxxr2h0q3sbjwhy0p5b82sbyvi224s5vx5gn2gix3nhdyx"))))
     (build-system cmake-build-system)
     (outputs (list "out" "python"))
     (arguments
@@ -3229,11 +3250,15 @@ Python.")
       #:imported-modules (append %cmake-build-system-modules
                                  %pyproject-build-system-modules)
       #:modules '((ice-9 match)
+                  (srfi srfi-26)
                   (guix build utils)
                   (guix build cmake-build-system)
                   ((guix build pyproject-build-system) #:prefix py:))
       #:configure-flags
       #~(list
+         ;; Access some OpenCL functions in mesa-headers
+         "-DCMAKE_C_FLAGS=-DCL_ENABLE_BETA_EXTENSIONS=1"
+         "-DCMAKE_CXX_FLAGS=-DCL_ENABLE_BETA_EXTENSIONS=1"
          ;; "-DTFLITE_KERNEL_TEST=ON"  ; TODO: build tests
          ;; so cmake can be used to find this from other packages
          "-DTFLITE_ENABLE_INSTALL=ON"
@@ -3284,7 +3309,8 @@ Python.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
-            (lambda _ (chdir "tensorflow/lite")))
+            (lambda _
+              (chdir "tensorflow/lite")))
           (add-after 'chdir 'unbundle-gemmlowp
             (lambda _
               (call-with-output-file "tools/cmake/modules/gemmlowp.cmake"
@@ -3301,7 +3327,7 @@ find_library(ML_DTYPES_LIBRARIES
   PATHS \"${ML_DTYPES_LIBRARY_DIRS}\"
   NO_DEFAULT_PATH)" port)))))
           (add-after 'chdir 'copy-sources
-            (lambda* (#:key inputs #:allow-other-keys)
+            (lambda _
               ;; Don't fetch source code; we already have everything we need.
               (substitute* '("tools/cmake/modules/fft2d.cmake"
                              "tools/cmake/modules/farmhash.cmake"
@@ -3310,28 +3336,30 @@ find_library(ML_DTYPES_LIBRARIES
 
               (mkdir-p "/tmp/farmhash")
               (with-directory-excursion "/tmp/farmhash"
-                (invoke "tar" "--strip-components=1"
-                        "-xf" (assoc-ref inputs "farmhash-src")))
+                (copy-recursively #$(this-package-native-input "farmhash-src") ".")
+                (for-each make-file-writable (find-files ".")))
 
               (mkdir-p "/tmp/fft2d")
               (with-directory-excursion "/tmp/fft2d"
-                (invoke "tar" "--strip-components=1"
-                        "-xf" (assoc-ref inputs "fft2d-src")))))
+                (copy-recursively #$(this-package-native-input "fft2d-src") ".")
+                (for-each make-file-writable (find-files ".")))))
           (add-after 'copy-sources 'opencl-fix
-            (lambda _ (substitute* "delegates/gpu/cl/opencl_wrapper.h"
-              (("cl_ndrange_kernel_command_properties_khr")
-               "cl_command_properties_khr"))))
+            (lambda _
+              (substitute* "delegates/gpu/cl/opencl_wrapper.h"
+                (("cl_ndrange_kernel_command_properties_khr")
+                 "cl_command_properties_khr"))))
           (add-after 'opencl-fix 'absl-fix
-            (lambda _ (substitute* '(
-                        "delegates/gpu/cl/cl_operation.h"
-                        "delegates/gpu/common/task/qcom_thin_filter_desc.cc"
-                        "delegates/gpu/common/tasks/special/thin_pointwise_fuser.cc")
-              (("#include <vector>")
-               "#include <vector>\n\n#include \"absl/strings/str_cat.h\"\n"))))
+            (lambda _
+              (substitute* '("delegates/gpu/cl/cl_operation.h"
+                             "delegates/gpu/common/task/qcom_thin_filter_desc.cc"
+                             "delegates/gpu/common/tasks/special/thin_pointwise_fuser.cc")
+                (("#include <vector>")
+                 "#include <vector>\n\n#include \"absl/strings/str_cat.h\"\n"))))
           (add-after 'opencl-fix 'stdint-fix
-            (lambda _ (substitute* "kernels/internal/spectrogram.cc"
-              (("#include <math.h>")
-               "#include <math.h>\n#include <cstdint>\n"))))
+            (lambda _
+              (substitute* "kernels/internal/spectrogram.cc"
+                (("#include <math.h>")
+                 "#include <math.h>\n#include <cstdint>\n"))))
           (add-after 'stdint-fix 'gemmlowp-fix
             (lambda _
               (substitute* "kernels/internal/common.h"
@@ -3354,11 +3382,22 @@ find_library(ML_DTYPES_LIBRARIES
                                            "build_pip_package_with_cmake.sh")))
                 (substitute* script
                   (("\"\\$\\{TENSORFLOW_LITE_DIR\\}\"" all)
-                   (string-append "${CMAKE_ADDITIONAL_CONFIGURE_FLAGS} "
-                                  all)))
+                   (string-append "${ADDITIONAL_CMAKE_FLAGS} " all))
+                  (("-D(CMAKE_C[X]*_FLAGS)=\"\\$\\{BUILD_FLAGS\\}" all flag)
+                   (string-append all " ${ADDITIONAL_" flag "}")))
                 (setenv "BUILD_NUM_JOBS" (number->string (parallel-job-count)))
-                (setenv "CMAKE_ADDITIONAL_CONFIGURE_FLAGS"
-                        (string-join configure-flags " "))
+                (let* ((config (map (cut string-split <> #\=) configure-flags))
+                       (c-flags (assoc-ref config "-DCMAKE_C_FLAGS"))
+                       (config (alist-delete "-DCMAKE_C_FLAGS" config))
+                       (cxx-flags (assoc-ref config "-DCMAKE_CXX_FLAGS"))
+                       (config (alist-delete "-DCMAKE_CXX_FLAGS" config)))
+                  (setenv "ADDITIONAL_CMAKE_C_FLAGS"
+                          (string-join c-flags "="))
+                  (setenv "ADDITIONAL_CMAKE_CXX_FLAGS"
+                          (string-join cxx-flags "="))
+                  (setenv "ADDITIONAL_CMAKE_FLAGS"
+                          (string-join (map (cut string-join <> "=") config)
+                                       " ")))
                 (invoke "sh" script))))
           (add-after 'install 'install-extra
             (lambda _
@@ -3398,11 +3437,9 @@ find_library(ML_DTYPES_LIBRARIES
            mesa-headers
            neon2sse
            nsync
-           opencl-clhpp
-           opencl-headers
            opencl-icd-loader
            pthreadpool
-           python-wrapper
+           python                       ;for its /lib
            python-ml-dtypes
            ruy
            re2
@@ -3412,32 +3449,30 @@ find_library(ML_DTYPES_LIBRARIES
     (propagated-inputs
      (list python-numpy))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("googletest" ,googletest)
-       ("pybind11" ,pybind11)
-       ("python-wheel" ,python-wheel)
-       ("swig" ,swig)
-       ("farmhash-src"
-        ,(let ((commit "816a4ae622e964763ca0862d9dbd19324a1eaf45"))
+     (list pkg-config
+           googletest
+           pybind11
+           python-setuptools
+           python-wrapper               ;for its /bin
+           swig
            (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://mirror.bazel.build/github.com/google/farmhash/archive/"
-                   commit ".tar.gz"))
-             (file-name (git-file-name "farmhash" (string-take commit 8)))
+             (method git-fetch)
+             (uri (git-reference
+                    (url "https://github.com/google/farmhash")
+                    (commit "816a4ae622e964763ca0862d9dbd19324a1eaf45")))
+             (file-name "farmhash-src")
              (sha256
               (base32
-               "185b2xdxl4d4cnsnv6abg8s22gxvx8673jq2yaq85bz4cdy58q35")))))
-       ("fft2d-src"
-        ,(origin
-           (method url-fetch)
-           (uri (string-append "https://storage.googleapis.com/"
-                               "mirror.tensorflow.org/github.com/petewarden/"
-                               "OouraFFT/archive/v1.0.tar.gz"))
-           (file-name "fft2d.tar.gz")
-           (sha256
-            (base32
-             "1jfflzi74fag9z4qmgwvp90aif4dpbr1657izmxlgvf4hy8fk9xd"))))))
+               "1mqxsljq476n1hb8ilkrpb39yz3ip2hnc7rhzszz4sri8ma7qzp6")))
+           (origin
+             (method git-fetch)
+             (uri (git-reference
+                    (url "https://github.com/petewarden/OouraFFT")
+                    (commit "v1.0")))
+             (file-name "fft2d-src")
+             (sha256
+              (base32
+               "1gla8m477din9k7jnbkzzbvc0wzw2rn97skxwf0k0mwcdf6vlhcs")))))
     (home-page "https://www.tensorflow.org")
     (synopsis "Machine learning framework")
     (description
@@ -3620,8 +3655,55 @@ project, and it will potentially also do the same for the Lime project.")
 
 (define-public gloo
   (let ((version "0.0.0")                         ; no proper version tag
-        (commit "c7b7b022c124d9643957d9bd55f57ac59fce8fa2")
-        (revision "3"))
+        (commit "54cbae0d3a67fa890b4c3d9ee162b7860315e341")
+        (revision "4"))
+    (package
+      (name "gloo")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pytorch/gloo")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1zixybyma7zpwdawy1qi2d48g9r65wcjjd4j3j2bhlvjymyw03z2"))))
+      (build-system cmake-build-system)
+      (native-inputs
+       (list googletest))
+      (inputs
+       (append (list openssl-1.1)
+               (if (supported-package? rdma-core)
+                   (list rdma-core)
+                   '())))
+      (arguments
+       (list #:configure-flags #~'("-DBUILD_SHARED_LIBS=ON"
+                                   "-DBUILD_TEST=1"
+                                   "-DCMAKE_CXX_STANDARD=17"
+                                   #$@(if (this-package-input "rdma-core")
+                                          #~("-DUSE_IBVERBS=ON")
+                                          #~()))
+             #:phases
+             #~(modify-phases %standard-phases
+                 (replace 'check
+                   (lambda* (#:key tests? #:allow-other-keys)
+                     (when tests?
+                       (invoke "make" "gloo_test")))))))
+      (synopsis "Collective communications library")
+      (description
+       "Gloo is a collective communications library.  It comes with a
+number of collective algorithms useful for machine learning applications.
+These include a barrier, broadcast, and allreduce.")
+      (home-page "https://github.com/facebookincubator/gloo")
+      (supported-systems %64bit-supported-systems)
+      (license license:bsd-3))))
+
+(define-public gloo-for-r-torch
+  (let ((version "0.0.0")                         ; no proper version tag
+        (commit "81925d1c674c34f0dc34dd9a0f2151c1b6f701eb")
+        (revision "2"))
     (package
       (name "gloo")
       (version (git-version version revision commit))
@@ -3634,7 +3716,7 @@ project, and it will potentially also do the same for the Lime project.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "0xsp2m2if3g85l0c3cx9l0j3kz36j3kbmz9mai6kchdhrs13r7d5"))))
+           "16zs8ndbiv9nppn8bv6lfanzyyssz7g5pawxiqcnafwq3nvxpj9m"))))
       (build-system cmake-build-system)
       (native-inputs
        (list googletest))
@@ -4002,74 +4084,6 @@ TensorFlow.js, PyTorch, and MediaPipe.")
          "i686-linux" "x86_64-linux"))
       (license license:bsd-3))))
 
-(define-public xnnpack-for-r-torch
-  (let ((version "0.0")
-        (commit "51a987591a6fc9f0fc0707077f53d763ac132cbf")
-        (revision "2"))
-    (package
-      (inherit xnnpack)
-      (version (git-version version revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference (url (package-home-page xnnpack)) (commit commit)))
-         (file-name (git-file-name (package-name xnnpack) version))
-         (sha256
-          (base32
-           "1rzby82xq8d0rl1d148yz88jh9cpsw5c8b2yw7yg39mi7qmr55rm"))
-         (modules '((guix build utils)
-                    (ice-9 ftw)
-                    (ice-9 textual-ports)
-                    (srfi srfi-26)))
-         (snippet
-          '(begin
-             ;; Remove autogenerated files
-             (for-each
-              (lambda (dir)
-                (let ((gendir (string-append "src/" dir "/gen")))
-                  (when (file-exists? gendir)
-                    (delete-file-recursively gendir)
-                    ;; Needed for the scripts generating the files
-                    (mkdir gendir))))
-              (scandir "src" (negate (cut member <> '("." "..")))))
-             (delete-file-recursively "google3")
-             (delete-file "cmake/microkernels.cmake")
-             ;; Additional autogenerated files which contain the string
-             ;; "Auto-generated file"
-             (for-each
-              (lambda (dir)
-                (for-each
-                 (lambda (name)
-                   (let ((path (string-append dir "/" name)))
-                     (when (call-with-input-file path
-                             (lambda (port)
-                               (string-contains
-                                (get-string-all port)
-                                "Auto-generated file")))
-                       (delete-file path))))
-                 (scandir dir (negate (cut member <> '("." ".."))))))
-              '("test" "bench" "eval" "models" "src/enums" "src/xnnpack"))))))
-      (arguments
-       (substitute-keyword-arguments (package-arguments xnnpack)
-         ((#:phases phases)
-          #~(modify-phases #$phases
-              (replace 'generate-files
-                (lambda _
-                  (for-each
-                   (lambda (name)
-                     (when (and (string-prefix? "generate" name)
-                                (string-suffix? ".sh" name)
-                                (not (equal? "generate-amalgamation.sh" name)))
-                       (display (string-append name "\n"))
-                       (invoke "bash" (string-append "scripts/" name))))
-                   (scandir "scripts"))
-                  ;; These need to run after the above scripts
-                  (display "Remaining files\n")
-                  (invoke "python3" "tools/update-microkernels.py")
-                  (substitute* "tools/amalgamate-microkernels.py"
-                    (("BUILD") "BUILD.bazel"))
-                  (invoke "bash" "scripts/generate-amalgamation.sh"))))))))))
-
 ;; Warning: This package requires AVX2 or AVX-512 instructions.
 (define-public fbgemm
   (package
@@ -4278,22 +4292,7 @@ contains facebook extensions and is used by PyTorch.")
 PyTorch.")
     (license license:expat)))
 
-(define-public ideep-pytorch-for-r-torch
-  (package
-    (inherit ideep-pytorch)
-    (version "2.7.3-1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/intel/ideep")
-             (commit (string-append "pytorch-rls-v" version))))
-       (file-name (git-file-name (package-name ideep-pytorch) version))
-       (sha256
-        (base32
-         "0hdpkhcjry22fjx2zg2r48v7f4ljrclzj0li2pgk76kvyblfbyvm"))))))
-
-(define %python-pytorch-version "2.8.0")
+(define %python-pytorch-version "2.9.0")
 
 (define %python-pytorch-src
   (origin
@@ -4304,7 +4303,7 @@ PyTorch.")
     (file-name (git-file-name "python-pytorch" %python-pytorch-version))
     (sha256
      (base32
-      "0am8mx0mq3hqsk1g99a04a4fdf865g93568qr1f247pl11r2jldl"))
+      "005gj27qikkgbibbk00z8xs9a8xms2fxapm53inp31zxm4853myh"))
     (patches (search-patches "python-pytorch-system-libraries.patch"
                              "python-pytorch-runpath.patch"
                              "python-pytorch-without-kineto.patch"
@@ -4461,8 +4460,14 @@ PyTorch.")
           ;; the 'sanity-check phase to fail.
           (add-after 'unpack 'remove-fr-trace-script
             (lambda _
+             (substitute* "setup.py"
+               (("entry_points\\[\"console_scripts\"\\]\\.append\\(") "("))))
+          (add-after 'remove-fr-trace-script 'skip-pip-redirect
+            (lambda _
+              ;; Keep using setup.py directly instead of invoking pip.
               (substitute* "setup.py"
-                (("entry_points\\[\"console_scripts\"\\]\\.append\\(") "("))))
+                (("if arg == \"install\":")
+                 "if False and arg == \"install\":"))))
           (add-before 'build 'use-system-libraries
             (lambda _
               (for-each
@@ -4479,7 +4484,8 @@ PyTorch.")
 
               ;; Fix moodycamel/concurrentqueue includes for system package
               (substitute* '("c10/util/Semaphore.h"
-                             "c10/test/util/Semaphore_test.cpp")
+                             "c10/test/util/Semaphore_test.cpp"
+                             "torch/nativert/executor/ParallelGraphExecutor.cpp")
                 (("<moodycamel/concurrentqueue\\.h>") "<concurrentqueue.h>")
                 (("<moodycamel/lightweightsemaphore\\.h>") "<lightweightsemaphore.h>"))
 
@@ -4640,6 +4646,7 @@ PyTorch.")
            python-pytest-shard
            python-pytest-xdist
            python-hypothesis
+           python-setuptools
            python-types-dataclasses
            shaderc
            valgrind/pinned))
@@ -4736,7 +4743,7 @@ Note: currently this package does not provide GPU support.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0snrn6bhc7hcfzs5y4h61dl4dmwxymkf46dygjq6c09nc1jvmxj8"))))
+        (base32 "0g55nsjs3n66i462cc0fba14qs6w9nk519hrac6rsf5anp8dx551"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4759,9 +4766,15 @@ test/torchaudio_unittest/prototype/hifi_gan/hifi_gan_gpu_test.py"
          "--ignore-glob=test/torchaudio_unittest/models"
          "--ignore=test/torchaudio_unittest/models/models_test.py"
          "--ignore=test/torchaudio_unittest/transforms/autograd_cpu_test.py"
-         "-k" (string-append "not test_torchscript_fails"  ; requires BUILD_SOX=1
-                             ;; XXX: Unmatching harmless warning message.
-                             " and not test_unknown_subtype_warning"))
+         "-k" (string-append
+               "not test_torchscript_fails"  ; requires BUILD_SOX=1
+               ;; XXX: Unmatching harmless warning message.
+               " and not test_unknown_subtype_warning"
+               ;; Skip TorchScript consistency tests that fail with 2.9.0
+               " and not test_FrequencyMasking"
+               " and not test_TimeMasking"
+               " and not test_deemphasis"
+               " and not test_rnnt_loss"))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'configure
@@ -4816,7 +4829,7 @@ in the audio domain.")
            (delete 'disable-avx-dependencies)))))
     (supported-systems '("x86_64-linux"))))
 
-(define %python-pytorch-for-r-torch-version "2.0.1")
+(define %python-pytorch-for-r-torch-version "2.7.1")
 
 (define %python-pytorch-for-r-torch-src
   (origin
@@ -4828,29 +4841,15 @@ in the audio domain.")
                               %python-pytorch-for-r-torch-version))
     (sha256
      (base32
-      "0iirrn687i7sfv0p0i7dn89x3rf13a7l8y1y5h190h51yjxpxqxa"))
+      "0734kfm66hsqdzgs2s4wj5yagvifijbgb0c5wfmp3qcdrraa9x57"))
     (patches (search-patches
               "python-pytorch-for-r-torch-system-libraries.patch"
               "python-pytorch-runpath.patch"
-              "python-pytorch-without-kineto.patch"
+              "python-pytorch-for-r-torch-without-kineto.patch"
               ;; Some autogeneration scripts depend on the
               ;; compile PyTorch library. Therefore, we create
               ;; dummy versions which are regenerated later.
               "python-pytorch-for-r-torch-fix-codegen.patch"))))
-
-(define-public qnnpack-pytorch-for-r-torch
-  (package
-    (inherit qnnpack-pytorch)
-    (version (string-append "pytorch-" %python-pytorch-for-r-torch-version))
-    (source
-     (origin
-       (inherit %python-pytorch-for-r-torch-src)
-       (patches '())
-       (modules '((guix build utils)
-                  (srfi srfi-26)
-                  (ice-9 ftw)))
-       (snippet
-        (origin-snippet (package-source qnnpack-pytorch)))))))
 
 ;; Keep in sync with r-torch
 (define-public python-pytorch-for-r-torch
@@ -4859,34 +4858,73 @@ in the audio domain.")
     (name "python-pytorch")
     (version %python-pytorch-for-r-torch-version)
     (source %python-pytorch-for-r-torch-src)
+    (inputs
+     (modify-inputs (package-inputs python-pytorch)
+       (replace "gloo" gloo-for-r-torch)))
     (arguments
      (substitute-keyword-arguments (package-arguments python-pytorch)
        ((#:phases phases)
         #~(modify-phases #$phases
-            ;; See https://github.com/pytorch/pytorch/issues/61244
-            (add-after 'unpack 'fix-aten-vec
+            (replace 'use-system-libraries
               (lambda _
+                (for-each
+                 (lambda (file)
+                   ;; Check whether the files exist for the
+                   ;; python-pytorch-for-r-torch package
+                   (when (file-exists? file)
+                     (substitute* file
+                       (("\"miniz\\.h\"") "<miniz/miniz.h>")
+                       (("<miniz\\.h>") "<miniz/miniz.h>"))))
+                 '("caffe2/serialize/crc.cc"
+                   "caffe2/serialize/inline_container.cc"
+                   "torch/csrc/inductor/aoti_package/model_package_loader.cpp"))
+
+                (substitute* "aten/src/ATen/native/vulkan/api/Allocator.h"
+                  (("<include/vk_mem_alloc.h>")
+                   "<vk_mem_alloc.h>"))
+                ;; Fix missing <algorithm> header for std::for_each in Vulkan API
+                (substitute* "aten/src/ATen/native/vulkan/api/QueryPool.cpp"
+                  (("#include <utility>" all)
+                   (string-append all "\n#include <algorithm>")))
+                ;; For Vulkan
+                (substitute* "CMakeLists.txt"
+                  (("append_cxx_flag.*-Werror=(return-type|range-loop-construct).*") ""))
                 (substitute*
-                    '("aten/src/ATen/cpu/vec/vec512/vec512_bfloat16.h"
-                      "aten/src/ATen/cpu/vec/vec256/vec256_bfloat16.h")
-                  (("map\\(const __") "map(__"))))))))
-    (native-inputs
-     (modify-inputs (package-native-inputs python-pytorch)
-       (replace "ideep-pytorch" ideep-pytorch-for-r-torch)))
-    (inputs
-     (modify-inputs (package-inputs python-pytorch)
-       (prepend foxi)
-       (prepend qnnpack)
-       (replace "qnnpack-pytorch" qnnpack-pytorch-for-r-torch)
-       (replace "oneapi-dnnl" oneapi-dnnl-for-r-torch)
-       (replace "xnnpack" xnnpack-for-r-torch)))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-pytorch)
-       (append python-filelock
-               python-jinja2
-               python-networkx
-               python-opt-einsum
-               python-sympy)))))
+                    (cons*
+                     "torch/csrc/Module.cpp"
+                     (map
+                      (lambda (name)
+                        (string-append
+                         "torch/utils/benchmark/utils/valgrind_wrapper/"
+                         name))
+                      '("compat_bindings.cpp" "timer_callgrind_template.cpp")))
+                  (("<callgrind.h>") "<valgrind/callgrind.h>"))
+                (setenv "USE_VULKAN" "1")
+                ;; Tell 'setup.py' to let 'CMakeLists.txt' know that we
+                ;; want to use "system libraries" instead of the bundled
+                ;; ones.
+                (setenv "USE_SYSTEM_LIBS" "1")
+                ;; For oneDNN
+                (setenv "USE_MKLDNN" "1")
+                ;; Only works with CUPTI
+                (setenv "USE_KINETO" "0")
+                ;; Prevent CMake error by disabling explicitely
+                (setenv "USE_ITT" "0")
+                ;; Disable on unsupported systems
+                (if #$(not (member
+                            (or (%current-target-system)
+                                (%current-system))
+                            (package-transitive-supported-systems qnnpack)))
+                    (setenv "USE_QNNPACK" "0"))
+                (substitute* '("requirements.txt" "setup.py")
+                  (("sympy>=1\\.13\\.3")
+                   "sympy>=1.13.1"))))
+            (replace 'skip-nccl-call
+              (lambda _
+                ;; Comment-out `checkout_nccl()` invokation in build_pytorch().
+                (substitute* "tools/build_pytorch_libs.py"
+                  (("^[[:blank:]]*checkout_nccl\\(\\)" all)
+                   (string-append "# " all "\n    pass")))))))))))
 
 (define-public python-pytorch-geometric
     (package
@@ -5230,7 +5268,7 @@ PyTorch code to decouple the science from the engineering.")
 (define-public python-torchmetrics
   (package
     (name "python-torchmetrics")
-    (version "1.4.1")
+    (version "1.8.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5239,7 +5277,7 @@ PyTorch code to decouple the science from the engineering.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0371kx2fpp46rlhzkafa7397kp1lirgykpzk9g12kxsqypb67v1l"))))
+                "0x4v1795w38p3067karn56qmv48fwf9cj012p50fsvcwj8k3di9s"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5318,7 +5356,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
                 (setenv "TORCHVISION_LIBRARY"
                         (string-append jpegdir "/lib/"))))))))
     (inputs
-     (list ffmpeg
+     (list ffmpeg-6
            libpng
            libjpeg-turbo))
     (propagated-inputs
@@ -5666,7 +5704,7 @@ of Hidden Markov Models.")
 (define-public liblantern
   (package
     (name "liblantern")
-    (version "0.13.0")
+    (version "0.16.3")
     (source
      (origin
        (method git-fetch)
@@ -5675,7 +5713,7 @@ of Hidden Markov Models.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yy5xpn9mi5qm7k4w7040d6frpixm9ifs46v1cn9b6bpc1qs1a02"))))
+        (base32 "13gdrj9aklqgfx10jyylr3jh2ilk8j27fzgv708yv9jn2ckmfdhn"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -5886,13 +5924,13 @@ linear algebra routines needed for structured matrices (or operators).")
 (define-public python-gpytorch
   (package
     (name "python-gpytorch")
-    (version "1.14")
+    (version "1.14.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "gpytorch" version))
               (sha256
                (base32
-                "13cs6dx8qa5j4ygji9w5xbmaqc68ihqyzz33fyyf9qa6d8gc2b03"))))
+                "1c30348kjawg0cl522qvbljg6adyy5bcpmqdg4mh09zk8r8z0hla"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
@@ -5912,8 +5950,7 @@ linear algebra routines needed for structured matrices (or operators).")
     (native-inputs (list python-nbval
                          python-pytest
                          python-setuptools
-                         python-setuptools-scm
-                         python-wheel))
+                         python-setuptools-scm))
     (home-page "https://gpytorch.ai")
     (synopsis "Implementation of Gaussian Processes in PyTorch")
     (description
@@ -5923,16 +5960,16 @@ linear algebra routines needed for structured matrices (or operators).")
 (define-public python-botorch
   (package
     (name "python-botorch")
-    (version "0.15.1")
+    (version "0.16.0")
     (source (origin
               (method git-fetch) ;no tests in PyPI
               (uri (git-reference
-                    (url "https://github.com/pytorch/botorch")
+                    (url "https://github.com/meta-pytorch/botorch")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1c6p5h5gypiyj59820q2w3k7rx715r3vxxcr5mnwdjbhi4l2q47a"))))
+                "1bk7ks2g0qfrjsi4vqy72jkc6pr0pcqq4k5z6dmqqs0ajxc2d5sy"))))
     (build-system pyproject-build-system)
     (arguments
      ;; 7 failed, 1502 passed, 1 skipped, 1 deselected, 807 warnings
@@ -5942,7 +5979,13 @@ linear algebra routines needed for structured matrices (or operators).")
                                  " and not test_input_constructors"
                                  " and not test_gen"
                                  " and not test_mock"
-                                 " and not test_evaluation"))
+                                 " and not test_evaluation"
+                                 ;; SciPy<1.13: gen.py doesn't import
+                                 ;; fmin_l_bfgs_b_batched; mock patch fails.
+                                 " and not test_emsemble_map_saas"
+                                 " and not test_negative_fixed_features")
+                                ;; Requires optional 'pfns' dependency.
+                                "--ignore=test_community/")
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'build 'pretend-version
@@ -5963,8 +6006,7 @@ linear algebra routines needed for structured matrices (or operators).")
                              python-typing-extensions))
     (native-inputs (list python-pytest
                          python-setuptools
-                         python-setuptools-scm
-                         python-wheel))
+                         python-setuptools-scm))
     (home-page "https://botorch.org")
     (synopsis "Bayesian Optimization in PyTorch")
     (description
@@ -6326,71 +6368,6 @@ Brian 2 simulator.")
 performance library of basic building blocks for deep learning applications.")
     (supported-systems %64bit-supported-systems)
     (license license:asl2.0)))
-
-(define-public oneapi-dnnl-for-r-torch
-  (package
-    (inherit oneapi-dnnl)
-    (version "2.7.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/oneapi-src/oneDNN")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name (package-name oneapi-dnnl) version))
-       (sha256
-        (base32 "1zyw5rd8x346bb7gac9a7x3saviw3zvp6aqz2z1l9sv163vmjfz6"))))))
-
-(define-public whisper-cpp
-  (package
-    (name "whisper-cpp")
-    (version "1.6.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ggerganov/whisper.cpp")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "01q4j602wkvsf9vw0nsazzgvjppf4fhpy90vqnm9affynyxhi0c4"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:configure-flags #~'("-DWHISPER_STANDALONE=TRUE" "-DWHISPER_SDL2=TRUE")
-      ;; "-DWHISPER_FFMPEG=TRUE"  ; TODO
-      #:phases #~(modify-phases %standard-phases
-           #$@(if (not (target-64bit?))
-                  '((add-after 'unpack 'skip-failing-tests
-                     (lambda _
-                              ;; 32-bit system
-                              ;; large model does not fit in RAM in 32-bit system,
-                              ;; disable large model test
-                              (substitute* "tests/CMakeLists.txt"
-                                  (("LABELS \"large\"")
-                                   "DISABLED true")))))
-                  '()))))
-    (inputs (list sdl2)) ;ffmpeg openblas  ;TODO:
-    (native-inputs (list pkg-config))
-    (properties '((tunable? . #t))) ;use AVX512, FMA, etc. when available
-    (home-page "https://github.com/ggerganov/whisper.cpp")
-    (synopsis "OpenAI's Whisper model in C/C++")
-    (description
-     "This package is a high-performance inference of OpenAI's
-Whisper automatic speech recognition (ASR) model, implemented in plain C/C++
-without dependencies, with
-@itemize
-@item AVX intrinsics support for x86 architectures
-@item VSX intrinsics support for POWER architectures
-@item Mixed F16 / F32 precision
-@item 4-bit and 5-bit integer quantization support
-@item Zero memory allocations at runtime
-@item Support for CPU-only inference
-@item Efficient GPU support for NVIDIA
-@item OpenVINO Support
-@item C-style API
-@end itemize")
-    (license license:expat)))
 
 (define-public python-gguf
   (package

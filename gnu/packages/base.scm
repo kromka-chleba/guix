@@ -133,15 +133,6 @@ command-line arguments, multiple languages, and so on.")
    (inputs (list pcre2))
    (arguments
     (list #:configure-flags #~(list "--enable-perl-regexp")
-
-          ;; XXX: On 32-bit Hurd platforms, 'time_t' is defined as a 32-bit
-          ;; integer in 'hurd_types.defs', so this Gnulib test always fails.
-          #:make-flags
-          #~#$(if (and (not (%current-target-system))
-                       (string=? (%current-system) "i586-gnu"))
-                  #~'("XFAIL_TESTS=test-year2038")
-                  #~'())
-
           #:phases
           #~(modify-phases %standard-phases
               (add-after 'install 'fix-egrep-and-fgrep
@@ -160,6 +151,17 @@ command-line arguments, multiple languages, and so on.")
                             ;; Stack overflow recovery does not compile
                             (substitute* "lib/sigsegv.in.h"
                               (("__GNU__") "__XGNU__")))))
+                     #~())
+              ;; XXX: On 32-bit Hurd platforms, 'time_t' is defined as a 32-bit
+              ;; integer in 'hurd_types.defs', so this Gnulib test always fails.
+              ;; Use a phase instead of XFAIL_TESTS to not override
+              ;; xfailing tests in grep
+              #$@(if (target-hurd32?)
+                     #~((add-after 'unpack 'skip-year2038-test
+                          (lambda _
+                            (substitute* "gnulib-tests/test-year2038.c"
+                              (("(^| )main *\\(.*" all)
+                               (string-append all "{\n  return 77;//"))))))
                      #~())
               #$@(if (system-hurd?)
                      #~((add-before 'check 'skip-test
@@ -269,8 +271,7 @@ implementation offers several extensions over the standard utility.")
            '(#:make-flags (list "TESTSUITEFLAGS= -k '!tricky time stamps'")))
           (else '()))
       ;; XXX: 32-bit Hurd platforms don't support 64bit time_t
-      ,@(if (and (target-hurd?)
-                 (not (target-64bit?)))
+      ,@(if (target-hurd32?)
             (list #:configure-flags ''("--disable-year2038"))
             '())
       #:phases (modify-phases %standard-phases
@@ -346,7 +347,7 @@ differences.")
     (arguments
      (substitute-keyword-arguments (package-arguments patch/pinned)
        ((#:configure-flags flags #~'())
-        (if (and (target-hurd?) (not (target-64bit?)))
+        (if (target-hurd32?)
             #~(cons* "--disable-year2038"
                      #$flags)
             flags))))
@@ -370,7 +371,7 @@ differences.")
      ;; integer in 'hurd_types.defs', so this Gnulib test always fails.
      #:make-flags
      #~#$(cond ((and (not (%current-target-system))
-                     (string=? (%current-system) "i586-gnu"))
+                     (target-hurd32?))
                 #~'("XFAIL_TESTS=test-year2038"))
                ;; TODO: Figure out why these gnulib tests are failing.
                ((and (not (%current-target-system))
@@ -428,8 +429,7 @@ interactive means to merge two files.")
    (arguments
     `(#:configure-flags (list
                          ;; XXX: 32-bit Hurd platforms don't support 64bit time_t
-                         ,@(if (and (target-hurd?)
-                                    (not (target-64bit?)))
+                         ,@(if (target-hurd32?)
                                '("--disable-year2038")
                                '())
                          ;; Tell 'updatedb' to write to /var.
@@ -527,6 +527,7 @@ used to apply commands with arbitrarily long arguments.")
                                    ;; These tests error
                                    "tests/dd/nocache.sh"
                                    ;; These tests fail
+                                   "tests/cp/parent-perm-race.sh"
                                    "tests/cp/sparse.sh"
                                    "tests/cp/special-f.sh"
                                    "tests/dd/bytes.sh"
@@ -1549,7 +1550,18 @@ variety of options.  It is an alternative to the shell \"type\" built-in
 command.")
     (license gpl3+))) ; some files are under GPLv2+
 
-(define-public glibc/hurd glibc)
+(define-public glibc/hurd
+  (hidden-package
+   (package/inherit glibc
+     (source
+      (origin
+        (inherit (package-source glibc))
+        (patches
+         (append (map search-patch
+                      (delete "glibc-hurd64-intr-msg-clobber.patch" %glibc-patches))
+                 (search-patches
+		  "glibc-hurd-signal-fpe-exception.patch"
+		  "glibc-hurd-xstate.patch"))))))))
 
 (define-public glibc/hurd-headers
   (package/inherit glibc/hurd

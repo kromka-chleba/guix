@@ -560,6 +560,46 @@ types (circle, polygon, thin line segments), and quite a few joint
 types (revolute, prismatic, wheel, etc.).")
     (license license:zlib)))
 
+(define-public python-anvil-parser
+  (let ((commit "27544bb41f035617be130a209a84371cbaf837cc")
+        (revision "0"))
+  (package
+    (name "python-anvil-parser")
+    (version (git-version "0.9.0" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/0xTiger/anvil-parser")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "196nli36pz4sllx1m8jlys661hgbxhcxr2c4545fqb4nd27hhwy7"))))
+    (build-system python-build-system)
+    (propagated-inputs (list python-frozendict python-nbt))
+    (home-page "https://github.com/0xTiger/anvil-parser")
+    (synopsis "Anvil file format parser")
+    (description "This package provides an Anvil file format parser.")
+    (license license:expat))))
+
+(define-public python-nbt
+  (package
+    (name "python-nbt")
+    (version "1.5.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "NBT" version))
+              (sha256
+               (base32
+                "1i9ncrzy5zcfnxzkh2j31n9ayzxfncckzwa6fkz9vjq5fq9v4fys"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/twoolie/NBT")
+    (synopsis "Named Binary Tag reader and writer")
+    (description
+     "This library is a parser and writer for the NBT file format.  It is suited
+to inspect and edit the Minecraft data files.")
+    (license license:expat)))
+
 (define-public python-sge
   (package
     (name "python-sge")
@@ -2104,6 +2144,38 @@ Joysticks, etc) and feedback devices (e.g. force feedback).  Meant to be very
 robust and compatible with many systems and operating systems.")
     (home-page "https://github.com/wgois/OIS")
     (license license:zlib)))
+
+(define-public mc2mt
+  (let ((commit "039dbc26466a430e03c646dc5a9bd0822637a87a")
+        (revision "0"))
+  (package
+    (name "mc2mt")
+    (version (git-version "0.1" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/listia/mc2mt")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vnaznwgm87x0n5dp14363p2h54lpzalynrrd6lbs6wgrqq7fq9i"))
+       (patches (search-patches "mc2mt-add-packaging-support.patch"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (substitute* "mc2mtlib/argument_parser.py"
+              (("mineclone2") "mineclone"))))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools))
+    (propagated-inputs (list python-anvil-parser))
+    (arguments
+     (list #:tests? #f)) ; no tests
+    (synopsis "Minecraft to Minetest world converter")
+    (description "@code{mc2mt} is a Minecraft to Minetest world converter.
+It can convert worlds from Minecraft 1.9 and later.")
+    (home-page "https://github.com/listia/mc2mt")
+    (license license:expat))))
 
 (define-public mygui
   (package

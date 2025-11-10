@@ -56,7 +56,7 @@
 (define-public luanti
   (package
     (name "luanti")
-    (version "5.13.0")
+    (version "5.14.0")
     (source
      (origin
        (method git-fetch)
@@ -65,7 +65,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gsdsnyrdy40d6n7a0imjg9hs4k8g01zqbz824j0qiyvdvw39wjf"))
+        (base32 "0lwx94pydlxy97lg6b5sn530wmnz9wh3y5fx7jw6n4z7mnb6g06b"))
        (modules '((guix build utils)
                   (srfi srfi-26)
                   (ice-9 ftw)))
@@ -434,7 +434,7 @@ with different rules and mechanics.")
 (define-public luanti-mineclonia
   (package
     (name "luanti-mineclonia")
-    (version "0.115.0")
+    (version "0.117.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -443,7 +443,7 @@ with different rules and mechanics.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0y10rxh7fb6qwny0jpqyz6akw8cwsrdfcyadrqjv774hrr98371a"))))
+                "0iq153dyijbfbvp30fcvbbgvca9c3c6szpw04svwc08ar4h5yvl7"))))
     (build-system copy-build-system)
     (arguments
      `(#:install-plan

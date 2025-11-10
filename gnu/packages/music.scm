@@ -1499,7 +1499,7 @@ and auto-mapping slices to MIDI note numbers.")
 (define-public lilypond
   (package
     (name "lilypond")
-    (version "2.24.4")
+    (version "2.25.30")
     (source
      (origin
        (method url-fetch)
@@ -1507,7 +1507,7 @@ and auto-mapping slices to MIDI note numbers.")
                            "v" (version-major+minor version) "/"
                            "lilypond-" version ".tar.gz"))
        (sha256
-        (base32 "073qa7m9xkghad4x37rxb9v45vp4vfmsylwnjzhj17y7f4ss0vz9"))))
+        (base32 "0q5id9v211i9zgjmwzmvi2qfvr3flh55kh476653r04a2br53962"))))
     (build-system gnu-build-system)
     (arguments
       (list #:tests? #f                      ;out-test/collated-files.html fails
@@ -3181,37 +3181,6 @@ using a system-independent interface.")
 using a system-independent interface.")
     (license license:expat)))
 
-(define-public python-pyportmidi
-  (let ((commit "d9e5ee00b208b09618fa0d4a5bbce3c9c077b386")
-        (revision "0"))
-    (package
-      (name "python-pyportmidi")
-      (version (git-version "0.0.7" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/PortMidi/pm_python")
-               (commit commit)))
-         (sha256
-          (base32 "1jvp9na8d1hw46w9ybhkimbavfb3ysw7hp30cbk6dj40k5y5vgvz"))
-         (file-name (git-file-name name version))))
-      (build-system python-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-before 'build 'relax-gcc-14-strictness
-              (lambda _
-                (setenv "CFLAGS" "-Wno-error=incompatible-pointer-types"))))))
-      (inputs (list portmidi-2 alsa-lib))
-      (native-inputs (list python-cython))
-      (home-page "https://github.com/PortMidi")
-      (synopsis "Python bindings to PortMidi")
-      (description
-       "This package provides Python bindings to the PortMidi library.")
-      (license license:expat))))
-
 (define-public python-pysmf
   (let ((commit "8a98a557470301f5a471d07d37f334a5b8892602")
         (revision "1"))
@@ -3533,14 +3502,14 @@ improves on support for JACK features, such as JACK MIDI.")
 (define-public libgig
   (package
     (name "libgig")
-    (version "4.2.0")
+    (version "4.5.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://download.linuxsampler.org/packages/"
                                   "libgig-" version ".tar.bz2"))
               (sha256
                (base32
-                "1zs5yy124bymfyapsnljr6rv2lnn5inwchm0xnwiw44b2d39l8hn"))))
+                "0qcgb2xs0hk541zyqcy8lfrbi38dwgwmk26s79xx1c4f6agk929l"))))
     (build-system gnu-build-system)
     (inputs
      (list `(,util-linux "lib") libsndfile))
@@ -3735,14 +3704,14 @@ from the command line.")
 (define-public qtractor
   (package
     (name "qtractor")
-    (version "1.5.8")
+    (version "1.5.9")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/qtractor/qtractor/"
                                   version "/qtractor-" version ".tar.gz"))
               (sha256
                (base32
-                "1m1flmjqq19v3zvrhqm0m1qc33kwbw6bj2v4lv0m317c8xn7wwww"))))
+                "03x9mjzwfxxfpr2drx0q4qf14vc5yxq3y9343d9bdbvjacpbyjvp"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no "check" target
@@ -4582,54 +4551,63 @@ standard MIDI file with the csvmidi program.")
     (license license:public-domain)))
 
 (define-public mididings
-  (let ((commit "bc71ea9c86bdc0b02364b11ab7331e8b3a86bb4f")
-        (revision "2"))
-    (package
-      (name "mididings")
-      (version (git-version "0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/mididings/mididings")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1f0f8bpqbc1av0ggv6wjicymc2klliwdl1m5blmjcvy39q3cwd59"))))
-      (build-system meson-build-system)
-      (arguments
-       (list
-        #:phases
-        '(modify-phases %standard-phases
-           (add-after 'unpack 'build-manpages
-             (lambda _
-               (with-directory-excursion "doc/man"
-                 (for-each (lambda (doc)
-                             (system (format #false
-                                             "scdoc < ~a.scd > ~a.1" doc doc)))
-                           '(livedings mididings send_midi))))))))
-      (inputs
-       (list alsa-lib
-             boost
-             jack-2
-             python
-             `(,python "tk")
-             python-dbus
-             python-decorator
-             python-pyinotify
-             python-pyliblo
-             python-pysmf))
-      (native-inputs
-       (list python-pytest
-             python-setuptools
-             python-wheel
-             pkg-config
-             scdoc))
-      (home-page "https://github.com/mididings/mididings")
-      (synopsis "MIDI router and processor")
-      (description
-       "mididings is a MIDI router/processor based on Python, supporting ALSA
-and JACK MIDI.  Features include:
+  (package
+    (name "mididings")
+    (version "20250818")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/mididings/mididings")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1ardf61zkgh0ikyfjwvhaznlgsdkhh4vzcqvcpvmh0h5mk0b40rg"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+         (add-after 'unpack 'build-manpages
+           (lambda _
+             (with-directory-excursion "doc/man"
+               (for-each (lambda (doc)
+                           (system (format #false
+                                           "scdoc < ~a.scd > ~a.1" doc doc)))
+                         '(livedings mididings send_midi)))))
+         (add-after 'install 'wrap-executables
+           (lambda _
+             (for-each (lambda (file)
+                         (wrap-program file
+                           `("GUIX_PYTHONPATH" ":" prefix
+                             (,(string-append #$output "/lib/python"
+                                              #$(version-major+minor
+                                                 (package-version python))
+                                              "/site-packages")
+                              ,(getenv "GUIX_PYTHONPATH")))))
+                       (find-files (string-append #$output "/bin"))))))))
+    (inputs
+     (list alsa-lib
+           boost
+           jack-2
+           python
+           `(,python "tk")
+           python-dbus
+           python-decorator
+           python-pyinotify
+           python-pyliblo
+           python-pysmf))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel
+           pkg-config
+           scdoc))
+    (home-page "https://github.com/mididings/mididings")
+    (synopsis "MIDI router and processor")
+    (description
+     "mididings is a MIDI router/processor based on Python, supporting ALSA and
+JACK MIDI.  Features include:
 
 @itemize
 @item MIDI routing and filtering; filter events depending on their event type,
@@ -4648,7 +4626,7 @@ and JACK MIDI.  Features include:
   controllers.  In addition to its MIDI output, mididings can also execute shell
   commands and send OSC or DBUS messages.
 @end itemize")
-      (license license:gpl2+))))
+      (license license:gpl2+)))
 
 (define-public gx-guvnor-lv2
   (package
@@ -7614,15 +7592,17 @@ to be bundled with the Zrythm @dfn{digital audio workstation} (DAW).")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/ssj71/reMID.lv2")
-             (commit (string-append "v" version))))
+              (url "https://github.com/ssj71/reMID.lv2")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
          "062kriniidsrhzwrf89kfxm9wb0cmgrl07asnlmgil8vcl7gl9y5"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f))                    ; no tests included
+     (list #:tests? #f ; no tests included
+           #:configure-flags
+           #~(list "-DCMAKE_C_FLAGS=-Wno-implicit-function-declaration")))
     (inputs
      (list alsa-lib glib jack-1 lv2))
     (native-inputs

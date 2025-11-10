@@ -529,7 +529,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.17-version "6.17.5")
+(define-public linux-libre-6.17-version "6.17.7")
 (define-public linux-libre-6.17-gnu-revision "gnu")
 (define deblob-scripts-6.17
   (linux-libre-deblob-scripts
@@ -539,7 +539,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "14fypjidk49l0799dbi1pacy37ks94k0bs38cck2y4glxfpbfqr6")))
 (define-public linux-libre-6.17-pristine-source
   (let ((version linux-libre-6.17-version)
-        (hash (base32 "1kibm4b3dvncw8dzxllxiza0923q6f2xlsng4gkln5n2x4vaypy0")))
+        (hash (base32 "03lxl2p8hvi4hdzbf72v3xh8yigr58826dmy6rqxbq9r8h6ymwnx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.17)))
@@ -563,7 +563,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.55")
+(define-public linux-libre-6.12-version "6.12.57")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -573,12 +573,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "17zv8ail05wnbfl9yhgs4llapyk3f6qjjbfqbwx0clx61138z3rj")))
+        (hash (base32 "06jlsawz1wgk13gyxphkglb8a4iiwg0vg5hrfc7bj1s6gk1s2p0n")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.114")
+(define-public linux-libre-6.6-version "6.6.116")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -588,12 +588,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0z5r1kmzf3ib0r5rbcmp3cgjyagf6wgdjynpjbhkm5727jh7ahfa")))
+        (hash (base32 "07d5629579apc1d8yb0ki226iyb5n3lwp1yw0p189qlvq919g9d9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.157")
+(define-public linux-libre-6.1-version "6.1.158")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -603,12 +603,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0f3jgbfd2j7sz7h1hb30s1r9147g1cbb3ia09k9834fvbiz1ihaa")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "0vpnjrk5kjc03sk5m66i9bv677xfy9mfrjvzx3jcrbr10bhq98d0")))
+        (hash (base32 "1nmz4rknw82k9ylyrbm4g2m0hh4lmgkwi1g3gm7hzv04nvyqn1md")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.195")
+(define-public linux-libre-5.15-version "5.15.196")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -618,12 +618,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0rg65s6kd9gxxa3wl6180pr39rb6zbcicwjik4kygs2ns0247y56")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0hd4p76qv29zlr0iik4j9y9qynyqisk6bgfiqcwkk7gr6bf81l13")))
+        (hash (base32 "018ffzi91xh46l7r3fgc4mpri3pxzl6wc1n946vny0lbb59pj5c3")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.244")
+(define-public linux-libre-5.10-version "5.10.246")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
@@ -633,12 +633,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0r1whrfhhhjyvppiidhihcvyzcab6dva6g9a4div8jkxm62s2cq3")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "1h3dqaran5zrfgs0vybwq576yka8s9jirahiy3bb7hpm1763f2i1")))
+        (hash (base32 "0xd8r8qqgxh3zhqkl4a5plmgsycxrffhpc9q2rwhkp6jd717cszb")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.300")
+(define-public linux-libre-5.4-version "5.4.301")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -648,7 +648,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0l7pwhgw9laxfypcpqlz411x3hybcw2269abh3lpcw96bgv5m1k2")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "0nl1l689d4jq2l39v816yy7z5lzc5dvv8aqn85xlv4najc022jcr")))
+        (hash (base32 "0qkra8ci2mx5p8ngdys2ixsl9s30qdqlq027pr5p3rk0s1k8fwdp")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
@@ -1205,11 +1205,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-version         linux-libre-6.16-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.16-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.16-pristine-source)
-(define-public linux-libre-source          linux-libre-6.16-source)
-(define-public linux-libre                 linux-libre-6.16)
+(define-public linux-libre-version         linux-libre-6.17-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.17-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.17-pristine-source)
+(define-public linux-libre-source          linux-libre-6.17-source)
+(define-public linux-libre                 linux-libre-6.17)
 
 (define-public linux-libre-6.12
   (make-linux-libre* linux-libre-6.12-version
@@ -1538,22 +1538,22 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 (define-public reform-debian-packages
   (package
     (name "reform-debian-packages")
-    (version "2023-07-10-443-gd7741e1") ;from git describe
+    (version "2023-07-10-475-ge469c2a") ;from git describe
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://source.mnt.re/reform/reform-debian-packages.git")
-             (commit "d7741e1426d53806f7b2d1a3b9e068bdfb9801cd")))
+             (commit "e469c2ad131054c7afe4f9f059eb2eb575545b1a")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01hjpsac08j1ay5kn4k42dzyvg2cl5rfz32l1yqx243v4x2hw0c9"))))
+        (base32 "0pv24b317n4h71rn25v2wa3qhs1i0wjfpys899cpm5lf0irvis7q"))))
     (build-system copy-build-system)
     (arguments
      (list
       #:install-plan
-      #~'(("linux/patches6.15/" "/patches6.15")
-          ("linux/patches6.16/" "/patches6.16")
+      #~'(("linux/patches6.16/" "/patches6.16")
+          ("linux/patches6.17/" "/patches6.17")
           ("linux/" "/dts/amlogic"
            #:include-regexp ("meson.*\\.dts$"))
           ("linux/" "/dts/freescale"
@@ -1619,6 +1619,298 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
               license:gpl2+
               license:gpl3
               license:x11))))
+
+(define-public linux-libre-arm64-mnt-reform-6.17
+  ;; Kernel for use on the MNT/Reform systems
+  ;; https://mntre.com/reform.html
+  (let ((base (make-linux-libre* linux-libre-6.17-version
+                                 linux-libre-6.17-gnu-revision
+                                 linux-libre-6.17-source
+                                 '("aarch64-linux")
+                                 #:extra-version "arm64-mnt-reform"
+                                 #:extra-options
+                                 ;; https://source.mnt.re/reform/reform-debian-packages/-/blob/main/linux/config
+                                 (append `(("CONFIG_DRM_LVDS_CODEC" . m)
+                                           ("CONFIG_DRM_CDNS_MHDP8546" . m)
+                                           ("CONFIG_DRM_CDNS_HDMI_CEC" . m)
+                                           ("CONFIG_DRM_IMX_CDNS_MHDP" . m)
+                                           ("CONFIG_DRM_IMX_DCSS" . m)
+                                           ("CONFIG_PHY_FSL_IMX8MQ_HDPTX" . m)
+                                           ("CONFIG_DRM_PANEL_LVDS" . m)
+                                           ("CONFIG_I2C_IMX_LPI2C" . m)
+                                           ("CONFIG_I2C_MUX_REG" . m)
+                                           ("CONFIG_INTERCONNECT_IMX" . #true)
+                                           ("CONFIG_INTERCONNECT_IMX8MQ" . #true)
+                                           ("CONFIG_MFD_WM8994" . m)
+                                           ("CONFIG_MUX_GPIO" . m)
+                                           ("CONFIG_MUX_MMIO" . m)
+                                           ("CONFIG_RTC_DRV_PCF8523" . m)
+                                           ("CONFIG_USB_EHCI_FSL" . m)
+                                           ("CONFIG_NO_HZ_IDLE" . #true)
+                                           ("CONFIG_SND_SOC_FSL_MICFIL" . m)
+                                           ("CONFIG_SND_IMX_SOC" . m)
+                                           ("CONFIG_SND_SOC_FSL_ASOC_CARD" . m)
+                                           ("CONFIG_SND_SOC_IMX_AUDMIX" . m)
+                                           ("CONFIG_SND_SOC_IMX_HDMI" . m)
+                                           ("CONFIG_INPUT_JOYSTICK" . #true)
+                                           ("CONFIG_JOYSTICK_XPAD" . m)
+                                           ("CONFIG_JOYSTICK_XPAD_FF" . #true)
+                                           ("CONFIG_JOYSTICK_XPAD_LEDS" . #true)
+                                           ("CONFIG_INTERCONNECT_IMX8MP" . #true)
+                                           ("CONFIG_SND_SOC_FSL_ASRC" . #true)
+                                           ("CONFIG_DRM_IMX_LCDIF" . #true)
+                                           ("CONFIG_DRM_IMX8MP_DW_HDMI_BRIDGE" . #true)
+                                           ("CONFIG_DRM_IMX8MP_HDMI_PVI" . #true)
+                                           ("CONFIG_IMX8MM_THERMAL" . #true)
+                                           ("CONFIG_IMX2_WDT" . #true)
+                                           ("CONFIG_DRM_SAMSUNG_DSIM" . #true)
+                                           ("CONFIG_PHY_FSL_SAMSUNG_HDMI_PHY" . #true)
+                                           ("CONFIG_DRM" . #true)
+                                           ("CONFIG_DRM_PANEL_MNT_POCKET_REFORM" . #true)
+                                           ("CONFIG_IMX8M_BLK_CTRL" . #true)
+                                           ("CONFIG_IMX_GPCV2_PM_DOMAINS" . #true)
+                                           ("CONFIG_DRM_DISPLAY_CONNECTOR" . #true)
+                                           ("CONFIG_DRM_FSL_LDB" . #true)
+                                           ("CONFIG_BACKLIGHT_CLASS_DEVICE" . #true)
+                                           ("CONFIG_BACKLIGHT_PWM" . #true)
+                                           ("CONFIG_BACKLIGHT_GPIO" . #true)
+                                           ("CONFIG_BACKLIGHT_LED" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_PERFORMANCE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_POWERSAVE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_USERSPACE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_ONDEMAND" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_CONSERVATIVE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_SCHEDUTIL" . #true)
+                                           ("CONFIG_ARM_IMX_CPUFREQ_DT" . #true)
+                                           ("CONFIG_ARM_IMX_BUS_DEVFREQ" . #true)
+                                           ("CONFIG_IMX_IRQSTEER" . #true)
+                                           ("CONFIG_PCI_MESON" . #true)
+                                           ("CONFIG_DWMAC_MESON" . #true)
+                                           ("CONFIG_MDIO_BUS_MUX_MESON_G12A" . #true)
+                                           ("CONFIG_GPIO_ROCKCHIP" . #true)
+                                           ("CONFIG_PL330_DMA" . #true)
+                                           ("CONFIG_I2C_MESON" . #true)
+                                           ("CONFIG_PWM_MESON" . #true)
+                                           ("CONFIG_USB_DWC3_MESON_G12A" . #true)
+                                           ("CONFIG_MMC_MESON_GX" . #true)
+                                           ("CONFIG_MMC_MESON_MX_SDIO" . #true)
+                                           ("CONFIG_MESON_DDR_PMU" . #true)
+                                           ("CONFIG_RTW88_8822CS" . m)
+                                           ("CONFIG_PWM_FSL_FTM" . #true)
+                                           ("CONFIG_FSL_RCPM" . #true)
+                                           ("CONFIG_ARM_ROCKCHIP_CPUFREQ" . m)
+                                           ("CONFIG_DRM_PANTHOR" . m)
+                                           ("CONFIG_NVMEM_ROCKCHIP_OTP" . #true)
+                                           ("CONFIG_PHY_ROCKCHIP_SAMSUNG_HDPTX" . m)
+                                           ("CONFIG_PHY_ROCKCHIP_USBDP" . m)
+                                           ("CONFIG_ROCKCHIP_REGULATOR_COUPLER" . #true)
+                                           ("CONFIG_SPI_ROCKCHIP" . #true)
+                                           ("CONFIG_SPI_ROCKCHIP_SFC" . m)
+                                           ("CONFIG_ARM_SCMI_CPUFREQ" . m)
+                                           ("CONFIG_PHY_ROCKCHIP_SAMSUNG_DCPHY" . #true)
+                                           ("CONFIG_VIDEO_ROCKCHIP_VDEC2" . m)
+                                           ("CONFIG_ROCKCHIP_DW_HDMI_QP" . #true)
+                                           ("CONFIG_ROCKCHIP_DW_MIPI_DSI2" . #true)
+                                           ;; Fixes https://codeberg.org/guix/guix/issues/101
+                                           ("CONFIG_CRYPTO_USER_API_HASH" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_SKCIPHER" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_RNG" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_AEAD" . #true)
+                                           ("CONFIG_KEY_DH_OPERATIONS" . #true)
+                                           ;; nftables support
+                                           ("CONFIG_NF_TABLES" . m)
+                                           ("CONFIG_NF_TABLES_INET" . #true)
+                                           ("CONFIG_NF_TABLES_NETDEV" . #true)
+                                           ("CONFIG_NF_TABLES_IPV4" . #true)
+                                           ("CONFIG_NF_TABLES_ARP" . #true)
+                                           ("CONFIG_NF_TABLES_IPV6" . #true)
+                                           ("CONFIG_NF_TABLES_BRIDGE" . m)
+                                           ("CONFIG_NFT_NUMGEN" . m)
+                                           ("CONFIG_NFT_CT" . m)
+                                           ("CONFIG_NFT_FLOW_OFFLOAD" . m)
+                                           ("CONFIG_NFT_CONNLIMIT" . m)
+                                           ("CONFIG_NFT_LOG" . m)
+                                           ("CONFIG_NFT_LIMIT" . m)
+                                           ("CONFIG_NFT_MASQ" . m)
+                                           ("CONFIG_NFT_REDIR" . m)
+                                           ("CONFIG_NFT_NAT" . m)
+                                           ("CONFIG_NFT_TUNNEL" . m)
+                                           ("CONFIG_NFT_QUEUE" . m)
+                                           ("CONFIG_NFT_QUOTA" . m)
+                                           ("CONFIG_NFT_REJECT" . m)
+                                           ("CONFIG_NFT_REJECT_INET" . m)
+                                           ("CONFIG_NFT_COMPAT" . m)
+                                           ("CONFIG_NFT_HASH" . m)
+                                           ("CONFIG_NFT_FIB" . m)
+                                           ("CONFIG_NFT_FIB_INET" . m)
+                                           ("CONFIG_NFT_XFRM" . m)
+                                           ("CONFIG_NFT_SOCKET" . m)
+                                           ("CONFIG_NFT_OSF" . m)
+                                           ("CONFIG_NFT_TPROXY" . m)
+                                           ("CONFIG_NFT_SYNPROXY" . m)
+                                           ("CONFIG_NFT_DUP_NETDEV" . m)
+                                           ("CONFIG_NFT_FWD_NETDEV" . m)
+                                           ("CONFIG_NFT_FIB_NETDEV" . m)
+                                           ("CONFIG_NFT_REJECT_NETDEV" . m)
+                                           ("CONFIG_NFT_REJECT_IPV4" . m)
+                                           ("CONFIG_NFT_DUP_IPV4" . m)
+                                           ("CONFIG_NFT_FIB_IPV4" . m)
+                                           ("CONFIG_NFT_COMPAT_ARP" . m)
+                                           ("CONFIG_NFT_REJECT_IPV6" . m)
+                                           ("CONFIG_NFT_DUP_IPV6" . m)
+                                           ("CONFIG_NFT_FIB_IPV6" . m)
+                                           ("CONFIG_NFT_BRIDGE_META" . m)
+                                           ("CONFIG_NFT_BRIDGE_REJECT" . m)
+                                           ;; Provide support for ath9k wireless
+                                           ("CONFIG_ATH9K" . m)
+                                           ("CONFIG_ATH9K_HTC" . m))
+                                         (default-extra-linux-options
+                                          linux-libre-6.17-version)))))
+    (package
+      (inherit base)
+      (inputs (list reform-debian-packages))
+      (synopsis (string-append (package-synopsis base)
+                               " for MNT/Reform systems"))
+      (description (string-append (package-description base)
+                    "  Configuration options and patches have been applied for use with MNT/Reform systems."))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (add-after 'unpack 'apply-reform-patches
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (for-each (lambda (patch)
+                              (invoke "patch" "-p1" "-i"
+                                      (search-input-file inputs
+                                                         (string-append
+                                                          "patches6.17/" patch))))
+                            (list
+                             "imx8mp-mnt-pocket-reform/2ghz/0001-imx8mp-2ghz-clk.patch"
+                             "imx8mp-mnt-pocket-reform/2ghz/0002-imx8mp-2ghz-opp.patch"
+                             "imx8mp-mnt-pocket-reform/audio/0000-revert-crashy-audiomix-pm-support.patch"
+                             "imx8mp-mnt-pocket-reform/mmc-sdio/0001-sdhci-add-no-sd-uhs-sdr104-devicetree-property.patch"
+                             "imx8mp-mnt-pocket-reform/mmc-sdio/0002-During-the-card-init-the-host-side-sometimes-may-nee.patch"
+                             "imx8mp-mnt-pocket-reform/mmc-sdio/0003-USDHC-IP-has-one-limitation-the-tuning-circuit-can-t.patch"
+                             "imx8mp-mnt-pocket-reform/pocket-panel/0001-v5-add-multi-display-panel-driver.patch"
+                             "imx8mp-mnt-pocket-reform/pocket-panel/0002-pocket-panel-fix-sleep-add-orientation.patch"
+                             "imx8mp-mnt-reform2/0001-sn65dsi86-use-hs-clock-of-samsung-dsim-host-directly.patch"
+                             "imx8mp-mnt-reform2/0002-lcdif-dont-exceed-desired-pixel-clock.patch"
+                             "imx8mq-mnt-reform2/0001-drm-etnaviv-Fix-flush-sequence-logic.patch"
+                             "imx8mq-mnt-reform2/0001-imx8mq-mnt-reform2.dts-multiple-fixes-for-display-wi.patch"
+                             "imx8mq-mnt-reform2/0001-nwl-dsi-fixup-mode-only-for-LCDIF-input-not-DCSS.patch"
+                             "imx8mq-mnt-reform2/0002-Revert-drm-bridge-nwl-dsi-Use-vsync-hsync-polarity-f.patch"
+                             "imx8mq-mnt-reform2/0003-lcdif-fix-pcie-interference.patch"
+                             "imx8mq-mnt-reform2/0004-mnt4002-imx-gpcv2-wake-smccc.patch.patch"
+                             "imx8mq-mnt-reform2/0005-pci-imx6-add-support-for-internal-refclk-imx8mq.patch"
+                             "imx8mq-mnt-reform2/0006-imx8mq-import-HDMI-driver-and-make-DCSS-compatible-w.patch"
+                             "ls1028a-mnt-reform2/0000-dtsi-add-hdptx.patch"
+                             "meson-g12b-bananapi-cm4-mnt-pocket-reform/0001-a311d-viu-fifo-lines-config.patch"
+                             "meson-g12b-bananapi-cm4-mnt-pocket-reform/0002-a311d-viu-fifo-lines-config-header.patch"
+                             "meson-g12b-bananapi-cm4-mnt-pocket-reform/0003-tlv320aic31xx-add-1228800hz-support.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0001-meson-g12b-bananapi-cm4-mnt-reform2.dts-fix-audio-an.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0001-Revert-drm-bridge-synopsys-dw-mipi-dsi-enable-EoTp-b.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0011-dw-mipi-dsi-phy-stop-wait-time.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0012-innolux-n125hce-gn1-timing-tweaks.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0013-meson-viu-hold-fifo-lines.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0014-meson-venc-sync.patch.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0015-meson-dw-mipi-dsi-sync-invert.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0016-sn65dsi86-burst-mode-support.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0018-sn65dsi86-never-turn-off.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0020-LOCAL-ALSA-Assign-internal-PCM-chmap-ELD-IEC958-kctl.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0021-HACK-of-partial-revert-of-fdt.c-changes.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0022-add-bt-and-eth-resets.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0023-sdio-pullups.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0024-sdio-improve-wifi-speed.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0030-WORKAROUND-meson-plane-disable-afbc-32x8.patch"
+                             "rk3588-mnt-reform2/0001-MERGED-drm-bridge-Pass-down-connector-to-drm-bridge-.patch"
+                             "rk3588-mnt-reform2/0010-MERGED-arm64-dts-rockchip-add-pd_npu-label-for-RK358.patch"
+                             "rk3588-mnt-reform2/0011-MERGED-arm64-dts-rockchip-Add-nodes-for-NPU-and-its-.patch"
+                             "rk3588-mnt-reform2/0024-math.h-add-DIV_ROUND_UP_NO_OVERFLOW.patch"
+                             "rk3588-mnt-reform2/0025-clk-divider-Fix-divisor-masking-on-64-bit-platforms.patch"
+                             "rk3588-mnt-reform2/0026-clk-composite-replace-open-coded-abs_diff.patch"
+                             "rk3588-mnt-reform2/0030-mfd-rk8xx-Fix-shutdown-handler.patch"
+                             "rk3588-mnt-reform2/0033-arm64-dts-rockchip-Add-VOP-clock-resets-for-rk3588s.patch"
+                             "rk3588-mnt-reform2/0035-drm-rockchip-vop2-Add-core-reset-support.patch"
+                             "rk3588-mnt-reform2/0037-drm-bridge-synopsys-Add-DW-DPTX-Controller-support-l.patch"
+                             "rk3588-mnt-reform2/0038-drm-rockchip-Add-RK3588-DPTX-output-support.patch"
+                             "rk3588-mnt-reform2/0041-drm-birdge-simple-bridge-Add-support-for-radxa-ra620.patch"
+                             "rk3588-mnt-reform2/0042-arm64-dts-rockchip-Add-DP0-for-rk3588.patch"
+                             "rk3588-mnt-reform2/0043-arm64-dts-rockchip-Add-DP1-for-rk3588.patch"
+                             "rk3588-mnt-reform2/0046-arm64-defconfig-Enable-Rockchip-RK3588-DisplayPort-C.patch"
+                             "rk3588-mnt-reform2/0048-arm64-dts-rockchip-Fix-USB-C-description-for-RK3588-.patch"
+                             "rk3588-mnt-reform2/0068-drm-bridge-dw-hdmi-qp-Add-CEC-support.patch"
+                             "rk3588-mnt-reform2/0069-drm-bridge-dw-hdmi-qp-Fixup-timer-base-setup.patch"
+                             "rk3588-mnt-reform2/0070-drm-rockchip-dw_hdmi_qp-Improve-error-handling-with-.patch"
+                             "rk3588-mnt-reform2/0071-drm-rockchip-dw_hdmi_qp-Provide-CEC-IRQ-in-dw_hdmi_q.patch"
+                             "rk3588-mnt-reform2/0072-drm-rockchip-dw_hdmi_qp-Provide-ref-clock-rate-in-dw.patch"
+                             "rk3588-mnt-reform2/0075-phy-hdmi-Add-HDMI-2.1-FRL-configuration-options.patch"
+                             "rk3588-mnt-reform2/0076-phy-rockchip-samsung-hdptx-Fix-reported-clock-rate-i.patch"
+                             "rk3588-mnt-reform2/0077-phy-rockchip-samsung-hdptx-Reduce-ROPLL-loop-bandwid.patch"
+                             "rk3588-mnt-reform2/0078-phy-rockchip-samsung-hdptx-Prevent-Inter-Pair-Skew-f.patch"
+                             "rk3588-mnt-reform2/0079-phy-rockchip-samsung-hdptx-Use-usleep_range-instead-.patch"
+                             "rk3588-mnt-reform2/0080-phy-rockchip-samsung-hdptx-Fix-coding-style-alignmen.patch"
+                             "rk3588-mnt-reform2/0081-phy-rockchip-samsung-hdptx-Consistently-use-rk_-hdpt.patch"
+                             "rk3588-mnt-reform2/0082-phy-rockchip-samsung-hdptx-Enable-lane-output-in-com.patch"
+                             "rk3588-mnt-reform2/0083-phy-rockchip-samsung-hdptx-Cleanup-_cmn_init_seq-lis.patch"
+                             "rk3588-mnt-reform2/0084-phy-rockchip-samsung-hdptx-Compute-clk-rate-from-PLL.patch"
+                             "rk3588-mnt-reform2/0085-phy-rockchip-samsung-hdptx-Drop-hw_rate-driver-data.patch"
+                             "rk3588-mnt-reform2/0086-phy-rockchip-samsung-hdptx-Switch-to-driver-specific.patch"
+                             "rk3588-mnt-reform2/0087-phy-rockchip-samsung-hdptx-Extend-rk_hdptx_phy_verif.patch"
+                             "rk3588-mnt-reform2/0088-phy-rockchip-samsung-hdptx-Add-HDMI-2.1-FRL-support.patch"
+                             "rk3588-mnt-reform2/0089-drm-rockchip-vop2-Check-bpc-before-switching-DCLK-so.patch"
+                             "rk3588-mnt-reform2/0091-drm-rockchip-dw_hdmi_qp-Switch-to-phy_configure.patch"
+                             "rk3588-mnt-reform2/0114-media-dt-bindings-video-interfaces-add-defines-for-s.patch"
+                             "rk3588-mnt-reform2/0123-phy-rockchip-phy-rockchip-inno-csidphy-allow-writes-.patch"
+                             "rk3588-mnt-reform2/0126-arm64-defconfig-enable-rockchip-camera-interface-and.patch"
+                             "rk3588-mnt-reform2/0127-arm64-dts-rockchip-add-the-vip-node-to-px30.patch"
+                             "rk3588-mnt-reform2/0131-arm64-dts-rockchip-add-mipi-csi-2-dphy-nodes-to-rk35.patch"
+                             "rk3588-mnt-reform2/0142-drm-bridge-dw-hdmi-qp-Fix-spurious-IRQ-on-resume.patch"
+                             "rk3588-mnt-reform2/2001-drm-bridge-dw-hdmi-qp-Return-0-in-audio-prepare-when.patch"
+                             "rk3588-mnt-reform2/2003-drm-bridge-synopsys-Do-not-warn-about-audio-params-c.patch"
+                             "rk3588-mnt-reform2/5200-drm-rockchip-Set-dma-mask-to-64-bit.patch"))))
+              (add-after 'apply-reform-patches 'copy-reform-dts-files
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (for-each (lambda (dts)
+                              (copy-file (search-input-file inputs
+                                                            (string-append
+                                                             "/dts/" dts))
+                                         (string-append "arch/arm64/boot/dts/"
+                                          dts)))
+                            (list
+                             "amlogic/meson-g12b-bananapi-cm4-mnt-pocket-reform.dts"
+                             "freescale/fsl-ls1028a-mnt-reform2.dts"
+                             "freescale/imx8mp-mnt-pocket-reform.dts"
+                             "freescale/imx8mp-mnt-reform2.dts"
+                             "freescale/imx8mq-mnt-reform2-hdmi.dts"
+                             "rockchip/rk3588-mnt-pocket-reform.dts"
+                             "rockchip/rk3588-mnt-reform-next.dts"
+                             "rockchip/rk3588-mnt-reform2.dts"
+                             "rockchip/rk3588-mnt-reform2-dsi.dts"
+                             ))))
+              (add-after 'apply-reform-patches 'adjust-makefiles-with-new-dtb
+                (lambda _
+                  (substitute* "arch/arm64/boot/dts/amlogic/Makefile"
+                    (("meson-g12b-bananapi-cm4-mnt-reform2.dtb")
+                     "meson-g12b-bananapi-cm4-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_MESON) += meson-g12b-bananapi-cm4-mnt-pocket-reform.dtb"))
+                  (substitute* "arch/arm64/boot/dts/freescale/Makefile"
+                    (("fsl-ls1028a-rdb.dtb")
+                     "fsl-ls1028a-rdb.dtb
+dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1028a-mnt-reform2.dtb"))
+                  (substitute* "arch/arm64/boot/dts/freescale/Makefile"
+                    (("imx8mq-mnt-reform2.dtb")
+                     "imx8mq-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-pocket-reform.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mq-mnt-reform2-hdmi.dtb"))
+                  (substitute* "arch/arm64/boot/dts/rockchip/Makefile"
+                    (("rk3588-mnt-reform2.dtb")
+                     "rk3588-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-reform2-dsi.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-reform-next.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-pocket-reform.dtb")))))))))))
+
+(define-public linux-libre-arm64-mnt-reform linux-libre-arm64-mnt-reform-6.17)
 
 (define-public linux-libre-arm64-mnt-reform-6.16
   ;; Kernel for use on the MNT/Reform systems
@@ -1795,6 +2087,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                              "imx8mp-mnt-pocket-reform/pocket-panel/0002-pocket-panel-fix-sleep-add-orientation.patch"
                              "imx8mp-mnt-reform2/0001-sn65dsi86-use-hs-clock-of-samsung-dsim-host-directly.patch"
                              "imx8mp-mnt-reform2/0002-lcdif-dont-exceed-desired-pixel-clock.patch"
+                             "imx8mq-mnt-reform2/0001-drm-etnaviv-Fix-flush-sequence-logic.patch"
                              "imx8mq-mnt-reform2/0001-imx8mq-mnt-reform2.dts-multiple-fixes-for-display-wi.patch"
                              "imx8mq-mnt-reform2/0001-nwl-dsi-fixup-mode-only-for-LCDIF-input-not-DCSS.patch"
                              "imx8mq-mnt-reform2/0002-Revert-drm-bridge-nwl-dsi-Use-vsync-hsync-polarity-f.patch"
@@ -1826,47 +2119,15 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                              "rk3588-mnt-reform2/0004-MERGED-drm-connector-hdmi-Add-missing-bpc-debug-info.patch"
                              "rk3588-mnt-reform2/0005-MERGED-drm-connector-hdmi-Factor-out-bpc-and-format-.patch"
                              "rk3588-mnt-reform2/0006-MERGED-drm-connector-hdmi-Use-YUV420-output-format-a.patch"
-                             "rk3588-mnt-reform2/0007-MERGED-drm-tests-hdmi-Replace-_-MHz-with-mhz.patch"
-                             "rk3588-mnt-reform2/0008-MERGED-drm-tests-hdmi-Switch-to-void-type-for-EDID-d.patch"
-                             "rk3588-mnt-reform2/0009-MERGED-drm-tests-hdmi-Add-macro-to-simplify-EDID-set.patch"
-                             "rk3588-mnt-reform2/0010-MERGED-drm-tests-hdmi-Replace-open-coded-EDID-setup.patch"
-                             "rk3588-mnt-reform2/0011-MERGED-drm-tests-hdmi-Drop-unused-drm_kunit_helper_c.patch"
-                             "rk3588-mnt-reform2/0012-MERGED-drm-tests-hdmi-Setup-ycbcr_420_allowed-before.patch"
-                             "rk3588-mnt-reform2/0013-MERGED-drm-tests-hdmi-Switch-to-drm_atomic_get_new_c.patch"
-                             "rk3588-mnt-reform2/0014-MERGED-drm-tests-hdmi-Provide-EDID-supporting-4K-30H.patch"
-                             "rk3588-mnt-reform2/0015-MERGED-drm-tests-hdmi-Add-limited-range-tests-for-YU.patch"
-                             "rk3588-mnt-reform2/0016-MERGED-drm-tests-hdmi-Rename-max-TMDS-rate-fallback-.patch"
-                             "rk3588-mnt-reform2/0017-MERGED-drm-tests-hdmi-Provide-EDID-supporting-4K-30H.patch"
-                             "rk3588-mnt-reform2/0018-MERGED-drm-tests-hdmi-Add-max-TMDS-rate-fallback-tes.patch"
-                             "rk3588-mnt-reform2/0019-MERGED-drm-tests-hdmi-Add-test-for-unsuccessful-fall.patch"
                              "rk3588-mnt-reform2/0020-MERGED-thermal-rockchip-rename-rk_tsadcv3_tshut_mode.patch"
-                             "rk3588-mnt-reform2/0021-MERGED-dt-bindings-rockchip-thermal-Add-RK3576-compa.patch"
-                             "rk3588-mnt-reform2/0022-MERGED-thermal-rockchip-Support-RK3576-SoC-in-the-th.patch"
                              "rk3588-mnt-reform2/0023-MERGED-dt-bindings-thermal-rockchip-document-otp-the.patch"
                              "rk3588-mnt-reform2/0024-MERGED-thermal-rockchip-support-reading-trim-values-.patch"
-                             ;; already merged in 6.16.4?
-                             ; "rk3588-mnt-reform2/0025-MERGED-dt-bindings-display-vop2-Add-optional-PLL-clo.patch"
-                             ; "rk3588-mnt-reform2/0026-MERGED-arm64-dts-rockchip-Enable-HDMI-PHY-clk-provid.patch"
-                             ; "rk3588-mnt-reform2/0027-MERGED-arm64-dts-rockchip-Add-HDMI-PHY-PLL-clock-sou.patch"
-                             "rk3588-mnt-reform2/0028-MERGED-arm64-dts-rockchip-Enable-HDMI-receiver-on-RK.patch"
                              "rk3588-mnt-reform2/0029-MERGED-drm-bridge-Pass-down-connector-to-drm-bridge-.patch"
-                             "rk3588-mnt-reform2/0030-MERGED-arm64-dts-rockchip-enable-USB-on-Sige5.patch"
-                             "rk3588-mnt-reform2/0032-MERGED-arm64-dts-rockchip-add-SDIO-controller-on-RK3.patch"
-                             "rk3588-mnt-reform2/0033-MERGED-arm64-dts-rockchip-add-version-independent-Wi.patch"
-                             "rk3588-mnt-reform2/0034-MERGED-arm64-dts-rockchip-add-overlay-for-the-WiFi-B.patch"
-                             "rk3588-mnt-reform2/0035-MERGED-drm-panel-raydium-rm67200-Add-missing-drm_dis.patch"
-                             "rk3588-mnt-reform2/0037-MERGED-arm64-dts-rockchip-enable-PCIe-on-ROCK-4D.patch"
-                             "rk3588-mnt-reform2/0038-MERGED-arm64-dts-rockchip-add-HDMI-audio-on-ROCK-4D.patch"
                              "rk3588-mnt-reform2/0040-MERGED-arm64-defconfig-enable-further-Rockchip-platf.patch"
                              "rk3588-mnt-reform2/0041-MERGED-dt-bindings-pinctrl-rockchip-increase-max-amo.patch"
-                             "rk3588-mnt-reform2/0043-DEBUG-usb-typec-tcpm-also-log-to-dmesg.patch"
-                             "rk3588-mnt-reform2/0044-DEBUG-usb-typec-fusb302-also-log-to-dmesg.patch"
                              "rk3588-mnt-reform2/0045-math.h-add-DIV_ROUND_UP_NO_OVERFLOW.patch"
                              "rk3588-mnt-reform2/0046-clk-divider-Fix-divisor-masking-on-64-bit-platforms.patch"
                              "rk3588-mnt-reform2/0047-clk-composite-replace-open-coded-abs_diff.patch"
-                             "rk3588-mnt-reform2/0048-arm64-dts-rockchip-rk3588-evb1-add-bluetooth-rfkill.patch"
-                             "rk3588-mnt-reform2/0049-arm64-dts-rockchip-rk3588-evb1-improve-PCIe-ethernet.patch"
-                             "rk3588-mnt-reform2/0050-arm64-dts-rockchip-Slow-down-EMMC-a-bit-to-keep-IO-s.patch"
                              "rk3588-mnt-reform2/0051-media-v4l2-ctrls-core-Set-frame_mbs_only_flag-by-def.patch"
                              "rk3588-mnt-reform2/0052-media-rockchip-Move-H264-CABAC-table-to-header-file.patch"
                              "rk3588-mnt-reform2/0053-media-rockchip-Introduce-the-rkvdec2-driver.patch"
@@ -1877,7 +2138,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                              "rk3588-mnt-reform2/0058-dt-bindings-display-vop2-Add-VP-clock-resets.patch"
                              "rk3588-mnt-reform2/0059-drm-rockchip-vop2-Add-clock-resets-support.patch"
                              "rk3588-mnt-reform2/0060-arm64-dts-rockchip-Add-VOP-clock-resets-for-rk3588s.patch"
-                             "rk3588-mnt-reform2/0061-arm64-dts-rockchip-rk3588-evb1-add-DSI-panel.patch"
                              "rk3588-mnt-reform2/0062-drm-rockchip-vop2-Add-core-reset-support.patch"
                              "rk3588-mnt-reform2/0063-WIP-drm-rockchip-dw_hdmi_qp-Make-use-of-phy_configur.patch"
                              "rk3588-mnt-reform2/0064-WIP-drm-bridge-Add-detect_ctx-hook.patch"
@@ -1887,15 +2147,10 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                              "rk3588-mnt-reform2/0068-drm-bridge-synopsys-Add-DW-DPTX-Controller-support-l.patch"
                              "rk3588-mnt-reform2/0069-drm-rockchip-Add-RK3588-DPTX-output-support.patch"
                              "rk3588-mnt-reform2/0070-MAINTAINERS-Add-entry-for-DW-DPTX-Controller-bridge.patch"
-                             "rk3588-mnt-reform2/0071-dt-bindings-display-simple-bridge-Add-ra620-compatib.patch"
                              "rk3588-mnt-reform2/0072-drm-birdge-simple-bridge-Add-support-for-radxa-ra620.patch"
                              "rk3588-mnt-reform2/0073-arm64-dts-rockchip-Add-DP0-for-rk3588.patch"
                              "rk3588-mnt-reform2/0074-arm64-dts-rockchip-Add-DP1-for-rk3588.patch"
-                             "rk3588-mnt-reform2/0075-arm64-dts-rockchip-Enable-DisplayPort-for-rk3588s-Co.patch"
-                             "rk3588-mnt-reform2/0076-arm64-dts-rockchip-Enable-DP2HDMI-for-ROCK-5-ITX.patch"
                              "rk3588-mnt-reform2/0077-arm64-defconfig-Enable-Rockchip-RK3588-DisplayPort-C.patch"
-                             "rk3588-mnt-reform2/0078-arm64-dts-rockchip-add-USB-C-support-for-ROCK-5B.patch"
-                             "rk3588-mnt-reform2/0079-arm64-dts-rockchip-enable-camera-I2C-interfaces-for-.patch"
                              "rk3588-mnt-reform2/0080-accel-rocket-Add-registers-header.patch"
                              "rk3588-mnt-reform2/0081-accel-rocket-Add-a-new-driver-for-Rockchip-s-NPU.patch"
                              "rk3588-mnt-reform2/0082-accel-rocket-Add-IOCTL-for-BO-creation.patch"
@@ -1904,28 +2159,12 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                              "rk3588-mnt-reform2/0085-dt-bindings-npu-rockchip-rknn-Add-bindings.patch"
                              "rk3588-mnt-reform2/0086-arm64-dts-rockchip-add-pd_npu-label-for-RK3588-power.patch"
                              "rk3588-mnt-reform2/0087-arm64-dts-rockchip-Add-nodes-for-NPU-and-its-MMU-to-.patch"
-                             "rk3588-mnt-reform2/0088-arm64-dts-rockchip-Enable-the-NPU-on-quartzpro64.patch"
-                             "rk3588-mnt-reform2/0089-arm64-dts-rockchip-enable-NPU-on-ROCK-5B.patch"
                              "rk3588-mnt-reform2/0091-PM-devfreq-rockchip-dfi-double-count-on-RK3588.patch"
                              "rk3588-mnt-reform2/0092-PM-devfreq-rockchip-dfi-add-support-for-LPDDR5.patch"
-                             "rk3588-mnt-reform2/0093-arm64-dts-rockchip-Add-thermal-nodes-to-RK3576.patch"
-                             "rk3588-mnt-reform2/0094-arm64-dts-rockchip-Add-thermal-trim-OTP-and-tsadc-no.patch"
-                             "rk3588-mnt-reform2/0095-phy-rockchip-inno-usb2-add-soft-vbusvalid-control.patch"
-                             "rk3588-mnt-reform2/0096-phy-rockchip-usbdp-move-orientation-handling-further.patch"
-                             "rk3588-mnt-reform2/0097-phy-rockchip-usbdp-reset-USB3-and-reinit-on-orientat.patch"
                              "rk3588-mnt-reform2/0098-drm-bridge-dw-hdmi-qp-Add-CEC-driver.patch"
-                             "rk3588-mnt-reform2/0100-arm64-dts-rockchip-Enable-RK3576-watchdog.patch"
                              "rk3588-mnt-reform2/0101-defconfig-Enable-watchdog-sysfs-for-testing.patch"
-                             "rk3588-mnt-reform2/0103-dt-bindings-input-adc-keys-allow-linux-input-type-pr.patch"
-                             "rk3588-mnt-reform2/0104-Input-adc-keys-support-types-that-aren-t-just-keyboa.patch"
-                             "rk3588-mnt-reform2/0105-arm64-dts-rockchip-add-analog-audio-to-ROCK-4D.patch"
-                             "rk3588-mnt-reform2/0107-net-phy-realtek-Reset-after-clock-enable.patch"
                              "rk3588-mnt-reform2/0108-arm64-dts-rockchip-use-downstream-PHY-timing-setup.patch"
-                             "rk3588-mnt-reform2/0109-thermal-rockchip-shut-up-GRF-warning.patch"
-                             "rk3588-mnt-reform2/0110-PCI-dw-rockchip-Add-system-PM-support.patch"
                              "rk3588-mnt-reform2/0111-net-stmmac-dwmac-rk-Fix-disabling-set_clock_selectio.patch"
-                             ;; Applied in 6.16.4?
-                             ; "rk3588-mnt-reform2/1002-v2-media_verisilicon_fix_av1_decoder_clock_frequency.patch"
                              "rk3588-mnt-reform2/2001-drm-bridge-dw-hdmi-qp-Return-0-in-audio-prepare-when.patch"
                              "rk3588-mnt-reform2/2003-drm-bridge-synopsys-Do-not-warn-about-audio-params-c.patch"
                              "rk3588-mnt-reform2/5200-drm-rockchip-Set-dma-mask-to-64-bit.patch"))))
@@ -1970,8 +2209,6 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mq-mnt-reform2-hdmi.dtb"))
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-reform2-dsi.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-reform-next.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-pocket-reform.dtb")))))))))))
-
-(define-public linux-libre-arm64-mnt-reform linux-libre-arm64-mnt-reform-6.16)
 
 (define-public linux-libre-arm64-mnt-reform-6.12
   ;; Kernel for use on the MNT/Reform systems
@@ -3261,8 +3498,7 @@ deviation, and minimum and maximum values.  It can show a nice histogram too.")
                    (string-append "--with-bashcompletiondir=" #$output
                                   "/etc/bash_completion.d")
                    ;; XXX: 32-bit Hurd platforms don't support 64bit time_t
-                   #$@(if (and (target-hurd?)
-                               (not (target-64bit?)))
+                   #$@(if (target-hurd32?)
                           '("--disable-year2038")
                           '()))
 
@@ -7678,7 +7914,7 @@ disks and SD cards.  This package provides the userland utilities.")
           (string-append "libblkid_CFLAGS=-I" libuuid "/include/uuid "
                          "-I" libuuid "/include/blkid")
           (string-append "libblkid_LIBS=-L" libuuid-static "/lib -lblkid")))
-       #:disallowed-references (,util-linux)
+       #:disallowed-references (,(this-package-input "libuuid"))
        #:make-flags '("LDFLAGS=-all-static")
        #:phases
        (modify-phases %standard-phases ; TODO: f2fs phases.
@@ -10973,6 +11209,7 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
                 "041ir9wk44v7isidwl7fzxrjvs85j637wcr7xirasd8ysxa0r4qv"))
               (patches
                (search-patches
+                "falcosecurity-libs-bpf-probes-fix.patch"
                 "falcosecurity-libs-shared-build.patch"))))
     (build-system cmake-build-system)
     (arguments

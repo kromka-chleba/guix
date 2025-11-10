@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2014, 2015, 2019, 2020 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013-2015, 2019-2020, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016, 2021 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2017, 2018, 2019, 2021, 2022, 2023, 2025 Ricardo Wurmus <rekado@elephly.net>
@@ -236,6 +236,7 @@ servers from Python programs.")
               (sha256
                (base32
                 "1sdvfbjfg0091f47562gw3gdc2vgvvhyhdi21lrpwnw9lqc8xdxk"))
+              (patches (search-patches "389-ds-base-legacy-version.patch"))
               (modules '((guix build utils)))
               (snippet
                ;; Put '#define f_type' after '#include <sys/statvfs.h>' to
@@ -254,7 +255,7 @@ servers from Python programs.")
                   (guix build utils))
       #:imported-modules `((guix build python-build-system)
                            ,@%default-gnu-imported-modules)
-      #:disallowed-references (list httpd)
+      #:disallowed-references (list (this-package-native-input "httpd"))
       #:configure-flags
       #~(list
          ;; Relax gcc-14's strictness.
@@ -273,6 +274,12 @@ servers from Python programs.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-references
             (lambda _
+              ;; Add the nss:bin output to the search path, so that certutil
+              ;; can be found below.  As nss:bin does not have a sub "/bin"
+              ;; directory it cannot be found directly.
+              (let ((path (getenv "PATH"))
+                    (nss (string-append ":" #$nss:bin)))
+                (setenv "PATH" (string-append path ":" nss)))
               ;; Avoid dependency on systemd-detect-virt
               (substitute* "src/lib389/lib389/instance/setup.py"
                 (("container_result = subprocess.*") "container_result = 1\n")

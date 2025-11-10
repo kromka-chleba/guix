@@ -120,6 +120,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gettext)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -127,6 +128,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-vcs)
   #:use-module (gnu packages golang-web)
@@ -336,7 +338,8 @@ Python 3.3 and later, rather than on Python 2.")
                   ((guix build gnu-build-system) #:prefix gnu:)
                   ,@%default-gnu-modules)
       ;; Make sure the full bash does not end up in the final closure.
-      #:disallowed-references (list bash perl)
+      #:disallowed-references (list (this-package-native-input "bash")
+                                    (this-package-native-input "perl"))
       #:test-target "test"
       #:configure-flags
       #~(cons "--with-gitconfig=/etc/gitconfig"
@@ -608,7 +611,7 @@ everything from small to very large projects with speed and efficiency.")
     (arguments
      (substitute-keyword-arguments (package-arguments git-minimal)
        ((#:disallowed-references disallowed-refs ''())
-        (delete perl disallowed-refs))
+        (delq (this-package-native-input "perl") disallowed-refs))
        ((#:make-flags flags #~'())
         #~(cons "USE_LIBPCRE2=yes" #$flags))
        ((#:configure-flags flags #~'())
@@ -2123,8 +2126,14 @@ will work.")
                                 (string-append
                                  "not test_remove_composite_keys"
                                  " and not test_remove_simple_keys"))))
-    (native-inputs (list python-psycopg2 python-pymysql python-pytest))
-    (propagated-inputs (list python-jinja2 python-multipart))
+    (native-inputs
+     (list python-psycopg2
+           python-pymysql
+           python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-jinja2
+           python-multipart))
     (home-page "https://trac.edgewall.org")
     (synopsis "Integrated SCM, wiki, issue tracker and project environment")
     (description "Trac is a minimalistic web-based software project management
@@ -2566,76 +2575,78 @@ control to Git repositories.")
 (define-public gitolite (make-gitolite))
 
 (define-public gitile
-  (package
-    (name "gitile")
-    (version "0.1.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://git.lepiller.eu/git/gitile")
-              (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1wb1rajcrzdqjncv40s7hjsnvlh1gq4z9pn9gf210g1iy35vimmz"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:imported-modules ((guix build guile-build-system)
-                           ,@%default-gnu-imported-modules)
-       #:make-flags (list "GUILE_AUTO_COMPILE=0")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'bootstrap
-           (lambda _
-             ;; The 'bootstrap' script lacks a shebang, leading to "Exec
-             ;; format error" with glibc 2.35.
-             (invoke "autoreconf" "-vfi")))
-         (add-after 'install 'wrap-program
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (use-modules (guix build guile-build-system))
-             ;; Wrap the 'gitile' command to refer to the right modules.
-             (let* ((out    (assoc-ref outputs "out"))
-                    (commonmark (assoc-ref inputs "guile-commonmark"))
-                    (git    (assoc-ref inputs "guile-git"))
-                    (bytes  (assoc-ref inputs "guile-bytestructures"))
-                    (fibers (assoc-ref inputs "guile-fibers"))
-                    (gcrypt (assoc-ref inputs "guile-gcrypt"))
-                    (syntax-highlight (assoc-ref inputs "guile-syntax-highlight"))
-                    (deps   (list out commonmark git bytes fibers gcrypt
-                                  syntax-highlight))
-                    (guile  (assoc-ref inputs "guile"))
-                    (effective (target-guile-effective-version))
-                    (mods   (string-drop-right  ;drop trailing colon
-                             (string-join deps
-                                          (string-append "/share/guile/site/"
-                                                         effective ":")
-                                          'suffix)
-                             1))
-                    (objs   (string-drop-right
-                             (string-join deps
-                                          (string-append "/lib/guile/" effective
-                                                         "/site-ccache:")
-                                          'suffix)
-                             1)))
-               (wrap-program (string-append out "/bin/gitile")
-                 `("GUILE_LOAD_PATH" ":" prefix (,mods))
-                 `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,objs)))))))))
-    (native-inputs
-     (list autoconf automake guile-3.0 pkg-config))
-    (inputs
-     (list bash-minimal                 ;for wrap-program
-           guile-3.0
-           guile-commonmark
-           guile-fibers
-           guile-gcrypt
-           guile-git
-           guile-syntax-highlight
-           guile-gnutls))
-    (home-page "https://git.lepiller.eu/gitile")
-    (synopsis "Simple Git forge written in Guile")
-    (description "Gitile is a Git forge written in Guile that lets you
+  ;; Use an unreleased version to fix the gitile system test.
+  (let ((commit "1feb300c0d3069b1180e62c5e989ac0ed353a248"))
+    (package
+      (name "gitile")
+      (version (string-append "0.1.4-" (string-take commit 7)))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://git.lepiller.eu/git/gitile")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1yhqn54hx7p7sc3vc85vsx7315bxs313bv3i9lzx8q0zpzc0x7xh"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:imported-modules ((guix build guile-build-system)
+                             ,@%default-gnu-imported-modules)
+         #:make-flags (list "GUILE_AUTO_COMPILE=0")
+         #:phases
+         (modify-phases %standard-phases
+           (replace 'bootstrap
+             (lambda _
+               ;; The 'bootstrap' script lacks a shebang, leading to "Exec
+               ;; format error" with glibc 2.35.
+               (invoke "autoreconf" "-vfi")))
+           (add-after 'install 'wrap-program
+             (lambda* (#:key inputs outputs #:allow-other-keys)
+               (use-modules (guix build guile-build-system))
+               ;; Wrap the 'gitile' command to refer to the right modules.
+               (let* ((out    (assoc-ref outputs "out"))
+                      (commonmark (assoc-ref inputs "guile-commonmark"))
+                      (git    (assoc-ref inputs "guile-git"))
+                      (bytes  (assoc-ref inputs "guile-bytestructures"))
+                      (fibers (assoc-ref inputs "guile-fibers"))
+                      (gcrypt (assoc-ref inputs "guile-gcrypt"))
+                      (syntax-highlight (assoc-ref inputs "guile-syntax-highlight"))
+                      (deps   (list out commonmark git bytes fibers gcrypt
+                                    syntax-highlight))
+                      (guile  (assoc-ref inputs "guile"))
+                      (effective (target-guile-effective-version))
+                      (mods   (string-drop-right  ;drop trailing colon
+                               (string-join deps
+                                            (string-append "/share/guile/site/"
+                                                           effective ":")
+                                            'suffix)
+                               1))
+                      (objs   (string-drop-right
+                               (string-join deps
+                                            (string-append "/lib/guile/" effective
+                                                           "/site-ccache:")
+                                            'suffix)
+                               1)))
+                 (wrap-program (string-append out "/bin/gitile")
+                   `("GUILE_LOAD_PATH" ":" prefix (,mods))
+                   `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,objs)))))))))
+      (native-inputs
+       (list autoconf automake guile-3.0 pkg-config))
+      (inputs
+       (list bash-minimal                 ;for wrap-program
+             guile-3.0
+             guile-commonmark
+             guile-fibers
+             guile-gcrypt
+             guile-git
+             guile-syntax-highlight
+             guile-gnutls))
+      (home-page "https://git.lepiller.eu/gitile")
+      (synopsis "Simple Git forge written in Guile")
+      (description "Gitile is a Git forge written in Guile that lets you
 visualize your public Git repositories on a web interface.")
-    (license license:agpl3+)))
+      (license license:agpl3+))))
 
 (define-public pre-commit
   (package
@@ -3962,7 +3973,7 @@ be served with a HTTP file server of your choice.")
                             (assoc-ref %build-inputs "boost")
                             "/lib")
              "--with-tinyxml")
-       #:disallowed-references (,tzdata-for-tests)
+       #:disallowed-references ,(list (this-package-native-input "tzdata"))
        #:phases (modify-phases %standard-phases
                   (add-after 'unpack 'unbundle
                     (lambda _
@@ -4279,27 +4290,27 @@ file contents on a remote server.")
 (define-public lfs-s3
   (package
     (name "lfs-s3")
-    (version "0.1.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://git.sr.ht/~ngraves/lfs-s3")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0yilbxpia2lh36s872hiji77hazy83h2zc0iyqldrf3r18szqniw"))))
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/nicolas-graves/lfs-s3")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d2jwpqfbcd1hb213i6fjln0sqyg8ldjfrkzf312mivp2b1bxjl3"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "git.sr.ht/~ngraves/lfs-s3"))
+      #:import-path "github.com/nicolas-graves/lfs-s3"))
     (inputs (list git-lfs))
     (propagated-inputs
      (list go-github-com-aws-aws-sdk-go-v2
            go-github-com-aws-aws-sdk-go-v2-config
            go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
-           go-github-com-aws-aws-sdk-go-v2-service-s3))
+           go-github-com-aws-aws-sdk-go-v2-service-s3
+           go-github-com-klauspost-compress))
     (home-page "https://git.sr.ht/~ngraves/lfs-s3/")
     (synopsis "Git extension for versioning large files in S3")
     (description
@@ -4360,36 +4371,33 @@ guessing the URL pattern from the @code{origin} remote.")
                   ;; error, so address that.
                   (substitute* "src/tla/libarch/archive.c"
                     (("\"--preserve\"")
-                     "\"--preserve-permissions\""))
-                  #t))))
+                     "\"--preserve-permissions\""))))))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'configure
-                    (lambda* (#:key inputs outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        (chdir "src")
+     (list #:phases #~(modify-phases %standard-phases
+                        (replace 'configure
+                          (lambda _
+                            (chdir "src")
 
-                        (mkdir "=build")
-                        (chdir "=build")
+                            (mkdir "=build")
+                            (chdir "=build")
 
-                        ;; For libneon's 'configure' script.
-                        ;; XXX: There's a bundled copy of neon.
-                        (setenv "CONFIG_SHELL" (which "sh"))
+                            ;; For libneon's 'configure' script.
+                            ;; XXX: There's a bundled copy of neon.
+                            (setenv "CONFIG_SHELL" (which "sh"))
 
-                        (invoke "../configure" "--prefix" out
-                                "--config-shell" (which "sh")
-                                "--with-posix-shell" (which "sh")
-                                "--with-cc" "gcc")))))
+                            (invoke "../configure" "--prefix" #$output
+                                    "--config-shell" (which "sh")
+                                    "--with-posix-shell" (which "sh")
+                                    "--with-cc" "gcc"))))
 
+           ;; There are build failures when building in parallel.
+           #:parallel-build? #f
+           #:parallel-tests? #f
 
-       ;; There are build failures when building in parallel.
-       #:parallel-build? #f
-       #:parallel-tests? #f
-
-       #:test-target "test"))
+           #:test-target "test"))
     (native-inputs
-     (list which))
+     (list gcc-10 which))
     (synopsis "Historical distributed version-control system")
     (description
      "GNU Arch, aka. @code{tla}, was one of the first free distributed
