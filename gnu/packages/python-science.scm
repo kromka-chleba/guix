@@ -4862,6 +4862,50 @@ tabular datasets.  This package provides the core modules of Vaex.")
 python-polars package.  Not meant for direct general consumption.")
     (license license:expat)))
 
+(define-public python-polars
+  (package
+    (name "python-polars")
+    (version "1.35.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "polars" version))
+       (sha256
+        (base32 "0bm6sz7ni3lvi0v1h9mrnm04dv7fpis2sid7dhfib025amnqwm06"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-polars-runtime-64))
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-dependencies
+            (lambda _
+              ;;The pypi polars-runtime-32 packages does not build;
+              ;;upstream's pola-rs/polars git only has polars-runtime-64
+              (substitute* "pyproject.toml"
+                (("runtime-32") "runtime-64")))))))
+    (home-page "https://github.com/pola-rs/polars")
+    (synopsis "Fast Query Engine for DataFrames")
+    (description
+     "Polars is an analytical query engine written for DataFrames.  It isdesigned to
+be fast, easy to use and expressive.  Key features are:
+
+@itemize
+@item Lazy | Eager execution
+@item Streaming (larger-than-RAM datasets)
+@item Query optimization
+@item Multi-threaded
+@item Written in Rust
+@item SIMD
+@item Powerful expression API
+@item Front end in Python | Rust | NodeJS | R | SQL
+@item Apache Arrow Columnar Format
+@end itemize")
+    (license license:expat)))
+
 (define-public python-vector
   (package
     (name "python-vector")
