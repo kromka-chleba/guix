@@ -79,6 +79,7 @@
 ;;; Copyright © 2025 Philippe Swartvagher <phil.swart@gmx.fr>
 ;;; Copyright © 2025 pinoaffe <pinoaffe@gmail.com>
 ;;; Copyright © 2025 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -7177,6 +7178,111 @@ service for that request.  Requests are made using port numbers as identifiers
 and xinetd usually launches another daemon to handle the request.  It can be
 used to start services with both privileged and non-privileged port numbers.")
     (license (license:fsf-free "file://COPYRIGHT"))))
+
+(define ucspi-tcp-debian-patches
+  (package
+    (name "ucspi-tcp-debian-data")
+    (version "0.88-13")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://deb.debian.org/debian/pool/main/"
+                           "u/ucspi-tcp/ucspi-tcp_" version ".debian.tar.xz"))
+       (sha256
+        (base32 "18wh7jxkn18b08gw5wbckq97fgv53ammg517gx5dv7z5xhr4j4mj"))))
+    (build-system copy-build-system)
+    (arguments
+     '(#:install-plan '(("patches/" "./"))))
+    (home-page "https://packages.debian.org/stable/net/ucspi-tcp")
+    (synopsis "Debian patches for @code{ucspi-tcp}")
+    (description
+     "The original source code of @code{ucspi-tcp} fails in most modern
+build environments.  The patches contained herein can improve the
+situation.")
+    (license license:public-domain)))
+
+(define-public ucspi-tcp
+  (package
+    (name "ucspi-tcp")
+    (version "0.88")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://cr.yp.to/"
+                           name
+                           "/"
+                           name
+                           "-"
+                           version
+                           ".tar.gz"))
+       (sha256
+        (base32 "171yl9kfm8w7l17dfxild99mbf877a9k5zg8yysgb1j8nz51a1ja"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Supplied tests merely check for installed file presence
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'patch
+            (lambda _args
+              (invoke "patch" "-p1" "-i"
+                      #$(file-append ucspi-tcp-debian-patches
+                                     "/0006-implicit-declarations.patch"))
+              (invoke "patch" "-p1" "-i"
+                      #$(file-append ucspi-tcp-debian-patches
+                                     "/0007-ssize-t.patch"))
+              (invoke "patch" "-p1" "-i"
+                      #$(file-append ucspi-tcp-debian-patches
+                                     "/0008-int-main.patch"))
+              (invoke "patch" "-p1" "-i"
+                      #$(file-append ucspi-tcp-debian-patches
+                                     "/0009-malloc.patch"))
+              (invoke "patch" "-p1" "-i"
+                      #$(file-append ucspi-tcp-debian-patches
+                                     "/0010-gid-t.patch"))
+              (substitute* "conf-home"
+                (("/usr/local")
+                 #$output))
+              (substitute* "error.h"
+                (("extern int errno;")
+                 "#include <errno.h>"))))
+          (replace 'install
+            (lambda _args
+              (invoke "make" "setup"))))))
+    (properties '((release-monitoring-url . "https://cr.yp.to/ucspi-tcp/install.html")))
+    (home-page "https://cr.yp.to/ucspi-tcp.html")
+    (synopsis "Command-line tools for buildig TCP client-server applications")
+    (description
+     "@code{tcpserver} waits for incoming connections and, for each
+connection, runs a program of your choice.  Your program receives
+environment variables showing the local and remote host names, IP
+addresses, and port numbers.
+
+@code{tcpserver} offers a concurrency limit to protect you from running out
+of processes and memory.  When you are handling 40 (by default)
+simultaneous connections, tcpserver smoothly defers acceptance of new
+connections.
+
+@code{tcpserver} also provides TCP access control features, similar to
+tcp-wrappers/tcpd's hosts.allow but much faster.  Its access control
+rules are compiled into a hashed format with cdb, so it can easily
+deal with thousands of different hosts.
+
+This package includes a @code{recordio} tool that monitors all the input and
+output of a server.
+
+@code{tcpclient} makes a TCP connection and runs a program of your choice.
+It sets up the same environment variables as tcpserver.
+
+This package includes several sample clients built on top of
+tcpclient: @code{who@@}, @code{date@@}, @code{finger@@}, @code{http@@},
+@code{tcpcat}, and @code{mconnect}.
+
+@code{tcpserver} and @code{tcpclient} conform to UCSPI, the UNIX Client-Server
+Program Interface, using the TCP protocol.  UCSPI tools are available
+for several different networks.")
+    (license license:public-domain)))
 
 (define-public tidy-html
   (package
