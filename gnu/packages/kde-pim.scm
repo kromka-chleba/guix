@@ -2126,7 +2126,6 @@ application \"Parts\" to be embedded as a Kontact component (or plugin).")
            akonadi-calendar
            akonadi-contacts
            akonadi-mime
-           akonadi-notes
            akonadi-search
            boost
            breeze-icons ; default icon set, required for tests
