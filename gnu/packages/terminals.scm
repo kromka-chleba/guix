@@ -920,6 +920,9 @@ a server/client mode.")
     (arguments
      (list
       #:zig zig-0.15
+      ;; "fast" instead of "safe" because running ghostty compiled "safe" mode
+      ;; is "too slow"
+      ;; <https://github.com/ghostty-org/ghostty/blob/main/PACKAGING.md#build-options>
       ;; #:zig-release-type "fast"
       #:zig-build-flags
       #~(list
