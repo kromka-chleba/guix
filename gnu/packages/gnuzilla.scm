@@ -947,7 +947,9 @@ preferences/advanced-scripts.dtd"
                  #$(local-file
                     (search-patch "icecat-fhs-configure-option.patch"))
                  #$(local-file
-                    (search-patch "icecat-adjust-mozilla-desktop.patch"))))))
+                    (search-patch "icecat-adjust-mozilla-desktop.patch"))
+                 #$(local-file
+                    (search-patch "icecat-expose-gnu-store-in-sandbox.patch"))))))
           (add-after 'apply-guix-specific-patches 'remove-bundled-libraries
             (lambda _
               ;; Remove bundled libraries that we don't use, since they may
@@ -1001,36 +1003,6 @@ preferences/advanced-scripts.dtd"
               (substitute* "dom/media/platforms/ffmpeg/FFmpegRuntimeLinker.cpp"
                 (("libavcodec\\.so")
                  (search-input-file inputs "lib/libavcodec.so")))))
-          (add-after 'fix-ffmpeg-runtime-linker 'build-sandbox-whitelist
-            (lambda* (#:key inputs #:allow-other-keys)
-              (define (runpath-of lib)
-                (call-with-input-file lib
-                  (compose elf-dynamic-info-runpath
-                           elf-dynamic-info
-                           parse-elf
-                           get-bytevector-all)))
-              (define (runpaths-of-input label)
-                (let* ((dir (string-append (assoc-ref inputs label) "/lib"))
-                       (libs (find-files dir "\\.so$")))
-                  (append-map runpath-of libs)))
-              ;; Populate the sandbox read-path whitelist as needed by ffmpeg.
-              (let* ((whitelist
-                      (map (cut string-append <> "/")
-                           (delete-duplicates
-                            `(,(string-append (assoc-ref inputs "shared-mime-info")
-                                              "/share/mime")
-                              ,(string-append (assoc-ref inputs "font-dejavu")
-                                              "/share/fonts")
-                              "/run/current-system/profile/share/fonts"
-                              ,@(append-map runpaths-of-input
-                                            '("mesa" "ffmpeg"))))))
-                     (whitelist-string (string-join whitelist ","))
-                     (port (open-file "browser/app/profile/icecat.js" "a")))
-                (format #t "setting 'security.sandbox.content.read_path_whitelist' to '~a'~%"
-                        whitelist-string)
-                (format port "~%pref(\"security.sandbox.content.read_path_whitelist\", ~S);~%"
-                        whitelist-string)
-                (close-output-port port))))
           (add-after 'patch-source-shebangs 'patch-cargo-checksums
             (lambda _
               (use-modules (guix build cargo-utils))

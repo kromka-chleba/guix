@@ -1,0 +1,38 @@
+Upstream-status: https://phabricator.services.mozilla.com/D271921
+
+diff --git a/security/sandbox/linux/broker/SandboxBrokerPolicyFactory.cpp b/security/sandbox/linux/broker/SandboxBrokerPolicyFactory.cpp
+index 9e2e276d2931..d3c0be9919e6 100644
+--- a/security/sandbox/linux/broker/SandboxBrokerPolicyFactory.cpp
++++ b/security/sandbox/linux/broker/SandboxBrokerPolicyFactory.cpp
+@@ -485,6 +485,7 @@ void SandboxBrokerPolicyFactory::InitContentPolicy() {
+   // Various places where fonts reside
+   policy->AddTree(rdonly, "/usr/X11R6/lib/X11/fonts");
+   policy->AddTree(rdonly, "/nix/store");
++  policy->AddTree(rdonly, "/gnu/store");
+   // https://gitlab.com/freedesktop-sdk/freedesktop-sdk/-/blob/e434e680d22260f277f4a30ec4660ed32b591d16/files/fontconfig-flatpak.conf
+   policy->AddTree(rdonly, "/run/host/fonts");
+   policy->AddTree(rdonly, "/run/host/user-fonts");
+@@ -494,6 +495,7 @@ void SandboxBrokerPolicyFactory::InitContentPolicy() {
+   // Bug 1848615
+   policy->AddPath(rdonly, "/usr");
+   policy->AddPath(rdonly, "/nix");
++  policy->AddPath(rdonly, "/gnu");
+ 
+   AddLdconfigPaths(policy);
+   AddLdLibraryEnvPaths(policy);
+@@ -950,6 +952,7 @@ SandboxBrokerPolicyFactory::GetRDDPolicy(int aPid) {
+   policy->AddTree(rdonly, "/usr/lib64");
+   policy->AddTree(rdonly, "/run/opengl-driver/lib");
+   policy->AddTree(rdonly, "/nix/store");
++  policy->AddTree(rdonly, "/gnu/store");
+ 
+   // Bug 1647957: memory reporting.
+   AddMemoryReporting(policy.get(), aPid);
+@@ -1095,6 +1098,7 @@ SandboxBrokerPolicyFactory::GetUtilityProcessPolicy(int aPid) {
+   // Required to make sure ffmpeg loads properly, this is already existing on
+   // Content and RDD
+   policy->AddTree(rdonly, "/nix/store");
++  policy->AddTree(rdonly, "/gnu/store");
+ 
+   // glibc will try to stat64("/") while populating nsswitch database
+   // https://sourceware.org/git/?p=glibc.git;a=blob;f=nss/nss_database.c;h=cf0306adc47f12d9bc761ab1b013629f4482b7e6;hb=9826b03b747b841f5fc6de2054bf1ef3f5c4bdf3#l396
