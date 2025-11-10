@@ -814,8 +814,7 @@ preferences/advanced-scripts.dtd"
            hunspell
            libnotify
            nspr
-           ;;nss-rapid            ;pending resolution of
-                                  ;<https://codeberg.org/guix/guix/issues/661>
+           nss-rapid
            shared-mime-info
            sqlite
            eudev
@@ -907,8 +906,7 @@ preferences/advanced-scripts.dtd"
          "--with-system-libevent"
          "--with-system-libvpx"
          "--with-system-nspr"
-         ;; "--with-system-nss"
-         ;;   (pending resolution of <https://codeberg.org/guix/guix/issues/661>)
+         "--with-system-nss"
          "--with-system-png"            ;must be libpng-apng
          "--with-system-webp"
          "--with-system-zlib"
@@ -966,10 +964,6 @@ preferences/advanced-scripts.dtd"
                           ;; FIXME: A script from the bundled nspr is used.
                           ;;"nsprpub"
                           ;;
-                          ;; FIXME: Some of the bundled NSS sources are used
-                          ;; to build third_party/prio.
-                          ;;"security/nss"
-                          ;;
                           ;; TODO: Use more system media libraries.  See:
                           ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=517422>
                           ;;   * libtheora: esr60 wants v1.2, not yet released.
@@ -987,6 +981,10 @@ preferences/advanced-scripts.dtd"
                           "media/libjpeg"
                           "media/libvpx"
                           "modules/freetype2"
+                          ;; FIXME: Some of the bundled NSS sources are used
+                          ;; to build third_party/prio.  Delete at least the
+                          ;; test directory.
+                          "security/nss/tests"
 
                           ;; UNBUNDLE-ME! "modules/zlib"
                           ;; UNBUNDLE-ME! "media/libogg"
