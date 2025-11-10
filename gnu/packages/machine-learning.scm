@@ -3610,38 +3610,10 @@ limited memory.")
 
 
 (define-public dmlc-core
-  (package
-    (name "dmlc-core")
-    (version "0.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dmlc/dmlc-core")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1x4ad1jhn84fywlk031fmv1kxyiscclmrqn9hhj8gz0mh7z9vcrh"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:configure-flags #~(list "-DGOOGLE_TEST=ON")))
-    (native-inputs
-     (list googletest python-wrapper))
-    (home-page "https://github.com/dmlc/dmlc-core")
-    (synopsis "Common bricks library for machine learning")
-    (description
-     "DMLC-Core is the backbone library to support all DMLC projects,
-offers the bricks to build efficient and scalable distributed machine
-learning libraries.")
-    (license license:asl2.0)))
-
-(define-public dmlc-core-next
   ;; Apache Tvm needs the latest code from git commits in May 2024 or later.
   (let ((commit "13341857549852a9a86b1894b5ba84c6276ab381")
         (revision "1"))
     (package
-      (inherit dmlc-core)
       (name "dmlc-core")
       (version (git-version "0.5" revision commit))
       (source
@@ -3652,7 +3624,20 @@ learning libraries.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1hj6h103lal3cm5mnry9lrm3d7aij89rxv46yv6y49vzd5hbnfbd")))))))
+          (base32 "1hj6h103lal3cm5mnry9lrm3d7aij89rxv46yv6y49vzd5hbnfbd"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags #~(list "-DGOOGLE_TEST=ON")))
+      (native-inputs
+       (list googletest python-wrapper))
+      (home-page "https://github.com/dmlc/dmlc-core")
+      (synopsis "Common bricks library for machine learning")
+      (description
+       "DMLC-Core is the backbone library to support all DMLC projects,
+offers the bricks to build efficient and scalable distributed machine
+learning libraries.")
+      (license license:asl2.0))))
 
 (define-public xgboost
   (package
@@ -4315,7 +4300,7 @@ the tensors contained therein.")
                     ;;         (string-append source
                     ;;                        "/tests/scripts/task_cpp_unittest.sh"))
                     )))))))
-      (inputs (list dmlc-core-next
+      (inputs (list dmlc-core
                     dlpack
                     libedit
                     libxml2
