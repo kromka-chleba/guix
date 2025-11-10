@@ -1,35 +1,46 @@
-# This patch was imported from Debian: https://sources.debian.org/patches/xgboost/1.7.4-1/cmake-dmlc-core.patch/
+From fcb978a0077218469bb8f9bc311b562b3ede5180 Mon Sep 17 00:00:00 2001
+Message-ID: <fcb978a0077218469bb8f9bc311b562b3ede5180.1762716481.git.csantosb@inventati.org>
+From: Cayetano Santos <csantosb@inventati.org>
+Date: Sun, 9 Nov 2025 20:27:50 +0100
+Subject: [PATCH] test
 
-Index: xgboost/CMakeLists.txt
-===================================================================
---- xgboost.orig/CMakeLists.txt
-+++ xgboost/CMakeLists.txt
-@@ -205,7 +205,9 @@ msvc_use_static_runtime()
- if (FORCE_SHARED_CRT)
-   set(DMLC_FORCE_SHARED_CRT ON)
- endif ()
+---
+ CMakeLists.txt | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index efff5a74a..c7cef3ae3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -289,7 +289,9 @@ endif()
+ 
+ # dmlc-core
+ set(DMLC_FORCE_SHARED_CRT ${FORCE_SHARED_CRT})
 -add_subdirectory(${xgboost_SOURCE_DIR}/dmlc-core)
 +add_library(dmlc SHARED IMPORTED)
 +find_library(DMLC_LIBRARY dmlc)
 +set_property(TARGET dmlc PROPERTY IMPORTED_LOCATION "${DMLC_LIBRARY}")
  
- if (MSVC)
-   if (TARGET dmlc_unit_tests)
-@@ -267,7 +269,7 @@ set_target_properties(runxgboost PROPERT
+ if(MSVC)
+   if(TARGET dmlc_unit_tests)
+@@ -407,7 +409,7 @@ endif()
  #-- End CLI for xgboost
  
  # Common setup for all targets
--foreach(target xgboost objxgboost dmlc runxgboost)
-+foreach(target xgboost objxgboost runxgboost)
+-foreach(target xgboost objxgboost dmlc)
++foreach(target xgboost objxgboost)
    xgboost_target_properties(${target})
    xgboost_target_link_libraries(${target})
    xgboost_target_defs(${target})
-@@ -318,7 +320,7 @@ install(DIRECTORY ${xgboost_SOURCE_DIR}/
- #
+@@ -469,7 +471,7 @@ install(DIRECTORY ${xgboost_SOURCE_DIR}/include/xgboost
  # https://github.com/dmlc/xgboost/issues/6085
- if (BUILD_STATIC_LIB)
--  set(INSTALL_TARGETS xgboost runxgboost objxgboost dmlc)
-+  set(INSTALL_TARGETS xgboost runxgboost objxgboost)
- else (BUILD_STATIC_LIB)
-   set(INSTALL_TARGETS xgboost runxgboost)
- endif (BUILD_STATIC_LIB)
+ if(BUILD_STATIC_LIB)
+   if(BUILD_DEPRECATED_CLI)
+-    set(INSTALL_TARGETS xgboost runxgboost objxgboost dmlc)
++    set(INSTALL_TARGETS xgboost runxgboost objxgboost)
+   else()
+     set(INSTALL_TARGETS xgboost objxgboost dmlc)
+   endif()
+-- 
+2.51.2
+

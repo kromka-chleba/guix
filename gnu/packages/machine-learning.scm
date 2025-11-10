@@ -3642,7 +3642,7 @@ learning libraries.")
 (define-public xgboost
   (package
     (name "xgboost")
-    (version "1.7.6")
+    (version "3.1.2")
     (source
      (origin
        (method git-fetch)
@@ -3650,15 +3650,31 @@ learning libraries.")
              (url "https://github.com/dmlc/xgboost")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (patches (search-patches "xgboost-use-system-dmlc-core.patch"))
+       (patches (search-patches "xgboost-use-system-dmlc-core.patch"
+                                ;; Comment out tests which fail with "network
+                                ;; is unreachable".
+                                "xgboost-disable-tests.patch"))
        (sha256
-        (base32 "16fbm5y3hn6ccflmbdlmn7krrdq7c0az3mxd8j1d23s9ky8niw05"))))
+        (base32 "0g5ifw1pgr51pc0w9jm151bgffhvphy84ihc90rabyivwp0f2ilj"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags (list "-DGOOGLE_TEST=ON")))
+     (list
+      ;; FIXME: Fails with:
+      ;; "libgomp: Thread creation failed: Resource temporarily
+      ;; unavailable"
+      #:tests? #f
+      #:configure-flags #~(list "-DGOOGLE_TEST=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda _
+              (substitute* "tests/cpp/tree/test_fit_stump.cc"
+                (("..\\/..\\/src\\/common\\/linalg_op.h")
+                 "../../../src/common/linalg_op.h")
+                (("..\\/..\\/src\\/tree\\/fit_stump.h")
+                 "../../../src/tree/fit_stump.h")))))))
     (native-inputs
-     `(("googletest" ,googletest)
-       ("python" ,python-wrapper)))
+     (list googletest python-wrapper))
     (inputs
      (list dmlc-core))
     (home-page "https://xgboost.ai/")

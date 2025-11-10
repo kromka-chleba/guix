@@ -2494,6 +2494,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/xfig-Use-pkg-config-to-set-fontconfig-CFLAGS-and-LIBS.patch	\
   %D%/packages/patches/xfce4-settings-defaults.patch		\
   %D%/packages/patches/xgboost-use-system-dmlc-core.patch	\
+  %D%/packages/patches/xgboost-disable-tests.patch		\
   %D%/packages/patches/xiphos-glib.patch                        \
   %D%/packages/patches/xlispstat-fix-compilation-with-modern-gcc.patch \
   %D%/packages/patches/xmonad-dynamic-linking.patch		\
