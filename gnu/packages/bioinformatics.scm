@@ -23437,6 +23437,148 @@ than is possible with plain-text methods alone.")
 genomic features from GTF files.")
     (license license:asl2.0)))
 
+(define-public python-sqanti3
+  (package
+    (name "python-sqanti3")
+    (version "5.5.1")
+    (home-page "https://github.com/conesalab/sqanti3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet
+        '(delete-file "src/utilities/gtfToGenePred"))
+       (sha256
+        (base32 "1lpiax3i6n1awnk2fh6i5y1hr8icarvj0nm0j585drl0haxdc49x"))))
+    (properties '(("upstream-name" . "sqanti3")))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list gffread
+                             python-bx-python
+                             python-biopython
+                             python-bcbio-gff
+                             python-cython
+                             python-gtfparse
+                             python-numpy
+                             python-polars
+                             python-pysam
+                             python-pybedtools
+                             python-psutil
+                             python-pandas
+                             python-scipy))
+    (native-inputs (list
+                    gffread             ;For tests
+                    kallisto
+                    minimap2
+                    perl
+                    python-pytest
+                    python-setuptools
+                    python-setuptools-scm
+                    python-wheel
+                    r-minimal
+                    samtools
+                    star))
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; Need bundled gtftogenepred binary
+         "--deselect=test/test_programs.py::test_gtf2genepred"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_genePred"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_genePred_found"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_notInGenome"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_correctOutput_length"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_correct1exon"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_correctExons"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_correctJunctionsChr"
+         "--deselect=test/unit/test_parsers.py::test_reference_parserc_correctJunctionsGene"
+         "--deselect=test/unit/test_parsers.py::test_reference_parser_correctStartEnds"
+         ;; Need uLTRA
+         "--deselect=test/test_programs.py::test_ultra"
+         "--deselect=test/unit/utilities/test_short_reads.py::test_get_TSS_bed"
+         "--deselect=test/unit/utilities/test_short_reads.py::test_get_TSS_bed_negative_strand"
+         "--deselect=test/unit/utilities/test_short_reads.py::test_get_TSS_bed_file_cleanup"
+         "--deselect=test/test_programs.py::test_gmap"    ;needs gmap
+         "--deselect=test/test_programs.py::test_desalt") ;needs deSALT
+      #:modules '((ice-9 ftw)
+                  (guix build utils)
+                  (guix build pyproject-build-system))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'fix-dist-info
+            (lambda _
+              (let* ((site (string-append #$output "/lib/python"
+                                          #$(version-major+minor
+                                             (package-version python))
+                                          "/site-packages"))
+                     (name (assoc-ref '#$properties "upstream-name"))
+                     (build-name "unknown")
+                     (dist-info
+                      (string-append site "/" build-name "-0.0.0.dist-info"))
+                     (versioned-dist-info
+                      (string-append site "/"  name "-" #$version ".dist-info")))
+                (substitute* (string-append dist-info "/METADATA")
+                  (("Name: .*")
+                   (string-append "Name: " name))
+                  (("Version: 0.0.0")
+                   (string-append "Version: " #$version)))
+                (substitute* (string-append dist-info "/RECORD")
+                  (("0.0.0") #$version)
+                  ((build-name) name))
+                (rename-file dist-info versioned-dist-info))))
+          (add-after 'install 'install-binary
+            (lambda _
+              (let ((bin (string-append #$output "/bin"))
+                    (name (assoc-ref '#$properties "upstream-name")))
+                (substitute* name
+                  (("^from src[.]") (string-append "from " name ".")))
+                (install-file name bin))))
+          (add-after 'install-binary 'fix-site-package
+            (lambda _
+              (let* ((site (string-append #$output "/lib/python"
+                                          #$(version-major+minor
+                                             (package-version python))
+                                          "/site-packages"))
+                     (name (assoc-ref '#$properties "upstream-name"))
+                     (package (string-append site "/" name))
+                     (files (scandir site (lambda (file)
+                                            (string-suffix? ".py" file)))))
+                (mkdir-p package)
+                (for-each (lambda (file)
+                            (rename-file (string-append site "/" file)
+                                         (string-append package "/" file)))
+                          `("utilities" ,@files)))))
+          (add-after 'fix-site-package 'fix-import-src
+            (lambda _
+              (let* ((site (string-append #$output "/lib/python"
+                                          #$(version-major+minor
+                                             (package-version python))
+                                          "/site-packages"))
+                     (name (assoc-ref '#$properties "upstream-name"))
+                     (package (string-append site "/" name))
+                     (files (find-files site "[.]py")))
+                (define (fix-import-src file)
+                  (substitute* file
+                    (("^from src[.]") "from .")
+                    (("^import src[.]") (string-append "import " name "."))))
+                (for-each fix-import-src files)))))))
+    (synopsis "Tool for Functional IsoTranscriptomics Analyses")
+    (description
+     "SQANTI3 constitutes the first module of the Functional
+IsoTranscriptomics (FIT) pipeline, which is an end-to-end strategy to perform
+isoform-level bioinformatics analyses.
+
+The SQANTI3 tool is designed to enable quality control and filtering of long
+read-defined transcriptomes, which are often rich in artifacts and
+false-positive isoforms.  Therefore, a good curation of the transcriptome is
+indispensable to proceed with FIT analysis and produce valid, biologically
+sound conclusions/hypothesis.")
+    (license (list license:gpl3+
+                   license:expat))))
+
 (define-public indelfixer
   (package
     (name "indelfixer")
@@ -23444,8 +23586,8 @@ genomic features from GTF files.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/cbg-ethz/InDelFixer/")
-                    (commit (string-append "v" version))))
+                     (url "https://github.com/cbg-ethz/InDelFixer/")
+                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
