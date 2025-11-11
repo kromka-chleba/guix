@@ -23405,6 +23405,38 @@ manipulation of hierarchical features (e.g., genes, transcripts, and exons)
 than is possible with plain-text methods alone.")
     (license license:expat)))
 
+(define-public python-gtfparse
+  (package
+    (name "python-gtfparse")
+    (version "2.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gtfparse" version))
+       (sha256
+        (base32 "14wlxg9i8bf3cb66xwyinzzjacva3cdxqj8a25x5jzyq3j0m9slz"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-polars
+                             python-pyarrow))
+    (native-inputs (list python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (arguments (list
+                #:phases
+                '(modify-phases %standard-phases
+                   (add-after 'unpack 'relax-requirements
+                     (lambda _
+                       (substitute* "requirements.txt"
+                         (("pyarrow.*") "pyarrow\n")
+                         (("polars.*") "polars\n")))))))
+    (home-page "https://github.com/openvax/gtfparse")
+    (synopsis
+     "Parsing library for extracting data frames of genomic features from GTF files")
+    (description
+     "Python-gtfparse is a tool and python library for extracting data frames of
+genomic features from GTF files.")
+    (license license:asl2.0)))
+
 (define-public indelfixer
   (package
     (name "indelfixer")
