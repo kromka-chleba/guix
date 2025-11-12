@@ -20776,6 +20776,10 @@
   (crate-source "wiremock" "0.6.3"
                 "00g3524s3nz6fbm56c6d7wqxsd1kx1j5mkvvx2cmhyyq9jvq25hh"))
 
+(define rust-wiremock-0.6.5
+  (crate-source "wiremock" "0.6.5"
+                "0cahz2c4lwaw8f7g5d805wlqh824fjhaw8g588akr6sxn3gixnq8"))
+
 (define rust-wit-bindgen-0.45.0
   (crate-source "wit-bindgen" "0.45.0"
                 "053q28k1hn9qgm0l05gr9751d8q34zcz6lbzviwxiqxs3n1q68h5"
