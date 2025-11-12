@@ -1279,6 +1279,58 @@ repositories.")
     (description "This package provides a fast Terminal UI for git.")
     (license license:expat)))
 
+(define-public goose-cli
+  (package
+    (name "goose-cli")
+    (version "1.13.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/block/goose")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet #~(list
+                   (delete-file-recursively "ui/desktop/src/platform/windows")))
+       (sha256
+        (base32 "0bgq20sh9kbwdpkd38nscp9n5530al640lzi0rqhxn83r9hgpi5j"))))
+    (build-system cargo-build-system)
+    (arguments (list
+      #:tests? #f
+      #:install-source? #f
+      #:cargo-install-paths ''("crates/goose-cli")
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'package) ;; fails in workspace
+          (add-after 'unpack 'use-guix-vendored-dependencies
+            (lambda _
+              (substitute* "Cargo.toml"
+                (("^crunchy.*") ""))))
+          (add-after 'configure 'patch
+            (lambda _
+              (let ((patch-file
+                     #$(local-file
+                        (search-patch "libdbus-sys-unvendor.patch"))))
+                (invoke "patch" "--force" "-p1" "-i" patch-file)))))))
+    (native-inputs (list pkg-config))
+    (inputs (cons*
+              dbus
+              libgit2-1.7
+              libxcb
+              oniguruma
+              sqlite
+              zlib
+              `(,zstd "lib")
+              (cargo-inputs 'goose)))
+    (home-page "https://block.github.io/goose/")
+    (synopsis "Local, extensible, open source AI agent")
+    (description "@code{goose} is an AI agent, capable of automating complex
+ development tasks from start to finish.  @code{goose} can build entire projects
+ from scratch, write and execute code, debug failures, orchestrate workflows,
+ and interact with external APIs.")
+    (license license:asl2.0)))
+
 (define-public helvum
   (package
     (name "helvum")

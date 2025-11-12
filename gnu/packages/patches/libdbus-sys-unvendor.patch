@@ -1,0 +1,18 @@
+--- a/guix-vendor/rust-libdbus-sys-0.2.5.tar.zst/build.rs
++++ b/libdbus-sys/build.rs
+@@ -11,7 +11,6 @@ fn main() -> Result<(), Box<dyn Error>> {
+ 
+     // See https://github.com/joshtriplett/metadeps/issues/9 for why we don't use
+     // metadeps here, but instead keep this manually in sync with Cargo.toml.
+-    #[cfg(not(feature = "vendored"))]
+     if let Err(e) = pkg_config::Config::new().atleast_version("1.6").probe("dbus-1") {
+         eprintln!("pkg_config failed: {}", e);
+         eprintln!(
+@@ -25,7 +24,5 @@ fn main() -> Result<(), Box<dyn Error>> {
+         panic!();
+     }
+ 
+-    #[cfg(feature = "vendored")]
+-    build_vendored::build_libdbus()?;
+     Ok(())
+ }
