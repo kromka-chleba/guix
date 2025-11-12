@@ -17729,6 +17729,14 @@
   (crate-source "tokio" "1.47.1"
                 "0f2hp5v3payg6x04ijj67si1wsdhksskhmjs2k9p5f7bmpyrmr49"))
 
+(define rust-tokio-1.48.0
+  (crate-source "tokio" "1.48.0"
+                "0244qva5pksy8gam6llf7bd6wbk2vkab9lx26yyf08dix810wdpz"))
+
+(define rust-tokio-cron-scheduler-0.14.0
+  (crate-source "tokio-cron-scheduler" "0.14.0"
+                "0h9i0rjg3zkhy7xglipjdjffiyajm4107hycxfmrzg0ah67wwwaw"))
+
 (define rust-tokio-macros-2.5.0
   (crate-source "tokio-macros" "2.5.0"
                 "1f6az2xbvqp7am417b78d1za8axbvjvxnmkakz9vr8s52czx81kf"))
