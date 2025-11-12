@@ -8421,6 +8421,10 @@
   (crate-source "imagesize" "0.13.0"
                 "11f26ac9zvbr7sjnsv2z9jd3ryaz40pg8xch4ij1q1rg5zbjgkgd"))
 
+(define rust-imagesize-0.14.0
+  (crate-source "imagesize" "0.14.0"
+                "1725g398w4v35qrv9s3gl8gl5cqj5cwkamn7mvvl12y4niblxr89"))
+
 (define rust-imara-diff-0.1.8
   (crate-source "imara-diff" "0.1.8"
                 "1lmk5dpha2fhahrnsrgavxn1qz6ydp1w8jz8fpvlb28p89ylplqp"))
