@@ -1136,6 +1136,10 @@
   (crate-source "aws-lc-rs" "1.13.1"
                 "1ix87hcaiala8r40xd76fzb044jvxrdc8ksinm6q6v4kcprwiz4k"))
 
+(define rust-aws-lc-rs-1.13.3
+  (crate-source "aws-lc-rs" "1.13.3"
+                "1fhp1aql8rii82yxqrv1lhipy9kgs0qv1m6061vnngh2pbhkz5aw"))
+
 (define rust-aws-lc-rs-1.14.0
   (crate-source "aws-lc-rs" "1.14.0"
                 "11i7l7pddlw808xidvm5fb0qi2qnc2lclh9nlmnv2myd15ngzf4l"))
