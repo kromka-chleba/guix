@@ -1197,6 +1197,14 @@
   (crate-source "axum-core" "0.5.2"
                 "19kwzksb4hwr3qfbrhjbqf83z6fjyng14wrkzck6fj1g8784qik8"))
 
+(define rust-axum-core-0.5.5
+  (crate-source "axum-core" "0.5.5"
+                "08pa4752h96pai7j5avr2hnq35xh7qgv6vl57y1zhhnikkhnqi2r"))
+
+(define rust-axum-macros-0.5.0
+  (crate-source "axum-macros" "0.5.0"
+                "0p6011ld0izk22fmdxsps58cigilq2yhnmyqw4f8bslg09gdwkv0"))
+
 (define rust-az-1.2.1
   (crate-source "az" "1.2.1"
                 "0ww9k1w3al7x5qmb7f13v3s9c2pg1pdxbs8xshqy6zyrchj4qzkv"))
