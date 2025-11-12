@@ -18038,6 +18038,10 @@
   (crate-source "tracing-log" "0.2.0"
                 "1hs77z026k730ij1a9dhahzrl0s073gfa2hm5p0fbl0b80gmz1gf"))
 
+(define rust-tracing-opentelemetry-0.28.0
+  (crate-source "tracing-opentelemetry" "0.28.0"
+                "0lyhrf5mfbcbjs7gdgqx62kmf810xbkj7ymgy70bb6440pv73acp"))
+
 (define rust-tracing-serde-0.2.0
   (crate-source "tracing-serde" "0.2.0"
                 "1wbgzi364vzfswfkvy48a3p0z5xmv98sx342r57sil70ggmiljvh"))
