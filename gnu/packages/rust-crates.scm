@@ -2831,6 +2831,10 @@
                 "1bmi736xxhy07bld3y81ysr66vn3gnff08kvb4ahqay0l5rspa45"
                 #:snippet '(delete-file-recursively "logo.png")))
 
+(define rust-cliclack-0.3.6
+  (crate-source "cliclack" "0.3.6"
+                "1f04gvf5cppm32mlavmg0w0g15ci503mm72dy0nkl4jcq2yj1i2p"))
+
 (define rust-clipboard-0.5.0
   (crate-source "clipboard" "0.5.0"
                 "1rxjfn811h09g6jpjjs2vx7z52wj6dxnflbwryfj6h03dij09a95"))
