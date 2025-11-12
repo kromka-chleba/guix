@@ -3974,6 +3974,10 @@
   (crate-source "deadpool" "0.10.0"
                 "145lq79dlc4jn7jvlcf4lb105bs3z3jy6g7d15zv7iy1g04i117v"))
 
+(define rust-deadpool-0.12.3
+  (crate-source "deadpool" "0.12.3"
+                "06wvsfyni5f04ia6jczgjnpkq4w91cnjjdz10mpq93gcsv8v3qhb"))
+
 (define rust-deadpool-runtime-0.1.4
   (crate-source "deadpool-runtime" "0.1.4"
                 "0arbchl5j887hcfvjy4gq38d32055s5cf7pkpmwn0lfw3ss6ca89"))
