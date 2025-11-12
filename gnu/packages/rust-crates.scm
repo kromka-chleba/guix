@@ -14343,6 +14343,10 @@
                 "0almvx3z75f611pdcd9mslh7zxg76zh3shifql4ndch6mn3rb92k"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-regex-lite-0.1.8
+  (crate-source "regex-lite" "0.1.8"
+                "1njm055j5kfq0cqc6ray24wgwcw8hrzjqn8dy9b8yrayvyc2p54d"))
+
 (define rust-regex-syntax-0.6.29
   (crate-source "regex-syntax" "0.6.29"
                 "1qgj49vm6y3zn1hi09x91jvgkl2b1fiaq402skj83280ggfwcqpi"))
