@@ -17763,6 +17763,10 @@
   (crate-source "tokio-rustls" "0.26.3"
                 "1gc6fxpd185xclg5y8z1kana0axv4g6vnypmpvqj78ccj8skixh5"))
 
+(define rust-tokio-rustls-0.26.4
+  (crate-source "tokio-rustls" "0.26.4"
+                "0qggwknz9w4bbsv1z158hlnpkm97j3w8v31586jipn99byaala8p"))
+
 (define rust-tokio-socks-0.5.2
   (crate-source "tokio-socks" "0.5.2"
                 "0gq40sgggz21wfpshiq8pryh062vp7m36rrz3c8c2wj60aw70iqd"))
