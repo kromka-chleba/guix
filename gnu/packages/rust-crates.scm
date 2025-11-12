@@ -20907,6 +20907,14 @@
   (crate-source "xattr" "1.5.1"
                 "0299mqwjfayn4g0aq156mc2myirw5bi2b8gqi6x85p2iff1ijfmg"))
 
+(define rust-xattr-1.6.1
+  (crate-source "xattr" "1.6.1"
+                "0ml1mb43gqasawillql6b344m0zgq8mz0isi11wj8vbg43a5mr1j"))
+
+(define rust-xcap-0.0.14
+  (crate-source "xcap" "0.0.14"
+                "0rnbvyvmcdihbk3n08yq84wpvvv2cprprlms4agxvaw3h8yj41qi"))
+
 (define rust-xcb-0.8.2
   (crate-source "xcb" "0.8.2"
                 "1ph27r9nxyfy3hh1c7x85g6dciwxcinf6514pvw9ybhl4hzpm4ay"))
