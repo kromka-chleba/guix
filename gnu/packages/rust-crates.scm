@@ -10646,6 +10646,10 @@
   (crate-source "minidom" "0.12.0"
                 "06nbqscsv2clc4mvdzzl1syn89plsqvmxn2lqxjfrxbllqar2m7y"))
 
+(define rust-minijinja-2.12.0
+  (crate-source "minijinja" "2.12.0"
+                "1469k9gfrfmwhvm2dzpvxg6r01lribzaw0rggm5kycikabbn9wm9"))
+
 (define rust-mio-0.6.23
   (crate-source "mio" "0.6.23"
                 "1i2c1vl8lr45apkh8xbh9k56ihfsmqff5l7s2fya7whvp7sndzaa"))
