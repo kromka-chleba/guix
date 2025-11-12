@@ -1667,6 +1667,10 @@
   (crate-source "brotli-decompressor" "4.0.3"
                 "1zdxrw6plcnfwirb6bnmd9h3xabx0c4x734ffk7g1ar3kryfyd53"))
 
+(define rust-brotli-decompressor-5.0.0
+  (crate-source "brotli-decompressor" "5.0.0"
+                "00yyswj1rj20ma4wr4wcci4r9ywlgvxa87nqsv5rik5y588vhjw7"))
+
 (define rust-browserslist-rs-0.6.0
   (crate-source "browserslist-rs" "0.6.0"
                 "19l0prgnbx0cyqvjsf30ni7d87nkn8j0fj56fg259yvfh50if1ri"))
