@@ -2355,6 +2355,10 @@
   (crate-source "cexpr" "0.6.0"
                 "0rl77bwhs5p979ih4r0202cn5jrfsrbgrksp40lkfz5vk1x3ib3g"))
 
+(define rust-cfb-0.10.0
+  (crate-source "cfb" "0.10.0"
+                "0hfscapkl295ffqlzj2arwbyrxlpm831zkygz9wb68z3bgjzi96q"))
+
 (define rust-cfb-0.7.3
   (crate-source "cfb" "0.7.3"
                 "03y6p3dlm7gfds19bq4ba971za16rjbn7q2v0vqcri52l2kjv3yk"
