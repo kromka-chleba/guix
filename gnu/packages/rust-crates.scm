@@ -15112,6 +15112,10 @@
   (crate-source "rustyline" "10.1.1"
                 "1vvsd68cch0lpcg6mcwfvfdd6r4cxbwis3bf9443phzkqcr3rs61"))
 
+(define rust-rustyline-15.0.0
+  (crate-source "rustyline" "15.0.0"
+                "0bws18zrj8i6ix27k9bhb3mb1civbz5nr72rv8xm2bljvikf1q9f"))
+
 (define rust-rustyline-9.1.2
   (crate-source "rustyline" "9.1.2"
                 "0f8069ljhiv9nf97y975wvv9yvx82w3lm9g50d5n298fkiw2cy6v"))
