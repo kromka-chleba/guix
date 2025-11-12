@@ -18154,6 +18154,10 @@
   (crate-source "tree-sitter-elixir" "0.3.4"
                 "0grdkbx6bqw3s1w3mkk94sibmhgdicdlqirjzpc57zdl8x348pg4"))
 
+(define rust-tree-sitter-go-0.21.2
+  (crate-source "tree-sitter-go" "0.21.2"
+                "03f0pvd2yvb7f1bpxf993szm1i8s5gzmhvj5cvj70ziwinlh5mxq"))
+
 (define rust-tree-sitter-go-0.23.4
   (crate-source "tree-sitter-go" "0.23.4"
                 "0cc4w4p12inxpsn2hgpmbvw1nyf5cm0l9pa705hbw3928milfgdi"))
