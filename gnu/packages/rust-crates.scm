@@ -11688,6 +11688,10 @@
   (crate-source "oauth2" "4.4.2"
                 "0zwkmwxwygl4fwghgyanixzqgn7yvkwwwacdghz7x124v36l3263"))
 
+(define rust-oauth2-5.0.0
+  (crate-source "oauth2" "5.0.0"
+                "0zfn67m93qfh9gyxxx1hj6yprk9dkr3hm1mi4ni23pqlj3kikqji"))
+
 (define rust-objc-0.2.7
   (crate-source "objc" "0.2.7"
                 "1cbpf6kz8a244nn1qzl3xyhmp05gsg4n313c9m3567625d3innwi"))
