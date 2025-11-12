@@ -17568,6 +17568,10 @@
                 "0ghyxlz566dzc3scvgmzys11dhq2ri77kb8sznjakijlxby104xs"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-tiktoken-rs-0.6.0
+  (crate-source "tiktoken-rs" "0.6.0"
+                "1xl7232gm6nlcd1wazrk78j3s5ljavb5sl0810pl11i4xs3mj1s4"))
+
 (define rust-tikv-jemalloc-sys-0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7
   (crate-source "tikv-jemalloc-sys"
                 "0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7"
