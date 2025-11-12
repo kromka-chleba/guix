@@ -1158,6 +1158,12 @@
                 "0yfhmn3vcbfyg07ic2mn43i187pssi0sp6sn3fzf3vq5fxpdicb1"
                 #:snippet '(delete-file-recursively "builder/prebuilt-nasm")))
 
+(define rust-aws-lc-sys-0.30.0
+  ;; TODO: Unbundle aws-lc.
+  (crate-source "aws-lc-sys" "0.30.0"
+                "1zs37mgl198yns1sckd21hcfczkbxf3yf7zvr2y8ifdxbl5ibzfv"
+                #:snippet '(delete-file-recursively "builder/prebuilt-nasm")))
+
 (define rust-aws-lc-sys-0.31.0
   ;; TODO: Unbundle aws-lc.
   (crate-source "aws-lc-sys" "0.31.0"
