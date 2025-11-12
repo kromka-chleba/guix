@@ -9157,6 +9157,10 @@
   (crate-source "keyring" "2.3.3"
                 "184mshdrgghlvmlz0n7w1167yx0sa3zb82n31jk4lwcx07q8fcrn"))
 
+(define rust-keyring-3.6.3
+  (crate-source "keyring" "3.6.3"
+                "072mzc4rk2qffdlc8c5s9h38c6fifyr9xxmsix599ra4y2pw7g7f"))
+
 (define rust-khronos-api-3.1.0
   (crate-source "khronos_api" "3.1.0"
                 "1p0xj5mlbagqyvvnv8wmv3cr7l9y1m153888pxqwg3vk3mg5inz2"))
