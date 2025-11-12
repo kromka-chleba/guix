@@ -2884,6 +2884,10 @@
                 "1an1vcala24grlyhvk71ikxk2kmgcbal9kgrzzpjcl9z7i74ahw5"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-cmake-0.1.53
+  (crate-source "cmake" "0.1.53"
+                "1mms9fa395bf7kcs0ald2nlaa6ic5w1n3bc92n5dc8i9np406jp2"))
+
 (define rust-cmake-0.1.54
   (crate-source "cmake" "0.1.54"
                 "1w41ma28yzad9x757s9sfq1wigjs9j902hbzc0nbxpc9vvws7jp7"))
