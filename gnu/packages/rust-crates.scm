@@ -1189,6 +1189,10 @@
   (crate-source "axum" "0.8.4"
                 "1d99kb3vcjnhbgrf6hysllf25hzagw7m1i1nidjpgsaa30n8c7h2"))
 
+(define rust-axum-0.8.6
+  (crate-source "axum" "0.8.6"
+                "0w9qyxcp77gwswc9sz3pf2rzpm4jycpxvd70yh8i60sjccrys64a"))
+
 (define rust-axum-core-0.4.5
   (crate-source "axum-core" "0.4.5"
                 "16b1496c4gm387q20hkv5ic3k5bd6xmnvk50kwsy6ymr8rhvvwh9"))
