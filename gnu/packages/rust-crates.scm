@@ -8261,6 +8261,10 @@
   (crate-source "icu_properties_data" "2.0.1"
                 "0cnn3fkq6k88w7p86w7hsd1254s4sl783rpz4p6hlccq74a5k119"))
 
+(define rust-icu-properties-data-2.1.1
+  (crate-source "icu_properties_data" "2.1.1"
+                "16a80p8j371jkl10x26rh9gw6d1gyl7limpc008my15v8wv5p102"))
+
 (define rust-icu-provider-1.5.0
   (crate-source "icu_provider" "1.5.0"
                 "1nb8vvgw8dv2inqklvk05fs0qxzkw8xrg2n9vgid6y7gm3423m3f"))
