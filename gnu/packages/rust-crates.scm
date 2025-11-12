@@ -1273,6 +1273,10 @@
   (crate-source "base64-simd" "0.7.0"
                 "1mg5ayj5z7imfyv06fhzi5rw289gv5yrfakxzsad22zz786d47bq"))
 
+(define rust-base64-simd-0.8.0
+  (crate-source "base64-simd" "0.8.0"
+                "15cihnjqpxy0h7llpk816czyp5z613yrvsivw9i8f5vkivkvp6ik"))
+
 (define rust-base64ct-1.7.3
   (crate-source "base64ct" "1.7.3"
                 "18scrpjl145msdb64q4nbb0plm4wbmp5lml134nz0c5rvxm5pql9"))
