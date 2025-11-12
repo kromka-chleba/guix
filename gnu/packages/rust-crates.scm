@@ -17078,6 +17078,10 @@
   (crate-source "sysinfo" "0.31.4"
                 "1gm1d4pxwnx4gmh6kwawchv8v8djb7y0a3qvbsq09cwrhx7vwp9m"))
 
+(define rust-sysinfo-0.32.1
+  (crate-source "sysinfo" "0.32.1"
+                "1bzlj3afjz4ibdsfchjk1f4md6djffw668f3npiykwph38jcscsc"))
+
 (define rust-sysinfo-0.33.1
   (crate-source "sysinfo" "0.33.1"
                 "00bcbj9rk39n07ylclj9klggkshxyianv2lfkpqnc6x0iqj5ij2g"))
