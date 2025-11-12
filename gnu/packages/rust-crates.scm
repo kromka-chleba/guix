@@ -4363,6 +4363,10 @@
   (crate-source "document-features" "0.2.11"
                 "0pdhpbz687fk2rkgz45yy3gvbhlxliwb7g1lj3jbx1f1qr89n94m"))
 
+(define rust-document-features-0.2.12
+  (crate-source "document-features" "0.2.12"
+                "0qcgpialq3zgvjmsvar9n6v10rfbv6mk6ajl46dd4pj5hn3aif6l"))
+
 (define rust-documented-0.9.1
   (crate-source "documented" "0.9.1"
                 "1wy67lk299zn0csr5fkmxyz0vkas0ycqk26ys99lbg4m14pv6vdw"))
