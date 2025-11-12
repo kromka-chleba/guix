@@ -18489,6 +18489,11 @@
   (crate-source "umask" "2.1.0"
                 "071xszsd6znk0ik11pxl7mwhf07clsiq3qpzw1ac0dcyak14d6pc"))
 
+(define rust-umya-spreadsheet-2.3.3
+  (crate-source "umya-spreadsheet" "2.3.3"
+                "16p3qcc80fqy39lsqv895krqkf6szbkss48ig98ivv4nkh1px320"
+                #:snippet '(delete-file-recursively "tests")))
+
 (define rust-uname-0.1.1
   (crate-source "uname" "0.1.1"
                 "1j1xd1rryml4j1hf07kahva9d5ym8m9jz9z20hfdpr1jrbq8jbxp"))
