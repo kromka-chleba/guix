@@ -10675,6 +10675,14 @@
   (crate-source "moxcms" "0.7.5"
                 "026df3qpxn430dlngpj3gjip0m9280g3asvbia5dpsjsjfl2zlyx"))
 
+(define rust-moxcms-0.7.9
+  (crate-source "moxcms" "0.7.9"
+                "1xkfc6cd81rvsm2yijjsph0gmw0z4waa2zlb5f4mx2vg8gbx7g8g"))
+
+(define rust-mpatch-0.2.0
+  (crate-source "mpatch" "0.2.0"
+                "1zdy89g24kragl2pnhwz4xxjpxm2pnfal4jlj1w137n3ca98n6c0"))
+
 (define rust-multibase-0.9.1
   (crate-source "multibase" "0.9.1"
                 "014l697md16829k41hzmfx4in9jzhn774q5292bsq10z7kn3jdcv"))
