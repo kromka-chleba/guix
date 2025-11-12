@@ -1485,6 +1485,10 @@
   (crate-source "blake2b_simd" "1.0.3"
                 "16cxmm4pr5jx9xc0msj1qn018ram3vz9k17cj57r97hm1fi07s86"))
 
+(define rust-blake3-1.5.3
+  (crate-source "blake3" "1.5.3"
+                "0452raki4c30y1hpijvxrji4rzn4xl0gwwfvz5jy7dc1kbz9dv79"))
+
 (define rust-blake3-1.8.1
   (crate-source "blake3" "1.8.1"
                 "1czffygg8dhdsjyzydsrf50harfrralrkm10ckhkja1i6jdhk6iq"))
