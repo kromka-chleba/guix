@@ -18218,6 +18218,10 @@
   (crate-source "tree-sitter-php" "0.23.11"
                 "030kiknyk2lw54yj7mzj92kfr5v0qr81qymhvkqy9kvjj97fjrph"))
 
+(define rust-tree-sitter-python-0.21.0
+  (crate-source "tree-sitter-python" "0.21.0"
+                "1achqgyj89irf4g9hgg7rhs4ij25b4h1ymn4qbw65ybqyrn6q1ml"))
+
 (define rust-tree-sitter-python-0.23.6
   (crate-source "tree-sitter-python" "0.23.6"
                 "012bgzycya91lpdbrrr8xnw9xjz116nf1w61c2pwxapk4ym5l1ix"))
