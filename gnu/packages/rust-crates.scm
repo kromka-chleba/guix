@@ -20841,6 +20841,10 @@
   (crate-source "writeable" "0.6.1"
                 "1fx29zncvbrqzgz7li88vzdm8zvgwgwy2r9bnjqxya09pfwi0bza"))
 
+(define rust-writeable-0.6.2
+  (crate-source "writeable" "0.6.2"
+                "1fg08y97n6vk7l0rnjggw3xyrii6dcqg54wqaxldrlk98zdy1pcy"))
+
 (define rust-ws-0.9.2
   (crate-source "ws" "0.9.2"
                 "0j2qkgshz258wyllvhyc0mxjskzad8i00nbx4h00lsi3bz3r1zi5"))
