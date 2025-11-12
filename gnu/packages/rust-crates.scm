@@ -10144,6 +10144,11 @@
                 "0aw7diz39z3mk22k0mp7jk7qiaaagfvggzly1baqg2jf4vpf8xg7"
                 #:snippet '(delete-file-recursively "assets")))
 
+(define rust-lopdf-0.35.0
+  (crate-source "lopdf" "0.35.0"
+                "12ynm3625izyajs95bfwf3ms06bhbhhcnsvsk23cnwfha0risz2w"
+                #:snippet '(delete-file-recursively "assets")))
+
 (define rust-loupe-0.1.3
   (crate-source "loupe" "0.1.3"
                 "0kb3bc62xh20i405afr8bf65m6gznbp0fhxrfrg5pqaglkgp4slv"))
