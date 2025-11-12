@@ -14999,6 +14999,10 @@
   (crate-source "rustls-ffi" "0.14.1"
                 "1hky8z8xf9l813b1f54b0ir2knzv3kflh41i7q7xwlkyafza65n9"))
 
+(define rust-rustls-native-certs-0.6.3
+  (crate-source "rustls-native-certs" "0.6.3"
+                "007zind70rd5rfsrkdcfm8vn09j8sg02phg9334kark6rdscxam9"))
+
 (define rust-rustls-native-certs-0.7.3
   (crate-source "rustls-native-certs" "0.7.3"
                 "1r9ib5gwkfci2wbqnbh44nigvrfgxs4n1x89js82w97dxsab7gz5"))
