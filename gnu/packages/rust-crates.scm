@@ -8269,6 +8269,10 @@
   (crate-source "icu_provider" "2.0.0"
                 "1bz5v02gxv1i06yhdhs2kbwxkw3ny9r2vvj9j288fhazgfi0vj03"))
 
+(define rust-icu-provider-2.1.1
+  (crate-source "icu_provider" "2.1.1"
+                "0576b7dizgyhpfa74kacv86y4g1p7v5ffd6c56kf1q82rvq2r5l5"))
+
 (define rust-icu-provider-adapters-1.5.0
   (crate-source "icu_provider_adapters" "1.5.0"
                 "1g60fydak0i4rxf8vfrr31mpck846k9ynix4fh1qx2il13ylscnn"
