@@ -12051,6 +12051,30 @@
                        (string-append bindgen "\"*\",")))
                     (copy-file "Cargo.toml.orig" "Cargo.toml"))))
 
+(define rust-opentelemetry-0.27.1
+  (crate-source "opentelemetry" "0.27.1"
+                "1mx6kc1479pkak49xxy98jzqnfilkm1bc56liryvjdzd52606w5b"))
+
+(define rust-opentelemetry-appender-tracing-0.27.0
+  (crate-source "opentelemetry-appender-tracing" "0.27.0"
+                "0nz86xrdvsbcfcp80jp54s3lmn5lmcrm6zla12aasd8h6byfypxb"))
+
+(define rust-opentelemetry-http-0.27.0
+  (crate-source "opentelemetry-http" "0.27.0"
+                "102dn3xkcbb41cjyssdy7gv1d8db9r2s1g1gdhl1nz5syvssga0h"))
+
+(define rust-opentelemetry-otlp-0.27.0
+  (crate-source "opentelemetry-otlp" "0.27.0"
+                "0xhzw57khwribh4817lhf9rayl5ik8z1qaibpxvcbb4dhshn3kwi"))
+
+(define rust-opentelemetry-proto-0.27.0
+  (crate-source "opentelemetry-proto" "0.27.0"
+                "19jryh79aalv4i6hds8mq03v7l5b2jpnhly84f8cfpnszb5mmq56"))
+
+(define rust-opentelemetry-sdk-0.27.1
+  (crate-source "opentelemetry_sdk" "0.27.1"
+                "1f1sw5xjgbdz0nxfhkj7qwmjahffhmbk6lnzdmab5c7rxrn9s7i3"))
+
 (define rust-optfield-0.3.0
   (crate-source "optfield" "0.3.0"
                 "079a5n7lhqsj444fkgk580vra5v2nhym7czwnky9iip9rljz0ngs"))
