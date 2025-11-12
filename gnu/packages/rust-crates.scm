@@ -8168,6 +8168,10 @@
   (crate-source "icu_collections" "2.0.0"
                 "0izfgypv1hsxlz1h8fc2aak641iyvkak16aaz5b4aqg3s3sp4010"))
 
+(define rust-icu-collections-2.1.1
+  (crate-source "icu_collections" "2.1.1"
+                "0hsblchsdl64q21qwrs4hvc2672jrf466zivbj1bwyv606bn8ssc"))
+
 (define rust-icu-datetime-1.5.1
   (crate-source "icu_datetime" "1.5.1"
                 "100pdcq2y452py0bxa7vzy1sfibm11z2xxbpgvbkzpq8bswfy5fi"
