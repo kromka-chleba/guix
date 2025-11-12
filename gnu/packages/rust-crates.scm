@@ -17783,6 +17783,10 @@
   (crate-source "tokio-tungstenite" "0.26.2"
                 "117hwxfwmpxazxks076w5i73xj7cgv5iqs7x2rnbzln60zvaz7bs"))
 
+(define rust-tokio-tungstenite-0.28.0
+  (crate-source "tokio-tungstenite" "0.28.0"
+                "0mzqgc94csy5ai6kx5yxj548shppq2kwdbyrsdsilhycvmn40nnj"))
+
 (define rust-tokio-util-0.6.10
   (crate-source "tokio-util" "0.6.10"
                 "01v5zkcxjdd5zaniqxxfl6isvd7y5qfmljpqsdyrfrvd3bh3x51n"))
