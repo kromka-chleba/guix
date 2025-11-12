@@ -10002,6 +10002,10 @@
   (crate-source "litrs" "0.4.2"
                 "1v8bxsrkm0w2k9nmbp8hsspy9i1lawajywqdw4hx87rjzqv41rgm"))
 
+(define rust-litrs-1.0.0
+  (crate-source "litrs" "1.0.0"
+                "14p0kzzkavnngvybl88nvfwv031cc2qx4vaxpfwsiifm8grdglqi"))
+
 (define rust-lld-rs-140.0.0
   (crate-source "lld_rs" "140.0.0"
                 "13xzaf4dh5ljy9rrlsgy3dvs1va0cfxbwqawbz2pkbcjjqp6pbxs"
