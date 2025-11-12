@@ -4371,6 +4371,10 @@
   (crate-source "documented-macros" "0.9.1"
                 "1yp5hy7r88x1bjcyclqyrkpiddm42xmpr3s1znjzjn4vj8svp553"))
 
+(define rust-docx-rs-0.4.18
+  (crate-source "docx-rs" "0.4.18"
+                "165d3pr0h3gkjfymm0kj96b85cwdb97nfg9j617r5lkvp49vw89z"))
+
 (define rust-dot-writer-0.1.4
   (crate-source "dot-writer" "0.1.4"
                 "1w3sqyy2sg2i29didlv183h2zl7sgqf27wmcb6spqnzrsc4abxx2"))
