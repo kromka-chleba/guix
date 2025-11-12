@@ -55,7 +55,7 @@
                 (lambda* (#:key inputs #:allow-other-keys)
                   ;; Refer to the right shell.
                   (let ((/bin/sh (search-input-file inputs "bin/sh")))
-                    (substitute* "io.c"
+                    (substitute* '("io.c" "builtin.c")
                       (("/bin/sh") /bin/sh))
 
                     ;; When cross-compiling, remove dependencies on the
@@ -72,7 +72,7 @@
                   ;; Remove dependency on 'more' (from util-linux), which
                   ;; would needlessly complicate bootstrapping.
                   (substitute* "test/Makefile"
-                    (("\\| more") ""))
+                    (("\\| \\$\\$\\{PAGER:-more\\}") ""))
 
                   ;; Adjust the shebang in that file since it is then diff'd
                   ;; against the actual test output.
