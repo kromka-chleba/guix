@@ -4154,6 +4154,10 @@
 
 (define rust-deunicode-1.6.2 rust-deunicode-1)
 
+(define rust-devgen-tree-sitter-swift-0.21.0
+  (crate-source "devgen-tree-sitter-swift" "0.21.0"
+                "1bljpl34maypqd7vgwcgsfkx11sah3j8zsrlb6l96kw7nqjkdhjm"))
+
 (define rust-devicons-0.6.12
   (crate-source "devicons" "0.6.12"
                 "0jwh0g72rfkpbsm16rxb47y3ylmr47wwx3cmbbflzkrhygi4f3l3"))
