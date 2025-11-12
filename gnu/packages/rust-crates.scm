@@ -3471,6 +3471,10 @@
   (crate-source "critical-section" "1.2.0"
                 "02ylhcykxjc40xrfhk1lwc21jqgz4dbwv3jr49ymw733c51yl3kr"))
 
+(define rust-croner-2.2.0
+  (crate-source "croner" "2.2.0"
+                "0hq8khadsgflvx06w9dava7h09y9w1rv33p1dwbwgl8s1ilv0i63"))
+
 (define rust-crossbeam-0.8.4
   (crate-source "crossbeam" "0.8.4"
                 "1a5c7yacnk723x0hfycdbl91ks2nxhwbwy46b8y5vyy0gxzcsdqi"))
