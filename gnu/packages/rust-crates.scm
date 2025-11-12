@@ -15891,6 +15891,10 @@
   (crate-source "serde_with_macros" "3.14.0"
                 "03xk9ghj2s6n331r565mgh22w0749vnq50094nd0vkk5cmg9946y"))
 
+(define rust-serde-with-macros-3.15.1
+  (crate-source "serde_with_macros" "3.15.1"
+                "0mc9nd6ccmxxp3h05vk88miw3bnv3d4am0cqx7acwbslc0v906mr"))
+
 (define rust-serde-yaml-0.8.26
   (crate-source "serde_yaml" "0.8.26"
                 "06y7gxy312mink8nsnmci9cw0ykpgsdcxmayg0snmdbnnwrp92jp"))
