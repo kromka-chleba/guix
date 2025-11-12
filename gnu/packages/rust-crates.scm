@@ -8225,6 +8225,10 @@
   (crate-source "icu_normalizer_data" "2.0.0"
                 "1lvjpzxndyhhjyzd1f6vi961gvzhj244nribfpdqxjdgjdl0s880"))
 
+(define rust-icu-normalizer-data-2.1.1
+  (crate-source "icu_normalizer_data" "2.1.1"
+                "02jnzizg6q75m41l6c13xc7nkc5q8yr1b728dcgfhpzw076wrvbs"))
+
 (define rust-icu-plurals-1.5.0
   (crate-source "icu_plurals" "1.5.0"
                 "055iwgyxmdwm197wvb8d9x16lrhirn4c39dh072xbnr5q3kp0nms"))
