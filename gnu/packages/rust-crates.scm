@@ -3080,6 +3080,14 @@
   (crate-source "compose_spec_macros" "0.1.0"
                 "0z4r9n38h5346ksfilkaxa76zzivdhvj9axq8yjm6wv9nhl1pf25"))
 
+(define rust-compression-codecs-0.4.31
+  (crate-source "compression-codecs" "0.4.31"
+                "08rdpxad4azmc20rj3wlgqypvm9nsvmclwpmk03lc75qqip512pg"))
+
+(define rust-compression-core-0.4.29
+  (crate-source "compression-core" "0.4.29"
+                "1fswgrwvlzqk3g45akdzygm7bqi5b5rm87xc70aznhdgvv9l2xp4"))
+
 (define rust-comrak-0.26.0
   (crate-source "comrak" "0.26.0"
                 "1a87w6c0xkfml7rg1v34rhlcknr811s11mi9xsjgazf58dwbcnir"))
