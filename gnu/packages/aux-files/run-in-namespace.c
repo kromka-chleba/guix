@@ -209,7 +209,20 @@ mirror_directory (const char *source, const char *target,
 	     keep going if we fail to bind-mount a non-directory entry.
 	     That's OK because regular files in the root file system are
 	     usually uninteresting.  */
-	  if (err != 0 && entry->d_type != DT_DIR)
+      int is_directory = 0;
+      if (entry->d_type == DT_UNKNOWN)
+        {
+          struct stat statbuf;
+          if (fstatat (dir_fd, entry->d_name, &statbuf,
+                       AT_SYMLINK_NOFOLLOW) < 0)
+            assert_perror (errno);
+          if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
+            is_directory = 1;
+        }
+      else if (entry->d_type == DT_DIR)
+        is_directory = 1;
+
+	  if (err != 0 && is_directory == 0)
 	    assert_perror (errno);
 
 	  free (new_entry);
