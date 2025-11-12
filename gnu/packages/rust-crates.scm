@@ -8533,6 +8533,10 @@
   (crate-source "indoc" "2.0.6"
                 "1gbn2pkx5sgbd9lp05d2bkqpbfgazi0z3nvharh5ajah11d29izl"))
 
+(define rust-indoc-2.0.7
+  (crate-source "indoc" "2.0.7"
+                "01np60qdq6lvgh8ww2caajn9j4dibx9n58rvzf7cya1jz69mrkvr"))
+
 (define rust-indoc-impl-0.3.6
   (crate-source "indoc-impl" "0.3.6"
                 "1w58yg249kmzsn75kcj34qaxqh839l1hsaj3bzggy3q03wb6s16f"))
