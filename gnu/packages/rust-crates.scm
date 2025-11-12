@@ -1123,6 +1123,14 @@
   (crate-source "avif-serialize" "0.8.6"
                 "0gx2yqlh0j5063vk70hv0f1yq40lm6kvc45qx2gm3x1iz30gpj27"))
 
+(define rust-aws-config-1.8.10
+  (crate-source "aws-config" "1.8.10"
+                "12k62i3lbhggzwl9hjwj99nn8yws3y9w1ca0v56imxv5ifsb2mhq"))
+
+(define rust-aws-credential-types-1.2.8
+  (crate-source "aws-credential-types" "1.2.8"
+                "1g273n631v00l7j74g05z830vmxij8l3rdi2cyvrxdd5yhjnkwps"))
+
 (define rust-aws-lc-fips-sys-0.13.5
   ;; TODO: Unbundle aws-lc.
   (crate-source "aws-lc-fips-sys" "0.13.5"
