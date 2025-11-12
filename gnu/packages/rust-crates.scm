@@ -16503,6 +16503,10 @@
   (crate-source "sqlite3-sys" "0.17.0"
                 "1rdds3kzxbxwy3lpsvgy7g8nh609nzqpxv4jvj23ag0c16kss09r"))
 
+(define rust-sqlx-0.7.4
+  (crate-source "sqlx" "0.7.4"
+                "1ahadprvyhjraq0c5712x3kdkp1gkwfm9nikrmcml2h03bzwr8n9"))
+
 (define rust-sqlx-0.8.6
   (crate-source "sqlx" "0.8.6"
                 "1p4pgppy10ch4vj0fyay9q3g8y5xhzsayyfrrnfncacli69vivqz"
