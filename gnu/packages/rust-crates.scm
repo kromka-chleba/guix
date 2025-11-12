@@ -17030,6 +17030,12 @@
 
 (define rust-syntect-5.2.0 rust-syntect-5)
 
+(define rust-syntect-5.3.0 rust-syntect-5)
+
+; (define rust-syntect-5.3.0
+;   (crate-source "syntect" "5.3.0"
+;                 "09f9j0hlsz5zmc0fkjdp64sjnyzcvp86pvxfk51p19cmbp04asv5"))
+
 (define rust-sys-info-0.9.1
   (crate-source "sys-info" "0.9.1"
                 "0b759814ng0cj5a1iiqqjgrzfg9vqlpkbp6z3l76mycbp850sfhb"))
