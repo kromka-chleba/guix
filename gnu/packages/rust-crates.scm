@@ -19873,6 +19873,10 @@
 
 (define rust-web-view-0.7.3.82d7cbc rust-web-view-0.7.3.82d7cbc)
 
+(define rust-webbrowser-0.8.15
+  (crate-source "webbrowser" "0.8.15"
+                "12zw844al9kf32p5llv6dbqzaky9fa3ng497i3sk8mj0m5sswryv"))
+
 (define rust-webbrowser-1.0.4
   (crate-source "webbrowser" "1.0.4"
                 "0pjmpl6p09y837ikdh4v8dymisfz0sk8dgdiaqc2y52ihigjkpym"))
