@@ -18122,6 +18122,10 @@
   (crate-source "tree_magic_mini" "3.2.0"
                 "0b2ncw376snr5lwdnmpqgnz4bm1j0c8xf11sq3pfipvci4fkjhzr"))
 
+(define rust-tree-sitter-0.21.0
+  (crate-source "tree-sitter" "0.21.0"
+                "16imkbnnnflxj59dpj0xbznqf7gjykr44r9sgpfp20cdjp0gfnvh"))
+
 (define rust-tree-sitter-0.22.6
   (crate-source "tree-sitter" "0.22.6"
                 "1jkda5n43m7cxmx2h7l20zxc74nf9v1wpm66gvgxrm5drscw8z6z"))
