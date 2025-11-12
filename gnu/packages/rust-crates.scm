@@ -18328,6 +18328,10 @@
   (crate-source "tungstenite" "0.26.2"
                 "04rwwcxx95m3avi46rmn0kmpb6nynqimnla3v2qwn3k8argcp4s7"))
 
+(define rust-tungstenite-0.28.0
+  (crate-source "tungstenite" "0.28.0"
+                "0hll4l62lk77zqzgps04689skpk555lcpmi3hhyyn2as9v4dqa46"))
+
 (define rust-two-face-0.4.3
   ;; TODO: Generate from source.
   (crate-source "two-face" "0.4.3"
