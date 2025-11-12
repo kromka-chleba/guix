@@ -3247,6 +3247,10 @@
   (crate-source "cookie_store" "0.20.0"
                 "1xkc7fl1jik9ki13j9pjgyw51d0qd613srz1lv1qb0blpjmn2x1q"))
 
+(define rust-cookie-store-0.21.1
+  (crate-source "cookie_store" "0.21.1"
+                "1y9ydb52bcd1zc7r0mppy8c8l541p459a006xr0m52pq50c91b1f"))
+
 (define rust-copy-dir-0.1.3
   (crate-source "copy_dir" "0.1.3"
                 "18rckga6rf3nzlw8avyi6chdlid0kp7lhfjyy0pnw27g738isgal"))
