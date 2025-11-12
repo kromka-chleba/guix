@@ -8445,6 +8445,14 @@
   (crate-source "implib" "0.3.5"
                 "0qjyhapssradwljryq8v31kbyg6s6fqdg50cyyq3by0mc84zg2sr"))
 
+(define rust-include-dir-0.7.4
+  (crate-source "include_dir" "0.7.4"
+                "1pfh3g45z88kwq93skng0n6g3r7zkhq9ldqs9y8rvr7i11s12gcj"))
+
+(define rust-include-dir-macros-0.7.4
+  (crate-source "include_dir_macros" "0.7.4"
+                "0x8smnf6knd86g69p19z5lpfsaqp8w0nx14kdpkz1m8bxnkqbavw"))
+
 (define rust-indent-write-2.2.0
   (crate-source "indent_write" "2.2.0"
                 "1hqjp80argdskrhd66g9sh542yxy8qi77j6rc69qd0l7l52rdzhc"))
