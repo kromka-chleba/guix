@@ -14102,6 +14102,10 @@
   (crate-source "ravif" "0.11.20"
                 "0sryi4qzwv3rjhy4h0z9fb0zw3k3i814j3ck2psvjsnivmpw49aq"))
 
+(define rust-raw-window-handle-0.5.2
+  (crate-source "raw-window-handle" "0.5.2"
+                "1f9k10fgda464ia1b2hni8f0sa8i0bphdsbs3di032x80qgrmzzj"))
+
 (define rust-raw-window-handle-0.6.2
   (crate-source "raw-window-handle" "0.6.2"
                 "0ff5c648hncwx7hm2a8fqgqlbvbl4xawb6v3xxv9wkpjyrr5arr0"))
