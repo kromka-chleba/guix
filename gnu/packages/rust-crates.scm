@@ -16520,6 +16520,10 @@
   (crate-source "sqlx-macros-core" "0.8.6"
                 "16r1slvkzfdxjkc2v5i3yd5l4xzcwbcy35hzfihmmb14262c3a8r"))
 
+(define rust-sqlx-mysql-0.7.4
+  (crate-source "sqlx-mysql" "0.7.4"
+                "066lxhb80xgb8r5m2yy3a7ydjvp0b6wsk9s7whwfa83d46817lqy"))
+
 (define rust-sqlx-mysql-0.8.6
   (crate-source "sqlx-mysql" "0.8.6"
                 "09n5k60z9j1ilbdmggcla6s27np3zwxc3fnbzsw4wy6z7003y05a"))
