@@ -14512,6 +14512,14 @@
   (crate-source "rlimit" "0.9.1"
                 "13mb3ligflqb4h7m76pkyc8z5pswpc38fcl6qm1lvp2jls3rv8pq"))
 
+(define rust-rmcp-0.8.3
+  (crate-source "rmcp" "0.8.3"
+                "0hq2wqkxq3309lkxxg3jzp8vbhw2kj9ndhnzyb0gsnbjiwjx3nhz"))
+
+(define rust-rmcp-macros-0.8.3
+  (crate-source "rmcp-macros" "0.8.3"
+                "16ydglc7widhp8488ll17k8gq5xrfizals5ys60wxiwc42d5iq7d"))
+
 (define rust-rmp-0.8.14
   (crate-source "rmp" "0.8.14"
                 "1i1l6dhv7vws5vp0ikakj44fk597xi59g3j6ng1q55x3dz0xg3i2"))
