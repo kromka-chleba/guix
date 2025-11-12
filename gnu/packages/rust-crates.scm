@@ -792,6 +792,10 @@
                 "0r6shv717rl3qzccjc9qlxmnaj3l22rr9197jsahkn33v7wr98ar"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-async-compression-0.4.32
+  (crate-source "async-compression" "0.4.32"
+                "1q7l15lwlc1ral2bi8a4d88a4rha12xgnci4mish4wjc0pkbr2as"))
+
 (define rust-async-executor-1.13.1
   (crate-source "async-executor" "1.13.1"
                 "1v6w1dbvsmw6cs4dk4lxj5dvrikc6xi479wikwaab2qy3h09mjih"))
