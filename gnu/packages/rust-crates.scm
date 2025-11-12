@@ -3966,6 +3966,10 @@
   (crate-source "dbus-crossroads" "0.5.2"
                 "1q3dyywazr3hppm052fa8q2366q66ml789r42jjlnm47f51q6k1s"))
 
+(define rust-dbus-secret-service-4.1.0
+  (crate-source "dbus-secret-service" "4.1.0"
+                "19jgbqb841kbzmfgaqnbbhsc5ijck7fzl3zvgqyyb2bqvyg512vh"))
+
 (define rust-dbus-tokio-0.7.6
   (crate-source "dbus-tokio" "0.7.6"
                 "04xd3z2dnjv4d45kj3wqnwbnwllrp1zsg8v3q0qp2rxwb7a8hxh0"))
