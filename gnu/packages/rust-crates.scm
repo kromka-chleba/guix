@@ -17957,6 +17957,10 @@
   (crate-source "tower" "0.5.2"
                 "1ybmd59nm4abl9bsvy6rx31m4zvzp5rja2slzpn712y9b68ssffh"))
 
+(define rust-tower-http-0.5.2
+  (crate-source "tower-http" "0.5.2"
+                "1xakj3x0anp55gjqibiwvzma5iz0w9pcjsr7qk97sx4qm4sd970y"))
+
 (define rust-tower-http-0.6.5
   (crate-source "tower-http" "0.6.5"
                 "18hdkgznns83jhd98adkcsj9jfhjr0hza9j3718s84m4hvhdkhjw"))
