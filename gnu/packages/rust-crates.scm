@@ -18186,6 +18186,10 @@
   (crate-source "tree-sitter-julia" "0.23.1"
                 "08z33mq5n5z3xgjjcjrha8b4rrci7f5ykc8rfs3fw4l82wd76i21"))
 
+(define rust-tree-sitter-kotlin-0.3.8
+  (crate-source "tree-sitter-kotlin" "0.3.8"
+                "0d6xgf385fvlf22x7g34jxczk91fa4219cyf2ljpdx9nn2p61zsl"))
+
 (define rust-tree-sitter-language-0.1.5
   (crate-source "tree-sitter-language" "0.1.5"
                 "1f14p8i09yrfsf9708jmayy0km78n9pqzxmf31xzd0vk45q3j0f4"))
