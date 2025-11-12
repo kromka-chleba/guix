@@ -297,7 +297,7 @@ storage protocols (S3, NFS, and others) through the RADOS gateway.")
 (define-public spdk
   (package
     (name "spdk")
-    (version "24.09")
+    (version "25.09")
     (source
      (origin
        (method git-fetch)
@@ -305,7 +305,7 @@ storage protocols (S3, NFS, and others) through the RADOS gateway.")
              (url "https://github.com/spdk/spdk")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1cx0yj3ibmbngqsjdlnh7qg7as9mzpbiw0zscraw07b4rs6g0s6q"))))
+        (base32 "1x2nrg4qjilym18shb792593gn1bwihzaq19bxms06mmw40x4s6n"))))
     (build-system gnu-build-system)
     (arguments
      (list
