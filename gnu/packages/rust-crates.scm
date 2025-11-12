@@ -9098,6 +9098,10 @@
   (crate-source "jsonschema" "0.17.1"
                 "0y397fmb7qkah166lq5q39p9hizj9sls09xnvwc936pwgr7iy1ra"))
 
+(define rust-jsonwebtoken-9.3.1
+  (crate-source "jsonwebtoken" "9.3.1"
+                "1plx2qf8mpg96bpsa1aalfsf4jvgwcnl6i37x7masysk91xcr1ss"))
+
 (define rust-junction-1.2.0
   (crate-source "junction" "1.2.0"
                 "05mxqwzxgb2aqgbq9b5lgbqq0r0nds6yx68zzhyxlhx26zbxzfvj"))
