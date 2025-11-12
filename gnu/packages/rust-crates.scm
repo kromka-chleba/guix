@@ -16508,6 +16508,10 @@
                 "1p4pgppy10ch4vj0fyay9q3g8y5xhzsayyfrrnfncacli69vivqz"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-sqlx-core-0.7.4
+  (crate-source "sqlx-core" "0.7.4"
+                "1xiyr35dq10sf7lq00291svcj9wbaaz1ihandjmrng9a6jlmkfi4"))
+
 (define rust-sqlx-core-0.8.6
   (crate-source "sqlx-core" "0.8.6"
                 "1ildwsjy7lwfxsvfh174jwhk0rjqvyw37h87q1lhyslbhfqrhrzf"))
