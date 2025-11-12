@@ -7910,6 +7910,10 @@
   (crate-source "html-escape" "0.2.13"
                 "0xml3hswv0205fbm5iq7dqiwjkr6d245xkfppwi7wqjdfr4x86kd"))
 
+(define rust-html-parser-0.7.0
+  (crate-source "html_parser" "0.7.0"
+                "1gaa32a23lvg64yxz3rpsvwzyxagjkpzh6bpdx7n84k6gfq6vxgn"))
+
 (define rust-html5ever-0.25.2
   (crate-source "html5ever" "0.25.2"
                 "0j1iw2yy3fglr5rxqfrghmhksxzpcfp8ps753qazqkaxisq3zhg5"))
