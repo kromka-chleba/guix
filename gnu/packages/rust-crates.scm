@@ -1659,6 +1659,10 @@
                 "1g99xay61mds9d23fnfj5gfbd6g11gihfgs3y1abljwldzqvi5yc"
                 #:snippet '(delete-file-recursively "testdata")))
 
+(define rust-brotli-8.0.2
+  (crate-source "brotli" "8.0.2"
+                "0q25r00z3gm5wzvv4vfxvlx5zjb8i4jwyznrvdcp7abs7ihbkn2b"))
+
 (define rust-brotli-decompressor-4.0.2
   (crate-source "brotli-decompressor" "4.0.2"
                 "0dqb0vbhrc77c09qf6qmbylgkfnbjaq8629qp0z42gc0gnnhbykl"))
