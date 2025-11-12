@@ -1164,6 +1164,82 @@
                 "1kcxz4rdglzmw7r6ni45ys1hnn35pp7956w9r6g6mbxcg1kx2i0f"
                 #:snippet '(delete-file-recursively "builder/prebuilt-nasm")))
 
+(define rust-aws-runtime-1.5.13
+  (crate-source "aws-runtime" "1.5.13"
+                "0w2zk33yxx8brpr5cbl9m9p13f167zbya9c7m65qc5jy3bd0494z"))
+
+(define rust-aws-sdk-bedrockruntime-1.112.0
+  (crate-source "aws-sdk-bedrockruntime" "1.112.0"
+                "1493br5q54vymk415dwj3dfzjg4dfnnjpv024xsnss93d1z06v60"))
+
+(define rust-aws-sdk-sagemakerruntime-1.90.0
+  (crate-source "aws-sdk-sagemakerruntime" "1.90.0"
+                "0ac1d272gvbqyi2642dii8fjaxliw650dayy5mq9asdgvh0lfgkf"))
+
+(define rust-aws-sdk-sso-1.88.0
+  (crate-source "aws-sdk-sso" "1.88.0"
+                "1i1kv4kp4c8czskkpsvy7mnh1n54mlx2xfnvjshsj2jnfxkjfnyh"))
+
+(define rust-aws-sdk-ssooidc-1.90.0
+  (crate-source "aws-sdk-ssooidc" "1.90.0"
+                "16w7693hwx8jf3mhwg6qcbgw1mkygzsa0d6j7yn1yxndv7b19gpr"))
+
+(define rust-aws-sdk-sts-1.90.0
+  (crate-source "aws-sdk-sts" "1.90.0"
+                "100albpvr9gq3m3kpsb516rxqnpbpgc642vlr1jxh5y80kbn5a4q"))
+
+(define rust-aws-sigv4-1.3.6
+  (crate-source "aws-sigv4" "1.3.6"
+                "04dg6anpvw4izb4wb8ivqrgg0j0z7wvvc1xidlpiy7h07zn54m63"))
+
+(define rust-aws-smithy-async-1.2.6
+  (crate-source "aws-smithy-async" "1.2.6"
+                "176f076x5qz2656illd5mj45ziia80f7xnhz2hqwbpxp6fnwyzqj"))
+
+(define rust-aws-smithy-eventstream-0.60.13
+  (crate-source "aws-smithy-eventstream" "0.60.13"
+                "0n46cdrjc8whmakkv4vfnwdindb1jnryyiw8h0wily0rhd7k16p2"))
+
+(define rust-aws-smithy-http-0.62.5
+  (crate-source "aws-smithy-http" "0.62.5"
+                "1jlzdwnnnk7rybd4mq3kvlki96sxhc6x0kk7masd1vlr1ir5spa4"))
+
+(define rust-aws-smithy-http-client-1.1.4
+  (crate-source "aws-smithy-http-client" "1.1.4"
+                "0b0xpf11bi604smc9dc6l0friy252qwb5rvfargm7zcd7rr58ck2"))
+
+(define rust-aws-smithy-json-0.61.7
+  (crate-source "aws-smithy-json" "0.61.7"
+                "0m0cgqjvmvwlwvn6348a6gn3jxl472s3g2xfxv367z1mg5r1zcrd"))
+
+(define rust-aws-smithy-observability-0.1.4
+  (crate-source "aws-smithy-observability" "0.1.4"
+                "1k7lp9bw7j61figq5sliijq6zaxxb30na3bij2c3ycbdxaqq261d"))
+
+(define rust-aws-smithy-query-0.60.8
+  (crate-source "aws-smithy-query" "0.60.8"
+                "1janf4n2mp5p0pk85y9qlrf0fkcw7fnapiw0bx37gi302d2672nj"))
+
+(define rust-aws-smithy-runtime-1.9.4
+  (crate-source "aws-smithy-runtime" "1.9.4"
+                "1w0ydjzd34vxmn57fz6hwsq65644hxwx0g86pv3rcsv4il0rvghb"))
+
+(define rust-aws-smithy-runtime-api-1.9.2
+  (crate-source "aws-smithy-runtime-api" "1.9.2"
+                "14y1yva7k7xh9fwy1w8f0yzkdb5lc6ws2vdjady9lx4lzpwh8wpc"))
+
+(define rust-aws-smithy-types-1.3.4
+  (crate-source "aws-smithy-types" "1.3.4"
+                "0vplxslswcjqbzaigms4h6f1b8wi7vy9qrsbnw6wwzr0ka3kbx95"))
+
+(define rust-aws-smithy-xml-0.60.12
+  (crate-source "aws-smithy-xml" "0.60.12"
+                "0mmfa9vwkil4730sq5pj9c1gp2apfxxsz9rh59nha4bb0gfprdza"))
+
+(define rust-aws-types-1.3.10
+  (crate-source "aws-types" "1.3.10"
+                "1dl0hvcpc7vbpdhacgfbhqq6vllp5rywhkd37s1x9rbz7n7bd7yp"))
+
 (define rust-axoasset-1.2.0
   (crate-source "axoasset" "1.2.0"
                 "0hql04vlw1z5dnrdij1mkfi82gnvpq3ywrmps9rhjzx1za60k8av"
