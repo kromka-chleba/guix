@@ -14066,6 +14066,10 @@
   (crate-source "rand_xoshiro" "0.6.0"
                 "1ajsic84rzwz5qr0mzlay8vi17swqi684bqvwqyiim3flfrcv5vg"))
 
+(define rust-rangemap-1.6.0
+  (crate-source "rangemap" "1.6.0"
+                "08r2qagsc9k02qw30zpc91ghqsrxid2p9mkvgxqngy8bpd4pwgpr"))
+
 (define rust-ratatui-0.26.3
   (crate-source "ratatui" "0.26.3"
                 "1vqyk46r6mbsv6qqvjf8rmc7lr8b0khqbfvgcifa3va6zml9wk7l"))
