@@ -2259,6 +2259,10 @@
   (crate-source "cbindgen" "0.28.0"
                 "1zyiaifg6mcd4wwhhbxk8adzhph6qz4wxzgagvg3ijp95j58dpga"))
 
+(define rust-cc-1.0.106
+  (crate-source "cc" "1.0.106"
+                "18hr0xnyi46ap1b9gzlnj658092afafy12cffppsykhxgclcwvq6"))
+
 (define rust-cc-1.0.82
   (crate-source "cc" "1.0.82"
                 "00cgp2xjw0jbryp2xqajgb9rh9s23nk6nwmnm07jli61xm2ycprh"))
