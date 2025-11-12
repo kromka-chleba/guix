@@ -16459,6 +16459,10 @@
   (crate-source "sptr" "0.3.2"
                 "0shddkys046nnrng929mrnjjrh31mlxl95ky7dgxd6i4kclkk6rv"))
 
+(define rust-sqlformat-0.2.6
+  (crate-source "sqlformat" "0.2.6"
+                "14470h40gn0f6jw9xxzbpwh5qy1fgvkhkfz8xjyzgi0cvf9kmfkv"))
+
 (define rust-sqlite-0.32.0
   (crate-source "sqlite" "0.32.0"
                 "1rpqpkpxn2qdvghsnak2b73cn5ca37p6ri0ylyjdcmrq3481r003"))
