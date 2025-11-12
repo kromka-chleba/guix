@@ -15027,6 +15027,10 @@
                 "0yawbdpix8jif6s8zj1p2hbyb7y3bj66fhx0y7hyf4qh4964m6i2"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-rustls-pki-types-1.13.0
+  (crate-source "rustls-pki-types" "1.13.0"
+                "0yjzsnpv1sjbnfxbbmrnyimd23jip48nav6l9hr1rjd06vcjl64l"))
+
 (define rust-rustls-platform-verifier-0.3.4
   (crate-source "rustls-platform-verifier" "0.3.4"
                 "145lhjn9w5khp0fn4lagaa8qqyjyhfqn2dg6llva6qyzvy5qgfxg"
