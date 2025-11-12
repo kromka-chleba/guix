@@ -3235,6 +3235,10 @@
   (crate-source "cookie" "0.17.0"
                 "096c52jg9iq4lfcps2psncswv33fc30mmnaa2sbzzcfcw71kgyvy"))
 
+(define rust-cookie-0.18.1
+  (crate-source "cookie" "0.18.1"
+                "0iy749flficrlvgr3hjmf3igr738lk81n5akzf4ym4cs6cxg7pjd"))
+
 (define rust-cookie-factory-0.3.2
   (crate-source "cookie-factory" "0.3.2"
                 "0sqjmw85ckqhppff6gjwmvjpkii35441a51xx7cv0ih3jy2fjv9r"))
