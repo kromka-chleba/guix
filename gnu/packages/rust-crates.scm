@@ -18889,6 +18889,14 @@
   (crate-source "utf8parse" "0.2.2"
                 "088807qwjq46azicqwbhlmzwrbkz7l4hpw43sdkdyyk524vdxaq6"))
 
+(define rust-utoipa-4.2.3
+  (crate-source "utoipa" "4.2.3"
+                "08xbxz3an28g0rv9agmqs1qix4nrrzppylw24r8clz901skb3by5"))
+
+(define rust-utoipa-gen-4.3.1
+  (crate-source "utoipa-gen" "4.3.1"
+                "14j3bim9igkqpzmgxc6i2rj1wq1mandx68mdd9sfxycgns54xhi0"))
+
 (define rust-uu-cp-0.0.29
   (crate-source "uu_cp" "0.0.29"
                 "1a2s7z41fr5lv74fys8m7j8cwpc4n6sjr6chvg5rkxygxzw3jm13"))
