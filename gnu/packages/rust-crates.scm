@@ -16512,6 +16512,10 @@
   (crate-source "sqlx-core" "0.8.6"
                 "1ildwsjy7lwfxsvfh174jwhk0rjqvyw37h87q1lhyslbhfqrhrzf"))
 
+(define rust-sqlx-macros-0.7.4
+  (crate-source "sqlx-macros" "0.7.4"
+                "09rih250868nfkax022y5dyk24a7qfw6scjy3sgalbzb8lihx92f"))
+
 (define rust-sqlx-macros-0.8.6
   (crate-source "sqlx-macros" "0.8.6"
                 "0pbiwsv5ysv3qcx1g4p1pvsqlz0xp67k9g5xw3szpb6aijc55m52"))
