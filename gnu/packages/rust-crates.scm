@@ -18174,6 +18174,10 @@
   (crate-source "tree-sitter-java" "0.23.5"
                 "1mlh3skj2nasrwdz0v865r4hxnk7v8037z8nwqab4yf6r36wp9ha"))
 
+(define rust-tree-sitter-javascript-0.21.4
+  (crate-source "tree-sitter-javascript" "0.21.4"
+                "1mrkqpw61bsgwhazjvr96cbyv2yh7vdbsrw03a0k77kpqqdsf447"))
+
 (define rust-tree-sitter-javascript-0.23.1
   (crate-source "tree-sitter-javascript" "0.23.1"
                 "1cf19p9rl96yqjjhzimhp0dpvp2xxq8fqg2w29nc25h4krcvyh5z"))
