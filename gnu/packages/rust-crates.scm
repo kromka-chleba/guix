@@ -16528,6 +16528,10 @@
   (crate-source "sqlx-postgres" "0.8.6"
                 "0insvvaql0pz6nk64dbss4q4qzilj7zh2j0m9cc7rw1wlpazqn6v"))
 
+(define rust-sqlx-sqlite-0.7.4
+  (crate-source "sqlx-sqlite" "0.7.4"
+                "1ap0bb2hazbrdgd7mhnckdg9xcchx0k094di9gnhpnhlhh5fyi5j"))
+
 (define rust-sqlx-sqlite-0.8.6
   (crate-source "sqlx-sqlite" "0.8.6"
                 "1siy1jhqf5flpxyrmy7rw66j0y0v2l7zjmc00c0l86rc1gkjzlf2"))
