@@ -1437,9 +1437,9 @@ OpenDocument presentations (*.odp).")
            python-pytest-asyncio
            python-pytest-textual-snapshot
            python-setuptools))
-    (propagated-inputs
+    (inputs
      (list python-beautifulsoup4
-           python-bibtexparser
+           python-bibtexparser-for-cobib
            python-lxml
            python-mdit-py-plugins ;XXX: for sanity-check
            python-natsort

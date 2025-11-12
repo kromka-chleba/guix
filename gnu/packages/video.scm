@@ -1207,7 +1207,7 @@ H.264 (MPEG-4 AVC) video streams.")
 (define-public pipe-viewer
   (package
     (name "pipe-viewer")
-    (version "0.4.8")
+    (version "0.5.6")
     (source
      (origin
        (method git-fetch)
@@ -1217,7 +1217,7 @@ H.264 (MPEG-4 AVC) video streams.")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0x5jq9vr6qr2zckz509wscbf3gblifcksf7vpzq9iy3jma5fnmkc"))))
+        (base32 "0crsgkqr5lycv831ynnnghjhyf5akrx5rd40b1722pfc63pv9hv5"))))
     (build-system perl-build-system)
     (arguments
      `(#:imported-modules
@@ -2893,7 +2893,7 @@ Jellyfin.  It has support for various media files without transcoding.")
 (define-public gallery-dl
   (package
     (name "gallery-dl")
-    (version "1.30.8")
+    (version "1.30.10")
     (source
      (origin
        (method git-fetch)
@@ -2902,7 +2902,7 @@ Jellyfin.  It has support for various media files without transcoding.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1hl1nyaah4l03kg4q382jqdznmlywzwnb4dj71qd40mh6895zswd"))))
+        (base32 "1rgzgmw11b0ay1cf42cshn35gvll9iypw7phi389r5ahf56am6h4"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3086,7 +3086,7 @@ to download videos from Austria's national television broadcaster.")
 (define-public yle-dl
   (package
     (name "yle-dl")
-    (version "20230611")
+    (version "20250126")
     (source (origin
               ;; PyPI release doesn't include tests.
               (method git-fetch)
@@ -3096,7 +3096,7 @@ to download videos from Austria's national television broadcaster.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04smlq6cswfp08sjif0cxnall0xbxl3bgly849nm5kg1m33ybmqk"))))
+                "0dinny2amqnln5dgp83x32p54mq7j0x4jy6d48wf26c8d4gkkqbh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5636,7 +5636,7 @@ tools for styling them, including a built-in real-time video preview.")
 (define-public pitivi
   (package
     (name "pitivi")
-    (version "2022.06.0")
+    (version "2023.03.0")
     (source
      (origin
        (method git-fetch)
@@ -5645,7 +5645,7 @@ tools for styling them, including a built-in real-time video preview.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wgfi8srblqzd2y6528cyvn56rbdxpwlq0wmwqhabshdk28zyx8d"))))
+        (base32 "12sbl9dlw9rh44mbyfx6pzan4jkhcxidrcbfqih10cyyv50cqjkb"))))
     (build-system meson-build-system)
     (native-inputs
      (list gettext-minimal
@@ -6085,7 +6085,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "25.07.26")
+    (version "25.10.31")
     (source
      (origin
        (method git-fetch)
@@ -6094,7 +6094,7 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0213adgk8zlsw160dz3bbdkhlz627cg42i6ng35flgxdx0z050hn"))))
+        (base32 "0b532m4qjh0954b2wp2g31qz98ymxmylqyirdc136ycr2d91hiqi"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -6144,6 +6144,7 @@ transitions, and effects and then export your film to many common formats.")
            qtcharts
            qtdeclarative
            qtmultimedia
+           qtwebsockets
            sdl2
            vulkan-loader))
     (home-page "https://www.shotcut.org/")
@@ -6640,7 +6641,7 @@ package does not rely on the @code{YouTube} Data API v3.")
 (define-public wf-recorder
   (package
     (name "wf-recorder")
-    (version "0.5.0")
+    (version "0.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6649,7 +6650,7 @@ package does not rely on the @code{YouTube} Data API v3.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0a805kfbgpg7898gbb218n7krbvn9r96xydhibvrphy08wxd1xzg"))))
+                "14lzx6bz72j0ljw7jjqzqvflsyyvfwp137iwl8if8dcb5mr2k389"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config))

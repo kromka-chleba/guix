@@ -217,6 +217,7 @@
   #:use-module (gnu packages django)
   #:use-module (gnu packages djvu)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages duckdb)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages emulators)
   #:use-module (gnu packages enchant)
@@ -23776,67 +23777,6 @@ runtime (rather than during a preprocessing step).")
 Mustache templating language renderer.")
     (license license:expat)))
 
-;; XXX: Try to inherit from duckdb and build from source with all extensions.
-(define-public python-duckdb
-  (package
-    (name "python-duckdb")
-    (version "1.3.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "duckdb" version))
-              (sha256
-               (base32
-                "1x8zb47y8lzc4w0g013sim8x9vd1h96ra3dd0bvh91y73f5dyn66"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:tests? #f ;FIXME: See <https://codeberg.org/guix/guix/issues/1436>.
-      #:test-flags
-      #~(list "--ignore=tests/slow/test_h2oai_arrow.py"
-              ;; Do not relay on mypy.
-              "--ignore=tests/stubs/test_stubs.py"
-              "-k" (string-append
-                    ;; Don't install anything, thank you.
-                    "not test_install_non_existent_extension"
-                    ;; _pybind11_conduit_v1_ not found.
-                    " and not test_wrap_coverage"
-                    ;; See <https://github.com/duckdb/duckdb/issues/11961>.
-                    " and not test_fetchmany"
-                    ;; See <https://github.com/duckdb/duckdb/issues/10702>.
-                    " and not test_connection_interrupt"
-                    " and not test_query_interruption"))
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Tests need this
-          (add-before 'check 'set-HOME
-            (lambda _ (setenv "HOME" "/tmp")))
-          ;; Later versions of pybind replace "_" with "const_name".
-          (add-after 'unpack 'pybind-compatibility
-            (lambda _
-              (with-directory-excursion "src/include/duckdb_python"
-                (substitute* '("python_objects.hpp"
-                               "pyfilesystem.hpp"
-                               "pybind11/conversions/pyconnection_default.hpp")
-                  (("const_name") "_"))))))))
-    (propagated-inputs
-     (list python-adbc-driver-manager))
-    (native-inputs
-     (list pybind11
-           python-fsspec
-           ;; python-google-cloud-storage ;python-grpcio fails (see: guix/guix#1436)
-           python-numpy
-           python-pandas
-           python-psutil
-           ;; python-pytest
-           python-setuptools-scm
-           python-setuptools
-           python-wheel))
-    (home-page "https://www.duckdb.org")
-    (synopsis "DuckDB embedded database")
-    (description "DuckDB is an in-process SQL OLAP database management
-system.")
-    (license license:expat)))
-
 (define-public python-dulwich
   (package
     (name "python-dulwich")
@@ -28340,7 +28280,6 @@ class in a @acronym{DRY, Don't Repeat Yourself} way.")
       (version (git-version "2.10.70" revision commit))
       (source
        (origin
-         ;; There are no tests in the PyPI tarball.
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/construct/construct")
@@ -28348,17 +28287,12 @@ class in a @acronym{DRY, Don't Repeat Yourself} way.")
          (file-name (git-file-name name version))
          (sha256
           (base32 "03f6nvyzrq50nhqqwmmws983wwjg78yd9j09pl94vkmyjph33da5"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
       (arguments
-       (list #:phases
-             #~(modify-phases %standard-phases
-                 (replace 'check
-                   (lambda* (#:key tests? #:allow-other-keys)
-                     (when tests?
-                       (invoke "pytest" "-v" "tests/")))))))
+       (list
+        #:test-flags #~(list "--ignore=tests/test_benchmarks.py")))
       (native-inputs
-       (list python-pytest
-             python-pytest-benchmark))
+       (list python-pytest python-setuptools))
       (propagated-inputs
        (list python-arrow
              python-cloudpickle
@@ -28457,15 +28391,19 @@ processes may share the same data.")
 (define-public python-croniter
   (package
     (name "python-croniter")
-    (version "1.3.4")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "croniter" version))
-              (sha256
-               (base32
-                "1whbm26m9kpn0klgr9dqiqpp83ki9nhpxifaq9afcjw32rckcs9i"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-dateutil))
+    (version "5.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kiorky/croniter")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "146v641wicx2ipfdpqg1vysikbbhrhndmrnjj1hnv03fjvhqknq9"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools))
+    (propagated-inputs (list python-dateutil python-pytz))
     (home-page "https://github.com/kiorky/croniter")
     (synopsis "Iterate datetime objects with cron-like syntax")
     (description
@@ -28508,29 +28446,49 @@ access the system cron automatically and simply using a direct API.")
 (define-public python-apscheduler
   (package
     (name "python-apscheduler")
-    (version "3.10.4")
+    (version "3.11.1")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "APScheduler" version))
+              (uri (pypi-uri "apscheduler" version))
               (sha256
                (base32
-                "0jpg9jyx95jafkq0hz6sx7r4l2z5gc599ivb9278kgnr4wdhgpz6"))))
+                "08gjh0l7ba87yp23ilqigp3q004gnnw092p9gxsd310c83v7mdqd"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-pytz
-                             python-six
-                             python-tzlocal))
-    (native-inputs (list python-mock
-                         python-twisted
-                         python-gevent
-                         python-setuptools
-                         python-setuptools-scm
-                         python-sqlalchemy
-                         python-pyside-6
-                         python-pytest
-                         python-pytest-asyncio-0.26
-                         python-pytest-cov
-                         python-pytest-tornado5
-                         python-wheel))
+    (arguments
+     (list
+      ;; tests: 701 passed, 252 skipped, 13 deselected, 201 warnings
+      #:test-flags
+      ;; XXX: Some tests hang or fail with verity of errors:
+      ;; E   RuntimeError: There is no current event loop in thread 'MainThread'.
+      #~(list #$@(map (lambda (test) (string-append "--deselect="
+                                                    "tests/test_executors.py::"
+                                                    test))
+                      (list "test_broken_pool"
+                            "test_max_instances[processpool-pytz]"
+                            "test_max_instances[processpool-zoneinfo]"
+                            "test_run_coroutine_job_tornado"
+                            "test_run_job_error[processpool-pytz]"
+                            "test_run_job_error[processpool-zoneinfo]"
+                            "test_submit_job[processpool-pytz-error]"
+                            "test_submit_job[processpool-pytz-executed]"
+                            "test_submit_job[processpool-pytz-missed]"
+                            "test_submit_job[processpool-zoneinfo-error]"
+                            "test_submit_job[processpool-zoneinfo-executed]"
+                            "test_submit_job[processpool-zoneinfo-missed]")))))
+    (native-inputs
+     (list python-anyio
+           python-gevent
+           python-pyside-6
+           python-pytest
+           python-pytest-asyncio-0.26
+           python-pytz
+           python-setuptools
+           python-setuptools-scm
+           python-sqlalchemy
+           python-tornado
+           python-twisted))
+    (propagated-inputs
+     (list python-tzlocal))
     (home-page "https://github.com/agronholm/apscheduler")
     (synopsis "Task scheduling library for Python")
     (description "Advanced Python Scheduler (APScheduler) is a Python library
@@ -28564,30 +28522,35 @@ should have run while it was offline.")
 library in Python.")
     (license license:expat)))
 
-(define-public python-bsddb3
+(define-public python-berkeleydb
   (package
-    (name "python-bsddb3")
-    (version "6.2.9")
+    (name "python-berkeleydb")
+    (version "18.1.15")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "bsddb3" version))
+       (uri (pypi-uri "berkeleydb" version))
        (sha256
-        (base32 "00bqdsfx8jgmfz5bgkx10nlw5bfsw11a86f91zkl53snvk45xl3h"))))
-    (build-system python-build-system)
-    (inputs
-     (list bdb))
+        (base32 "13kmvy6viay27khmj6ydryniirdsbqrc2mjnr2r6nk3m7la57yks"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'configure-locations
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "BERKELEYDB_DIR" (assoc-ref inputs "bdb"))
-             (setenv "YES_I_HAVE_THE_RIGHT_TO_USE_THIS_BERKELEY_DB_VERSION" "1")
-             #t))
-         (replace 'check
-           (lambda _
-             (invoke "python3" "test3.py" "-v"))))))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "test.py" "-v")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'configure-locations
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "BERKELEYDB_DIR"
+                      (assoc-ref inputs "bdb"))
+              (setenv "YES_I_HAVE_THE_RIGHT_TO_USE_THIS_BERKELEY_DB_VERSION"
+                      "1")))
+          (add-after 'unpack 'remove-legacy
+            (lambda _
+              (substitute* "pyproject.toml"
+                ((":__legacy__") "")))))))
+    (native-inputs (list python-setuptools))
+    (inputs (list bdb))
     (home-page "https://www.jcea.es/programacion/pybsddb.htm")
     (synopsis "Python bindings for Oracle Berkeley DB")
     (description
@@ -28600,19 +28563,54 @@ transactions.  Complete support for Berkeley DB Replication Manager.
 Complete support for Berkeley DB Base Replication.  Support for RPC.")
     (license license:bsd-3)))
 
+;; Last version before rename to python-berkeleydb.
+(define-public python-bsddb3
+  (package
+    (inherit python-berkeleydb)
+    (name "python-bsddb3")
+    (version "6.2.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "bsddb3" version))
+       (sha256
+        (base32 "00bqdsfx8jgmfz5bgkx10nlw5bfsw11a86f91zkl53snvk45xl3h"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-berkeleydb)
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (delete 'remove-legacy)))
+       ((#:test-flags test-flags #~(list))
+        #~(list "test3.py" "-v"))))))
+
 (define-public python-dbfread
   (package
     (name "python-dbfread")
-    (version "2.0.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "dbfread" version))
-              (sha256
-               (base32
-                "0gdpwdzf1fngsi6jrdyj4qdf6cr7gnnr3zp80dpkzbgz0spskj07"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest))
+    (properties '((commit . "dce544641065d966c76a97864b4e9908ec922ce8")
+                  (revision . "0")))
+    (version (git-version "2.0.7"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/olemb/dbfread")
+             (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m7dbgyf8yl6qhilzx41vzhcmkqmc36897wfqs2jngp4bnda64vd"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-setup.py
+            (lambda _
+              (substitute* "setup.py"
+                (("python_requires.*")
+                 "")))))))
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://dbfread.readthedocs.io")
     (synopsis "Read DBF Files with Python")
     (description
@@ -28778,17 +28776,19 @@ for manual interpretation.")
 (define-public python-pyroutelib3
   (package
     (name "python-pyroutelib3")
-    (version "1.3.post1")
+    (version "2.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyroutelib3" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/MKuranowski/pyroutelib3")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1hpbydpn2alyswiajfbvhzq4c7f36vdmvxy91hgv8l1lb2g2vfrj"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-dateutil))
+        (base32 "18a86fggs9pjib97x47acqgccrsra1h7dkz21r94vsyrdindchns"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-dateutil python-protobuf-5))
+    (native-inputs (list python-filelock python-flit-core python-pytest))
     (home-page "https://github.com/MKuranowski/pyroutelib3")
     (synopsis "Library for simple routing on OSM data")
     (description "Library for simple routing on OSM data")
@@ -28797,20 +28797,40 @@ for manual interpretation.")
 (define-public python-bibtexparser
   (package
     (name "python-bibtexparser")
-    (version "1.4.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "bibtexparser" version))
-              (sha256
-               (base32
-                "1rmc178qqb8814v3pcfv4qgl8rxmkd11d56limkqmi776jyf4z6a"))))
-    (build-system python-build-system)
+    (version "2.0.0b8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sciunto-org/python-bibtexparser")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "065b6267ygphacfc9aawckv0yz9x3pzd4ivdbsr8cla3zs3lqzg7"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-pyparsing))
-    (native-inputs (list python-future))
+    (native-inputs
+     (list python-pylatexenc python-pytest python-setuptools))
     (home-page "https://github.com/sciunto-org/python-bibtexparser")
     (synopsis "Python library to parse BibTeX files")
     (description "BibtexParser is a Python library to parse BibTeX files.")
     (license (list license:bsd-3 license:lgpl3))))
+
+(define-public python-bibtexparser-for-cobib
+  (hidden-package
+   (package
+     (inherit python-bibtexparser)
+    (name "python-bibtexparser")
+     (version "1.4.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/sciunto-org/python-bibtexparser")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "0zrgfgmh37m9frq528vy66p2fhlxzrxyhj0inc6qwg0m717w9zbl")))))))
 
 (define-public python-distro
   (package
@@ -28882,14 +28902,18 @@ qvarious formats: PDF, PostScript, PNG and even SVG.")
 (define-public python-pyphen
   (package
     (name "python-pyphen")
-    (version "0.10.0")
+    (version "0.17.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "Pyphen" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Kozea/Pyphen")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0a1iwrgs4hzwzz60q4i1813kbzimhm0i4q8grh8vqkxhnkgj36vi"))))
-    (build-system python-build-system)
+        (base32 "1fqxc50vqj884b7f6d8qfvnvw34477lhsdznvpxsljjg9j2v4ipv"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-flit-core python-pytest))
     ;; TODO: Use the Guix system hyphenation packages hyphen-* rather than the
     ;; embedded set provided by upstream - like Debian does.
     (home-page "https://github.com/Kozea/Pyphen")
@@ -28904,16 +28928,21 @@ existing Hunspell hyphenation dictionaries.")
     (version "2.3.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "intelhex" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/python-intelhex/intelhex")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "14q04p6qs47ab9w55232ylrdn4wm9rswz36s6x999x0rlxhp6aw9"))))
-    (build-system python-build-system)
-    (home-page "https://pypi.org/project/IntelHex/")
+        (base32 "13p7x4ygfgqn27q3c8lam7a0z09764iymgs7lcvjvxgq52nqwf9c"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-backend #~'unittest))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/python-intelhex/intelhex")
     (synopsis "Python library for Intel HEX files manipulations")
-    (description "The Intel HEX file format is widely used in microprocessors
-and microcontrollers area (embedded systems etc.) as the de facto standard for
+    (description
+     "The Intel HEX file format is widely used in microprocessors and
+microcontrollers area (embedded systems etc.) as the de facto standard for
 representation of code to be programmed into microelectronic devices.  This
 package provides an intelhex Python library to read, write, create from
 scratch and manipulate data from Intel HEX file format.  It also includes
@@ -28925,37 +28954,54 @@ converters and more, those based on the library itself.")
   (package
     (name "python-interlap")
     (version "0.2.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "interlap" version))
-              (sha256
-               (base32
-                "1jbfh00bkrf0i5psa6n75rlgmqp5389xixa9j29w8rxhah6g7r1i"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/brentp/interlap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kmw72ilhsfx7piikl92b1s0rnax49qc7idjxsbwhvpklyjiylfm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "interlap.py")))
+    (native-inputs (list python-setuptools))
     (home-page "https://brentp.github.io/interlap")
     (synopsis "Fast, simple interval overlap testing")
-    (description "InterLap does fast interval overlap testing with a simple Python data
+    (description
+     "InterLap does fast interval overlap testing with a simple Python data
 structure.")
     (license license:expat)))
 
 (define-public python-pykwalify
   (package
     (name "python-pykwalify")
-    (version "1.7.0")
+    (version "1.8.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pykwalify" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/grokzen/pykwalify")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1cnfzkg1b01f825ikpw2fhjclf9c8akxjfrbd1vc22x1lg2kk2vy"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;missing dependencies
+        (base32 "1x46ray74hzqmsicq2qikxhdihyyz9himjmc5gvlvd8vzqr1gi8p"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; XXX: yaml safe_dump() has been removed.
+      #~(list "--ignore=tests/test_unicode.py"
+              "--deselect=tests/test_core.py::TestCore::test_core_files")))
+    (native-inputs
+     (list python-pytest python-setuptools python-testfixtures))
     (propagated-inputs
-     (list python-dateutil python-docopt python-pyyaml))
+     (list python-dateutil python-docopt python-pyyaml python-ruamel.yaml))
     (home-page "https://github.com/grokzen/pykwalify")
-    (synopsis
-     "Python lib/cli for JSON/YAML schema validation")
+    (synopsis "Python lib/cli for JSON/YAML schema validation")
     (description
      "This package provides a parser, schema validator, and data binding tool
 for YAML and JSON.")
@@ -29111,17 +29157,32 @@ services to what you expect in your tests.")
 (define-public python-jsonplus
   (package
     (name "python-jsonplus")
-    (version "0.8.0")
     (home-page "https://github.com/randomir/jsonplus")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "jsonplus" version))
-              (sha256
-               (base32
-                "05yv3dw813zwas9snz124k2hki49y268b3mx0gj9w7v1nrjmglq1"))))
-    (build-system python-build-system)
-    ;; XXX: No tests on PyPI, and the repository has no tags.
-    (arguments '(#:tests? #f))
+    (properties '((commit . "a4450ce73a4464fcee9b08d96be3e13152b0cb3b")
+                  (revision . "0")))
+    (version (git-version "0.8.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n7rr7fgy2g972si6zhindia362w34d696xjdicx25f39n88jcvk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Tests require the additional package moneyed.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "python"))))))
+    (native-inputs (list python-setuptools))
     (propagated-inputs
      (list python-dateutil python-simplejson python-sortedcontainers))
     (synopsis "Serialize Python types to/from JSON")
@@ -29339,19 +29400,30 @@ package are included automatically.")
 (define-public python-fastentrypoints
   (package
     (name "python-fastentrypoints")
-    (version "0.12")
+    (home-page "https://github.com/ninjaaron/fast-entry_points")
+    (properties '((commit . "a3a26f320c7ae2191fde71b79d4f4bf325d162f3")
+                  (revision . "0")))
+    (version (git-version "0.12"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "fastentrypoints" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "02s1j8i2dzbpbwgq2a3fiqwm3cnmhii2qzc0k42l0rdxd4a4ya7z"))))
-    (build-system python-build-system)
-    (home-page
-     "https://github.com/ninjaaron/fast-entry_points")
-    (synopsis
-     "Makes entry_points specified in setup.py load more quickly")
+        (base32 "0d4xx9zz2xrdxgap8lbrc1mvslvdvddxk3s27zqv918iykkm70d0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Testing is non-standard and hardly configurable.
+      #:tests? #f
+      #:test-backend #~'custom
+      #:test-flags #~(list "test/runtest.py")))
+    (native-inputs (list python-setuptools))
+    (synopsis "Makes entry_points specified in setup.py load more quickly")
     (description
      "Using entry_points in your setup.py makes scripts that start really
 slowly because it imports pkg_resources.  This package allows such setup
@@ -30411,23 +30483,22 @@ dictionaries.")
 (define-public python-osc
   (package
     (name "python-osc")
-    (version "1.7.4")
+    (version "1.9.3")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "python-osc" version))
-        (sha256
-         (base32 "0cnh0z5lnng7fh48nmfaqqn8j25k13gkd4rhxd3m6sjqiix9s3vn"))
-       (snippet
-        #~(begin (use-modules (guix build utils))
-                 (substitute* "pythonosc/udp_client.py"
-                   (("from collections import Iterable")
-                    "from collections.abc import Iterable"))))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/attwad/python-osc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d99q9ww278cjqbfdzahg17rhbkgk2rw6ixxm5z5iwnxnsrhfdwa"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/attwad/python-osc")
     (synopsis "Open Sound Control server and client implementations")
     (description
-      "@code{python-osc} is a pure Python library with no external
+     "@code{python-osc} is a pure Python library with no external
 dependencies.  It implements the @uref{http://opensoundcontrol.org/spec-1_0,
 Open Sound Control 1.0} specification.")
     (license license:unlicense)))
@@ -30472,29 +30543,33 @@ be necessary when using @code{cmd}.")
   (package
     (name "python-pytidylib")
     (version "0.3.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytidylib" version))
-              (sha256
-               (base32
-                "1wqa9dv5d7swka14rnky862hc7dgk2g3dhlrz57hdn3hb7bwic92"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/countergram/pytidylib")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h5kx99ka47yan9xsh2pyi19mhhbixqpbqn6rgciskfr5m1csji0"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-queue-import
-           (lambda _
-             ;; Adjust Queue import for Python 3.  Remove for versions >=0.4.0.
-             (substitute* "tests/threadsafety.py"
-               (("from Queue import Queue")
-                "from queue import Queue"))))
-         (add-before 'build 'qualify-libtidy
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((libtidy (search-input-file inputs "/lib/libtidy.so")))
-               (substitute* "tidylib/tidy.py"
-                 (("ctypes\\.util\\.find_library\\('tidy'\\)")
-                  (format #f "'~a'" libtidy)))
-               #t))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-queue-import
+            (lambda _
+              ;; Adjust Queue import for Python 3.  Remove for versions >=0.4.0.
+              (substitute* "tests/threadsafety.py"
+                (("from Queue import Queue")
+                 "from queue import Queue"))))
+          (add-before 'build 'qualify-libtidy
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((libtidy (search-input-file inputs "/lib/libtidy.so")))
+                (substitute* "tidylib/tidy.py"
+                  (("ctypes\\.util\\.find_library\\('tidy'\\)")
+                   (format #f "'~a'" libtidy)))))))))
+    (native-inputs (list python-pytest python-setuptools))
     (inputs (list tidy-html))
     (home-page "https://github.com/countergram/pytidylib")
     (synopsis "Python wrapper for HTML Tidy library")
@@ -30508,17 +30583,22 @@ allows you, from Python code, to “fix” invalid (X)HTML markup.")
     (name "python-mujson")
     (version "1.4")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "mujson" version))
-        (sha256
-         (base32
-          "0wbj6r8yzsdx2b0kbldlkznr1a9nn33za2q9x3g0hbg420dwzn97"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattgiles/mujson")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j0pcqyxpivk8nn7xx5d0pj40g22psd6v2r7l4m8b6h4hrdn9cij"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f)) ;No tests.
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/mattgiles/mujson")
     (synopsis "Use the fastest JSON functions available at import time")
-    (description "This package selects the fastest JSON functions available
-at import time.")
+    (description
+     "This module selects the fastest JSON functions available at import time
+in Python.")
     (license license:expat)))
 
 (define-public python-bashlex
@@ -30527,25 +30607,29 @@ at import time.")
     (version "0.18")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "bashlex" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/idank/bashlex")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1vln4zszzdqkypiir2hxsvkhgbf816005lbgqcw66rymqq0kmc2v"))))
-    (build-system python-build-system)
+        (base32 "00idgf9153jvp0g5ajbcfgpb6ffl2a8rcy3w5n9iirgxa7vlvmkm"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'pregenerate-yacc-tables
-           (lambda _
-             ;; parser.py caches tables, which attempts to write to site lib
-             ;; see https://github.com/idank/bashlex/issues/51
-             (invoke "python" "-c" "import bashlex"))))))
-    (home-page
-     "https://github.com/idank/bashlex")
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'pregenerate-yacc-tables
+            (lambda _
+              ;; parser.py caches tables, which attempts to write to site lib
+              ;; see https://github.com/idank/bashlex/issues/51
+              (invoke "python" "-c" "import bashlex"))))))
+    (native-inputs (list python-pytest python-setuptools))
+    (home-page "https://github.com/idank/bashlex")
     (synopsis "Python parser for bash")
-    (description "@code{bashlex} is a Python port of the parser used
-internally by GNU bash.
+    (description
+     "@code{bashlex} is a Python port of the parser used internally by GNU
+bash.
 
 For the most part it's transliterated from C, the major differences are:
 
@@ -30560,27 +30644,28 @@ For the most part it's transliterated from C, the major differences are:
 (define-public python-jinxed
   (package
     (name "python-jinxed")
-    (version "1.0.0")
+    (version "1.3.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "jinxed" version))
-        (sha256
-         (base32
-          "1n7vl03rhjd0xhjgbjlh8x9f8yfbhamcwkgvs4jg7g5qj8f0wk89"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Rockhopper-Technologies/jinxed")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cssqc5fvy3nx0q94ia79vhldfi0r2pq5nkagdvnkhmlnz26a3n8"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'set-environment-variables
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((ncurses (assoc-ref inputs "ncurses")))
-               (setenv "TERM" "LINUX")
-               (setenv "TERMINFO" (string-append ncurses "/share/terminfo"))
-               #t))))
-       #:tests? #f)) ; _curses.error: setupterm: could not find terminal
-    (native-inputs
-     (list ncurses))
+     (list
+      #:tests? #f ;_curses.error: setupterm: could not find terminal
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-environment-variables
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TERM" "LINUX")
+              (setenv "TERMINFO"
+                      (search-input-directory inputs "share/terminfo")))))))
+    (native-inputs (list ncurses python-setuptools))
     (home-page "https://github.com/Rockhopper-Technologies/jinxed")
     (synopsis "Jinxed Terminal Library")
     (description
@@ -30875,14 +30960,17 @@ and have a maximum lifetime built-in.")
     (name "python-flufl-testing")
     (version "0.8")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "flufl.testing" version))
-        (sha256
-         (base32
-          "1nkm95mhcfhl4x5jgs6y97ikszaxsfh07nyawsih6cxxm6l62641"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;no tests
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/warsaw/flufl.testing")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dl2dl4wdrqklkhqcdbwchpqrpm6lwic4qk961zi6b2f8agis35i"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;no tests
+    (native-inputs (list python-setuptools))
     (home-page "https://gitlab.com/warsaw/flufl.testing")
     (synopsis "Collection of test tool plugins")
     (description
@@ -31145,22 +31233,23 @@ By default it uses the open Python vulnerability database Safety DB.")
 (define-public python-rnc2rng
   (package
     (name "python-rnc2rng")
-    (version "2.6.6")
+    (version "2.7.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "rnc2rng" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/djc/rnc2rng")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1wbqvz2bhq2f5kqi7q2q3m9y5vs9rj970zhnjh502pvvhmbx20as"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-rply))
+        (base32 "1wbd8936vs4rinjfmjd8dav6sdz6wrsc0jppqidzzcnzwfp146pf"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "python" "test.py"))))))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "test.py")))
+    (native-inputs (list python-setuptools))
+    (propagated-inputs (list python-rply))
     (home-page "https://github.com/djc/rnc2rng")
     (synopsis "Convert RELAX NG Compact to regular syntax")
     (description

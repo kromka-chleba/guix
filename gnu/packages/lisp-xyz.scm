@@ -492,9 +492,6 @@ alternative 4x4 matrix representation.")
 (define-public clasp-3d-transforms
   (sbcl-package->clasp-package sbcl-3d-transforms))
 
-(define-public clasp-3d-transforms
-  (sbcl-package->clasp-package sbcl-3d-transforms))
-
 (define-public sbcl-3d-vectors
   (let ((commit "fc751c65b2285e971c348539bfbc3cbb58b253b0")
         (revision "3"))
@@ -1657,7 +1654,7 @@ Clojure, as well as several expansions on the idea.")
 (define-public asdf-cli
   (package
     (name "asdf-cli")
-    (version "0.1.1")
+    (version "0.2.1")
     (source
      (origin
        (method git-fetch)
@@ -1666,16 +1663,23 @@ Clojure, as well as several expansions on the idea.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "asdf-cli" version))
        (sha256
-        (base32 "1dsvmqazn25h3b55ycd96am5f18ymk9rga8xy72d6ykm4ki8w7pn"))))
+        (base32 "1x925sl7q7m8c0larysqswlvmzm26fi39cwd45snl1z71rdgkmaw"))))
     (build-system asdf-build-system/sbcl)
     (arguments
      (list
       #:tests? #f ; There are no tests.
+      #:asd-systems ''("charje.asdf-cli")
       #:phases
       #~(modify-phases %standard-phases
           (replace 'build
-            (lambda* _
+            (lambda _
               (setenv "HOME" (getcwd))
+              ;; TEMPLATES is a buildtime option for asdf-cli to show where
+              ;; the templates are installed.
+              (setenv "TEMPLATES"
+                      (string-append
+                       #$output
+                       "/share/common-lisp/sbcl/asdf-cli/src/templates/"))
               (invoke "./build")))
           (add-after 'build 'install
             (lambda _
@@ -1683,8 +1687,12 @@ Clojure, as well as several expansions on the idea.")
                 (install-file "asdf" bin)))))))
     (inputs
      (list sbcl-alexandria
-           sbcl-command-line-args
-           sbcl-cl-annot))
+           sbcl-charje.loop
+           sbcl-cl-annot
+           sbcl-cl-fad
+           sbcl-cl-semver
+           sbcl-cl-str
+           sbcl-command-line-args))
     (propagated-inputs
      (list sbcl
            cl-quickproject))
@@ -14411,9 +14419,8 @@ them as strings.")
   (sbcl-package->ecl-package sbcl-decimals))
 
 (define-public sbcl-deeds
-  ;; tagged branch is outdated
-  (let ((revision "1")
-        (commit "f5df54eac79b58a34030e0eb8acf3952c788410d"))
+  (let ((revision "2")
+        (commit "c63502b9ca3bd7946411686ac98b040c0c6b3e1c"))
     (package
       (name "sbcl-deeds")
       (version (git-version "1.1.1" revision commit))
@@ -14421,16 +14428,16 @@ them as strings.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/deeds")
+               (url "https://codeberg.org/shinmera/deeds")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "062cnb2dwli6pw3zvv46jfxyxdzcbzwsck5pa6nw03qf1j1hyg3k"))))
+          (base32 "1kx5x783cxw5whfwl1akwmzybh6dbrrjmygqmigirqcwdmxk5h8c"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-bordeaux-threads sbcl-closer-mop sbcl-form-fiddle
              sbcl-lambda-fiddle))
-      (home-page "https://github.com/Shinmera/deeds")
+      (home-page "https://shinmera.com/docs/deeds")
       (synopsis "Extensible Event Delivery System")
       (description
        "@code{deeds} allows for efficient event delivery to multiple handlers

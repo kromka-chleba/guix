@@ -80,8 +80,10 @@
 (define-module (gnu packages music)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system ant)
+  #:use-module (gnu packages base)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system emacs)
+  #:use-module (gnu packages gawk)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
@@ -223,7 +225,7 @@
 (define-public alsa-scarlett-gui
   (package
     (name "alsa-scarlett-gui")
-    (version "0.5.0")
+    (version "0.5.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -232,7 +234,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "14c5yk6gp2bqkcyl78r9hnnlxidpdpmrwpf05dcq6zyca8l0mkr9"))))
+                "161x5kqwkca46wmwv5jxywhpl772vw4qmqksk9wb1sqkmlqfjiqf"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1584,16 +1586,16 @@ Guile.")
 scores.")
     (license (package-license lilypond))))
 
-(define-public music21
+(define-public python-music21
   (package
-    (name "music21")
-    (version "9.3.0")
+    (name "python-music21")
+    (version "9.9.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "music21" version))
        (sha256
-        (base32 "0jjgyyzw527h026zr2pphj7ba1pda46mi03j0djc2bh6l9ywdx0c"))))
+        (base32 "10i5y71zw2vjf8z8rm1v8vdwkas92lyrkk015r5c6kipnb2575sl"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases
@@ -1621,6 +1623,8 @@ scores.")
 listeners answer questions about music quickly and simply.")
     ;; Software is dual-licensed.
     (license (list license:bsd-3 license:lgpl3+))))
+
+(define-deprecated-package music21 python-music21)
 
 (define-public stk
   (package
@@ -2293,20 +2297,41 @@ Editor.  It is compatible with Power Tab Editor 1.7 and Guitar Pro.")
                 "15yanq1wra0hyh6x72ji7pk562iddg476g3vksj495x91zhnl6vm"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-after 'unpack 'ignore-PATH
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "jalv.select.cpp"
-               (("echo \\$PATH.*tr ':'.*xargs ls")
-                (string-append "ls -1 " (assoc-ref inputs "jalv") "/bin"))))))))
+     (list #:make-flags
+           #~(list (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (add-after 'unpack 'ignore-PATH
+                 (lambda _
+                   (substitute* "jalv.select.cpp"
+                     (("echo \\$PATH.*tr ':'.*xargs ls")
+                      (string-append "ls -1 "
+                                     #$(this-package-input "jalv") "/bin")))))
+               (add-after 'install 'wrap
+                 (lambda _
+                   (wrap-program (string-append #$output "/bin/jalv.select")
+                     `("PATH" ":" prefix
+                       (,(string-append #$(this-package-input "coreutils")
+                                        "/bin")
+                        ,(string-append #$(this-package-input "gawk") "/bin")
+                        ,(string-append #$(this-package-input "grep") "/bin")
+                        ,(string-append #$(this-package-input "jalv")
+                                        "/bin")))))))))
     (inputs
-     (list lilv lv2 jalv gtkmm-2))
+     (list bash-minimal
+           lilv
+           lv2
+           jalv
+           gtkmm-2
+           ;; For finding jalv executables
+           coreutils gawk grep))
     (native-inputs
      (list pkg-config))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "LV2_PATH")
+            (files '("lib/lv2")))))
     (home-page "https://github.com/brummer10/jalv_select")
     (synopsis "GUI to select LV2 plugins and run them with jalv")
     (description
@@ -2723,7 +2748,7 @@ Paul), and specifically the PaulXStretch version from Xenakios.")
 (define-public setbfree
   (package
     (name "setbfree")
-    (version "0.8.12")
+    (version "0.8.13")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2732,7 +2757,7 @@ Paul), and specifically the PaulXStretch version from Xenakios.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lzrrpm57pilvwxpr1qhnx6273md2k96ygxjlhi5gqjdl0nl3z95"))))
+                "1w6p74168hbyrprk6lk18xrmli65kp9i87li6rmxhbvgk5ck3lv3"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2829,14 +2854,14 @@ is subjective.")
 (define-public tuner
   (package
     (name "tuner")
-    (version "1.5.6")
+    (version "2.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                      (url "https://github.com/louis77/tuner")
                      (commit (string-append "v" version))))
               (file-name (git-file-name name version))
-              (sha256 (base32 "0zz91n56vdwhjwqscl21016i4l4lx3m6ja0fnrapmf16bdl0rrai"))))
+              (sha256 (base32 "1fl82xsr13pjf57lbg2rsjisdjsixysnx1wnp54w2jr25hskk8lb"))))
     (build-system meson-build-system)
     (native-inputs
      (list desktop-file-utils ; update-desktop-database
@@ -3055,7 +3080,7 @@ projects.")
 (define-public libpd
   (package
     (name "libpd")
-    (version "0.14.1")
+    (version "0.15.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3065,23 +3090,24 @@ projects.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "1bc1bqwviqddhh44cp2y2v2i6dnj92hwx8ld7bwcxgyp2zmlhiaz"))))
+                "0r7dic18csr9651lzrvmdvx4wvzhbzqc5x8six7v78cnla5pfnng"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f                      ; no tests
-       #:make-flags '("CC=gcc")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ; no configure script
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (invoke "make" "install"
-                       (string-append "prefix=" out)
-                       ;; XXX: Fix the last 2 lines of 'install' target.
-                       "LIBPD_IMPLIB=NO"
-                       "LIBPD_DEF=NO")))))))
-    (home-page "http://libpd.cc/")
+     (list #:tests? #f                      ; no tests
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target)))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)            ; no configure script
+               (replace 'install
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let ((out (assoc-ref outputs "out")))
+                     (invoke "make" "install"
+                             (string-append "prefix=" out)
+                             ;; XXX: Fix the last 2 lines of 'install' target.
+                             "LIBPD_IMPLIB=NO"
+                             "LIBPD_DEF=NO")))))))
+    (home-page "https://libpd.cc/")
     (synopsis "Pure Data as an embeddable audio synthesis library")
     (description
      "Libpd provides Pure Data as an embeddable audio synthesis library.  Its
@@ -3733,6 +3759,22 @@ from the command line.")
            zlib))
     (native-inputs
      (list pkg-config qttools))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "CLAP_PATH")
+            (files '("lib/clap")))
+           (search-path-specification
+            (variable "LADSPA_PATH")
+            (files '("lib/ladspa")))
+           (search-path-specification
+            (variable "LV2_PATH")
+            (files '("lib/lv2")))
+           (search-path-specification
+            (variable "LXVST_PATH")
+            (files '("lib/lxvst")))
+           (search-path-specification
+            (variable "VST2_PATH")
+            (files '("lib/vst2")))))
     (home-page "https://qtractor.org/")
     (synopsis "Audio/MIDI multi-track sequencer")
     (description
@@ -3791,7 +3833,7 @@ and hold, etc.")
 (define-public gxtuner
   (package
     (name "gxtuner")
-    (version "2.4")
+    (version "3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3800,7 +3842,7 @@ and hold, etc.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fxd2akan2njlr7fpkh84830783qhh1gg7yakswqk5dd466dcn96"))))
+                "09hh1y7ng7w42ijzk4v8ln7d48mdp5cs0vnfv96adbxv75k3g8if"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
@@ -3830,26 +3872,27 @@ analogue-like user interface.")
 (define-public mod-host
   ;; The last release was in 2014 but since then hundreds of commits have
   ;; been made.
-  (let ((commit "cdd30ddbd2cc916be8a0364275071c3d8335b3a7")
-        (revision "4"))
+  (let ((commit "bd00c4d7ae604d75bf8dc89cea4b8e4b485ce930")
+        (revision "5"))
     (package
       (name "mod-host")
       (version (git-version "0.10.6" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/moddevices/mod-host")
+                      (url "https://github.com/mod-audio/mod-host")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1xnflvcyj071gn9nhv5dynd0v85nq99sz1wn3adlj43l5m4fbx3a"))
+                  "0rsl38lsinhdv4pwhs4xfhwsf32a19klr9iiiiwqsiq2x4mwbc9z"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
        (list
         #:tests? #f                     ; no tests included
         #:make-flags
-        #~(list (string-append "PREFIX=" #$output) "CC=gcc")
+        #~(list (string-append "PREFIX=" #$output)
+                (string-append "CC=" #$(cc-for-target)))
         #:phases
         #~(modify-phases %standard-phases
             (delete 'configure)
@@ -3869,7 +3912,11 @@ analogue-like user interface.")
       (native-inputs
        (list pkg-config
              python-wrapper))
-      (home-page "https://github.com/moddevices/mod-host")
+      (native-search-paths
+     (list (search-path-specification
+            (variable "LV2_PATH")
+            (files '("lib/lv2")))))
+      (home-page "https://github.com/mod-audio/mod-host")
       (synopsis "LV2 host for Jack controllable via socket or command line")
       (description "mod-host is an LV2 plugin host for JACK, controllable via
 socket or command line.")
@@ -5829,10 +5876,10 @@ OSC connections.")
     (license license:artistic2.0)))
 
 (define-public luppp
-  (let ((revision "1")
+  (let ((revision "2")
         ;; The last release was in 2019.  Since then some build fixes have
         ;; been added.
-        (commit "23da1497f80dbace48b7807afd3570c57a4d5994"))
+        (commit "78fb003df542e752d43f8ea3e734a83de4e4f8a1"))
     (package
       (name "luppp")
       (version (git-version "1.2.1" revision commit))
@@ -5844,7 +5891,7 @@ OSC connections.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1rjl7fwnqq1gxa3haw1z0p1mld23i194sc43m03h9isagkwxrx9d"))))
+                  "1nc4xjm74assjzjghkbh25ahlkiiy7pkfaj72zagzfa9p64s6xdl"))))
       (build-system meson-build-system)
       (inputs
        (list cairo
@@ -6034,7 +6081,7 @@ for the DSSI Soft Synth Interface.  A brief list of features:
 (define-public libdiscid
   (package
     (name "libdiscid")
-    (version "0.6.4")
+    (version "0.6.5")
     (source
      (origin
        (method url-fetch)
@@ -6042,7 +6089,7 @@ for the DSSI Soft Synth Interface.  A brief list of features:
              "http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/libdiscid-"
              version ".tar.gz"))
        (sha256
-        (base32 "10mj1hwv1598nsi7jw5di0pfcwk36g4rr6kl7gi45m7ak8f8ypnx"))))
+        (base32 "0c6mq9wd0jy03k69df0ba3dywi75gjy0wvq5wa7l2dkkw29v9nvj"))))
     (arguments
      (list
       #:modules '((guix build cmake-build-system)
@@ -6163,7 +6210,7 @@ compact disc (CDDA) identifiers.")
 (define-public perl-webservice-musicbrainz
   (package
     (name "perl-webservice-musicbrainz")
-    (version "1.0.5")
+    (version "1.0.7")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -6171,7 +6218,7 @@ compact disc (CDDA) identifiers.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "16chs1l58cf000d5kalkyph3p31ci73p1rlyx98mfv10d2cq6fsj"))))
+                "08aahiyk2gr7r3lfn5gpamhziy448g9139j7lfjsjhbm67q5an3d"))))
     (build-system perl-build-system)
     (arguments
      ;; Tests try to connect to http://musicbrainz.org.
@@ -6678,7 +6725,7 @@ and reverb.")
 (define-public lsp-plugins
   (package
     (name "lsp-plugins")
-    (version "1.2.24")
+    (version "1.2.25")
     (source
       (origin
         (method url-fetch)
@@ -6686,7 +6733,7 @@ and reverb.")
                             "/releases/download/" version
                             "/lsp-plugins-src-" version ".tar.gz"))
         (sha256
-         (base32 "0qxlvdzryf494qyx2d8c36g1qs84aza41in1cm5yjswizbf9ycmc"))))
+         (base32 "0wr6wfq8qix39kcvlqivjbch0qnlxcpv8lsfq9xb9v25yh6vfad8"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -6931,7 +6978,7 @@ file is added, which you could load per drag 'n drop into XUiDesigner.")
 (define-public zam-plugins
   (package
     (name "zam-plugins")
-    (version "4.1")
+    (version "4.4")
     (source
      (origin
        (method git-fetch)
@@ -6945,19 +6992,17 @@ file is added, which you could load per drag 'n drop into XUiDesigner.")
          (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0p3y3r2nrhzr0xlcy5rz4c2jsvc10l1n8cwc642r0zppwfabm9il"))))
+        (base32 "0mfcz3308wqfyhc8689j1yvr17yllgpm09sy7hij97yamc6y2fd6"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:tests? #f                      ;no "check" target
       #:make-flags
-      #~(list (string-append "PREFIX=" #$output)
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output)
               "HAVE_ZITA_CONVOLVER=true")
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'build 'set-CC-variable
-            (lambda _
-              (setenv "CC" "gcc")))
           (delete 'configure))))
     (inputs
      (list fftwf
@@ -7141,13 +7186,6 @@ ones.")
              libxext
              libxrender
              mesa))
-      (native-search-paths
-       (list (search-path-specification
-              (variable "VST2_PATH")
-              (files '("lib/vst")))
-             (search-path-specification
-              (variable "VST3_PATH")
-              (files '("lib/vst3")))))
       (home-page "https://github.com/DISTRHO/DISTRHO-Ports")
       (synopsis "Audio plugins and LV2 ports")
       (description
@@ -7269,7 +7307,7 @@ Soul Force), MVerb, Nekobi, and ProM.")
 (define-public avldrums-lv2
   (package
     (name "avldrums-lv2")
-    (version "0.4.2")
+    (version "0.7.3")
     (source
      (origin
        (method git-fetch)
@@ -7281,18 +7319,16 @@ Soul Force), MVerb, Nekobi, and ProM.")
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14gka5g7va30gm1hn0cas4vvb8s764rfvzcxm67ww86hf54cpnig"))))
+        (base32 "0bjg2wlnd04mlk123hsmacdbw9jiivn1f4qy3r5kpl9h727qg4h1"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no "check" target
-       #:make-flags
-       (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ; no configure script
-         (add-before 'build 'set-CC-variable
-           (lambda _
-             (setenv "CC" "gcc"))))))
+     (list #:tests? #f                      ; no "check" target
+           #:make-flags
+           #~(list (string-append "PREFIX=" #$output)
+                   (string-append "CC=" #$(cc-for-target)))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure))))         ; no configure script
     (inputs
      (list cairo dssi glu mesa pango))
     (native-inputs
@@ -7752,49 +7788,51 @@ plugin and a standalone JACK application.")
 (define-public wolf-shaper
   (package
     (name "wolf-shaper")
-    (version "0.1.8")
+    (version "1.0.2")
     (source
       (origin
         (method git-fetch)
         (uri (git-reference
-               (url "https://github.com/pdesaulniers/wolf-shaper")
+               (url "https://github.com/wolf-plugins/wolf-shaper")
                (commit (string-append "v" version))
                ;; Bundles a specific commit of the DISTRHO plugin framework.
                (recursive? #t)))
         (file-name (git-file-name name version))
         (sha256
           (base32
-            "1j9xmh1nkf45ay1c5dz2g165qvrwlanzcq6mvb3nfxar265drd9q"))))
+            "03m6vq83lbj61xmg5f45yziajsmfxxwn95s53m8y7sdifz1bb272"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:make-flags (list "CC=gcc"
-                          "NOOPT=true")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ;no configure target
-         (replace 'install              ;no install target
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (lv2 (string-append out "/lib/lv2")))
-               ;; Install LV2.
-               (for-each
-                (lambda (file)
-                  (copy-recursively file
-                                    (string-append lv2 "/" (basename file))))
-                (find-files "bin" "\\.lv2$" #:directories? #t))
-               ;; Install executables.
-               (for-each
-                 (lambda (file)
-                   (install-file file bin))
-                 (find-files "bin"
-                             (lambda (name stat)
-                               (and
-                                 (equal? (dirname name) "bin")
-                                 (not (string-suffix? ".so" name))
-                                 (not (string-suffix? ".lv2" name))))))
-               #t))))))
+     (list #:tests? #f                      ; no check target
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   "NOOPT=true")
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)            ;no configure target
+               (replace 'install              ;no install target
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (bin (string-append out "/bin"))
+                          (lv2 (string-append out "/lib/lv2")))
+                     ;; Install LV2.
+                     (for-each
+                      (lambda (file)
+                        (copy-recursively file
+                                          (string-append lv2 "/"
+                                                         (basename file))))
+                      (find-files "bin" "\\.lv2$" #:directories? #t))
+                     ;; Install executables.
+                     (for-each
+                       (lambda (file)
+                         (install-file file bin))
+                       (find-files "bin"
+                                   (lambda (name stat)
+                                     (and
+                                       (equal? (dirname name) "bin")
+                                       (not (string-suffix? ".so" name))
+                                       (not
+                                        (string-suffix? ".lv2" name))))))))))))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -7802,7 +7840,7 @@ plugin and a standalone JACK application.")
     (synopsis "Waveshaper plugin")
     (description "Wolf Shaper is a waveshaper plugin with a graph editor.
 It is provided as an LV2 plugin and as a standalone Jack application.")
-    (home-page "https://pdesaulniers.github.io/wolf-shaper/")
+    (home-page "https://wolf-plugins.github.io/wolf-shaper/")
     (properties `((tunable? . #t)))
     (license license:gpl3)))
 
@@ -8228,7 +8266,7 @@ tries to match each block with one in its brain to play in realtime.")
 (define-public le-biniou-data
   (package
     (name "le-biniou-data")
-    (version "3.66.0")
+    (version "3.67.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8237,7 +8275,7 @@ tries to match each block with one in its brain to play in realtime.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1s8dax6ryfqz7aqq8rj5ipxddshp5mjdvj0mn9kk1zzr55hvkfb7"))))
+                "1kgwxy2kcjv4x32smp5108cn5qvlixjcxi23hqd3g6diws3s45v5"))))
     (build-system gnu-build-system)
     (native-inputs (list autoconf automake libtool))
     (home-page "https://biniou.net/")
@@ -8249,7 +8287,7 @@ tries to match each block with one in its brain to play in realtime.")
 (define-public le-biniou
   (package
     (name "le-biniou")
-    (version "3.66.0")
+    (version "3.67.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8258,7 +8296,7 @@ tries to match each block with one in its brain to play in realtime.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fvf944i703yd17kkxgja2xyyznb30p006piclz1rmgkhijp0lcp"))))
+                "1p3g2m16fr52xi4rwkpm7j278yaml9443szji4s5l3f78m9aiwcm"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags #~(list (string-append "LDFLAGS=-Wl,-rpath="

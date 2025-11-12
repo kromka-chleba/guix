@@ -2858,6 +2858,57 @@ Features:
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-danielgtaylor-huma-v2
+  (package
+    (name "go-github-com-danielgtaylor-huma-v2")
+    (version "2.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/danielgtaylor/huma")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rwmyxihrdznfn6iqxrb4lmlfijblapnpxavmcgavylixwigyrdk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/danielgtaylor/huma/v2"
+      #:test-flags
+      ;; Tests require local network setup.
+      #~(list "-skip" "TestFeatures|TestAdapters/go|ExampleResolver")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "examples")))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-danielgtaylor-shorthand-v2
+           go-github-com-evanphx-json-patch-v5
+           go-github-com-fxamacker-cbor-v2
+           go-github-com-gin-gonic-gin
+           go-github-com-go-chi-chi-v5
+           go-github-com-gofiber-fiber-v2
+           go-github-com-google-uuid
+           go-github-com-gorilla-mux
+           go-github-com-julienschmidt-httprouter
+           go-github-com-labstack-echo-v4
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-uptrace-bunrouter))
+    (home-page "https://github.com/danielgtaylor/huma")
+    (synopsis "REST/HTTP API Framework for Golang")
+    (description
+     "This package provides a framework for building REST APIs in Go.  It is
+designed to generate @code{OpenAPI} 3.1 specifications and JSON Schema
+documents describing the API and providing a quick & easy way to generate
+docs, mocks, SDKs, CLI clients, and more.")
+    (license license:expat)))
+
 (define-public go-github-com-datadog-datadog-go
   (package
     (name "go-github-com-datadog-datadog-go")
@@ -12024,6 +12075,59 @@ extract data from those paths.")
     (description
      "This package provides a high performance and feature rich codec and
 encoding library for the MessagePack, CBOR, JSON and the Binc formats.")
+    (license license:expat)))
+
+(define-public go-github-com-uptrace-bunrouter
+  (package
+    (name "go-github-com-uptrace-bunrouter")
+    (version "1.0.23")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/uptrace/bunrouter")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q02f9bmz7qrwd6j7kdlxsskwapcrpvngkiw28dwf86zikzfnwxa"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/uptrace/bunrouter/extra/basicauth
+            ;; - github.com/uptrace/bunrouter/extra/bunrouterotel
+            ;; - github.com/uptrace/bunrouter/extra/reqlog
+            (delete-file-recursively "extra")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/uptrace/bunrouter"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "example")))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/uptrace/bunrouter")
+    (synopsis "HTTP router for Golang")
+    (description
+     "BunRouter is a fast HTTP router for Go with unique combination of features:
+
+@itemize
+@item middlewares allow to extract common operations from HTTP handlers into
+reusable functions
+@item error handling allows to further reduce the size of HTTP handlers by
+handling errors in middlewares
+@item routes priority enables meaningful matching priority for routing rules:
+first static nodes, then named nodes, lastly wildcard nodes
+@item @code{net/http} compatible API which means using minimal API without
+constructing huge wrappers that try to do everything: from serving static
+files to XML generation (for example, @code{gin.Context} or
+@code{echo.Context})
+@end itemize")
     (license license:expat)))
 
 (define-public go-github-com-urfave-negroni

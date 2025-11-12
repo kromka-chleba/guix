@@ -254,6 +254,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/docker.scm			\
   %D%/packages/documentation.scm		\
   %D%/packages/dpdk.scm        \
+  %D%/packages/duckdb.scm			\
   %D%/packages/dvtm.scm				\
   %D%/packages/easyrpg.scm			\
   %D%/packages/ebook.scm			\
@@ -1618,7 +1619,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/irrlicht-link-against-needed-libs.patch	\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch		\
   %D%/packages/patches/ispell-for-linphone-cmake.patch		\
-  %D%/packages/patches/jamesdsp-fix-bulid-on-pipewire-1.4.0.patch\
   %D%/packages/patches/jami-find-package-avutil.patch		\
   %D%/packages/patches/jami-libjami-headers-search.patch	\
   %D%/packages/patches/jami-qwindowkit.patch			\

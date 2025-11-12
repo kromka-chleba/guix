@@ -252,7 +252,7 @@ promoting the market for advanced audio.")
 (define-public wildmidi
   (package
     (name "wildmidi")
-    (version "0.4.4")
+    (version "0.4.6")
     (source
      (origin
        (method git-fetch)
@@ -262,7 +262,7 @@ promoting the market for advanced audio.")
          (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08fbbsvw6pkwwqarjwcvdp8mq4zn5sgahf025hynwc6rvf4sp167"))))
+        (base32 "0cc8vg2alyzakmm132vljx228arisqcnfqh8xyjnnczr5vryqa5k"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f ; No target
@@ -872,120 +872,129 @@ purposes developed at Queen Mary, University of London.")
     (license license:gpl2+)))
 
 (define-public jamesdsp
-  (package
-    (name "jamesdsp")
-    (version "2.7.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-          (url "https://github.com/Audio4Linux/JDSP4Linux")
-          (commit version)
-          ;; Recurse GraqhicEQWidget, FlatTabWidget, LiquidEqualizerWidget and
-          ;; EELEditor.
-          (recursive? #t)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "17vx12kbvwxvb69vzrlb82mrgf6sl3plyk71g9f39p49ialdsnbr"))
-       (modules '((guix build utils)))
-       (snippet
-        ;; Unbundle 3rd party libraries.
-        '(begin
-           ;; Delete the bundled 3rd party libraries.
-           (for-each delete-file-recursively
-            (list "3rdparty"
-                  "src/subprojects/EELEditor/3rdparty"
-                  "src/subprojects/EELEditor/QCodeEditor"
-                  "src/subprojects/EELEditor/src/EELEditor-Linker.pri"))
-           (with-directory-excursion "src"
-             (substitute* "src.pro"
-               ;; Do not use bundled 3rd party libraries.
-               ((".*3rdparty.*") "")
-               ;; Link required libraries from system.
-               (("-ldl")
-                (string-join '("-ldl"
-                               "-lasync++"
-                               "-lQCodeEditor"
-                               "-lqcustomplot"
-                               "-lqtadvanceddocking-qt6"
-                               "-lqtcsv"
-                               "-lwaf")
-                               " ")))
-             ;; Fix including WAF headers.
-             (substitute* "MainWindow.cpp"
-                       (("<Animation") "<WAF/Animation"))
-             ;; Do not use resources from the bundled docking-system.
-             (substitute* '("interface/fragment/AppManagerFragment.ui")
-               ((".*location.*3rdparty.*") "")
-               ((" resource=.*>") ">"))
-             (with-directory-excursion "subprojects/EELEditor/src"
-               ;; Do not use bundled QCodeEditor and docking-system.
-               (substitute* "EELEditor.pri"
-                 ((".*(QCodeEditor|docking-system).*") ""))
-               ;; Do not link to bundled docking-system.
+  (let ((commit "53cf0989681ba38755208c8aec063f29ed8586d3")
+        (revision "0"))
+    (package
+      (name "jamesdsp")
+      (version (git-version "2.7.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+            (url "https://github.com/Audio4Linux/JDSP4Linux")
+            (commit commit)
+            ;; Recurse GraqhicEQWidget, FlatTabWidget, LiquidEqualizerWidget and
+            ;; EELEditor.
+            (recursive? #t)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1b5612gr2gfmj1h5hdzfa9xxdwixia06a34n2zs04cra94clif9i"))
+         (modules '((guix build utils)))
+         (snippet
+          ;; Unbundle 3rd party libraries.
+          '(begin
+             ;; Delete the bundled 3rd party libraries.
+             (for-each delete-file-recursively
+              (list "3rdparty"
+                    "src/subprojects/EELEditor/3rdparty"
+                    "src/subprojects/EELEditor/QCodeEditor"
+                    "src/subprojects/EELEditor/src/EELEditor-Linker.pri"))
+             (with-directory-excursion "src"
                (substitute* "src.pro"
-                 ((".*EELEditor-Linker.*") ""))
-               ;; Fix including headers from the system.
-               (substitute* (find-files "." "\\.(cpp|h)$")
-                 (("#include <Dock") "#include <qtadvanceddocking-qt6/Dock")
-                 (("#include <FloatingDock")
-                  "#include <qtadvanceddocking-qt6/FloatingDock")
-                 (("#include <QSyntaxStyle")
-                  "#include <QCodeEditor/QSyntaxStyle")
-                 (("#include <QStyleSyntaxHighlighter")
-                  "#include <QCodeEditor/QStyleSyntaxHighlighter")
-                 (("#include <QHighlightRule")
-                  "#include <QCodeEditor/QHighlightRule")
-                 (("#include <QLanguage") "#include <QCodeEditor/QLanguage")
-                 (("#include <QCodeEditor\\.hpp")
-                  "#include <QCodeEditor/QCodeEditor.hpp"))))))
-       (patches (search-patches "jamesdsp-fix-bulid-on-pipewire-1.4.0.patch"))))
-    (build-system qt-build-system)
-    (arguments
-     (list #:qtbase qtbase
-           #:tests? #f ;no tests
-           #:phases
-           #~(modify-phases %standard-phases
-               ;; Configure using qmake.
-               (replace 'configure
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (invoke "qmake" (string-append "PREFIX=" #$output))))
-               (add-after 'install 'install-icon
-                 (lambda _
-                   (let ((pixmaps (string-append #$output "/share/pixmaps")))
-                     (mkdir-p pixmaps)
-                     (copy-file "resources/icons/icon.png"
-                                (string-append pixmaps "/jamesdsp.png")))))
-               (add-after 'install-icon 'create-desktop-entry-file
-                 (lambda _
-                   (make-desktop-entry-file
-                    (string-append #$output
-                                  "/share/applications/jamesdsp.desktop")
-                    #:name "JamesDSP"
-                    #:comment "Audio effect processor"
-                    #:keywords '("equalizer" "audio" "effect")
-                    #:categories '("AudioVideo" "Audio")
-                    #:exec (string-append #$output "/bin/jamesdsp")
-                    #:icon (string-append #$output "/share/pixmaps/jamesdsp.png")
-                    #:startup-notify #f))))))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list asyncplusplus
-           glibmm-2.66
-           libarchive
-           pipewire
-           qcodeeditor
-           qcustomplot
-           qt-advanced-docking-system
-           qtcsv
-           qtpromise
-           qtsvg
-           qtwidgetanimationframework))
-    (home-page "https://github.com/Audio4Linux/JDSP4Linux")
-    (synopsis "Audio effect processor for PipeWire and PulseAudio clients")
-    (description "JamesDSP is an audio effect processor for PipeWire and
+                 ;; Do not use bundled 3rd party libraries.
+                 ((".*3rdparty.*") "")
+                 ;; Link required libraries from system.
+                 (("-ldl")
+                  (string-join '("-ldl"
+                                 "-lasync++"
+                                 "-lQCodeEditor"
+                                 "-lqcustomplot"
+                                 "-lqtadvanceddocking-qt6"
+                                 "-lqtcsv"
+                                 "-lwaf")
+                                 " ")))
+               ;; Fix including WAF headers.
+               (substitute* "MainWindow.cpp"
+                         (("<Animation") "<WAF/Animation"))
+               ;; Do not use resources from the bundled docking-system.
+               (substitute* '("interface/fragment/AppManagerFragment.ui")
+                 ((".*location.*3rdparty.*") "")
+                 ((" resource=.*>") ">"))
+               (with-directory-excursion "subprojects/EELEditor/src"
+                 ;; Do not use bundled QCodeEditor and docking-system.
+                 (substitute* "EELEditor.pri"
+                   ((".*(QCodeEditor|docking-system).*") ""))
+                 ;; Do not link to bundled docking-system.
+                 (substitute* "src.pro"
+                   ((".*EELEditor-Linker.*") ""))
+                 ;; Fix including headers from the system.
+                 (substitute* (find-files "." "\\.(cpp|h)$")
+                   (("#include <Dock") "#include <qtadvanceddocking-qt6/Dock")
+                   (("#include <FloatingDock")
+                    "#include <qtadvanceddocking-qt6/FloatingDock")
+                   (("#include <QSyntaxStyle")
+                    "#include <QCodeEditor/QSyntaxStyle")
+                   (("#include <QStyleSyntaxHighlighter")
+                    "#include <QCodeEditor/QStyleSyntaxHighlighter")
+                   (("#include <QHighlightRule")
+                    "#include <QCodeEditor/QHighlightRule")
+                   (("#include <QLanguage") "#include <QCodeEditor/QLanguage")
+                   (("#include <QCodeEditor\\.hpp")
+                    "#include <QCodeEditor/QCodeEditor.hpp"))))))))
+      (build-system qt-build-system)
+      (arguments
+       (list #:qtbase qtbase
+             #:tests? #f ;no tests
+             #:parallel-build? #f ;fails on some systems
+             #:modules '((guix build qt-build-system)
+                         ((guix build gnu-build-system) #:prefix gnu:)
+                         (guix build utils))
+             #:phases
+             #~(modify-phases %standard-phases
+                 ;; Configure using qmake.
+                 (replace 'configure
+                   (lambda _
+                     (invoke "qmake" (string-append "PREFIX=" #$output))))
+                 (replace 'build (assoc-ref gnu:%standard-phases 'build))
+                 (replace 'check (assoc-ref gnu:%standard-phases 'check))
+                 (replace 'install (assoc-ref gnu:%standard-phases 'install))
+                 (add-after 'install 'install-icon
+                   (lambda _
+                     (let ((pixmaps (string-append #$output "/share/pixmaps")))
+                       (mkdir-p pixmaps)
+                       (copy-file "resources/icons/icon.png"
+                                  (string-append pixmaps "/jamesdsp.png")))))
+                 (add-after 'install-icon 'create-desktop-entry-file
+                   (lambda _
+                     (make-desktop-entry-file
+                      (string-append #$output
+                                    "/share/applications/jamesdsp.desktop")
+                      #:name "JamesDSP"
+                      #:comment "Audio effect processor"
+                      #:keywords '("equalizer" "audio" "effect")
+                      #:categories '("AudioVideo" "Audio")
+                      #:exec (string-append #$output "/bin/jamesdsp")
+                      #:icon (string-append #$output
+                                            "/share/pixmaps/jamesdsp.png")
+                      #:startup-notify #f))))))
+      (native-inputs
+       (list pkg-config))
+      (inputs
+       (list asyncplusplus
+             glibmm-2.66
+             libarchive
+             pipewire
+             qcodeeditor
+             qcustomplot
+             qt-advanced-docking-system
+             qtcsv
+             qtpromise
+             qtsvg
+             qtwidgetanimationframework))
+      (home-page "https://github.com/Audio4Linux/JDSP4Linux")
+      (synopsis "Audio effect processor for PipeWire and PulseAudio clients")
+      (description "JamesDSP is an audio effect processor for PipeWire and
 PulseAudio clients, featuring:
 @itemize
 @item Automatic bass boost: Frequency-detecting bass-boost
@@ -1007,7 +1016,7 @@ PulseAudio clients, featuring:
  dynamic code outline window, console output support and detailed error
  messages with inline code highlighting
 @end itemize")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define ardour-bundled-media
   (origin
@@ -1158,6 +1167,16 @@ namespace ARDOUR { const char* revision = \"" version "\" ; const char* date = \
            perl
            pkg-config
            unzip))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "LADSPA_PATH")
+            (files '("lib/ladspa")))
+           (search-path-specification
+            (variable "LV2_PATH")
+            (files '("lib/lv2")))
+           (search-path-specification
+            (variable "LXVST_PATH")
+            (files '("lib/lxvst")))))
     (home-page "https://ardour.org")
     (synopsis "Digital audio workstation")
     (description
@@ -1596,7 +1615,7 @@ plugins are provided.")
 (define-public cable
   (package
     (name "cable")
-    (version "0.9.8.1")
+    (version "0.9.21")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1605,10 +1624,7 @@ plugins are provided.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0pzafiim1cnxrngk6nzmpx9sx1lc6qrqjrrcxg1qpigcrjvrfjs2"))
-              (modules '((guix build utils)))
-              (snippet
-               '(delete-file-recursively "Arch packages"))))
+                "1c7fy92nwp2m96asls460s83xapzcc6pqvplmg5rqds1rddiva2h"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1629,21 +1645,7 @@ plugins are provided.")
               (install-file "jack-plug.svg"
                             (string-append #$output "/share/icons/hicolor/scalable/apps/"))
               (install-file "com.github.magillos.cable.desktop"
-                            (string-append #$output "/share/applications/"))))
-          (add-after 'install-more 'wrap-executables
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let* ((pyversion
-                      #$(version-major+minor (package-version
-                                              (this-package-input "python"))))
-                     (lib (string-append #$output "/lib/python" pyversion
-                                         "/site-packages"))
-                     (file
-                      (string-append lib "/cables/launch-connection-manager.py")))
-                (chmod file #o555)
-                (wrap-script file
-                  #:guile (search-input-file inputs "bin/guile")
-                  `("GUIX_PYTHONPATH" ":" prefix
-                    (,lib  ,(getenv "GUIX_PYTHONPATH"))))))))))
+                            (string-append #$output "/share/applications/")))))))
     (inputs
      (list python
            python-dbus
@@ -1664,7 +1666,7 @@ connections manager, pw-top wrapper, simple ALSA mixer and jack_delay GUI.")
 (define-public calf
   (package
     (name "calf")
-    (version "0.90.6")
+    (version "0.90.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1673,7 +1675,7 @@ connections manager, pw-top wrapper, simple ALSA mixer and jack_delay GUI.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0p4zqzr7spy3jjsmy6h7n5lsyqqyh23bswk1r3kims50b102xhxd"))))
+                "0wzkshqazw26w73h1lva5wr8v2bq0a20kjd6lfvbi1pj3ql3azk5"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #false)) ;there is no test target
     (inputs
@@ -1829,7 +1831,7 @@ reel-to-reel tape machines.")
 (define-public iir
   (package
     (name "iir")
-    (version "1.9.4")
+    (version "1.10.0")
     (source
      (origin
        (method git-fetch)
@@ -1838,7 +1840,7 @@ reel-to-reel tape machines.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fqxn0qlvykpk9hiliivmkjjcz3g1bp83yd0zfm82r14abkjbj2g"))))
+        (base32 "0p64l0fmr7mfjhfxg6yc4f06aacbr6bb8kjmb5ffm95sq12rzdss"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2369,7 +2371,7 @@ the non-linear circuit elements of their original analog counterparts.")
 (define-public rev-plugins
   (package
     (name "rev-plugins")
-    (version "0.7.1")
+    (version "0.8.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2378,23 +2380,24 @@ the non-linear circuit elements of their original analog counterparts.")
                     version ".tar.bz2"))
               (sha256
                (base32
-                "1ikpinxm00pkfi259bnkzhsy3miagrjgdihaaf5x4v7zac29j3g7"))))
+                "1yhnvjgr14qr0ni0n2x8dhlzbx1qfgyrnffbaaq0d5xbzfgrq543"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; no "check" target
-       #:phases
-       (modify-phases %standard-phases
-         ;; no configure script
-         (delete 'configure)
-         (add-before 'install 'prepare-target-directory
-           (lambda* (#:key outputs #:allow-other-keys)
-             (mkdir-p (string-append (assoc-ref outputs "out") "/lib/ladspa"))
-             #t))
-         (add-after 'unpack 'override-target-directory
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "Makefile"
-               (("/usr") (assoc-ref outputs "out")))
-             #t)))))
+     (list #:tests? #f ; no "check" target
+           #:phases
+           #~(modify-phases %standard-phases
+               ;; no configure script
+               (delete 'configure)
+               (add-after 'unpack 'change-directory
+                 (lambda _
+                   (chdir "source")))
+               (add-after 'change-directory 'override-target-directory
+                 (lambda _
+                   (substitute* "Makefile"
+                     (("/usr") #$output))))
+               (add-before 'install 'prepare-target-directory
+                 (lambda _
+                   (mkdir-p (string-append #$output "/lib/ladspa")))))))
     (home-page "https://kokkinizita.linuxaudio.org")
     (synopsis "LADSPA reverb plugin")
     (description
@@ -2708,7 +2711,7 @@ also play midifiles using a Soundfont.")
 (define-public faust-2
   (package
     (inherit faust)
-    (version "2.75.7")
+    (version "2.81.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/grame-cncm/faust/"
@@ -2716,7 +2719,7 @@ also play midifiles using a Soundfont.")
                                   "/faust-" version ".tar.gz"))
               (sha256
                (base32
-                "11ww02zmj3vnva1w52hs9wkxvhwwf53agklyzm2c7gysw0jfvkw9"))))
+                "0mj7gn7xp6mzr94nqcyrrkcmzm81chq6qb1n76wspah71lw7g6f6"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -3142,7 +3145,7 @@ and testing or configuring the JACK session.  Tools include @code{jack_lsp},
 (define-public jacktrip
   (package
     (name "jacktrip")
-    (version "1.6.8")
+    (version "2.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3150,7 +3153,7 @@ and testing or configuring the JACK session.  Tools include @code{jack_lsp},
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "0719ng799kingv0y9yk07bvnmprk25c09ph3yaia5dhapg0jz17m"))))
+               (base32 "1d9cn4nny3kbf3f9x0bcsrqb0ir1h789nv7s72xmhf7r5rfd9xm4"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -3169,10 +3172,11 @@ and testing or configuring the JACK session.  Tools include @code{jack_lsp},
            python
            python-jinja2
            python-pyyaml
-           qtbase-5
+           qtbase
+           qtwayland
            rtaudio))
     (native-inputs
-     (list pkg-config qtbase-5)) ;for qmake
+     (list pkg-config))
     (home-page "https://jacktrip.github.io/jacktrip/")
     (synopsis "Multi-machine audio system for network music performance")
     (description
@@ -3254,25 +3258,30 @@ from being able to mix multiple JACK audio streams.")
                 "1q8mzjv577vdi64s47gd4pg0ydzxvs32cwrb1d64v90f52qpgbpd"))))
     (build-system meson-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'build-PIC
-           ;; The default -fPIE #errors when combined with our Qt packages.
-           ;; Work around the broken meson.build script clobbering c_args.
-           (lambda _
-             (substitute* "meson.build"
-               (("'-DZIX_STATIC'" match)
-                (string-append match ", '-fPIC'"))))))))
+     (list #:tests? #f                      ; no check target
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'build-PIC
+                 ;; The default -fPIE #errors when combined with our Qt
+                 ;; packages.  Work around the broken meson.build script
+                 ;; clobbering c_args.
+                 (lambda _
+                   (substitute* "meson.build"
+                     (("'-DZIX_STATIC'" match)
+                      (string-append match ", '-fPIC'"))))))))
     (inputs
      (list lv2
            lilv
            suil
            gtk+
-           qtbase-5
-           jack-1))
+           jack-1
+           qtbase-5))
     (native-inputs
      (list pkg-config))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "LV2_PATH")
+            (files '("lib/lv2")))))
     (home-page "https://drobilla.net/software/jalv.html")
     (synopsis "Simple LV2 host for JACK")
     (description
@@ -3536,6 +3545,7 @@ compensation, (de)interleaving, and byte-swapping
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:tests? #f ;no test target
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'find-library
@@ -3725,13 +3735,13 @@ CFFI and NumPy.")
 (define-public python-soxr
   (package
     (name "python-soxr")
-    (version "0.5.0.post1")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "soxr" version))
        (sha256
-        (base32 "0wzz7j0z814mm99xr19vfrwp2x904lbwhf513x7085m4x3rvk4kh"))))
+        (base32 "02a5balcm8dvlb938gl2k3kqvfdq1k300j2g0dbnkg2rsv0yczp0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3759,7 +3769,6 @@ CFFI and NumPy.")
                          python-scikit-build-core
                          python-setuptools
                          python-setuptools-scm
-                         python-sphinx
                          python-typing-extensions
                          python-wheel))
     (home-page "https://github.com/dofuuz/python-soxr")
@@ -5966,7 +5975,7 @@ kbps at 24 bit/96 kHz.")
 (define-public bluez-alsa
   (package
     (name "bluez-alsa")
-    (version "3.0.0")
+    (version "4.3.1")
     (source (origin
               ;; The tarballs are mere snapshots and don't contain a
               ;; bootstrapped build system.
@@ -5977,7 +5986,7 @@ kbps at 24 bit/96 kHz.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jlsgxyqfhncfhx1sy3ry0dp6p95kd4agh7g2b7g51h0c4cv74h8"))))
+                "05qzmcsihhd92vpjd45qr0gdzfqiw4jfcdjdg78mzimv9g5g3rjm"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -5989,7 +5998,12 @@ kbps at 24 bit/96 kHz.")
                             (assoc-ref %outputs "out")
                             "/etc/dbus-1/system.d"))))
     (native-inputs
-     (list autoconf automake libtool pkg-config))
+     (list autoconf
+           automake
+           `(,glib "bin")
+           libtool
+           pkg-config
+           python-minimal))
     (inputs
      (list alsa-lib
            bluez
@@ -6077,26 +6091,50 @@ customized and extended using either the s7 Scheme implementation (included in
 the Snd sources), Ruby, or Forth.")
     (license (license:non-copyleft "file://COPYING"))))
 
+(define-public libspecbleach
+  (package
+    (name "libspecbleach")
+    (version "0.1.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/lucianodato/libspecbleach")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0czmzhggg5gl833karfrl2c0pr2k3jf7q7jd3y68hyj0cnn6f3jg"))))
+    (build-system meson-build-system)
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list fftwf))
+    (home-page "https://github.com/lucianodato/libspecbleach")
+    (synopsis "C library for audio noise reduction and other spectral effects")
+    (description
+     "This package provides a C library for audio noise reduction and other
+spectral effects.  It is based on the algorithms that were used in
+@code{noise-repellent}.  These were extracted into a this standalone library to
+remove the lv2 dependency.  It uses the concept of a spectral processor which
+itself uses a @acronym{STFT, short time Fourier transform} to process the audio.")
+    (license license:lgpl2.1+)))
+
 (define-public noise-repellent
   (package
     (name "noise-repellent")
-    (version "0.1.5")
+    (version "0.2.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/lucianodato/noise-repellent")
-                    (commit version)))
-              (file-name (string-append name "-" version "-checkout"))
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hb89x9i2knzan46q4nwscf5zmnb2nwf4w13xl2c0y1mx1ls1mwl"))))
+                "0dq0rv7mndw0lqacl2nf9dmj4zzq19hfminzk3fzbppk5mh2rivp"))))
     (build-system meson-build-system)
-    (arguments
-     `(#:configure-flags
-       (list (string-append "--prefix=" (assoc-ref %outputs "out")
-                            "/lib/lv2"))))
     (inputs
-     (list lv2 fftwf))
+     (list fftwf libspecbleach lv2))
     (native-inputs
      (list pkg-config))
     (home-page "https://github.com/lucianodato/noise-repellent")
@@ -6220,7 +6258,7 @@ representations.")
 (define-public cava
   (package
     (name "cava")
-    (version "0.10.4")
+    (version "0.10.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6229,7 +6267,7 @@ representations.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09wwzqynfmdzn77vxxmrw2z0yz95p4zg9cgfp9vnpv70visi98d0"))))
+                "12ysxbm1di2m0qac4rgd5f94fvlxv64s7kyy5s0d2bbxyzvdcqvm"))))
     (build-system gnu-build-system)
     (native-inputs (list autoconf automake libtool pkg-config))
     (inputs (list alsa-lib fftw ncurses pipewire pulseaudio iniparser
@@ -6480,7 +6518,7 @@ other Gnaural instances, allowing synchronous sessions between many users.")
 (define-public darkice
   (package
     (name "darkice")
-    (version "1.4")
+    (version "1.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/rafael2k/darkice/releases/"
@@ -6488,7 +6526,7 @@ other Gnaural instances, allowing synchronous sessions between many users.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "05yq7lggxygrkd76yiqby3msrgdn082p0qlvmzzv9xbw8hmyra76"))))
+                "13h58skz5xik75sjv9kf2299haly2nc5gswl22ff1kvw79bw9d0q"))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config))
     (inputs (list lame
@@ -7302,14 +7340,14 @@ while still staying in time.")
 (define-public butt
   (package
     (name "butt")
-    (version "0.1.38")
+    (version "1.45.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/butt/butt/butt-"
+              (uri (string-append "https://danielnoethen.de/butt/release/"
                                   version "/butt-" version ".tar.gz"))
               (sha256
                (base32
-                "10i3xpxzccdl4pidiyymw9cfavhy50yhn7xi5bd77y91f2903kp9"))
+                "0r43xph6xf02c9zldhyj82mvy82xv0f9wbv653gg2kkcjh88ajc8"))
               (modules '((guix build utils)))
               (snippet
                '(substitute* "src/butt.cpp"
@@ -7320,19 +7358,21 @@ while still staying in time.")
            #~(modify-phases %standard-phases
                (add-after 'install 'install-documentation
                  (lambda _
-                   (let ((doc (string-append #$output "/share/doc/" #$name)))
+                   (let ((doc (string-append #$output:doc "/share/doc/" #$name)))
                      (install-file "README" doc)
                      (copy-file #$(this-package-native-input "manual")
                                 (string-append doc "/butt-manual.pdf"))))))))
+    (outputs '("out" "doc"))
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("manual"
         ,(origin
            (method url-fetch)
-           (uri (string-append "https://danielnoethen.de/butt/butt-"
+           (uri (string-append "https://danielnoethen.de/butt/release/" version
+                               "/butt-"
                                version "_manual.pdf"))
            (sha256
-            (base32 "04aixxqshfj11ja3ifh0zvywl2mqzmymppcd0xj8sv0j7whjibaq"))))))
+            (base32 "07mr25k26xrpns3s7ci27jmp71c49a23r0mi662ir5v35rz4bf4q"))))))
     (inputs
      (list curl
            dbus
@@ -7350,7 +7390,8 @@ while still staying in time.")
            libogg
            openssl
            opus
-           portaudio))
+           portaudio
+           portmidi-2))
     (home-page "https://danielnoethen.de/butt/")
     (synopsis "Audio streaming tool")
     (description "Butt is a tool to stream audio to a ShoutCast or
@@ -7484,7 +7525,7 @@ Home Page}.")
 (define-public python-librosa
   (package
     (name "python-librosa")
-    (version "0.10.2.post1")
+    (version "0.11.0")
     (source
      (origin
        (method git-fetch)
@@ -7494,7 +7535,7 @@ Home Page}.")
              ;; For test files.
              (recursive? #true)))
        (sha256
-        (base32 "1x37148y1rh4sq2nc59iw9jlza3zwawxnlb7bd9w36an05aclmnh"))))
+        (base32 "065x43hx670rjrclxi4hiqxscllb16v9s7myjvg7rd5pd3y0k7sg"))))
     (build-system pyproject-build-system)
     (arguments
      (list

@@ -5332,7 +5332,7 @@ a binding language:
 (define-public qt-advanced-docking-system
   (package
     (name "qt-advanced-docking-system")
-    (version "4.4.0")
+    (version "4.4.1")
     (source
      (origin
        (method git-fetch)
@@ -5342,7 +5342,7 @@ a binding language:
           (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qbvlnfpdlz22y1vrdd1gs2mfh03k95ccahb7pl6i07pgn4dgcvh"))))
+        (base32 "07qhvhz4cmkrpxpfmybva57ddshkwf993jiryxg3lkj24p1rlh7d"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -5494,24 +5494,24 @@ color-related widgets.")
 (define-public qcustomplot
   (package
     (name "qcustomplot")
-    (version "2.1.0")
+    (version "2.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.qcustomplot.com/release/"
-                           version "fixed" "/QCustomPlot.tar.gz"))
+                           version "/QCustomPlot.tar.gz"))
        (sha256
-        (base32 "1324kqyj1v1f8k8d7b15gc3apwz9qxx52p86hvchg33hjdlqhskx"))))
+        (base32 "0aiixk36v1534429yndn2phn7q7m2rvkh81hn7awin4b1vkidz4s"))))
     (native-inputs
      `(("qcustomplot-sharedlib"
         ,(origin
            (method url-fetch)
            (uri (string-append "https://www.qcustomplot.com/release/"
-                               version "fixed" "/QCustomPlot-sharedlib.tar.gz"))
+                               version "/QCustomPlot-sharedlib.tar.gz"))
            (sha256
-            (base32 "0vp8lpxvd1nlp4liqrlvslpqrgfn0wpiwizzdsjbj22zzb8vxikc"))))))
+            (base32 "1h5l29q82grz94z5ch95vq6hs5clcymbcb3yngqfsh47gsffmmim"))))))
     (inputs
-     (list qtbase-5))
+     (list qtbase))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -5540,6 +5540,13 @@ color-related widgets.")
     (description
      "QCustomPlot is a Qt C++ widget providing 2D plots, graphs and charts.")
     (license license:gpl3+)))
+
+(define-public qcustomplot-qt5
+  (package/inherit qcustomplot
+    (name "qcustomplot-qt5")
+    (inputs
+     (modify-inputs (package-inputs qcustomplot)
+       (replace "qtbase" qtbase-5)))))
 
 ;; TODO: Split shiboken2 binding generator into a dedicated output.
 ;; This executable requires libxml2, libxslt, clang-toolchain at runtime.

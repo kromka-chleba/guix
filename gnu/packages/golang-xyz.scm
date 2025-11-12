@@ -5551,6 +5551,71 @@ credentials as well as Go structures for convenient access to the credential
 data.")
     (license license:expat)))
 
+(define-public go-github-com-danielgtaylor-mexpr
+  (package
+    (name "go-github-com-danielgtaylor-mexpr")
+    (version "1.9.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/danielgtaylor/mexpr")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kiya25njhy5k9jpk79dz07bwzl33x19mjl4h1sjmdh98aw41z3r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/danielgtaylor/mexpr"
+      #:test-flags
+      #~(list "-vet=off")))  ;Go@1.24 forces vet, but tests are not ready yet.
+    (home-page "https://github.com/danielgtaylor/mexpr")
+    (synopsis " Micro expression parser library for Golang")
+    (description
+     "Package mexpr provides a simple expression parser, originally built
+for use in templating languages (e.g. for-loop variable selection,
+if-statement evaluation) so is minimal in what it supports by design.")
+    (license license:expat)))
+
+(define-public go-github-com-danielgtaylor-shorthand-v2
+  (package
+    (name "go-github-com-danielgtaylor-shorthand-v2")
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/danielgtaylor/shorthand")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17s4jjzfz10lavwnir8cd6nwsf15hrm38y87f7w2pi9hv40x7vn9"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/danielgtaylor/shorthand/cmd/j
+            (delete-file-recursively "cmd")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/danielgtaylor/shorthand/v2"
+      #:test-flags
+      #~(list "-vet=off")))  ;Go@1.24 forces vet, but tests are not ready yet.
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-fxamacker-cbor-v2
+           go-github-com-danielgtaylor-mexpr))
+    (home-page "https://github.com/danielgtaylor/shorthand")
+    (synopsis "Structured Data Shorthand Syntax")
+    (description
+     "Shorthand is a superset and friendlier variant of JSON designed with
+several use-cases in mind..")
+    (license license:expat)))
+
 (define-public go-github-com-dannav-hhmmss
   (package
     (name "go-github-com-dannav-hhmmss")
