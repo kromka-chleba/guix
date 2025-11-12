@@ -161,6 +161,14 @@
                 "1lgaqgg1gh9crg435509lqdhajg1m2vgma6f7fdj1qa2yyh10443"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-agent-client-protocol-0.4.7
+  (crate-source "agent-client-protocol" "0.4.7"
+                "00ci9whii7y2nm4kp6szx9nc1ainiz41xbf384v7mbipgh33q4vn"))
+
+(define rust-agent-client-protocol-schema-0.4.11
+  (crate-source "agent-client-protocol-schema" "0.4.11"
+                "096ryvcfh32ica3yzcfzqkm75zkzf1gfajjcnjjz2zad61a49gk1"))
+
 (define rust-ahash-0.7.8
   (crate-source "ahash" "0.7.8"
                 "1y9014qsy6gs9xld4ch7a6xi9bpki8vaciawxq4p75d8qvh7f549"))
