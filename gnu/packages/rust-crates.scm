@@ -16532,6 +16532,10 @@
   (crate-source "sqlx-sqlite" "0.8.6"
                 "1siy1jhqf5flpxyrmy7rw66j0y0v2l7zjmc00c0l86rc1gkjzlf2"))
 
+(define rust-sse-stream-0.2.1
+  (crate-source "sse-stream" "0.2.1"
+                "16j734awsc6rmaxhap6z3xp6a8hr6l563dc6sckizv387k9w8kgb"))
+
 (define rust-ssh-agent-lib-0.5.1
   (crate-source "ssh-agent-lib" "0.5.1"
                 "1fmbwz0qxds2w7rsvcg9kqm9x3wwifll8wxcc3g43k2mh357rxps"
