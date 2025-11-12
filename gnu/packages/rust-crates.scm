@@ -18222,6 +18222,10 @@
   (crate-source "tree-sitter-python" "0.23.6"
                 "012bgzycya91lpdbrrr8xnw9xjz116nf1w61c2pwxapk4ym5l1ix"))
 
+(define rust-tree-sitter-ruby-0.21.0
+  (crate-source "tree-sitter-ruby" "0.21.0"
+                "1cgh847mc8fs98j82k40l6ci0q986k208wdpszdg4wh7gil1y0y0"))
+
 (define rust-tree-sitter-ruby-0.23.1
   (crate-source "tree-sitter-ruby" "0.23.1"
                 "15cz4h1sfgf838r2pmf7vg9ahh0kwgkvvnjgbdbrrfzn9vm8815y"))
