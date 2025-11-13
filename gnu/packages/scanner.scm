@@ -5,6 +5,7 @@
 ;;; Copyright © 2017, 2019, 2020, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2022 João Gabriel <joaog.bastos@protonmail.ch>
+;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -238,6 +239,7 @@ package contains the library, but no drivers.")
        ((#:phases phases)
         `(modify-phases ,phases
            (delete 'disable-backends)
+           (delete 'remove-dll.conf)
            (add-after 'disable-failing-tests 'disable-failing-backend-tests
              (lambda _
                ;; Disable test that fails on i686:
