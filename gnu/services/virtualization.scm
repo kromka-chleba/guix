@@ -1897,7 +1897,9 @@ is added to the OS specified in CONFIG."
                       "-m" (number->string #$memory-size)
                       #$@net-options
                       #$@options
-                      "--hda" #+(system-image image)
+                      "--hda" #+(if (image? image)
+                                    (system-image image)
+                                    image)
 
                       ;; Cause the service to be respawned if the guest
                       ;; reboots (it can reboot for instance if it did not
