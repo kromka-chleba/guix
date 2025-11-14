@@ -83,6 +83,7 @@
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
+;;; Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4723,4 +4724,26 @@ configure input, and customize Wayfire plugins.")
     (description
      "A drop-in replacement for the wlroots scene API that allows wayland
 compositors to render surfaces with eye-candy effects.")
+    (license license:expat)))
+
+(define-public swaykbdd
+  (package
+    (name "swaykbdd")
+    (version "1.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/artemsen/swaykbdd")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "1yvzh4yjamccjf75sf0cy3m89mjqhzs9finwyx5zil6zjagydm8n"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config))
+    (inputs (list json-c))
+    (home-page "https://github.com/artemsen/swaykbdd")
+    (synopsis "Per-window keyboard layout switcher for sway/wayland")
+    (description
+     "@command{swaykbdd} is a small daemon that allows per-window keyboard
+layout switching under Sway and other Wayland compositors.")
     (license license:expat)))
