@@ -1011,7 +1011,7 @@ makeinfo OPTIONS."
                      grep
                      sed
                      tar
-                     texinfo-7
+                     texinfo
                      (texlive-local-tree
                       (list
                        texlive-epsf
@@ -1077,7 +1077,7 @@ makeinfo OPTIONS."
                                            "~%~%Failed to produce \
 PDF for language '~a'!~%~%"
                                            language)))
-                         (apply invoke #$(file-append texinfo-7 "/bin/texi2any")
+                         (apply invoke #$(file-append texinfo "/bin/texi2any")
                                 "--pdf" "-o"
                                 (string-append #$output "/"
                                                (normalize language)

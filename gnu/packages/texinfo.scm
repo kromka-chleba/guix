@@ -46,7 +46,7 @@
   #:use-module (gnu packages perl-compression)
   #:use-module (gnu packages readline))
 
-(define-public texinfo
+(define-public texinfo-6
   (package
     (name "texinfo")
     (version "6.8")
@@ -111,7 +111,7 @@ is on expressing the content semantically, avoiding physical markup commands.")
 
 (define-public texinfo-7
   (package
-    (inherit texinfo)
+    (inherit texinfo-6)
     (version "7.2")
     (source (origin
               (method url-fetch)
@@ -121,12 +121,12 @@ is on expressing the content semantically, avoiding physical markup commands.")
                (base32
                 "19k38dqmsk4p03h6yr7p1p7498wpl6f8i06bhbx17wdyixwdfa83"))
               (patches (search-patches "texinfo-7-perl-compat.patch"))))
-    (inputs (modify-inputs (package-inputs texinfo)
+    (inputs (modify-inputs (package-inputs texinfo-6)
               (append perl-archive-zip           ;needed for 'tex2any --epub3'
                       perl-unicode-eastasianwidth perl-text-unidecode
                       perl-libintl-perl)))
     (arguments
-     (substitute-keyword-arguments (package-arguments texinfo)
+     (substitute-keyword-arguments (package-arguments texinfo-6)
        ((#:configure-flags flags
          ''())
         #~(cons* "--with-external-Unicode-EastAsianWidth"
@@ -156,8 +156,10 @@ is on expressing the content semantically, avoiding physical markup commands.")
                     `("PERL5LIB" prefix
                       ,(cons* (dirname zip) mods))))))))))))
 
+(define-public texinfo texinfo-7)
+
 (define-public texinfo-5
-  (package (inherit texinfo)
+  (package (inherit texinfo-6)
     (version "5.2")
     (source (origin
               (method url-fetch)
@@ -169,7 +171,7 @@ is on expressing the content semantically, avoiding physical markup commands.")
                 "1njfwh2z34r2c4r0iqa7v24wmjzvsfyz4vplzry8ln3479lfywal"))))))
 
 (define-public texinfo-4
-  (package (inherit texinfo)
+  (package (inherit texinfo-6)
     (version "4.13a")
     (source (origin
               (method url-fetch)
@@ -220,7 +222,7 @@ is on expressing the content semantically, avoiding physical markup commands.")
   ;; the dependency on Perl that 'makeinfo' drags.
   ;; Texinfo version must be at least 7.0, which fixed crashes in a pt_BR
   ;; locale; see <https://git.savannah.gnu.org/cgit/texinfo.git/plain/NEWS>.
-  (package/inherit texinfo-7
+  (package/inherit texinfo
     (name "info-reader")
     (arguments
      `(,@(substitute-keyword-arguments (package-arguments texinfo)
