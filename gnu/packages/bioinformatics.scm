@@ -1744,6 +1744,17 @@ tests in large cohorts and biobanks (SAIGE-GENE+).")
         (base32 "16r6m8p90rnb4hxl86fz3kbals3626232i8fj0zhhd23p89z3w4v"))))
     (properties `((upstream-name . "sigfit")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'gcc-14-compatibility
+            (lambda _
+              (substitute* "configure"
+                ;; Modifying src/Makevars directly is overruled.
+                (("config\\(\\)\"")
+                 "config()\"
+echo \"PKG_CXXFLAGS+=-g -O2 -Wno-error=changes-meaning\" >> src/Makevars")))))))
     (native-inputs (list r-codetools))
     (propagated-inputs (list r-rcpp
                              r-rstan
@@ -13163,8 +13174,8 @@ GenomicRanges operations.")
       (license license:gpl2))))
 
 (define-public r-skitools
-  (let ((commit "22d107d32f063eb891eb5e7fb36996d1c0b0d2bc")
-        (revision "1"))
+  (let ((commit "ba322dcc2c0ca24a7f3dabecfb37f95e0e2186d1")
+        (revision "2"))
     (package
       (name "r-skitools")
       (version (git-version "0.0.0.9000" revision commit))
@@ -13176,9 +13187,19 @@ GenomicRanges operations.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1977d9bkdk9l2n6niahfj9vksh9l1ga4g7c3b3x27lj1gc0qgr4z"))))
+                  "1za371x1cmkmlmicbhzxwycg7g1z9q3d5j7ia2rzayf30s9rcc47"))))
       (properties `((upstream-name . "skitools")))
       (build-system r-build-system)
+      (arguments
+       (list
+        #:phases
+        '(modify-phases %standard-phases
+           (add-after 'unpack 'disable-bad-test
+             (lambda _
+               ;; See https://github.com/mskilab-org/skitools/issues/11
+               (substitute* "tests/testthat/test_skitools.R"
+                 ((".*test ra.merge.*" m)
+                  (string-append m "skip('guix')\n"))))))))
       (propagated-inputs
        (list r-biostrings
              r-complexheatmap

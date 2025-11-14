@@ -44,6 +44,7 @@
 ;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Samuel Sehnert <mail@buffersquid.com>
 ;;; Copyright © 2025 Julian Flake <julian@flake.de>
+;;; Copyright © 2025 Ahmad Jarara <ajarara@fastmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -117,6 +118,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages rust)
+  #:use-module (gnu packages security-token)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages textutils)
@@ -174,6 +176,37 @@ records.  It can forward other requests to configured resolvers.")
 programming language.  It has very few features, and can only serve static
 files.  It uses async I/O, and should be quite efficient even when running on
 low-end hardware and serving many concurrent requests.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public age-plugin-yubikey
+  (package
+    (name "age-plugin-yubikey")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "age-plugin-yubikey" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0vp85bf39a89pzy88icjsyf9a7gmkasbppm87zww7pvxr65qaj9z"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'install-extras
+           (lambda* (#:key outputs #:allow-other-keys)
+             (invoke "cargo" "run" "--example" "generate-docs")
+             (install-file "target/manpages/age-plugin-yubikey.1.gz"
+                           (string-append (assoc-ref outputs "out")
+                                          "/share/man/man1")))))))
+    (native-inputs (list pkg-config))
+    (inputs (cons* pcsc-lite openssl
+                   (cargo-inputs 'age-plugin-yubikey)))
+    (home-page "https://github.com/str4d/age-plugin-yubikey")
+    (synopsis "YubiKey plugin for age clients")
+    (description
+     "This package provides @code{YubiKey} plugin for age clients.")
     (license (list license:expat license:asl2.0))))
 
 (define-public alfis
@@ -867,6 +900,32 @@ Javascript, Python, Rust and Scheme.")
      "Drill is a HTTP load testing application written in Rust inspired by
 Ansible syntax.  Benchmark files can be written in YAML.")
     (license license:gpl3)))
+
+(define-public dumbpipe
+  (package
+    (name "dumbpipe")
+    (version "0.32.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "dumbpipe" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1z3jxjylb2w3lgqf7g1dirnk7f37scim27xliii4pz4dx9lv33jf"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      ;; Tests require network access.
+      #:tests? #f))
+    (inputs (cargo-inputs 'dumbpipe))
+    (home-page "https://github.com/n0-computer/dumbpipe")
+    (synopsis "CLI tool to pipe data over the network, with NAT hole punching")
+    (description
+     "This package provides a cli tool to pipe data over the network, with NAT
+hole punching.  It uses iroh to establish peer-to-peer connections between
+systems.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public dutree
   (package
@@ -1902,6 +1961,31 @@ specified image or color, easing the process of theme creation.")
 @code{cffi} bindings as well as rust binaries as python packages.")
     (license (list license:expat license:asl2.0))))
 
+(define-public mollysocket
+  (package
+    (name "mollysocket")
+    (version "1.6.0")
+    (source (origin
+              (method url-fetch)
+              (uri (crate-uri "mollysocket" version))
+              (file-name (string-append name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "08kgcwc1b9s221sy2pjmzxz4i8iagkfj8wr1k2c6d4pbgzgwqm8y"))))
+    (build-system cargo-build-system)
+    (arguments
+     '(#:install-source? #f
+       #:tests? #f)) ; tests require internet
+    (inputs (cons* openssl sqlite (cargo-inputs 'mollysocket)))
+    (native-inputs (list pkg-config))
+    (home-page "https://github.com/mollyim/mollysocket")
+    (synopsis "Signal push notifications through UnifiedPush")
+    (description "MollySocket is a UnifiedPush provider that receives push
+notifications from Signal through the Molly app, and pushes them to a user's
+distributor.  Message encryption keys are never stored nor received by
+Mollysocket.")
+    (license license:agpl3+)))
+
 (define-public netavark
   (package
     (name "netavark")
@@ -2831,17 +2915,18 @@ blanks grouped by language.")
 (define-public typst
   (package
     (name "typst")
-    (version "0.13.1")
+    (version "0.14.0")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "typst-cli" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "10xnxf6z78hcck7647vfq9vigrvvz0a6g4ha4l4vn5zlarrxwd56"))))
+        (base32 "0dzl7q637mhlkd026aknjk566hzkyr6ivg7qcwxivf1img24fvb3"))))
     (build-system cargo-build-system)
     (arguments
      (list
+      #:rust rust-1.88
       #:install-source? #f
       #:modules '((guix build cargo-build-system)
                   (guix build utils)

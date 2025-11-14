@@ -241,7 +241,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.58")
+    (version "0.59")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -250,7 +250,7 @@ formal verification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "191hsznsmsjn8100n50qsh3ng8wgrnyfhr7qcnb8yskiwqp37pjh"))))
+                "110hvmwspp7bprwwilcwb8kw6wcqrj9z214269fa75j9027k5l0c"))))
     (home-page "https://github.com/YosysHQ/abc/")
     (description "ABC is a program for sequential logic synthesis and
 formal verification.  This is the Yosyshq fork of ABC.")
@@ -2335,7 +2335,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.58")
+    (version "0.59")
     (source
      (origin
        (method git-fetch)
@@ -2344,7 +2344,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fja71y1wkqdwc3cwwk9ifaf33hhnxr8khlj9fhadbcc66rg1s56"))))
+        (base32 "1viah5rm22d0c2v1fsm04brhavl4522h36gv80d7647alkvdfqb9"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2713,7 +2713,7 @@ parallel computing platforms.  It also supports serial execution.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.58")
+    (version "0.59")
     (source
      (origin
        (method git-fetch)
@@ -2721,7 +2721,7 @@ parallel computing platforms.  It also supports serial execution.")
               (url "https://github.com/YosysHQ/yosys")
               (commit (string-append "v" version))))
        (sha256
-        (base32 "13095d587dvnj6n1fhw5whda7qhafmmng0qz6qa52cdxriz63kka"))
+        (base32 "0bgijlivkhq338rbd056pjhdbjgwbd8l10afzp2dzlhn03j4l140"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -2759,9 +2759,11 @@ parallel computing platforms.  It also supports serial execution.")
           (replace 'configure
             (lambda* (#:key make-flags #:allow-other-keys)
               (apply invoke "make" "config-gcc" make-flags)))
-          (add-after 'configure 'use-external-abc
+          (add-after 'configure 'configure-makefile
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* '("Makefile")
+                (("ENABLE_EDITLINE \\:= 0")
+                 "ENABLE_EDITLINE := 1")
                 (("ABCEXTERNAL \\?=")
                  (string-append "ABCEXTERNAL = "
                                 (search-input-file inputs "/bin/abc"))))))
@@ -2790,6 +2792,7 @@ parallel computing platforms.  It also supports serial execution.")
                          gawk ;for the tests and "make" progress pretty-printing
                          iverilog ;for the tests
                          pkg-config
+                         perl
                          python
                          tcl)) ;tclsh for the tests
     (inputs (list abc-yosyshq

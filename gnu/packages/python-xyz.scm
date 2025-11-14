@@ -5495,6 +5495,25 @@ a platform independent file lock in Python, which provides a simple way of
 inter-process communication.")
     (license license:unlicense)))
 
+(define-public python-filelock-next
+  (package
+    (inherit python-filelock)
+    (name "python-filelock")
+    (version "3.20.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "filelock" version))
+       (sha256
+        (base32 "1x0k9hrk8gr91hfb6ss6cwlq4p0pvi40nsg6skhl5gn69qxr87ki"))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-mock
+           python-pytest-timeout))))
+
 (define-public python-seedir
   (package
     (name "python-seedir")
@@ -33990,13 +34009,13 @@ development, testing, production]};
   ;; TODO: Rename to pudb as it's a final program.
   (package
     (name "python-pudb")
-    (version "2025.1.1")
+    (version "2025.1.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pudb" version))
        (sha256
-        (base32 "0wjbvj94cww49pg7prnh5yi81v4m5f0sl816c51jcy8wag3lbhmp"))))
+        (base32 "1x210l6wxpn7k8jbca7ahzgsld938cnb6jlg3nrq8vr6xza75zb9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -34014,6 +34033,7 @@ development, testing, production]};
      (list python-jedi
            python-packaging
            python-pygments
+           python-typing-extensions
            python-urwid
            python-urwid-readline))
     (home-page "https://documen.tician.de/pudb/")

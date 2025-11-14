@@ -29209,7 +29209,7 @@ running into parallelism problems when having to change directory.")
 (define-public sbcl-simple-matrix
   (package
     (name "sbcl-simple-matrix")
-    (version "3.4")
+    (version "3.5")
     (source
      (origin
        (method git-fetch)
@@ -29218,7 +29218,7 @@ running into parallelism problems when having to change directory.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-matrix" version))
        (sha256
-        (base32 "1zxan2v4rcqdplxwfy02ylawlm59j1583jk894jl2aa946v66zxj"))))
+        (base32 "1zdj16vy1h24ypm7kjb20pzniclqm6xdndb5kh3f6kcgfsmc6m06"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (synopsis "Matrix library for Common Lisp")
@@ -33573,7 +33573,7 @@ precisely controls the behavior of the parser via Common Lisp restarts.")
 (define-public sbcl-usocket
   (package
     (name "sbcl-usocket")
-    (version "0.8.8")
+    (version "0.8.9")
     (source
      (origin
        (method git-fetch)
@@ -33582,7 +33582,7 @@ precisely controls the behavior of the parser via Common Lisp restarts.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-usocket" version))
        (sha256
-        (base32 "13j2hyl7j06vl8hh3930wd3bi2p0pcg4dcd243al31fgw4m0bvag"))))
+        (base32 "0msrrp069vrma70fr0wzw5jc94r796ha53dhpq8bdm1h3fm7f103"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
      (list sbcl-rt))

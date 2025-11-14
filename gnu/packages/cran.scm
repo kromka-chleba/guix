@@ -41,6 +41,7 @@
 ;;; Copyright © 2024 Marco Baggio <guix@mawumag.com>
 ;;; Copyright © 2024, 2025 Spencer King <spencer.king@wustl.edu>
 ;;; Copyright © 2024-2025 Tor-björn Claesson <tclaesson@gmail.com>
+;;; Copyright © 2025 Jonas Freimuth <jonas.freimuth@posteo.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1823,7 +1824,7 @@ code for possible problems.")
 (define-public r-colorout
   (package
     (name "r-colorout")
-    (version "1.2-2")
+    (version "1.3-3")
     (source
      (origin
        (method git-fetch)
@@ -1832,7 +1833,7 @@ code for possible problems.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rsx69wjpa73c6x2hacvvvbzdzxn7wg06gizf97kasjdlb7azmp3"))))
+        (base32 "101mkdfk8w520vxqb5cl3spi8brgs5nrc6ciqidpxydmynp879fm"))))
     (build-system r-build-system)
     (arguments
      (list
@@ -12801,6 +12802,18 @@ weights.")
      (list
       #:phases
       '(modify-phases %standard-phases
+         ;; write_file_attachments copies files from the store but does not
+         ;; check their permissions. The files end up with read-only
+         ;; permissions.  As a result, they cannot be overwritten in
+         ;; subsequent passes.  This is especially problematic in downstream
+         ;; packages like r-bslib.
+         (add-after 'unpack 'fix-file-permissions
+           (lambda _
+             (substitute* "R/layers.R"
+               (("recursive = TRUE")
+                "recursive = TRUE, copy.mode = FALSE")
+               (("fs::file_copy\\(src, dest, overwrite = TRUE\\)")
+                "file.copy(src, dest, overwrite = TRUE, copy.mode = FALSE)"))))
          ;; One test fails when the current locale is the C locale.
          (add-before 'check 'set-test-locale
            (lambda _ (setenv "LC_ALL" "en_US.UTF-8"))))))
@@ -12896,12 +12909,11 @@ Markdown documents.  More generally, icons can be inserted in any
                      "inst/lib/bs5/dist/js/bootstrap.bundle.min.js")))))
     (properties
      `((upstream-name . "bslib")
-       (updater-ignored-native-inputs . ("r-rmarkdown" "r-shiny"))))
+       (updater-ignored-native-inputs . ("r-rmarkdown" "r-shiny"))
+       (updater-extra-native-inputs . ("r-testthat" "r-yaml"))))
     (build-system r-build-system)
     (arguments
      (list
-      ;; Some tests require shiny, leading to a dependency cycle.
-      #:tests? #false
       #:modules '((guix build r-build-system)
                   (guix build minify-build-system)
                   (guix build utils)
@@ -12910,6 +12922,19 @@ Markdown documents.  More generally, icons can be inserted in any
                            (guix build minify-build-system))
       #:phases
       #~(modify-phases (@ (guix build r-build-system) %standard-phases)
+          ;; When using themes, bslib copies theme dependencies, such as
+          ;; bootstrap.bundle.min.js or selectize.min.js, into a temporary
+          ;; directory.  Since these files are copied from the read-only
+          ;; store, they end up with read-only permissions.  As a result,
+          ;; bslib cannot overwrite these files as needed, because it has no
+          ;; permission to write to the files.
+          (add-after 'unpack 'fix-file-permissions
+            (lambda _
+              (substitute* "R/bs-dependencies.R"
+                (("overwrite = TRUE")
+                 (string-append "overwrite = TRUE, copy.mode = FALSE"))
+                (("file.copy\\(precompiled_css, out_file\\)")
+                 "file.copy(precompiled_css, out_file, copy.mode = FALSE)"))))
           (add-after 'unpack 'process-javascript
             (lambda* (#:key inputs #:allow-other-keys)
               (with-directory-excursion "inst/"
@@ -12927,7 +12952,37 @@ Markdown documents.  More generally, icons can be inserted in any
                             (,(assoc-ref inputs "js-bootstrap4-bundle")
                              . "lib/bs4/dist/js/bootstrap.bundle.min.js")
                             (,(assoc-ref inputs "js-bootstrap5-bundle")
-                             . "lib/bs5/dist/js/bootstrap.bundle.min.js")))))))))
+                             . "lib/bs5/dist/js/bootstrap.bundle.min.js"))))))
+          ;; Some tests require shiny, leading to a dependency cycle.
+          (add-after 'unpack 'disable-bad-tests
+            (lambda _
+              (with-directory-excursion "tests/testthat/"
+                (substitute* "test-layout.R"
+                  ((".*layout_columns\\(\\) with col_widths.*" m)
+                   (string-append m "skip('skip');\n")))
+                (substitute* "test-navs-legacy.R"
+                  ((".*navset_bar\\(\\) warns if using deprecated args.*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*navset_bar\\(\\) warns if `navbar_options\\(\\)` collide with direct deprecated options.*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*shiny:navbarPage\\(\\) is unaffected.*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*navbar markup snapshots.*" m)
+                   (string-append m "skip('skip');\n")))
+                (substitute* "test-page.R"
+                  ((".*page_sidebar\\(\\).*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*save_html\\(\\) works on components and pages with a custom theme.*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*functions can handle trailing commas.*" m)
+                   (string-append m "skip('skip');\n")))
+                (substitute* "test-sidebar.R"
+                  ((".*sidebar\\(\\) - assigns a random `id` if collapsible and `id` not provided.*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*sidebar\\(\\) - sets `aria-expanded` correctly on collapse toggle.*" m)
+                   (string-append m "skip('skip');\n"))
+                  ((".*sidebar\\(\\) - warns if `max_height_mobile` used with `open != 'always'.*" m)
+                   (string-append m "skip('skip');\n")))))))))
     (propagated-inputs
      (list r-base64enc
            r-cachem
@@ -12955,7 +13010,9 @@ Markdown documents.  More generally, icons can be inserted in any
            (uri "https://raw.githubusercontent.com/twbs/bootstrap/v5.3.1/dist/js/bootstrap.bundle.js")
            (sha256
             (base32
-             "1bp0a2fin80hwxvd260r1jk57snsgz74vahid64yb2sgj0rlmj8a"))))))
+             "1bp0a2fin80hwxvd260r1jk57snsgz74vahid64yb2sgj0rlmj8a"))))
+       ("r-testthat" ,r-testthat)
+       ("r-yaml" ,r-yaml)))
     (home-page "https://rstudio.github.io/bslib/")
     (synopsis "Custom Bootstrap Sass themes for shiny and rmarkdown")
     (description
@@ -19674,6 +19731,22 @@ normalizations, minimum variance matching, and so on.")
          "1xvcd97ikqsfdpk2fddy3k0z1ajqga7nv9bgac9c1wnjk1gqrpgh"))))
     (properties `((upstream-name . "SDMTools")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-constants
+           (lambda _
+             ;; Older versions of R used to define PI.  As of R 4.5.0 the
+             ;; definition from the default math headers is supposed to be
+             ;; used instead.
+             (substitute* "src/pointinpolygon.c"
+               (("double TWOPI = " m)
+                (string-append "#define PI M_PI\n" m)))
+             (with-fluids ((%default-port-encoding "ISO-8859-1"))
+               (substitute* "src/vincenty.geodesics.c"
+                 (("#include <math.h>" m)
+                  (string-append m "\n#define PI M_PI")))))))))
     (propagated-inputs (list r-r-utils))
     (home-page "https://www.rforge.net/SDMTools/")
     (synopsis "Species distribution modelling tools")
@@ -22091,18 +22164,18 @@ posterior predictive checking, and quantifying uncertainty.")
 (define-public r-import
   (package
     (name "r-import")
-    (version "1.3.2")
+    (version "1.3.4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "import" version))
        (sha256
         (base32
-         "0ngakg8jqn76c05hrglp4hmmwvm5a9ldc9s1i83a9rc8lni6nb1j"))))
+         "0i87mlhjig7hzk8fgk3yij1shfwbwa4r05jagibqlv7rabls260g"))))
     (build-system r-build-system)
     (native-inputs
      (list r-knitr r-rmarkdown r-testthat))
-    (home-page "https://github.com/smbache/import")
+    (home-page "https://rticulate.github.io/import/")
     (synopsis "Import mechanism for R")
     (description
      "This is an alternative mechanism for importing objects from packages.
@@ -29748,14 +29821,14 @@ package provides a minimal R interface by relying on the Rcpp package.")
 (define-public r-rcppparallel
   (package
     (name "r-rcppparallel")
-    (version "5.1.10")
+    (version "5.1.11-1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "RcppParallel" version))
        (sha256
         (base32
-         "0kgkjbiprfw90rdwq352z4jbnwb98s3dsv2xyzkzi413rq2709gb"))
+         "0qk3gaia5g1da5yqd9a3jcwp1f4jldj1a4r9cqpxbjqjh9a87371"))
        (modules '((guix build utils)))
        (snippet
         '(delete-file-recursively "src/tbb/"))))
@@ -38104,7 +38177,7 @@ provided.")
      `((upstream-name . "XML")))
     (build-system r-build-system)
     (inputs
-     (list libxml2 zlib))
+     (list libxml2-with-zlib zlib))
     (native-inputs
      (list pkg-config))
     (home-page "https://www.omegahat.net/RSXML")
@@ -47747,40 +47820,6 @@ package.")
      "This is a subset of the original spatstat package, containing the
 user-level code from spatstat which performs geometrical operations, except
 for the geometry of linear networks.")
-    (license license:gpl2+)))
-
-(define-public r-spatstat-core
-  (package
-    (name "r-spatstat-core")
-    (version "2.4-4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (cran-uri "spatstat.core" version))
-       (sha256
-        (base32
-         "0fyi8y1z919nzn47kaviln7gflhcp5qdi3gfvf7nwkdix3pkk373"))))
-    (properties `((upstream-name . "spatstat.core")))
-    (build-system r-build-system)
-    (propagated-inputs
-     (list r-abind
-           r-goftest
-           r-matrix
-           r-mgcv
-           r-nlme
-           r-rpart
-           r-spatstat-data
-           r-spatstat-geom
-           r-spatstat-random
-           r-spatstat-sparse
-           r-spatstat-utils
-           r-tensor))
-    (native-inputs (list r-spatstat-model))
-    (home-page "https://spatstat.org/")
-    (synopsis "Core functionality of the spatstat package")
-    (description
-     "This is a subset of the original spatstat package, containing all of the
-user-level code from spatstat, except for the code for linear networks.")
     (license license:gpl2+)))
 
 (define-public r-spatstat-linnet

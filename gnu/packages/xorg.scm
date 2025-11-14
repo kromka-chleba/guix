@@ -6697,7 +6697,7 @@ without losing any state.  It can also be used to forward full desktops from
 X11 servers, Windows, or macOS.")
     (license license:gpl2+)))
 
-(define-public spra-5
+(define-public xpra-5
   (package
     (inherit xpra)
     (name "xpra")

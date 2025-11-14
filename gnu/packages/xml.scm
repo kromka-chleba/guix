@@ -283,18 +283,17 @@ project (but it is usable outside of the Gnome platform).")
                 (base32
                  "17w0a622466k2hi5nln276la6rzfr9xaip3lqj71hmyvxyhmf0bq")))))))
 
-(define-public libxml2-xpath0
-  (package/inherit libxml2
-    (name "libxml2-xpath0")
-    (source (origin
-              (inherit (package-source libxml2))
-              (patches (append (search-patches
-                                "libxml2-xpath0-Add-option-xpath0.patch")
-                               (origin-patches (package-source libxml2))))))
-    (description
-     "Libxml2-xpath0 is like libxml2 but with a patch applied that
-provides an @code{--xpath0} option to @command{xmllint} that enables it
-to output XPath results with a null delimiter.")))
+;; We need this for r-xml, which claims to support parsing gzipped XML files.
+;; This depends on the zlib feature, which is deprecated and will be removed
+;; in future releases of libxml2.
+(define-public libxml2-with-zlib
+  (hidden-package
+   (package
+     (inherit libxml2)
+     (arguments
+      (substitute-keyword-arguments (package-arguments libxml2)
+        ((#:configure-flags flags #~'())
+         #~(cons "--with-zlib" #$flags)))))))
 
 (define-deprecated-package python-libxml2
   libxml2)
