@@ -118,7 +118,8 @@ is on expressing the content semantically, avoiding physical markup commands.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "19k38dqmsk4p03h6yr7p1p7498wpl6f8i06bhbx17wdyixwdfa83"))))
+                "19k38dqmsk4p03h6yr7p1p7498wpl6f8i06bhbx17wdyixwdfa83"))
+              (patches (search-patches "texinfo-7-perl-compat.patch"))))
     (inputs (modify-inputs (package-inputs texinfo)
               (append perl-archive-zip           ;needed for 'tex2any --epub3'
                       perl-unicode-eastasianwidth perl-text-unidecode
