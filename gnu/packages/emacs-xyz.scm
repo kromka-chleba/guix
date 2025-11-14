@@ -38093,6 +38093,38 @@ global minor mode whose purpose is to automatically feed TRAMP sub-processes
 with passwords for paths matching regexps.")
       (license license:gpl3+))))
 
+(define-public emacs-ssh-tunnels
+  (let ((commit "5010d779edef33f869065231b99d74723c9c7eaf"))
+    (package
+      (name "emacs-ssh-tunnels")
+      (version (git-version "1.0" "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/death/ssh-tunnels")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "15pwgc9s7f5fjmx2savjrpwr6qcpp0s9iy0y10abpy63np4krc62"))))
+      (build-system emacs-build-system)
+      (inputs (list openssh))
+      (propagated-inputs (list emacs-helm))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-ssh-location
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "ssh-tunnels.el"
+                  (("\"ssh\"")
+                   (search-input-file inputs "/bin/ssh"))))))))
+      (home-page "https://github.com/death/ssh-tunnels")
+      (synopsis "Manage SSH tunnels from Emacs")
+      (description "This package provides @code{auto-ssh-tunnels-mode} and customs that describes ssh tunnels configurations and @code{emacs-helm} interface to modify and act on tunnels")
+      (license license:expat))))
+
 (define-public emacs-eacl
   (package
     (name "emacs-eacl")
