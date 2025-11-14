@@ -2840,7 +2840,7 @@ memoized as a function of '%current-system'."
   ;; Also, use (%BOOT0-INPUTS) to avoid building Perl once more.
   (package
     (inherit texinfo)
-    (source (bootstrap-origin (package-source texinfo)))
+    (source (bootstrap-origin (package-source texinfo-6)))
     (native-inputs '())
     (inputs `(,@(%boot0-inputs)
               ("perl" ,perl-boot0)))
