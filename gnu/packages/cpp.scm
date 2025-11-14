@@ -3156,6 +3156,33 @@ of reading and writing XML.")
     ;; details.
     (license license:gpl2+)))
 
+(define-public rapidyaml
+  (package
+    (name "rapidyaml")
+    (version "0.1.0") ;using 0.1.0 because it is what jsonnet uses
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/biojppm/rapidyaml")
+             (commit "v0.1.0")
+             (recursive? #t))) ;For c4core submodule by the same author
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h7p3rmk3p7h08lgc6g2m2wmk0vlp16yyiljv67r03x7aw74b21f"))
+       (modules '((guix build utils)))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f ;FIXME: modify check phase to have working tests
+       #:configure-flags '("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")))
+    (home-page "https://github.com/biojppm/rapidyaml")
+    (synopsis "YAML parser/generator for C++")
+    (description
+     "rapidyaml, or ryml for short, is a C++ library to parse and emit YAML,
+and do it fast, on everything from x64 to bare-metal chips without operating
+system.")
+    (license license:expat)))
+
 (define-public jsonnet
   (package
     (name "jsonnet")
