@@ -20773,7 +20773,7 @@ into 22 character URL-safe base64 slug representation.")
 (define-public python-rich
   (package
     (name "python-rich")
-    (version "13.7.1")
+    (version "14.2.0")
     (source
       (origin
         ;; There are no tests in the PyPI tarball.
@@ -20784,7 +20784,7 @@ into 22 character URL-safe base64 slug representation.")
         (file-name (git-file-name name version))
         (sha256
          (base32
-          "0jvkcp473c0icbb8md3grc3285j2cy0z0swxgk2g67d9n0zfdfzc"))))
+          "0zwjry4ylqncqvxrywp0km96jng4f288dgz8kz5vymk7nr2z21m1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -20805,7 +20805,7 @@ into 22 character URL-safe base64 slug representation.")
     (propagated-inputs
      (list python-markdown-it-py python-pygments))
     (native-inputs
-     (list python-poetry-core python-pytest))
+     (list python-poetry-core python-pytest which))
     (home-page "https://github.com/willmcgugan/rich")
     (synopsis "Render rich text and more to the terminal")
     (description
