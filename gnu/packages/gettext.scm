@@ -138,7 +138,13 @@
                  '()))
 
        ;; When tests fail, we want to know the details.
-       #:make-flags #~'("VERBOSE=yes")))
+       #:make-flags #~'("VERBOSE=yes"
+                       #$@(if (system-hurd?)
+                              (list (string-append "XFAIL_TESTS="
+                                                   ;; Gnulib tests.
+                                                   " test-open"
+                                                   " test-openat"))
+                              '()))))
     (home-page "https://www.gnu.org/software/gettext/")
     (synopsis
      "Tools and documentation for translation (used to build other packages)")
