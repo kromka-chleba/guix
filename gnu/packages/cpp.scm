@@ -3186,7 +3186,7 @@ system.")
 (define-public jsonnet
   (package
     (name "jsonnet")
-    (version "0.17.0")
+    (version "0.20.0")
     (source
      (origin
        (method git-fetch)
@@ -3195,9 +3195,9 @@ system.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ddz14699v5lqx3dh0mb7hfffr6fk5zhmzn3z8yxkqqvriqnciim"))
+        (base32 "1mnz99kqj00ksz22ji36alql6pii94m9qgi9a9x5w4m5sq9lkm8n"))
        (modules '((guix build utils)))
-       (patches (search-patches "jsonnet-include-cstdint-for-gcc-13-builds.patch"))
+       (patches (search-patches "jsonnet-use-system-rapidyaml.patch"))
        (snippet
         #~(begin
             (rename-file "third_party/md5" ".md5")
@@ -3205,14 +3205,17 @@ system.")
             (delete-file-recursively "doc/third_party")
             (substitute* '("core/vm.cpp")
               (("#include \"json.hpp\"") "#include <nlohmann/json.hpp>"))
+            (substitute* '("setup.py")
+              (("PLACEHOLDER_RAPIDYAML_DIR") #$rapidyaml))
             (mkdir "third_party")
             (rename-file ".md5" "third_party/md5")))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags '("-DUSE_SYSTEM_GTEST=ON" "-DUSE_SYSTEM_JSON=ON"
+                           "-DUSE_SYSTEM_RAPIDYAML=ON"
                            "-DBUILD_STATIC_LIBS=OFF")))
     (native-inputs
-     (list googletest pkg-config))
+     (list googletest pkg-config rapidyaml))
     (inputs
      (list nlohmann-json))
     (home-page "https://jsonnet.org/")

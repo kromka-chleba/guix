@@ -1,0 +1,57 @@
+Jsonnet use vendored dependency rapidyaml. To use unvendored dependency
+jsonnet's build system must be tweaked. This patch does some part. The
+rest is done by snippets.
+
+--- a/CMakeLists.txt	1970-01-01 01:00:01.000000000 +0100
++++ b/CMakeLists.txt	1970-01-01 01:00:01.000000000 +0100
+@@ -13,6 +13,7 @@
+ option(BUILD_SHARED_BINARIES "Link binaries to the shared libjsonnet instead of the static one." OFF)
+ option(USE_SYSTEM_GTEST "Use system-provided gtest library" OFF)
+ option(USE_SYSTEM_JSON "Use the system-provided json library" OFF)
++option(USE_SYSTEM_RAPIDYAML "Use the system-provided ryml library" OFF)
+ set(GLOBAL_OUTPUT_PATH_SUFFIX "" CACHE STRING
+     "Output artifacts directory.")
+ 
+@@ -102,6 +103,12 @@
+     add_subdirectory(third_party/json)
+ endif()
+ 
++if(USE_SYSTEM_RAPIDYAML)
++    find_package(ryml 0.1.0 REQUIRED)
++else()
++    add_subdirectory(third_party/rapidyaml/rapidyaml ryml)
++endif()
++
+ # Look for libraries in global output path.
+ link_directories(${GLOBAL_OUTPUT_PATH})
+ 
+@@ -121,7 +128,6 @@
+ add_subdirectory(include)
+ add_subdirectory(stdlib)
+ add_subdirectory(third_party/md5)
+-add_subdirectory(third_party/rapidyaml/rapidyaml ryml)
+ add_subdirectory(core)
+ add_subdirectory(cpp)
+ add_subdirectory(cmd)
+--- a/setup.py	1970-01-01 01:00:01.000000000 +0100
++++ b/setup.py	1970-01-01 01:00:01.000000000 +0100
+@@ -32,18 +32,7 @@
+     'core/string_utils.o',
+     'core/vm.o',
+     'third_party/md5/md5.o',
++    'PLACEHOLDER_RAPIDYAML_DIR/lib/libryml.a',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/char_traits.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/base64.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/language.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/memory_util.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/format.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/time.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/memory_resource.o',
+-    'third_party/rapidyaml/rapidyaml/ext/c4core/src/c4/error.o',
+-    'third_party/rapidyaml/rapidyaml/src/c4/yml/parse.o',
+-    'third_party/rapidyaml/rapidyaml/src/c4/yml/preprocess.o',
+-    'third_party/rapidyaml/rapidyaml/src/c4/yml/common.o',
+-    'third_party/rapidyaml/rapidyaml/src/c4/yml/tree.o',
+ ]
+ 
+ MODULE_SOURCES = ['python/_jsonnet.c']
