@@ -21968,6 +21968,31 @@ XOR, as in kademlia.")
 @code{MemoryInfo}.")
     (license license:expat)))
 
+(define-public go-github-com-wifx-gonetworkmanager-v2
+  (package
+    (name "go-github-com-wifx-gonetworkmanager-v2")
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Wifx/gonetworkmanager")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07alvhlldhpp97nynmyqsxishs0bj3z0yv4nrxsp7dv81v4brjrz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Wifx/gonetworkmanager/v2"))
+    (propagated-inputs (list go-github-com-google-uuid
+                             go-github-com-godbus-dbus-v5))
+    (home-page "https://github.com/Wifx/gonetworkmanager")
+    (synopsis "Networkmanager bindings in Go")
+    (description
+     "Go D-Bus bindings for @url{https://networkmanager.dev/, NetworkManager}.")
+    (license license:expat)))
+
 (define-public go-github-com-workiva-go-datastructures
   (package
     (name "go-github-com-workiva-go-datastructures")
