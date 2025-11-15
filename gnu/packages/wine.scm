@@ -81,7 +81,7 @@
 (define-public wine-minimal
   (package
     (name "wine-minimal")
-    (version "10.0")
+    (version "10.5")
     (source
      (origin
        (method url-fetch)
@@ -93,7 +93,7 @@
               (string-append "https://dl.winehq.org/wine/source/" dir
                              "wine-" version ".tar.xz")))
        (sha256
-        (base32 "009nmi0z60ilrlrxjj9msdqk2n2wp0jcdnflkh7b7bzgyzsv7q65"))))
+        (base32 "1g49xhxmns4yqylb667wx27vcbly5q186icrbx57fx3nyhgfqdn0"))))
     (properties '((upstream-name . "wine")))
     (build-system gnu-build-system)
     (native-inputs (list bison flex))
@@ -310,7 +310,7 @@ integrate Windows applications into your desktop.")
 (define-public wine-staging-patchset-data
   (package
     (name "wine-staging-patchset-data")
-    (version "10.0")
+    (version "10.5")
     (source
      (origin
        (method git-fetch)
@@ -319,7 +319,7 @@ integrate Windows applications into your desktop.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17lslhmad0z5im0xlan5xwsnfvnxzi6iaj8bc51sc9sslfhwlv6j"))))
+        (base32 "1hbxwdfivlyfjrdn98m335fyvm21vizf1i4fvd8j4hghkbkkyw5d"))))
     (build-system trivial-build-system)
     (native-inputs
      (list coreutils))
