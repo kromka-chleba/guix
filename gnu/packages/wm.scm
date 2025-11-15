@@ -252,6 +252,67 @@ the leaves of a full binary tree.")
 single, maximized application.")
     (license license:expat)))
 
+(define-public dankmaterialshell
+  (package
+    (name "dankmaterialshell")
+    (version "0.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AvengeMedia/DankMaterialShell")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "186n0pcibjk9va967vnwnq8gfb5p3zah96sv4gkgsp0k6931vs1w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AvengeMedia/DankMaterialShell/core/cmd/dms"
+      #:unpack-path "github.com/AvengeMedia/DankMaterialShell"
+      #:test-subdirs
+      #~(list "../../...")
+      #:test-flags
+      ;; when the whole library is tested - tests don't pass
+      ;; because they need internet connection or loginctl connection
+      #~(list "-skip"
+              "TestHandleList|TestDetectNetworkStack_Integration|TestHandle|
+TestRespondError_Loginctl|TestUpdate|TestGetCacheDir")
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-config
+            (lambda _
+              (let* ((src (string-append #$source "/quickshell"))
+                     (tgt (string-append #$output "/share/quickshell")))
+                (mkdir-p tgt)
+                (copy-recursively src tgt)))))))
+    (propagated-inputs (list quickshell qtwayland))
+    (native-inputs (list go-github-com-charmbracelet-bubbles
+                         go-github-com-charmbracelet-bubbletea
+                         go-github-com-charmbracelet-lipgloss
+                         go-github-com-charmbracelet-log
+                         go-github-com-godbus-dbus-v5
+                         go-github-com-go-git-go-git-v6
+                         go-github-com-lucasb-eyer-go-colorful
+                         go-github-com-spf13-afero
+                         go-github-com-spf13-cobra
+                         go-github-com-stretchr-testify
+                         go-github-com-wifx-gonetworkmanager-v2
+                         go-golang-org-x-exp
+                         go-golang-org-x-sys
+                         go-github-com-yaslama-go-wayland))
+    (home-page "https://github.com/AvengeMedia/DankMaterialShell")
+    (synopsis "Desktop shell for wayland compositors")
+    (description
+     "This package provides a DankMaterialShell,
+a Quickshell-based modern desktop suite for Wayland compositors
+(such as Niri, Hyprland, MangoWC and Sway).  This program is meant
+to be used in system/home modules.  To launch it manually,
+use the @code{dms} CLI program, followed by @code{-c} and path to
+the @code{.../share/quickshell} path in the package.")
+    (license license:expat)))
+
 (define-public herbstluftwm
   (package
     (name "herbstluftwm")
