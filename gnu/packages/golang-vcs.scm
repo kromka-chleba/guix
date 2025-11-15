@@ -216,6 +216,43 @@ using the Git pkt-line format used in various Git operations.")
     (description "This package provides a Git implementation library.")
     (license license:asl2.0)))
 
+(define-public go-github-com-go-git-go-git-v6
+  (package
+    (inherit go-github-com-go-git-go-git-v5)
+    (name "go-github-com-go-git-go-git-v6")
+    (version "6.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-git/go-git")
+             ;; v6.0.0 is not a release tag as of 14.11.2025
+             (commit "47b1ed2930c96d34c09a3e31abf9673fe361ec63")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vzj9vs0wqsjpwsi7mvkfs7n8gnk3qg5vhl040c5a5k8h7rlhdz4"))))
+    (arguments
+     (list
+      #:tests? #f ;requires network connection like v5
+      #:import-path "github.com/go-git/go-git/v6"))
+    (propagated-inputs (list go-golang-org-x-text
+                             go-golang-org-x-sys
+                             go-golang-org-x-net
+                             go-golang-org-x-crypto
+                             go-github-com-stretchr-testify
+                             go-github-com-sergi-go-diff
+                             go-github-com-pjbgf-sha1cd
+                             go-github-com-kevinburke-ssh-config
+                             go-github-com-golang-groupcache
+                             go-github-com-go-git-go-git-fixtures-v5
+                             go-github-com-go-git-go-billy-v6
+                             go-github-com-go-git-gcfg-v2
+                             go-github-com-gliderlabs-ssh
+                             go-github-com-emirpasic-gods
+                             go-github-com-elazarl-goproxy
+                             go-github-com-armon-go-socks5
+                             go-github-com-protonmail-go-crypto))))
+
 (define-public go-github-com-jiangxin-goconfig
   (package
     (name "go-github-com-jiangxin-goconfig")
