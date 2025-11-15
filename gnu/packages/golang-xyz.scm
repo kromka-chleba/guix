@@ -22361,6 +22361,35 @@ globs from things like your .gitignore file, and zsh.  The \"**\" glob
 represents a recursive wildcard matching zero-or-more directory levels deep.")
     (license license:expat)))
 
+(define-public go-github-com-yaslama-go-wayland
+  (package
+    (name "go-github-com-yaslama-go-wayland")
+    (version "0.0.0-20250907155644-2874f32d9c34")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/yaslama/go-wayland")
+             (commit (go-version->git-ref version
+					  ; #:subdir "wayland" doesn't build
+					  ; and only client is implemented
+                                          #:subdir "wayland/client"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02akinr154n6jdcw7mpjnlj2cgz0q47qmp7sf5bbnpza7b2y4x6m"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/yaslama/go-wayland/wayland/client"
+      #:unpack-path "github.com/yaslama/go-wayland"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/yaslama/go-wayland")
+    (synopsis "Go bindings for Wayland")
+    (description
+     "This module contains pure Go implementation of the Wayland
+protocol.  Currently only wayland-client functionality is supported.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-yookoala-realpath
   (let ((commit "d19ef9c409d9817c1e685775e53d361b03eabbc8")
         (revision "0"))
