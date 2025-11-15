@@ -486,15 +486,19 @@ used to apply commands with arbitrarily long arguments.")
    (arguments
     `(#:parallel-build? #f            ; help2man may be called too early
       ,@(if (system-hurd?)
-            '(#:make-flags            ; these tests fail deterministically
-              (list (string-append "XFAIL_TESTS="
+            `(#:make-flags            ; these tests fail deterministically
+              (list ,(string-append "XFAIL_TESTS="
                                    ;; Gnulib tests.
-                                   " test-fdutimensat"
-                                   " test-futimens"
+                                   " test-fcntl-safer"
                                    " test-linkat"
-                                   " test-renameat"
-                                   " test-renameatu"
-                                   " test-utimensat")))
+                                   " test-open"
+                                   " test-openat"
+                                   (if (target-hurd32?)
+                                       " test-year2038"
+                                       ""))))
+            '())
+      ,@(if (target-hurd32?)
+            (list #:configure-flags ''("--disable-year2038"))
             '())
       #:phases (modify-phases %standard-phases
                  (add-before 'build 'patch-shell-references
@@ -514,6 +518,7 @@ used to apply commands with arbitrarily long arguments.")
                                  ;; These tests hang
                                  '("tests/cp/sparse-to-pipe.sh"
                                    "tests/split/fail.sh"
+                                   "tests/wc/wc-total.sh"
                                    ;; These tests error
                                    "tests/dd/nocache.sh"
                                    ;; These tests fail
@@ -522,21 +527,19 @@ used to apply commands with arbitrarily long arguments.")
                                    "tests/cp/special-f.sh"
                                    "tests/dd/bytes.sh"
                                    "tests/dd/stats.sh"
+                                   "tests/factor/factor-parallel.sh"
                                    "tests/ls/dangle.sh"
                                    "tests/ls/follow-slink.sh"
                                    "tests/ls/hyperlink.sh"
                                    "tests/ls/infloop.sh"
                                    "tests/ls/inode.sh"
                                    "tests/ls/selinux-segfault.sh"
-                                   "tests/misc/env-S.pl"
-                                   "tests/misc/factor-parallel.sh"
-                                   "tests/misc/ls-misc.pl"
-                                   "tests/misc/nice.sh"
-                                   "tests/misc/pwd-long.sh"
-                                   "tests/misc/shred-passes.sh"
-                                   "tests/misc/stat-slash.sh"
+                                   "tests/nice/nice.sh"
+                                   "tests/pwd/pwd-long.sh"
                                    "tests/rm/fail-eperm.xpl"
-                                   "tests/split/filter.sh")
+                                   "tests/split/filter.sh"
+                                   "tests/tail/tail-c.sh"
+                                   "tests/wc/wc-proc.sh")
                                (("^#!.*" all)
                                 (string-append all "exit 77;\n")))
                              (substitute* "gnulib-tests/Makefile.in"
@@ -553,6 +556,7 @@ used to apply commands with arbitrarily long arguments.")
                                    "tests/misc/wc-parallel.sh")
                                (("^#!.*" all)
                                 (string-append all "exit 77;\n")))
+                             ;; XXX: Check these on hurd64
                              (substitute* '("gnulib-tests/test-fdutimensat.c"
                                             "gnulib-tests/test-futimens.c"
                                             "gnulib-tests/test-linkat.c"
