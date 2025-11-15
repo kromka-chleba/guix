@@ -129,7 +129,27 @@ that handle none of the event types.")
      (list
       #:install-source? #f
       #:import-path "github.com/google/go-jsonnet/cmd/jsonnet"
-      #:unpack-path "github.com/google/go-jsonnet"))
+      #:unpack-path "github.com/google/go-jsonnet"
+      #:phases
+      #~(let ((all-import-paths (list
+                                 "github.com/google/go-jsonnet/cmd/jsonnet"
+                                 "github.com/google/go-jsonnet/cmd/jsonnetfmt"
+                                 "github.com/google/go-jsonnet/cmd/jsonnet-deps")))
+          (modify-phases %standard-phases
+            (replace 'build
+              (lambda arguments
+                (for-each (lambda (cmd)
+                            (apply (assoc-ref %standard-phases
+                                              'build)
+                                   `(,@arguments #:import-path ,cmd)))
+                          all-import-paths)))
+            (replace 'install
+              (lambda arguments
+                (for-each (lambda (cmd)
+                            (apply (assoc-ref %standard-phases
+                                              'install)
+                                   `(,@arguments #:import-path ,cmd)))
+                          all-import-paths)))))))
     (native-inputs
      (list go-github-com-fatih-color
            go-github-com-sergi-go-diff
@@ -140,8 +160,8 @@ that handle none of the event types.")
     (description
      "This package provides an implementation of the @url{http://jsonnet.org/,
 Jsonnet} data templating language in Go.  It is a feature-complete,
-production-ready implementation, compatible with the original Jsonnet
-C++implementation.")
+production-ready implementation, compatible with and faster than the original
+Jsonnet C++ implementation.")
     (license license:asl2.0)))
 
 (define-public godef
