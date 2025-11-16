@@ -43,12 +43,6 @@
     `(;; Explicitly disable tests when cross-compiling, otherwise 'make check'
       ;; proceeds and fails, unsurprisingly.
       #:tests? ,(not (%current-target-system))
-      ,@(if (system-hurd64?)
-            (list #:configure-flags
-                  `'(,(string-append
-                       "CFLAGS=-g -O2"
-                       " -Wno-error=implicit-function-declaration")))
-            '())
       #:phases
       (modify-phases %standard-phases
         (add-after 'unpack 'disable-test
@@ -71,11 +65,12 @@
                        (string-append all "{\n  exit (77);//"))))))
               '())
         ,@(if (target-hurd64?)
-              '((add-after 'unpack 'patch-sigsegv
+              '((add-after 'unpack 'skip-test
                   (lambda _
-                    ;; Stack overflow recovery does not compile
-                    (substitute* "lib/sigsegv.in.h"
-                      (("__GNU__") "__XGNU__")))))
+                    (substitute* '("tests/test-c-stack2.sh")
+                      ;; These tests hang.
+                      (("^#!.*" all)
+                       (string-append all "exit 77;\n"))))))
               '())
         (add-after 'unpack 'configure-shell
           (lambda* (#:key native-inputs inputs #:allow-other-keys)
