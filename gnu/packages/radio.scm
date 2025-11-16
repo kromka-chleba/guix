@@ -3649,3 +3649,32 @@ universal tool.
 To install the qdmr udev rules, you must extend @code{udev-service-type} with this
 package.  E.g.: @code{(udev-rules-service 'qdmr qdmr)}")
     (license license:gpl3+)))
+
+(define-public radio-tool
+  (package
+    (name "radio-tool")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/v0l/radio_tool")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bxpf2ck8m187vpmaflzsrlkx6byhrpskd3i5pa4df7klrkp9ncr"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ;No test suite
+    (inputs (list libusb))
+    (native-inputs (list pkg-config))
+    (home-page "https://github.com/v0l/radio_tool")
+    (synopsis "Radio Firmware tool")
+    (description
+     "radio_tool is a utility for reading, writing, and manipulating
+firmware/codeplugs on the following radios: TYT MD-2017, TYT MD-9600,
+TYT MD-UV380, TYT MD-UV390, TYT MD-390, TYT MD-380, TYT MD-446, TYT MD-280,
+Baofeng DM-1701, Baofeng DM1801, Baofeng RD-5R, Connect Systems CS800D,
+Ailunce HD1, Yaesu FT-70DR, and the Radioddity GD-77.")
+    (license license:gpl3)))
