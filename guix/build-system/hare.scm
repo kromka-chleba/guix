@@ -126,16 +126,8 @@
             #:test-target #$test-target
             #:parallel-tests? #$parallel-tests?
             #:validate-runpath? #$validate-runpath?))))
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f ; same as gnu-build-system
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define hare-build-system
   (build-system
