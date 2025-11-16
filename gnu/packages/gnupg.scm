@@ -650,31 +650,24 @@ decrypt messages using the OpenPGP format by making use of GPGME.")
 (define-public python-gnupg
   (package
     (name "python-gnupg")
-    (version "0.5.0")
+    (version "0.5.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-gnupg" version))
        (sha256
         (base32
-         "0ali2zz6k568yzhdgzm8f14v6s5ymihlyffbvfxc9q60gww8wxbh"))))
+         "0qsszyjafbdrh8q5hp864xscxy9ws2cc6zg3z27r86qayrvazp1z"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (substitute* "test_gnupg.py"
-                 ;; Unsure why this test fails.
-                 (("'test_search_keys'") "True")
-                 (("def test_search_keys") "def disabled__search_keys"))
-               (setenv "USERNAME" "guixbuilder")
-               ;; The doctests are extremely slow and sometimes time out,
-               ;; so we disable them.
-               (invoke "python" "test_gnupg.py" "--no-doctests")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "NO_EXTERNAL_TESTS" "1"))))))
     (native-inputs
-     (list gnupg python-setuptools python-wheel))
+     (list gnupg python-pytest python-setuptools))
     (home-page "https://pythonhosted.org/python-gnupg/index.html")
     (synopsis "Wrapper for the GNU Privacy Guard")
     (description
