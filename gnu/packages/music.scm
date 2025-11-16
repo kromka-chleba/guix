@@ -3136,7 +3136,7 @@ using a system-independent interface.")
 (define-public python-abjad
   (package
     (name "python-abjad")
-    (version "3.19")
+    (version "3.31")
     (source
      (origin
        (method git-fetch)
@@ -3145,8 +3145,9 @@ using a system-independent interface.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cgcnmwzxx2hr21pqm1hbsknpad748yw3gf7jncsb3w1azhjypzm"))))
+        (base32 "1vly4n0rvji372l4kskwx3xppzw22wb2q9jrpj3i3cjhsgy2mp6q"))))
     (build-system pyproject-build-system)
+    (arguments (list #:python python-next))
     (inputs
      (list lilypond))
     (native-inputs
