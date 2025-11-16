@@ -145,13 +145,6 @@ command-line arguments, multiple languages, and so on.")
                                        (string-append bin "/fgrep"))
                       (("^exec grep")
                        (string-append "exec " bin "/grep"))))))
-              #$@(if (target-hurd64?)
-                     #~((add-after 'unpack 'patch-sigsegv
-                          (lambda _
-                            ;; Stack overflow recovery does not compile
-                            (substitute* "lib/sigsegv.in.h"
-                              (("__GNU__") "__XGNU__")))))
-                     #~())
               ;; XXX: On 32-bit Hurd platforms, 'time_t' is defined as a 32-bit
               ;; integer in 'hurd_types.defs', so this Gnulib test always fails.
               ;; Use a phase instead of XFAIL_TESTS to not override
@@ -176,7 +169,11 @@ command-line arguments, multiple languages, and so on.")
               #$@(if (system-hurd64?)
                      #~((add-before 'check 'skip-test
                           (lambda _
-                            (substitute* "tests/stack-overflow" ;This test hangs
+                             ;; these tests hang
+                            (substitute* "tests/stack-overflow"
+                              (("^#!.*" all)
+                               (string-append all "exit 77;\n")))
+                            (substitute* "gnulib-tests/test-c-stack2.sh"
                               (("^#!.*" all)
                                (string-append all "exit 77;\n"))))))
                      #~()))))
