@@ -472,16 +472,17 @@ and every application benefits from this.")
     (inherit gpgme)
     (name "qgpgme")
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'chdir-and-symlink
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((gpgme (assoc-ref inputs "gpgme")))
-               (symlink (string-append gpgme "/lib/libgpgmepp.la")
-                        "lang/cpp/src/libgpgmepp.la")
-               (symlink (string-append gpgme "/lib/libgpgme.la")
-                        "src/libgpgme.la"))
-             (chdir "lang/qt"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'chdir-and-symlink
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((gpgme (assoc-ref inputs "gpgme")))
+                (symlink (string-append gpgme "/lib/libgpgmepp.la")
+                         "lang/cpp/src/libgpgmepp.la")
+                (symlink (string-append gpgme "/lib/libgpgme.la")
+                         "src/libgpgme.la"))
+              (chdir "lang/qt"))))))
     (propagated-inputs (list gpgme))    ;required by QGpgmeConfig.cmake
     (native-inputs
      (modify-inputs (package-native-inputs gpgme)
