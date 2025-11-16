@@ -86,7 +86,7 @@
                                (guix build utils))))
   "Build SOURCE with INPUTS.  This assumes that SOURCE provides a 'waf' file
 as its build system."
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -105,14 +105,8 @@ as its build system."
                                                    search-paths))
                            #:inputs %build-inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:modules imported-modules
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define waf-build-system
   (build-system
