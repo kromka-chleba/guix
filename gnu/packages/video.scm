@@ -2744,6 +2744,10 @@ SVCD, DVD, 3ivx, DivX 3/4/5, WMV and H.264 movies.")
     (build-system meson-build-system)
     (arguments
      (list
+      #:modules '((guix build utils)
+                  (guix build meson-build-system)
+                  (ice-9 rdelim)
+                  (ice-9 popen))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-file-names
@@ -2751,7 +2755,29 @@ SVCD, DVD, 3ivx, DivX 3/4/5, WMV and H.264 movies.")
               (substitute* "player/lua/ytdl_hook.lua"
                 (("\"yt-dlp\",")
                  (string-append
-                  "\"" (search-input-file inputs "bin/yt-dlp") "\","))))))
+                  "\"" (search-input-file inputs "bin/yt-dlp") "\",")))))
+          (add-after 'install 'patch-mpv.pc
+            (lambda* (#:key outputs #:allow-other-keys)
+              (setenv "PKG_CONFIG_PATH"
+                      (string-append (getenv "PKG_CONFIG_PATH")
+                                     ":" #$output "/lib/pkgconfig"))
+              (let ((mpv.pc (string-append #$output "/lib/pkgconfig/mpv.pc"))
+                    (libs
+                      (read-line (open-pipe* OPEN_READ
+                                             "pkg-config" "--libs"
+                                             "--static" "mpv")))
+                    (cflags
+                      (read-line (open-pipe* OPEN_READ
+                                             "pkg-config" "--cflags-only-I"
+                                             "--static" "mpv"))))
+                (substitute* mpv.pc
+                  (("(Libs.private: .*)\n" _ Libs.private)
+                   (string-append Libs.private " " libs "\n"))
+                  #;(("Cflags: -I\\$\\{includedir\\}")
+                   (string-append "Cflags: " cflags))
+                  ;; Remove the Requires.private field since we stuffed
+                  ;; everything into Libs and Cflags.
+                  #;(("Requires\\.private.*") ""))))))
       #:configure-flags
       #~(list "-Dlibmpv=true"
               "-Dcdda=enabled"
@@ -2774,12 +2800,10 @@ SVCD, DVD, 3ivx, DivX 3/4/5, WMV and H.264 movies.")
            rsound
            vulkan-headers
            vulkan-loader
-           yt-dlp))
-    ;; XXX: These are propagated for the mpv pkg-config package, as they are
-    ;; listed in Requires.private and would break 'pkg-config --exists mpv' if
-    ;; unavailable.
-    (propagated-inputs
-     (list alsa-lib
+           yt-dlp
+           ;; These are the packages listed in the unaltered mpv.pc in
+           ;; the Requires.private section.
+           alsa-lib
            ffmpeg
            jack-1
            libass
