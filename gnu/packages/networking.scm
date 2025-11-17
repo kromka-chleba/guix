@@ -70,6 +70,7 @@
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Thijs Paelman <thijs@ouroboros.rocks>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -118,6 +119,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages code)
@@ -5424,6 +5426,66 @@ recording packets that are dropped by the kernel.  It provides the commands
 Protocol.  RDAP is modern a replacement for WHOIS, which provides domain name
 and IP address registration information in JSON format over HTTP.")
     (license license:expat)))
+
+(define-public ouroboros
+  (package
+    (name "ouroboros")
+    (version "0.22.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "git://ouroboros.rocks/ouroboros")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kbk16qnya7cqbqwn3cf2bm79ziwldlxpnby5nb3aq3qncc9jpxh"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:build-type "Release"
+      #:configure-flags
+      #~(list
+         ;; Enable systemd usage on a foreign distro. Installed systemd system files
+         ;; need to be copied/symlinked from `<guix-profile>/lib/systemd/system`
+         ;; to {/usr/lib,/etc,/lib}/systemd/system (depends on your distro).
+         ;; Check the systemd.unit manual for all edge cases.
+         "-DSYSTEMD_INSTALL_FILES=FORCE"
+         (string-append "-DSYSTEMD_UNITDIR_OVERRIDE="
+                        #$output "/lib/systemd/system"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-cmakelists
+            (lambda _
+              (substitute* "src/irmd/CMakeLists.txt"
+                ;; Install the example configuration file under #$output
+                (("(DESTINATION .?\")(\\$\\{OUROBOROS_CONFIG_DIR\\}.?\")" _ p1 p2)
+                 (string-append p1 "${CMAKE_INSTALL_PREFIX}" p2))))))))
+    (inputs
+     (list protobuf-c
+           ;pkg-config            ; only to find systemd, thus not useful
+           ;; Optional dependencies
+           tomlc99                ; Enable configuration file support
+           ;libgcrypt             ; Not needed, since glibc > 2.25
+           openssl                ; Enable encryption
+           fuse-2                 ; Enable the export of internal metrics
+           ;; isc-bind:utils is ~240MiB (pulls in Python)
+           `(,isc-bind "utils"))) ; Use DDNS server as naming directory in UDP layer
+    (home-page "https://ouroboros.rocks")
+    (synopsis "Completely decentralized packet network")
+    (description
+     "Ouroboros is a peer-to-peer packet network prototype.  It unifies all
+packet communications – whether it is two programs on the same machine or a
+set of programs in computers on different continents – using a small set of
+abstractions, which we call layers and flows.  The Ouroboros architecture
+improves security, privacy and efficiency through simplicity.  It provides a
+very compact API for writing distributed software and networked application
+libraries, with support for both unicast and multicast communications.  Being
+rebuilt from the ground up, Ouroboros is not directly compatible with IP or
+UNIX sockets, but it can run on top of and/or below UDP/IP and Ethernet.")
+    (license (list license:lgpl2.1   ; libraries
+                   license:gpl2      ; daemons
+                   license:bsd-3)))) ; tools
 
 (define-public wireproxy
   (package
