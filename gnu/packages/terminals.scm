@@ -44,6 +44,7 @@
 ;;; Copyright © 2024, 2025-2026 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2025 Liam Hupfer <liam@hpfr.net>
+;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -64,6 +65,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system go)
@@ -1650,3 +1652,30 @@ running;
 @item background image for eye candy.
 @end itemize")
     (license license:gpl2+)))
+
+(define-public alacritty-selenized-theme
+  (let ((commit "2b7b446eba1cbca66d4cbf2edf6f787a77fe41b2")
+        (version "1.0")
+        (revision "1"))
+    (package
+      (name "alacritty-selenized-theme")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://codeberg.org/Phosphenius/selenized")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1mlm1pmlgk6iydqbyx7iykd9hr3dj5rjbrlm22wai3f6s5s8nbw1"))))
+      (build-system copy-build-system)
+      (arguments
+       `(#:install-plan `(("terminals/alacritty/" "share/selenized/alacritty/"
+                           #:exclude ("README.md")))))
+      (synopsis "Selenized colors for alacritty")
+      (description
+       "Solarized redesigned: fine-tuned color palette for programmers with
+       focus on readability.")
+      (home-page "https://codeberg.org/Phosphenius/selenized")
+      (license license:expat))))
