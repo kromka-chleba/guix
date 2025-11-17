@@ -61,10 +61,23 @@
   (latest dist-tags-latest "latest" string->semver))
 
 (define-record-type <versioned-package>
-  (make-versioned-package name version)
+  (make-versioned-package-inner name version)
   versioned-package?
   (name  versioned-package-name)       ;string
   (version versioned-package-version)) ;string
+
+(define npm-pattern
+  (make-regexp "^npm:([^@]+)@(.*)$"))
+
+(define (make-versioned-package name version)
+  (let ((regexp-match (regexp-exec npm-pattern version)))
+    (if regexp-match
+        (let* ((name    (match:substring regexp-match 1))
+               (version (match:substring regexp-match 2)))
+          ;; Parsed name and version
+          (make-versioned-package-inner name version))
+        ;; Original name and version
+        (make-versioned-package-inner name version))))
 
 (define (dependencies->versioned-packages entries)
   (match entries
