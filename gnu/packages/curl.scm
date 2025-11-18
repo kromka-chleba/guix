@@ -162,17 +162,6 @@ tunneling, and so on.")
 (define-deprecated-package gnurl
   curl)
 
-(define-public curl-ssh
-  (package/inherit curl
-    (arguments
-     (substitute-keyword-arguments (package-arguments curl)
-       ((#:configure-flags flags)
-        #~(cons "--with-libssh2" #$flags))))
-    (inputs
-     (modify-inputs (package-inputs curl)
-       (prepend libssh2)))
-    (properties `((hidden? . #t)))))
-
 ;; XXX: It looks like unmaintained, last time updated in 2018.
 (define-public kurly
   (package

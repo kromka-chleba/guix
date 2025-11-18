@@ -1197,7 +1197,7 @@ saved to a file for further viewing in another window.")
        (sha256
         (base32 "0fgd2kdpkzrv9db059zm8sbnscxf489p65wq36s88n2y5xqnclr9"))))
     (build-system gnu-build-system)
-    (inputs (list curl-ssh pcre2 quickjs-ng openssl readline-7 unixodbc))
+    (inputs (list curl pcre2 quickjs-ng openssl readline-7 unixodbc))
     (native-inputs (list perl pkg-config))
     (arguments
      (list

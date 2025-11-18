@@ -504,7 +504,7 @@ using Dates: @dateformat_str, Date, DateTime, DateFormat, Time"))
     (inputs
      `(("bash-minimal" ,bash-minimal)
        ("coreutils" ,coreutils) ; for bindings to "mkdir" and the like
-       ("curl" ,curl-ssh)
+       ("curl" ,curl)
        ("gfortran" ,gfortran)
        ;; required for libgcc_s.so
        ("gfortran:lib" ,gfortran "lib")
