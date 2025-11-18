@@ -1680,16 +1680,17 @@ SunMD5, sha1crypt, NT, bsdicrypt, bigcrypt, and descrypt.")
     (propagated-inputs (list procps))
     (native-inputs (list perl))
     (arguments
-     `(#:tests? #f ; No test suite
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure)
-                  (replace 'install
-                    (lambda _
-                      (install-file "keychain"
-                                    (string-append %output "/bin/"))
-                      (install-file "keychain.1"
-                                    (string-append %output "/share/man/man1"))
-                      #t)))))
+     (list
+      #:tests? #f ; No test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'install
+            (lambda _
+              (install-file "keychain"
+                            (string-append #$output "/bin/"))
+              (install-file "keychain.1"
+                            (string-append #$output "/share/man/man1")))))))
     (synopsis
      "SSH or GPG agent frontend that can share a single agent on the same
 system")
