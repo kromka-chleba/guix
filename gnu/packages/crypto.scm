@@ -1509,13 +1509,14 @@ addresses using a brute-force method.")
      (list git openssl))
     (build-system copy-build-system)
     (arguments
-     `(#:install-plan
-       '(("transcrypt" "bin/transcrypt")
-         ("man/transcrypt.1" "share/man/man1/transcrypt.1")
-         ("contrib/bash/transcrypt"
-          "share/bash-completion/completions/transcrypt")
-         ("contrib/zsh/_transcrypt"
-          "share/zsh/site-functions/_transcrypt"))))
+     (list
+      #:install-plan
+      #~'(("transcrypt" "bin/transcrypt")
+          ("man/transcrypt.1" "share/man/man1/transcrypt.1")
+          ("contrib/bash/transcrypt"
+           "share/bash-completion/completions/transcrypt")
+          ("contrib/zsh/_transcrypt"
+           "share/zsh/site-functions/_transcrypt"))))
     (home-page "https://github.com/elasticdog/transcrypt")
     (synopsis "Transparently encrypt files within a git repository")
     (description
