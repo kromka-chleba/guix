@@ -68,16 +68,14 @@
 (define-public curl
   (package
     (name "curl")
-    (version "8.6.0")
+    (version "8.18.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://curl.se/download/curl-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "05fv468yjrb7qwrxmfprxkrcckbkij0myql0vwwnalgr3bcmbk9w"))
-              (patches (search-patches "curl-use-ssl-cert-env.patch"
-                                       "curl-CVE-2024-8096.patch"))))
+                "0ihrm74y401is67zdr1lgkanm94qqzj1xqb5jca21akldqb7kps0"))))
     (outputs '("out"
                "doc"))                  ;1.2 MiB of man3 pages
     (build-system gnu-build-system)
@@ -135,7 +133,6 @@
     (inputs
      (list gnutls libidn libssh2 libpsl mit-krb5 `(,nghttp2 "lib") zlib))
     (native-search-paths
-     ;; These variables are introduced by curl-use-ssl-cert-env.patch.
      (list $SSL_CERT_DIR
            $SSL_CERT_FILE
            ;; Note: This search path is respected by the `curl` command-line
