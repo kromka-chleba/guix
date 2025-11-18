@@ -21,6 +21,9 @@
 # Test the `guix hash' command-line utility.
 #
 
+# This test requires the optional disarchive module.
+guile -c '(use-modules (disarchive git-hash))' 2> /dev/null || exit 77
+
 guix hash --version
 
 tmpdir="guix-hash-$$"
