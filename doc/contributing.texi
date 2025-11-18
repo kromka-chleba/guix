@@ -302,7 +302,11 @@ command.
 @quotation Note
 By default, hooks are installed such that @command{guix git
 authenticate} is invoked anytime you run @command{git pull} or
-@command{git push}.
+@command{git push}. This may be undesireable if you are working on
+a fork of guix instead of the original repo as this would prevent you
+from pushing your own commits unless they are signed with a GPG key of
+an upstream commiter. You may want to either delete the @file{.git/hooks/pre-push} file or
+whitelist your own GPG key (see @pxref{Invoking guix git authenticate}).
 @end quotation
 
 After updating the repository, @command{make} might fail with an error
