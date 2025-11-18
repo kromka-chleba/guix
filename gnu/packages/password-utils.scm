@@ -302,7 +302,7 @@ human.")
           '())))
     (inputs
      (list argon2
-           botan
+           botan-2
            libgcrypt
            libsodium                    ; XC_BROWSER
            libusb

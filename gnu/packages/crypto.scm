@@ -982,14 +982,14 @@ SHA256, SHA512, SHA3, AICH, ED2K, Tiger, DC++ TTH, BitTorrent BTIH, GOST R
 (define-public botan
   (package
     (name "botan")
-    (version "2.19.3")
+    (version "3.10.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://botan.randombit.net/releases/"
                                   "Botan-" version ".tar.xz"))
               (sha256
                (base32
-                "0m9dh00zibx13pbjij8lbncf86pix3cxklxmgl47z965k7rlgq6s"))))
+                "092g1zcjrj6qqzhz3scnifpjd7fcyqkhc2pa6vqk8m3ddwir9qgx"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1029,6 +1029,19 @@ specifically designed to be easy to call from other languages.  A Python binding
 using ctypes is included, and several other language bindings are available.")
     (home-page "https://botan.randombit.net")
     (license license:bsd-2)))
+
+(define-public botan-2
+  (package
+    (inherit botan)
+    (version "2.19.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://botan.randombit.net/releases/Botan"
+                           version ".tar.xz"))
+       (sha256
+        (base32
+         "0m9dh00zibx13pbjij8lbncf86pix3cxklxmgl47z965k7rlgq6s"))))))
 
 (define-public ccrypt
   (package
