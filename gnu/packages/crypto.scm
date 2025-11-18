@@ -1495,7 +1495,7 @@ addresses using a brute-force method.")
 (define-public transcrypt
   (package
     (name "transcrypt")
-    (version "2.1.0")
+    (version "2.3.1")
     (source
      (origin
        (method git-fetch)
@@ -1503,7 +1503,7 @@ addresses using a brute-force method.")
              (url "https://github.com/elasticdog/transcrypt")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0bpz1hazbhfb6pqi68x55kq6a31bgh6vwij836slmi4jqiwvnh5a"))
+        (base32 "1yp1s69wphhsaks46rfj2ann8z397jgvbbq22ikdwxcw96f49pmk"))
        (file-name (git-file-name name version))))
     (inputs
      (list git openssl))
