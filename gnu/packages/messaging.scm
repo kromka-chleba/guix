@@ -46,6 +46,7 @@
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -142,6 +143,7 @@
   #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages rust-crates)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tcl)
@@ -157,6 +159,7 @@
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system go)
@@ -3661,5 +3664,53 @@ Massively Scalable Messaging Platform.  It supports XMPP, MQTT and SIP
 protocols.")
     (home-page "https://www.ejabberd.im")
     (license license:gpl2+)))
+
+(define-public iamb
+  (package
+    (name "iamb")
+    (version "0.0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "iamb" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1dl6qrn7lg8jknnkpb8nv362ap6rfpdxfwv69p2j2hmk6dzs0hsx"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install-license-files 'install-docs
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((outdir (string-append (assoc-ref outputs "out") "/share/")))
+                (install-file "iamb.desktop"
+                              (string-append outdir "applications/"))
+                (install-file "config.example.toml"
+                              (string-append outdir "iamb/"))
+                (install-file "docs/iamb-256x256.png"
+                              (string-append outdir
+                               "icons/hicolor/256x256/apps/iamb.png"))
+                (install-file "docs/iamb-512x512.png"
+                              (string-append outdir
+                               "icons/hicolor/512x512/apps/iamb.png"))
+                (install-file "docs/iamb.svg"
+                              (string-append outdir
+                               "icons/hicolor/scalable/apps/iamb.svg"))
+                (install-file "docs/iamb.1"
+                              (string-append outdir "man/man1/"))
+                (install-file "docs/iamb.5"
+                              (string-append outdir "man/man5/"))
+                (install-file "docs/iamb.metainfo.xml"
+                              (string-append outdir
+                                             "metainfo/iamb.metainfo.xml"))))))))
+    (native-inputs (list sqlite))
+    (inputs (cargo-inputs 'iamb))
+    (synopsis "Matrix client for Vim addicts")
+    (description
+     "iamb is a Matrix client for the terminal that uses Vim keybindings.")
+    (home-page "https://iamb.chat/")
+    (license license:asl2.0)))
 
 ;;; messaging.scm ends here
