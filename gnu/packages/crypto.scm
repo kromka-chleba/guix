@@ -252,21 +252,23 @@ communication, encryption, decryption, signatures, etc.")
   (package
     (name "libmd")
     (version "1.0.4")
-    (source (origin
-            (method url-fetch)
-            (uri
-             (list
-              (string-append "https://archive.hadrons.org/software/libmd/libmd-"
-                             version ".tar.xz")
-              (string-append "https://libbsd.freedesktop.org/releases/libmd-"
-                             version ".tar.xz")))
-            (sha256
-             (base32
-              "03skgv013v0y9hxh6j143xdwynb5cmbmbdylvvgfsjz38889477m"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (list
+         (string-append "https://archive.hadrons.org/software/libmd/libmd-"
+                        version ".tar.xz")
+         (string-append "https://libbsd.freedesktop.org/releases/libmd-"
+                        version ".tar.xz")))
+       (sha256
+        (base32
+         "03skgv013v0y9hxh6j143xdwynb5cmbmbdylvvgfsjz38889477m"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list "--disable-static")))
+     (list
+      #:configure-flags
+      #~(list "--disable-static")))
     (synopsis "Message Digest functions from BSD systems")
     (description
      "The currently provided message digest algorithms are:
