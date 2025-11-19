@@ -11701,7 +11701,7 @@ accessibility infrastructure.")
            `(,liblouis "python")
            procps                       ; for pgrep
            python
-           python-pygobject
+           python-pygobject-3.50
            python-pyatspi
            speech-dispatcher
            xkbcomp))
