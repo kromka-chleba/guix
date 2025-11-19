@@ -1178,13 +1178,11 @@ private network between hosts on the internet.")
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'patch-FHS-file-names
-                 (lambda* (#:key inputs #:allow-other-keys)
+                 (lambda _
                    (substitute* "sshuttle/client.py"
-                     (("(/usr)?(/bin/env)" _ _ command)
-                      (search-input-file inputs command)))
+                     (("/usr/bin/env") (which "env")))
                    (substitute* "sshuttle/ssh.py"
-                     (("/bin/sh" command)
-                      (search-input-file inputs command)))))
+                     (("/bin/sh") "sh"))))
                (add-after 'install 'install-documentation
                  (lambda _
                    (with-directory-excursion "docs"
