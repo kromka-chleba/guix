@@ -13,6 +13,7 @@
 ;;; Copyright © 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -426,13 +427,13 @@ Jump conversion filter by CFFI for Python.")
 (define-public python-inflate64
   (package
     (name "python-inflate64")
-    (version "0.3.1")
+    (version "1.0.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "inflate64" version))
               (sha256
                (base32
-                "0767j35gkwaykl1iq9qn8rc25j1ggv56x3d1vzjpk89bzpzdhbdm"))))
+                "1vhj7qhghyc6bvwqval471d2rnsm2pzk2byklp1s1v9ndi0xv7m8"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-importlib-metadata))
     (native-inputs
