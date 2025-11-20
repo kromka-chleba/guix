@@ -1047,13 +1047,13 @@ provided.")
 (define-public python-pyzstd
   (package
     (name "python-pyzstd")
-    (version "0.15.9")
+    (version "0.16.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyzstd" version))
        (sha256
-        (base32 "1iycfmif15v1jhv0gsza1hyd1hn3sz0vn9s1y79abzv8axndxzfb"))
+        (base32 "1lk3gzvg3n5zq02rwdpp9ivb4m3wrvwp5zgjql4vynjnl4p1m70p"))
        (modules '((guix build utils)))
        (snippet
         '(begin
