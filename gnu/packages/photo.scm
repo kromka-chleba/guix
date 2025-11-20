@@ -57,6 +57,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages documentation)
   #:use-module (gnu packages file)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
@@ -75,7 +76,9 @@
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages iso-codes)
   #:use-module (gnu packages libcanberra)
+  #:use-module (gnu packages libevent)
   #:use-module (gnu packages libusb)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages m4)
@@ -94,7 +97,9 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages serialization)
   #:use-module (gnu packages sdl)
+  #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages time)
@@ -1053,3 +1058,88 @@ from Foveon and X-Trans sensors.")
     (description
      "This package provides RawTherapee's highly optimized RAW processing routines.")
     (license license:gpl3+)))
+
+(define-public libcamera
+  (package
+    (name "libcamera")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.libcamera.org/libcamera/libcamera.git")
+             (commit (string-append "v" version))))
+       (patches (search-patches
+                 "libcamera-ipa_manager-disable-signature-verification.patch"))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15wgy6dc56dwjyasw6w6x6d4j8475clbrxkgphc2zly6232ds7mw"))))
+    (build-system meson-build-system)
+    (outputs '("out" "doc" "gst" "tools"))
+    (arguments
+     (list
+      #:glib-or-gtk? #t ;To wrap binaries and/or compile schemas
+      #:configure-flags
+      #~(list (string-append "-Dbindir="
+                             (assoc-ref %outputs "tools") "/bin")
+
+              ;; In 0.3.1 release simple pipeline wasn't enabled for
+              ;; x86_64 by mistake, it's enabled a couple commits later.
+              ;; Remove this expression on the next release.
+              #$@(if (target-x86-64?)
+                     '("-Dpipelines=ipu3,vimc,uvcvideo,simple")
+                     '())
+              "-Dudev=enabled"
+              "-Dtest=true"
+              "-Dv4l2=true"
+              ;; XXX: Requires bundled pybind11.
+              "-Dpycamera=disabled")
+      #:phases
+      #~(modify-phases %standard-phases
+          #$@(if (target-aarch64?)
+                 #~((add-after 'unpack
+                               'disable-problematic-tests
+                               (lambda _
+                                 ;; The 'log_process' test fails on aarch64-linux with a
+                                 ;; SIGinvalid error (see:
+                                 ;; https://bugs.libcamera.org/show_bug.cgi?id=173).
+                                 (substitute* "test/log/meson.build"
+                                   ((".*'name': 'log_process'.*")
+                                    ""))
+                                 ;; The 'file' test fails on aarch64-linux with SIGinvalid.
+                                 (substitute* "test/meson.build"
+                                   ((".*'name': 'file'.*")
+                                    "")))))
+                 #~())
+          (add-after 'install 'move-doc-and-gst
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (doc (assoc-ref outputs "doc"))
+                     (gst (assoc-ref outputs "gst")))
+                (mkdir-p (string-append doc "/share"))
+                (rename-file (string-append out "/share/doc")
+                             (string-append doc "/share/doc"))
+                (mkdir-p (string-append gst "/lib"))
+                (rename-file (string-append out "/lib/gstreamer-1.0")
+                             (string-append gst "/lib/gstreamer-1.0"))))))))
+    (native-inputs (list googletest
+                         graphviz ;for 'dot'
+                         doxygen
+                         pkg-config
+                         python-wrapper
+                         python-sphinx
+                         python-pyyaml))
+    (inputs (list eudev
+                  glib
+                  gst-plugins-base
+                  libevent
+                  libtiff
+                  libyaml
+                  python-jinja2
+                  python-ply
+                  qtbase))
+    (synopsis "Camera stack and framework")
+    (description "LibCamera is a complex camera support library for GNU+Linux,
+Android, and ChromeOS.")
+    (home-page "https://libcamera.org/")
+    (license license:lgpl2.1+)))
