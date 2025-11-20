@@ -107,7 +107,6 @@
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages opencl)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages pdf)

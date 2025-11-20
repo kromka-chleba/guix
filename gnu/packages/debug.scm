@@ -73,7 +73,6 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)

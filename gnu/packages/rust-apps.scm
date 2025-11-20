@@ -104,7 +104,6 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages networking)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages pcre)

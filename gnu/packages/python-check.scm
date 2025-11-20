@@ -38,7 +38,7 @@
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
-;;; Copyright © 2025 Zheng Junjie <z572@z572.online> 
+;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -60,6 +60,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
@@ -67,7 +68,6 @@
   #:use-module (gnu packages jupyter)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages python-build)

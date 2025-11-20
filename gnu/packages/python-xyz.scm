@@ -263,7 +263,6 @@
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages node)
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages pcre)
@@ -19683,7 +19682,7 @@ text.")
 
                           ;; XXX: Probably will be resolved in the next
                           ;; release, as botocore's refresh pace is fast.
-                          ;; 
+                          ;;
                           ;; botocore.exceptions.UnknownServiceError: Unknown
                           ;; service: <...>
                           "test_create_app_response"
