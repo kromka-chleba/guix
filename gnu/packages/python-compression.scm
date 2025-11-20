@@ -54,6 +54,7 @@
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-science)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
@@ -557,14 +558,14 @@ several possible methods.")
 (define-public python-py7zr
   (package
     (name "python-py7zr")
-    (version "0.20.2")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "py7zr" version))
        (sha256
         (base32
-         "0lwniinfr3rb10n0c203a09vz06vxnnj637yqn8ipdlml89gj7kr"))))
+         "1wgyzd7vb2fbsx1grv4b2gs7yypw9dd09szhm7v3543wcf0yxgzn"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -586,11 +587,12 @@ several possible methods.")
      (list python-setuptools
            python-libarchive-c
            python-py-cpuinfo
-           python-pyannotate
            python-pytest
            python-pytest-benchmark
+           python-pytest-httpserver
            python-pytest-remotedata
            python-pytest-timeout
+           python-requests
            python-setuptools-scm
            python-wheel))
     (home-page "https://github.com/miurahr/py7zr")
