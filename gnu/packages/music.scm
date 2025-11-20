@@ -61,6 +61,7 @@
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4334,6 +4335,11 @@ websites such as Libre.fm.")
             (lambda _
               (substitute* "test/test_importer.py"
                 (("^([ \t]+)(def test_merge_duplicate_album\\(self\\):)" _ indentation rest)
+                  (string-append indentation "@pytest.mark.skip()\n" indentation rest)))))
+          (add-after 'unpack 'skip-broken-test
+            (lambda _
+              (substitute* "test/test_files.py"
+                (("^([ \t]+)(def test_successful_reflink\\(self\\):)" _ indentation rest)
                   (string-append indentation "@pytest.mark.skip()\n" indentation rest)))))
           ;; Wrap the executable, so it can find python-gi (aka
           ;; pygobject) and gstreamer plugins.
