@@ -44,6 +44,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages avahi)
+  #:use-module (gnu packages algebra)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
@@ -1254,6 +1255,33 @@ be dangerous and may void your CPU or system board's warranty.")
       (description "OpenHMD aims to provide an API and drivers for immersive
 technology, such as head mounted displays with built in head tracking.")
       (license license:boost1.0))))
+
+(define-public libsurvive
+  (package
+    (name "libsurvive")
+    (version "2023.12")
+    (source
+      (origin ;;TODO: make release
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://codeberg.org/LibreVR/libsurvive")
+              (recursive? #t)
+              (commit "v2023.12.rc0"))) ;; make a final release this year
+        (file-name (git-file-name name version))
+        (sha256 (base32 "0fkdgvpm987yl5q6yq0979cfj99ffi6k0dpmddlpxfm2rngn85r5"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f)) ;; no tests in this version
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list hidapi eigen eudev))
+    (home-page "https://codeberg.org/LibreVR/libsurvive")
+    (synopsis "Lighthouse Tracking for LibreVR")
+    (description "Libsurvive is a set of tools and libraries that enable Lighthouse
+Tracking on various devices, including HTC Vive and the well known Valve Index.
+It currently supports both SteamVR 1.0 and SteamVR 2.0 generation of devices,
+future versions will support more hardware and the survive_link protocol.")
+    (license license:expat)))
 
 (define-public openrgb
   (package
