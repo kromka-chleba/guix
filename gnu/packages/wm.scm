@@ -2078,6 +2078,7 @@ limited size and a few external dependencies.  It is configurable via
    (build-system cargo-build-system)
    (arguments
     (list #:install-source? #f
+          #:cargo-install-paths ''(".")
           #:modules
           '((ice-9 match)
             (guix build utils)
