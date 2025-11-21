@@ -55,7 +55,7 @@
 ;;; Copyright © 2022 Andreas Rammhold <andreas@rammhold.de>
 ;;; Copyright © 2022 ( <paren@disroot.org>
 ;;; Copyright © 2022, 2023 Matthew James Kraai <kraai@ftbfs.org>
-;;; Copyright © 2022 jgart <jgart@dismail.de>
+;;; Copyright © 2022, 2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2023 Lu Hui <luhux76@gmail.com>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
@@ -4872,6 +4872,31 @@ application, collecting the information received.")
     ;; 'src/siphash24.c' is the SipHash reference implementation, which
     ;; bears a CC0 Public Domain Dedication.
     (license license:agpl3+)))
+
+(define-public mnc
+  (package
+    (name "mnc")
+    (version "0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.sr.ht/~anjan/mnc")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04vcv8540s07rsdfzmxg63cpckacgfiiqchyvfimsg7ic71gna3q"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "git.sr.ht/~anjan/mnc"))
+    (inputs (list go-github-com-influxdata-cron))
+    (home-page "https://git.sr.ht/~anjan/mnc")
+    (synopsis "Find seconds to next cron job")
+    (description "mnc (my next cron) opens the user's crontab and echos the
+time when the next cronjob will be ran.")
+    (license license:unlicense)))
 
 (define-public launchmon
   (package
