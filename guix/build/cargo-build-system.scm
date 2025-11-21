@@ -57,8 +57,15 @@
                                           (cons* "--features" features)))))
          (port (open-input-pipe command))
          (data (json->scm port))
-         (packages (vector-ref (assoc-ref data "packages") 0))
-         (targets (or (assoc-ref packages "targets") '())))
+         (packages (assoc-ref data "packages"))
+         (package-targets (vector-map
+                   (lambda (_ package)
+                     (or
+                      (assoc-ref package "targets")
+                      '()))
+                   packages))
+         (targets (vector-concatenate
+                   (vector->list package-targets))))
     (close-port port)
     targets))
 
