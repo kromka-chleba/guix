@@ -4390,3 +4390,22 @@ $(which espanso)}.  On a Guix system, you can define the following in your
       #:features '(list "modulo" "vendored-tls" "wayland")))
     (inputs (modify-inputs (package-inputs espanso-x11)
               (append wl-clipboard)))))
+
+(define-public jnv
+  (package
+    (name "jnv")
+    (version "0.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "jnv" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1xfxxhny1j0c21rjdiixzljmnn6j7j72cpisb0j8a39dbkpvj53f"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'jnv))
+    (home-page "https://github.com/ynqa/jnv")
+    (synopsis "JSON navigator and interactive filter leveraging jq")
+    (description
+     "This package provides JSON navigator and interactive filter leveraging jq.")
+    (license license:expat)))
