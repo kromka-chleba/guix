@@ -33439,24 +33439,27 @@ a Python program in an customizable and pythonic way.")
 (define-public python-csb43
   (package
     (name "python-csb43")
-    (version "0.9.1")
+    (version "1.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "csb43" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://bitbucket.org/wmj/csb43")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0r0csl9npncnkfafg3rg6xr38d1qr0sxvq7wn7mg9bq41hvvh1si"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-lxml))
+        (base32 "030lncdmrcvzgp8v1jw04snnplqxlwf3vikzd0a3jbk5sgrp2cih"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-lxml python-pytest python-setuptools))
     (propagated-inputs
-     (list python-pycountry python-pyyaml python-tablib))
+     (list python-deprecated python-pycountry python-pyyaml python-tablib))
     (home-page "https://bitbucket.org/wmj/csb43")
     (synopsis "Tools for converting from the Spanish banks' format CSB norm
 43 (CSB43)")
-    (description "This package provides tools to convert files in the format
-used by multiple Spanish banks (standard 43 of the Spanish Banking Council
-[CSB43] / Spanish Banking Association [AEB43]) to other formats.
+    (description
+     "This package provides tools to convert files in the format used by
+multiple Spanish banks (standard 43 of the Spanish Banking Council [CSB43] /
+Spanish Banking Association [AEB43]) to other formats.
 
 Supported output formats are: OFX, HomeBank CSV, HTML, JSON, ODS (OpenDocument
 spreadsheet), CSV, TSV, XLS, XLSX (Microsoft Excel spreadsheet), and YAML.")
