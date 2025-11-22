@@ -659,7 +659,7 @@ Note: do not set @code{TERM} here, but instead use the \
   (text-bindings
     (maybe-list-of-string-pairs)
     "Text bindings section of the configuration."
-    (serializer serialize-list-of-string-pairs))
+    (serializer serialize-list-section))
   (mouse-bindings
    (maybe-foot-mouse-bindings-configuration)
    "Mouse-bindings section of the configuration."
