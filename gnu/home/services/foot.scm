@@ -564,12 +564,15 @@ foot.ini(5) man page."))
 
 (define-configuration foot-configuration
   ;; shell
+  (shell
+    (maybe-string "$SHELL")
+    "Executable to launch. Typically a shell. You can also pass arguments. For example /bin/bash --norc.")
   (login-shell
-   (maybe-boolean)
+   (maybe-boolean #f)
    "If enabled, the shell will be launched as a login shell, by prepending a '-'
 to argv[0].")
   (term
-   (maybe-string)
+   (maybe-string "foot")
    "Value to set the environment variable TERM to.")
   ;; TODO: replace font-name and font-size with a custom define-configuration
   ;; for fonts
@@ -581,13 +584,49 @@ to argv[0].")
    (maybe-integer)
    "Font size."
    (serializer serialize-font-size))
+  (box-drawings-uses-font-glyphs
+    (maybe-boolean #f)
+    "Boolean. When disabled, foot generates box/line drawing characters itself.")
   (dpi-aware
-   (maybe-boolean)
+   (maybe-boolean #f)
    "Fonts are sized using the monitor's DPI when true.")
+  (gamma-correct-blending
+    (maybe-boolean #f)
+    "Boolean. When enabled, foot will do gamma-correct blending in linear color space. This is how font glyphs are supposed to be rendered, but since nearly no applications or toolkits are doing it on Linux, the result may not look like you are used to.")
+  ;; Spacing, offsets, underline and strikethrough
+  ;; TODO: these are measured in points by default. The "px" suffix can be used to measure in pixels instead. Supporting that will need a new serializer, I think.
+  (line-height
+    (maybe-integer)
+    "An absolute value, in points, that override line height from the font metrics.")
+  (letter-spacing
+    (maybe-integer 0)
+    "Spacing between letters, in points. A positive value will increase the cell size, and a negative value shrinks it.")
+  (horizontal-letter-offset
+    (maybe-integer 0)
+    "Horizontal offset used when positioning glyphs within cells, in points, relative to the top left corner.")
+  (vertical-letter-offset
+    (maybe-integer 0)
+    "Vertical offset used when positioning glyphs within cells, in points, relative to the top left corner.")
+  (underline-offset
+    (maybe-integer)
+    "Custom offset for underlines, in points and relative to the font's baseline. Positive values position in under the baseline, negative values position it over the baseline.")
+  (underline-thickness
+    (maybe-integer)
+    "Use a custom thickness (height) for underlines, in points.")
+  (strikeout-thickness
+    (maybe-integer)
+    "Use a custom thickness (height) for strikeouts, in points.")
+  ;;
+  (uppercase-regex-insert
+    (maybe-boolean #t)
+    "Boolean. When enabled, inputting an uppercase hint character in show- urls-copy or regex-copy mode will insert the selected text into the prompt in addition to copying it to the clipboard.")
   (raw-fields
    (maybe-string)
    "Additional fields to the main section of the configuration, see
 foot.ini(5) man page.")
+  (include
+    (maybe-string)
+    "Absolute path to configuration file to import.")
   (colors
    (maybe-foot-color-configuration)
    "Color section of the configuration."
