@@ -39,31 +39,23 @@
 (define (dim-blend-towards? value)
   (member value '(black white)))
 
+(define (verify-pair type?)
+  (lambda (pair)
+    (match pair
+      ((key . value) (and (type? key) (type? value)))
+      (_ #f))))
+
 (define (extra-content? lines)
   (and (list? lines)
-       (fold (lambda (line prev)
-               (and
-                (string? line)
-                prev))
-             #t
-             lines)))
+       (every string? lines)))
 
 (define (integer-pair? value)
-  (match value
-    ((one . two) (and (integer? one) (integer? two)))
-    (_ #f)))
+  ((verify-pair integer?) value))
 
 (define (integers-N? N ints)
   (and (list? ints)
        (<= (length ints) N)
-       (fold (lambda (pair prev)
-               (and
-                (match pair
-                  ((id . color) (and (integer? id) (integer? color)))
-                  (_ #f))
-                prev))
-             #t
-             ints)))
+       (every (verify-pair integer?) ints)))
 
 (define (integers-8? ints)
   (integers-N? 8 ints))
@@ -78,10 +70,7 @@
   (integers-256? ints))
 
 (define (string-pair? s)
-  (match s
-    ((a . b) (and (string? a)
-		  (string? b)))
-    (_ #f)))
+  ((verify-pair string?) s))
 
 (define (list-of-string-pairs? s)
   (every string-pair? s))
