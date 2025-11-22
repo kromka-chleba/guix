@@ -568,7 +568,7 @@ foot.ini(5) man page."))
 to argv[0].")
   (term
    (maybe-string)
-   "Value to set the environment variable TERM to.")
+   "@anchor{home-foot-configuration-term}Value to set the environment variable TERM to.")
   ;; TODO: replace font-name and font-size with a custom define-configuration
   ;; for fonts
   (font-name
@@ -622,6 +622,23 @@ foot.ini(5) man page.")
   (include
     (maybe-string)
     "Absolute path to configuration file to import.")
+  (environment
+   (maybe-list-of-string-pairs)
+   "Section to define environment variables that will be set in the client \
+application, in addition to the variables inherited from the terminal process \
+itself.
+
+Format is a list of @code{(KEY . VALUE)} pairs, where @code{KEY} is a string \
+matching the environment variable name to set, and @code{VALUE} a string \
+representing the environment variable's value.
+
+If you want to set environment variables for your home configuration, use
+@code{home-environment-variables-service-type} instead.  @xref{Essential Home \
+Services} for details.
+
+Note: do not set @code{TERM} here, but instead use the \
+@ref{home-foot-configuration-term,,term} field in the main section."
+   (serializer serialize-list-section))
   (colors
    (maybe-foot-colors-configuration)
    "Color section of the configuration."
