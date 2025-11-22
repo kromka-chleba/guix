@@ -555,7 +555,6 @@ foot.ini(5) man page."))
 (define-maybe foot-mouse-bindings-configuration)
 
 (define-configuration foot-configuration
-  ;; shell
   (shell
     (maybe-string)
     "Executable to launch. Typically a shell. You can also pass arguments. For example /bin/bash --norc.")
@@ -608,7 +607,6 @@ to argv[0].")
   (strikeout-thickness
     (maybe-integer)
     "Use a custom thickness (height) for strikeouts, in points.")
-  ;;
   (uppercase-regex-insert
     (maybe-boolean)
     "Boolean. When enabled, inputting an uppercase hint character in show- urls-copy or regex-copy mode will insert the selected text into the prompt in addition to copying it to the clipboard.")
