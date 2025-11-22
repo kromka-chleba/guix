@@ -26,6 +26,10 @@
   #:use-module (srfi srfi-1)
   #:export (foot-configuration
             foot-color-configuration
+	    foot-key-bindings-configuration
+	    foot-search-bindings-configuration
+	    foot-url-bindings-configuration
+	    foot-mouse-bindings-configuration
             foot-configuration->file
             home-foot-service-type))
 
@@ -73,6 +77,15 @@
 (define (integers-256/no-field-name? ints)
   (integers-256? ints))
 
+(define (string-pair? s)
+  (match s
+    ((a . b) (and (string? a)
+		  (string? b)))
+    (_ #f)))
+
+(define (list-of-string-pairs? s)
+  (every string-pair? s))
+
 (define-maybe string)
 (define-maybe boolean)
 (define-maybe number)
@@ -84,6 +97,7 @@
 (define-maybe integers-256)
 (define-maybe integers-256/no-field-name)
 (define-maybe integer-pair)
+(define-maybe list-of-string-pairs)
 
 (define (serialize-key-value field-name value)
   (format #f "~a=~a~%" field-name value))
@@ -146,13 +160,19 @@
 (define (serialize-string field-name value)
   (serialize-key-value field-name value))
 
+(define (serialize-list-of-string-pairs field-name value)
+  (string-concatenate
+   (map (match-lambda
+          ((k . v) (serialize-key-value k v)))
+        value)))
+
 (define (serialize-boolean field-name value)
   (format #f "~a=~a~%" field-name (if value "yes" "no")))
 
-(define (serialize-foot-color-configuration field-name config)
-   #~(string-append "\n[colors]\n"
-                    #$(serialize-configuration
-                       config foot-color-configuration-fields)))
+(define (serialize-foot-section-configuration fields)
+  (lambda (section config)
+    #~(string-append #$(format #f "~%[~a]~%" section)
+                     #$(serialize-configuration config fields))))
 
 (define (serialize-font-name field-name value)
   (format #f "font=~a" value))
@@ -265,6 +285,283 @@ foot.ini(5) man page."))
 
 (define-maybe foot-color-configuration)
 
+(define-configuration foot-key-bindings-configuration
+  (noop
+   (maybe-string)
+   "All key combinations listed here will not be sent to the application.")
+  (scrollback-up-page
+   (string "Shift+Page_Up Shift+KP_Page_Up")
+   "Scrolls up/back one page in history.")
+  (scrollback-up-half-page
+   (maybe-string)
+   "Scrolls up/back half of a page in history.")
+  (scrollback-up-line
+   (maybe-string)
+   "Scrolls up/back a single line in history.")
+  (scrollback-down-page
+   (string "Shift+Page_Down Shift+KP_Page_Down")
+   "Scroll down/forward one page in history.")
+  (scrollback-down-half-page
+   (maybe-string)
+   "Scroll down/forward half of a page in history.")
+  (scrollback-down-line
+   (maybe-string)
+   "Scroll down/forward a single line in history.")
+  (scrollback-home
+   (maybe-string)
+   "Scroll to the beginning of the scrollback.")
+  (scrollback-end
+   (maybe-string)
+   "Scroll to the end (bottom) of the scrollback.")
+  (clipboard-copy
+   (string "Control+Shift+c XF86Copy")
+   "Copies the current selection into the clipboard.")
+  (clipboard-paste
+   (string "Control+Shift+v XF86Paste")
+   "Pastes from the clipboard.")
+  (primary-paste
+   (string "Shift+Insert (also defined in mouse-bindings)")
+   "Pastes from the primary selection.")
+  (search-start
+   (string "Control+Shift+r")
+   "Starts a scrollback/history search.")
+  (font-increase
+   (string "Control+plus Control+equal Control+KP_Add (also defined in mouse-bindings)")
+   "Increases the font size by 0.5pt.")
+  (font-decrease
+   (string "Control+minus Control+KP_Subtract (also defined in mouse-bindings)")
+   "Decreases the font size by 0.5pt.")
+  (font-reset
+   (string "Control+0 Control+KP_0")
+   "Resets the font size to the default.")
+  (spawn-terminal
+   (string "Control+Shift+n")
+   "Spawns a new terminal. If the shell has been configured to emit the OSC 7 escape sequence, the new terminal will start in the current working directory.")
+  (minimize
+   (maybe-string)
+   "Minimizes the window.")
+  (maximize
+   (maybe-string)
+   "Toggle the maximized state.")
+  (fullscreen
+   (maybe-string)
+   "Toggles the fullscreen state.")
+  (pipe-visible
+   (maybe-string)
+   "Pipes the currently visible text to an external tool.")
+  (pipe-scrollback
+   (maybe-string)
+   "Pipes the entire scrollback to an external tool.")
+  (pipe-selected
+   (maybe-string)
+   "Pipes the currently selected text to an external tool.")
+  (pipe-command-output
+   (maybe-string)
+   "Pipes the last command's output to an external tool.")
+  (show-urls-launch
+   (string "Control+Shift+o")
+   "Enter URL mode, where all currently visible URLs are tagged with a jump label with a key sequence that will open the URL (and exit URL mode).")
+  (show-urls-persistent
+   (maybe-string)
+   "Similar to @code{show-urls-launch}, but does not automatically exit URL mode after activating an URL.")
+  (show-urls-copy
+   (maybe-string)
+   "Enter URL mode, where all currently visible URLs are tagged with a jump label with a key sequence that will place the URL in the clipboard. If the hint is completed with an uppercase character, the match will also be pasted.")
+  (regex-launch
+   (maybe-string)
+   "Enter regex mode. This works exactly the same as URL mode; all regex matches are tagged with a jump label with a key sequence that will \"launch\" to match (and exit regex mode).")
+  (regex-copy
+   (maybe-string)
+   "Same as @code{regex-launch}, but the match is placed in the clipboard, instead of \"launched\", upon activation. If the hint is completed with an uppercase character, the match will also be pasted.")
+  (prompt-prev
+   (string "Control+Shift+z")
+   "Jump to the previous, currently not visible, prompt (requires shell integration, see foot(1)).")
+  (prompt-next
+   (string "Control+Shift+x")
+   "Jump the next prompt (requires shell integration, see foot(1)).")
+  (unicode-input
+   (string "Control+Shift+u")
+   "Input a Unicode character by typing its codepoint in hexadecimal, followed by @code{Enter} or @code{Space.}")
+  (color-theme-switch-1
+   (maybe-string)
+   "applies the primary color theme regardless of which color theme is currently active.")
+  (color-theme-switch-2
+   (maybe-string)
+   "applies the alternative color theme regardless of which color theme is currently active.")
+  (color-theme-toggle
+   (maybe-string)
+   "toggles between the primary and alternative color themes.")
+  (quit
+   (maybe-string)
+   "Quit foot."))
+
+(define-maybe foot-key-bindings-configuration)
+
+(define-configuration foot-search-bindings-configuration
+  (cancel
+   (string "Control+g Control+c Escape")
+   "Aborts the search. The viewport is restored and the primary selection is not updated.")
+  (commit
+   (string "Return KP_Enter")
+   "Exit search mode and copy current selection into the primary selection.  Viewport is not restored. To copy the selection to the regular clipboard, use @code{Control+Shift+c}.")
+  (find-prev
+   (string "Control+r")
+   "Search backwards in the scrollback history for the next match.")
+  (find-next
+   (string "Control+s")
+   "Searches forwards in the scrollback history for the next match.")
+  (cursor-left
+   (string "Left Control+b")
+   "Moves the cursor in the search box one character to the left.")
+  (cursor-left-word
+   (string "Control+Left Mod1+b")
+   "Moves the cursor in the search box one word to the left.")
+  (cursor-right
+   (string "Right Control+f")
+   "Moves the cursor in the search box one character to the right.")
+  (cursor-right-word
+   (string "Control+Right Mod1+f")
+   "Moves the cursor in the search box one word to the right.")
+  (cursor-home
+   (string "Home Control+a")
+   "Moves the cursor in the search box to the beginning of the input.")
+  (cursor-end
+   (string "End Control+e")
+   "Moves the cursor in the search box to the end of the input.")
+  (delete-prev
+   (string "BackSpace")
+   "Deletes the character before the cursor.")
+  (delete-prev-word
+   (string "Mod1+BackSpace Control+BackSpace")
+   "Deletes the word before the cursor.")
+  (delete-next
+   (string "Delete")
+   "Deletes the character after the cursor.")
+  (delete-next-word
+   (string "Mod1+d Control+Delete")
+   "Deletes the word after the cursor.")
+  (delete-to-start
+   (string "Ctrl+u")
+   "Deletes search input before the cursor.")
+  (delete-to-end
+   (string "Ctrl+k")
+   "Deletes search input after the cursor.")
+  (extend-char
+   (string "Shift+Right")
+   "Extend current selection to the right, by one character.")
+  (extend-to-word-boundary
+   (string "Control+w Control+Shift+Right")
+   "Extend current selection to the right, to the next word boundary.")
+  (extend-to-next-whitespace
+   (string "Control+Shift+w")
+   "Extend the current selection to the right, to the next whitespace.")
+  (extend-line-down
+   (string "Shift+Down")
+   "Extend current selection down one line.")
+  (extend-backward-char
+   (string "Shift+Left")
+   "Extend current selection to the left, by one character.")
+  (extend-backward-to-word-boundary
+   (string "Control+Shift+Left")
+   "Extend current selection to the left, to the next word boundary.")
+  (extend-backward-to-next-whitespace
+   (maybe-string)
+   "Extend the current selection to the left, to the next whitespace.")
+  (extend-line-up
+   (string "Shift+Up")
+   "Extend current selection up one line.")
+  (clipboard-paste
+   (string "Control+v Control+y Control+Shift+v XF86Paste")
+   "Paste from the clipboard into the search buffer.")
+  (primary-paste
+   (string "Shift+Insert")
+   "Paste from the primary selection into the search buffer.")
+  (unicode-input
+   (maybe-string)
+   "Unicode input mode. See @file{key-bindings.unicode-input} for details.")
+  (scrollback-up-page
+   (string "Shift+Page_Up Shift+KP_Page_Up")
+   "Scrolls up/back one page in history.")
+  (scrollback-up-half-page
+   (maybe-string)
+   "Scrolls up/back half of a page in history.")
+  (scrollback-up-line
+   (maybe-string)
+   "Scrolls up/back a single line in history.")
+  (scrollback-down-page
+   (string "Shift+Page_Down Shift+KP_Page_Down")
+   "Scroll down/forward one page in history.")
+  (scrollback-down-half-page
+   (maybe-string)
+   "Scroll down/forward half of a page in history.")
+  (scrollback-down-line
+   (maybe-string)
+   "Scroll down/forward a single line in history.")
+  (scrollback-home
+   (maybe-string)
+   "Scroll to the beginning of the scrollback.")
+  (scrollback-end
+   (maybe-string)
+   "Scroll to the end (bottom) of the scrollback."))
+
+(define-maybe foot-search-bindings-configuration)
+
+(define-configuration foot-url-bindings-configuration
+  (cancel
+   (string "Control+g Control+c Control+d Escape")
+   "Exits URL mode without opening a URL.")
+  (toggle-url-visible
+   (string "t")
+   "This action toggles between showing and hiding the URL on the jump label."))
+
+(define-maybe foot-url-bindings-configuration)
+
+(define-configuration foot-mouse-bindings-configuration
+  (selection-override-modifiers
+   (string "Shift")
+   "The modifiers set in this set (which may be set to any combination of modifiers, e.g. @code{mod1+mod2+mod3}, as well as none) are used to enable selecting text with the mouse irrespective of whether a client application currently has the mouse grabbed. These modifiers cannot be used as modifiers in mouse bindings. Because the order of bindings is significant, it is best to set this prior to any other mouse bindings that might use modifiers in the default set.")
+  (scrollback-up-mouse
+   (string "BTN_WHEEL_BACK")
+   "Normal screen: scrolls up the contents.  Alt screen: send fake @code{KeyUP} events to the client application, if alternate scroll mode is enabled.")
+  (scrollback-down-mouse
+   (string "BTN_WHEEL_FORWARD")
+   "Normal screen: scrolls down the contents.  Alt screen: send fake @code{KeyDOWN} events to the client application, if alternate scroll mode is enabled.")
+  (select-begin
+   (string "BTN_LEFT")
+   "Begin an interactive selection. The selection is finalized, and copied to the primary selection, when the button is released.")
+  (select-begin-block
+   (string "Control+BTN_LEFT")
+   "Begin an interactive block selection. The selection is finalized, and copied to the primary selection, when the button is released.")
+  (select-word
+   (string "BTN_LEFT-2")
+   "Begin an interactive word-wise selection, where words are separated by whitespace and all characters defined by the word-delimiters option. The selection is finalized, and copied to the primary selection, when the button is released.")
+  (select-word-whitespace
+   (string "Control+BTN_LEFT-2")
+   "Same as select-word, but the characters in the word-delimiters option are ignored. I.e only whitespace characters act as delimiters. The selection is finalized, and copied to the primary selection, when the button is released.")
+  (select-quote
+   (string "BTN_LEFT-3")
+   "Begin an interactive \"quote\" selection. This is similar to select-word, except an entire quote is selected. Recognized quote characters are: \" and '.")
+  (select-row
+   (string "BTN_LEFT-4")
+   "Begin an interactive row-wise selection. The selection is finalized, and copied to the primary selection, when the button is released.")
+  (select-extend
+   (string "BTN_RIGHT")
+   "Interactively extend an existing selection, using the original selection mode (normal, block, word-wise or row-wise). The selection is finalized, and copied to the primary selection, when the button is released.")
+  (select-extend-character-wise
+   (string "Control+BTN_RIGHT")
+   "Same as select-extend, but forces the selection mode to normal (i.e.  character wise). Note that this causes subsequent select-extend operations to be character wise. This action is ignored for block selections.")
+  (primary-paste
+   (string "BTN_MIDDLE")
+   "Pastes from the primary selection.")
+  (font-increase
+   (string "Control+BTN_WHEEL_BACK")
+   "Increases the font size by 0.5pt.")
+  (font-decrease
+   (string "Control+BTN_WHEEL_FORWARD")
+   "Decreases the font size by 0.5pt."))
+
+(define-maybe foot-mouse-bindings-configuration)
+
 (define-configuration foot-configuration
   ;; shell
   (login-shell
@@ -293,7 +590,34 @@ to argv[0].")
 foot.ini(5) man page.")
   (colors
    (maybe-foot-color-configuration)
-   "Color section of the configuration."))
+   "Color section of the configuration."
+   (serializer (serialize-foot-section-configuration
+                foot-color-configuration-fields)))
+  (key-bindings
+   (maybe-foot-key-bindings-configuration)
+   "Key bindings section of the configuration."
+   (serializer (serialize-foot-section-configuration
+                foot-key-bindings-configuration-fields)))
+  (search-bindings
+   (maybe-foot-search-bindings-configuration)
+   "Search bindings section of the configuration."
+   (serializer (serialize-foot-section-configuration
+                foot-search-bindings-configuration-fields)))
+  (url-bindings
+   (maybe-foot-url-bindings-configuration)
+   "Url bindings section of the configuration."
+   (serializer (serialize-foot-section-configuration
+                foot-url-bindings-configuration-fields)))
+  (text-bindings
+    (maybe-list-of-string-pairs)
+    "Text bindings section of the configuration."
+    (serializer serialize-list-of-string-pairs))
+  (mouse-bindings
+   (maybe-foot-mouse-bindings-configuration)
+   "Mouse-bindings section of the configuration."
+   (serializer (serialize-foot-section-configuration
+                foot-mouse-bindings-configuration-fields)))
+  )
 
 (define (foot-configuration->file config)
   (mixed-text-file
