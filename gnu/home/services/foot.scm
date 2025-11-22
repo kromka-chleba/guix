@@ -100,6 +100,12 @@
 (define (serialize-extra-content field-name value)
   (fold-right string-append "" value))
 
+(define (serialize-list-section field-name list)
+  (string-concatenate
+   (cons (format #f "~%[~a]~%" field-name)
+         (map (match-lambda ((key . value) (serialize-key-value key value)))
+              list))))
+
 (define (serialize-integer-pair field-name value)
   (match value
     ((cursor . text)
