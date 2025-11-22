@@ -122,13 +122,12 @@
                        ('_ "")
                        (name (symbol->string name)))))
     (fold-right string-append ""
-          (map (lambda (pair)
-                 (match pair
-                   ((id . color)
-                    (serialize-integer
-                     (string-append prefix-name
-                                    (number->string id))
-                     color))))
+          (map (match-lambda
+                 ((id . color)
+                  (serialize-integer
+                   (string-append prefix-name
+                                  (number->string id))
+                   color)))
                value))))
 
 (define (serialize-integers-8 field-name value)
