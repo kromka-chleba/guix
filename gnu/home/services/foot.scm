@@ -161,8 +161,9 @@
   (format #f ":size=~a~%" value))
 
 (define (description-integers from to)
-  (format #f "Defined as a list of cons cells: (INDEX . COLOR).  Where INDEX is an \
-integer from ~a to ~a, and COLOR is the given color for that index." from to))
+  (format #f "Defined as a list of cons cells: @code{(INDEX . COLOR)}.  Where @code{INDEX} \
+is an integer from ~a to ~a, and @code{COLOR} is the given color for that \
+index." from to))
 
 (define (description-translucency)
   "A value in the range [0.0, 1.0], where 0.0 means completely transparent, and 1.0 is opaque.")
@@ -170,9 +171,9 @@ integer from ~a to ~a, and COLOR is the given color for that index." from to))
 (define-configuration foot-color-configuration
   (cursor
    (maybe-integer-pair)
-   "A pair of RRGGBB values in hexadecimal in a cons cell: (CURSOR . TEXT).
+   "A pair of @code{RRGGBB} values in hexadecimal in a cons cell: @code{(CURSOR . TEXT)}.
 
-Example: (cursor (cons #xff0000 #x00ff00)) for green cursor and red text.")
+Example: @code{(cursor (cons #xff0000 #x00ff00))} for green cursor and red text.")
   (foreground
    (maybe-integer)
    "Default foreground color in hexadecimal.  This is the color used when no ANSI \
@@ -186,15 +187,17 @@ color is being used.")
    (string-append "The eight basic ANSI colors (Black, Red, Green, Yellow, Blue, Magenta, Cyan, \
 White).  "(description-integers 0 7)"
 
-E.g (regular '((0 . #x242424) (7 . #xe6e6e6))) to set the Black (regular0) and White (regular7) \
-fields 242424 and e6e6e6 respectively"))
+E.g @code{(regular '((0 . #x242424) (7 . #xe6e6e6)))} to set the Black (@code{regular0}) and White (@code{regular7}) \
+
+%/>
+fields @code{242424} and @code{e6e6e6} respectively"))
   (bright
    (maybe-integers-8)
    (string-append "The eight bright ANSI colors (Black, Red, Green, Yellow, Blue, Magenta, Cyan, \
 White).  "(description-integers 0 7)"
 
-E.g (bright '((1 . #xff4d51) (2 . #x35d450))) to set the Red (bright1) and Green (bright2) \
-fields 242424 and e6e6e6 respectively"))
+E.g @code{(bright '((1 . #xff4d51) (2 . #x35d450)))} to set the Red (@code{bright1}) and Green (@code{bright2}) \
+fields @code{242424} and @code{e6e6e6} respectively"))
   (dim
    (maybe-integers-8)
    (string-append "Eight custom colors to use with dimmed colors.  "(description-integers 0 7)"
@@ -215,14 +218,14 @@ See foot.ini(5) man page for details."))
    (string-append "Background translucency.  "(description-translucency)))
   (alpha-mode
    (maybe-alpha-mode)
-   "Specifies when alpha is applied.  One of the symbols 'default, 'matching or \
-'all.
+   "Specifies when alpha is applied.  One of the symbols @code{'default}, @code{'matching} or \
+@code{'all}.
 
 See foot.ini(5) man page for details.")
   (dim-blend-towards
    (maybe-dim-blend-towards)
    "Which color to blend towards when \"auto\" dimming a color (see foot.ini(5)
-man page for details).  Takes one of the symbols 'black or 'white.  Blending
+man page for details).  Takes one of the symbols @code{'black} or @code{'white.}  Blending
 towards black makes the text darker, while blending towards white makes it
 whiter (but still dimmer than normal text).")
   (selection-foreground
@@ -233,17 +236,17 @@ whiter (but still dimmer than normal text).")
    "Selection background color in hexadecimal.")
   (jump-labels
    (maybe-integer-pair)
-   "A pair of color values in a cons cell (FOREGROUND . BACKGROUND), specifying \
-the FOREGROUND (text) and BACKGROUND colors to use when rendering jump labels \
+   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
+the foreground (text) and background colors to use when rendering jump labels \
 in URL mode.")
   (scrollback-indicator
    (maybe-integer-pair)
-   "A pair of color values in a cons cell (FOREGROUND . BACKGROUND), specifying \
+   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
 the foreground (text) and background (indicator itself) colors for the \
 scrollback indicator.")
   (search-box-no-match
    (maybe-integer-pair)
-   "A pair of color values in a cons cell (FOREGROUND . BACKGROUND), specifying \
+   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
 the foreground (text) and background colors for the scrollback search box, \
 when there are no matches.")
   (urls
