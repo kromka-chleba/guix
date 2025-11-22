@@ -3372,7 +3372,7 @@ typographical palette.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/github/mona-sans.git")
+             (url "https://github.com/github/mona-sans")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -3380,11 +3380,11 @@ typographical palette.")
          "1gdblparf0v5mdbp891wnsc5x4dxr433fg0dmz0mhzrdw9vaalig"))))
     (build-system font-build-system)
     (outputs '("out" "ttf" "woff"))
-    (home-page "http://github.com/mona-sans")
-    (synopsis "A variable font from Github")
+    (home-page "https://github.com/mona-sans")
+    (synopsis "Variable font from Github")
     (description
      "A strong and versatile typeface, designed with Degarism and inspired
-by industrial-era grotesques. Mona Sans works well across product, web and
+by industrial-era grotesques.  Mona Sans works well across product, web and
 print.")
     (license license:silofl1.1)))
 
