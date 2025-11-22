@@ -638,7 +638,20 @@ Note: do not set @code{TERM} here, but instead use the \
    (serializer serialize-list-section))
   (colors
    (maybe-foot-colors-configuration)
-   "Color section of the configuration."
+   "Color section of the configuration.
+The color format is a 6 digit hex value in the form RRGGBB.  You can use \
+@code{#xRRGGBB} to set these in guix.
+@example
+(foot-color-configuration
+ (foreground #x839496)
+ (background #x002b36))
+@end example"
+   (serializer (serialize-foot-section-configuration
+                foot-colors-configuration-fields)))
+  (colors2
+   (maybe-foot-colors-configuration)
+   "Alternative color theme section of the configuration.  See foot.ini(5) man \
+page for details."
    (serializer (serialize-foot-section-configuration
                 foot-colors-configuration-fields)))
   (key-bindings
