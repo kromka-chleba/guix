@@ -100,7 +100,7 @@
   (format #f "~a=~a~%" field-name (integer->hex-string value)))
 
 (define (serialize-extra-content field-name value)
-  (fold-right string-append "" value))
+  (string-join value "\n"))
 
 (define (serialize-list-section field-name list)
   (string-concatenate
@@ -175,6 +175,10 @@ index." from to))
 
 (define (description-translucency)
   "A value in the range [0.0, 1.0], where 0.0 means completely transparent, and 1.0 is opaque.")
+
+(define (description-extra-content section)
+  (format #f "Lines to add to the end of the ~a section of the configuration, see \
+foot.ini(5) man page for available options." section))
 
 (define-configuration foot-colors-configuration
   (cursor
@@ -272,8 +276,7 @@ when there are no matches.")
    (string-append "Flash translucency.  "(description-translucency)))
   (extra-content
    (extra-content '())
-   "Lines to add to the end of the color section of the configuration, see
-foot.ini(5) man page."))
+   (description-extra-content "colors/colors2")))
 
 (define-maybe foot-colors-configuration)
 
@@ -385,7 +388,10 @@ foot.ini(5) man page."))
    "toggles between the primary and alternative color themes.")
   (quit
    (maybe-string)
-   "Quit foot."))
+   "Quit foot.")
+  (extra-content
+   (extra-content '())
+   (description-extra-content "key-bindings")))
 
 (define-maybe foot-key-bindings-configuration)
 
@@ -494,7 +500,10 @@ foot.ini(5) man page."))
    "Scroll to the beginning of the scrollback.")
   (scrollback-end
    (maybe-string)
-   "Scroll to the end (bottom) of the scrollback."))
+   "Scroll to the end (bottom) of the scrollback.")
+  (extra-content
+   (extra-content '())
+   (description-extra-content "search-bindings")))
 
 (define-maybe foot-search-bindings-configuration)
 
@@ -504,7 +513,10 @@ foot.ini(5) man page."))
    "Exits URL mode without opening a URL.")
   (toggle-url-visible
    (string "t")
-   "This action toggles between showing and hiding the URL on the jump label."))
+   "This action toggles between showing and hiding the URL on the jump label.")
+  (extra-content
+   (extra-content '())
+   (description-extra-content "url-bindings")))
 
 (define-maybe foot-url-bindings-configuration)
 
@@ -550,7 +562,10 @@ foot.ini(5) man page."))
    "Increases the font size by 0.5pt.")
   (font-decrease
    (string "Control+BTN_WHEEL_FORWARD")
-   "Decreases the font size by 0.5pt."))
+   "Decreases the font size by 0.5pt.")
+  (extra-content
+   (extra-content '())
+   (description-extra-content "mouse-bindings")))
 
 (define-maybe foot-mouse-bindings-configuration)
 
@@ -610,10 +625,6 @@ to argv[0].")
   (uppercase-regex-insert
     (maybe-boolean)
     "Boolean. When enabled, inputting an uppercase hint character in show- urls-copy or regex-copy mode will insert the selected text into the prompt in addition to copying it to the clipboard.")
-  (raw-fields
-   (maybe-string)
-   "Additional fields to the main section of the configuration, see
-foot.ini(5) man page.")
   (include
     (maybe-string)
     "Absolute path to configuration file to import.")
@@ -676,7 +687,9 @@ page for details."
    "Mouse-bindings section of the configuration."
    (serializer (serialize-foot-section-configuration
                 foot-mouse-bindings-configuration-fields)))
-  )
+  (extra-content
+   (extra-content '())
+   (description-extra-content "main")))
 
 (define (foot-configuration->file config)
   (mixed-text-file
