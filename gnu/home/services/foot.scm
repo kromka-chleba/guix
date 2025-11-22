@@ -25,7 +25,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:export (foot-configuration
-            foot-color-configuration
+            foot-colors-configuration
 	    foot-key-bindings-configuration
 	    foot-search-bindings-configuration
 	    foot-url-bindings-configuration
@@ -177,7 +177,7 @@ index." from to))
 (define (description-translucency)
   "A value in the range [0.0, 1.0], where 0.0 means completely transparent, and 1.0 is opaque.")
 
-(define-configuration foot-color-configuration
+(define-configuration foot-colors-configuration
   (cursor
    (maybe-integer-pair)
    "A pair of @code{RRGGBB} values in hexadecimal in a cons cell: @code{(CURSOR . TEXT)}.
@@ -272,7 +272,7 @@ when there are no matches.")
    "Lines to add to the end of the color section of the configuration, see
 foot.ini(5) man page."))
 
-(define-maybe foot-color-configuration)
+(define-maybe foot-colors-configuration)
 
 (define-configuration foot-key-bindings-configuration
   (noop
@@ -617,10 +617,10 @@ foot.ini(5) man page.")
     (maybe-string)
     "Absolute path to configuration file to import.")
   (colors
-   (maybe-foot-color-configuration)
+   (maybe-foot-colors-configuration)
    "Color section of the configuration."
    (serializer (serialize-foot-section-configuration
-                foot-color-configuration-fields)))
+                foot-colors-configuration-fields)))
   (key-bindings
    (maybe-foot-key-bindings-configuration)
    "Key bindings section of the configuration."
