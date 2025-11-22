@@ -3377,7 +3377,7 @@ typographical palette.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "f5jkk5xcfv7vrqnpbu6dobwjxwiv5gfwhqshiv5lmubzpvnfvo6q"))))
+         "1gdblparf0v5mdbp891wnsc5x4dxr433fg0dmz0mhzrdw9vaalig"))))
     (build-system font-build-system)
     (outputs '("out" "ttf" "woff"))
     (home-page "http://github.com/mona-sans")
