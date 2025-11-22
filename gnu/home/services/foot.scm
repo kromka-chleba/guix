@@ -93,6 +93,13 @@
 (define (serialize-key-value field-name value)
   (format #f "~a=~a~%" field-name value))
 
+(define* (pair->string value #:key (transform identity))
+  (match-let (((first . second) value))
+    (format #f
+            "~a ~a"
+            (transform first)
+            (transform second))))
+
 (define (integer->hex-string value)
   (format #f "~6,'0x" value))
 
@@ -109,13 +116,9 @@
               list))))
 
 (define (serialize-integer-pair field-name value)
-  (match value
-    ((cursor . text)
-     (format #f
-             "~a=~a ~a~%"
-             field-name
-             (integer->hex-string cursor)
-             (integer->hex-string text)))))
+  (serialize-key-value
+   field-name
+   (pair->string value #:transform integer->hex-string)))
 
 (define (serialize-integersN field-name value)
   (let ((prefix-name (match field-name
