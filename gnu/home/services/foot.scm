@@ -33,11 +33,13 @@
             foot-configuration->file
             home-foot-service-type))
 
-(define (alpha-mode? value)
-  (member value '(default matching all)))
-
-(define (dim-blend-towards? value)
-  (member value '(black white)))
+(define (choice-sanitizer list)
+  "Create a procedure that checks if a value is member of LIST."
+  (lambda (value)
+    (cond
+     ((equal? value '%unset-marker%) '%unset-marker%)
+     ((member value list) value)
+     (else (error (format #f "value '~a' is not one of ~a" value list))))))
 
 (define (verify-pair type?)
   (lambda (pair)
@@ -141,14 +143,6 @@
 (define (serialize-integers-256/no-field-name _ value)
   (serialize-integersN '_ value))
 
-;; TODO: investigate why (serializer serialize-key-value) doesn't work in
-;; define-configuration for alpha-mode and dim-blend-towards
-(define (serialize-alpha-mode field-name value)
-  (serialize-key-value field-name value))
-
-(define (serialize-dim-blend-towards field-name value)
-  (serialize-key-value field-name value))
-
 (define (serialize-number field-name value)
   (serialize-key-value field-name value))
 
@@ -236,13 +230,17 @@ See foot.ini(5) man page for details."))
    "Specifies when alpha is applied.  One of the symbols @code{'default}, @code{'matching} or \
 @code{'all}.
 
-See foot.ini(5) man page for details.")
+See foot.ini(5) man page for details."
+   (serializer serialize-key-value)
+   (sanitizer (choice-sanitizer '(default matching all))))
   (dim-blend-towards
    (maybe-dim-blend-towards)
    "Which color to blend towards when \"auto\" dimming a color (see foot.ini(5)
 man page for details).  Takes one of the symbols @code{'black} or @code{'white.}  Blending
 towards black makes the text darker, while blending towards white makes it
-whiter (but still dimmer than normal text).")
+whiter (but still dimmer than normal text)."
+   (serializer serialize-key-value)
+   (sanitizer (choice-sanitizer '(black white))))
   (selection-foreground
    (maybe-integer)
    "Selection foreground color in hexadecimal.")
