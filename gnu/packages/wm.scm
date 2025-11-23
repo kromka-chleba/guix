@@ -84,6 +84,7 @@
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -121,6 +122,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages admin)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bison)
@@ -135,6 +137,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fribidi)
@@ -147,6 +150,7 @@
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages hardware)
   #:use-module (gnu packages haskell-check)
   #:use-module (gnu packages haskell-web)
   #:use-module (gnu packages haskell-xyz)
@@ -4847,3 +4851,55 @@ configure input, and customize Wayfire plugins.")
      "A drop-in replacement for the wlroots scene API that allows wayland
 compositors to render surfaces with eye-candy effects.")
     (license license:expat)))
+
+(define-public noctalia-shell-minimal
+  (package
+    (name "noctalia-shell-minimal")
+    (version "3.7.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/noctalia-dev/noctalia-shell")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jipdvfg54g9423fradybghl0nbhz73wk8ip38w1mhfjwlv75b3z"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan `(("." "etc/xdg/quickshell/noctalia-shell/"
+                         #:exclude (".github/"
+                                    ".gitignore"
+                                    "LICENSE"
+                                    "README.md"
+                                    "flake.*"
+                                    "nix/"
+                                    "shell.nix")))))
+    (propagated-inputs (list brightnessctl
+                             font-google-roboto
+                             font-inter
+                             qtmultimedia
+                             quickshell))
+    (synopsis
+     "Sleek and minimal desktop shell thoughtfully crafted for Wayland")
+    (description
+     "A beautiful, minimal desktop shell for Wayland that actually gets out of
+     your way.  Built on Quickshell with a warm lavender aesthetic that you
+     can easily customize to match your vibe.")
+    (home-page "https://docs.noctalia.dev/")
+    (license license:expat)))
+
+(define-public noctalia-shell
+  (package
+    (inherit noctalia-shell-minimal)
+    (name "noctalia-shell")
+    (propagated-inputs (modify-inputs (package-propagated-inputs
+                                       noctalia-shell-minimal)
+                         (append cava
+                                 cliphist
+                                 ddcutil
+                                 evolution-data-server
+                                 matugen
+                                 wlsunset
+                                 xdg-desktop-portal
+                                 python)))))
