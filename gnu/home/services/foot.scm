@@ -785,6 +785,30 @@ page for details."
    "foot.ini"
    (serialize-configuration config foot-configuration-fields)))
 
+(define (foot-configuration-documentation->file)
+  (mixed-text-file "foot-configuration.texi"
+                   (generate-documentation
+                    `((foot-configuration ,foot-configuration-fields))
+                    'foot-configuration)
+                   (generate-documentation
+                    `((foot-font-configuration ,foot-font-configuration-fields))
+                    'foot-font-configuration)
+                   (generate-documentation
+                    `((foot-colors-configuration ,foot-colors-configuration-fields))
+                    'foot-colors-configuration)
+                   (generate-documentation
+                    `((foot-key-bindings-configuration ,foot-key-bindings-configuration-fields))
+                    'foot-key-bindings-configuration)
+                   (generate-documentation
+                    `((foot-mouse-bindings-configuration ,foot-mouse-bindings-configuration-fields))
+                    'foot-mouse-bindings-configuration)
+                   (generate-documentation
+                    `((foot-search-bindings-configuration ,foot-search-bindings-configuration-fields))
+                    'foot-search-bindings-configuration)
+                   (generate-documentation
+                    `((foot-url-bindings-configuration ,foot-url-bindings-configuration-fields))
+                    'foot-url-bindings-configuration)))
+
 (define (home-foot-config config)
   `(("foot/foot.ini" ,(foot-configuration->file config))))
 
