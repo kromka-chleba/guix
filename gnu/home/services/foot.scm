@@ -231,6 +231,90 @@ index." from to))
   (format #f "Lines to add to the end of the ~a section of the configuration, see \
 foot.ini(5) man page for available options." section))
 
+(define-configuration foot-main-configuration
+  (shell
+    (maybe-string)
+    "Executable to launch. Typically a shell. You can also pass arguments. For example /bin/bash --norc.")
+  (login-shell
+   (maybe-boolean)
+   "If enabled, the shell will be launched as a login shell, by prepending a '-'
+to argv[0].")
+  (term
+   (maybe-string)
+   "@anchor{home-foot-configuration-term}Value to set the environment variable TERM to.")
+  (font
+   (maybe-list-of-foot-font-configuration)
+   (description-font "normal"))
+  (font-bold
+   (maybe-list-of-foot-font-configuration)
+   (description-font "bold"))
+  (font-italic
+   (maybe-list-of-foot-font-configuration)
+   (description-font "italic"))
+  (font-bold-italic
+   (maybe-list-of-foot-font-configuration)
+   (description-font "bold italic"))
+  (box-drawings-uses-font-glyphs
+    (maybe-boolean)
+    "Boolean. When disabled, foot generates box/line drawing characters itself.")
+  (dpi-aware
+   (maybe-boolean)
+   "Fonts are sized using the monitor's DPI when true.")
+  (gamma-correct-blending
+    (maybe-boolean)
+    "Boolean. When enabled, foot will do gamma-correct blending in linear color space. This is how font glyphs are supposed to be rendered, but since nearly no applications or toolkits are doing it on Linux, the result may not look like you are used to.")
+  ;; Spacing, offsets, underline and strikethrough
+  ;; TODO: these are measured in points by default. The "px" suffix can be used to measure in pixels instead. Supporting that will need a new serializer, I think.
+  (line-height
+    (maybe-integer)
+    "An absolute value, in points, that override line height from the font metrics.")
+  (letter-spacing
+    (maybe-integer)
+    "Spacing between letters, in points. A positive value will increase the cell size, and a negative value shrinks it.")
+  (horizontal-letter-offset
+    (maybe-integer)
+    "Horizontal offset used when positioning glyphs within cells, in points, relative to the top left corner.")
+  (vertical-letter-offset
+    (maybe-integer)
+    "Vertical offset used when positioning glyphs within cells, in points, relative to the top left corner.")
+  (underline-offset
+    (maybe-integer)
+    "Custom offset for underlines, in points and relative to the font's baseline. Positive values position in under the baseline, negative values position it over the baseline.")
+  (underline-thickness
+    (maybe-integer)
+    "Use a custom thickness (height) for underlines, in points.")
+  (strikeout-thickness
+    (maybe-integer)
+    "Use a custom thickness (height) for strikeouts, in points.")
+  (uppercase-regex-insert
+    (maybe-boolean)
+    "Boolean. When enabled, inputting an uppercase hint character in show- urls-copy or regex-copy mode will insert the selected text into the prompt in addition to copying it to the clipboard.")
+  (include
+    (maybe-string)
+    "Absolute path to configuration file to import.")
+  (extra-content
+   (extra-content '())
+   (description-extra-content "main"))
+  (environment
+   (maybe-list-of-string-pairs)
+   "Section to define environment variables that will be set in the client \
+application, in addition to the variables inherited from the terminal process \
+itself.
+
+Format is a list of @code{(KEY . VALUE)} pairs, where @code{KEY} is a string \
+matching the environment variable name to set, and @code{VALUE} a string \
+representing the environment variable's value.
+
+If you want to set environment variables for your home configuration, use
+@code{home-environment-variables-service-type} instead.  \
+@xref{Essential Home Services} for details.
+
+Note: do not set @code{TERM} here, instead \
+@xref{home-foot-configuration-term,,term}."
+   (serializer serialize-list-section)))
+
+
+
 (define-configuration foot-font-configuration
   (name
    (fontconfig-name)
@@ -659,86 +743,12 @@ when there are no matches.")
 man page for details." font))
 
 (define-configuration foot-configuration
-  (shell
-    (maybe-string)
-    "Executable to launch. Typically a shell. You can also pass arguments. For example /bin/bash --norc.")
-  (login-shell
-   (maybe-boolean)
-   "If enabled, the shell will be launched as a login shell, by prepending a '-'
-to argv[0].")
-  (term
-   (maybe-string)
-   "@anchor{home-foot-configuration-term}Value to set the environment variable TERM to.")
-  (font
-   (maybe-list-of-foot-font-configuration)
-   (description-font "normal"))
-  (font-bold
-   (maybe-list-of-foot-font-configuration)
-   (description-font "bold"))
-  (font-italic
-   (maybe-list-of-foot-font-configuration)
-   (description-font "italic"))
-  (font-bold-italic
-   (maybe-list-of-foot-font-configuration)
-   (description-font "bold italic"))
-  (box-drawings-uses-font-glyphs
-    (maybe-boolean)
-    "Boolean. When disabled, foot generates box/line drawing characters itself.")
-  (dpi-aware
-   (maybe-boolean)
-   "Fonts are sized using the monitor's DPI when true.")
-  (gamma-correct-blending
-    (maybe-boolean)
-    "Boolean. When enabled, foot will do gamma-correct blending in linear color space. This is how font glyphs are supposed to be rendered, but since nearly no applications or toolkits are doing it on Linux, the result may not look like you are used to.")
-  ;; Spacing, offsets, underline and strikethrough
-  ;; TODO: these are measured in points by default. The "px" suffix can be used to measure in pixels instead. Supporting that will need a new serializer, I think.
-  (line-height
-    (maybe-integer)
-    "An absolute value, in points, that override line height from the font metrics.")
-  (letter-spacing
-    (maybe-integer)
-    "Spacing between letters, in points. A positive value will increase the cell size, and a negative value shrinks it.")
-  (horizontal-letter-offset
-    (maybe-integer)
-    "Horizontal offset used when positioning glyphs within cells, in points, relative to the top left corner.")
-  (vertical-letter-offset
-    (maybe-integer)
-    "Vertical offset used when positioning glyphs within cells, in points, relative to the top left corner.")
-  (underline-offset
-    (maybe-integer)
-    "Custom offset for underlines, in points and relative to the font's baseline. Positive values position in under the baseline, negative values position it over the baseline.")
-  (underline-thickness
-    (maybe-integer)
-    "Use a custom thickness (height) for underlines, in points.")
-  (strikeout-thickness
-    (maybe-integer)
-    "Use a custom thickness (height) for strikeouts, in points.")
-  (uppercase-regex-insert
-    (maybe-boolean)
-    "Boolean. When enabled, inputting an uppercase hint character in show- urls-copy or regex-copy mode will insert the selected text into the prompt in addition to copying it to the clipboard.")
-  (include
-    (maybe-string)
-    "Absolute path to configuration file to import.")
-  (extra-content
-   (extra-content '())
-   (description-extra-content "main"))
-  (environment
-   (maybe-list-of-string-pairs)
-   "Section to define environment variables that will be set in the client \
-application, in addition to the variables inherited from the terminal process \
-itself.
-
-Format is a list of @code{(KEY . VALUE)} pairs, where @code{KEY} is a string \
-matching the environment variable name to set, and @code{VALUE} a string \
-representing the environment variable's value.
-
-If you want to set environment variables for your home configuration, use
-@code{home-environment-variables-service-type} instead.  @xref{Essential Home \
-Services} for details.
-
-Note: do not set @code{TERM} here, instead \
-@xref{home-foot-configuration-term,,term}."
-   (serializer serialize-list-section))
+  (main
+   (maybe-foot-main-configuration)
+   "Main section of the configuration.  See foot.ini(5) man \
+page for details."
+   (serializer (serialize-foot-section-configuration
+                foot-colors-configuration-fields)))
   (colors
    (maybe-foot-colors-configuration)
    "Color section of the configuration.
@@ -806,6 +816,10 @@ page for details."
 		     `((foot-configuration ,foot-configuration-fields))
 		     'foot-configuration)
                    (foot-generate-documentation
+		     "Main"
+		     `((foot-main-configuration ,foot-main-configuration-fields))
+		     'foot-main-configuration)
+                   (foot-generate-documentation
 		     "Font"
 		     `((foot-font-configuration ,foot-font-configuration-fields))
 		     'foot-font-configuration)
@@ -839,6 +853,7 @@ page for details."
    (extensions
     (list (service-extension home-xdg-configuration-files-service-type
                              home-foot-config)))
-   ;; TODO: compose and extend?
+   (compose concatenate)
+   (extend append)
    (default-value (foot-configuration))
    (description "Install and configure foot.")))
