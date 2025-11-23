@@ -51,25 +51,28 @@
   (and (list? lines)
        (every string? lines)))
 
-(define (integer-pair? value)
-  ((verify-pair integer?) value))
+(define (color? value)
+  (integer? value))
 
-(define (integers-N? N ints)
-  (and (list? ints)
-       (<= (length ints) N)
-       (every (verify-pair integer?) ints)))
+(define (color-pair? value)
+  ((verify-pair color?) value))
 
-(define (integers-8? ints)
-  (integers-N? 8 ints))
+(define (colors-N? N colors)
+  (and (list? colors)
+       (<= (length colors) N)
+       (every (verify-pair color?) colors)))
 
-(define (integers-16? ints)
-  (integers-N? 16 ints))
+(define (colors-8? colors)
+  (colors-N? 8 colors))
 
-(define (integers-256? ints)
-  (integers-N? 256 ints))
+(define (colors-16? colors)
+  (colors-N? 16 colors))
 
-(define (integers-256/no-field-name? ints)
-  (integers-256? ints))
+(define (colors-256? colors)
+  (colors-N? 256 colors))
+
+(define (colors-256/no-field-name? colors)
+  (colors-256? colors))
 
 (define (string-pair? s)
   ((verify-pair string?) s))
@@ -77,17 +80,18 @@
 (define (list-of-string-pairs? s)
   (every string-pair? s))
 
+(define-maybe color)
+(define-maybe colors-8)
+(define-maybe colors-16)
+(define-maybe colors-256)
+(define-maybe colors-256/no-field-name)
+(define-maybe color-pair)
 (define-maybe string)
 (define-maybe boolean)
 (define-maybe number)
 (define-maybe alpha-mode)
 (define-maybe dim-blend-towards)
 (define-maybe integer)
-(define-maybe integers-8)
-(define-maybe integers-16)
-(define-maybe integers-256)
-(define-maybe integers-256/no-field-name)
-(define-maybe integer-pair)
 (define-maybe list-of-string-pairs)
 
 (define (serialize-key-value field-name value)
@@ -100,11 +104,11 @@
             (transform first)
             (transform second))))
 
-(define (integer->hex-string value)
+(define (color->hex-string value)
   (format #f "~6,'0x" value))
 
-(define (serialize-integer field-name value)
-  (format #f "~a=~a~%" field-name (integer->hex-string value)))
+(define (serialize-color field-name value)
+  (format #f "~a=~a~%" field-name (color->hex-string value)))
 
 (define (serialize-extra-content field-name value)
   (string-join value "\n"))
@@ -115,35 +119,35 @@
          (map (match-lambda ((key . value) (serialize-key-value key value)))
               list))))
 
-(define (serialize-integer-pair field-name value)
+(define (serialize-color-pair field-name value)
   (serialize-key-value
    field-name
-   (pair->string value #:transform integer->hex-string)))
+   (pair->string value #:transform color->hex-string)))
 
-(define (serialize-integersN field-name value)
+(define (serialize-colorsN field-name value)
   (let ((prefix-name (match field-name
                        ('_ "")
                        (name (symbol->string name)))))
     (fold-right string-append ""
           (map (match-lambda
                  ((id . color)
-                  (serialize-integer
+                  (serialize-color
                    (string-append prefix-name
                                   (number->string id))
                    color)))
                value))))
 
-(define (serialize-integers-8 field-name value)
-  (serialize-integersN field-name value))
+(define (serialize-colors-8 field-name value)
+  (serialize-colorsN field-name value))
 
-(define (serialize-integers-16 field-name value)
-  (serialize-integersN field-name value))
+(define (serialize-colors-16 field-name value)
+  (serialize-colorsN field-name value))
 
-(define (serialize-integers-256 field-name value)
-  (serialize-integersN field-name value))
+(define (serialize-colors-256 field-name value)
+  (serialize-colorsN field-name value))
 
-(define (serialize-integers-256/no-field-name _ value)
-  (serialize-integersN '_ value))
+(define (serialize-colors-256/no-field-name _ value)
+  (serialize-colorsN '_ value))
 
 (define (serialize-number field-name value)
   (serialize-key-value field-name value))
@@ -171,7 +175,7 @@
 (define (serialize-font-size field-name value)
   (format #f ":size=~a~%" value))
 
-(define (description-integers from to)
+(define (description-colors from to)
   (format #f "Defined as a list of cons cells: @code{(INDEX . COLOR)}.  Where @code{INDEX} \
 is an integer from ~a to ~a, and @code{COLOR} is the given color for that \
 index." from to))
@@ -185,47 +189,47 @@ foot.ini(5) man page for available options." section))
 
 (define-configuration foot-colors-configuration
   (cursor
-   (maybe-integer-pair)
+   (maybe-color-pair)
    "A pair of @code{RRGGBB} values in hexadecimal in a cons cell: @code{(CURSOR . TEXT)}.
 
 Example: @code{(cursor (cons #xff0000 #x00ff00))} for green cursor and red text.")
   (foreground
-   (maybe-integer)
+   (maybe-color)
    "Default foreground color in hexadecimal.  This is the color used when no ANSI \
 color is being used.")
   (background
-   (maybe-integer)
+   (maybe-color)
    "Default background color in hexadecimal.  This is the color used when no ANSI \
 color is being used.")
   (regular
-   (maybe-integers-8)
+   (maybe-colors-8)
    (string-append "The eight basic ANSI colors (Black, Red, Green, Yellow, Blue, Magenta, Cyan, \
-White).  "(description-integers 0 7)"
+White).  "(description-colors 0 7)"
 
 E.g @code{(regular '((0 . #x242424) (7 . #xe6e6e6)))} to set the Black (@code{regular0}) and White (@code{regular7}) \
 
 %/>
 fields @code{242424} and @code{e6e6e6} respectively"))
   (bright
-   (maybe-integers-8)
+   (maybe-colors-8)
    (string-append "The eight bright ANSI colors (Black, Red, Green, Yellow, Blue, Magenta, Cyan, \
-White).  "(description-integers 0 7)"
+White).  "(description-colors 0 7)"
 
 E.g @code{(bright '((1 . #xff4d51) (2 . #x35d450)))} to set the Red (@code{bright1}) and Green (@code{bright2}) \
 fields @code{242424} and @code{e6e6e6} respectively"))
   (dim
-   (maybe-integers-8)
-   (string-append "Eight custom colors to use with dimmed colors.  "(description-integers 0 7)"
+   (maybe-colors-8)
+   (string-append "Eight custom colors to use with dimmed colors.  "(description-colors 0 7)"
 
 See foot.ini(5) man page for details."))
   (256-color-palette
-   (maybe-integers-256/no-field-name)
-   (string-append "Arbitrary colors in the 256-color palette.  "(description-integers 0 255)"
+   (maybe-colors-256/no-field-name)
+   (string-append "Arbitrary colors in the 256-color palette.  "(description-colors 0 255)"
 
 See foot.ini(5) man page for details."))
   (sixel
-   (maybe-integers-16)
-   (string-append "The default sixel color palette of 16 colors.  "(description-integers 0 15)"
+   (maybe-colors-16)
+   (string-append "The default sixel color palette of 16 colors.  "(description-colors 0 15)"
 
 See foot.ini(5) man page for details."))
   (alpha
@@ -248,34 +252,34 @@ whiter (but still dimmer than normal text)."
    (serializer serialize-key-value)
    (sanitizer (choice-sanitizer '(black white))))
   (selection-foreground
-   (maybe-integer)
+   (maybe-color)
    "Selection foreground color in hexadecimal.")
   (selection-background
-   (maybe-integer)
+   (maybe-color)
    "Selection background color in hexadecimal.")
   (jump-labels
-   (maybe-integer-pair)
+   (maybe-color-pair)
    "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
 the foreground (text) and background colors to use when rendering jump labels \
 in URL mode.")
   (scrollback-indicator
-   (maybe-integer-pair)
+   (maybe-color-pair)
    "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
 the foreground (text) and background (indicator itself) colors for the \
 scrollback indicator.")
   (search-box-no-match
-   (maybe-integer-pair)
+   (maybe-color-pair)
    "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
 the foreground (text) and background colors for the scrollback search box, \
 when there are no matches.")
   (urls
-   (maybe-integer)
+   (maybe-color)
    "Color to use for the underline used to highlight URLs in URL mode.")
   (flash
-   (maybe-integer)
+   (maybe-color)
    "Color to use for the terminal window flash.")
   (flash-alpha
-   (maybe-integer)
+   (maybe-color)
    (string-append "Flash translucency.  "(description-translucency)))
   (extra-content
    (extra-content '())
