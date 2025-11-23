@@ -716,6 +716,9 @@ to argv[0].")
   (include
     (maybe-string)
     "Absolute path to configuration file to import.")
+  (extra-content
+   (extra-content '())
+   (description-extra-content "main"))
   (environment
    (maybe-list-of-string-pairs)
    "Section to define environment variables that will be set in the client \
@@ -775,10 +778,7 @@ page for details."
    (maybe-foot-mouse-bindings-configuration)
    "Mouse-bindings section of the configuration."
    (serializer (serialize-foot-section-configuration
-                foot-mouse-bindings-configuration-fields)))
-  (extra-content
-   (extra-content '())
-   (description-extra-content "main")))
+                foot-mouse-bindings-configuration-fields))))
 
 (define (foot-configuration->file config)
   (mixed-text-file
