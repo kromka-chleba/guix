@@ -19,6 +19,7 @@
 ;;; Copyright © 2025 Yovan Naumovski <yovan@gorski.stream>
 ;;; Copyright © 2025 André Batista <nandre@riseup.net>
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -64,6 +65,7 @@
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages music)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages popt)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages linux)
@@ -1156,4 +1158,34 @@ CDEmu daemon.
 It provides a way to perform the key tasks related to controlling the CDEmu
 daemon, such as loading and unloading devices, displaying devices' status and
 retrieving/setting devices' debug masks.")
+    (license gpl2+)))
+
+(define-public vcdimager
+  (package
+    (name "vcdimager")
+    (version "2.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnu/vcdimager/vcdimager-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "0ypnb1vp49nmzp5571ynlz6n1gh90f23w3z4x95hb7c2p7pmylb7"))
+       (patches (search-patches "vcdimager-libxml2-2.14.patch"))))
+    (build-system gnu-build-system)
+    ;; The configure.ac file selects the silent mode by default; make the
+    ;; build verbose.
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-silent-rules") ;verbose build
+           #:parallel-tests? #f))
+    (native-inputs (list pkg-config))
+    (inputs (list libcdio popt libxml2))
+    (synopsis "Authoring, disassembling and analyzing (super and) video CDs")
+    (description
+     "GNU VCDImager is a suite of programs for working with Video CDs and Super Video
+CDs.  It can be used for authoring, disassembling and analyzing discs.  It
+supports full playback control, segment play items, automatic padding of MPEG
+streams on the fly, and extraction of Video CDs into files.")
+    (home-page "https://www.gnu.org/software/vcdimager/")
     (license gpl2+)))
