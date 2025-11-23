@@ -254,13 +254,13 @@ italic font.")
   (fontconfig-options
    (maybe-list-of-fontconfig-string-pairs)
    "Additional fontconfig options.
-@example
+@lisp
 (foot-font-configuration
  (name \"Iosevka\")
  (fontconfig-options
   '((\"fontfeatures\" . \"cv01=1\")
     (\"fontfeatures\" . \"cv06=1\"))))
-@end example"))
+@end lisp"))
 
 (define-configuration foot-colors-configuration
   (cursor
@@ -730,19 +730,20 @@ If you want to set environment variables for your home configuration, use
 @code{home-environment-variables-service-type} instead.  @xref{Essential Home \
 Services} for details.
 
-Note: do not set @code{TERM} here, but instead use the \
-@ref{home-foot-configuration-term,,term} field in the main section."
+Note: do not set @code{TERM} here, instead \
+@xref{home-foot-configuration-term,,term}."
    (serializer serialize-list-section))
   (colors
    (maybe-foot-colors-configuration)
    "Color section of the configuration.
 The color format is a 6 digit hex value in the form RRGGBB.  You can use \
-@code{#xRRGGBB} to set these in guix.
-@example
+@code{#xRRGGBB} to set these in guix.  For example setting the foreground and \
+background color:
+@lisp
 (foot-color-configuration
  (foreground #x839496)
  (background #x002b36))
-@end example"
+@end lisp"
    (serializer (serialize-foot-section-configuration
                 foot-colors-configuration-fields)))
   (colors2
