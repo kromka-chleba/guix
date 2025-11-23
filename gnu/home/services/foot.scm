@@ -93,6 +93,8 @@
 (define (list-of-fontconfig-string-pairs? s)
   (list-of-string-pairs? s))
 
+;;TODO: foot-font-configuration?
+
 (define (list-of-foot-font-configuration? configs)
   (every foot-font-configuration? configs))
 
@@ -397,16 +399,16 @@ when there are no matches.")
    (string "Control+Shift+v XF86Paste")
    "Pastes from the clipboard.")
   (primary-paste
-   (string "Shift+Insert (also defined in mouse-bindings)")
+   (string "Shift+Insert")
    "Pastes from the primary selection.")
   (search-start
    (string "Control+Shift+r")
    "Starts a scrollback/history search.")
   (font-increase
-   (string "Control+plus Control+equal Control+KP_Add (also defined in mouse-bindings)")
+   (string "Control+plus Control+equal Control+KP_Add")
    "Increases the font size by 0.5pt.")
   (font-decrease
-   (string "Control+minus Control+KP_Subtract (also defined in mouse-bindings)")
+   (string "Control+minus Control+KP_Subtract")
    "Decreases the font size by 0.5pt.")
   (font-reset
    (string "Control+0 Control+KP_0")
