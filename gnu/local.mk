@@ -2296,6 +2296,10 @@ dist_patch_DATA =						\
   %D%/packages/patches/shakespeare-spl-fix-grammar.patch		\
   %D%/packages/patches/shared-mime-info-xdgmime-path.patch	\
   %D%/packages/patches/sharutils-CVE-2018-1000097.patch		\
+  %D%/packages/patches/shtool-fix-manpages.patch                \
+  %D%/packages/patches/shtool-fix-mkdir-p.patch                 \
+  %D%/packages/patches/shtool-fix-pod-errors.patch              \
+  %D%/packages/patches/shtool-fix-spelling.patch                \
   %D%/packages/patches/sipwitch-fix-build-with-exosip5.patch	\
   %D%/packages/patches/slim-config.patch			\
   %D%/packages/patches/slim-gcc-14.patch			\

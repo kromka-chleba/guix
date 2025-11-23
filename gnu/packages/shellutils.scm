@@ -23,6 +23,7 @@
 ;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;; Copyright © 2025 Skylar Hill <stellarskylark@posteo.net>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -52,9 +53,11 @@
   #:use-module (guix build-system go)
   #:use-module ((guix build-system python) #:select (pypi-uri))
   #:use-module (guix build-system pyproject)
+  #:use-module (gnu packages)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
@@ -507,6 +510,49 @@ all of the regexes given on the command line in order.")
 POSIX Shell}, @url{https://www.gnu.org/software/bash/, Bash}, and
 @url{http://www.mirbsd.org/mksh.htm, mksh}.")
     (license license:bsd-3)))
+
+(define-public shtool
+  (package
+    (name "shtool")
+    (version "2.0.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnu/shtool/shtool-" version ".tar.gz"))
+       (sha256
+        (base32 "06df8r803i3fxclczma9zc5222b5drz7hklzkqisy4kd854sb60j"))
+       (patches (search-patches "shtool-fix-manpages.patch"
+                                "shtool-fix-mkdir-p.patch"
+                                "shtool-fix-pod-errors.patch"
+                                "shtool-fix-spelling.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:make-flags
+           #~(list (string-append "SHELL="
+                                  (search-input-file %build-inputs "bin/sh")))
+           #:phases #~(modify-phases %standard-phases
+                        (add-after 'unpack 'patch-/bin/sh
+                          (lambda* (#:key inputs #:allow-other-keys)
+                            (substitute* "shtoolize.in"
+                              (("/bin/sh")
+                               (search-input-file inputs "bin/sh")))))
+                        (add-after 'unpack 'disable-problematic-tests
+                          (lambda _
+                            (substitute* "test.db"
+                              (("shtool mdate /")
+                               "true")))))))
+    (native-inputs (list perl))
+    (inputs (list bash-minimal))
+    (synopsis "Compilation of utility shell scripts into a shell tool")
+    (description
+     "GNU shtool is a multipurpose shell tool.  It can perform the functions
+ of many different commands, in order to provide a single tool to distribute
+with a source distribution in order to ensure portability of shell scripts.
+For example, shtool can perform the jobs of the common commands
+@command{install}, @command{mkdir} or @command{echo} on systems that lack
+them.")
+    (home-page "https://www.gnu.org/software/shtool/")
+    (license license:gpl2+)))
 
 (define-public starship
   (package

@@ -1,0 +1,48 @@
+Retrieved-from: https://salsa.debian.org/debian/shtool/-/raw/debian/master/debian/patches/20_fix-poderros.patch?ref_type=heads
+Upstream-status: https://savannah.gnu.org/support/index.php?111344
+
+Description: fix manpage-has-errors-from-pod2man.
+Author: William Vera <billy@billy.com.mx>
+Last-Update: 2010-03-02
+Index: shtool-2.0.8/sh.mdate
+===================================================================
+--- shtool-2.0.8.orig/sh.mdate
++++ shtool-2.0.8/sh.mdate
+@@ -219,6 +219,9 @@ Specifies order of the day month year el
+ element represented as a single character out of ``C<d>'', ``C<m>'' and
+ ``C<y>''. The default for I<spec> is ``C<dmy>''.
+ 
++
++=back
++
+ =head1 EXAMPLE
+ 
+  #   shell script
+Index: shtool-2.0.8/sh.mkdir
+===================================================================
+--- shtool-2.0.8.orig/sh.mkdir
++++ shtool-2.0.8/sh.mkdir
+@@ -183,6 +183,9 @@ Default is to skip this step and leave t
+ which is usually based on the executing gid or the parent setgid
+ directory.
+ 
++
++=back
++
+ =head1 EXAMPLE
+ 
+  #   Makefile
+Index: shtool-2.0.8/sh.mkshadow
+===================================================================
+--- shtool-2.0.8.orig/sh.mkshadow
++++ shtool-2.0.8/sh.mkshadow
+@@ -188,6 +188,9 @@ Enable the output of the essential shell
+ Really shadow all files and directories in I<src-dir>. Default is to
+ skip CVS related files and directories, backup files, object files, etc.
+ 
++
++=back
++
+ =head1 EXAMPLE
+ 
+  #   shell script

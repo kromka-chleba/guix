@@ -1,0 +1,279 @@
+Retrieved-from: https://salsa.debian.org/debian/shtool/-/raw/debian/master/debian/patches/30_fix-manpages.patch?ref_type=heads
+Upstream-status: https://savannah.gnu.org/support/index.php?111344
+
+Description: Fix manpage-has-bad-whatis-entry.
+Author: William Vera <billy@billy.com.mx>
+Last-Update: 2010-03-02
+
+Description: Fix a spelling error in sh.install manpage.
+Author: Joao Eriberto Mota Filho <eriberto@debian.org>
+Last-Update: 2016-09-08
+Index: shtool-2.0.8/sh.echo
+===================================================================
+--- shtool-2.0.8.orig/sh.echo
++++ shtool-2.0.8/sh.echo
+@@ -339,7 +339,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool echo> - B<GNU shtool> echo(1) extensional command
++B<shtool-echo> - B<GNU shtool> echo(1) extensional command
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.fixperm
+===================================================================
+--- shtool-2.0.8.orig/sh.fixperm
++++ shtool-2.0.8/sh.fixperm
+@@ -86,7 +86,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool fixperm> - B<GNU shtool> file permission fixing command
++B<shtool-fixperm> - B<GNU shtool> file permission fixing command
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.install
+===================================================================
+--- shtool-2.0.8.orig/sh.install
++++ shtool-2.0.8/sh.install
+@@ -200,7 +200,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool install> - B<GNU shtool> install(1) command
++B<shtool-install> - B<GNU shtool> install(1) command
+ 
+ =head1 SYNOPSIS
+ 
+@@ -240,7 +240,7 @@ Enable the output of the essential shell
+ 
+ =item B<-d>, B<--mkdir>
+ 
+-To maximize BSD compatiblity, the BSD "B<shtool> C<install -d>" usage is
++To maximize BSD compatibility, the BSD "B<shtool> C<install -d>" usage is
+ internally mapped to the "B<shtool> C<mkdir -f -p -m 755>" command.
+ 
+ =item B<-c>, B<--copy>
+Index: shtool-2.0.8/sh.mdate
+===================================================================
+--- shtool-2.0.8.orig/sh.mdate
++++ shtool-2.0.8/sh.mdate
+@@ -162,7 +162,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool mdate> - B<GNU shtool> pretty-print last modification time
++B<shtool-mdate> - B<GNU shtool> pretty-print last modification time
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.mkdir
+===================================================================
+--- shtool-2.0.8.orig/sh.mkdir
++++ shtool-2.0.8/sh.mkdir
+@@ -121,7 +121,7 @@ shtool_exit $errstatus
+ 
+ =head1 NAME
+ 
+-B<shtool mkdir> - B<GNU shtool> mkdir(1) style command
++B<shtool-mkdir> - B<GNU shtool> mkdir(1) style command
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.mkln
+===================================================================
+--- shtool-2.0.8.orig/sh.mkln
++++ shtool-2.0.8/sh.mkln
+@@ -186,7 +186,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool mkln> - B<GNU shtool> enhanced ln(1) replacement
++B<shtool-mkln> - B<GNU shtool> enhanced ln(1) replacement
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.mkshadow
+===================================================================
+--- shtool-2.0.8.orig/sh.mkshadow
++++ shtool-2.0.8/sh.mkshadow
+@@ -148,7 +148,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool mkshadow> - B<GNU shtool> create shadow tree using symlinks
++B<shtool-mkshadow> - B<GNU shtool> create shadow tree using symlinks
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.move
+===================================================================
+--- shtool-2.0.8.orig/sh.move
++++ shtool-2.0.8/sh.move
+@@ -123,7 +123,7 @@ shtool_exit $errorstatus
+ 
+ =head1 NAME
+ 
+-B<shtool move> - B<GNU shtool> enhanced mv(1) replacement
++B<shtool-move> - B<GNU shtool> enhanced mv(1) replacement
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.path
+===================================================================
+--- shtool-2.0.8.orig/sh.path
++++ shtool-2.0.8/sh.path
+@@ -175,7 +175,7 @@ shtool_exit 1
+ 
+ =head1 NAME
+ 
+-B<shtool path> - B<GNU shtool> command dealing with shell path variables
++B<shtool-path> - B<GNU shtool> command dealing with shell path variables
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.platform
+===================================================================
+--- shtool-2.0.8.orig/sh.platform
++++ shtool-2.0.8/sh.platform
+@@ -667,7 +667,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool platform> - B<GNU shtool> Unix platform identification
++B<shtool-platform> - B<GNU shtool> Unix platform identification
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.prop
+===================================================================
+--- shtool-2.0.8.orig/sh.prop
++++ shtool-2.0.8/sh.prop
+@@ -74,7 +74,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool prop> - B<GNU shtool> propeller processing indication
++B<shtool-prop> - B<GNU shtool> propeller processing indication
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.rotate
+===================================================================
+--- shtool-2.0.8.orig/sh.rotate
++++ shtool-2.0.8/sh.rotate
+@@ -409,7 +409,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool rotate> - B<GNU shtool> log file rotation
++B<shtool-rotate> - B<GNU shtool> log file rotation
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.scpp
+===================================================================
+--- shtool-2.0.8.orig/sh.scpp
++++ shtool-2.0.8/sh.scpp
+@@ -256,7 +256,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool scpp> - B<GNU shtool> C source file pre-processor
++B<shtool-scpp> - B<GNU shtool> C source file pre-processor
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.slo
+===================================================================
+--- shtool-2.0.8.orig/sh.slo
++++ shtool-2.0.8/sh.slo
+@@ -187,7 +187,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool slo> - B<GNU shtool> separate linker options by library class
++B<shtool-slo> - B<GNU shtool> separate linker options by library class
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.subst
+===================================================================
+--- shtool-2.0.8.orig/sh.subst
++++ shtool-2.0.8/sh.subst
+@@ -199,7 +199,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool subst> - B<GNU shtool> sed(1) substitution operations
++B<shtool-subst> - B<GNU shtool> sed(1) substitution operations
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.table
+===================================================================
+--- shtool-2.0.8.orig/sh.table
++++ shtool-2.0.8/sh.table
+@@ -96,7 +96,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool table> - B<GNU shtool> pretty-print a field-separated list
++B<shtool-table> - B<GNU shtool> pretty-print a field-separated list
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.tarball
+===================================================================
+--- shtool-2.0.8.orig/sh.tarball
++++ shtool-2.0.8/sh.tarball
+@@ -200,7 +200,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool tarball> - B<GNU shtool> command for rolling standardized tarballs
++B<shtool-tarball> - B<GNU shtool> command for rolling standardized tarballs
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/sh.version
+===================================================================
+--- shtool-2.0.8.orig/sh.version
++++ shtool-2.0.8/sh.version
+@@ -326,7 +326,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool version> - B<GNU shtool> maintain version information file
++B<shtool-version> - B<GNU shtool> maintain version information file
+ 
+ =head1 SYNOPSIS
+ 
+Index: shtool-2.0.8/shtool.pod
+===================================================================
+--- shtool-2.0.8.orig/shtool.pod
++++ shtool-2.0.8/shtool.pod
+@@ -22,7 +22,7 @@
+ 
+ =head1 NAME
+ 
+-B<GNU shtool> - The GNU Portable Shell Tool
++B<shtool> - The GNU Portable Shell Tool
+ 
+ =head1 VERSION
+ 
+Index: shtool-2.0.8/sh.arx
+===================================================================
+--- shtool-2.0.8.orig/sh.arx
++++ shtool-2.0.8/sh.arx
+@@ -108,7 +108,7 @@ shtool_exit 0
+ 
+ =head1 NAME
+ 
+-B<shtool arx> - B<GNU shtool> ar(1) extensional command
++B<shtool-arx> - B<GNU shtool> ar(1) extensional command
+ 
+ =head1 SYNOPSIS
+ 

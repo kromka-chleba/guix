@@ -1,0 +1,36 @@
+Retrieved-from: https://salsa.debian.org/debian/shtool/-/raw/debian/master/debian/patches/10_fix-spelling.patch?ref_type=heads
+Upstream-status: https://savannah.gnu.org/support/index.php?111344
+
+Description: fix spelling in a manpage (sh.prop).
+Author: William Vera <billy@billy.com.mx>
+Last-Update: 2010-03-02
+
+Description: fix a spelling error in sh-path.
+Author: Joao Eriberto Mota Filho <eriberto@debian.org>
+Last-Update: 2015-04-04
+Index: shtool-2.0.8/sh.prop
+===================================================================
+--- shtool-2.0.8.orig/sh.prop
++++ shtool-2.0.8/sh.prop
+@@ -85,7 +85,7 @@ B<shtool prop>
+ 
+ This command displays a processing indication though a running
+ propeller. It is intended to be run at the end of a pipe ("C<|>")
+-sequence where on C<stdin> logging/processing informations found. For
++sequence where on C<stdin> logging/processing information found. For
+ every line on C<stdin> the propeller advances one step clock-wise.
+ 
+ =head1 OPTIONS
+Index: shtool-2.0.8/sh.path
+===================================================================
+--- shtool-2.0.8.orig/sh.path
++++ shtool-2.0.8/sh.path
+@@ -203,7 +203,7 @@ The following command line options are a
+ 
+ =item B<-s>, B<--suppress>
+ 
+-Supress output. Useful to only test whether a program exists with the
++Suppress output. Useful to only test whether a program exists with the
+ help of the return code.
+ 
+ =item B<-r>, B<--reverse>
