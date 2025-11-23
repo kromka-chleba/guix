@@ -25,6 +25,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:export (foot-configuration
+            foot-font-configuration
             foot-colors-configuration
 	    foot-key-bindings-configuration
 	    foot-search-bindings-configuration
@@ -80,6 +81,21 @@
 (define (list-of-string-pairs? s)
   (every string-pair? s))
 
+(define (fontconfig-integer? s)
+  (integer? s))
+
+(define (fontconfig-string? s)
+  (string? s))
+
+(define (fontconfig-name? s)
+  (string? s))
+
+(define (list-of-fontconfig-string-pairs? s)
+  (list-of-string-pairs? s))
+
+(define (list-of-foot-font-configuration? configs)
+  (every foot-font-configuration? configs))
+
 (define-maybe color)
 (define-maybe colors-8)
 (define-maybe colors-16)
@@ -93,6 +109,10 @@
 (define-maybe dim-blend-towards)
 (define-maybe integer)
 (define-maybe list-of-string-pairs)
+(define-maybe fontconfig-string)
+(define-maybe fontconfig-integer)
+(define-maybe list-of-fontconfig-string-pairs)
+(define-maybe list-of-foot-font-configuration)
 
 (define (serialize-key-value field-name value)
   (format #f "~a=~a~%" field-name value))
@@ -155,11 +175,14 @@
 (define (serialize-string field-name value)
   (serialize-key-value field-name value))
 
-(define (serialize-list-of-string-pairs field-name value)
+(define (serialize-list-of-pairs field-name value serializer)
   (string-concatenate
    (map (match-lambda
-          ((k . v) (serialize-key-value k v)))
+          ((k . v) (serializer k v)))
         value)))
+
+(define (serialize-list-of-string-pairs field-name value)
+  (serialize-list-of-pairs field-name value serialize-key-value))
 
 (define (serialize-boolean field-name value)
   (format #f "~a=~a~%" field-name (if value "yes" "no")))
@@ -169,11 +192,29 @@
     #~(string-append #$(format #f "~%[~a]~%" section)
                      #$(serialize-configuration config fields))))
 
-(define (serialize-font-name field-name value)
-  (format #f "font=~a" value))
+(define (serialize-fontconfig field-name value)
+  (format #f ":~a=~a" field-name value))
 
-(define (serialize-font-size field-name value)
-  (format #f ":size=~a~%" value))
+(define (serialize-fontconfig-name field-name value)
+  (format #f "~a" value))
+
+(define (serialize-fontconfig-string field-name value)
+  (serialize-fontconfig field-name value))
+
+(define (serialize-fontconfig-integer field-name value)
+  (serialize-fontconfig field-name (number->string value)))
+
+(define (serialize-list-of-fontconfig-string-pairs field-name value)
+  (serialize-list-of-pairs field-name value serialize-fontconfig))
+
+(define (serialize-list-of-foot-font-configuration font-option configs)
+  #~(format #f "~a=~a~%"
+            #$(symbol->string font-option)
+            (string-join
+             (list #$@(map (lambda (config)
+                             (serialize-configuration config foot-font-configuration-fields))
+                           configs))
+             ", ")))
 
 (define (description-colors from to)
   (format #f "Defined as a list of cons cells: @code{(INDEX . COLOR)}.  Where @code{INDEX} \
@@ -186,6 +227,40 @@ index." from to))
 (define (description-extra-content section)
   (format #f "Lines to add to the end of the ~a section of the configuration, see \
 foot.ini(5) man page for available options." section))
+
+(define-configuration foot-font-configuration
+  (name
+   (fontconfig-name)
+   "Name of the font.")
+  (size
+   (maybe-fontconfig-integer)
+   "Font size in points, as defined by fontconfig.
+
+Note that this is affected by the @code{dpi-aware} option.")
+  (pixersize
+   (maybe-fontconfig-integer)
+   "Font size in pixels.
+
+Note that this is unaffected by the @code{dpi-aware} \
+option, but affected by desktop scaling.")
+  (weight
+   (maybe-fontconfig-string)
+   "Specify the weight (boldness) for the font.  E.g. @code{(weight \"bold\")} for \
+bold font.")
+  (slant
+   (maybe-fontconfig-string)
+   "Specify the slant for the font.  E.g. @code{(slant \"italic\")} for \
+italic font.")
+  (fontconfig-options
+   (maybe-list-of-fontconfig-string-pairs)
+   "Additional fontconfig options.
+@example
+(foot-font-configuration
+ (name \"Iosevka\")
+ (fontconfig-options
+  '((\"fontfeatures\" . \"cv01=1\")
+    (\"fontfeatures\" . \"cv06=1\"))))
+@end example"))
 
 (define-configuration foot-colors-configuration
   (cursor
@@ -576,6 +651,10 @@ when there are no matches.")
 
 (define-maybe foot-mouse-bindings-configuration)
 
+(define (description-font font)
+  (format #f "List of @code{foot-font-configuration} for the ~a fonts to use.  See foot.ini(5)
+man page for details." font))
+
 (define-configuration foot-configuration
   (shell
     (maybe-string)
@@ -587,16 +666,18 @@ to argv[0].")
   (term
    (maybe-string)
    "@anchor{home-foot-configuration-term}Value to set the environment variable TERM to.")
-  ;; TODO: replace font-name and font-size with a custom define-configuration
-  ;; for fonts
-  (font-name
-   (maybe-string)
-   "Font name."
-   (serializer serialize-font-name))
-  (font-size
-   (maybe-integer)
-   "Font size."
-   (serializer serialize-font-size))
+  (font
+   (maybe-list-of-foot-font-configuration)
+   (description-font "normal"))
+  (font-bold
+   (maybe-list-of-foot-font-configuration)
+   (description-font "bold"))
+  (font-italic
+   (maybe-list-of-foot-font-configuration)
+   (description-font "italic"))
+  (font-bold-italic
+   (maybe-list-of-foot-font-configuration)
+   (description-font "bold italic"))
   (box-drawings-uses-font-glyphs
     (maybe-boolean)
     "Boolean. When disabled, foot generates box/line drawing characters itself.")
