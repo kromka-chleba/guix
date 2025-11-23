@@ -9,7 +9,7 @@
 ;;; Copyright © 2020, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020, 2021 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Katherine Cox-Buday <cox.katherine.e@gmail.com>
-;;; Copyright © 2020, 2022, 2023 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2020, 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020, 2021 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2021 David Dashyan <mail@davie.li>
 ;;; Copyright © 2021 Foo Chuan Wei <chuanwei.foo@hotmail.com>
@@ -1437,6 +1437,48 @@ Service (S3) protocol for object storage.")
 Telemetry Transport (MQTT) publish-subscribe messaging protocol.")
     (home-page "https://github.com/awslabs/aws-c-mqtt")
     (license license:asl2.0)))
+
+(define-public dmalloc
+  (package
+    (name "dmalloc")
+    (version "5.6.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/j256/dmalloc")
+                     (commit (string-append
+                              name "_release_"
+                              (string-replace-substring version "." "_")))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0gwkdw64ylvbxxhfy1lv8xprhwnh18xgdcp4mgspn2znrpvcib9z"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      ;; Install the Info, HTML and unwanted INSTALL.txt to a temporary
+      ;; directory.
+      #:make-flags #~(list "docdir=docdir")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-doc
+            (lambda* (#:key make-flags #:allow-other-keys)
+              (apply invoke "make" "installdocs" make-flags)
+              ;; Install the only file we care about.
+              (install-file "docdir/dmalloc.info"
+                            (string-append #$output "/share/info")))))))
+    ;; The older texi2html is required (see:
+    ;; <https://github.com/j256/dmalloc/issues/122>)
+    (native-inputs (list texinfo texi2html-1.82))
+    (home-page "https://dmalloc.com/")
+    (synopsis "Memory allocation debugging C library")
+    (description "The debug memory allocation or @code{dmalloc} library
+ has been designed as a drop in replacement for the system's malloc, realloc,
+calloc, free and other memory management routines while providing powerful
+debugging facilities configurable at runtime.  These facilities include such
+things as memory-leak tracking, fence-post write detection, file/line number
+reporting, and general logging of statistics.")
+    (license license:isc)))
 
 ;; Note: there is another mimalloc embedded in rust-mimalloc (version 1.6.4).
 (define-public mimalloc
