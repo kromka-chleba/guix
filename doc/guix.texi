@@ -145,7 +145,7 @@ Copyright @copyright{} 2025 jgart@*
 Copyright @copyright{} 2025 Artur Wroblewski@*
 Copyright @copyright{} 2025 Edouard Klein@*
 Copyright @copyright{} 2025 Rodion Goritskov@*
-Copyright @copyright{} 2025 dan@*
+Copyright @copyright{} 2025 Fredrik Salomonsson@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -467,6 +467,7 @@ Home Services
 
 * Essential Home Services::     Environment variables, packages, on-* scripts.
 * Shells: Shells Home Services.  POSIX shells, Bash, Zsh.
+* Terminals: Terminal Home Services.  Services for terminal emulators.
 * Mcron: Mcron Home Service.    Scheduled User's Job Execution.
 * Power Management: Power Management Home Services.  Services for battery power.
 * Shepherd: Shepherd Home Service.  Managing User's Daemons.
@@ -50262,6 +50263,7 @@ services)}.
 @menu
 * Essential Home Services::     Environment variables, packages, on-* scripts.
 * Shells: Shells Home Services.  POSIX shells, Bash, Zsh.
+* Terminals: Terminal Home Services.  Services for terminal emulators.
 * Mcron: Mcron Home Service.    Scheduled User's Job Execution.
 * Power Management: Power Management Home Services.  Services for battery power.
 * Shepherd: Shepherd Home Service.  Managing User's Daemons.
@@ -50999,6 +51001,637 @@ readline} for more information about all the configuration options.
 
 @end table
 @end deftp
+
+@node Terminal Home Services
+@subsection  Services for terminal emulators.
+@cindex foot
+@deftp {Data Type} foot-configuration
+Available @code{foot-configuration} fields are:
+
+@table @asis
+@item @code{shell} (type: maybe-string)
+Executable to launch.  Typically a shell.  You can also pass arguments.
+For example /bin/bash --norc.
+
+@item @code{login-shell} (type: maybe-boolean)
+If enabled, the shell will be launched as a login shell, by prepending a
+'-' to argv[0].
+
+@item @code{term} (type: maybe-string)
+@anchor{home-foot-configuration-term}Value to set the environment
+variable TERM to.
+
+@item @code{font} (type: maybe-list-of-foot-font-configuration)
+List of @code{foot-font-configuration} for the normal fonts to use.  See
+foot.ini(5) man page for details.
+
+@item @code{font-bold} (type: maybe-list-of-foot-font-configuration)
+List of @code{foot-font-configuration} for the bold fonts to use.  See
+foot.ini(5) man page for details.
+
+@item @code{font-italic} (type: maybe-list-of-foot-font-configuration)
+List of @code{foot-font-configuration} for the italic fonts to use.  See
+
+@item @code{font-bold-italic} (type: maybe-list-of-foot-font-configuration)
+List of @code{foot-font-configuration} for the bold italic fonts to use.
+See foot.ini(5) man page for details.
+
+@item @code{box-drawings-uses-font-glyphs} (type: maybe-boolean)
+Boolean.  When disabled, foot generates box/line drawing characters
+itself.
+
+@item @code{dpi-aware} (type: maybe-boolean)
+Fonts are sized using the monitor's DPI when true.
+
+@item @code{gamma-correct-blending} (type: maybe-boolean)
+Boolean.  When enabled, foot will do gamma-correct blending in linear
+color space.  This is how font glyphs are supposed to be rendered, but
+since nearly no applications or toolkits are doing it on Linux, the
+result may not look like you are used to.
+
+@item @code{line-height} (type: maybe-integer)
+An absolute value, in points, that override line height from the font
+metrics.
+
+@item @code{letter-spacing} (type: maybe-integer)
+Spacing between letters, in points.  A positive value will increase the
+cell size, and a negative value shrinks it.
+
+@item @code{horizontal-letter-offset} (type: maybe-integer)
+Horizontal offset used when positioning glyphs within cells, in points,
+relative to the top left corner.
+
+@item @code{vertical-letter-offset} (type: maybe-integer)
+Vertical offset used when positioning glyphs within cells, in points,
+relative to the top left corner.
+
+@item @code{underline-offset} (type: maybe-integer)
+Custom offset for underlines, in points and relative to the font's
+baseline.  Positive values position in under the baseline, negative
+values position it over the baseline.
+
+@item @code{underline-thickness} (type: maybe-integer)
+Use a custom thickness (height) for underlines, in points.
+
+@item @code{strikeout-thickness} (type: maybe-integer)
+Use a custom thickness (height) for strikeouts, in points.
+
+@item @code{uppercase-regex-insert} (type: maybe-boolean)
+Boolean.  When enabled, inputting an uppercase hint character in show-
+urls-copy or regex-copy mode will insert the selected text into the
+prompt in addition to copying it to the clipboard.
+
+@item @code{include} (type: maybe-string)
+Absolute path to configuration file to import.
+
+@item @code{environment} (type: maybe-list-of-string-pairs)
+Section to define environment variables that will be set in the client
+application, in addition to the variables inherited from the terminal
+process itself.  Format is a list of @code{(KEY .  VALUE)} pairs, where
+@code{KEY} is a string matching the environment variable name to set,
+and @code{VALUE} a string representing the environment variable's value.
+If you want to set environment variables for your home configuration,
+use @code{home-environment-variables-service-type} instead.
+@xref{Essential Home Services} for details.
+
+Note: do not set @code{TERM} here, instead
+@xref{home-foot-configuration-term,,term}.
+
+@item @code{colors} (type: maybe-foot-colors-configuration)
+Color section of the configuration.  The color format is a 6 digit hex
+value in the form RRGGBB.  You can use @code{#xRRGGBB} to set these in
+guix.  For example setting the foreground and background color:
+@example
+(foot-color-configuration
+ (foreground #x839496)
+ (background #x002b36))
+@end example
+
+@item @code{colors2} (type: maybe-foot-colors-configuration)
+Alternative color theme section of the configuration.  See foot.ini(5)
+man page for details.
+
+@item @code{key-bindings} (type: maybe-foot-key-bindings-configuration)
+Key bindings section of the configuration.
+
+@item @code{search-bindings} (type: maybe-foot-search-bindings-configuration)
+Search bindings section of the configuration.
+
+@item @code{url-bindings} (type: maybe-foot-url-bindings-configuration)
+Url bindings section of the configuration.
+
+@item @code{text-bindings} (type: maybe-list-of-string-pairs)
+Text bindings section of the configuration.
+
+@item @code{mouse-bindings} (type: maybe-foot-mouse-bindings-configuration)
+Mouse-bindings section of the configuration.
+
+@item @code{extra-content} (default: @code{()}) (type: extra-content)
+Lines to add to the end of the main section of the configuration, see
+foot.ini(5) man page for available options.
+
+@end table
+
+@end deftp
+
+@deftp {Data Type} foot-font-configuration
+Available @code{foot-font-configuration} fields are:
+
+@table @asis
+@item @code{name} (type: fontconfig-name)
+Name of the font.
+
+@item @code{size} (type: maybe-fontconfig-integer)
+Font size in points, as defined by fontconfig.  Note that this is
+affected by the @code{dpi-aware} option.
+
+@item @code{pixersize} (type: maybe-fontconfig-integer)
+Font size in pixels.  Note that this is unaffected by the
+@code{dpi-aware} option, but affected by desktop scaling.
+
+@item @code{weight} (type: maybe-fontconfig-string)
+Specify the weight (boldness) for the font.  E.g.  @code{(weight
+"bold")} for bold font.
+
+@item @code{slant} (type: maybe-fontconfig-string)
+Specify the slant for the font.  E.g.  @code{(slant "italic")} for
+italic font.
+
+@item @code{fontconfig-options} (type: maybe-list-of-fontconfig-string-pairs)
+Additional fontconfig options.  
+@example
+(foot-font-configuration
+ (name "Iosevka")
+ (fontconfig-options
+ '(("fontfeatures" .  "cv01=1")
+   ("fontfeatures" .  "cv06=1")))) 
+@end example
+
+@end table
+
+@end deftp
+
+@deftp {Data Type} foot-colors-configuration
+Available @code{foot-colors-configuration} fields are:
+
+@table @asis
+@item @code{cursor} (type: maybe-color-pair)
+A pair of @code{RRGGBB} values in hexadecimal in a cons cell:
+@code{(CURSOR .  TEXT)}.  Example: @code{(cursor (cons #xff0000
+#x00ff00))} for green cursor and red text.
+
+@item @code{foreground} (type: maybe-color)
+Default foreground color in hexadecimal.  This is the color used when no
+ANSI color is being used.
+
+@item @code{background} (type: maybe-color)
+Default background color in hexadecimal.  This is the color used when no
+ANSI color is being used.
+
+@item @code{regular} (type: maybe-colors-8)
+The eight basic ANSI colors (Black, Red, Green, Yellow, Blue, Magenta,
+Cyan, White).  Defined as a list of cons cells: @code{(INDEX .  COLOR)}.
+Where @code{INDEX} is an integer from 0 to 7, and @code{COLOR} is the
+given color for that index.  E.g @code{(regular '((0 .  #x242424) (7 .
+#xe6e6e6)))} to set the Black (@code{regular0}) and White
+(@code{regular7}) %/> fields @code{242424} and @code{e6e6e6}
+respectively
+
+@item @code{bright} (type: maybe-colors-8)
+The eight bright ANSI colors (Black, Red, Green, Yellow, Blue, Magenta,
+Cyan, White).  Defined as a list of cons cells: @code{(INDEX .  COLOR)}.
+Where @code{INDEX} is an integer from 0 to 7, and @code{COLOR} is the
+given color for that index.  E.g @code{(bright '((1 .  #xff4d51) (2 .
+#x35d450)))} to set the Red (@code{bright1}) and Green (@code{bright2})
+fields @code{242424} and @code{e6e6e6} respectively
+
+@item @code{dim} (type: maybe-colors-8)
+Eight custom colors to use with dimmed colors.  Defined as a list of
+cons cells: @code{(INDEX .  COLOR)}.  Where @code{INDEX} is an integer
+from 0 to 7, and @code{COLOR} is the given color for that index.  See
+foot.ini(5) man page for details.
+
+@item @code{#@{256-color-palette@}#} (type: maybe-colors-256/no-field-name)
+Arbitrary colors in the 256-color palette.  Defined as a list of cons
+cells: @code{(INDEX .  COLOR)}.  Where @code{INDEX} is an integer from 0
+to 255, and @code{COLOR} is the given color for that index.  See
+foot.ini(5) man page for details.
+
+@item @code{sixel} (type: maybe-colors-16)
+The default sixel color palette of 16 colors.  Defined as a list of cons
+cells: @code{(INDEX .  COLOR)}.  Where @code{INDEX} is an integer from 0
+to 15, and @code{COLOR} is the given color for that index.  See
+foot.ini(5) man page for details.
+
+@item @code{alpha} (type: maybe-number)
+Background translucency.  A value in the range [0.0, 1.0], where 0.0
+means completely transparent, and 1.0 is opaque.
+
+@item @code{alpha-mode} (type: maybe-alpha-mode)
+Specifies when alpha is applied.  One of the symbols @code{'default},
+@code{'matching} or @code{'all}.  See foot.ini(5) man page for details.
+
+@item @code{dim-blend-towards} (type: maybe-dim-blend-towards)
+Which color to blend towards when "auto" dimming a color (see
+foot.ini(5) man page for details).  Takes one of the symbols
+@code{'black} or @code{'white.} Blending towards black makes the text
+darker, while blending towards white makes it whiter (but still dimmer
+than normal text).
+
+@item @code{selection-foreground} (type: maybe-color)
+Selection foreground color in hexadecimal.
+
+@item @code{selection-background} (type: maybe-color)
+Selection background color in hexadecimal.
+
+@item @code{jump-labels} (type: maybe-color-pair)
+A pair of color values in a cons cell @code{(FOREGROUND .  BACKGROUND)},
+specifying the foreground (text) and background colors to use when
+rendering jump labels in URL mode.
+
+@item @code{scrollback-indicator} (type: maybe-color-pair)
+A pair of color values in a cons cell @code{(FOREGROUND .  BACKGROUND)},
+specifying the foreground (text) and background (indicator itself)
+colors for the scrollback indicator.
+
+@item @code{search-box-no-match} (type: maybe-color-pair)
+A pair of color values in a cons cell @code{(FOREGROUND .  BACKGROUND)},
+specifying the foreground (text) and background colors for the
+scrollback search box, when there are no matches.
+
+@item @code{urls} (type: maybe-color)
+Color to use for the underline used to highlight URLs in URL mode.
+
+@item @code{flash} (type: maybe-color)
+Color to use for the terminal window flash.
+
+@item @code{flash-alpha} (type: maybe-color)
+Flash translucency.  A value in the range [0.0, 1.0], where 0.0 means
+completely transparent, and 1.0 is opaque.
+
+@item @code{extra-content} (default: @code{()}) (type: extra-content)
+Lines to add to the end of the colors/colors2 section of the
+configuration, see foot.ini(5) man page for available options.
+
+@end table
+
+@end deftp
+
+@deftp {Data Type} foot-key-bindings-configuration
+Available @code{foot-key-bindings-configuration} fields are:
+
+@table @asis
+@item @code{noop} (type: maybe-string)
+All key combinations listed here will not be sent to the application.
+
+@item @code{scrollback-up-page} (default: @code{"Shift+Page_Up Shift+KP_Page_Up"}) (type: string)
+Scrolls up/back one page in history.
+
+@item @code{scrollback-up-half-page} (type: maybe-string)
+Scrolls up/back half of a page in history.
+
+@item @code{scrollback-up-line} (type: maybe-string)
+Scrolls up/back a single line in history.
+
+@item @code{scrollback-down-page} (default: @code{"Shift+Page_Down Shift+KP_Page_Down"}) (type: string)
+Scroll down/forward one page in history.
+
+@item @code{scrollback-down-half-page} (type: maybe-string)
+Scroll down/forward half of a page in history.
+
+@item @code{scrollback-down-line} (type: maybe-string)
+Scroll down/forward a single line in history.
+
+@item @code{scrollback-home} (type: maybe-string)
+Scroll to the beginning of the scrollback.
+
+@item @code{scrollback-end} (type: maybe-string)
+Scroll to the end (bottom) of the scrollback.
+
+@item @code{clipboard-copy} (default: @code{"Control+Shift+c XF86Copy"}) (type: string)
+Copies the current selection into the clipboard.
+
+@item @code{clipboard-paste} (default: @code{"Control+Shift+v XF86Paste"}) (type: string)
+Pastes from the clipboard.
+
+@item @code{primary-paste} (default: @code{"Shift+Insert (also defined in mouse-bindings)"}) (type: string)
+Pastes from the primary selection.
+
+@item @code{search-start} (default: @code{"Control+Shift+r"}) (type: string)
+Starts a scrollback/history search.
+
+@item @code{font-increase} (default: @code{"Control+plus Control+equal Control+KP_Add (also defined in mouse-bindings)"}) (type: string)
+Increases the font size by 0.5pt.
+
+@item @code{font-decrease} (default: @code{"Control+minus Control+KP_Subtract (also defined in mouse-bindings)"}) (type: string)
+Decreases the font size by 0.5pt.
+
+@item @code{font-reset} (default: @code{"Control+0 Control+KP_0"}) (type: string)
+Resets the font size to the default.
+
+@item @code{spawn-terminal} (default: @code{"Control+Shift+n"}) (type: string)
+Spawns a new terminal.  If the shell has been configured to emit the OSC
+7 escape sequence, the new terminal will start in the current working
+directory.
+
+@item @code{minimize} (type: maybe-string)
+Minimizes the window.
+
+@item @code{maximize} (type: maybe-string)
+Toggle the maximized state.
+
+@item @code{fullscreen} (type: maybe-string)
+Toggles the fullscreen state.
+
+@item @code{pipe-visible} (type: maybe-string)
+Pipes the currently visible text to an external tool.
+
+@item @code{pipe-scrollback} (type: maybe-string)
+Pipes the entire scrollback to an external tool.
+
+@item @code{pipe-selected} (type: maybe-string)
+Pipes the currently selected text to an external tool.
+
+@item @code{pipe-command-output} (type: maybe-string)
+Pipes the last command's output to an external tool.
+
+@item @code{show-urls-launch} (default: @code{"Control+Shift+o"}) (type: string)
+Enter URL mode, where all currently visible URLs are tagged with a jump
+label with a key sequence that will open the URL (and exit URL mode).
+
+@item @code{show-urls-persistent} (type: maybe-string)
+Similar to @code{show-urls-launch}, but does not automatically exit URL
+mode after activating an URL.
+
+@item @code{show-urls-copy} (type: maybe-string)
+Enter URL mode, where all currently visible URLs are tagged with a jump
+label with a key sequence that will place the URL in the clipboard.  If
+the hint is completed with an uppercase character, the match will also
+be pasted.
+
+@item @code{regex-launch} (type: maybe-string)
+Enter regex mode.  This works exactly the same as URL mode; all regex
+matches are tagged with a jump label with a key sequence that will
+"launch" to match (and exit regex mode).
+
+@item @code{regex-copy} (type: maybe-string)
+Same as @code{regex-launch}, but the match is placed in the clipboard,
+instead of "launched", upon activation.  If the hint is completed with
+an uppercase character, the match will also be pasted.
+
+@item @code{prompt-prev} (default: @code{"Control+Shift+z"}) (type: string)
+Jump to the previous, currently not visible, prompt (requires shell
+integration, see foot(1)).
+
+@item @code{prompt-next} (default: @code{"Control+Shift+x"}) (type: string)
+Jump the next prompt (requires shell integration, see foot(1)).
+
+@item @code{unicode-input} (default: @code{"Control+Shift+u"}) (type: string)
+Input a Unicode character by typing its codepoint in hexadecimal,
+followed by @code{Enter} or @code{Space.}
+
+@item @code{color-theme-switch-1} (type: maybe-string)
+applies the primary color theme regardless of which color theme is
+currently active.
+
+@item @code{color-theme-switch-2} (type: maybe-string)
+applies the alternative color theme regardless of which color theme is
+currently active.
+
+@item @code{color-theme-toggle} (type: maybe-string)
+toggles between the primary and alternative color themes.
+
+@item @code{quit} (type: maybe-string)
+Quit foot.
+
+@item @code{extra-content} (default: @code{()}) (type: extra-content)
+Lines to add to the end of the key-bindings section of the
+configuration, see foot.ini(5) man page for available options.
+
+@end table
+
+@end deftp
+
+@deftp {Data Type} foot-mouse-bindings-configuration
+Available @code{foot-mouse-bindings-configuration} fields are:
+
+@table @asis
+@item @code{selection-override-modifiers} (default: @code{"Shift"}) (type: string)
+The modifiers set in this set (which may be set to any combination of
+modifiers, e.g.  @code{mod1+mod2+mod3}, as well as none) are used to
+enable selecting text with the mouse irrespective of whether a client
+application currently has the mouse grabbed.  These modifiers cannot be
+used as modifiers in mouse bindings.  Because the order of bindings is
+significant, it is best to set this prior to any other mouse bindings
+that might use modifiers in the default set.
+
+@item @code{scrollback-up-mouse} (default: @code{"BTN_WHEEL_BACK"}) (type: string)
+Normal screen: scrolls up the contents.  Alt screen: send fake
+@code{KeyUP} events to the client application, if alternate scroll mode
+is enabled.
+
+@item @code{scrollback-down-mouse} (default: @code{"BTN_WHEEL_FORWARD"}) (type: string)
+Normal screen: scrolls down the contents.  Alt screen: send fake
+@code{KeyDOWN} events to the client application, if alternate scroll
+mode is enabled.
+
+@item @code{select-begin} (default: @code{"BTN_LEFT"}) (type: string)
+Begin an interactive selection.  The selection is finalized, and copied
+to the primary selection, when the button is released.
+
+@item @code{select-begin-block} (default: @code{"Control+BTN_LEFT"}) (type: string)
+Begin an interactive block selection.  The selection is finalized, and
+copied to the primary selection, when the button is released.
+
+@item @code{select-word} (default: @code{"BTN_LEFT-2"}) (type: string)
+Begin an interactive word-wise selection, where words are separated by
+whitespace and all characters defined by the word-delimiters option.  The
+selection is finalized, and copied to the primary selection, when the
+button is released.
+
+@item @code{select-word-whitespace} (default: @code{"Control+BTN_LEFT-2"}) (type: string)
+Same as select-word, but the characters in the word-delimiters option
+are ignored.  I.e only whitespace characters act as delimiters.  The
+selection is finalized, and copied to the primary selection, when the
+button is released.
+
+@item @code{select-quote} (default: @code{"BTN_LEFT-3"}) (type: string)
+Begin an interactive "quote" selection.  This is similar to select-word,
+except an entire quote is selected.  Recognized quote characters are: "
+and '.
+
+@item @code{select-row} (default: @code{"BTN_LEFT-4"}) (type: string)
+Begin an interactive row-wise selection.  The selection is finalized,
+and copied to the primary selection, when the button is released.
+
+@item @code{select-extend} (default: @code{"BTN_RIGHT"}) (type: string)
+Interactively extend an existing selection, using the original selection
+mode (normal, block, word-wise or row-wise).  The selection is
+finalized, and copied to the primary selection, when the button is
+released.
+
+@item @code{select-extend-character-wise} (default: @code{"Control+BTN_RIGHT"}) (type: string)
+Same as select-extend, but forces the selection mode to normal (i.e.
+character wise).  Note that this causes subsequent select-extend
+operations to be character wise.  This action is ignored for block
+selections.
+
+@item @code{primary-paste} (default: @code{"BTN_MIDDLE"}) (type: string)
+Pastes from the primary selection.
+
+@item @code{font-increase} (default: @code{"Control+BTN_WHEEL_BACK"}) (type: string)
+Increases the font size by 0.5pt.
+
+@item @code{font-decrease} (default: @code{"Control+BTN_WHEEL_FORWARD"}) (type: string)
+Decreases the font size by 0.5pt.
+
+@item @code{extra-content} (default: @code{()}) (type: extra-content)
+Lines to add to the end of the mouse-bindings section of the
+configuration, see foot.ini(5) man page for available options.
+
+@end table
+
+@end deftp
+
+@deftp {Data Type} foot-search-bindings-configuration
+Available @code{foot-search-bindings-configuration} fields are:
+
+@table @asis
+@item @code{cancel} (default: @code{"Control+g Control+c Escape"}) (type: string)
+Aborts the search.  The viewport is restored and the primary selection
+is not updated.
+
+@item @code{commit} (default: @code{"Return KP_Enter"}) (type: string)
+Exit search mode and copy current selection into the primary selection.
+Viewport is not restored.  To copy the selection to the regular
+clipboard, use @code{Control+Shift+c}.
+
+@item @code{find-prev} (default: @code{"Control+r"}) (type: string)
+Search backwards in the scrollback history for the next match.
+
+@item @code{find-next} (default: @code{"Control+s"}) (type: string)
+Searches forwards in the scrollback history for the next match.
+
+@item @code{cursor-left} (default: @code{"Left Control+b"}) (type: string)
+Moves the cursor in the search box one character to the left.
+
+@item @code{cursor-left-word} (default: @code{"Control+Left Mod1+b"}) (type: string)
+Moves the cursor in the search box one word to the left.
+
+@item @code{cursor-right} (default: @code{"Right Control+f"}) (type: string)
+Moves the cursor in the search box one character to the right.
+
+@item @code{cursor-right-word} (default: @code{"Control+Right Mod1+f"}) (type: string)
+Moves the cursor in the search box one word to the right.
+
+@item @code{cursor-home} (default: @code{"Home Control+a"}) (type: string)
+Moves the cursor in the search box to the beginning of the input.
+
+@item @code{cursor-end} (default: @code{"End Control+e"}) (type: string)
+Moves the cursor in the search box to the end of the input.
+
+@item @code{delete-prev} (default: @code{"BackSpace"}) (type: string)
+Deletes the character before the cursor.
+
+@item @code{delete-prev-word} (default: @code{"Mod1+BackSpace Control+BackSpace"}) (type: string)
+Deletes the word before the cursor.
+
+@item @code{delete-next} (default: @code{"Delete"}) (type: string)
+Deletes the character after the cursor.
+
+@item @code{delete-next-word} (default: @code{"Mod1+d Control+Delete"}) (type: string)
+Deletes the word after the cursor.
+
+@item @code{delete-to-start} (default: @code{"Ctrl+u"}) (type: string)
+Deletes search input before the cursor.
+
+@item @code{delete-to-end} (default: @code{"Ctrl+k"}) (type: string)
+Deletes search input after the cursor.
+
+@item @code{extend-char} (default: @code{"Shift+Right"}) (type: string)
+Extend current selection to the right, by one character.
+
+@item @code{extend-to-word-boundary} (default: @code{"Control+w Control+Shift+Right"}) (type: string)
+Extend current selection to the right, to the next word boundary.
+
+@item @code{extend-to-next-whitespace} (default: @code{"Control+Shift+w"}) (type: string)
+Extend the current selection to the right, to the next whitespace.
+
+@item @code{extend-line-down} (default: @code{"Shift+Down"}) (type: string)
+Extend current selection down one line.
+
+@item @code{extend-backward-char} (default: @code{"Shift+Left"}) (type: string)
+Extend current selection to the left, by one character.
+
+@item @code{extend-backward-to-word-boundary} (default: @code{"Control+Shift+Left"}) (type: string)
+Extend current selection to the left, to the next word boundary.
+
+@item @code{extend-backward-to-next-whitespace} (type: maybe-string)
+Extend the current selection to the left, to the next whitespace.
+
+@item @code{extend-line-up} (default: @code{"Shift+Up"}) (type: string)
+Extend current selection up one line.
+
+@item @code{clipboard-paste} (default: @code{"Control+v Control+y Control+Shift+v XF86Paste"}) (type: string)
+Paste from the clipboard into the search buffer.
+
+@item @code{primary-paste} (default: @code{"Shift+Insert"}) (type: string)
+Paste from the primary selection into the search buffer.
+
+@item @code{unicode-input} (type: maybe-string)
+Unicode input mode.  See @file{key-bindings.unicode-input} for details.
+
+@item @code{scrollback-up-page} (default: @code{"Shift+Page_Up Shift+KP_Page_Up"}) (type: string)
+Scrolls up/back one page in history.
+
+@item @code{scrollback-up-half-page} (type: maybe-string)
+Scrolls up/back half of a page in history.
+
+@item @code{scrollback-up-line} (type: maybe-string)
+Scrolls up/back a single line in history.
+
+@item @code{scrollback-down-page} (default: @code{"Shift+Page_Down Shift+KP_Page_Down"}) (type: string)
+Scroll down/forward one page in history.
+
+@item @code{scrollback-down-half-page} (type: maybe-string)
+Scroll down/forward half of a page in history.
+
+@item @code{scrollback-down-line} (type: maybe-string)
+Scroll down/forward a single line in history.
+
+@item @code{scrollback-home} (type: maybe-string)
+Scroll to the beginning of the scrollback.
+
+@item @code{scrollback-end} (type: maybe-string)
+Scroll to the end (bottom) of the scrollback.
+
+@item @code{extra-content} (default: @code{()}) (type: extra-content)
+Lines to add to the end of the search-bindings section of the
+configuration, see foot.ini(5) man page for available options.
+
+@end table
+
+@end deftp
+
+@deftp {Data Type} foot-url-bindings-configuration
+Available @code{foot-url-bindings-configuration} fields are:
+
+@table @asis
+@item @code{cancel} (default: @code{"Control+g Control+c Control+d Escape"}) (type: string)
+Exits URL mode without opening a URL.
+
+@item @code{toggle-url-visible} (default: @code{"t"}) (type: string)
+This action toggles between showing and hiding the URL on the jump
+label.
+
+@item @code{extra-content} (default: @code{()}) (type: extra-content)
+Lines to add to the end of the url-bindings section of the
+configuration, see foot.ini(5) man page for available options.
+
+@end table
+
+@end deftp
+
 
 @node Mcron Home Service
 @subsection Scheduled User's Job Execution
