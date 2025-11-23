@@ -212,36 +212,41 @@
 
 (define (serialize-list-of-foot-font-configuration font-option configs)
   #~(format #f "~a=~a~%"
-            #$(symbol->string font-option)
-            (string-join
-             (list #$@(map (lambda (config)
-                             (serialize-configuration config foot-font-configuration-fields))
-                           configs))
-             ", ")))
+    #$(symbol->string font-option)
+    (string-join
+     (list #$@(map (lambda (config)
+        	     (serialize-configuration
+		       config
+		       foot-font-configuration-fields))
+                   configs))
+     ", ")))
 
 (define (description-colors from to)
-  (format #f "Defined as a list of cons cells: @code{(INDEX . COLOR)}.  Where @code{INDEX} \
-is an integer from ~a to ~a, and @code{COLOR} is the given color for that \
-index." from to))
+  (format #f "Defined as a list of cons cells: @code{(INDEX . COLOR)}.  Where \
+@code{INDEX} is an integer from ~a to ~a, and @code{COLOR} is the given color \
+for that index." from to))
 
 (define (description-translucency)
-  "A value in the range [0.0, 1.0], where 0.0 means completely transparent, and 1.0 is opaque.")
+  "A value in the range [0.0, 1.0], where 0.0 means completely transparent, \
+and 1.0 is opaque.")
 
 (define (description-extra-content section)
-  (format #f "Lines to add to the end of the ~a section of the configuration, see \
-foot.ini(5) man page for available options." section))
+  (format #f "Lines to add to the end of the ~a section of the configuration, \
+see foot.ini(5) man page for available options." section))
 
 (define-configuration foot-main-configuration
   (shell
     (maybe-string)
-    "Executable to launch. Typically a shell. You can also pass arguments. For example /bin/bash --norc.")
+    "Executable to launch. Typically a shell. You can also pass arguments. \
+For example /bin/bash --norc.")
   (login-shell
    (maybe-boolean)
-   "If enabled, the shell will be launched as a login shell, by prepending a '-'
-to argv[0].")
+   "If enabled, the shell will be launched as a login shell, by prepending a \
+'-' to argv[0].")
   (term
    (maybe-string)
-   "@anchor{home-foot-configuration-term}Value to set the environment variable TERM to.")
+   "@anchor{home-foot-configuration-term}Value to set the environment \
+variable TERM to.")
   (font
    (maybe-list-of-foot-font-configuration)
    (description-font "normal"))
@@ -256,30 +261,42 @@ to argv[0].")
    (description-font "bold italic"))
   (box-drawings-uses-font-glyphs
     (maybe-boolean)
-    "Boolean. When disabled, foot generates box/line drawing characters itself.")
+    "Boolean. When disabled, foot generates box/line drawing characters \
+itself.")
   (dpi-aware
    (maybe-boolean)
    "Fonts are sized using the monitor's DPI when true.")
   (gamma-correct-blending
     (maybe-boolean)
-    "Boolean. When enabled, foot will do gamma-correct blending in linear color space. This is how font glyphs are supposed to be rendered, but since nearly no applications or toolkits are doing it on Linux, the result may not look like you are used to.")
+    "Boolean. When enabled, foot will do gamma-correct blending in linear \
+color space. This is how font glyphs are supposed to be rendered, but since \
+nearly no applications or toolkits are doing it on Linux, the result may not \
+look like you are used to.")
   ;; Spacing, offsets, underline and strikethrough
-  ;; TODO: these are measured in points by default. The "px" suffix can be used to measure in pixels instead. Supporting that will need a new serializer, I think.
+  ;; TODO: these are measured in points by default. The "px" suffix can be used
+  ;; to measure in pixels instead. Supporting that will need a new serializer,
+  ;; I think.
   (line-height
     (maybe-integer)
-    "An absolute value, in points, that override line height from the font metrics.")
+    "An absolute value, in points, that override line height from the font \
+metrics.")
   (letter-spacing
     (maybe-integer)
-    "Spacing between letters, in points. A positive value will increase the cell size, and a negative value shrinks it.")
+    "Spacing between letters, in points. A positive value will increase the \
+cell size, and a negative value shrinks it.")
   (horizontal-letter-offset
     (maybe-integer)
-    "Horizontal offset used when positioning glyphs within cells, in points, relative to the top left corner.")
+    "Horizontal offset used when positioning glyphs within cells, in points, \
+relative to the top left corner.")
   (vertical-letter-offset
     (maybe-integer)
-    "Vertical offset used when positioning glyphs within cells, in points, relative to the top left corner.")
+    "Vertical offset used when positioning glyphs within cells, in points, \
+relative to the top left corner.")
   (underline-offset
     (maybe-integer)
-    "Custom offset for underlines, in points and relative to the font's baseline. Positive values position in under the baseline, negative values position it over the baseline.")
+    "Custom offset for underlines, in points and relative to the font's \
+baseline. Positive values position in under the baseline, negative values \
+position it over the baseline.")
   (underline-thickness
     (maybe-integer)
     "Use a custom thickness (height) for underlines, in points.")
@@ -288,7 +305,9 @@ to argv[0].")
     "Use a custom thickness (height) for strikeouts, in points.")
   (uppercase-regex-insert
     (maybe-boolean)
-    "Boolean. When enabled, inputting an uppercase hint character in show- urls-copy or regex-copy mode will insert the selected text into the prompt in addition to copying it to the clipboard.")
+    "Boolean. When enabled, inputting an uppercase hint character in \
+show-urls-copy or regex-copy mode will insert the selected text into the \
+prompt in addition to copying it to the clipboard.")
   (include
     (maybe-string)
     "Absolute path to configuration file to import.")
@@ -332,8 +351,8 @@ Note that this is unaffected by the @code{dpi-aware} \
 option, but affected by desktop scaling.")
   (weight
    (maybe-fontconfig-string)
-   "Specify the weight (boldness) for the font.  E.g. @code{(weight \"bold\")} for \
-bold font.")
+   "Specify the weight (boldness) for the font.  E.g. @code{(weight \
+\"bold\")} for bold font.")
   (slant
    (maybe-fontconfig-string)
    "Specify the slant for the font.  E.g. @code{(slant \"italic\")} for \
@@ -352,65 +371,73 @@ italic font.")
 (define-configuration foot-colors-configuration
   (cursor
    (maybe-color-pair)
-   "A pair of @code{RRGGBB} values in hexadecimal in a cons cell: @code{(CURSOR . TEXT)}.
+   "A pair of @code{RRGGBB} values in hexadecimal in a cons cell: \
+@code{(CURSOR . TEXT)}.
 
-Example: @code{(cursor (cons #xff0000 #x00ff00))} for green cursor and red text.")
+Example: @code{(cursor (cons #xff0000 #x00ff00))} for green cursor and red \
+text.")
   (foreground
    (maybe-color)
-   "Default foreground color in hexadecimal.  This is the color used when no ANSI \
-color is being used.")
+   "Default foreground color in hexadecimal.  This is the color used when no \
+ANSI color is being used.")
   (background
    (maybe-color)
-   "Default background color in hexadecimal.  This is the color used when no ANSI \
-color is being used.")
+   "Default background color in hexadecimal.  This is the color used when no \
+ANSI color is being used.")
   (regular
    (maybe-colors-8)
-   (string-append "The eight basic ANSI colors (Black, Red, Green, Yellow, Blue, Magenta, Cyan, \
-White).  "(description-colors 0 7)"
+   (string-append "The eight basic ANSI colors (Black, Red, Green, Yellow, \
+Blue, Magenta, Cyan, White).  "(description-colors 0 7)"
 
-E.g @code{(regular '((0 . #x242424) (7 . #xe6e6e6)))} to set the Black (@code{regular0}) and White (@code{regular7}) \
+E.g @code{(regular '((0 . #x242424) (7 . #xe6e6e6)))} to set the Black \
+(@code{regular0}) and White (@code{regular7}) \
 
 %/>
 fields @code{242424} and @code{e6e6e6} respectively"))
   (bright
    (maybe-colors-8)
-   (string-append "The eight bright ANSI colors (Black, Red, Green, Yellow, Blue, Magenta, Cyan, \
-White).  "(description-colors 0 7)"
+   (string-append "The eight bright ANSI colors (Black, Red, Green, Yellow, \
+Blue, Magenta, Cyan, White).  "(description-colors 0 7)"
 
-E.g @code{(bright '((1 . #xff4d51) (2 . #x35d450)))} to set the Red (@code{bright1}) and Green (@code{bright2}) \
-fields @code{242424} and @code{e6e6e6} respectively"))
+E.g @code{(bright '((1 . #xff4d51) (2 . #x35d450)))} to set the Red \
+(@code{bright1}) and Green (@code{bright2}) fields @code{242424} and \
+@code{e6e6e6} respectively"))
   (dim
    (maybe-colors-8)
-   (string-append "Eight custom colors to use with dimmed colors.  "(description-colors 0 7)"
+   (string-append "Eight custom colors to use with dimmed colors."
+		  (description-colors 0 7)"
 
 See foot.ini(5) man page for details."))
   (256-color-palette
    (maybe-colors-256/no-field-name)
-   (string-append "Arbitrary colors in the 256-color palette.  "(description-colors 0 255)"
+   (string-append "Arbitrary colors in the 256-color palette.  "
+		  (description-colors 0 255)"
 
 See foot.ini(5) man page for details."))
   (sixel
    (maybe-colors-16)
-   (string-append "The default sixel color palette of 16 colors.  "(description-colors 0 15)"
+   (string-append "The default sixel color palette of 16 colors.  "
+		  (description-colors 0 15)"
 
 See foot.ini(5) man page for details."))
   (alpha
    (maybe-number)
-   (string-append "Background translucency.  "(description-translucency)))
+   (string-append "Background translucency.  "
+		  (description-translucency)))
   (alpha-mode
    (maybe-alpha-mode)
-   "Specifies when alpha is applied.  One of the symbols @code{'default}, @code{'matching} or \
-@code{'all}.
+   "Specifies when alpha is applied.  One of the symbols @code{'default}, \
+   @code{'matching} or @code{'all}.
 
 See foot.ini(5) man page for details."
    (serializer serialize-key-value)
    (sanitizer (choice-sanitizer '(default matching all))))
   (dim-blend-towards
    (maybe-dim-blend-towards)
-   "Which color to blend towards when \"auto\" dimming a color (see foot.ini(5)
-man page for details).  Takes one of the symbols @code{'black} or @code{'white.}  Blending
-towards black makes the text darker, while blending towards white makes it
-whiter (but still dimmer than normal text)."
+   "Which color to blend towards when \"auto\" dimming a color (see \
+foot.ini(5) man page for details).  Takes one of the symbols @code{'black} or \
+@code{'white.}  Blending towards black makes the text darker, while blending \
+towards white makes it whiter (but still dimmer than normal text)."
    (serializer serialize-key-value)
    (sanitizer (choice-sanitizer '(black white))))
   (selection-foreground
@@ -421,19 +448,19 @@ whiter (but still dimmer than normal text)."
    "Selection background color in hexadecimal.")
   (jump-labels
    (maybe-color-pair)
-   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
-the foreground (text) and background colors to use when rendering jump labels \
-in URL mode.")
+   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, \
+specifying the foreground (text) and background colors to use when rendering \
+jump labels in URL mode.")
   (scrollback-indicator
    (maybe-color-pair)
-   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
-the foreground (text) and background (indicator itself) colors for the \
-scrollback indicator.")
+   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, \
+specifying the foreground (text) and background (indicator itself) colors for \
+the scrollback indicator.")
   (search-box-no-match
    (maybe-color-pair)
-   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, specifying \
-the foreground (text) and background colors for the scrollback search box, \
-when there are no matches.")
+   "A pair of color values in a cons cell @code{(FOREGROUND . BACKGROUND)}, \
+specifying the foreground (text) and background colors for the scrollback \
+search box, when there are no matches.")
   (urls
    (maybe-color)
    "Color to use for the underline used to highlight URLs in URL mode.")
@@ -500,7 +527,9 @@ when there are no matches.")
    "Resets the font size to the default.")
   (spawn-terminal
    (string "Control+Shift+n")
-   "Spawns a new terminal. If the shell has been configured to emit the OSC 7 escape sequence, the new terminal will start in the current working directory.")
+   "Spawns a new terminal. If the shell has been configured to emit the OSC 7 \
+escape sequence, the new terminal will start in the current working \
+directory.")
   (minimize
    (maybe-string)
    "Minimizes the window.")
@@ -524,34 +553,46 @@ when there are no matches.")
    "Pipes the last command's output to an external tool.")
   (show-urls-launch
    (string "Control+Shift+o")
-   "Enter URL mode, where all currently visible URLs are tagged with a jump label with a key sequence that will open the URL (and exit URL mode).")
+   "Enter URL mode, where all currently visible URLs are tagged with a jump \
+label with a key sequence that will open the URL (and exit URL mode).")
   (show-urls-persistent
    (maybe-string)
-   "Similar to @code{show-urls-launch}, but does not automatically exit URL mode after activating an URL.")
+   "Similar to @code{show-urls-launch}, but does not automatically exit URL \
+mode after activating an URL.")
   (show-urls-copy
    (maybe-string)
-   "Enter URL mode, where all currently visible URLs are tagged with a jump label with a key sequence that will place the URL in the clipboard. If the hint is completed with an uppercase character, the match will also be pasted.")
+   "Enter URL mode, where all currently visible URLs are tagged with a jump \
+label with a key sequence that will place the URL in the clipboard. If the \
+hint is completed with an uppercase character, the match will also be pasted.")
   (regex-launch
    (maybe-string)
-   "Enter regex mode. This works exactly the same as URL mode; all regex matches are tagged with a jump label with a key sequence that will \"launch\" to match (and exit regex mode).")
+   "Enter regex mode. This works exactly the same as URL mode; all regex \
+matches are tagged with a jump label with a key sequence that will \"launch\" \
+to match (and exit regex mode).")
   (regex-copy
    (maybe-string)
-   "Same as @code{regex-launch}, but the match is placed in the clipboard, instead of \"launched\", upon activation. If the hint is completed with an uppercase character, the match will also be pasted.")
+   "Same as @code{regex-launch}, but the match is placed in the clipboard, \
+instead of \"launched\", upon activation. If the hint is completed with an \
+uppercase character, the match will also be pasted.")
   (prompt-prev
    (string "Control+Shift+z")
-   "Jump to the previous, currently not visible, prompt (requires shell integration, see foot(1)).")
+   "Jump to the previous, currently not visible, prompt (requires shell \
+integration, see foot(1)).")
   (prompt-next
    (string "Control+Shift+x")
    "Jump the next prompt (requires shell integration, see foot(1)).")
   (unicode-input
    (string "Control+Shift+u")
-   "Input a Unicode character by typing its codepoint in hexadecimal, followed by @code{Enter} or @code{Space.}")
+   "Input a Unicode character by typing its codepoint in hexadecimal, \
+   followed by @code{Enter} or @code{Space.}")
   (color-theme-switch-1
    (maybe-string)
-   "applies the primary color theme regardless of which color theme is currently active.")
+   "applies the primary color theme regardless of which color theme is \
+currently active.")
   (color-theme-switch-2
    (maybe-string)
-   "applies the alternative color theme regardless of which color theme is currently active.")
+   "applies the alternative color theme regardless of which color theme is \
+currently active.")
   (color-theme-toggle
    (maybe-string)
    "toggles between the primary and alternative color themes.")
@@ -567,10 +608,13 @@ when there are no matches.")
 (define-configuration foot-search-bindings-configuration
   (cancel
    (string "Control+g Control+c Escape")
-   "Aborts the search. The viewport is restored and the primary selection is not updated.")
+   "Aborts the search. The viewport is restored and the primary selection is \
+not updated.")
   (commit
    (string "Return KP_Enter")
-   "Exit search mode and copy current selection into the primary selection.  Viewport is not restored. To copy the selection to the regular clipboard, use @code{Control+Shift+c}.")
+   "Exit search mode and copy current selection into the primary selection. \
+Viewport is not restored. To copy the selection to the regular clipboard, use \
+@code{Control+Shift+c}.")
   (find-prev
    (string "Control+r")
    "Search backwards in the scrollback history for the next match.")
@@ -692,37 +736,61 @@ when there are no matches.")
 (define-configuration foot-mouse-bindings-configuration
   (selection-override-modifiers
    (string "Shift")
-   "The modifiers set in this set (which may be set to any combination of modifiers, e.g. @code{mod1+mod2+mod3}, as well as none) are used to enable selecting text with the mouse irrespective of whether a client application currently has the mouse grabbed. These modifiers cannot be used as modifiers in mouse bindings. Because the order of bindings is significant, it is best to set this prior to any other mouse bindings that might use modifiers in the default set.")
+   "The modifiers set in this set (which may be set to any combination of \
+modifiers, e.g. @code{mod1+mod2+mod3}, as well as none) are used to enable \
+selecting text with the mouse irrespective of whether a client application \
+currently has the mouse grabbed. These modifiers cannot be used as modifiers \
+in mouse bindings. Because the order of bindings is significant, it is best \
+to set this prior to any other mouse bindings that might use modifiers in the \
+default set.")
   (scrollback-up-mouse
    (string "BTN_WHEEL_BACK")
-   "Normal screen: scrolls up the contents.  Alt screen: send fake @code{KeyUP} events to the client application, if alternate scroll mode is enabled.")
+   "Normal screen: scrolls up the contents.  Alt screen: send fake \
+@code{KeyUP} events to the client application, if alternate scroll mode is \
+enabled.")
   (scrollback-down-mouse
    (string "BTN_WHEEL_FORWARD")
-   "Normal screen: scrolls down the contents.  Alt screen: send fake @code{KeyDOWN} events to the client application, if alternate scroll mode is enabled.")
+   "Normal screen: scrolls down the contents.  Alt screen: send fake \
+@code{KeyDOWN} events to the client application, if alternate scroll mode is \
+enabled.")
   (select-begin
    (string "BTN_LEFT")
-   "Begin an interactive selection. The selection is finalized, and copied to the primary selection, when the button is released.")
+   "Begin an interactive selection. The selection is finalized, and copied to \
+the primary selection, when the button is released.")
   (select-begin-block
    (string "Control+BTN_LEFT")
-   "Begin an interactive block selection. The selection is finalized, and copied to the primary selection, when the button is released.")
+   "Begin an interactive block selection. The selection is finalized, and \
+copied to the primary selection, when the button is released.")
   (select-word
    (string "BTN_LEFT-2")
-   "Begin an interactive word-wise selection, where words are separated by whitespace and all characters defined by the word-delimiters option. The selection is finalized, and copied to the primary selection, when the button is released.")
+   "Begin an interactive word-wise selection, where words are separated by \
+whitespace and all characters defined by the word-delimiters option. The \
+selection is finalized, and copied to the primary selection, when the button \
+is released.")
   (select-word-whitespace
    (string "Control+BTN_LEFT-2")
-   "Same as select-word, but the characters in the word-delimiters option are ignored. I.e only whitespace characters act as delimiters. The selection is finalized, and copied to the primary selection, when the button is released.")
+   "Same as select-word, but the characters in the word-delimiters option are \
+ignored. I.e only whitespace characters act as delimiters. The selection is \
+finalized, and copied to the primary selection, when the button is released.")
   (select-quote
    (string "BTN_LEFT-3")
-   "Begin an interactive \"quote\" selection. This is similar to select-word, except an entire quote is selected. Recognized quote characters are: \" and '.")
+   "Begin an interactive \"quote\" selection. This is similar to select-word,
+   except an entire quote is selected. Recognized quote characters are: \" and
+   '.")
   (select-row
    (string "BTN_LEFT-4")
-   "Begin an interactive row-wise selection. The selection is finalized, and copied to the primary selection, when the button is released.")
+   "Begin an interactive row-wise selection. The selection is finalized, and \
+   copied to the primary selection, when the button is released.")
   (select-extend
    (string "BTN_RIGHT")
-   "Interactively extend an existing selection, using the original selection mode (normal, block, word-wise or row-wise). The selection is finalized, and copied to the primary selection, when the button is released.")
+   "Interactively extend an existing selection, using the original selection \
+mode (normal, block, word-wise or row-wise). The selection is finalized, and \
+copied to the primary selection, when the button is released.")
   (select-extend-character-wise
    (string "Control+BTN_RIGHT")
-   "Same as select-extend, but forces the selection mode to normal (i.e.  character wise). Note that this causes subsequent select-extend operations to be character wise. This action is ignored for block selections.")
+   "Same as select-extend, but forces the selection mode to normal (i.e. \
+character wise). Note that this causes subsequent select-extend operations to \
+be character wise. This action is ignored for block selections.")
   (primary-paste
    (string "BTN_MIDDLE")
    "Pastes from the primary selection.")
@@ -739,8 +807,8 @@ when there are no matches.")
 (define-maybe foot-mouse-bindings-configuration)
 
 (define (description-font font)
-  (format #f "List of @code{foot-font-configuration} for the ~a fonts to use.  See foot.ini(5)
-man page for details." font))
+  (format #f "List of @code{foot-font-configuration} for the ~a fonts to use. \
+See foot.ini(5) man page for details." font))
 
 (define-configuration foot-configuration
   (main
@@ -748,7 +816,7 @@ man page for details." font))
    "Main section of the configuration.  See foot.ini(5) man \
 page for details."
    (serializer (serialize-foot-section-configuration
-                foot-colors-configuration-fields)))
+                foot-main-configuration-fields)))
   (colors
    (maybe-foot-colors-configuration)
    "Color section of the configuration.
@@ -764,8 +832,8 @@ background color:
                 foot-colors-configuration-fields)))
   (colors2
    (maybe-foot-colors-configuration)
-   "Alternative color theme section of the configuration.  See foot.ini(5) man \
-page for details."
+   "Alternative color theme section of the configuration.  See foot.ini(5) \
+man page for details."
    (serializer (serialize-foot-section-configuration
                 foot-colors-configuration-fields)))
   (key-bindings
@@ -829,19 +897,23 @@ page for details."
 		     'foot-colors-configuration)
                    (foot-generate-documentation
 		     "Key Bindings"
-		     `((foot-key-bindings-configuration ,foot-key-bindings-configuration-fields))
+		     `((foot-key-bindings-configuration
+			 ,foot-key-bindings-configuration-fields))
 		     'foot-key-bindings-configuration)
                    (foot-generate-documentation
 		     "Mouse Bindings"
-		     `((foot-mouse-bindings-configuration ,foot-mouse-bindings-configuration-fields))
+		     `((foot-mouse-bindings-configuration
+			 ,foot-mouse-bindings-configuration-fields))
 		     'foot-mouse-bindings-configuration)
                    (foot-generate-documentation
 		     "Search Bindings"
-		     `((foot-search-bindings-configuration ,foot-search-bindings-configuration-fields))
+		     `((foot-search-bindings-configuration
+			 ,foot-search-bindings-configuration-fields))
 		     'foot-search-bindings-configuration)
                    (foot-generate-documentation
 		     "URL Bindings"
-		     `((foot-url-bindings-configuration ,foot-url-bindings-configuration-fields))
+		     `((foot-url-bindings-configuration
+			 ,foot-url-bindings-configuration-fields))
 		     'foot-url-bindings-configuration)))
 
 (define (home-foot-config config)
