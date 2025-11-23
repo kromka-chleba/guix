@@ -11070,7 +11070,7 @@ under the same name.
 Make @var{file} writable for its owner.
 @end deffn
 
-@deffn {Procedure} copy-recursively source destination @
+@deffn {Procedure} copy-file-recursively source destination @
   [#:log (current-output-port)] [#:follow-symlinks? #f] @
   [#:copy-file copy-file] [#:keep-mtime? #f] [#:keep-permissions? #t] @
   [#:select? (const #t)]
@@ -11085,6 +11085,16 @@ When @var{keep-mtime?} is true, keep the modification time of the files
 in @var{source} on those of @var{destination}.
 When @var{keep-permissions?} is true, preserve file permissions.  Write
 verbose output to the @var{log} port.
+@end deffn
+
+@deffn {Procedure} copy-recursively source destination @
+  [#:log (current-output-port)] [#:follow-symlinks? #f] @
+  [#:copy-file copy-file] [#:keep-mtime? #f] [#:keep-permissions? #t] @
+  [#:select? (const #t)]
+@quotation Deprecation warning
+Performs the same operation as copy-file-recursively and is deprecated
+in the favor of the same.
+@end quotation
 @end deffn
 
 @deffn {Procedure} delete-file-recursively dir [#:follow-mounts? #f]

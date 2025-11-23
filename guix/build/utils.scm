@@ -75,7 +75,8 @@
             mkdir-p
             install-file
             make-file-writable
-            copy-recursively
+            copy-recursively ;deprecated
+            copy-file-recursively
             delete-file-recursively
             file-name-predicate
             find-files
@@ -427,7 +428,7 @@ name."
   (let ((stat (lstat file)))                      ;XXX: symlinks
     (chmod file (logior #o600 (stat:perms stat)))))
 
-(define* (copy-recursively source destination
+(define* (copy-file-recursively source destination
                            #:key
                            (log (current-output-port))
                            (follow-symlinks? #f)
@@ -496,6 +497,9 @@ return true."
               "warning: failed to delete ~a: ~a~%"
               file (strerror
                     (system-error-errno args))))))
+
+; copy-recursively is deprecated in favor of copy-file-recursively
+(define copy-recursively copy-file-recursively)
 
 (define* (delete-file-recursively dir
                                   #:key follow-mounts?)
