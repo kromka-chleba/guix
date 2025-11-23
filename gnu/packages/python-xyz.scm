@@ -35535,6 +35535,119 @@ compatible with BibTeX's own parser.")
 window managers.")
     (license license:bsd-3)))
 
+(define-public libgnome-volume-control
+  (let ((commit "5f9768a2eac29c1ed56f1fbb449a77a3523683b6")
+        (version "unknown")
+        (revision "1"))
+    (hidden-package (package
+                      (name "libgnome-volume-control")
+                      (version (git-version version revision commit))
+                      (source
+                       (origin
+                         (method git-fetch)
+                         (uri (git-reference
+                               (url
+                                "https://gitlab.gnome.org/GNOME/libgnome-volume-control.git")
+                               (commit commit)))
+                         (file-name (git-file-name name version))
+                         (sha256
+                          (base32
+                           "1lyq6lcz5m0p9j5lsjn85qg31zxbk3pvybqb82c1gw673jgi7n41"))))
+                      (build-system trivial-build-system)
+                      (arguments
+                       (list
+                        #:builder
+                        #~(mkdir #$output)))
+                      (home-page "")
+                      (synopsis "")
+                      (description "")
+                      (license license:gpl2)))))
+
+(define-public ignis-gvc
+  (package
+    (name "ignis-gvc")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (list (string-append
+                   "https://github.com/ignis-sh/ignis-gvc/archive/refs/tags/v"
+                   version ".tar.gz")))
+
+       (sha256
+        (base32 "1xh831a2qvrl77z4p3ci5kl20hapsx6nhr4k1yvkafwfww5z62vd"))))
+    (build-system meson-build-system)
+    (arguments
+      (list
+      	#:phases
+      	#~(modify-phases %standard-phases
+      			 ; TODO: Patch/move gvc source.
+                         )))
+    (inputs (list libgnome-volume-control))
+    (synopsis "")
+    (description "")
+    (home-page "")
+    (license license:expat)))
+
+(define-public python-ignis
+  (let ((commit "ba8b0e1")
+        (version "0.5.1")
+        (revision "1"))
+    (package
+      (name "python-ignis")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ignis-sh/ignis")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1iyzay5zyigvhwqpfaspsvqr0d0k91bnzdndw5x8xg395xa4aapf"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+       	 ;; FIXME: Tests don’t work yet.
+        #:tests? #f
+        #:test-flags
+        #~(list "-k" "not  ignis.services.network")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-version
+              (lambda _
+                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" "0.5.1")))
+            (add-after 'build 'set-HOME
+              (lambda _
+                (setenv "HOME" "/tmp")))
+            (add-after 'unpack 'patch-libgtk4-layer-shell.so
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; TODO: Don’t need to find-files, just patch __init__
+                (substitute* (find-files "." "\\.py$")
+                  (("CDLL\\(\"libgtk4-layer-shell.so\"")
+                   (format #f "CDLL(~s"
+                           (search-input-file inputs
+                                              "lib/libgtk4-layer-shell.so")))))))))
+
+      (inputs (list gtk4-layer-shell))
+      (native-inputs (list gnome-bluetooth python-hatchling python-hatch-vcs
+                           gtk4-layer-shell))
+      (propagated-inputs (list python-click
+                               python
+                               python-pycairo
+                               python-pygobject
+                               python-loguru
+                               python-rich-next
+                               gtk
+                               gtk4-layer-shell))
+      (synopsis "Widget framework for building desktop shells")
+      (description
+       "A widget framework for building desktop shells, written and configurable in Python.
+    Easy to use, GTK4-based, Batteries Included (a lot of built-in Services an
+   Utilities!), Flexible work with widgets.")
+      (home-page "https://ignis-sh.github.io/ignis/")
+      (license license:lgpl2.0+))))
+
 (define-public i3-autotiling
   (package
     (name "i3-autotiling")
