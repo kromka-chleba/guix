@@ -11955,6 +11955,39 @@ currently implements
 of the specification.")
       (license license:expat)))
 
+(define-public go-github-com-rclone-gofakes3
+  (package
+    (name "go-github-com-rclone-gofakes3")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rclone/gofakes3")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "021xy4sycanrn55a0ygbkmirvnwdsplxkzq336nvlfhnd8bnyf6v"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/rclone/gofakes3"))
+    (propagated-inputs
+     (list go-golang-org-x-tools
+           go-github-com-stretchr-testify
+           go-github-com-shabbyrobe-gocovmerge
+           go-github-com-ryszard-goskiplist
+           go-github-com-minio-xxml
+           go-github-com-aws-smithy-go
+           go-github-com-aws-aws-sdk-go-v2-service-s3
+           go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
+           go-github-com-aws-aws-sdk-go-v2-credentials
+           go-github-com-aws-aws-sdk-go-v2))
+    (home-page "https://github.com/rclone/gofakes3")
+    (synopsis "Fake s3 server in Go")
+    (description "This package implements a fake s3 server for rclone.")
+    (license license:expat)))
+
 (define-public go-github-com-rcrowley-go-metrics
   (package
     (name "go-github-com-rcrowley-go-metrics")
