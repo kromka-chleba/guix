@@ -257,10 +257,10 @@ the leaves of a full binary tree.")
 single, maximized application.")
     (license license:expat)))
 
-(define-public dankmaterialshell
+(define-public dankmaterialshell-minimal
   (package
-    (name "dankmaterialshell")
-    (version "0.5.1")
+    (name "dankmaterialshell-minimal")
+    (version "0.6.2")
     (source
      (origin
        (method git-fetch)
@@ -269,7 +269,7 @@ single, maximized application.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "186n0pcibjk9va967vnwnq8gfb5p3zah96sv4gkgsp0k6931vs1w"))))
+        (base32 "0y8z5vps53j18izal1hss0nhip9gzvgpmapmgwi5v80add6y5dkl"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -317,6 +317,22 @@ to be used in system/home modules.  To launch it manually,
 use the @code{dms} CLI program, followed by @code{-c} and path to
 the @code{.../share/quickshell} path in the package.")
     (license license:expat)))
+
+(define-public dankmaterialshell
+  (package
+   (inherit dankmaterialshell-minimal)
+   (name "dankmaterialshell")
+   (propagated-inputs (modify-inputs (package-propagated-inputs dankmaterialshell-minimal)
+				     (append 
+				      dbus 
+				      matugen 
+				      dgop 
+				      `(,glib "bin") 
+				      brightnessctl 
+				      qtmultimedia 
+				      cliphist 
+				      wl-clipboard 
+				      cava)))))
 
 (define-public herbstluftwm
   (package
