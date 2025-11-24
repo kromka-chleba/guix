@@ -4337,6 +4337,51 @@ metrics (i.e. response time, bytes written, and http status code) from your
 application's http.Handlers.")
     (license license:expat)))
 
+(define-public go-github-com-files-com-files-sdk-go-v3
+  (package
+    (name "go-github-com-files-com-files-sdk-go")
+    (version "3.2.267")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Files-com/files-sdk-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wcd2kn8cnf51kr43dmc7y188b50r5q58aa8ls4r8y6f048362z5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional packages
+      #:embed-files
+      #~(list "Linux.gitignore")
+      #:import-path "github.com/Files-com/files-sdk-go/v3"))
+    (propagated-inputs
+     (list go-moul-io-http2curl-v2
+           go-golang-org-x-text
+           go-golang-org-x-sys
+           ;; go-github-com-winfsp-cgofuse
+           go-github-com-stretchr-testify
+           go-github-com-samber-lo
+           go-github-com-sabhiram-go-gitignore
+           go-github-com-panjf2000-ants-v2
+           go-github-com-lpar-date
+           go-github-com-hashicorp-golang-lru-v2
+           go-github-com-hashicorp-go-retryablehttp
+           go-github-com-gin-gonic-gin
+           go-github-com-dustin-go-humanize
+           ;; go-github-com-dnaeon-go-vcr
+           go-github-com-chilts-sid
+           go-github-com-bradfitz-iter
+           go-github-com-appscode-go-querystring))
+    (home-page "https://github.com/Files-com/files-sdk-go")
+    (synopsis "Files.com Go Client")
+    (description
+     "The Files.com Go SDK provides a direct, high performance integration to
+Files.com from applications written in Go.")
+    (license license:expat)))
+
 (define-public go-github-com-flosch-pongo2-v6
   (package
     (name "go-github-com-flosch-pongo2-v6")
