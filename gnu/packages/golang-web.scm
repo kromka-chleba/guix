@@ -13272,6 +13272,33 @@ extract data from those paths.")
 encoding library for the MessagePack, CBOR, JSON and the Binc formats.")
     (license license:expat)))
 
+(define-public go-github-com-unknwon-goconfig
+  (package
+    (name "go-github-com-unknwon-goconfig")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/unknwon/goconfig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10f0lhb3l971b2fw2xsvbsy96gx9isyckg2003av2f4rlzs27n7b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "TestSaveConfigFile")
+      #:import-path "github.com/unknwon/goconfig"))
+    (native-inputs (list go-github-com-smartystreets-goconvey))
+    (home-page "https://github.com/unknwon/goconfig")
+    (synopsis "Configuration file parser")
+    (description
+     "This package is a fully functional and comments-support configuration
+file(.ini) parser.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-uptrace-bunrouter
   (package
     (name "go-github-com-uptrace-bunrouter")
