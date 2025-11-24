@@ -10162,6 +10162,38 @@ standard library.")
 Go.")
     (license license:asl2.0)))
 
+(define-public go-github-com-oracle-oci-go-sdk-v65
+  (package
+    (name "go-github-com-oracle-oci-go-sdk")
+    (version "65.104.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oracle/oci-go-sdk")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d8mpawbk29s28pb269fkmgqgdv4ypwk3a26hmm2amgn4vsaaqj2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional packages
+      #:import-path "github.com/oracle/oci-go-sdk/v65"))
+    (propagated-inputs
+     (list go-github-com-youmark-pkcs8
+           go-github-com-stretchr-testify
+           go-github-com-sony-gobreaker
+           go-github-com-gofrs-flock
+           ;; go-github-com-fnproject-fdk-go
+           ))
+    (home-page "https://github.com/oracle/oci-go-sdk")
+    (synopsis "Oracle Cloud Infrastructure Golang SDK")
+    (description
+     "This is the official Go SDK for Oracle Cloud Infrastructure.")
+    ;; Universal Permissive License
+    (license (license:non-copyleft "https://oss.oracle.com/licenses/upl/"))))
+
 (define-public go-github-com-oschwald-geoip2-golang
   (package
     (name "go-github-com-oschwald-geoip2-golang")
