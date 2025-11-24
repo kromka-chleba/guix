@@ -2672,6 +2672,36 @@ API.  See the full Circonus API Documentation at
 browser window.")
     (license license:bsd-2)))
 
+(define-public go-github-com-cloudinary-cloudinary-go-v2
+  (package
+    (name "go-github-com-cloudinary-cloudinary-go")
+    (version "2.14.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cloudinary/cloudinary-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nn1kjv94x7xh0js9mwkmqfq4y3dj1jz9w55lvmv7c3qgqkzqgbh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional dependencies
+      #:import-path "github.com/cloudinary/cloudinary-go/v2"))
+    (propagated-inputs
+     (list go-github-com-stretchr-testify
+           ;; go-github-com-heimdalr-dag
+           go-github-com-gorilla-schema
+           go-github-com-google-uuid
+           go-github-com-creasty-defaults))
+    (home-page "https://github.com/cloudinary/cloudinary-go")
+    (synopsis "Cloudinary Go SDK")
+    (description "This package provides an SDK for developing projects with
+@url{https://cloudinary.com/,Cloudinary} in Go.")
+    (license license:expat)))
+
 (define-public go-github-com-cncf-xds-go
   (package
     (name "go-github-com-cncf-xds-go")
