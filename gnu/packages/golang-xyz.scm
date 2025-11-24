@@ -23513,6 +23513,30 @@ utilities for cty Golang module.")
      "This package provides a simple error package with stack traces.")
     (license license:expat)))
 
+(define-public go-github-com-zeebo-errs-v2
+  (package
+    (name "go-github-com-zeebo-errs")
+    (version "2.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zeebo/errs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1121d876l002d7vd8816fzymdv90q6x04lcjgxgr0rkczzlzbynp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zeebo/errs/v2"))
+    (propagated-inputs (list go-github-com-zeebo-assert))
+    (home-page "https://github.com/zeebo/errs")
+    (synopsis "Simple error package")
+    (description
+     "This package provides a simple error package with stack traces.")
+    (license license:expat)))
+
 (define-public go-github-com-zitadel-logging
   (package
     (name "go-github-com-zitadel-logging")
