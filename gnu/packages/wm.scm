@@ -119,6 +119,7 @@
   #:use-module (guix build-system trivial)
   #:use-module (guix utils)
   #:use-module (gnu packages)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
@@ -168,6 +169,7 @@
   #:use-module (gnu packages lua)
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages monitoring)
   #:use-module (gnu packages mpd)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages music)
@@ -260,7 +262,7 @@ single, maximized application.")
 (define-public dankmaterialshell-minimal
   (package
     (name "dankmaterialshell-minimal")
-    (version "0.6.2")
+    (version "0.5.1")
     (source
      (origin
        (method git-fetch)
@@ -269,7 +271,7 @@ single, maximized application.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0y8z5vps53j18izal1hss0nhip9gzvgpmapmgwi5v80add6y5dkl"))))
+        (base32 "186n0pcibjk9va967vnwnq8gfb5p3zah96sv4gkgsp0k6931vs1w"))))
     (build-system go-build-system)
     (arguments
      (list
