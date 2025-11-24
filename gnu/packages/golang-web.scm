@@ -15682,6 +15682,51 @@ the standard @code{context} package to store request-scoped values.")
 @url{http://github.com/yob/graval,github.com/yob/graval} and changed a lot.")
     (license license:expat)))
 
+(define-public go-google-golang-org-api
+  (package
+    (name "go-google-golang-org-api")
+    (version "0.247.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googleapis/google-api-go-client")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19rj4m4qfc6lfik6p562a2nyf9mhmz0nfargpnvkcvdzi0rh350x"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional dependencies
+      #:import-path "google.golang.org/api/"))
+    (propagated-inputs
+     (list go-google-golang-org-protobuf
+           go-google-golang-org-grpc
+           ;; go-google-golang-org-genproto
+           go-golang-org-x-time
+           go-golang-org-x-sync
+           go-golang-org-x-oauth2
+           go-golang-org-x-net
+           go-go-opentelemetry-io-contrib-instrumentation-net-http-otelhttp
+           ;; go-go-opentelemetry-io-contrib-instrumentation-google-golang-org-grpc-otelgrpc
+           go-github-com-googleapis-gax-go-v2
+           ;; go-github-com-googleapis-enterprise-certificate-proxy
+           go-github-com-google-uuid
+           go-github-com-google-s2a-go
+           go-github-com-google-go-cmp
+           go-cloud-google-com-go-compute-metadata
+           go-cloud-google-com-go-auth-oauth2adapt
+           go-cloud-google-com-go-auth))
+    (home-page "https://google.golang.org/api/")
+    (synopsis "Google APIs Client Library for Go")
+    (description
+     "Package api is the root of the packages used to access Google Cloud Services.
+See
+@url{https://godoc.org/google.golang.org/api,https://godoc.org/google.golang.org/api}
+for a full list of sub-packages.")
+    (license license:bsd-3)))
+
 (define-public go-google-golang-org-genproto-googleapis-api
   (package
     (name "go-google-golang-org-genproto-googleapis-api")
