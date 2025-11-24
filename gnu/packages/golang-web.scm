@@ -12804,6 +12804,30 @@ verity of Go web frameworks which may be integrated with an existing project
 using Swagger UI.")
     (license license:expat)))
 
+(define-public go-github-com-t3rm1n4l-go-mega
+  (package
+    (name "go-github-com-t3rm1n4l-go-mega")
+    (version "0.0.0-20251031123324-a804aaa87491")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/t3rm1n4l/go-mega")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fvcc8bg75rj323mcfb9s6xiylk5mlrn1n4lws6iqffrn0di80fy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/t3rm1n4l/go-mega"))
+    (propagated-inputs (list go-golang-org-x-crypto))
+    (home-page "https://github.com/t3rm1n4l/go-mega")
+    (synopsis "Client library for mega.co.nz storage service")
+    (description
+     "This package provides a client library in go for mega.co.nz storage service.")
+    (license license:expat)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
