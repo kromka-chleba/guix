@@ -808,6 +808,34 @@ Golang.")
 substitution.")
     (license license:expat)))
 
+(define-public go-github-com-a8m-tree
+  (package
+    (name "go-github-com-a8m-tree")
+    (version "0.0.0-20240104212747-2c8764a5f17e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/a8m/tree")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0alkk8ghgmdzx4585r5562igsj39g89zlzdw109hdm5c1vmrm8dw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to fmt.Fprintf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:import-path "github.com/a8m/tree"))
+    (home-page "https://github.com/a8m/tree")
+    (synopsis
+     "Implementation of the tree command that can be used programmatically")
+    (description
+     "This package implements the @code{tree} command in Go, in a way such that it
+can be used programatically.")
+    (license license:expat)))
+
 (define-public go-github-com-abadojack-whatlanggo
   (package
     (name "go-github-com-abadojack-whatlanggo")
