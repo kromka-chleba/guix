@@ -15652,6 +15652,36 @@ the standard @code{context} package to store request-scoped values.")
     (description "This package is a Go Implementation of WireGuard.")
     (license license:expat)))
 
+(define-public go-goftp-io-server-v2
+  (package
+    (name "go-goftp-io-server")
+    (version "2.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitea.com/goftp/server")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12gyq0jpp03bxzas5439d4a7shqak7vg7s9q7j4fa1vq5n2pd2qn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:embed-files
+      #~(list "children" "nodes" "text")
+      #:import-path "goftp.io/server/v2"))
+    (propagated-inputs
+     (list go-github-com-stretchr-testify
+           go-github-com-minio-minio-go-v7
+           go-github-com-jlaffaye-ftp))
+    (home-page "https://goftp.io/server")
+    (synopsis "server")
+    (description
+     "This package provides a FTP server framework forked from
+@url{http://github.com/yob/graval,github.com/yob/graval} and changed a lot.")
+    (license license:expat)))
+
 (define-public go-google-golang-org-genproto-googleapis-api
   (package
     (name "go-google-golang-org-genproto-googleapis-api")
