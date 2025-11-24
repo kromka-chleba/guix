@@ -11955,6 +11955,34 @@ currently implements
 of the specification.")
       (license license:expat)))
 
+(define-public go-github-com-rasky-go-xdr
+  (package
+    (name "go-github-com-rasky-go-xdr")
+    (version "0.0.0-20170124162913-1a41d1a06c93")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rasky/go-xdr")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f69yfdvgwyqrj6l0zdbdb78fi6iwkqh4v6rr5ns4v63kxvnfs9s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:skip-build? #t
+      #:import-path "github.com/rasky/go-xdr"))
+    (propagated-inputs (list go-github-com-davecgh-go-xdr))
+    (home-page "https://github.com/rasky/go-xdr")
+    (synopsis "XDR standard in pure Go")
+    (description
+     "This package implements the data representation portion of the External Data
+Representation (XDR) standard protocol as specified in RFC 4506 (obsoletes RFC
+1832 and RFC 1014) in Go.")
+    (license license:isc)))
+
 (define-public go-github-com-rclone-gofakes3
   (package
     (name "go-github-com-rclone-gofakes3")
