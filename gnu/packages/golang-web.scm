@@ -1049,6 +1049,34 @@ supporting @acronym{GELF, Graylog Extended Log Format} specified in
 @url{Graylog Documentation, https://go2docs.graylog.org/current/home.html}.")
     (license license:expat)))
 
+(define-public go-github-com-appscode-go-querystring
+  (package
+    (name "go-github-com-appscode-go-querystring")
+    (version "0.0.0-20170504095604-0126cfb3f1dc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/appscode/go-querystring")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jzpdf6sdgm1xw5b5mkqiaz7l4rs677habrwclfpc3szxkllclks"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; (*testing.common).Errorf format %q has arg s of wrong type
+      #:test-flags
+      #~(list "-vet=off")
+      #:skip-build? #t
+      #:import-path "github.com/appscode/go-querystring"))
+    (home-page "https://github.com/appscode/go-querystring")
+    (synopsis "Encode structs into URL query parameters")
+    (description
+     "This package is designed to assist in scenarios where you want to construct a
+URL using a struct that represents the URL query parameters.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-arceliar-ironwood
   (package
     (name "go-github-com-arceliar-ironwood")
