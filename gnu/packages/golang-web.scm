@@ -6652,6 +6652,56 @@ Features:
 @end itemize")
     (license license:mpl2.0)))
 
+(define-public go-github-com-henrybear327-go-proton-api
+  (package
+    (name "go-github-com-henrybear327-go-proton-api")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/henrybear327/go-proton-api")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0065mhbnhc973avqmd646gg2p3hdsj9q2gzrl0z6f9k18b4pf00j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Test requires PGP cert
+      #:test-flags
+      #~(list "-skip" "TestDecrypt")
+      #:embed-files
+      #~(list "children" "nodes" "text")
+      #:import-path "github.com/henrybear327/go-proton-api"))
+    (propagated-inputs
+     (list go-google-golang-org-protobuf
+           go-google-golang-org-grpc
+           go-golang-org-x-text
+           go-golang-org-x-net
+           go-golang-org-x-exp
+           go-go-uber-org-goleak
+           go-github-com-urfave-cli-v2
+           go-github-com-stretchr-testify
+           go-github-com-sirupsen-logrus
+           go-github-com-google-uuid
+           go-github-com-go-resty-resty-v2
+           go-github-com-gin-gonic-gin
+           go-github-com-emersion-go-vcard
+           go-github-com-emersion-go-message
+           go-github-com-bradenaw-juniper
+           go-github-com-puerkitobio-goquery
+           go-github-com-protonmail-gopenpgp-v2
+           go-github-com-protonmail-go-srp
+           go-github-com-protonmail-go-crypto
+           go-github-com-protonmail-gluon
+           go-github-com-masterminds-semver-v3))
+    (home-page "https://github.com/henrybear327/go-proton-api")
+    (synopsis "Go Proton API")
+    (description
+     "Package proton implements types for accessing the Proton API.")
+    (license license:expat)))
+
 (define-public go-github-com-hetznercloud-hcloud-go-v2
   (package
     (name "go-github-com-hetznercloud-hcloud-go-v2")
