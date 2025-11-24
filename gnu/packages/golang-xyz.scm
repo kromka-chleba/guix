@@ -23490,6 +23490,29 @@ utilities for cty Golang module.")
      "Package yaml can marshal and unmarshal cty values in YAML format.")
     (license license:asl2.0)))
 
+(define-public go-github-com-zeebo-errs
+  (package
+    (name "go-github-com-zeebo-errs")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zeebo/errs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bvmqpxr7gk38yl1wz6llwjgd5ys3ls0m150wjmmr61nggb5n7dy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zeebo/errs"))
+    (home-page "https://github.com/zeebo/errs")
+    (synopsis "Simple error package")
+    (description
+     "This package provides a simple error package with stack traces.")
+    (license license:expat)))
+
 (define-public go-github-com-zitadel-logging
   (package
     (name "go-github-com-zitadel-logging")
