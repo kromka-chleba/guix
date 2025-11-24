@@ -149,6 +149,30 @@ collections like from @code{container/tree}.
 ")
     (license license:expat)))
 
+(define-public go-github-com-dsnet-try
+  (package
+    (name "go-github-com-dsnet-try")
+    (version "0.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/dsnet/try")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c6n27sfh37ngl6rh3y0l0f1yc169v97va3msbsnza723f6f7rdb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dsnet/try"))
+    (home-page "https://github.com/dsnet/try")
+    (synopsis "Try: Simplified Error Handling in Go")
+    (description
+     "Package try emulates aspects of the ill-fated \"try\" proposal using generics.
+See https://golang.org/issue/32437 for inspiration.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-ebitengine-purego
   (package
     (name "go-github-com-ebitengine-purego")
