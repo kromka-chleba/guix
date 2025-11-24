@@ -2289,7 +2289,7 @@ QMatrixClient project.")
 (define-public mtxclient
   (package
     (name "mtxclient")
-    (version "0.10.0")
+    (version "0.10.1")
     (source
      (origin
        (method git-fetch)
@@ -2298,7 +2298,7 @@ QMatrixClient project.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10iidyxjk3w6cljw2r62i5azx84nw3p8hw97d8vy7r5gh1nrrrcn"))))
+        (base32 "077f3x45sd0sbk51azz5xg1icp3472nn4vfjsbk2db8wmq54qhb3"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2334,7 +2334,7 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
 (define-public nheko
   (package
     (name "nheko")
-    (version "0.12.0")
+    (version "0.12.1")
     (source
      (origin
        (method git-fetch)
@@ -2343,7 +2343,7 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "113ids1k2pjmvs9cgh025vkpg5mipw295dlkx7n3ydi0r8mzw1l5"))
+        (base32 "098jqccwsfbqkdpnhbych2rd076385wb51fx9qyjfiddidxv2mas"))
        (modules '((guix build utils)))
        (snippet '(delete-file-recursively "third_party"))))
     (arguments
