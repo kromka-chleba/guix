@@ -2366,6 +2366,31 @@ GIT_TRACE mechanism.")
      "This package provides tools for detecting deadlocks at run-time in Go.")
     (license license:asl2.0)))
 
+(define-public go-github-com-shabbyrobe-gocovmerge
+  (package
+    (name "go-github-com-shabbyrobe-gocovmerge")
+    (version "0.0.0-20230507112040-c3350d9342df")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/shabbyrobe/gocovmerge")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1853x61fcc0gnqgizggqhh4w9d3i6dcdw72z3gzncr6fhb03y4mz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/shabbyrobe/gocovmerge"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/shabbyrobe/gocovmerge")
+    (synopsis "Merge coverprofile results from multiple go cover runs")
+    (description
+     "This package takes the results from multiple `go test -coverprofile` runs
+and merges them into one profile.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-smarty-assertions
   (package
     (name "go-github-com-smarty-assertions")
