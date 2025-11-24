@@ -14164,6 +14164,36 @@ It is to used for inputs in other packages.")
      ;; which apply to the Application, with which you must still comply
      license:lgpl3)))
 
+(define-public go-github-com-yunify-qingstor-sdk-go
+  (package
+    (name "go-github-com-yunify-qingstor-sdk-go")
+    (version "3.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/qingstor/qingstor-sdk-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m7lnvkvn66r50gjhlfymhw3cslqa9q815y6vwad4gdwnj7bhfwl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional packages
+      #:import-path "github.com/yunify/qingstor-sdk-go/v3"))
+    (propagated-inputs
+     (list go-gopkg-in-yaml-v2
+           go-github-com-stretchr-testify
+           go-github-com-pengsrc-go-shared
+           ;; go-github-com-datadog-godog
+           ))
+    (home-page "https://github.com/yunify/qingstor-sdk-go")
+    (synopsis "QingStor SDK for Go")
+    (description
+     "This package is the official @code{QingStor} SDK for the Go programming language.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-zitadel-oidc-v3
   (package
     (name "go-github-com-zitadel-oidc-v3")
