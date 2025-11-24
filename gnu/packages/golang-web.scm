@@ -13741,6 +13741,38 @@ https://github.com/restic/restic project.")
 netmasks.")
     (license license:expat)))
 
+(define-public go-github-com-willscott-go-nfs
+  (package
+    (name "go-github-com-willscott-go-nfs")
+    (version "0.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/willscott/go-nfs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13iqjvy9daslg5a7lxafj1xad0ps5d2vcv9076sfa6fljzd6hzb6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests reqire additional dependencies
+      #:import-path "github.com/willscott/go-nfs"))
+    (propagated-inputs
+     (list go-golang-org-x-sys
+           ;; go-github-com-willscott-memphis
+           go-github-com-willscott-go-nfs-client
+           go-github-com-rasky-go-xdr
+           go-github-com-hashicorp-golang-lru-v2
+           go-github-com-google-uuid
+           go-github-com-go-git-go-billy-v5))
+    (home-page "https://github.com/willscott/go-nfs")
+    (synopsis "Golang Network File Server")
+    (description
+     "This package implements a NFSv3 protocol implementation in pure Golang.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-willscott-go-nfs-client
   (package
     (name "go-github-com-willscott-go-nfs-client")
