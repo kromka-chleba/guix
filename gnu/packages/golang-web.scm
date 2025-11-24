@@ -2945,6 +2945,36 @@ Wasm}.
 @end itemize")
     (license license:isc)))
 
+(define-public go-github-com-colinmarc-hdfs-v2
+  (package
+    (name "go-github-com-colinmarc-hdfs")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/colinmarc/hdfs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01ywhbnxgl2k0dy2ngwa3pci8px0z5ffkn7ar5pajhd6l8vg07w6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require "ambient config"
+      #:import-path "github.com/colinmarc/hdfs/v2"))
+    (propagated-inputs
+     (list go-google-golang-org-protobuf
+           go-github-com-stretchr-testify
+           go-github-com-pborman-getopt
+           go-github-com-jcmturner-gokrb5-v8))
+    (home-page "https://github.com/colinmarc/hdfs")
+    (synopsis "HDFS for Go")
+    (description
+     "This package provides a native, idiomatic interface to HDFS.  Where possible,
+it mimics the functionality and signatures of the standard `os` package.")
+    (license license:expat)))
+
 (define-public go-github-com-containerd-containerd-api
   (package
     (name "go-github-com-containerd-containerd-api")
