@@ -11331,6 +11331,50 @@ serialization and are generally 2 to 3 times faster.  In cases where
 changes.")
     (license license:asl2.0)))
 
+(define-public go-github-com-protonmail-gluon
+  (let ((commit "a9b2986eafad9630802a579507c7882e0f3f6eb4")
+        (revision "0"))
+    (package
+      (name "go-github-com-protonmail-gluon")
+      (version (git-version "0.17.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ProtonMail/gluon")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "17c7wm9xxad8aklv51mkpzg4bzxg4q79nbvswkx0blf4zfimsrbr"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:tests? #f ;TODO: Tests require additional dependencies
+        #:import-path "github.com/ProtonMail/gluon"))
+      (propagated-inputs
+       (list go-gopkg-in-yaml-v3
+             go-golang-org-x-text
+             go-golang-org-x-sys
+             go-golang-org-x-exp
+             go-go-uber-org-goleak
+             go-github-com-stretchr-testify
+             go-github-com-sirupsen-logrus
+             go-github-com-pkg-profile
+             go-github-com-pierrec-lz4-v4
+             go-github-com-mattn-go-sqlite3
+             go-github-com-google-uuid
+             go-github-com-golang-mock
+             ;; go-github-com-emersion-go-imap-uidplus
+             go-github-com-emersion-go-imap
+             go-github-com-bradenaw-juniper
+             ;; go-github-com-protonmail-go-mbox
+             ))
+      (home-page "https://github.com/ProtonMail/gluon")
+      (synopsis "IMAP server library")
+      (description
+       "This package implements an IMAP4rev1 (+extensions) mailserver.")
+      (license license:expat))))
+
 (define-public go-github-com-protonmail-go-mime
   (package
     (name "go-github-com-protonmail-go-mime")
