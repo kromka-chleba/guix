@@ -1318,8 +1318,7 @@ the \"texlive\" importer."
 
 (define-member (person "Hilton Chain"
                        "hako@ultrarare.space"
-                       "hako")
-  emacs home localization mozilla rust zig)
+                       "hako"))
 
 (define-member (person "Noé Lopez"
                        "noelopez@free.fr"
