@@ -16521,6 +16521,34 @@ Kubernetes components which are using nftables.")
 Procedure Call (RPC) framework.")
     (license license:expat)))
 
+(define-public go-storj-io-picobuf
+  (package
+    (name "go-storj-io-picobuf")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/storj/picobuf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18h4ashs0i8qikqi7x30yy7y72xkxcc57xdxry6nssdzcjym4w5n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "TestMessageSize")
+      #:import-path "storj.io/picobuf"))
+    (propagated-inputs
+     (list go-google-golang-org-protobuf
+           go-github-com-zeebo-assert))
+    (home-page "https://storj.io/picobuf")
+    (synopsis "Picobuf")
+    (description
+     "Package picobuf is a light replacement for a subset of protobuf.")
+    (license license:expat)))
+
 ;;;
 ;;; Executables:
 ;;;
