@@ -16521,6 +16521,49 @@ Kubernetes components which are using nftables.")
 Procedure Call (RPC) framework.")
     (license license:expat)))
 
+(define-public go-storj-io-eventkit
+  (package
+    (name "go-storj-io-eventkit")
+    (version "0.0.0-20250410172343-61f26d3de156")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/storj/eventkit")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19vliv2ksw8wi382zfd5ak5zpm3yii2ivxhq5gk90m9x0swdg157"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional packages
+      #:import-path "storj.io/eventkit"))
+    (propagated-inputs
+     (list go-storj-io-picobuf
+           go-google-golang-org-protobuf
+           go-google-golang-org-api
+           go-golang-org-x-sync
+           go-go-uber-org-zap
+           go-github-com-zeebo-errs-v2
+           go-github-com-stretchr-testify
+           go-github-com-spf13-viper
+           go-github-com-spf13-cobra
+           go-github-com-spacemonkeygo-monkit-v3
+           go-github-com-pkg-errors
+           go-github-com-google-gopacket
+           ;; go-github-com-elek-bubbles
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-bubbletea
+           ;; go-cloud-google-com-go-bigquery
+           ))
+    (home-page "https://storj.io/eventkit")
+    (synopsis "Report multidimensional events over UDP")
+    (description
+     "This package provides a go library for reporting multidimensional events over
+UDP.")
+    (license license:expat)))
+
 (define-public go-storj-io-picobuf
   (package
     (name "go-storj-io-picobuf")
