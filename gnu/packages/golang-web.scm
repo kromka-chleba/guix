@@ -16668,6 +16668,49 @@ to actually correct errors.")
      "Package picobuf is a light replacement for a subset of protobuf.")
     (license license:expat)))
 
+(define-public go-storj-io-uplink
+  (package
+    (name "go-storj-io-uplink")
+    (version "1.13.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/storj/uplink")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0294wyyilvf69dk5vza6zbw3imcvp7ph5nrp7d1hchxrysk3g07y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional dependencies
+      #:import-path "storj.io/uplink"))
+    (propagated-inputs
+     (list go-storj-io-picobuf
+           go-storj-io-infectious
+           go-storj-io-eventkit
+           go-storj-io-drpc
+           go-storj-io-common
+           go-golang-org-x-sync
+           go-golang-org-x-exp
+           ;; go-github-com-zeebo-sudo
+           go-github-com-zeebo-errs-v2
+           go-github-com-stretchr-testify
+           ;; go-github-com-spacemonkeygo-monkit-v3
+           go-github-com-klauspost-compress))
+    (home-page "https://storj.io/uplink")
+    (synopsis "Storj network Go library")
+    (description
+     "Package uplink is the main entrypoint to interacting with Storj Labs
+decentralized storage network.
+
+Storj is an S3-compatible platform and suite of decentralized applications
+that allows you to store data in a secure and decentralized manner.  Your files
+are encrypted, broken into little pieces and stored in a global decentralized
+network of computers.")
+    (license license:expat)))
+
 ;;;
 ;;; Executables:
 ;;;
