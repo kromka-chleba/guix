@@ -16485,6 +16485,56 @@ support arbitrary use cases, but instead specifically focuses on supporting
 Kubernetes components which are using nftables.")
     (license license:asl2.0)))
 
+(define-public go-storj-io-common
+  (package
+    (name "go-storj-io-common")
+    (version "0.0.0-20251107171817-6221ae45072c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/storj/common")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dg5mwm0hhrf9prns1d21wnwd6icjx7bq059jll5y8hfdxa3l49i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require dependency cycle
+      #:skip-build? #t
+      #:import-path "storj.io/common"))
+    (propagated-inputs
+     (list go-storj-io-picobuf
+           go-storj-io-eventkit
+           go-storj-io-drpc
+           go-gopkg-in-yaml-v2
+           go-golang-org-x-sys
+           go-golang-org-x-sync
+           go-golang-org-x-mod
+           go-golang-org-x-crypto
+           go-go-uber-org-zap
+           go-github-com-zeebo-errs-v2
+           go-github-com-zeebo-blake3
+           go-github-com-stretchr-testify
+           go-github-com-spf13-viper
+           go-github-com-spf13-pflag
+           go-github-com-spf13-cobra
+           go-github-com-spf13-cast
+           go-github-com-spacemonkeygo-monkit-v3
+           go-github-com-shopspring-decimal
+           go-github-com-quic-go-quic-go
+           go-github-com-jtolio-noiseconn
+           go-github-com-google-pprof
+           go-github-com-google-gopacket
+           go-github-com-gogo-protobuf
+           go-github-com-flynn-noise
+           go-github-com-calebcase-tmpfile))
+    (home-page "https://storj.io/common")
+    (synopsis #f)
+    (description #f)
+    (license license:expat)))
+
 (define-public go-storj-io-drpc
   (package
     (name "go-storj-io-drpc")
