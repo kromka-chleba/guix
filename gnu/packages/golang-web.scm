@@ -16485,6 +16485,42 @@ support arbitrary use cases, but instead specifically focuses on supporting
 Kubernetes components which are using nftables.")
     (license license:asl2.0)))
 
+(define-public go-storj-io-drpc
+  (package
+    (name "go-storj-io-drpc")
+    (version "0.0.34")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/storj/drpc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14lqij58nj8m84mbad1nv30s2v33l2zbw3nvc903f7bl43rgwdl6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require additional packages
+      #:import-path "storj.io/drpc"))
+    (propagated-inputs
+     (list go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
+           go-golang-org-x-sync
+           go-google-golang-org-protobuf
+           go-google-golang-org-grpc
+           go-github-com-zeebo-errs
+           go-github-com-zeebo-assert
+           ;; go-github-com-twitchtv-twirp
+           go-github-com-gogo-protobuf
+           ;; go-github-com-improbable-eng-grpc-web
+           ))
+    (home-page "https://storj.io/drpc")
+    (synopsis "Lightweight, drop-in replacement for gRPC")
+    (description
+     "This package is a light, drop-in replacement for @code{gRPC}, a Remote
+Procedure Call (RPC) framework.")
+    (license license:expat)))
+
 ;;;
 ;;; Executables:
 ;;;
