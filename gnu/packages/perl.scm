@@ -14610,7 +14610,7 @@ converting Perl data structures to YAML strings, and the other way around.")
 (define-public perl-module-build
   (package
     (name "perl-module-build")
-    (version "0.4231")
+    (version "0.4234")
     (source
      (origin
        (method url-fetch)
@@ -14618,10 +14618,10 @@ converting Perl data structures to YAML strings, and the other way around.")
                            "Module-Build-" version ".tar.gz"))
        (sha256
         (base32
-         "05xpn8qg814y49vrih16zfr9iiwb7pmdf57ahjnc2h0p5illq3vy"))))
+         "13var0mmyrsjcsvca998900vsrn791379lzaf7jfb2s14xhsrbk6"))))
     (build-system perl-build-system)
     (propagated-inputs
-     (list perl-cpan-meta))
+     (list))
     (home-page "https://metacpan.org/release/Module-Build")
     (synopsis "Build and install Perl modules")
     (description "@code{Module::Build} is a system for building, testing, and
