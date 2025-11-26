@@ -1224,6 +1224,35 @@ defaults for 80% of the use cases.")
     (description "This package provides a CLI tool for Forgejo.")
     (license (list license:asl2.0 license:expat))))
 
+(define-public gitlogue
+  (package
+    (name "gitlogue")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "gitlogue" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1080d4q2rw1jzbghj2a4g934qhipfnj9hh2m65v53hm9z2p2xijn"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'setenv
+            (lambda _
+              (setenv "LIBGIT2_NO_VENDOR" "1"))))))
+    (native-inputs (list pkg-config git perl))
+    (inputs (cons* libgit2-1.9 libssh2 openssl zlib (cargo-inputs 'gitlogue)))
+    (home-page "https://github.com/unhappychoice/gitlogue")
+    (synopsis "Git history screensaver")
+    (description
+     "This package provides a Git history screensaver - watch your code rewrite
+itself.")
+    (license license:isc)))
+
 (define-public gitoxide
   (package
     (name "gitoxide")
