@@ -17425,6 +17425,34 @@ the Python standard library but currently only supports the older 2003
 specification.")
     (license license:bsd-4)))
 
+(define-public python-liberty-parser
+  (package
+    (name "python-liberty-parser")
+    (version "0.0.25")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/tok/liberty-parser")
+             (commit version)))
+       (sha256 (base32 "0z5s2fa48km2ixmnm65h9j82xab6raj8bsfhfbsy63bpdx28aprn"))
+       (file-name (git-file-name name version))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list
+           python-lark
+           python-numpy
+           python-sympy))
+    (native-inputs (
+      list
+        python-setuptools-scm
+    ))
+    (home-page "https://codeberg.org/tok/liberty-parser")
+    (synopsis "Liberty format parser")
+    (description
+     "This package provides a parser for the Liberty format, a standard file format used in @acronym{EDA, Electronic Design Automation}.")
+    (license license:gpl3+)))
+
 (define-public python-libsass
   (package
     (name "python-libsass")
