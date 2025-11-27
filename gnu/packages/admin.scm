@@ -619,7 +619,7 @@ interface and is based on GNU Guile.")
                 (this-package-native-input "guile-fibers"))
        (append gzip zstd)))))
 
-(define-public shepherd shepherd-0.10)
+(define-public shepherd shepherd-1.0)
 
 (define-public shepherd-for-home
   ;; Variant of shepherd without 'sbin' to not shadow 'halt' and 'reboot' on
