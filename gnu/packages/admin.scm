@@ -719,11 +719,11 @@ manager.")
     (propagated-inputs
      (list btrfs-progs
            guile-config
-           guile-fibers-1.3
+           guile-fibers
            guile-netlink
            guile-3.0
            guix
-           shepherd-0.10))
+           shepherd))
     (home-page "https://github.com/BIMSBbioinfo/swineherd")
     (synopsis "System container manager")
     (description
