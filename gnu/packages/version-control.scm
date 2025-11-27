@@ -66,6 +66,7 @@
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
+;;; Copyright © 2026 Nguyễn Gia Phong <cnx@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -89,6 +90,7 @@
   #:use-module (guix deprecation)
   #:use-module (guix gexp)
   #:use-module (guix download)
+  #:use-module (guix fossil-download)
   #:use-module (guix git-download)
   #:use-module (guix hg-download)
   #:use-module (guix build-system cargo)
@@ -109,6 +111,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
@@ -3374,6 +3377,74 @@ output of the @code{git} command.")
      "Recursively find the newest file in a file tree and print its
 modification time.")
     (license license:bsd-2)))
+
+(define-public libfossil
+  (let ((ci "3dae8f708ddbb4ef8904a6a0d198845b96d3d7364ab0c922af95b1635c2a7ec5")
+        (revision "0"))
+    (package
+      (name "libfossil")
+      (version (fossil-version "0.6.0" revision ci))
+      (source
+       (origin
+         (method fossil-fetch)
+         (uri (fossil-reference
+               (uri "https://fossil.wanderinghorse.net/r/libfossil")
+               (version ci)))
+         (file-name (fossil-file-name name version))
+         (sha256
+          (base32 "0jninbwckwsm6d9r9iv78bz6xpzxl2wwn8gx2yq1l6q056472yyb"))
+         (patches (search-patches "libfossil-skip-amalgamation.patch"))
+         (modules '((guix build utils)
+                    (ice-9 ftw)
+                    (srfi srfi-26)))
+         (snippet
+          #~(begin
+              (define (delete-all-but directory . preserve)
+                (with-directory-excursion directory
+                  (let* ((pred (negate (cut member <>
+                                            (cons* "." ".." preserve))))
+                         (items (scandir "." pred)))
+                    (for-each (cut delete-file-recursively <>) items))))
+              (delete-all-but "autosetup" "proj.tcl" "wh-common.tcl")
+              (delete-file-recursively "extsrc")
+              ;; Re-create Fossil check-out manifests,
+              ;; whose content does not affect in semantics.
+              (for-each
+                (lambda (file)
+                  (call-with-output-file file (const #t)))
+                '("manifest" "manifest.uuid"))))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:configure-flags
+             #~(list "--no-debug" "--no-fnc" ;TODO: C++ and Tcl binding?
+                     (string-append "--with-sqlite="
+                                    #$(this-package-input "sqlite"))
+                     (string-append "--soname=libfossil.so"))
+             #:phases
+             #~(modify-phases %standard-phases
+                 (replace 'configure
+                   (lambda* (#:key configure-flags #:allow-other-keys)
+                     (apply invoke "autosetup"
+                            (string-append "--prefix=" #$output)
+                            configure-flags)))
+                 (replace 'check
+                   (lambda* (#:key tests? #:allow-other-keys)
+                     (when tests?
+                       (substitute* "sanity-checks.sh"
+                         ;; FIXME: these tests requires a Fossil checkout.
+                         (("\\./f-sanity.*") "")
+                         (("\\./f-parseparty.*") ""))
+                       (setenv "LD_LIBRARY_PATH" (getcwd))
+                       (invoke "./sanity-checks.sh")))))))
+      (native-inputs (list autosetup))
+      (inputs (list sqlite-next zlib))
+      (home-page "https://fossil.wanderinghorse.net/r/libfossil")
+      (synopsis "Unofficial Fossil SCM Library API")
+      (description
+       "@code{libfossil} is an alternative interface into Fossil repositories,
+as opposed to a replacement for the core fossil application,
+intended for new ways to access and manipulate fossil repositories.")
+      (license license:bsd-2))))
 
 (define-public fnc
   (package
