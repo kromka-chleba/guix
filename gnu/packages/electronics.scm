@@ -2832,3 +2832,4 @@ parallel computing platforms.  It also supports serial execution.")
      (modify-inputs (package-inputs yosys)
        (append clang)))
     (synopsis "FPGA Verilog RTL synthesizer (Clang variant)")))
+
