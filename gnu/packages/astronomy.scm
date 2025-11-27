@@ -1200,7 +1200,7 @@ different kinds of input files.")
 (define-public gnuastro
   (package
     (name "gnuastro")
-    (version "0.22")
+    (version "0.24")
     (source
      (origin
        (method url-fetch)
@@ -1208,7 +1208,7 @@ different kinds of input files.")
                            version ".tar.lz"))
        (sha256
         (base32
-         "15rljx1mx9dyvni17qpj7y9gv086cvmjf9f5j34m1pbiyn989fqz"))))
+         "0z2i5cx4wx1m90nyg98f653gwdil86mi0w55sg8rick4rg2a9ifz"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--disable-static")))
@@ -4454,7 +4454,7 @@ tools for astronomers.")
     (version "2.0.0")
     (source
      (origin
-       (method git-fetch) 
+       (method git-fetch)
        (uri (git-reference
               (url "https://github.com/cta-observatory/pyeventio")
               (commit (string-append "v" version))))
@@ -4940,7 +4940,7 @@ specifically pulsar timing array signals.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 1023 passed, 10 skipped, 10 warnings 
+      ;; tests: 1023 passed, 10 skipped, 10 warnings
       #:phases
       #~(modify-phases %standard-phases
          (add-after 'unpack 'relax-requirements
