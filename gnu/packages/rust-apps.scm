@@ -105,6 +105,7 @@
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ninja)
+  #:use-module (gnu packages node)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages pcre)
@@ -799,6 +800,68 @@ from a single, concise, @code{EBNF}-like grammar.")
      "This package provides a CLI tool to list system USB buses and devices
 similar to lsusb.")
     (license license:gpl3+)))
+
+;; FIXME: rusqlite references function not compiled in
+(define-public deno
+  ;; FIXME: Build this ourselves instead of downloading precompiled version
+  (let* ((rusty-v8-version "140.2.0")
+         (rusty-v8-prebuilt
+          (origin
+            (method url-fetch)
+            (uri (string-append "https://github.com/denoland/rusty_v8/releases/download/v"
+                                rusty-v8-version "/librusty_v8_release_x86_64-unknown-linux-gnu.a.gz"))
+            (sha256
+             (base32 "0xgkyjx4vhi001p8iv0wqjpal4nl0vj65fnhp5x8ckss6mhanymg")))))
+    (package
+      (name "deno")
+      (version "2.5.6")
+      (source
+       (origin
+         (method url-fetch)
+         (uri (crate-uri "deno" version))
+         (file-name (string-append name "-" version ".tar.gz"))
+         (sha256
+          (base32 "1p83wv4s6dslyanih3p81vd8lmryw8wlj6n2riialabbcvbjadvr"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; There's no easy way to mess with dependencies' features from
+            ;; the `cargo build' command, so we manually add in `libffi' as a
+            ;; dependent at top level and force the "system" feature. This
+            ;; means it won't try to compile `libffi' itself and will instead
+            ;; use the one that comes packaged with guix.
+            ;;
+            ;; NOTE: The version here should match the one that would appear
+            ;; in `Cargo.lock' if this were missing, lest we inadvertently
+            ;; mess with dependencies.
+            (substitute* "Cargo.toml"
+              (("\\[dependencies\\.libsui\\]" orig)
+               (string-append
+                "[dependencies.libffi]\n"
+                "version = \"4.1.2\"\n"
+                "features = [\"system\"]\n\n"
+                orig)))))))
+      (build-system cargo-build-system)
+      (arguments
+       (list
+        #:rust rust-1.88
+        #:install-source? #f
+        #:cargo-build-flags '(list "--no-default-features" "--verbose")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-release-variable
+              (lambda _
+                (setenv "RUSTY_V8_ARCHIVE" #$rusty-v8-prebuilt)
+                ;; (setenv "V8_FROM_SOURCE" "true")
+                (setenv "CARGO_FEATURE_SYSTEM" "1")
+                (setenv "NINJA" #$(file-append ninja "/bin/ninja"))
+                (setenv "GN" #$(file-append gn "/bin/gn")))))))
+      (native-inputs (list pkg-config python curl glib clang-19 gn ninja cmake))
+      (inputs (cons* libffi libssh2 node openssl sqlite tzdata (cargo-inputs 'deno)))
+      (home-page "https://github.com/denoland/deno")
+      (synopsis "Provides the deno executable")
+      (description "This package provides the deno executable.")
+      (license license:expat))))
 
 (define-public diffr
   (package
