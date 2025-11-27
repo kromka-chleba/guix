@@ -10963,6 +10963,47 @@ objects.")
      "This is a Python library for color math and conversions.")
     (license license:bsd-3)))
 
+(define-public python-pyspice
+(package
+  (name "python-pyspice")
+  (version "1.5")
+  (source
+   (origin
+     (method git-fetch)
+     (uri (git-reference
+            (url "https://github.com/PySpice-org/PySpice")
+            (commit (string-append "v" version)))
+        )
+     (sha256
+      (base32 "02z35gyx27npqg7g0m1gdy8wid93iy335pc72j90ycx998xf2r5k")))) 
+  (build-system python-build-system)
+  (arguments
+    '(#:tests? #f) ; skip unit-tests (TODO: how to run them successfully?)
+    )
+  (propagated-inputs
+   (list python-numpy
+     python-scipy
+     python-matplotlib
+     python-cffi
+     python-ply
+     python-pyyaml
+    ))
+  (native-inputs
+   (list python-setuptools
+     python-wheel
+     python-pip
+     python-requests
+     python-invoke
+     python-pytest
+    ))
+  (inputs
+   (list ngspice))
+  (home-page "https://pyspice.fabrice-salvaire.fr/")
+  (synopsis "Python wrapper for SPICE circuit simulators")
+  (description
+   "PySpice is a Python library that provides a high-level interface to SPICE circuit simulators.")
+  (license license:gpl3+)))
+
 (define-public python-spectra
   (package
     (name "python-spectra")
