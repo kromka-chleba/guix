@@ -220,6 +220,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages duckdb)
   #:use-module (gnu packages elf)
+  #:use-module (gnu packages electronics)
   #:use-module (gnu packages emulators)
   #:use-module (gnu packages enchant)
   #:use-module (gnu packages file)
