@@ -20,50 +20,56 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages re2c)
-  #:use-module (guix licenses)
-  #:use-module (guix gexp)
-  #:use-module (guix utils)
-  #:use-module (guix packages)
-  #:use-module (gnu packages)
+  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages)
+  #:use-module (guix build-system gnu)
   #:use-module (guix download)
-  #:use-module (guix build-system gnu))
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages)
+  #:use-module (guix utils))
 
 (define-public re2c
   (package
     (name "re2c")
     (version "4.2")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "https://github.com/skvadrik/" name
-                                 "/releases/download/" version "/"
-                                 name "-" version ".tar.xz"))
-             (sha256
-              (base32
-                "07ysqgdm0h566a8lwnpdgycp93vz7zskzihsgah3bla0ycj2pp69"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/skvadrik/re2c")
+              (commit version)))
+       (sha256
+        (base32
+         "0i8nv6n83rmkhp7lg6xsm5fgbl9mw2prg2g7m0xbzzkagkwsmn7c"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:tests? (not (or (%current-target-system)
-                             ;; run_tests.py hangs
-                             (system-hurd?)))
-           #:phases
-           (if (target-arm32?)
-               #~(modify-phases %standard-phases
-                   (add-after 'unpack 'patch-sources
-                     (lambda _
-                       (invoke "patch" "-p1" "--force" "--input"
-                               #$(local-file (search-patch
-                                              "re2c-Use-maximum-alignment.patch"))))))
-               #~%standard-phases)))
+     (list
+      #:tests?
+      (not (or (%current-target-system)
+               ;; run_tests.py hangs
+               (system-hurd?)))
+      #:phases
+      (if (target-arm32?)
+          #~(modify-phases %standard-phases
+              (add-after 'unpack 'patch-sources
+                (lambda _
+                  (invoke "patch" "-p1" "--force" "--input"
+                          #$(local-file (search-patch
+                                         "re2c-Use-maximum-alignment.patch"))))))
+          #~%standard-phases)))
     (native-inputs
-     (list python))             ; for the test driver
-    (home-page "https://re2c.org/")
+     (list autoconf
+           automake
+           libtool
+           python))                     ; For the test driver
     (synopsis "Lexer generator for C/C++")
     (description
      "@code{re2c} generates minimalistic hard-coded state machine (as opposed
-to full-featured table-based lexers).  A flexible API allows generated code
-to be wired into virtually any environment.  Instead of exposing a traditional
-@code{yylex()} style API, re2c exposes its internals.  Be sure to take a look
-at the examples, as they cover a lot of real-world cases and shed some light on
-dark corners of the re2c API.")
-    (license public-domain)))
+to full-featured table-based lexers).  A flexible API allows generated code to
+be wired into virtually any environment.  Instead of exposing a traditional
+@code{yylex()} style API, re2c exposes its internals.")
+    (home-page "https://re2c.org/")
+    (license license:public-domain)))
