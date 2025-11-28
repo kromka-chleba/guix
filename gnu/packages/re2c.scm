@@ -34,7 +34,7 @@
 (define-public re2c
   (package
     (name "re2c")
-    (version "4.2")
+    (version "4.3")
     (source
      (origin
        (method git-fetch)
@@ -43,7 +43,7 @@
               (commit version)))
        (sha256
         (base32
-         "0i8nv6n83rmkhp7lg6xsm5fgbl9mw2prg2g7m0xbzzkagkwsmn7c"))))
+         "1j5xs5rfx4y189lj9nszf968dpygwsxghvfdfvq08pnpqws89wyc"))))
     (build-system gnu-build-system)
     (arguments
      (list
