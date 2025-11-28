@@ -1264,7 +1264,10 @@ Enjoy all of your favorite Atari 2600 games on your PC thanks to Stella!")
            (lambda _
              (substitute* "projects/unix/Makefile"
                (("\\$\\(CFLAGS\\)")
-                "$(CFLAGS) -fcommon"))))
+                "$(CFLAGS) -fcommon")
+               ;; remove this when upgrading from version 2.5.9
+               (("\\$\\(LDFLAGS\\)")
+                "$(LDFLAGS) -Wl,-z,noexecstack"))))
          ;; Makefile is in a subdirectory.
          (add-before 'build 'chdir-to-project-directory
            (lambda _ (chdir "projects/unix"))))
