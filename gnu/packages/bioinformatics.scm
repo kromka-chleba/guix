@@ -12063,10 +12063,15 @@ bioinformatics file formats, sequence alignment, and more.")
          (sha256
           (base32 "0syipb7m44s5bqrhs17bwr28svy2s83j8d93kbazav92jzszzsw4"))))
       (build-system pyproject-build-system)
-      (inputs
-       (list python-biopython python-pygtrie))
-      (native-inputs
-       (list python-nose python-setuptools python-wheel))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-version
+              (lambda _
+                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+      (inputs (list python-biopython python-pygtrie))
+      (native-inputs (list python-pynose python-setuptools))
       (home-page "https://github.com/fhcrc/seqmagick")
       (synopsis "Tools for converting and modifying sequence files")
       (description
