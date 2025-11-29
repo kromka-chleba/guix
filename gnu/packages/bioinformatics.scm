@@ -6302,7 +6302,7 @@ setup"))))
                          python-setuptools
                          python-wheel
                          python-mock ;for tests
-                         python-nose ;for tests
+                         python-pynose ;for tests
                          python-pytz)) ;for tests
     (home-page "https://github.com/YeoLab/clipper")
     (synopsis "CLIP peak enrichment recognition")
