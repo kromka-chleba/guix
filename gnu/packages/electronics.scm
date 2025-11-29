@@ -685,6 +685,47 @@ used in the declarative section of design units.")
       (native-inputs
        '()))))
 
+(define-public lctime
+  (package
+    (name "lctime")
+    (version "0.0.26")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/librecell/lctime")
+             (commit version)))
+       (sha256 (base32 "0pc0y3i790bcfzd4wbvk70d8m2f7wnch1qvfrfvd6xpmr9brxnd0"))
+       (file-name (git-file-name name version))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         ;; Uncomment and customize if you need to run tests
+         ;; (add-after 'unpack 'set-test-environment
+         ;;   (lambda _
+         ;;     (setenv "PYTHONPATH" (string-append (getcwd) ":${PYTHONPATH}"))))
+         )))
+    (propagated-inputs
+     (list python-joblib
+           python-scipy
+           python-networkx
+           python-sympy
+           python-numpy
+           python-liberty-parser
+           ngspice))
+    (native-inputs
+     (list python-pytest
+           python-which
+           ngspice))
+    (home-page "https://codeberg.org/librecell/lctime")
+    (synopsis "CMOS standard-cell characterization tool")
+    (description
+     "CMOS standard-cell characterization tool")
+    (license license:agpl3+)))
+
+
+
 (define-public libngspice
   ;; Note: The ngspice's build system does not allow us to build both the
   ;; library and the executables in one go.  Thus, we have two packages.
