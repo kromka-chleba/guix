@@ -36,6 +36,7 @@
             monitorv2
             env
 	    submap
+            gesture
 	    home-hyprland-service-type))
 
 ;; Utilities
