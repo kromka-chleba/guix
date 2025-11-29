@@ -7579,19 +7579,20 @@ provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients."
   (package
     (name "python-url")
     (version "0.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "url" version))
-              (sha256
-               (base32
-                "0v879yadcz9qxfl41ak6wkga1kimp9cflla9ddz03hjjvgkqy5ki"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-publicsuffix))
-    (native-inputs
-     (list python-coverage python-nose))
-    (arguments
-     `(#:tests? #f)) ; FIXME: tests fail with "ImportError: No module named 'tests'"
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/seomoz/url-py")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "049gr64ici60n14ncgy909jc6is14rqcih4s6rd1dpxg4gcqx48k"))))
+    (build-system pyproject-build-system)
+    ;; FIXME: tests fail with "ImportError: No module named 'tests'"
+    (arguments (list #:tests? #f))
+    (propagated-inputs (list python-publicsuffix))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/seomoz/url-py")
     (synopsis "URL Parsing")
     (description "Library for parsing urls.")
