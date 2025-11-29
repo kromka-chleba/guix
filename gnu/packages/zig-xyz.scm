@@ -130,7 +130,7 @@ performance of multiple commands with a colorful terminal user interface.")
 (define-public river
   (package
     (name "river")
-    (version "0.3.6")
+    (version "0.3.12")
     (source
      (origin
        (method git-fetch)
@@ -139,10 +139,11 @@ performance of multiple commands with a colorful terminal user interface.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1g4p1fa9kf23ldq1p8yplkb7hnkhfynhn93z6qqm67nacss2idbc"))))
+        (base32 "1jh374v6c0mfrppj0fgz177qxi3ihcisq158ismqnhagnbdk3z2w"))))
     (build-system zig-build-system)
     (arguments
-     (list #:install-source? #f
+     (list #:zig zig-0.15
+           #:install-source? #f
            #:zig-release-type "safe"
            #:zig-build-flags
            #~(list "-Dpie" "-Dxwayland")
@@ -152,6 +153,20 @@ performance of multiple commands with a colorful terminal user interface.")
                  (lambda _
                    (substitute* "build.zig"
                      (("/bin/sh") (which "sh")))))
+               (add-after 'unpack 'prepare-build.zig.zon
+                 (lambda _
+                   (substitute* "build.zig.zon"
+                     (("\\.pixman") ".@\"zig-pixman\"")
+                     (("\\.wayland") ".@\"zig-wayland\"")
+                     (("\\.wlroots") ".@\"zig-wlroots\"")
+                     (("\\.xkbcommon") ".@\"zig-xkbcommon\""))))
+               (add-before 'build 'revert-build.zig.zon
+                 (lambda _
+                   (substitute* "build.zig.zon"
+                     (("\\.@\"zig-pixman\"") ".pixman")
+                     (("\\.@\"zig-wayland\"") ".wayland")
+                     (("\\.@\"zig-wlroots\"") ".wlroots")
+                     (("\\.@\"zig-xkbcommon\"") ".xkbcommon"))))
                (add-after 'install 'install-wayland-session
                  (lambda _
                    (let ((wayland-sessions
@@ -231,7 +246,7 @@ mission-critical safety and performance for financial services.")
 (define-public waylock
   (package
     (name "waylock")
-    (version "1.3.0")
+    (version "1.5.0")
     (source
      (origin
        (method git-fetch)
@@ -240,10 +255,11 @@ mission-critical safety and performance for financial services.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jlq23cb5069sa5ipshhj82a9rn30frflwi9skp2kplqpxm15wwd"))))
+        (base32 "1bxs0gbczw8hb42fzl0i51jbzq82gvi3dad7xzhlall6fkl8882d"))))
     (build-system zig-build-system)
     (arguments
      (list
+      #:zig zig-0.15
       #:install-source? #f
       ;; No tests.
       #:tests? #f
@@ -455,7 +471,7 @@ across several operating systems.")
 (define-public zig-pixman
   (package
     (name "zig-pixman")
-    (version "0.2.0")
+    (version "0.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -464,7 +480,7 @@ across several operating systems.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0il6nw51kf08bcxpf45n7h78k1iyfi1zarcvpb7n19g2r48dkiyd"))))
+                "1mg0fmcnfl5il8nx9nplxm8hg54jkdg9ks7r40w4451rx9m3il7j"))))
     (build-system zig-build-system)
     (arguments (list #:skip-build? #t))
     (propagated-inputs (list pixman))
@@ -476,7 +492,7 @@ across several operating systems.")
 (define-public zig-wayland
   (package
     (name "zig-wayland")
-    (version "0.2.0")
+    (version "0.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -485,10 +501,16 @@ across several operating systems.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1cf5085f6c0yly4fcr49jry3mh12bybw98x5lvickl6w5gxsvy3n"))))
+                "0kkmg2gxb03xjrsd4kzxwvchxlcj3mvx0hajzpbcz949k0ihhlms"))))
     (build-system zig-build-system)
     (arguments
-     (list #:phases
+     (list #:zig zig-0.15
+           #:zig-release-type "safe"
+           #:zig-build-flags
+           #~(list "-Denable-tests")
+           #:zig-test-flags
+           #~(list "-Denable-tests")
+           #:phases
            #~(modify-phases %standard-phases
                (add-after 'configure 'fix-cross-compilation
                  (lambda _
@@ -506,7 +528,7 @@ interface.")
 (define-public zig-wlroots
   (package
     (name "zig-wlroots")
-    (version "0.18.1")
+    (version "0.19.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -515,10 +537,11 @@ interface.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rckbrdqc4b5q6r8ppijkkf0xi01536sfsnfgmy9f3mfj3hvifvy"))))
+                "0d21vyrav2vi42kr1gpf4y6i27gspskzb1fma963qp8wyrlrn3dg"))))
     (build-system zig-build-system)
     (arguments
-     (list #:zig-release-type "safe"
+     (list #:zig zig-0.15
+           #:zig-release-type "safe"
            #:zig-build-flags
            #~(list "-Denable-tests")
            #:zig-test-flags
@@ -534,7 +557,7 @@ interface.")
                           `(,@args #:install-source? #f))
                    (chdir ".."))))))
     (propagated-inputs
-     (list wlroots-0.18
+     (list wlroots-0.19
            zig-pixman
            zig-wayland
            zig-xkbcommon))
@@ -547,7 +570,7 @@ interface.")
 (define-public zig-xkbcommon
   (package
     (name "zig-xkbcommon")
-    (version "0.2.0")
+    (version "0.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -556,7 +579,7 @@ interface.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "16f59n7l2gcpnq8gb4v8skr4jhb2l6ax75rna92nqzj15f4ikqag"))))
+                "117nw4b5q14mb6j5yhvydlwllbd7gyxp176as4gj9qb5zh8wz5kv"))))
     (build-system zig-build-system)
     (arguments (list #:skip-build? #t))
     (propagated-inputs (list libxkbcommon))

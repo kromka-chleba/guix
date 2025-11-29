@@ -1196,14 +1196,16 @@ projections and coordinate transformations library.")
 (define-public python-fiona
   (package
     (name "python-fiona")
-    (version "1.9.4.post1")
+    (version "1.9.6")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "Fiona" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Toblerity/Fiona")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "083120rqc4rrqzgmams0yjd8b1h4p5xm4n9fnxg064ymw3vx6yan"))))
+        (base32 "08whhjrspp194qasjhr9kf70fl342ms47k78rwpcf5q6ikf0rfii"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1228,10 +1230,8 @@ projections and coordinate transformations library.")
      (list python-attrs
            python-certifi
            python-click
-           python-click-plugins
-           python-cligj
-           python-importlib-metadata
-           python-six))
+           python-click-plugins-1
+           python-cligj))
     (native-inputs
      (list gdal ; for gdal-config
            python-boto3
@@ -1239,8 +1239,7 @@ projections and coordinate transformations library.")
            python-pytest
            python-pytest-cov
            python-pytz
-           python-setuptools
-           python-wheel))
+           python-setuptools))
     (home-page "https://github.com/Toblerity/Fiona")
     (synopsis
      "Fiona reads and writes spatial data files")
@@ -2141,39 +2140,75 @@ delivered to any client.")
     (name "imposm3")
     (version "0.14.2")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
+     (origin
+       (method git-fetch)
+       (uri (git-reference
               (url "https://github.com/omniscale/imposm3")
               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "1za04n0d73gqff4qmgxbn6rz2sqwnqcpyxvzjhsgfdysbx48nph6"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1za04n0d73gqff4qmgxbn6rz2sqwnqcpyxvzjhsgfdysbx48nph6"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/omniscale/imposm3/cmd/imposm"
-       #:unpack-path "github.com/omniscale/imposm3"
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'set-version
-           (lambda _
-             (substitute* "src/github.com/omniscale/imposm3/version.go"
-               (("0.0.0-dev") ,version))
-             #t)))))
+     (list
+      #:install-source? #f
+      #:import-path "github.com/omniscale/imposm3/cmd/imposm"
+      #:unpack-path "github.com/omniscale/imposm3"
+      #:build-flags
+      #~(list (string-append "-ldflags="
+                             " -X github.com/omniscale/imposm3.Version="
+                             #$version))
+      #:test-flags
+      #~(list "-vet=off"     ;Go@1.24 forces vet, but tests are not ready yet.
+              ;; XXX: Network access or additional test data are required.
+              ;;
+              ;; 1. expected error with "no such host|No address associated
+              ;; with hostname", got fetching current sequence for estimated
+              ;; import sequence: fetching current state: Get
+              ;; "https://unknownurl_planet.openstreetmap.org/replication/\
+              ;; day/state.txt":
+              ;; dial tcp: lookup unknownurl_planet.openstreetmap.org on
+              ;; [::1]:53: read udp [::1]:60519->[::1]:53: read: connection
+              ;; refused
+              ;;
+              ;; 2. opening PBF file: open
+              ;; ../vendor/github.com/omniscale/go-osm/parser/pbf/\
+              ;; monaco-20150428.osm.pbf:
+              ;; no such file or directory
+              "-skip" "TestStateFromTimestamp|TestFromPBF")
+      #:test-subdirs
+      #~(list "../../...")  ;test the whole libary
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-integration-tests
+            ;; XXX: Some tests require network access and the whole suite
+            ;; fails simultaneously, check if some tests may be enabled.
+            ;;
+            ;; [2025-11-25T09:56:15Z] 0:00:00 dial tcp [::1]:5432: connect:
+            ;; connection refused
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" unpack-path "/test")))))))
+    (native-inputs
+     (list go-github-com-gogo-protobuf
+           go-github-com-jmhodges-levigo
+           go-github-com-lib-pq
+           go-github-com-omniscale-go-osm
+           go-github-com-pkg-errors
+           go-gopkg-in-yaml-v2))
     (inputs
-     (list geos leveldb))
+     (list geos
+           leveldb))
     (home-page "https://imposm.org/")
     (synopsis "OpenStreetMap importer for PostGIS")
-    (description "Imposm is an importer for OpenStreetMap data.  It reads PBF
-files and imports the data into PostgreSQL/PostGIS databases.  It is designed
-to create databases that are optimized for rendering/tile/map-services.")
-    (license (list
-               license:asl2.0
-               ;; Some dependencies in vendor have different licenses
-               license:expat
-               license:bsd-2
-               license:bsd-3))))
+    (description
+     "Imposm is an importer for OpenStreetMap data.  It reads PBF files and
+imports the data into PostgreSQL/PostGIS databases.  It is designed to create
+databases that are optimized for rendering/tile/map-services.")
+    (license (list license:asl2.0))))
 
 (define-public python-metpy
   (package

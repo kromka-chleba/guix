@@ -3495,7 +3495,8 @@ Encryption} (JOSE) Web Standards.")
 
 (define-public python-pyscss
   ;; XXX: no fresh release supporting Python 3.11, use the latest commit, see
-  ;; <https://github.com/Kronuz/pyScss/issues/428>.
+  ;; <https://github.com/Kronuz/pyScss/issues/428>,
+  ;; <https://github.com/Kronuz/pyScss/issues/431>.
   (let ((commit "73559d047706ccd4593cf6aa092de71f35164723")
         (revision "0"))
     (package
@@ -3512,9 +3513,12 @@ Encryption} (JOSE) Web Standards.")
           (base32 "00msypxf5dm57gyfp3jxvjinigi4km84v33w83635pms9li2k3y7"))))
       (build-system pyproject-build-system)
       (native-inputs
-       (list python-pytest python-pytest-cov python-setuptools python-wheel))
+       (list python-pytest
+             python-setuptools))
       (inputs
        (list pcre))
+      (propagated-inputs
+       (list python-six)) ;hard dependency in scss/compiler.py
       (home-page "https://github.com/Kronuz/pyScss")
       (synopsis "Scss compiler for Python")
       (description
@@ -3926,31 +3930,6 @@ Origin Resource Sharing}, making cross-origin AJAX possible.")
 into Jinja2 by default.")
     (license license:bsd-3)))
 
-(define-public python-flask-misaka
-  (package
-    (name "python-flask-misaka")
-    (version "1.0.1")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "Flask-Misaka" version))
-        (sha256
-          (base32
-            "1yi9iall3ml1n8bff1mg49xajmldcm5pc0fkpl3w2rlnny08giax"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:test-flags #~(list "tests.py")))
-    (native-inputs
-     (list python-flask python-pytest python-setuptools python-wheel))
-    (propagated-inputs
-      (list python-markupsafe python-misaka))
-    (home-page "https://github.com/singingwolfboy/flask-misaka/")
-    (synopsis "Flask interface to Misaka, a Markdown parsing library")
-    (description
-      "This package provides an interface between the Flask web framework and
-the Misaka Markdown parser.")
-    (license license:expat)))
-
 (define-public python-flask-session
   (package
     (name "python-flask-session")
@@ -4184,6 +4163,23 @@ services' API.  It includes a pre-defined set of classes for API resources
 that initialize themselves dynamically from API responses which makes it
 compatible with a wide range of versions of the Stripe API.")
     (license license:expat)))
+
+(define-public python-stripe-12
+  (hidden-package
+   (package/inherit python-stripe
+     (name "python-stripe")
+     (version "12.5.1")
+     (source
+      (origin
+        (inherit (package-source python-stripe))
+        (uri (git-reference
+               (url "https://github.com/stripe/stripe-python")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256 (base32
+                 "0jgixfb8ydlx387vm7rdaqrzsiqbvi99nszrpb1ghjqyn755xigd"))))
+     (native-inputs
+      (list python-setuptools)))))
 
 (define-public python-tldextract
   (package

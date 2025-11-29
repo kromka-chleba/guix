@@ -45,7 +45,8 @@
   #:use-module (guix git-download)
   #:use-module (guix i18n)
   #:use-module (guix packages)
-  #:use-module (guix utils))
+  #:use-module (guix utils)
+  #:use-module (ice-9 exceptions))
 
 (define-public tree-sitter
   (package
@@ -204,15 +205,22 @@ This package includes the @command{tree-sitter} command-line tool.")
 (define (tree-sitter-delete-generated-files grammar-directories)
   #~(begin
       (use-modules (guix build utils))
-      (delete-file "binding.gyp")
-      (delete-file-recursively "bindings")
+      (define (delete-file-if-exists file)
+        ;; Not every package has all files that we want to delete.
+        (catch 'system-error
+          (lambda () (delete-file-recursively file))
+          (lambda args
+            (unless (= ENOENT (system-error-errno args))
+              (apply throw args)))))
+      (delete-file-if-exists "binding.gyp")
+      (delete-file-if-exists "bindings")
       (for-each
        (lambda (lang)
          (with-directory-excursion lang
-           (delete-file "src/grammar.json")
-           (delete-file "src/node-types.json")
-           (delete-file "src/parser.c")
-           (delete-file-recursively "src/tree_sitter")))
+           (delete-file-if-exists "src/grammar.json")
+           (delete-file-if-exists "src/node-types.json")
+           (delete-file-if-exists "src/parser.c")
+           (delete-file-if-exists "src/tree_sitter")))
        '#$grammar-directories)))
 
 (define* (tree-sitter-grammar
@@ -264,6 +272,24 @@ which will be used as a snippet in origin."
 
 ;;; Language grammars (sort alphabetically)
 
+(define-public tree-sitter-actionscript
+  (let ((commit "24919034fc78fdf9bedaac6616b6a60af20ab9b5")
+        (revision "0"))
+    (tree-sitter-grammar
+     "actionscript" "ActionScript"
+     "0gdkb7hi6nc6d3rza247c66nzi04m471b6fv32adxqjw76w5bg1d"
+     (git-version "0.1.0" revision commit)
+     #:repository-url "https://github.com/Rileran/tree-sitter-actionscript"
+     #:commit commit
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           (substitute* "grammar.js"
+             (("u\\{\\[0-9a-fA-F\\]\\+\\}")
+              "u\\{[0-9a-fA-F]+\\}"))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
 (define-public tree-sitter-ada
   (let ((version "0.1.0") ; In package.json, but untagged.
         (commit "b23672d313b4c994ab96fd54f1b7ff15eac68a55")
@@ -275,6 +301,16 @@ which will be used as a snippet in origin."
      #:repository-url "https://github.com/briot/tree-sitter-ada"
      #:commit commit)))
 
+(define-public tree-sitter-agda
+  ;; Use a later commit because some tests fail with the v1.3.1 tag.
+  (let ((commit "e8d47a6987effe34d5595baf321d82d3519a8527")
+        (revision "0"))
+    (tree-sitter-grammar
+     "agda" "Agda"
+     "1x06a1c7k5lyw4803h514yibmzizszg8dc6r4wj9gjnr1vw7l7p6"
+     (git-version "1.3.1" revision commit)
+     #:commit commit)))
+
 (define-public tree-sitter-arduino
   (tree-sitter-grammar
    "arduino" "Arduino"
@@ -284,6 +320,31 @@ which will be used as a snippet in origin."
    "https://github.com/tree-sitter-grammars/tree-sitter-arduino"
    #:inputs (delay (list tree-sitter-c tree-sitter-cpp))
    #:article "an"))
+
+(define-public tree-sitter-asm
+  (tree-sitter-grammar
+   "asm" "ASM"
+   "0i5wxrwavhxqj04g6ix76q8vsggl9sq8jazasl9k53mag3rnchi5"
+   "0.24.0"
+   #:repository-url "https://github.com/RubixDev/tree-sitter-asm"))
+
+(define-public tree-sitter-astro
+  (let ((commit "213f6e6973d9b456c6e50e86f19f66877e7ef0ee")
+        (revision "0"))
+    (tree-sitter-grammar
+     "astro" "Astro"
+     "18asz2dsgkq4zj5frxigpzac00pgs4kvbp8l3x27z7yq6vgfr5af"
+     (git-version "0.0.1" revision commit)
+     #:repository-url "https://github.com/virchau13/tree-sitter-astro"
+     #:commit commit
+     #:inputs (delay (list tree-sitter-html))
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           (mkdir-p "test/corpus")
+           (copy-recursively "corpus" "test/corpus")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-awk
   (tree-sitter-grammar
@@ -297,6 +358,13 @@ which will be used as a snippet in origin."
    "bash" "Bash"
    "1smlcfkxxknhya1b1h72zj3ccg35szbg9mii2xwh7iq9acnlzpgc"
    "0.23.3"))
+
+(define-public tree-sitter-beancount
+  (tree-sitter-grammar
+   "beancount" "Beancount"
+   "0r2ql0n4wkwbcdjpklxhsk91xm8q8dl9n9rdlqk585xagmxf1w4b"
+   "2.4.1"
+   #:repository-url "https://github.com/polarmutex/tree-sitter-beancount"))
 
 (define-public tree-sitter-bibtex
   (let ((commit "ccfd77db0ed799b6c22c214fe9d2937f47bc8b34")
@@ -317,6 +385,22 @@ which will be used as a snippet in origin."
    #:repository-url
    "https://github.com/tree-sitter-grammars/tree-sitter-bicep"))
 
+(define-public tree-sitter-bitbake
+  (tree-sitter-grammar
+   "bitbake" "BitBake"
+   "1pfma482nyc88x56v6l6rmhdy44qbwibrqri38wkkh66a1fka8ix"
+   "1.1.0"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-bitbake"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: Invalid node type INHERIT.
+           (substitute* "queries/highlights.scm"
+             (("^.*\"INHERIT\".*") ""))
+           #$(tree-sitter-delete-generated-files grammar-directories)))))
+
 (define-public tree-sitter-blueprint
   (let ((commit "329699d55f3e3955091e13756563c3f320a561fc")
         (revision "0"))
@@ -334,6 +418,25 @@ which will be used as a snippet in origin."
    "1vw7jd3wrb4vnigfllfmqxa8fwcpvgp1invswizz0grxv249piza"
    "0.23.5"))
 
+(define-public tree-sitter-cairo
+  (tree-sitter-grammar
+   "cairo" "Cairo"
+   "08ig80mqs0p00p09rfygrdfarqnn29xsgnlbqvnfdll4jlj5ilid"
+   "1.0.0"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-cairo"))
+
+(define-public tree-sitter-capnp
+  (let ((commit "7b0883c03e5edd34ef7bcf703194204299d7099f")
+        (revision "0"))
+    (tree-sitter-grammar
+     "capnp" "Cap'n Proto"
+     "0ww98b15n9hr6afbnl0ckxs4q8y0c31cnga2pnjx369iwfwdkajq"
+     (git-version "1.5.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-capnp")))
+
 (define-public tree-sitter-chatito
   (tree-sitter-grammar
    "chatito" "Chatito"
@@ -350,24 +453,21 @@ which will be used as a snippet in origin."
    #:repository-url
    "https://github.com/xlittlerag/tree-sitter-clarity"))
 
+(define-public tree-sitter-clisp
+  (tree-sitter-grammar
+   "clisp" "Common Lisp"
+   "0xg3ay8l62h7s35abkxi4gjfvndzdvvrpgh1z980q1ib5935sxf0"
+   "0.4.1"
+   #:inputs (delay (list tree-sitter-clojure))
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-commonlisp"))
+
 (define-public tree-sitter-clojure
   (tree-sitter-grammar
    "clojure" "Clojure"
    "1j41ba48sid6blnfzn6s9vsl829qxd86lr6yyrnl95m42x8q5cx4"
    "0.0.13"
-   #:repository-url "https://github.com/sogaiu/tree-sitter-clojure"
-   #:get-cleanup-snippet
-   (lambda (grammar-directories)
-     #~(begin
-         (use-modules (guix build utils))
-         (for-each
-          (lambda (lang)
-            (with-directory-excursion lang
-              (delete-file "src/grammar.json")
-              (delete-file "src/node-types.json")
-              (delete-file "src/parser.c")
-              (delete-file-recursively "src/tree_sitter")))
-          '#$grammar-directories)))))
+   #:repository-url "https://github.com/sogaiu/tree-sitter-clojure"))
 
 (define-public tree-sitter-cmake
   (tree-sitter-grammar
@@ -382,6 +482,24 @@ which will be used as a snippet in origin."
    "1x0l8phr4x07n739z0ax8faxq0l6irmpkdprrv1z088zqdr43l1v"
    "0.3.0"
    #:repository-url "https://github.com/stsewd/tree-sitter-comment"))
+
+(define-public tree-sitter-cpon
+  (let ((commit "594289eadfec719198e560f9d7fd243c4db678d5")
+        (revision "0"))
+    (tree-sitter-grammar
+     "cpon" "ChainPack Object Notation (CPON)"
+     "0kzs3i62vrckwadp2z2gdfzj3mjparh1di0zcawy94635brvvgrn"
+     (git-version "1.0.0" revision commit)
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-cpon"
+     #:commit commit
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: Language not found.
+           (delete-file-recursively "test/highlight")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-cpp
   (tree-sitter-grammar
@@ -401,6 +519,43 @@ which will be used as a snippet in origin."
    "css" "CSS"
    "0c5j9zyjcykmraix1agbc0gdk85zs2v379q0aykr10fi9w2r9z9c"
    "0.23.2"))
+
+(define-public tree-sitter-csv
+  (tree-sitter-grammar
+   "csv" "CSV"
+   "0a1giyifli78chnshzzw4q6y7gqlfkg6mlmvb7kzbw9ss9hlx2rb"
+   "1.2.0"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-csv"
+   #:grammar-directories '("csv" "psv" "tsv")))
+
+(define-public tree-sitter-cuda
+  (tree-sitter-grammar
+   "cuda" "Cuda"
+   "116fa26bjh6a88kdshqq5hp6fq4ik95dpaiidw8rn90xxwwl0zxi"
+   "0.21.1"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-cuda"
+   #:inputs (list tree-sitter-c
+                  tree-sitter-cpp)))
+
+(define-public tree-sitter-d
+  (let ((commit "45e5f1e9d6de2c68591bc8e5ec662cf18e950b4a")
+        (revision "0"))
+    (tree-sitter-grammar
+     "d" "D"
+     "1y0kczf4yvk5qbvl5dcc8vf5xjjf2md44v0h3iv8lcmbjn093pmb"
+     (git-version "0.8.2" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/gdamore/tree-sitter-d"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: Language not found.
+           (delete-file-recursively "test/highlight")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-dart
   (let ((version "1.0.0")
@@ -456,6 +611,21 @@ which will be used as a snippet in origin."
      #:commit commit
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-doxygen")))
+
+(define-public tree-sitter-elisp
+  (tree-sitter-grammar
+   "elisp" "Emacs Lisp"
+   "0xymhprxa7kamc9cvlprg8s2rm61qcvbfazggny9kw45yj8rqvak"
+   "1.5.0"
+   #:commit "1.5.0"
+   #:repository-url "https://github.com/Wilfred/tree-sitter-elisp"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         ;; FIXME: Language not found.
+         (delete-file-recursively "test/highlight")
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-elixir
   (tree-sitter-grammar
@@ -528,6 +698,23 @@ which will be used as a snippet in origin."
      "https://github.com/tree-sitter-grammars/tree-sitter-firrtl"
      #:license license:asl2.0)))
 
+(define-public tree-sitter-fish
+  (tree-sitter-grammar
+   "fish" "Fish"
+   "1l8qmmligfcpf4amqghdv9c4nvs5wbhiifhl7016l7793rfzl235"
+   "3.6.0"
+   #:commit "3.6.0"
+   #:repository-url
+   "https://github.com/ram02z/tree-sitter-fish"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         ;; FIXME: Language not found.
+         (delete-file-recursively "test/highlight")
+         #$(tree-sitter-delete-generated-files grammar-directories)))
+   #:license license:unlicense))
+
 (define-public tree-sitter-fortran
   (let ((version "0.5.1")
         ;; Can't use the tag above directly; the build at that tag is
@@ -541,6 +728,17 @@ which will be used as a snippet in origin."
      #:repository-url
      "https://github.com/stadelmanma/tree-sitter-fortran"
      #:commit commit)))
+
+(define-public tree-sitter-f-sharp
+  (let ((commit "5141851c278a99958469eb1736c7afc4ec738e47")
+        (revision "0"))
+    (tree-sitter-grammar
+     "f-sharp" "F#"
+     "1mk3adn7q6zwrdxpzkvzmvpsqg5a6ijb50qhw5pd46p3scxmp6kh"
+     (git-version "0.1.0" revision commit)
+     #:commit commit
+     #:repository-url "https://github.com/ionide/tree-sitter-fsharp"
+     #:grammar-directories '("fsharp" "fsharp_signature"))))
 
 (define-public tree-sitter-func
   (let ((version "1.0.0")
@@ -568,6 +766,29 @@ which will be used as a snippet in origin."
      "https://github.com/PrestonKnopp/tree-sitter-gdscript"
      #:commit commit)))
 
+(define-public tree-sitter-gitattributes
+  (let ((commit "1b7af09d45b579f9f288453b95ad555f1f431645")
+        (revision "0"))
+    (tree-sitter-grammar
+     "gitattributes" "Git .gitattributes"
+     "1mmcxw3aqx7skgihl8mman5spjz4cmc0k06jca7fjng904kdqw3q"
+     (git-version "0.1.6" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-gitattributes")))
+
+(define-public tree-sitter-gitcommit
+  (let ((commit "a716678c0f00645fed1e6f1d0eb221481dbd6f6d")
+        (revision "0"))
+    (tree-sitter-grammar
+     "gitcommit" "Git commit"
+     "0syrmx6icp5n2iyawzwmz7nvpzi5iabrvn138vs7dlv9vyrxr1r9"
+     (git-version "0.3.3" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/gbprod/tree-sitter-gitcommit"
+     #:license license:wtfpl2)))
+
 (define-public tree-sitter-gitignore
   (let ((version "0.1.0")
         (commit "f4685bf11ac466dd278449bcfe5fd014e94aa504")
@@ -588,6 +809,15 @@ which will be used as a snippet in origin."
    #:repository-url
    "https://github.com/gleam-lang/tree-sitter-gleam"
    #:license license:asl2.0))
+
+(define-public tree-sitter-glsl
+  (tree-sitter-grammar
+   "glsl" "OpenGL Shading Language (GLSL)"
+   "0d0ymklms4a91b310f0vwl80yy50sji4qq9sdgly5qh42kyjnijb"
+   "0.2.0"
+   #:inputs (list tree-sitter-c)
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-glsl"))
 
 (define-public tree-sitter-gn
   (let ((version "1.0.0")
@@ -650,6 +880,28 @@ which will be used as a snippet in origin."
                 (delete-file-recursively "src/tree_sitter")))
             '#$grammar-directories))))))
 
+(define-public tree-sitter-graphql
+  (let ((commit "5e66e961eee421786bdda8495ed1db045e06b5fe")
+        (revision "0"))
+    (tree-sitter-grammar
+     "graphql" "GraphQL"
+     "0xvrd6p9rxdjpqfq575ap6hpl2f7dad5i4d4m05w1qk9jx33vw9n"
+     (git-version "0.0.1" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/bkegley/tree-sitter-graphql"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           (mkdir-p "test/corpus")
+           (copy-recursively "corpus" "test/corpus")
+           ;; FIXME: Impossible pattern.
+           (substitute* "queries/graphql/formatter.scm"
+             (("(\\(input_value_definition(.*@name)?\\))" all value _)
+              (string-append "(input_fields_definition " value ")")))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
 (define-public tree-sitter-groovy
   (let ((version "0.0.1")
         (commit "86911590a8e46d71301c66468e5620d9faa5b6af")
@@ -708,6 +960,25 @@ which will be used as a snippet in origin."
          (delete-file "test/highlight/Basic.hs") ;FIXME: Language not found.
          #$(tree-sitter-delete-generated-files grammar-directories)))))
 
+(define-public tree-sitter-haxe
+  (let ((commit "a55f3e2cf1e4449200fd089a80d3af642bcf5f94")
+        (revision "0"))
+    (tree-sitter-grammar
+     "haxe" "Haxe"
+     "0wyrc7l3xav805xmypfp9clgxacm080is598lr3raa2sb31rwdl3"
+     (git-version "0.13.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/vantreeseba/tree-sitter-haxe"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: No language found.
+           (delete-file "queries/highlights.scm")
+           (delete-file-recursively "test/highlight")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
 (define-public tree-sitter-hcl
   (let ((commit "de10d494dbd6b71cdf07a678fecbf404dbfe4398")
         (revision "0"))
@@ -726,6 +997,17 @@ which will be used as a snippet in origin."
    "0d0ljmxrvmr8k1wc0hd3qrjzwb31f1jaw6f1glamw1r948dxh9xf"
    "0.8.0"
    #:repository-url "https://github.com/phoenixframework/tree-sitter-heex"))
+
+(define-public tree-sitter-hlsl
+  (tree-sitter-grammar
+   "hlsl" "HLSL"
+   "0d850bxzxmbxgxjdh219ag2k3qvbphly1y0hdbs2zsqdsdgf0s05"
+   "0.2.0"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-hlsl"
+   #:inputs (list tree-sitter-c
+                  tree-sitter-cpp)
+   #:article "an"))
 
 (define-public tree-sitter-html
   (tree-sitter-grammar
@@ -840,13 +1122,7 @@ which will be used as a snippet in origin."
    "latex" "LaTeX"
    "18dyda7299imb6i2jnjpr7z2jdrjn804c3958nkkpxzzfhbq39h7"
    "0.4.0"
-   #:repository-url "https://github.com/latex-lsp/tree-sitter-latex"
-   #:get-cleanup-snippet
-   (lambda _
-     #~(begin
-         (use-modules (guix build utils))
-         (delete-file "binding.gyp")
-         (delete-file-recursively "bindings")))))
+   #:repository-url "https://github.com/latex-lsp/tree-sitter-latex"))
 
 (define-public tree-sitter-linkerscript
   (let ((version "1.0.0")
@@ -860,12 +1136,23 @@ which will be used as a snippet in origin."
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-linkerscript")))
 
+(define-public tree-sitter-llvm
+  (let ((commit "2914786ae6774d4c4e25a230f4afe16aa68fe1c1")
+        (revision "0"))
+    (tree-sitter-grammar
+     "llvm" "LLVM"
+     "0k02dak264y57ng0mxdg9z9hcb4b0jgyd1xm88h4f1bcq6sah54c"
+     (git-version "1.1.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/benwilliamgraham/tree-sitter-llvm")))
+
 (define-public tree-sitter-lua
   (tree-sitter-grammar
    "lua" "Lua"
-   "041anx0qirvd4il87whpic8nfdc1nk3kimxdb99m25bfdzm9rn0r"
-   "0.3.0"
-   #:repository-url "https://github.com/MunifTanjim/tree-sitter-lua"
+   "082hc274h96sa98n3vxicjmjvnbdhrpjaimxsh002xl69rdl80jm"
+   "0.4.0"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-lua"
    #:get-cleanup-snippet
    (lambda (grammar-directories)
      #~(begin
@@ -896,6 +1183,22 @@ which will be used as a snippet in origin."
      #:commit commit
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-luap")))
+
+(define-public tree-sitter-luau
+  (tree-sitter-grammar
+   "luau" "Luau"
+   "00j60425gp0pzrfds0wzr0k1wynbp0zq1saagpnglkmid41xk9p6"
+   "1.2.0"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-luau"
+   #:inputs (list tree-sitter-lua)
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         (substitute* "grammar.js"
+           (("@muniftanjim/") "@tree-sitter-grammars/"))
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-magik
   (let ((version "0.0.1")
@@ -1009,6 +1312,38 @@ which will be used as a snippet in origin."
          (delete-file-recursively "test/highlight")
          #$(tree-sitter-delete-generated-files grammar-directories)))))
 
+(define-public tree-sitter-nqc
+  (let ((commit "14e6da1627aaef21d2b2aa0c37d04269766dcc1d")
+        (revision "0"))
+    (tree-sitter-grammar
+     "nqc" "NQC"
+     "0gpai34vlcdbkyj4a7j2wm36g14p84aj0vldh1146b0n8zbvizhr"
+     (git-version "1.0.0" revision commit)
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-nqc"
+     #:commit commit
+     #:inputs (list tree-sitter-c)
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; Adjust to the change in tree-sitter-c
+           (substitute* "grammar.js"
+             (("\\$\\._statement") "$.statement")
+             (("\\$\\._expression") "$.expression"))
+           (delete-file "queries/highlights.scm") ;FIXME
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
+(define-public tree-sitter-objc
+  (tree-sitter-grammar
+   "objc" "Objective-C"
+   "1fryxjjxjq7lz93vvcm3lswshb4drywf64knbvjxrr3lq5zh5bv8"
+   "3.0.2"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-objc"
+   #:inputs (list tree-sitter-c)
+   #:article "an"))
+
 (define-public tree-sitter-ocaml
   (tree-sitter-grammar
    "ocaml" "OCaml (.ml and .mli)"
@@ -1054,6 +1389,24 @@ which will be used as a snippet in origin."
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-pem")))
 
+(define-public tree-sitter-perl
+  (let ((commit "ad74e6db234c35d537de9358799a8e0cc4f5dee0")
+        (revision "0"))
+    (tree-sitter-grammar
+     "perl" "Perl"
+     "0k6p3hij98vqa6b6iyswlyij69cggbnzgwi2zh64mj3faisblgzj"
+     (git-version "1.0.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-perl/tree-sitter-perl"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME
+           (delete-file "test/highlight/literals.pm")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
 (define-public tree-sitter-pgn
   (tree-sitter-grammar
    "pgn" "Chess Portable Game Notation (PGN)"
@@ -1080,14 +1433,13 @@ which will be used as a snippet in origin."
      #:repository-url "https://github.com/Decodetalkers/tree_sitter_plantuml"
      #:commit commit
      #:get-cleanup-snippet
-     (lambda _
+     (lambda (grammar-directories)
        #~(begin
            (use-modules (guix build utils))
            (substitute* "grammar.js"
              (("u\\{\\[0-9a-fA-F\\]\\+\\}")
               "u\\{[0-9a-fA-F]+\\}"))
-           (delete-file "binding.gyp")
-           (delete-file-recursively "bindings"))))))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-po
   (let ((version "0.0.1")
@@ -1100,6 +1452,17 @@ which will be used as a snippet in origin."
      #:commit commit
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-po")))
+
+(define-public tree-sitter-pony
+  (let ((commit "73ff874ae4c9e9b45462673cbc0a1e350e2522a7")
+        (revision "0"))
+    (tree-sitter-grammar
+     "pony" "Pony"
+     "0fm47by0z6vzihnk4py7lx1qbiwqbbgpxpi8ibl740bnx9nx7mpz"
+     (git-version "1.0.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-pony")))
 
 (define-public tree-sitter-powershell
   (tree-sitter-grammar
@@ -1200,6 +1563,16 @@ which will be used as a snippet in origin."
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-qmldir")))
 
+(define-public tree-sitter-qmljs
+  (tree-sitter-grammar
+   "qmljs" "QML"
+   "1a1fxm73ag51qsi0wfg36jzcm6am9n1mwvhjv3f57fyjwcwigqp0"
+   "0.2.0"
+   #:commit "0.2.0"
+   #:repository-url "https://github.com/yuja/tree-sitter-qmljs"
+   #:inputs (delay (list tree-sitter-javascript
+                         tree-sitter-typescript))))
+
 (define-public tree-sitter-query
   (package
     (inherit (tree-sitter-grammar "query"
@@ -1243,6 +1616,26 @@ which will be used as a snippet in origin."
      #:commit commit
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-readline")))
+
+(define-public tree-sitter-re2c
+  (let ((commit "c18a3c2f4b6665e35b7e50d6048ea3cff770c572")
+        (revision "0"))
+    (tree-sitter-grammar
+     "re2c" "Regular Expressions to Code (re2c)"
+     "0h6vvbns5xdi47pfgl2xf4hlwzawrsqbm16jv07d0z7lppimf6ys"
+     (git-version "0.1.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-re2c"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: Invalid node type labelprefix.
+           (substitute* "grammar.js"
+             (("( *)\\$\\.set_condenumprefix,\n" all tabs)
+              (string-append all tabs "$.set_labelprefix,\n")))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-rego
   (let ((version "1.0.0")
@@ -1299,6 +1692,62 @@ which will be used as a snippet in origin."
    "0.23.0-1"
    #:repository-url "https://github.com/6cdh/tree-sitter-scheme"))
 
+(define-public tree-sitter-scss
+  (let ((commit "bca847c1410f7dd97e13fbe7838b3c2c203fb473")
+        (revision "0"))
+    (tree-sitter-grammar
+     "scss" "SCSS"
+     "0v5vrgwp2fln1pypff5pr329mghm5naahpn3sr7mkrja2n8gyy6a"
+     (git-version "1.0.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-scss"
+     #:inputs (list tree-sitter-css)
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: 10/56 fail
+           (with-directory-excursion "test/corpus"
+             (for-each
+              delete-file
+              '("declarations.txt" "examples.txt" "statements.txt")))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
+(define-public tree-sitter-sfapex
+  ;; Use a later commit because some tests fail with the v2.3 tag.
+  (let ((commit "3597575a429766dd7ecce9f5bb97f6fec4419d5d")
+        (revision "0"))
+    (tree-sitter-grammar
+     "sfapex" "Sfapex"
+     "1kcv8g7smh76nb46np5yqmjma1c4zna74nkhc11xa1g3gwysvv2c"
+     (git-version "2.3" revision commit)
+     #:commit commit
+     #:repository-url "https://github.com/aheber/tree-sitter-sfapex"
+     #:grammar-directories '("apex" "sflog" "soql" "sosl"))))
+
+(define-public tree-sitter-smali
+  (let ((commit "fdfa6a1febc43c7467aa7e937b87b607956f2346")
+        (revision "0"))
+    (tree-sitter-grammar
+     "smali" "Smali"
+     "0b7b6vziwj2c3ngrpz439gnsxh5v22illc4nms1mxkzdx5g3liab"
+     (git-version "1.0.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-smali")))
+
+(define-public tree-sitter-smithy
+  (let ((commit "ec4fe14586f2b0a1bc65d6db17f8d8acd8a90433")
+        (revision "0"))
+    (tree-sitter-grammar
+     "smithy" "Smithy"
+     "12gs5baabvm6v7js0g0siy98v1w69cmfxc72sikylr6y4wfvhjf0"
+     (git-version "0.2.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/indoorvivants/tree-sitter-smithy")))
+
 (define-public tree-sitter-solidity
   (tree-sitter-grammar
    "solidity" "Solidity"
@@ -1306,6 +1755,38 @@ which will be used as a snippet in origin."
    "1.2.13"
    #:repository-url
    "https://github.com/JoranHonig/tree-sitter-solidity"))
+
+(define-public tree-sitter-sparql
+  (let* ((commit "1ef52d35a73a2a5f2e433ecfd1c751c1360a923b")
+         (revision "0"))
+    (tree-sitter-grammar
+     "sparql" "SPARQL"
+     "19s63n9kbijmbaprffvkxqmdr8a1jc3f371mzrxh2wv4czbradpl"
+     (git-version "0.1.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/GordianDziwis/tree-sitter-sparql")))
+
+(define-public tree-sitter-sql
+  (let ((commit "7b51ecda191d36b92f5a90a8d1bc3faef1c7b8b8")
+        (revision "0"))
+    (tree-sitter-grammar
+     "sql" "SQL"
+     "1lvm4x24ac9r4fy4ghpypyz1q771bafwkjvn0ma5zh82900q7xvr"
+     (git-version "0.3.11" revision commit)
+     #:commit commit
+     #:repository-url "https://github.com/DerekStride/tree-sitter-sql")))
+
+(define-public tree-sitter-squirrel
+  (let ((commit "072c969749e66f000dba35a33c387650e203e96e")
+        (revision "0"))
+    (tree-sitter-grammar
+     "squirrel" "Squirrel"
+     "01gwmjgbyq7byxs0hsy4kkinijdszq2vh13kqmrjz1pq632nd45l"
+     (git-version "1.0.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-squirrel")))
 
 (define-public tree-sitter-starlark
   (tree-sitter-grammar
@@ -1336,6 +1817,18 @@ which will be used as a snippet in origin."
 "))
          #$(tree-sitter-delete-generated-files grammar-directories)))))
 
+(define-public tree-sitter-svelte
+  (let ((commit "ae5199db47757f785e43a14b332118a5474de1a2")
+        (revision "0"))
+    (tree-sitter-grammar
+     "svelte" "Svelte"
+     "0pm5hillspaj4xvqz3j5sxvn78sljw75abjp58xnq8lc5vp62zvh"
+     (git-version "1.0.2" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-svelte"
+     #:inputs (list tree-sitter-html))))
+
 (define-public tree-sitter-sway
   (let ((commit "f9e53e922496dd47208a141fa7ac315625a1874f")
         (revision "0"))
@@ -1345,6 +1838,24 @@ which will be used as a snippet in origin."
      (git-version "1.0.0" revision commit)
      #:repository-url "https://github.com/FuelLabs/tree-sitter-sway"
      #:commit commit)))
+
+(define-public tree-sitter-swift
+  (let ((commit "7c2f26b5dce12e82ef2bd932a883ef514ae566b8")
+        (revision "0"))
+    (tree-sitter-grammar
+     "swift" "Swift"
+     "15rcld2k5h7m4c66msxx7zcmn9bmpqsz907pdr3ikhvcvx3w085g"
+     (git-version "0.7.1" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/alex-pinkus/tree-sitter-swift"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           (delete-file-recursively "test-npm-package")
+           (delete-file-recursively "test/outline")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-tablegen
   (let ((version "1.0.0")
@@ -1382,6 +1893,17 @@ which will be used as a snippet in origin."
     (synopsis "Tree-sitter grammar for Tree-sitter's corpus test files")
     (description "This package provides Tree-sitter's grammar for corpus test
 files.")))
+
+(define-public tree-sitter-thrift
+  (let ((commit "68fd0d80943a828d9e6f49c58a74be1e9ca142cf")
+        (revision "0"))
+    (tree-sitter-grammar
+     "thrift" "Thrift"
+     "1ijp9x1vylc8bgplnj9d898qhv04cvrl67qg9kmam33drfrmn1m3"
+     (git-version "0.5.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-thrift")))
 
 (define-public tree-sitter-tlaplus
   (tree-sitter-grammar
@@ -1468,6 +1990,25 @@ files.")))
      #:repository-url
      "https://github.com/tree-sitter-grammars/tree-sitter-uxntal")))
 
+(define-public tree-sitter-v
+  (let ((commit "532bebd50742ef15949bdd67c36d46697c847628")
+        (revision "0"))
+    (tree-sitter-grammar
+     "v" "V"
+     "1chkirgmbfrjy9p81qm5gi5qdqf9az98zfv9zgmd0q91gvkdf6ll"
+     (git-version "0.0.6" revision commit)
+     #:commit commit
+     #:repository-url "https://github.com/vlang/v-analyzer"
+     #:grammar-directories '("tree_sitter_v")
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           (delete-file-recursively "src")
+           (delete-file-recursively "editors")
+           (rename-file "tree_sitter_v/package.json" "package.json")
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
+
 (define-public tree-sitter-verilog
   (tree-sitter-grammar
    "verilog" "Verilog"
@@ -1485,15 +2026,9 @@ files.")))
      #:repository-url "https://github.com/alemuller/tree-sitter-vhdl"
      #:commit commit
      #:get-cleanup-snippet
-     (lambda _
+     (lambda (grammar-directories)
        #~(begin
            (use-modules (guix build utils))
-           (delete-file "binding.gyp")
-           ;; tree-sitter-vhdl does not have bindings/ directory.
-           (delete-file "src/grammar.json")
-           (delete-file "src/node-types.json")
-           (delete-file "src/parser.c")
-           (delete-file-recursively "src/tree_sitter")
            ;; FIXME: Language not found.
            (delete-file-recursively "test/highlight")
            ;; Fix a query error in the highlight.scm query test. This would be
@@ -1506,7 +2041,8 @@ files.")))
            (substitute* "queries/highlights.scm"
              (("\\(integer_decimal\n") "(integer_decimal)\n")
              (("\\(integer\\)") "")
-             (("\"0\")") "\"0\"")))))))
+             (("\"0\")") "\"0\""))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-vim
   (tree-sitter-grammar "vim"
@@ -1523,6 +2059,67 @@ files.")))
    #:repository-url
    "https://github.com/neovim/tree-sitter-vimdoc"
    #:license license:expat))
+
+(define-public tree-sitter-vue
+  (let ((commit "22bdfa6c9fc0f5ffa44c6e938ec46869ac8a99ff")
+        (revision "0"))
+    (tree-sitter-grammar
+     "vue" "Vue.js"
+     "1mi18x54g8rxz98jrpzh2gi7ii93sq743aws9i7qc139jas98y9f"
+     (git-version "0.1.0" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-vue"
+     #:inputs (list tree-sitter-html))))
+
+(define-public tree-sitter-wast
+  (let ((commit "2ca28a9f9d709847bf7a3de0942a84e912f59088")
+        (revision "0"))
+    (tree-sitter-grammar
+     "wast" "WebAssembly"
+     "02v08hs9wirdzfx9a7c3kpn0cpc9i867pw28qka0fid9q537hnbb"
+     (git-version "0.0.0" revision commit)
+     #:commit commit
+     #:repository-url "https://github.com/wasm-lsp/tree-sitter-wasm"
+     #:grammar-directories '("wast" "wat")
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME
+           (substitute* '("wat/grammar.js" "wast/grammar.js")
+             (("u\\{\\[0-9a-fA-F\\]\\+\\}")
+              "u\\{[0-9a-fA-F]+\\}"))
+           (for-each (lambda (lang)
+                       (with-directory-excursion lang
+                         ;; incompatible type of tests
+                         (delete-file-recursively "corpus")
+                         (delete-file "index.js")
+                         (delete-file "src/binding.cc")))
+                     '("wat" "wast"))
+           (for-each delete-file '("wat/tree-sitter-wat.wasm"
+                                   "wast/tree-sitter-wast.wasm"))
+           #$(tree-sitter-delete-generated-files grammar-directories)))
+     ;; Apache-2.0 with LLVM-exception
+     #:license license:asl2.0)))
+
+(define-public tree-sitter-wgsl
+  (let ((commit "809fe422b879021afb65a1899093fa87bc6e02df")
+        (revision "0"))
+    (tree-sitter-grammar
+     "wgsl" "WebGPU Shading Language (WGSL)"
+     "05a7yas33y4jfj1ac1n49xll0kmpsic4y5hffqavhm2zffpwmqbc"
+     (git-version "0.0.9" revision commit)
+     #:commit commit
+     #:repository-url "https://github.com/gpuweb/tree-sitter-wgsl"
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (use-modules (guix build utils))
+           ;; FIXME: Invalid node type const_assert_statement.
+           (delete-file "queries/highlights.scm")
+           #$(tree-sitter-delete-generated-files grammar-directories)))
+     #:license license:w3c)))
 
 (define-public tree-sitter-xcompose
   (tree-sitter-grammar
@@ -1549,6 +2146,17 @@ files.")))
    "0z5fz9hiafzapi0ijhyz8np6rksq6c1pb16xv1vhnlfh75rg6zyv"
    "0.7.0"
    #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-yaml"))
+
+(define-public tree-sitter-yuck
+  (let ((commit "e877f6ade4b77d5ef8787075141053631ba12318")
+        (revision "0"))
+    (tree-sitter-grammar
+     "yuck" "Yuck"
+     "00l009xmjpr2fgrbibhgkymk1kw2al2m8zi93civyjxwpbzkbiwp"
+     (git-version "0.0.2" revision commit)
+     #:commit commit
+     #:repository-url
+     "https://github.com/tree-sitter-grammars/tree-sitter-yuck")))
 
 (define-public tree-sitter-zig
   (tree-sitter-grammar

@@ -217,26 +217,34 @@ were a single file.")
 (define-public python-cramjam
   (package
     (name "python-cramjam")
-    (version "2.10.0")
+    (version "2.11.0.post1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "cramjam" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/milesgranger/cramjam")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "12kdwr313b8w8il4x1y9z366armd6lqv3hvpx4281bl4fd4ds8g8"))))
+        (base32 "1028aydcjy7917vsgg67v6cnskzw0wk4x1vz017mar99yiq7z349"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 743 passed, 1 skipped, 1 deselected
+      #:test-flags
+      #~(list "--ignore=benchmarks/test_bench.py"
+              ;; FIXME: Did not raise cramjam.DecompressionError
+              "--deselect=tests/test_variants.py::test_variants_raise_exception[deflate]")
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
       #:modules '(((guix build cargo-build-system) #:prefix cargo:)
                   (guix build pyproject-build-system)
                   (guix build utils))
-      #:phases #~(modify-phases %standard-phases
-                   (add-after 'unpack 'prepare-cargo-build-system
-                     (lambda args
-                       (for-each
-                        (lambda (phase)
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each (lambda (phase)
                           (format #t "Running cargo phase: ~a~%" phase)
                           (apply (assoc-ref cargo:%standard-phases phase)
                                  #:cargo-target #$(cargo-triplet)
@@ -244,7 +252,12 @@ were a single file.")
                         '(unpack-rust-crates
                           configure
                           check-for-pregenerated-files
-                          patch-cargo-checksums)))))))
+                          patch-cargo-checksums))))
+          (add-before 'check 'configure-tests
+            (lambda _
+              ;; XXX: Otherwise some flaky tests seem to fail with
+              ;; SyntaxError: could not convert string to float
+              (setenv "CI" "1"))))))
     (native-inputs
      (append
       (list maturin
@@ -426,20 +439,16 @@ Jump conversion filter by CFFI for Python.")
 (define-public python-inflate64
   (package
     (name "python-inflate64")
-    (version "0.3.1")
+    (version "1.0.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "inflate64" version))
               (sha256
                (base32
-                "0767j35gkwaykl1iq9qn8rc25j1ggv56x3d1vzjpk89bzpzdhbdm"))))
+                "1vhj7qhghyc6bvwqval471d2rnsm2pzk2byklp1s1v9ndi0xv7m8"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-importlib-metadata))
     (native-inputs
-     (list python-pytest
-           python-setuptools-scm
-           python-setuptools
-           python-wheel))
+     (list python-pytest python-setuptools python-setuptools-scm))
     (home-page "https://pypi.org/project/inflate64/")
     (synopsis "Compression/decompression library")
     (description "The @code{inflate64} package provides @code{Deflater} and
@@ -563,23 +572,29 @@ several possible methods.")
 (define-public python-py7zr
   (package
     (name "python-py7zr")
-    (version "0.20.2")
+    (version "1.0.0rc3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "py7zr" version))
        (sha256
         (base32
-         "0lwniinfr3rb10n0c203a09vz06vxnnj637yqn8ipdlml89gj7kr"))))
+         "04ff0jc0d0b4r2r5yidcfnx30qabi41k5s04v4h4y7rfb6yd40ac"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "--ignore=tests/test_benchmark.py")))
+      #~(list "--ignore=tests/test_benchmark.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("(brotli|brotlicffi)>=.*;" _ name)
+                 (string-append name ";"))))))))
     (propagated-inputs
      (list python-brotli
            python-brotlicffi
-           python-importlib-metadata
            python-inflate64
            python-multivolumefile
            python-psutil
@@ -589,16 +604,16 @@ several possible methods.")
            python-pyzstd
            python-texttable))
     (native-inputs
-     (list python-setuptools
-           python-libarchive-c
+     (list python-libarchive-c
            python-py-cpuinfo
-           python-pyannotate
+           python-pypa-build
            python-pytest
            python-pytest-benchmark
+           python-pytest-httpserver
            python-pytest-remotedata
            python-pytest-timeout
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools
+           python-setuptools-scm))
     (home-page "https://github.com/miurahr/py7zr")
     (synopsis "7-zip in Python")
     (description "This package provides py7zr, which implements 7-zip
@@ -1046,27 +1061,34 @@ provided.")
 (define-public python-pyzstd
   (package
     (name "python-pyzstd")
-    (version "0.15.9")
+    (version "0.18.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyzstd" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Rogdham/pyzstd")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1iycfmif15v1jhv0gsza1hyd1hn3sz0vn9s1y79abzv8axndxzfb"))
+        (base32 "08ih7vr3rzwrzpzwhk1k94z5nm9mmvls7c6w8wsqncf0kyl8d7yp"))
        (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Remove a bundled copy of the zstd sources.
-           (delete-file-recursively "zstd")))))
+       (snippet '(begin
+                   ;; Remove a bundled copy of the zstd sources.
+                   (delete-file-recursively "zstd")
+                   (mkdir "zstd")
+                   (call-with-output-file "zstd/LICENSE"
+                     (const #t))))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:configure-flags
       #~'(("--build-option" . "--dynamic-link-zstd"))))
     (inputs (list `(,zstd "lib")))
-    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-setuptools))
+    (propagated-inputs (list python-typing-extensions))
     (home-page "https://github.com/Rogdham/pyzstd")
     (synopsis "Zstandard bindings for Python")
-    (description "This package provides Python bindings to the Zstandard (zstd)
+    (description
+     "This package provides Python bindings to the Zstandard (zstd)
 compression library.  The API is similar to Python's bz2/lzma/zlib module.")
     (license license:bsd-3)))

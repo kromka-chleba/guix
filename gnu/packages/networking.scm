@@ -1003,14 +1003,14 @@ systems with no further dependencies.")
 (define-public blueman
   (package
     (name "blueman")
-    (version "2.4.4")
+    (version "2.4.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/blueman-project/blueman/releases"
                            "/download/" version "/blueman-" version ".tar.xz"))
        (sha256
-        (base32 "1w45dr2cmy32cvxwqaybf5m2ziraj929f4lxcwapv266r1a92kyk"))))
+        (base32 "0rp5z3xzrgwbh496dyca6xjz3iqh9xnick879il0cnc5z4vsf4n7"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      (list
@@ -1754,7 +1754,7 @@ intended as a substitute for the PPPStatus and EthStatus projects.")
 (define-public iputils
   (package
     (name "iputils")
-    (version "20221126")
+    (version "20250605")
     (home-page "https://github.com/iputils/iputils")
     (source (origin
               (method git-fetch)
@@ -1762,7 +1762,7 @@ intended as a substitute for the PPPStatus and EthStatus projects.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qfdvr60mlwh5kr4p27wjknz1cvrwfi6iadh9ny45661v22i0njx"))))
+                "0ypian23hb5rk0d8f9z1qbdy3l5g1g8h18c8pc5l1lixh4y0v600"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -1879,7 +1879,7 @@ and up to 1 Mbit/s downstream.")
 (define-public whois
   (package
     (name "whois")
-    (version "5.5.17")
+    (version "5.6.5")
     (source
      (origin
        (method git-fetch)
@@ -1888,7 +1888,7 @@ and up to 1 Mbit/s downstream.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mqgc8saz4l0hr4p8r9cgndwx3r9aal7ak9irgrrkxyjd65xpa9n"))))
+        (base32 "145lp72347vmr1ipai8rz10bqi6lkjx104g3rq2dmdi2ygfqq9nc"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1926,16 +1926,16 @@ of the same name.")
 (define-public wireshark
   (package
     (name "wireshark")
-    (version "4.4.1")
+    (version "4.6.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/wireshark/wireshark")
-             (commit (string-append "wireshark-" version))))
+             (url "https://gitlab.com/wireshark/wireshark.git")
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cc1dqmlc2jqgd6gg407qk0qkg3cjbiafzw8pf2pxhnh7n94fyki"))))
+        (base32 "14byn0izghn623z4niqfsm39phh71xbf4ajf7smq8pgaxqafdd5j"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -2110,7 +2110,7 @@ transmission protocol (SCTP) in a Go application.")
 (define-public httping
   (package
     (name "httping")
-    (version "2.9")
+    (version "4.4.0")
     (source
      (origin
        (method git-fetch)
@@ -2119,17 +2119,16 @@ transmission protocol (SCTP) in a Go application.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gbpirzih0zr93fm71scqjji9wwkfp64q8z36857blsngdfm6k38"))))
-    (build-system gnu-build-system)
+        (base32 "0jnxwwqcy52m7nm36h82ql3bgbzsima80ks8pqy952h4gkqbxy5a"))))
+    (build-system cmake-build-system)
     (arguments
-     (list #:make-flags
-           #~(list (string-append "CC=" #$(cc-for-target))
-                   (string-append "PREFIX=" #$output))
-           #:tests? #f))                ; no test suite
-    (native-inputs
-     (list gettext-minimal))
-    (inputs
-     (list fftw ncurses openssl))
+     (list
+      #:configure-flags
+      #~(list "-DUSE_SSL=ON" "-DUSE_TUI=ON" "-DUSE_FFTW3=ON"
+              "-DUSE_GETTEXT=ON")
+      #:tests? #f)) ;no test suite
+    (native-inputs (list gettext-minimal pkg-config))
+    (inputs (list fftw ncurses openssl))
     (home-page "https://www.vanheusden.com/httping/")
     (synopsis "Web server latency and throughput monitor")
     (description
@@ -2138,7 +2137,7 @@ HTTP(S) request, and receive the reply headers.  It is somewhat similar to
 @command{ping}, but can be used even in cases where ICMP traffic is blocked
 by firewalls or when you want to monitor the response time of the actual web
 application stack itself.")
-    (license license:gpl2)))        ; with permission to link with OpenSSL
+    (license license:agpl3)))        ; with permission to link with OpenSSL
 
 (define-public httpstat
   (package

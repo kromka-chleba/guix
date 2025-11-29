@@ -743,38 +743,6 @@ databases to perform alignment and is more robust.  Because it is
 alignment-free, it runs much faster and also easier to use.")
     (license license:gpl2+)))
 
-(define-public pbcopper
-  (package
-    (name "pbcopper")
-    (version "2.0.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/PacificBiosciences/pbcopper")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "04mgmla96bsmr9gijbn3ibspry625cv4kqqxv70z4jq4qc407jy3"))))
-    (build-system meson-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-meson-files
-           (lambda _
-             (substitute* "meson.build"
-               (("-msse4.1") "")))))))
-    (inputs
-     (list boost))
-    (native-inputs
-     (list googletest pkg-config))
-    (home-page "https://github.com/PacificBiosciences/pbcopper")
-    (synopsis "Data structures, algorithms, and utilities for PacBio C++ applications")
-    (description
-     "The pbcopper library provides a suite of data structures, algorithms,
-and utilities for PacBio C++ applications.")
-    (license license:bsd-3)))
-
 (define-public r-anglemania
   (let ((commit "f27399fb947adfa0de6134493e737658ca591af5")
         (revision "1"))
@@ -1962,57 +1930,6 @@ quantification tools so that it can be used with the Sleuth differential
 analysis package.")
       (license license:bsd-3))))
 
-(define-public pbbam
-  (package
-    (name "pbbam")
-    (version "2.1.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/PacificBiosciences/pbbam")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1iyazi3l7dswpfxh39k5j7ydi0ywja0579xz3r6l9kkwz2n1z6dc"))))
-    (build-system meson-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-tests
-           (lambda* (#:key inputs #:allow-other-keys)
-             ;; Disable this test.  I tried fixing it by including
-             ;; optional_io.hpp, but there's a type error.
-             (substitute* "tests/src/meson.build"
-               (("'test_ReadGroupInfo.cpp',") ""))
-             #;
-             (substitute* "include/pbbam/ReadGroupInfo.h"
-               (("#include <boost/optional.hpp>" m)
-                (string-append m "\n#include <boost/optional/optional_io.hpp>")))
-             (substitute* '("tests/scripts/cram/_test.py"
-                            "tests/scripts/cram/_main.py")
-               (("'/bin/sh'")
-                (string-append "'" (which "sh") "'"))))))))
-    ;; These libraries are listed as "Required" in the pkg-config file.
-    (propagated-inputs
-     (list htslib-1.14 pbcopper zlib))
-    (inputs
-     (list boost samtools))
-    (native-inputs
-     (list googletest
-           pkg-config
-           python-wrapper)) ;for tests
-    (home-page "https://github.com/PacificBiosciences/pbbam")
-    (synopsis "Work with PacBio BAM files")
-    (description
-     "The pbbam software package provides components to create, query, and
-edit PacBio BAM files and associated indices.  These components include a core
-C++ library, bindings for additional languages, and command-line utilities.
-This library is not intended to be used as a general-purpose BAM utility - all
-input and output BAMs must adhere to the PacBio BAM format specification.
-Non-PacBio BAMs will cause exceptions to be thrown.")
-    (license license:bsd-3)))
-
 (define-public pbgzip
   (let ((commit "2b09f97b5f20b6d83c63a5c6b408d152e3982974"))
     (package
@@ -2045,105 +1962,6 @@ to any particular format, but certain features are tailored to genomics data
 formats when enabled.  Parallel decompression is somewhat faster, but the true
 speedup comes during compression.")
       (license license:expat))))
-
-(define-public blasr-libcpp
-  (package
-    (name "blasr-libcpp")
-    (version "5.3.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/PacificBiosciences/blasr_libcpp")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "07cdfnfl29zf2j7fpaaqaxghq3p0wnc109razs0icwm2q6l3gycb"))))
-    (build-system meson-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'link-with-hdf5
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((hdf5 (assoc-ref inputs "hdf5")))
-               (substitute* "meson.build"
-                 (("libblasr_deps = \\[" m)
-                  (string-append
-                   m
-                   (format #f "cpp.find_library('hdf5', dirs : '~a'), \
-cpp.find_library('hdf5_cpp', dirs : '~a'), "
-                           hdf5 hdf5)))))))
-         (add-after 'unpack 'find-googletest
-           (lambda* (#:key inputs #:allow-other-keys)
-             ;; It doesn't find gtest_main because there's no pkg-config file
-             ;; for it.  Find it another way.
-             (substitute* "unittest/meson.build"
-               (("libblasr_gtest_dep = dependency\\('gtest_main'.*")
-                (format #f "cpp = meson.get_compiler('cpp')
-libblasr_gtest_dep = cpp.find_library('gtest_main', dirs : '~a')\n"
-                        (assoc-ref inputs "googletest")))))))
-       ;; TODO: unittest/libblasr_unittest cannot be linked
-       ;; ld: ;; unittest/df08227@@libblasr_unittest@exe/alignment_utils_FileUtils_gtest.cpp.o:
-       ;; undefined reference to symbol
-       ;; '_ZN7testing8internal9DeathTest6CreateEPKcPKNS0_2REES3_iPPS1_'
-       ;; ld: /gnu/store/...-googletest-1.8.0/lib/libgtest.so:
-       ;;   error adding symbols: DSO missing from command line
-       #:tests? #f
-       #:configure-flags '("-Dtests=false")))
-    (inputs
-     (list boost hdf5 htslib pbbam zlib))
-    (native-inputs
-     (list googletest pkg-config))
-    (home-page
-     (string-append "https://web.archive.org/web/20201106122415/"
-                    "https://github.com/PacificBiosciences/blasr_libcpp"))
-    (synopsis "Library for analyzing PacBio genomic sequences")
-    (description
-     "This package provides three libraries used by applications for analyzing
-PacBio genomic sequences.  This library contains three sub-libraries: pbdata,
-hdf and alignment.")
-    (license license:bsd-3)))
-
-(define-public blasr
-  (package
-    (name "blasr")
-    (version "5.3.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/PacificBiosciences/blasr")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0axyd06gn2xa0p0k76fihsbxpfxvhlb18jn6bf97c0ii58r1wc0k"))))
-    (build-system meson-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'link-with-hdf5
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((hdf5 (assoc-ref inputs "hdf5")))
-               (substitute* "meson.build"
-                 (("blasr_deps = \\[" m)
-                  (string-append
-                   m
-                   (format #f "cpp.find_library('hdf5', dirs : '~a'), \
-cpp.find_library('hdf5_cpp', dirs : '~a'), "
-                           hdf5 hdf5))))))))
-       ;; Tests require "cram" executable, which is not packaged.
-       #:tests? #f
-       #:configure-flags '("-Dtests=false")))
-    (inputs
-     (list boost blasr-libcpp hdf5 pbbam zlib))
-    (native-inputs
-     (list pkg-config))
-    (home-page (string-append "https://web.archive.org/web/20210813124135/"
-                              "https://github.com/PacificBiosciences/blasr"))
-    (synopsis "PacBio long read aligner")
-    (description
-     "Blasr is a genomic sequence aligner for processing PacBio long reads.")
-    (license license:bsd-3)))
 
 (define-public randfold
   (package
@@ -3907,7 +3725,6 @@ the managed genomes, STAR indexing and mapping and more.")
            python-pytest-mock
            python-setuptools
            python-sphinx
-           python-sphinx-autobuild
            python-sphinx-rtd-theme))
     (home-page "https://github.com/jrderuiter/pybiomart")
     (synopsis "A simple pythonic interface to biomart")
@@ -4595,7 +4412,7 @@ provide a coordinated and extensible framework to do computational biology.")
     (native-inputs
      (list perl-module-build pkg-config))
     (propagated-inputs
-     (list bioperl-minimal htslib-1.9))
+     (list bioperl-minimal htslib))
     (home-page "https://metacpan.org/release/Bio-DB-HTS")
     (synopsis "Perl interface to HTS library for DNA sequencing")
     (description "This is a Perl interface to the HTS library for DNA
@@ -7296,7 +7113,7 @@ CWL descriptions.")
 (define-public ravanan
   (package
     (name "ravanan")
-    (version "0.1.0")
+    (version "0.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -7304,7 +7121,7 @@ CWL descriptions.")
                     version "/ravanan-" version ".tar.lz"))
               (sha256
                (base32
-                "163r3iyqfdwd3bizm36axfsvnppqwqd6zxl2vwf7sq0lcgl2zx5p"))))
+                "00ayvxsgvma3231ja1759f5fr99a4nw3j23i8qz616wfxa54745s"))))
     (arguments
      (list #:make-flags
            #~(list (string-append "prefix=" #$output)
@@ -7345,9 +7162,10 @@ CWL descriptions.")
            guile-libyaml
            guix))
     (native-inputs
-     (list lzip))
+     (list guile-run64
+           lzip))
     (build-system gnu-build-system)
-    (home-page "https://github.com/arunisaac/ravanan")
+    (home-page "https://forge.systemreboot.net/ravanan/")
     (synopsis "High-reproducibility CWL runner powered by Guix")
     (description "ravanan is a @acronym{CWL, Common Workflow Language}
 implementation that is powered by GNU Guix and provides strong reproducibility
@@ -9782,37 +9600,6 @@ data.  It also provides the @command{bgzip}, @command{htsfile}, and
     ;; Files under cram/ are released under the modified BSD license;
     ;; the rest is released under the Expat license
     (license (list license:expat license:bsd-3))))
-
-(define-public htslib-1.14
-  (package/inherit htslib
-    (version "1.14")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/samtools/htslib/releases/download/"
-                    version "/htslib-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "0pwk8yhhvb85mi1d2qhwsb4samc3rmbcrq7b1s0jz0glaa7in8pd"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments htslib)
-       ((#:configure-flags cf #~'())
-        #~(delete "--with-external-htscodecs" #$cf))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs htslib)
-                    (delete "htscodecs")))))
-
-(define-public htslib-1.9
-  (package/inherit htslib
-    (version "1.9")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/samtools/htslib/releases/download/"
-                    version "/htslib-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "16ljv43sc3fxmv63w7b2ff8m1s7h89xhazwmbm1bicz8axq8fjz0"))))))
 
 ;; This package should be removed once no packages rely upon it.
 (define htslib-1.3

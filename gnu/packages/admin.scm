@@ -1942,7 +1942,7 @@ maintenance releases.")
 (define-public dhcpcd
   (package
     (name "dhcpcd")
-    (version "10.2.3")
+    (version "10.3.0")
     (source
      (origin
        (method git-fetch)
@@ -1951,7 +1951,7 @@ maintenance releases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01bqs71s2gixsir1cpnk6sm4k9dpdkrgp1r8cpbac50d6hwlxln3"))))
+        (base32 "058k8wbzbjb6mm6qklv40z1y4k6sdb4ysap1xk6pny1m1f9xkdax"))))
     (inputs (list bash-minimal coreutils-minimal eudev sed))
     (build-system gnu-build-system)
     (arguments
@@ -3183,7 +3183,7 @@ degradation and failure.")
 (define-public fdupes
   (package
     (name "fdupes")
-    (version "2.3.2")
+    (version "2.4.0")
     (source
      (origin
        (method url-fetch)
@@ -3191,7 +3191,7 @@ degradation and failure.")
                            "releases/download/v" version "/"
                            "fdupes-" version ".tar.gz"))
        (sha256
-        (base32 "1irab60gkjmnvk1l0x92cb5vh9zw9g0vgr3s82mir93zpvn8v3c0"))))
+        (base32 "0dhpgcylf99cnxz8h4i4dhv2i3124cs0n8lssbhwn783knijfysj"))))
     (build-system gnu-build-system)
     (inputs
      (list ncurses pcre2 sqlite))

@@ -59,10 +59,11 @@
 ;;; Copyright © 2022 Derek Chuank <derekchuank@outlook.com>
 ;;; Copyright © 2022, 2023 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Tobias Kortkamp <tobias.kortkamp@gmail.com>
+;;; Copyright © 2022 Mehmet Tekman <mtekman89@gmail.com>
+;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
-;;; Copyright © 2022 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Igor Goryachev <igor@goryachev.org>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
@@ -71,6 +72,8 @@
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 iamawacko <iamawacko@protonmail.com>
+;;; Copyright © 2025 dan <i@dan.games>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -142,6 +145,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages kde-utils)
   #:use-module (gnu packages libbsd)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
@@ -166,6 +170,7 @@
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages video)
   #:use-module (gnu packages xml)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages wm)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xorg)
@@ -175,6 +180,93 @@
   #:use-module (ice-9 match))
 
 ;; packages outside the x.org system proper
+
+(define-public autokey
+  (package
+    (name "autokey")
+    (version "0.96.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/autokey/autokey")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1v19196swihc12bcg0d9s07gfc3a44b9y7g6rqhb82qxm4p8jmbp"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 328 passed, 2 skipped, 1 deselected, 13 xfailed, 1 warning
+      #:test-flags
+      ;;  AssertionError: Ensure the most recent git tag version matches the
+      ;;  version number in lib/autokey/common.py
+      #~(list "--deselect=tests/test_common.py::test_version_number_accurate")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "setup.cfg"
+                (("--cov-repor.*") ""))))
+          ;; Use 'prefix' instead of '=' to allow the user to use additional
+          ;; GI paths from their autokey scripts.  GUIX_PYTHONPATH is already
+          ;; wrapped with prefix in python-build-system's wrap.
+          (add-after 'wrap 'wrap-executable
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((gi-typelib-path (getenv "GI_TYPELIB_PATH"))
+                    ;; See: lib/autokey/UI_common_functions.py and
+                    ;; apt-requirements.txt for runtime dependencies.
+                    (path (list (string-append #$(this-package-input "kdialog")
+                                               "/bin")
+                                (string-append #$(this-package-input "wmctrl")
+                                               "/bin")
+                                (string-append #$(this-package-input "zenity")
+                                               "/bin"))))
+                (for-each
+                 (lambda (program)
+                   (wrap-program program
+                     `("PATH" ":" prefix ,path)
+                     `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))))
+                 (map (lambda (name)
+                        (string-append #$output "/bin/" name))
+                      '("autokey-gtk"
+                        "autokey-qt"
+                        "autokey-run"
+                        "autokey-shell"))))))
+          (add-before 'check 'setup-env-vars
+            (lambda _
+              ;; tests/test_macro.py wants LANG set
+              (setenv "LANG" "")
+              ;; required for tests/test_configmanager.py
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-pyhamcrest
+           git-minimal
+           python-pytest
+           python-setuptools))
+    (inputs
+     (list bash-minimal ; for wrap-program
+           gtksourceview-3
+           kdialog
+           libappindicator
+           libnotify
+           python-dbus
+           python-ipython
+           python-pygobject
+           python-pyinotify
+           python-pyqt+qscintilla
+           python-xlib
+           wmctrl
+           zenity))
+    (home-page "https://github.com/autokey/autokey")
+    (synopsis "Keyboard and GUI automation utility")
+    (description
+     "AutoKey is a desktop automation utility for X11.  It allows the
+automation of virtually any task by responding to typed abbreviations and
+hotkeys.  It offers a full-featured GUI (GTK and QT versions) that makes it
+highly accessible for novices, as well as a scripting interface offering the
+full flexibility and power of the Python language.")
+    (license license:gpl3+)))
 
 (define-public xnee
   (package
@@ -4499,3 +4591,78 @@ a simple GUI for XKB (X KeyBoard extension) and just sends commands to and
 accepts events from XKB.  That means that it will work with the existing
 setup of your X Server without any modifications.")
     (license license:artistic2.0)))
+
+(define-public darkman
+  (package
+    (name "darkman")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/WhyNotHugo/darkman")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "039xqi9pll7vl1m8lri5x626s7n0wqrjzyy979kh3wmpqbk8jz3j"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           (substitute* "Makefile"
+             ;; Avoid building the binary again when installing.
+             (("install: build") "install: darkman.1")
+             ;; Don't install the systemd service.
+             ((".@install.*systemd.*") "")
+             ;; The binary will be installed by `go install'.
+             ((".@install.*bin.*") ""))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; No tests.
+      #:install-source? #f
+      #:import-path "gitlab.com/WhyNotHugo/darkman/cmd/darkman"
+      #:unpack-path "gitlab.com/WhyNotHugo/darkman"
+      #:build-flags
+      #~(list (string-append "-ldflags= -X main.Version=" #$version))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (let ((source (string-append "src/" unpack-path "/contrib/dbus/")))
+                (substitute*
+                    (list (string-append
+                           source "nl.whynothugo.darkman.service")
+                          (string-append
+                           source
+                           "org.freedesktop.impl.portal.desktop.darkman.service"))
+                  (("/usr") #$output)))))
+          (replace 'install
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (let ((darkman (string-append #$output "/bin/darkman")))
+                  (with-output-to-file "_darkman.zsh"
+                    (lambda ()
+                      (invoke darkman "completion" "zsh")))
+                  (with-output-to-file "darkman.bash"
+                    (lambda ()
+                      (invoke darkman "completion" "bash")))
+                  (with-output-to-file "darkman.fish"
+                    (lambda ()
+                      (invoke darkman "completion" "fish"))))
+                (invoke "make" "install" (string-append "PREFIX=" #$output))))))))
+    (native-inputs
+     (list gnu-make
+           go-github-com-adrg-xdg
+           go-github-com-godbus-dbus-v5
+           go-github-com-rxwycdh-rxhash
+           go-github-com-sj14-astral
+           go-github-com-spf13-cobra
+           go-gopkg-in-yaml-v3
+           scdoc))
+    (home-page "https://gitlab.com/WhyNotHugo/darkman")
+    (synopsis "Control dark-mode and light-mode transitions")
+    (description
+     "Darkman is a framework for dark-mode and light-mode transitions on Unix-like
+desktops.")
+    (license license:bsd-0)))

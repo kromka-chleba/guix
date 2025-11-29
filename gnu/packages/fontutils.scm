@@ -313,7 +313,7 @@ them as it goes.")
            python-defcon
            python-fontmath
            python-fonttools
-           python-lxml-4.9
+           python-lxml
            python-tqdm
            python-ufonormalizer
            python-ufoprocessor))
@@ -442,7 +442,7 @@ but also provides many useful font conversion and analysis facilities.
            python-defcon
            python-fontmath
            python-fonttools
-           python-lxml-4.9
+           python-lxml
            python-tqdm
            python-ufonormalizer
            python-ufoprocessor))))
@@ -450,24 +450,19 @@ but also provides many useful font conversion and analysis facilities.
 (define-public python-beziers
   (package
     (name "python-beziers")
-    (version "0.5.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/simoncozens/beziers.py")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1dyr45m15sclbgaz1mrcnw8kny50h09gd45dlpfkgv9qpfxphkg3"))))
-    (build-system python-build-system)
-    (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (invoke "pytest" "-vv")))))))
-    (native-inputs (list python-pytest python-dotmap python-matplotlib))
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/simoncozens/beziers.py")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ww2cc4wi3a3i9wknddjcii2p4r8ksilkqpnbkqg6d7z3jqrcf9n"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-dotmap python-matplotlib python-setuptools))
     (propagated-inputs (list python-pyclipper))
     (home-page "https://simoncozens.github.io/beziers.py/index.html")
     (synopsis "Python bezier manipulation library")
@@ -490,7 +485,7 @@ other operations on paths.")
        (snippet '(delete-file-recursively "external")) ;unbundle ADFKO
        (sha256
         (base32 "1yrfjn3mdi48pg78yzlmskdz9i4nf2wg7h8ivnn9yrw1vc5iaibp"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -514,12 +509,9 @@ other operations on paths.")
                 (("with path\\(__name__, TX_EXE) as tx_cli:")
                  "")
                 (("    (return subprocess.run\\(\\[)str\\(tx_cli)(].*)" _ h t)
-                 (format #f "~a~s~a" h tx t)))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
-    (native-inputs (list python-pytest python-setuptools-scm python-wheel))
+                 (format #f "~a~s~a" h tx t))))))))
+    (native-inputs
+     (list python-pytest python-setuptools-scm python-setuptools))
 
     ;; Use version 3.6.1, which matches the bundled version and does not
     ;; depend on Java.
@@ -688,10 +680,10 @@ font, glyph, etc. mathematical operations on font data.")
        (uri (pypi-uri "fontPens" version ".zip"))
        (sha256
         (base32 "1za15dzsnymq6d9x7xdfqwgw4a3003wj75fn2crhyidkfd2s3nd6"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments (list #:tests? #f))
     (propagated-inputs (list python-fonttools-minimal))
-    (native-inputs (list unzip))
+    (native-inputs (list python-setuptools unzip))
     (home-page "https://github.com/robofab-developers/fontPens")
     (synopsis "Python classes implementing the pen protocol")
     (description "This package provides a collection of Python classes
@@ -853,27 +845,28 @@ to UFOs and DesignSpace files via @code{defcon} and @code{designspaceLib}.")
  (package
   (name "python-glyphsets")
   (version "0.5.2")
-  (source (origin
-            (method url-fetch)
-            (uri (pypi-uri "glyphsets" version))
-            (sha256
-             (base32
-              "1dc24i0hkd85gkkg3bqjhagjyw3xsqxazd86yh2l60c1wr5n9y6g"))))
-  (build-system python-build-system)
+  (source
+   (origin
+     (method url-fetch)
+     (uri (pypi-uri "glyphsets" version))
+     (sha256
+      (base32 "1dc24i0hkd85gkkg3bqjhagjyw3xsqxazd86yh2l60c1wr5n9y6g"))))
+  (build-system pyproject-build-system)
   (arguments
-   (list #:phases
-         #~(modify-phases %standard-phases
-             (add-after 'unpack 'loosen-version-constraints
-               (lambda _
-                 (substitute* "setup.py"
-                   (("setuptools_scm>=4,<6\\.1")
-                    "setuptools_scm>=4"))))
-             (replace 'check
-               (lambda* (#:key tests? #:allow-other-keys)
-                 (when tests?
-                   (invoke "pytest" "-vv" "tests/testglyphdata.py")
-                   (invoke "pytest" "-vv" "tests/testusage.py")))))))
-  (native-inputs (list python-pytest python-setuptools-scm))
+   (list
+    #:phases
+    #~(modify-phases %standard-phases
+        (add-after 'unpack 'loosen-version-constraints
+          (lambda _
+            (substitute* "setup.py"
+              (("setuptools_scm>=4,<6\\.1")
+               "setuptools_scm>=4"))))
+        (replace 'check
+          (lambda* (#:key tests? #:allow-other-keys)
+            (when tests?
+              (invoke "pytest" "-vv" "tests/testglyphdata.py")
+              (invoke "pytest" "-vv" "tests/testusage.py")))))))
+  (native-inputs (list python-pytest python-setuptools-scm python-setuptools))
   (propagated-inputs
    (list python-defcon python-fonttools-minimal python-glyphslib))
   (home-page "https://github.com/googlefonts/glyphsets/")
@@ -886,34 +879,35 @@ different scripts and languages.")
 (define-public python-opentype-sanitizer
   (package
     (name "python-opentype-sanitizer")
-    (version "8.2.1")
+    (version "9.2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "opentype-sanitizer" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googlefonts/ots-python")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1wjy6chbnj9ic5yjxal6spln5jfzr8cigqs6ab0gj7q60dndrl5k"))))
-    (build-system python-build-system)
+        (base32 "0ffk99vcwmwpy2wzky1b0vj5j0i9xw67mwk81dzj696f6sws1dkm"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
           (add-after 'unpack 'unbundle-opentype-sanitizer
             (lambda* (#:key inputs #:allow-other-keys)
-              (delete-file-recursively "src/c")
               (substitute* "setup.py"
-                (("^cmdclass\\[\"download\"].*") "")
-                (("^cmdclass\\[\"build_ext\"].*") "")
-                (("^cmdclass\\[\"egg_info\"].*") ""))
+                (("^cmdclass\\[\"(download|build_ext|egg_info)\"].*")
+                 ""))
               (substitute* "src/python/ots/__init__.py"
                 (("^OTS_SANITIZE = .*")
                  (format #f "OTS_SANITIZE = ~s~%"
-                         (search-input-file inputs "bin/ots-sanitize"))))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
-    (native-inputs (list python-pytest python-setuptools-scm))
+                         (search-input-file inputs "bin/ots-sanitize")))))))))
+    (native-inputs
+     (list python-pytest python-setuptools python-setuptools-scm))
     (inputs (list opentype-sanitizer))
     (home-page "https://github.com/googlefonts/ots-python")
     (synopsis "Python wrapper for OpenType Sanitizer")
@@ -926,20 +920,28 @@ different scripts and languages.")
     (version "3.0.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "MutatorMath" version ".zip"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/LettError/MutatorMath")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0r1qq45np49x14zz1zwkaayqrn7m8dn2jlipjldg2ihnmpzw29w1"))))
-    (build-system python-build-system)
+        (base32 "1pvkhvafy2zzk8rr2dld866jq000vl2srzh0dw9x5lb6rhxi2f9b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "Lib/mutatorMath/test/run.py")))
     (propagated-inputs (list python-defcon python-fontmath
                              python-fonttools-minimal))
-    (native-inputs (list unzip))
+    (native-inputs (list python-setuptools unzip))
     (home-page "https://github.com/LettError/MutatorMath")
     (synopsis "Piecewise linear interpolation Python library")
-    (description "MutatorMath is a Python library for the calculation of
-piecewise linear interpolations in n-dimensions with any number of masters. It
-was developed for interpolating data related to fonts, but if can handle any
-arithmetic object.")
+    (description
+     "MutatorMath is a Python library for the calculation of piecewise linear
+interpolations in n-dimensions with any number of masters. It was developed
+for interpolating data related to fonts, but if can handle any arithmetic
+object.")
     (license license:bsd-3)))
 
 (define-public psautohint-font-data
@@ -1022,23 +1024,26 @@ can be used to hint PostScript fonts.  A Python wrapper is also included.")
 (define-public python-sfdlib
   (package
     (name "python-sfdlib")
-    (version "1.2.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/aliftype/sfdLib")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1q61km32i1h3cmn8nazcgsbzpm8q2nxp3kq3glqgfgvlxr1s3brm"))))
-    (build-system python-build-system)
+    (version "1.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/aliftype/sfdLib")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00vss0pv7y041rqjlbq8si7319w0mzlkp3ckw150mmxzsrx0m58c"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; No tests upstream.
+    (native-inputs (list python-setuptools))
     (propagated-inputs (list python-ufolib2))
     (home-page "https://github.com/aliftype/sfdLib")
     (synopsis "Simple SFD to UFO converter")
-    (description "This package provides the @command{sfd2ufo} command, a
-converter from FontForge’s @acronym{SFD, Spline Font Database} fonts to
-@acronym{UFO, Unified Font Object} fonts.")
+    (description
+     "This package provides the @command{sfd2ufo} command, a converter from
+FontForge’s @acronym{SFD, Spline Font Database} fonts to @acronym{UFO, Unified
+Font Object} fonts.")
     (license license:bsd-3)))
 
 (define-public python-skia-pathops
@@ -1084,29 +1089,25 @@ paths (intersection, union, difference, xor).")
 (define-public python-ufoprocessor
   (package
     (name "python-ufoprocessor")
-    (version "1.14.0")
+    (version "1.14.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ufoprocessor" version ".tar.gz"))
        (sha256
-        (base32 "08bkci1fwpx2jfgh3rw48qangs84ngn8lqpqk5fhrgs43hjwpki1"))))
-    (build-system python-build-system)
+        (base32 "009vq25bn0w5nispvyglrrm21qpxvvjc3zfkm0dig54v6p6d6f7x"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              ;; Most of the tests appear to be a work in
-                              ;; progress; run only a subset.
-                              (invoke "python" "Tests/tests.py")))))))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "Tests/tests.py")))
     (propagated-inputs
      (list python-defcon
            python-fontmath
            python-fontparts
            python-fonttools-minimal
            python-mutatormath))
-    (native-inputs (list python-setuptools-scm))
+    (native-inputs (list python-setuptools python-setuptools-scm))
     (home-page "https://github.com/LettError/ufoProcessor")
     (synopsis "Process and generate @acronym{UFO, Unified Font Object} files")
     (description "This Python package processes and generates instances for
@@ -2028,7 +2029,7 @@ UFO3 as described by the UFO font format.")
 (define-public nototools
   (package
     (name "nototools")
-    (version "0.2.16")
+    (version "0.3.2")
     (source
      (origin
        (method git-fetch)
@@ -2037,9 +2038,8 @@ UFO3 as described by the UFO font format.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "14rrdamkmhrykff8ln07fq9cm8zwj3k113lzwjcy0lgz23g51jyl"))))
-    (build-system python-build-system)
+        (base32 "1sfsmfxcp4kdkra58z274w9cjgyim4by50nxdq60q3z1r5hv9iyj"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -2051,8 +2051,8 @@ UFO3 as described by the UFO font format.")
             (lambda* (#:key tests? #:allow-other-keys)
               (with-directory-excursion "tests"
                 (invoke "./run_tests")))))))
-    (native-inputs (list python-setuptools-scm))
-    (propagated-inputs (list python-afdko))
+    (native-inputs (list python-setuptools-scm python-setuptools))
+    (propagated-inputs (list python-afdko python-pillow))
     (home-page "https://github.com/googlei18n/nototools")
     (synopsis "Noto fonts support tools and scripts")
     (description

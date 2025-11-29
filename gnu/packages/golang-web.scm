@@ -872,6 +872,34 @@ supporting @acronym{GELF, Graylog Extended Log Format} specified in
 @url{Graylog Documentation, https://go2docs.graylog.org/current/home.html}.")
     (license license:expat)))
 
+(define-public go-github-com-apparentlymart-go-cidr
+  (package
+    (name "go-github-com-apparentlymart-go-cidr")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/apparentlymart/go-cidr")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12b8qhazgdqr9p3sw5vma7va5j1fvm454cyd0ccc0wi96df3wk4i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/apparentlymart/go-cidr"))
+    (home-page "https://github.com/apparentlymart/go-cidr")
+    (synopsis "CIDR netmasks manipulation library for Golang")
+    (description
+     "Package cidr is a collection of assorted utilities for computing network
+and host addresses within network ranges.  It expects a CIDR-type address
+structure where addresses are divided into some number of prefix bits
+representing the network and then the remaining suffix bits represent the
+host.")
+    (license license:expat)))
+
 (define-public go-github-com-arceliar-ironwood
   (package
     (name "go-github-com-arceliar-ironwood")
@@ -2809,6 +2837,35 @@ to append and delete rules; create, clear and delete chains.")
            go-golang-org-x-net
            go-golang-org-x-oauth2))))
 
+(define-public go-github-com-coreos-stream-metadata-go
+  (package
+    (name "go-github-com-coreos-stream-metadata-go")
+    (version "0.4.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/coreos/stream-metadata-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03kslxzjqk4q9bvazrilaif91p58q0zm2wymd9rlpd0zfn73v99y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/coreos/stream-metadata-go"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/coreos/stream-metadata-go")
+    (synopsis "Parsing Fedora CoreOS streams for Golang")
+    (description
+     "This package implements a functionality to exposes API to decode
+@url{https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/,
+Fedora CoreOS streams} into Go structs, as well as a convenience API to find
+the URL for a given stream.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-cretz-bine
   (package
     ;; This package can be used with CGO to statically compile Tor.  This
@@ -4118,16 +4175,16 @@ Encryption, JSON Web Signature, and JSON Web Token standards.")
   (package
     (inherit go-github-com-go-jose-go-jose-v3)
     (name "go-github-com-go-jose-go-jose-v4")
-    (version "4.0.3")
+    (version "4.0.5")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/go-jose/go-jose")
-             (commit (string-append "v" version))))
+              (url "https://github.com/go-jose/go-jose")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bf444687q5rdxjgk41bkryhzhx49f6600b7i51m572xdl0r28a9"))))
+        (base32 "1v29i3i364n6y2k7bcm1wc0s5am8p8bbn0nkfhh7v22dzi0z0dn4"))))
     (arguments
      (list
       #:import-path "github.com/go-jose/go-jose/v4"))))
@@ -12860,7 +12917,7 @@ It is to used for inputs in other packages.")
 (define-public go-github-com-zitadel-oidc-v3
   (package
     (name "go-github-com-zitadel-oidc-v3")
-    (version "3.43.0")
+    (version "3.45.0")
     (source
      (origin
        (method git-fetch)
@@ -12869,14 +12926,13 @@ It is to used for inputs in other packages.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01cpck1qy91r74q86qkw3dh62zrzwdpqlbzwrxzsv0gpqz5pixc9"))))
+        (base32 "14wqsrbyrd88czkjnl3x8b7cwaya7x2rvkks3pdm5d6l4aljg0r7"))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/zitadel/oidc/v3"
       #:test-flags
-      #~(list "-vet=off"
-              "-skip" (string-join
+      #~(list "-skip" (string-join
                        ;; Tests requring Internet access.
                        (list "TestDiscover/spotify"
                              "TestIntrospect"
@@ -15015,35 +15071,22 @@ and concepts from Philipp Winter's ScrambleSuit protocol.")
   lyrebird)
 
 (define-public go-jose-util
-  (package
+  (package/inherit go-github-com-go-jose-go-jose-v4
     (name "go-jose-util")
-    (version "0.0.0-20240226165647-31202557b449")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/go-jose/go-jose")
-             (commit (go-version->git-ref version
-                                          #:subdir "jose-util"))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "19kr2r9nnrnixpmpp37p5adnxc92bc3gzqz7rpybgaly2wfssz0q"))))
-    (build-system go-build-system)
     (arguments
-     (list
-      #:install-source? #f
-      #:import-path "github.com/go-jose/go-jose/jose-util"
-      #:unpack-path "github.com/go-jose/go-jose"))
-    (native-inputs
-     (list go-github-com-go-jose-go-jose-v3
-           go-gopkg-in-alecthomas-kingpin-v2))
-    (home-page "https://github.com/go-jose/go-jose")
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-inetaf-tcpproxy)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _ "github.com/go-jose/go-jose/v4")
+        "github.com/go-jose/go-jose/jose-util")
+       ((#:unpack-path _ "")
+        "github.com/go-jose/go-jose")))
     (synopsis "JOSE CLI")
     (description
      "The @code{jose-util} command line utility allows for encryption,
 decryption,signing and verification of JOSE messages.  Its main purpose is to
-facilitate dealing with JOSE messages when testing or debugging.")
-    (license license:asl2.0)))
+facilitate dealing with JOSE messages when testing or debugging.")))
 
 (define-public go-gojay
   (package

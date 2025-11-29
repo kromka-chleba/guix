@@ -323,6 +323,31 @@ mediums.")
       (home-page "https://github.com/IBM/plex")
       (license license:silofl1.1))))
 
+(define-public font-inter
+  (package
+    (name "font-inter")
+    (version "4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/rsms/inter")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g54vl3jkpan0s1mzrb1s8zjqzy9787ffjg9sfy6yjy4k3qg8xhx"))))
+    (build-system font-build-system)
+    (home-page "https://rsms.me/inter")
+    (synopsis "Variable font family optimized for screen readability")
+    (description
+     "Inter is a typeface carefully crafted & designed for computer screens.
+Inter features a tall x-height to aid in readability of mixed-case and
+lower-case text.  Inter is a variable font with several OpenType features,
+like contextual alternates that adjusts punctuation depending on the shape of
+surrounding glyphs, slashed zero for when you need to disambiguate \"0\" from
+\"o\", tabular numbers, etc.")
+    (license license:silofl1.1)))
+
 (define-public font-lilex
   (package
     (name "font-lilex")
@@ -3341,7 +3366,7 @@ files (TTF).")
 (define-public font-monaspace
   (package
     (name "font-monaspace")
-    (version "1.200")
+    (version "1.301")
     (source
      (origin
        (method git-fetch)
@@ -3351,7 +3376,7 @@ files (TTF).")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0llhn40mbi67slkb9y3g16165v6hayczr11kygpz0zx6azg3m1lv"))))
+         "0f6i9v2m7x5zjdfwmcj180nmgxzlnbk2z0x7yv5sbdcrvndz1lzj"))))
     (build-system font-build-system)
     (outputs '("out" "ttf" "woff"))
     (home-page "https://monaspace.githubnext.com")
@@ -3362,6 +3387,29 @@ modern tricks up its sleeve.  It consists of five variable axis typefaces.
 Each one has a distinct voice, but they are all metrics-compatible with one
 another, allowing you to mix and match them for a more expressive
 typographical palette.")
+    (license license:silofl1.1)))
+
+(define-public font-mona-sans
+  (package
+    (name "font-mona-sans")
+    (version "2.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/github/mona-sans")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1gdblparf0v5mdbp891wnsc5x4dxr433fg0dmz0mhzrdw9vaalig"))))
+    (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
+    (home-page "https://github.com/mona-sans")
+    (synopsis "Variable font from Github")
+    (description
+     "Mona Sans is a strong and versatile typeface, designed with Degarism and
+inspired by industrial-era grotesques.")
     (license license:silofl1.1)))
 
 (define-public font-mononoki
@@ -5014,4 +5062,28 @@ in typical scalable font formats.")
      "Kawkab Mono (كوكب مونو) is a monospaced Arabic typeface.  It is designed
 for code and text-editing in particular, and whenever having a fixed-pitch font
 is necessary, such as when composing tabular data using text.")
+    (license license:silofl1.1)))
+
+(define-public font-hubot-sans
+  (package
+    (name "font-hubot-sans")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/github/hubot-sans")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "147srdhc0h9165f03kwlpsvm72qrsv0br31lspg9fy4jdjb7dxkp"))))
+    (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
+    (home-page "https://github.com/mona-sans")
+    (synopsis "Variable font from Github")
+    (description
+     "Hubot Sans is designed with more geometric accents to lend a
+technical and idiosyncratic feel—perfect for headers and pull-quotes.  Made to
+work well together with Mona Sans.")
     (license license:silofl1.1)))

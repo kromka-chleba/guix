@@ -5116,13 +5116,13 @@ provides support for parsing, splitting and formatting SQL statements.")
 (define-public python-sql
   (package
     (name "python-sql")
-    (version "1.6.0")
+    (version "1.7.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python_sql" version))
        (sha256
-        (base32 "0v637qc2g8w155k7crlg70w4bfxznn28c94prlxcax5dx0ja2d2v"))))
+        (base32 "09niqspjmsn9wyqadgqjcrsxxa7w4r6dcp21xhi1mimr4ya0p5ky"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-pytest python-setuptools))
     (home-page "https://python-sql.tryton.org/")
@@ -5134,19 +5134,21 @@ transforms idiomatic python function calls to well-formed SQL queries.")
 (define-public python-pypika
   (package
     (name "python-pypika")
-    (version "0.47.6")
+    (version "0.49.0")
     (source
-     (origin (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/kayak/pypika")
-                   (commit (string-append "v" version))))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "001pg36sw9a36zdd1kccbymcxndphjcjbbrsy6ri7ng8h4dgz549"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kayak/pypika")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nxm2cxq9sx43g57qxw7kzy8lsl5svq659r3mhxpa9vcbxrjrb1d"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-parameterized))
+     (list python-parameterized
+           python-pytest
+           python-setuptools))
     (home-page "https://github.com/kayak/pypika")
     (synopsis "SQL query builder API for Python")
     (description

@@ -1376,12 +1376,16 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
       #~(list (format #f "-Dguile-extension-dir=~a/lib" #$output))
       #:phases
       #~(modify-phases %standard-phases
+          ;; This phase can be removed in the next major release of mu.
+          ;; <https://github.com/djcb/mu/commit/f237a2b9905475fb95da6a04e318d10cab61ddeb>
+          ;; <https://github.com/djcb/mu/commit/fc4d5b01a703e8c8cc390cfea135f08d3b45ccab>
           (add-after 'unpack 'patch-bin-references
             (lambda _
               (substitute* '("guile/tests/test-mu-guile.cc"
                              "mu/tests/test-mu-query.cc")
                 (("/bin/sh") (which "sh")))
               (substitute* '("lib/tests/bench-indexer.cc"
+                             "lib/utils/mu-utils-file.cc"
                              "lib/utils/mu-test-utils.cc")
                 (("/bin/rm") (which "rm")))
               (substitute* '("lib/mu-maildir.cc")
@@ -2112,6 +2116,8 @@ delivery.")
                        (("(ZCAT_COMMAND=).*" all var)
                         (string-append var (search-input-file inputs "bin/zcat")
                                        "\n"))
+                       (("# (SUPPORT_SOCKS=yes)" all line) line)
+                       (("# (SUPPORT_PROXY=yes)" all line) line)
                        (("# (USE_GNUTLS(|_PC)=.*)" all line)
                         (string-append line "\n"))
                        (("# (AUTH_CRAM_MD5=yes)" all line) line)
@@ -3498,67 +3504,6 @@ to esoteric or niche requirements.")
     (license (list license:bsd-2 license:bsd-3 license:bsd-4
                    (license:non-copyleft "file://COPYING")
                    license:public-domain license:isc license:openssl))))
-
-(define-public opensmtpd-extras
-  (package
-    (name "opensmtpd-extras")
-    (version "6.7.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://www.opensmtpd.org/archives/"
-                                  "opensmtpd-extras-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1b1mx71bvmv92lbm08wr2p60g3qhikvv3n15zsr6dcwbk9aqahzq"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     `(("libressl" ,libressl)
-       ("libevent" ,libevent)
-       ("libxcrypt" ,libxcrypt)         ;required by Python.h
-       ("mysql" ,mariadb "dev")
-       ("opensmtpd" ,opensmtpd)
-       ("postgresql" ,postgresql)
-       ("python" ,python-2)
-       ("sqlite" ,sqlite)))
-    (arguments
-     `(#:configure-flags
-       (list "--sysconfdir=/etc"
-             "--localstatedir=/var"
-
-             "--with-queue-null"
-             "--with-queue-python"
-             "--with-queue-ram"
-             "--with-queue-stub"
-
-             "--with-table-ldap"
-             "--with-table-mysql"
-             "--with-table-postgres"
-             ;; "--with-table-redis"    ; TODO: package hiredis
-             "--with-table-socketmap"
-             "--with-table-passwd"
-             "--with-table-python"
-             "--with-table-sqlite"
-             "--with-table-stub"
-
-             "--with-scheduler-ram"
-             "--with-scheduler-stub"
-             "--with-scheduler-python"
-
-             "--with-user-smtpd=smtpd"
-
-             ;; We have to configure it like this because the default checks for
-             ;; for example Python in /usr/{,local/}bin and fails otherwise.
-             (string-append "--with-python="
-                            (assoc-ref %build-inputs "python")))))
-    (home-page "https://www.opensmtpd.org")
-    (synopsis "Extra tables, filters, and various other addons for OpenSMTPD")
-    (description
-     "This package provides extra tables, filters, and various other addons
-for OpenSMTPD to extend its functionality.")
-    (license (list license:bsd-2 license:bsd-3 ; openbsd-compat
-                   license:isc))))             ; everything else
 
 (define-public libopensmtpd
   ;; Private source dependency of opensmtpd-filter-dkimsign (by the same

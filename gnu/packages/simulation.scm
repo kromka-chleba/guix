@@ -483,8 +483,11 @@ functions in virtual scenarios.")
 (define-public python-open-simulation-interface
   (package/inherit open-simulation-interface
     (name "python-open-simulation-interface")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments '())
+    (native-inputs
+     (modify-inputs (package-native-inputs open-simulation-interface)
+       (append python-pytest python-setuptools)))
     (propagated-inputs
      (list python-pyyaml
            python-protobuf))))
@@ -603,36 +606,38 @@ the complexity of that interface.  Parallel support depends on the
 (define-public python-fenics-ufl
   (package
     (name "python-fenics-ufl")
-    (version "2019.1.0")
+    (version "2025.2.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "fenics-ufl" version))
-        (sha256
-          (base32
-            "10dz8x3lm68x2w3kkqcjask38h0zkhhak26jdbkppr8g9y8wny7p"))))
-    (build-system python-build-system)
-    (inputs
-     (list python-numpy))
-    (native-inputs
-     (list python-pytest))
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "py.test" "test"))))))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fenics_ufl" version))
+       (sha256
+        (base32 "1k2r7s1c7dqlgkah4jr08lqy4z17h49r94yxjm7ca16vgvqvq1xg"))))
+    (build-system pyproject-build-system)
+    (inputs (list python-numpy))
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://bitbucket.org/fenics-project/ufl/")
     (synopsis "Unified language for form-compilers")
-    (description "The Unified Form Language (UFL) is a domain specific
-language for declaration of finite element discretizations of
-variational forms.  More precisely, it defines a flexible interface
-for choosing finite element spaces and defining expressions for weak
-forms in a notation close to mathematical notation.
+    (description
+     "The Unified Form Language (UFL) is a domain specific language for
+declaration of finite element discretizations of variational forms.  More
+precisely, it defines a flexible interface for choosing finite element spaces
+and defining expressions for weak forms in a notation close to mathematical
+notation.
 
 UFL is part of the FEniCS Project.")
     (license license:lgpl3+)))
 
+(define-public python-fenics-ufl-2019
+  (package/inherit python-fenics-ufl
+    (name "python-fenics-ufl")
+    (version "2019.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fenics-ufl" version))
+       (sha256
+        (base32 "10dz8x3lm68x2w3kkqcjask38h0zkhhak26jdbkppr8g9y8wny7p"))))))
 
 ;; XXX: This package is quite dated and upstream no longer maintains it: "This
 ;; repository was archived by the owner on Feb 21, 2022. It is now read-only."
@@ -692,42 +697,40 @@ FIAT is part of the FEniCS Project.")
     (name "python-fenics-ffc")
     (version "2019.1.0.post0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "fenics-ffc" version))
-        (sha256
-          (base32
-            "1f2a44ha65fg3a1prrbrsz4dgvibsv0j5c3pi2m52zi93bhwwgg9"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest))
-    (propagated-inputs
-     (list python-fenics-dijitso python-fenics-fiat python-fenics-ufl))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fenics-ffc" version))
+       (sha256
+        (base32 "1f2a44ha65fg3a1prrbrsz4dgvibsv0j5c3pi2m52zi93bhwwgg9"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (setenv "HOME" (getcwd))
-             (with-directory-excursion "test"
-               ;; FIXME: the tests in subdirectory
-               ;; 'unit/ufc/finite_element' require the ffc_factory
-               ;; extension module.  This module, located in the 'libs'
-               ;; subdirectory, needs to be built and made accessible
-               ;; prior to running the tests.
-               (invoke "py.test" "unit/" "--ignore=unit/ufc/")
-               (with-directory-excursion "uflacs"
-                 (invoke "py.test" "unit/")))
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (setenv "HOME" (getcwd))
+              (with-directory-excursion "test"
+                ;; FIXME: the tests in subdirectory
+                ;; 'unit/ufc/finite_element' require the ffc_factory
+                ;; extension module.  This module, located in the 'libs'
+                ;; subdirectory, needs to be built and made accessible
+                ;; prior to running the tests.
+                (invoke "pytest" "unit/" "--ignore=unit/ufc/")
+                (with-directory-excursion "uflacs"
+                  (invoke "pytest" "unit/"))))))))
+    (native-inputs (list python-pytest python-setuptools))
+    (propagated-inputs (list python-fenics-dijitso python-fenics-fiat
+                             python-fenics-ufl-2019))
     (home-page "https://bitbucket.org/fenics-project/ffc/")
     (synopsis "Compiler for finite element variational forms")
-    (description "The FEniCS Form Compiler (FFC) is a compiler for
-finite element variational forms.  From a high-level description of
-the form, it generates efficient low-level C++ code that can be used
-to assemble the corresponding discrete operator (tensor).  In
-particular, a bilinear form may be assembled into a matrix and a
-linear form may be assembled into a vector.  FFC may be used either
-from the command line (by invoking the @code{ffc} command) or as a
+    (description
+     "The FEniCS Form Compiler (FFC) is a compiler for finite element
+variational forms.  From a high-level description of the form, it generates
+efficient low-level C++ code that can be used to assemble the corresponding
+discrete operator (tensor).  In particular, a bilinear form may be assembled
+into a matrix and a linear form may be assembled into a vector.  FFC may be
+used either from the command line (by invoking the @code{ffc} command) or as a
 Python module (@code{import ffc}).
 
 FFC is part of the FEniCS Project.")
@@ -899,22 +902,21 @@ user interface to the FEniCS core components and external libraries.")
 (define-public fenics
   (package/inherit fenics-dolfin
     (name "fenics")
-    (build-system python-build-system)
-    (inputs
-     (modify-inputs (package-inputs fenics-dolfin)
-       (delete "python")
-       (prepend pybind11 python-matplotlib)))
-    (native-inputs
-     (modify-inputs (package-native-inputs fenics-dolfin)
-       (prepend cmake-minimal python-ply python-pytest python-decorator)))
-    (propagated-inputs
-     (list fenics-dolfin
-           python-petsc4py
-           python-slepc4py
-           ;; 'dolfin/jit/jit.py' parses 'dolfin.pc' at runtime.
-           python-pkgconfig))
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list
+         "unit"
+         ;; This test fails and is ignored.
+         "--deselect"
+         "unit/nls/test_PETScSNES_solver.py::test_snes_set_from_options"
+         ;; These tests are flaky.
+         "--deselect=unit/common/test_timer.py::test_context_manager_named"
+         "--deselect=unit/common/test_timer.py::test_context_manager_anonymous"
+         ;; FIXME: Tests with binary encoded hdf5 files fail with a
+         ;; segfault.  See fenics-project DOLFIN commit 6fbc9fb.
+         "--ignore=unit/io/test_XDMF.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
@@ -926,7 +928,7 @@ user interface to the FEniCS core components and external libraries.")
               ;; Instead of cluttering the user's PKG_CONFIG_PATH environment
               ;; variable, hard-code the 'dolfin.pc' absolute file name.
               (let ((pc-file (search-input-file inputs
-                              "/lib/pkgconfig/dolfin.pc")))
+                                                "/lib/pkgconfig/dolfin.pc")))
                 (substitute* "python/dolfin/jit/jit.py"
                   (("pkgconfig\\.parse\\(\"dolfin\"\\)")
                    (string-append "pkgconfig.parse(\"" pc-file "\")"))))))
@@ -936,8 +938,7 @@ user interface to the FEniCS core components and external libraries.")
               (setenv "PYBIND11_DIR" #$(this-package-input "pybind11"))
               ;; Move to python sub-directory.
               (chdir "python")))
-          (add-after 'build 'mpi-setup
-            #$%openmpi-setup)
+          (add-after 'build 'mpi-setup #$%openmpi-setup)
           (add-before 'check 'pre-check
             (lambda _
               ;; Exclude three tests that generate 'NotImplementedError' in
@@ -946,34 +947,32 @@ user interface to the FEniCS core components and external libraries.")
               ;; Also exclude tests that require meshes supplied by git-lfs.
               (substitute* "demo/test.py"
                 (("(.*stem !.*)" line)
-                 (string-append line
-                  "\n"
-                  "excludeList = [\n"
-                  "'built-in-meshes', \n"
-                  "'hyperelasticity', \n"
-                  "'elasticity', \n"
-                  "'multimesh-quadrature', \n"
-                  "'multimesh-marking', \n"
-                  "'mixed-poisson-sphere', \n"
-                  "'mesh-quality', \n"
-                  "'lift-drag', \n"
-                  "'elastodynamics', \n"
-                  "'dg-advection-diffusion', \n"
-                  "'curl-curl', \n"
-                  "'contact-vi-tao', \n"
-                  "'contact-vi-snes', \n"
-                  "'collision-detection', \n"
-                  "'buckling-tao', \n"
-                  "'auto-adaptive-navier-stokes', \n"
-                  "'advection-diffusion', \n"
-                  "'subdomains', \n"
-                  "'stokes-taylor-hood', \n"
-                  "'stokes-mini', \n"
-                  "'navier-stokes', \n"
-                  "'eigenvalue']\n"
-                  "demos = ["
-                  "d for d in demos if d[0].stem not "
-                  "in excludeList]\n")))
+                 (format #f "~a
+excludeList = [~{ '~a',~% ~}]
+demos = [d for d in demos if d[0].stem not in excludeList]~%"
+                         line
+                         (list "built-in-meshes"
+                               "hyperelasticity"
+                               "elasticity"
+                               "multimesh-quadrature"
+                               "multimesh-marking"
+                               "mixed-poisson-sphere"
+                               "mesh-quality"
+                               "lift-drag"
+                               "elastodynamics"
+                               "dg-advection-diffusion"
+                               "curl-curl"
+                               "contact-vi-tao"
+                               "contact-vi-snes"
+                               "collision-detection"
+                               "buckling-tao"
+                               "auto-adaptive-navier-stokes"
+                               "advection-diffusion"
+                               "subdomains"
+                               "stokes-taylor-hood"
+                               "stokes-mini"
+                               "navier-stokes"
+                               "eigenvalue"))))
               ;; Do not test for expired numpy aliases.
               (substitute* "test/unit/la/test_vector.py"
                 ((" numpy.float\\(42.0\\),") "")
@@ -985,32 +984,37 @@ user interface to the FEniCS core components and external libraries.")
               ;; Restrict OpenBLAS to MPI-only in preference to MPI+OpenMP.
               (setenv "OPENBLAS_NUM_THREADS" "1")))
           (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
               (when tests?
                 (with-directory-excursion "test"
-                  (invoke "pytest"
-                   "unit"
-                   ;; This test fails and is ignored.
-                   "--deselect"
-                   "unit/nls/test_PETScSNES_solver.py::test_snes_set_from_options"
-                   ;; FIXME: Tests with binary encoded hdf5 files fail with a
-                   ;; segfault.  See fenics-project DOLFIN commit 6fbc9fb.
-                   "--ignore"
-                   "unit/io/test_XDMF.py")))))
+                  (apply invoke "pytest" test-flags)))))
           (add-after 'install 'install-demo-files
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((demos (string-append (assoc-ref outputs "out")
-                             "/share/python-dolfin/demo")))
+            (lambda _
+              (let* ((demos (string-append #$output
+                                           "/share/python-dolfin/demo")))
                 (mkdir-p demos)
                 (with-directory-excursion "demo"
                   (for-each (lambda (file)
                               (let* ((dir (dirname file))
-                                     (tgt-dir (string-append demos
-                                               "/" dir)))
+                                     (tgt-dir (string-append demos "/" dir)))
                                 (unless (equal? "." dir)
                                   (mkdir-p tgt-dir)
                                   (install-file file tgt-dir))))
                             (find-files "." ".*\\.(py|gz|xdmf)$")))))))))
+    (inputs
+     (modify-inputs (package-inputs fenics-dolfin)
+       (delete "python")
+       (prepend pybind11 python-matplotlib)))
+    (native-inputs
+     (modify-inputs (package-native-inputs fenics-dolfin)
+       (prepend cmake-minimal python-ply python-pytest python-decorator
+                python-setuptools)))
+    (propagated-inputs
+     (list fenics-dolfin
+           python-petsc4py
+           python-slepc4py
+           ;; 'dolfin/jit/jit.py' parses 'dolfin.pc' at runtime.
+           python-pkgconfig))
     (home-page "https://fenicsproject.org/")
     (synopsis "High-level environment for solving differential equations")
     (description
@@ -1100,43 +1104,28 @@ river flooding.")
 (define-public python-meshio
   (package
     (name "python-meshio")
-    (version "5.3.4")
+    (version "5.3.5")
     (source
      (origin
+       ;; Using PyPI rather than git because some test files must be
+       ;; downloaded through git-fls.
        (method url-fetch)
        (uri (pypi-uri "meshio" version))
        (sha256
-        (base32
-         "1w39qcg0rw5kb04j7sa45fnqd6k20fsdgrf62cmw2ygjgwnnjh72"))
-       (snippet
-        '(let ((file (open-file "setup.py" "a")))
-           (display "from setuptools import setup\nsetup()" file)
-           (close-port file)))))
-    (build-system python-build-system)
-    (inputs
-     (list python-h5py
-           python-netcdf4))
-    (native-inputs
-     (list python-pytest))
-    (propagated-inputs
-     (list python-importlib-metadata
-           python-numpy
-           python-rich))
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "-m" "pytest" "-v" "tests")))))))
+        (base32 "0vaqhygr2d186qixvfckzqf4447674ylnc0rl5pa16zjv6mh27zj"))))
+    (build-system pyproject-build-system)
+    (inputs (list python-h5py python-netcdf4))
+    (native-inputs (list python-pytest python-setuptools))
+    (propagated-inputs (list python-numpy python-rich))
     (home-page "https://github.com/nschloe/meshio")
     (synopsis "I/O for mesh files")
-    (description "There are various file formats available for
-representing unstructured meshes and mesh data.  The @code{meshio}
-package is able to read and write mesh files in many formats and to
-convert files from one format to another.  Formats such as cgns, h5m,
-gmsh, xdmf and vtk are supported.  The package provides command-line
-tools and a collection of Python modules for programmatic use.")
+    (description
+     "There are various file formats available for representing unstructured
+meshes and mesh data.  The @code{meshio} package is able to read and write
+mesh files in many formats and to convert files from one format to another.
+Formats such as cgns, h5m, gmsh, xdmf and vtk are supported.  The package
+provides command-line tools and a collection of Python modules for
+programmatic use.")
     (license license:expat)))
 
 (define-public python-pygmsh
@@ -1278,13 +1267,22 @@ implemented in @code{fenics} or
               (sha256
                (base32
                 "13jg0cys7y4n7rg548w6mxk9g10gd5qxmj4ynrlriczpffqy6kc7"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-setup.py
-                 (lambda _
-                   #$%commonroad-dont-install-license-at-root)))))
+     (list
+      #:test-flags
+      #~(list "--ignore=scripts/test_vehicle.py" ; import error
+              "-k" "not test_std")               ; flaky
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-setup.py
+            (lambda _
+              #$%commonroad-dont-install-license-at-root)))))
+    (native-inputs
+     (list python-matplotlib
+           python-pytest
+           python-scipy
+           python-setuptools))
     (propagated-inputs (list python-numpy python-omegaconf))
     (home-page "https://commonroad.in.tum.de/")
     (synopsis "CommonRoad vehicle models")
@@ -1303,15 +1301,17 @@ track models to multi-body models.")
               (sha256
                (base32
                 "1cj9zj567mca8xb8sx9h3nnl2cccv6vh8h73imgpq61cimk9mvas"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-setup.py
-                 (lambda _
-                   (substitute* "setup.py"
-                     (("protobuf==3.20.1") "protobuf >= 3.20.1"))
-                   #$%commonroad-dont-install-license-at-root)))))
+     (list
+      #:tests? #f                       ; No tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-setup.py
+            (lambda _
+              (substitute* "setup.py"
+                (("protobuf==3.20.1") "protobuf >= 3.20.1"))
+              #$%commonroad-dont-install-license-at-root)))))
     (propagated-inputs (list python-commonroad-vehicle-models
                              python-iso3166
                              python-lxml
@@ -1325,7 +1325,7 @@ track models to multi-body models.")
                              python-scipy
                              python-shapely
                              python-tqdm))
-    (native-inputs (list python-lxml python-pytest))
+    (native-inputs (list python-lxml python-setuptools))
     (home-page "https://commonroad.in.tum.de/")
     (synopsis "Read, write, and visualize CommonRoad scenarios")
     (description "This package provides methods to read, write, and visualize
@@ -1348,12 +1348,15 @@ and is the basis for other tools of the CommonRoad Framework.")
                (base32
                 "0xn0l7bzmj56d4mlqacvbl8mdvsffkg2fn2lzfmis5jl4vp99ipf"))))
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-setup.py
-                 (lambda _
-                   #$%commonroad-dont-install-license-at-root)))))
-    (build-system python-build-system)
+     (list
+      #:tests? #f                       ; No tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-setup.py
+            (lambda _
+              #$%commonroad-dont-install-license-at-root)))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools))
     (propagated-inputs (list python-commonroad-io
                              python-matplotlib
                              python-networkx
@@ -1362,9 +1365,9 @@ and is the basis for other tools of the CommonRoad Framework.")
                              python-shapely))
     (home-page "https://gitlab.lrz.de/tum-cps/commonroad-route-planner")
     (synopsis "Route planner for CommonRoad scenarios")
-    (description "This package provides functions for route planning, that is
-finding sequences that lead from a given start lanelet to some goal
-lanelet(s).")
+    (description
+     "This package provides functions for route planning, that is finding
+sequences that lead from a given start lanelet to some goal lanelet(s).")
     (license license:bsd-3)))
 
 (define-public sumo

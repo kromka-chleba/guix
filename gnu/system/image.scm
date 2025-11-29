@@ -4,7 +4,7 @@
 ;;; Copyright © 2022 Pavel Shlyak <p.shlyak@pantherx.org>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2022 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2023 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -81,6 +81,7 @@
             mbr-disk-image
             mbr-hybrid-disk-image
             efi-disk-image
+            efi32-disk-image
             iso9660-image
             docker-image
             tarball-image
@@ -354,6 +355,15 @@ set to the given OS."
   "Return the index of the root partition of the given IMAGE."
   (1+ (srfi-1:list-index root-partition? (image-partitions image))))
 
+(define (bootloader-uses-grub-efi? bootloader)
+  "Return true if the bootloader-name contains grub-efi."
+  (memq (bootloader-name bootloader)
+        (list grub-efi grub-efi32
+              grub-efi-removable-bootloader
+              grub-efi32-removable-bootloader
+              grub-efi-netboot-bootloader
+              grub-efi-netboot-removable-bootloader)))
+
 
 ;;
 ;; Disk image.
@@ -402,8 +412,10 @@ used in the image."
             (file-system (partition-file-system partition)))
         (cond
          ((member 'esp flags) "0xEF")
+         ((string=? file-system "swap") "0x82")
          ((or (string=? file-system "btrfs")
-              (string-prefix? "ext" file-system)) "0x83")
+              (string-prefix? "ext" file-system)
+              (string=? file-system "f2fs")) "0x83")
          ((or (string=? file-system "vfat")
               (string=? file-system "fat16")) "0x0E")
          ((string=? file-system "fat32") "0x0C")
@@ -423,10 +435,12 @@ used in the image."
         (cond
          ((member 'esp flags) "U")
          ((or (string=? file-system "btrfs")
-              (string-prefix? "ext" file-system)) "L")
+              (string-prefix? "ext" file-system)
+              (string=? file-system "f2fs")) "L")
          ((or (string=? file-system "vfat")
               (string=? file-system "fat16")
               (string=? file-system "fat32")) "F")
+         ((string=? file-system "swap") "S")
          ((and (string=? file-system "unformatted")
                (partition-uuid partition))
           (uuid->string (partition-uuid partition)))
@@ -459,6 +473,10 @@ used in the image."
                                    (list btrfs-progs fakeroot))
                                   ((string-prefix? "ext" type)
                                    (list e2fsprogs fakeroot))
+                                  ((string=? type "f2fs")
+                                   (list f2fs-tools fakeroot))
+                                  ((string=? type "swap")
+                                   (list fakeroot util-linux))
                                   ((or (string=? type "vfat")
                                        (string-prefix? "fat" type))
                                    (list dosfstools fakeroot mtools))
@@ -483,8 +501,15 @@ used in the image."
                               #:copy-closures? (not
                                                 #$(image-shared-store? image))
                               #:system-directory #$os
-                              #:grub-efi #+grub-efi
-                              #:grub-efi32 #+grub-efi32
+                              ;; These two shouldn't be needed unconditionally.
+                              #:grub-efi
+                              #+(if (bootloader-uses-grub-efi? bootloader)
+                                    grub-efi
+                                    #f)
+                              #:grub-efi32
+                              #+(if (bootloader-uses-grub-efi? bootloader)
+                                    grub-efi32
+                                    #f)
                               #:bootloader-package
                               #+(bootloader-package bootloader)
                               #:bootloader-installer
@@ -538,8 +563,7 @@ used in the image."
                 (image-partition-table-type image)))
        (else "")))
 
-    (when (and (memq (bootloader-name bootloader)
-                     '(grub-efi grub-efi32 grub-efi-removable-bootloader))
+    (when (and (bootloader-uses-grub-efi? bootloader)
                (not
                 (gpt-image? image)))
       (raise

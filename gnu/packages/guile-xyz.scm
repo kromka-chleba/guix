@@ -1314,23 +1314,23 @@ is not available for Guile 2.0.")
        (replace "guile" guile-2.2)))))
 
 (define-public guile-fibers-next
-  (let ((commit "96cd1f4d4639b5c0f0b2fb7ebfd29b339a368dcc")
+  (let ((commit "297359f0ad655378bcc3ff0d4e96101965ef39b4")
         (revision "0"))
     (package
       (inherit guile-fibers)
       (name "guile-fibers-next")
-      (version (git-version "1.3.1"
+      (version (git-version "1.4.2"
                             revision
                             commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/wingo/fibers")
+                      (url "https://codeberg.org/guile/fibers.git")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0kmsbdcpw2qdl20ihjsdcbw3nlii9f6zpkhhrwqmlyqi46hyq9xl"))))
+                  "0qh0czz5qvk5mmrc8x2gmvl5psdfd22q2rhzj4jrpan6k3d55bl8"))))
       (inputs
        (modify-inputs (package-inputs guile-fibers)
          (replace "guile" guile-next)))
@@ -2309,21 +2309,18 @@ format.")
 (define-public guile-extensible-match
   (package
     (name "guile-extensible-match")
-    (version "0.75.1")
+    (version "0.875")
     (source
      (origin
        (method git-fetch)
        (uri
         (git-reference
           (url "https://codeberg.org/dpk/extensible-match")
-          ;; This commit is 1 commit ahead of tag v0.75.1,
-          ;; includes a patch remove SRFI-151 dependency, which
-          ;; is not packaged in Guix.
-          (commit "d2d32e0e09d37c78dbdd4fedd1af1c6dd3663bb6")))
+          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1b2a7cl2fax6ysb5dj7ssy89w4w8xbn3iwc9ffb0p7948sxw7xgx"))))
+         "1dzg9qgzcm29kmbw1z3sxrbkr4zqi9babbdnspfms40ka86bawkx"))))
     (build-system guile-build-system)
     (arguments
      (list
@@ -2363,7 +2360,6 @@ format.")
               (rename-file "srfi/:262.scm" "srfi/srfi-262.scm")
               (rename-file "srfi/:262" "srfi/srfi-262"))))))
     (native-inputs (list guile-3.0))
-    (propagated-inputs (list guile-srfi-133))
     (home-page "https://codeberg.org/dpk/extensible-match")
     (synopsis "Extensible pattern-matching library")
     (description
@@ -7017,7 +7013,7 @@ including parsing and code generation.")
     (inputs
      (list guile-3.0))
     (propagated-inputs
-     (list guile-bytestructures nyacc))
+     (list guile-bytestructures nyacc-1.08.1))
     (home-page "https://git.elephly.net/software/guile-drmaa.git")
     (synopsis "Guile bindings to DRMAA")
     (description "This project provides Guile bindings to the DRMAA library
@@ -7499,8 +7495,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "95200eccfd5668fa94a0dfad6eab93d7b7731c9d")
-        (revision "25"))
+  (let ((commit "a8e07b738b558d701c6de1f5ee6452ee4095198e")
+        (revision "28"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -7511,7 +7507,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "188wnz6vn1ba3nby13dwf91v09vidlap2zrlnklz2xgzajk8m7bb"))
+                "13cc81pnjw55y1p8v6zvbk46bsf0snwbk3fkg3xh9girl9z5krj3"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs

@@ -546,7 +546,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/php.scm				\
   %D%/packages/php-xyz.scm			\
   %D%/packages/piet.scm			\
-  %D%/packages/pikchr.scm			\
+  %D%/packages/diagram.scm			\
   %D%/packages/pkg-config.scm			\
   %D%/packages/plan9.scm			\
   %D%/packages/plotutils.scm			\
@@ -987,6 +987,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/akonadi-not-relocatable.patch		\
   %D%/packages/patches/akonadi-timestamps.patch		\
   %D%/packages/patches/alure-dumb-2.patch			\
+  %D%/packages/patches/amd-smi-python.patch			\
   %D%/packages/patches/ibus-anthy-fix-tests.patch		\
   %D%/packages/patches/ibus-table-paths.patch			\
   %D%/packages/patches/anki-mpv-args.patch			\
@@ -1210,6 +1211,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
   %D%/packages/patches/emacs-deferred-fix-number-of-arguments.patch	\
   %D%/packages/patches/emacs-disable-jit-compilation.patch			\
+  %D%/packages/patches/emacs-elisp-autofmt-fix-region-send.patch	\
   %D%/packages/patches/emacs-exec-path.patch			\
   %D%/packages/patches/emacs-fix-scheme-indent-function.patch	\
   %D%/packages/patches/emacs-gnus-alias-reference-signature.patch	\

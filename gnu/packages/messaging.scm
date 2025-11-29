@@ -2289,7 +2289,7 @@ QMatrixClient project.")
 (define-public mtxclient
   (package
     (name "mtxclient")
-    (version "0.10.0")
+    (version "0.10.1")
     (source
      (origin
        (method git-fetch)
@@ -2298,7 +2298,7 @@ QMatrixClient project.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10iidyxjk3w6cljw2r62i5azx84nw3p8hw97d8vy7r5gh1nrrrcn"))))
+        (base32 "077f3x45sd0sbk51azz5xg1icp3472nn4vfjsbk2db8wmq54qhb3"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2334,7 +2334,7 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
 (define-public nheko
   (package
     (name "nheko")
-    (version "0.12.0")
+    (version "0.12.1")
     (source
      (origin
        (method git-fetch)
@@ -2343,7 +2343,7 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "113ids1k2pjmvs9cgh025vkpg5mipw295dlkx7n3ydi0r8mzw1l5"))
+        (base32 "098jqccwsfbqkdpnhbych2rd076385wb51fx9qyjfiddidxv2mas"))
        (modules '((guix build utils)))
        (snippet '(delete-file-recursively "third_party"))))
     (arguments
@@ -2809,47 +2809,6 @@ Eclipse Paho project provides client side implementations of MQTT and MQTT-SN
 in a variety of programming languages.  This package is for the Python
 implementation of an MQTT version client class.")
     (license (list license:epl2.0 license:edl1.0)))) ;dual licensed
-
-(define-public movim-desktop
-  (let ((commit "83d583b83629dbd2ec448da9a1ffd81f6c1fb295")
-        (revision "3"))
-    (package
-      (name "movim-desktop")
-      (version
-       (git-version "0.14.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri
-          (git-reference
-           (url "https://github.com/movim/movim_desktop")
-           (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1lsa3k3wx1d2lk0qs0k5jc5bmapnmpzwynprjf2wihh8c8y3iwlz"))))
-      (build-system qt-build-system)
-      (arguments
-       `(#:tests? #f                    ; No target
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'patch
-             (lambda* (#:key outputs #:allow-other-keys)
-               (substitute* `("CMakeLists.txt" "movim.desktop")
-                 (("/usr")
-                  (assoc-ref outputs "out"))
-                 (("\"build")
-                  "\"../build"))
-               #t)))))
-      (inputs
-       (list qtbase-5 qtdeclarative-5 qtwebchannel-5))
-      (propagated-inputs
-       (list qtwebengine-5))
-      (home-page "https://movim.eu/")
-      (synopsis "Desktop Application for Movim")
-      (description
-       "Movim-Desktop is a desktop application, relying on Qt, for the Movim
-social and chat platform.")
-      (license license:gpl3+))))
 
 (define-public psi-plus
   (package

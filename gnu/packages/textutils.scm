@@ -1976,15 +1976,27 @@ Expressions, and being faster to type than grep.")
 (define-public pandoc-include
   (package
     (name "pandoc-include")
-    (version "1.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pandoc-include" version))
-              (sha256
-               (base32
-                "01nrbzs85mrd7jcflicsz0bmfnzi6wsy0ii262xl01zsabqd7n91"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-natsort python-panflute))
+    (version "1.4.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/DCsunset/pandoc-include")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1db7fhdvhl3jnzwbi5s76jnlgkf0ifw9ngfv63dij4y21g5lhmzj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; XXX: Test can be run with "test/run.py" but fail with error:
+     ;; json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools))
+    (inputs
+     (list python-lxml
+           python-natsort
+           python-panflute))
     (home-page "https://github.com/DCsunset/pandoc-include")
     (synopsis "Pandoc filter to allow file and header includes")
     (description "@code{pandoc-include} extends Pandoc to support:
@@ -2004,7 +2016,7 @@ Expressions, and being faster to type than grep.")
 (define-public yq
   (package
     (name "yq")
-    (version "4.47.2")
+    (version "4.49.1")
     (source
      (origin
        (method git-fetch)
@@ -2013,7 +2025,7 @@ Expressions, and being faster to type than grep.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04724qywadxvgcdq5h35b9mqkyngkyad5aq5dk4g84aycarskpc4"))))
+        (base32 "1d73ln533xqbr9cxlkzpa5f5kfldzw381zwf6ln45cbjsgms7591"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -2047,7 +2059,7 @@ Expressions, and being faster to type than grep.")
            go-github-com-spf13-cobra
            go-github-com-spf13-pflag
            go-github-com-yuin-gopher-lua
-           go-go-yaml-in-yaml-v3
+           go-go-yaml-in-yaml-v4
            go-golang-org-x-net
            go-golang-org-x-text
            go-gopkg-in-op-go-logging-v1))

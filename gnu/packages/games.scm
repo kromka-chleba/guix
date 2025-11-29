@@ -1151,11 +1151,11 @@ original rogue game found on 4.2BSD.")
     (license license:bsd-3)))
 
 (define-public sgt-puzzles
-  (let ((commit "790f5851507be5845164d3ae7b32b2f86717fe50")
+  (let ((commit "28032bd5a0d3dc409eb225b8bdb23fd0b18a28d7")
         (revision "0"))
     (package
       (name "sgt-puzzles")
-      (version (git-version "20251021" revision commit))
+      (version (git-version "20251120" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1164,7 +1164,7 @@ original rogue game found on 4.2BSD.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "163jdm4vdydp3zqw37jg0gmiacz1dgyl58kjdd5wsd0y2qix78p4"))))
+          (base32 "0533fzzagmi7g7sw1fdgpzy6gjpif77gxf3avz1qnjsma5gq7f2l"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -5163,7 +5163,7 @@ falling, themeable graphics and sounds, and replays.")
 (define-public wesnoth
   (package
     (name "wesnoth")
-    (version "1.19.18")
+    (version "1.18.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5172,7 +5172,7 @@ falling, themeable graphics and sounds, and replays.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rykgbgwip3pn4fj4cihmggjljx8kakv6nglcvrk9l14cm95h9g6"))))
+                "16mrdpz1yq12ppnrmm4yv768zmh08qjdxh892pzc5i17n7xkmpy4"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;no test target
@@ -11991,20 +11991,41 @@ protect you.")
 (define-public 7kaa
   (package
     (name "7kaa")
-    (version "2.15.6")
+    (version "2.15.7")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://sourceforge/skfans/"
-                           "7KAA%20" version "/7kaa-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.code.sf.net/p/skfans/7kaa")
+              (commit (string-append "v" version))))
        (sha256
-        (base32 "15a0cl55bg479gw880yz48myg336q5lwp2zpyxyyhyadq26vjy9c"))))
+        (base32 "1gfmgqdmqfaxj4hlz8x7zh3s36inns1gqqb8dq0r58b26xk42x2y"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-configure-ac
+            ;; gettext version mismatch forces us to patch configure.ac
+            (lambda _
+              (let ((gettext-version
+                     #$(package-version (this-package-native-input "gettext-minimal"))))
+                (substitute* "configure.ac"
+                (("AM_GNU_GETTEXT_VERSION.*")
+                 (string-append
+                  "AM_GNU_GETTEXT_VERSION([" gettext-version "])\n"
+                  "AM_GNU_GETTEXT_REQUIRE_VERSION([" gettext-version "])\n")))))))))
     (native-inputs
-     (list gettext-minimal pkg-config))
+     (list autoconf
+           autoconf-archive
+           automake
+           gettext-minimal
+           pkg-config))
     (inputs
-     (list curl enet openal sdl2))
-    (home-page "https://7kfans.com/")
+     (list curl
+           enet
+           openal
+           sdl2))
     (synopsis "Seven Kingdoms Ancient Adversaries: real-time strategy game")
     (description
      "Seven Kingdoms, designed by Trevor Chan, brings a blend of Real-Time
@@ -12013,6 +12034,7 @@ enables players to compete against up to six other kingdoms allowing players
 to conquer opponents by defeating them in war (with troops or machines),
 capturing their buildings with spies, or offering opponents money for their
 kingdom.")
+    (home-page "https://7kfans.com/index.html")
     (license license:gpl2+)))
 
 (define-public neverball

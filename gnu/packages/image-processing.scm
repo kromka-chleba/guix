@@ -27,6 +27,7 @@
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
 ;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2025 dan <i@dan.games>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -231,16 +232,16 @@ with external tools and libraries.")
 (define-public dcmtk
   (package
     (name "dcmtk")
-    (version "3.6.8")
+    (version "3.6.9")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        (string-append "ftp://dicom.offis.de/pub/dicom/offis/software/dcmtk/"
-                       "dcmtk" (string-join (string-split version #\.) "")
-                       "/dcmtk-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.dcmtk.org/dcmtk")
+             (commit (string-append "DCMTK-" version))))
        (sha256
-        (base32 "03vjv2lq5kr79ghf8v0q9wskkrcr2ygi097nybmqs4q3amjpc813"))))
+        (base32 "0x99gg1kahkzbayfciyhkw5xdcm8cs4r8cmv15kniw9pldi3zllr"))
+       (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
      ;; By default, only static archives are built.
@@ -303,7 +304,20 @@ licences similar to the Modified BSD licence."))))
                    ;; (see https://github.com/AcademySoftwareFoundation/OpenColorIO/blob/v2.4.2/tests/cpu/Config_tests.cpp#L6227)
                    (substitute* "tests/cpu/Config_tests.cpp"
                      (("cs1\\\\t\\\\n   \\\\n,   \\\\ncs2")
-                      "cs1, cs2")))))))
+                      "cs1, cs2"))))
+               ;; Disable a failing test case on arm and riscv due to FMA
+               ;; instructions being generated.
+               ;; (see https://github.com/AcademySoftwareFoundation/OpenColorIO/issues/1784)
+               #$@(if (or (target-arm?)
+                          (target-riscv64?))
+                      #~((add-after 'unpack 'disable-failing-test
+                           (lambda _
+                             (substitute* "tests/cpu/ops/gamma/GammaOpCPU_tests.cpp"
+                               ((".*apply_moncurve_mirror_style_fwd.*" all)
+                                (string-append "#if 0\n" all))
+                               ((".*apply_moncurve_mirror_style_rev.*" all)
+                                (string-append "#endif\n" all))))))
+                      #~()))))
     (native-inputs
      ;; XXX: OCIO has unit tests for OpenShadingLanguage, but they fail.
      ;; They also require OIIO, but OCIO is an optional dependency to it.

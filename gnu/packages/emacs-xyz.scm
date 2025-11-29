@@ -148,7 +148,7 @@
 ;;; Copyright © 2024, 2025 Spencer King <spencer.king@wustl.edu>
 ;;; Copyright © 2024 emma thompson <bigbookofbug@proton.me>
 ;;; Copyright © 2024-2025 Liam Hupfer <liam@hpfr.net>
-;;; Copyright © 2024-2025 aurtzy <aurtzy@gmail.com>
+;;; Copyright © 2024-2025 Alvin Hsu <aurtzy@gmail.com>
 ;;; Copyright © 2024 Olivier Rojon <o.rojon@posteo.net>
 ;;; Copyright © 2024 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Arjan Adriaanse <arjan@adriaan.se>
@@ -310,6 +310,7 @@
   #:use-module (gnu packages finance)
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages erlang)
+  #:use-module (gnu packages search)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages telegram)
@@ -371,8 +372,8 @@ buffer, a file on your disk, or a string from the kill ring.")
       (license license:gpl3+))))
 
 (define-public emacs-elisp-autofmt
-  (let ((commit "fa30ffc2320c41fc3827e2a800d40d7d5bcaddbe")
-        (revision "0"))
+  (let ((commit "c2765641a9bd2b4c979e7055030fb7a145b6c118")
+        (revision "1"))
     (package
       (name "emacs-elisp-autofmt")
       (version (git-version "0.1" revision commit))
@@ -384,35 +385,46 @@ buffer, a file on your disk, or a string from the kill ring.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "174cmqszhx42blqc6fjjf3lgaz2hasj15743hcrzj6a97nhx4wsj"))))
+          (base32 "0hgmlbxabzhwc1kw59hxvi9xgk6fh0jar4k82sb8yn1zznzhr0lk"))
+         (patches
+          (search-patches "emacs-elisp-autofmt-fix-region-send.patch"))))
       (build-system emacs-build-system)
-      (inputs (list python))
       (arguments
        (list
-        #:test-command #~(list "make" "tests")
+        #:test-command #~(list "make" "test")
         #:include #~(cons* "elisp-autofmt.py"
+                           "elisp-autofmt-cmd.py"
                            "elisp-autofmt.overrides.json"
                            %default-include)
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'patch-dependencies
-              (lambda* (#:key inputs #:allow-other-keys)
-                (substitute* "elisp-autofmt.el"
-                  (("\"python\"")
-                   (string-append "\""
-                                  (search-input-file inputs "/bin/python3")
-                                  "\"")))))
             ;; TODO Remove when fixed upstream. See:
-            ;; https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/36
+            ;; <https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/36>.
             (add-before 'check 'fix-tests
               (lambda _
                 (setenv "HOME" (getenv "TMPDIR"))
-                (with-atomic-file-replacement "Makefile"
-                  (lambda (in out)
-                    (dump-port in out)
-                    (display "\n.PHONY: tests\n" out)))
-                (substitute* "Makefile"
-                  (("python") "python3")))))))
+                (substitute* '("tests/full_compare_data/spell-fu.autofmt.data"
+                               "tests/full_compare_data/simple.autofmt.data")
+                (("error \"Expected cache-header to be list, not %S\"")
+                 "error
+          \"Expected cache-header to be list, not %S\"")
+                (("error \"Require cache version %S, not %S\"")
+                 "error
+            \"Require cache version %S, not %S\"")
+                (("error \"Expected cache to contain a hash-table, not %S\"")
+                 "error
+          \"Expected cache to contain a hash-table, not %S\"")
+                (("error \"Don.t know how to handle action %S\"")
+                 "error
+                    \"Don't know how to handle action %S\"")
+                (("error \"Cannot indirectly clone a buffer in %s mode\" mode-name")
+                 "error \"Cxnnot indirectly clone a buffer in %s mode\" mode-name")
+                (("error \"Cannot indirectly clone a buffer in %s mode\"")
+                 "error
+          \"Cannot indirectly clone a buffer in %s mode\"")
+                (("error \"Cxnnot indirectly clone a buffer in %s mode\" mode-name")
+                 "error \"Cannot indirectly clone a buffer in %s mode\" mode-name")))))))
+      (inputs (list python-minimal-wrapper))
       (home-page "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
       (synopsis "Auto-format Emacs lisp")
       (description "This is a package to auto-format Emacs lisp.")
@@ -500,6 +512,36 @@ last-used state, or the initial/default state when a universal argument is
 provided.  The implementation uses the bookmark system to save buffers
 states–that is, any major mode that supports the bookmark system is
 compatible.")
+    (license license:gpl3+)))
+
+(define-public emacs-helix
+  (package
+    (name "emacs-helix")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mgmarlow/helix-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12frkqmv0qbs4rqxdazki6xvhdb6ykr4xsrzk8ljlj19dniawhd8"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:test-command
+      #~(list "emacs"
+              "-Q"
+              "--batch"
+              "-l"
+              "helix-test.el"
+              "-f"
+              "ert-run-tests-batch-and-exit")))
+    (home-page "https://github.com/mgmarlow/helix-mode")
+    (synopsis "Helix keybindings in Emacs")
+    (description
+     "This package provides a minor mode emulating Helix keybindings.")
     (license license:gpl3+)))
 
 (define-public emacs-sops
@@ -1919,19 +1961,29 @@ separate, named tab groups.")
     (build-system emacs-build-system)
     (arguments
      (list
+      #:tests? #f                       ;no tests
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-dcmtk-executables
+          (add-after 'unpack 'patch-commands
             (lambda* (#:key inputs #:allow-other-keys)
               (make-file-writable "dicom.el")
               (let ((dcm2xml (search-input-file inputs "/bin/dcm2xml"))
-                    (dcmj2pnm (search-input-file inputs "/bin/dcmj2pnm")))
+                    (dcmj2pnm (search-input-file inputs "/bin/dcmj2pnm"))
+                    (ffmpeg (search-input-file inputs "/bin/ffmpeg"))
+                    (mpv (search-input-file inputs "/bin/mpv")))
                 (substitute* "dicom.el"
                   (("\"dcm2xml")
                    (string-append "\"" dcm2xml))
                   (("\"dcmj2pnm")
-                   (string-append "\"" dcmj2pnm)))))))))
-    (inputs (list dcmtk))
+                   (string-append "\"" dcmj2pnm))
+                  (("(^|[^`])ffmpeg" _ start)
+                   (string-append start ffmpeg))
+                  (("(^|[^`])mpv" _ start)
+                   (string-append start mpv))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
+    (native-inputs (list texinfo))
+    (inputs (list dcmtk ffmpeg mpv))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/dicom")
     (synopsis
@@ -1979,6 +2031,14 @@ posts, and participate in discussions on Discourse, directly from Emacs.")
        (sha256
         (base32 "17ffcfm4qxjvnmy95yczk18mngiy13pbq7avzrhrh44p3d53b5ss"))))
     (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no tests
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'install 'build-info-manual
+                     (lambda _
+                       (invoke "make" "info"))))))
+    (native-inputs (list texinfo))
     (propagated-inputs (list emacs-transient))
     (home-page "https://github.com/aurtzy/disproject")
     (synopsis "Transient interface for managing and interacting with projects")
@@ -2275,6 +2335,32 @@ before interacting with non-free LLMs.")
        "This package provides a collection of tools to be used by
 @acronym{Large Language Models, LLM} clients in Emacs.")
       (license license:gpl3+))))
+
+(define-public emacs-agitjo
+  (package
+    (name "emacs-agitjo")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://codeberg.org/halvin/agitjo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wbhi4lbqk0vf0di86a9wljvva3a9vhb2wvsn1s44h53xslhrj0n"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;no tests
+    (propagated-inputs (list emacs-magit emacs-markdown-mode emacs-transient))
+    (home-page "https://codeberg.org/halvin/agitjo")
+    (synopsis "Manage Forgejo PRs with AGit-Flow in Emacs")
+    (description
+     "AGitjo is a GNU Emacs package that extends Magit with a new menu for
+AGit-Flow operations, to make them more convenient for users.  The AGit workflow
+enables users to create and edit pull requests using just the @code{git push}
+command.  This package is intended specifically for use with
+Forgejo-based (e.g. Codeberg) repositories.")
+    (license license:gpl3+)))
 
 (define-public emacs-magit
   (package
@@ -6663,6 +6749,35 @@ delimiters which usually appear as ^L glyphs on a single line as horizontal
 lines spanning the entire window.  The minor mode is suitable for inclusion
 into mode hooks and is intended to be used that way.")
     (license license:gpl3+)))
+
+(define-public emacs-form-feed-st
+  (let ((commit "f91c8daf35b7588e0aa24c8716c8cfd8ff0067c8")
+        (revision "0"))
+    (package
+      (name "emacs-form-feed-st")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/leodag/form-feed-st")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0wj7icy2nj2kc1ayzgmrnn3slcw1ws6l9m89yr8h8j7wyrcnhkxz"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f))    ; No tests.
+      (home-page "https://github.com/leodag/form-feed-st")
+      (synopsis "Display ^L glyphs as full-width horizontal lines")
+      (description
+       "This package provides a minor mode to displays page delimiters which
+usually appear as ^L glyphs on a single line as horizontal lines spanning the
+entire window.  In comparison to @code{emacs-form-feed}, this fork does not
+have configurable line width; however, it always displays correctly, even if
+you have multiple windows showing the same buffer, and will never cause side
+scrolling since the form feed only occupies two spaces.  It also only affects
+form feeds at the beginning of the line.")
+      (license license:gpl3+))))
 
 (define-public emacs-xcscope
   (let ((commit "d228d7593d762e457340f678d14b663ef66d7cee")
@@ -28524,6 +28639,30 @@ library adds a selection of popular loop structures as well as break and
 continue.")
     (license license:gpl3+)))
 
+(define-public emacs-elisp-def
+  (package
+    (name "emacs-elisp-def")
+    (version "1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Wilfred/elisp-def")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j685c6rdjjldix2kg9gs535296496gz72d4bzs6qn35hxk55lwf"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-dash emacs-f emacs-s))
+    (native-inputs
+     (list emacs-ert-runner emacs-undercover))
+    (home-page "https://github.com/Wilfred/elisp-def")
+    (synopsis "Macro-aware goto definition for Emacs Lisp")
+    (description
+     "@code{elisp-def} finds Emacs Lisp symbol definitions intelligently.
+It understands namespaces, macros, libraries and local bindings.")
+    (license license:gpl3+)))
+
 (define-public emacs-elisp-refs
   (package
     (name "emacs-elisp-refs")
@@ -30922,6 +31061,28 @@ wheel mice.")
 on drag distance.")
       (license license:gpl3+))))
 
+(define-public emacs-mlscroll
+  (package
+    (name "emacs-mlscroll")
+    (version "0.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jdtsmith/mlscroll")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00q0s1y8y4j9qyldbp9bwd7cqd5023wizlmsm7rkns5icf42hwbm"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ; No tests.
+    (home-page "https://github.com/jdtsmith/mlscroll")
+    (synopsis "Scroll bar for the Emacs mode line")
+    (description
+     "MLScroll is a text-based scrollbar for the Emacs mode line.
+Enable it with @code{mlscroll-mode}.")
+    (license license:gpl3+)))
+
 (define-public emacs-company-restclient
   (package
     (name "emacs-company-restclient")
@@ -31378,27 +31539,74 @@ This library connects to different @code{zotero} translators:
       (license license:gpl3+))))
 
 (define-public emacs-zotxt
-  (package
-    (name "emacs-zotxt")
-    (version "5.0.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/egh/zotxt-emacs")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1zr67h0w49rsi84mgf6jdili28h8782q6vjl8za0iq1hcx9zqxyf"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-deferred emacs-request))
-    (home-page "https://github.com/egh/zotxt-emacs")
-    (synopsis "Integrate Emacs with Zotero")
-    (description "This package provides two integration features between Emacs
+  ;; The last release, 5.0.5, is from Jan 2020. It doesn't
+  ;; fully work with today's Zotero+zotxt any more. This
+  ;; commit does.
+  (let ((commit "b433f46b518574d5fe25f38c9c3afed542122d8b")
+        (revision "0"))
+    (package
+      (name "emacs-zotxt")
+      (version (git-version "5.0.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/egh/zotxt-emacs")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0lrbf3j5m9k2nb9id9brsvc1wqbl0rja3ny8zmld320ch9g5f49y"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'check 'fix-tests
+              (lambda _
+                (substitute* "test/test-helper.el"
+                  (("\\(setq load-dir ")
+                   "(require 'f)\n(setq load-dir"))))
+            ;; Remove tests that require connection to a server.
+            (add-before 'check 'delete-server-based-tests
+              (lambda _
+                (emacs-batch-edit-file "test/zotxt-test.el"
+                  `(progn
+                    (let ((tests
+                           '("test-get-item-link-text-deferred-with-citekey"
+                             "test-get-item-link-text-deferred"
+                             "make-quick-bib-string"
+                             "test-update-all-reference-links"
+                             "test-update-reference-link-at-point"
+                             "test-deferred-error-handler"
+                             "test-get-item-bibliography-deferred"
+                             "test-get-item-citekey-list-chain"
+                             "test-get-item-deferred"
+                             "test-get-item-uuid-deferred"
+                             "test-search-deferred")))
+                      (dolist (test tests)
+                              (goto-char (point-min))
+                              (search-forward test)
+                              (beginning-of-line)
+                              (kill-sexp)))
+                    (basic-save-buffer)))
+                ;; Don't start the server
+                (substitute* "test/test-helper.el"
+                  (("bundle exec ruby")
+                   "echo SKIPPED: bundle exec ruby")))))
+        #:test-command #~(list "emacs" "--batch"
+                               "-l" "test/test-helper.el"
+                               "-l" "test/zotxt-test.el"
+                               "-f" "ert-run-tests-batch-and-exit")))
+      (native-inputs
+       (list emacs-f emacs-undercover))
+      (propagated-inputs
+       (list emacs-deferred emacs-request emacs-org-noter))
+      (home-page "https://github.com/egh/zotxt-emacs")
+      (synopsis "Integrate Emacs with Zotero")
+      (description "This package provides two integration features between Emacs
 and the Zotero research assistant: Insertion of links to Zotero items into an
 Org-mode file, and citations of Zotero items in Pandoc Markdown files.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-zoxide
   (package
@@ -35166,6 +35374,71 @@ inserting a new line with the same indentation level as the current line.")
     (home-page "https://github.com/jamescherti/outline-indent.el")
     (license license:gpl3+)))
 
+(define-public emacs-bray
+  ;; No tagged releases. Version taken from bray.el.
+  (let ((commit "59574fc07bcfaa67fbd096aa12b32aa088b16fef")
+        (revision "0"))
+    (package
+      (name "emacs-bray")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://codeberg.org/ideasman42/emacs-bray/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1y6js77l7b34fd3345g4pv8b9wzqvrbq4pdhxdy8m3k54s79glz2"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:tests? #f))              ; No tests.
+      (synopsis "Lightweight modal editing framework")
+      (description
+       "This package provides a blank-slate for users to define their own
+modal editing workflow.  It has the following features, among others:
+
+@itemize
+@item The user can define custom states (like, say, @emph{normal},
+@emph{insert} etc.) in any number at will;
+@item States may be buffer-local, allowing context-dependent configuration and
+behavior;
+@item States can hold settings such as cursor, keymaps and enter/exit hooks;
+@end itemize")
+      (home-page "https://codeberg.org/ideasman42/emacs-bray/")
+      (license license:gpl3+))))
+
+(define-public emacs-meep
+  ;; No tagged releases. Version taken from meep.el.
+  (let ((commit "de7f3c51bcfcb54417f3c59ae9db2ce24d9ec7bd")
+        (revision "0"))
+    (package
+      (name "emacs-meep")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://codeberg.org/ideasman42/emacs-meep/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0hbi4jd6h35a12l1y0gs52898lvw3cs9mcxbqwdvazmzz8wzwia7"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:tests? #f))              ; No tests.
+      (propagated-inputs
+       (list emacs-bray))
+      (synopsis "Lightweight modal editing functionalities")
+      (description
+       "This package provides utility functions to bind to keys, intended to
+be used along with @code{emacs-bray} although most of them can be used in
+vanilla Emacs.")
+      (home-page "https://codeberg.org/ideasman42/emacs-meep/")
+      (license license:gpl3+))))
+
 (define-public emacs-repeat-fu
   ;; Upstream has no tags; release extracted from source code
   (let ((commit "b91d55001cca71e5df7a9f665c7da73ab9f55efd")
@@ -36858,12 +37131,11 @@ output.")
 (define-public emacs-vdiff-magit
   ;; Need to use a more recent commit than the latest release version because
   ;; of Magit and Transient
-  (let ((commit "b100d126c69e5c26a61ae05aa1778bcc4302b597")
-        (version "0.3.2")
-        (revision "8"))
+  (let ((commit "cc9e2dbd81d7f717381981501472808b7a4c6d79")
+        (revision "0"))
     (package
       (name "emacs-vdiff-magit")
-      (version (git-version version revision commit))
+      (version (git-version "0.3.3" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -36873,9 +37145,11 @@ output.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "16cjmrzflf2i1w01973sl944xrfanakba8sb4dpwi79d92xp03xy"))))
+           "0jybs0ddgvl1xfa750prw3phvilqxq3a4gpjpcljyjbjdqhdfrym"))))
       (build-system emacs-build-system)
-      (propagated-inputs (list emacs-vdiff emacs-magit))
+      (propagated-inputs
+       (list emacs-magit
+             emacs-vdiff))
       (home-page "https://github.com/justbur/emacs-vdiff-magit/")
       (synopsis "Frontend for diffing based on vimdiff")
       (description "This package permits comparisons of two or three buffers
@@ -45248,6 +45522,44 @@ and directories associated with a project.  When no project is open in the
 current buffer, it displays a list of known projects.  One can then pick
 a file from the selected project.")
       (license license:gpl3+))))
+
+(define-public emacs-consult-recoll
+  (package
+    (name "emacs-consult-recoll")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://codeberg.org/jao/consult-recoll")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w7c41fz6mm0i8annxr68icrcdmindafkvd3fnnnyw3ncm8vsygb"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ; No tests upstream.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'inject-recollq
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "consult-recoll.el"
+                ("consult-recoll-program"
+                 `(or (executable-find "recollq")
+                      ,(search-input-file inputs "bin/recollq")))))))))
+    (inputs (list recoll-cli))
+    (propagated-inputs (list emacs-consult))
+    (home-page "https://codeberg.org/jao/consult-recoll")
+    (synopsis "Recoll queries using consult")
+    (description
+     "Recoll is a local search engine that knows how to index a wide variety
+of file formats, including PDFs, org and other text files and emails.  It also
+offers a sophisticated query language, and, for some document kinds, snippets
+in the found documents actually matching the query at hand.  This package
+provides an emacs interface to perform recoll queries, and display its
+results, via @code{emacs-consult}.")
+    (license license:gpl3+)))
 
 (define-public emacs-context-transient
   (package

@@ -102,6 +102,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
@@ -333,6 +334,65 @@ are implemented as a core Linux kernel module providing common functionality and
 individual low-level driver modules.")
     (home-page "https://www.comedi.org/")
     (license license:lgpl2.1)))
+
+(define-public eqy
+  (package
+    (name "eqy")
+    (version "0.59")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/YosysHQ/eqy/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lbi3pn4d2zmqy2pd3pvdv007znildr06ink2g8sh6c9zb74xrk4"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:imported-modules (append %default-gnu-imported-modules
+                                 %python-build-system-modules)
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (delete 'build)
+          (delete 'check)
+          (add-after 'unpack 'build-info
+            (lambda _
+              (invoke "make" "-C" "docs" "info")
+              (install-file "docs/build/texinfo/yosyshqeqy.info"
+                            (string-append #$output "/share/info"))))
+          (add-after 'unpack 'patch-/usr/bin/env
+            (lambda _
+              (substitute* "src/eqy_job.py"
+                (("\"/usr/bin/env\", ") ""))))
+          (add-after 'install 'check-after-install
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "PATH"
+                        (string-append #$output "/bin:" (getenv "PATH")))
+                ;; make test fails on upstream, see:
+                ;; https://github.com/YosysHQ/eqy/actions/runs/18767539188/job/53545383858
+                (invoke "make" "-C" "examples/spm")
+                (invoke "make" "-C" "examples/simple"))))
+          (add-after 'install 'python:wrap
+            (@@ (guix build python-build-system) wrap)))))
+    (native-inputs
+     (list clang python-minimal-wrapper python-sphinx texinfo yosys-clang))
+    (inputs
+     (list python-click python-json5 readline))
+    (home-page "https://yosyshq.readthedocs.io/projects/eqy/en/latest/")
+    (synopsis "Equivalence checking using formal verification with Yosys")
+    (description
+     "@command{Eqy} is a front-end driver program for Yosys-based formal
+hardware equivalence checking.  It performs formal verification on two
+designs, such as ensuring that a synthesis tool has not introduced functional
+changes into a design, or ensuring that a design refactor preserves
+correctness in all conditions.")
+    (license license:isc)))
 
 (define-public ieee-p1076
   (package
@@ -909,6 +969,69 @@ which allows one to install the M8 firmware on any Teensy.")
                    license:expat
                    license:public-domain
                    license:zlib))))
+
+;; TODO: Unbundle scintilla when ScintillaEdit.h is available.
+(define-public mcy
+  (package
+    (name "mcy")
+    (version "0.59")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/YosysHQ/mcy/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12hfnbb2kamins2azy43j2ii8ih7agnj9zizg9zv6h5zyrwb3rw9"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;there are no tests
+      #:imported-modules (append %qt-build-system-modules
+                                 %python-build-system-modules)
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'build-info-documentation
+            (lambda _
+              (invoke "make" "-C" "docs" "info")
+              (install-file "docs/build/texinfo/yosyshqmcy.info"
+                            (string-append #$output "/share/info"))))
+          (add-before 'configure 'chdir
+            (lambda _
+              (chdir "gui")))
+          ;; As per main Makefile install target.
+          (add-after 'install 'make-install
+            (lambda _
+              (chdir "..")
+              (copy-recursively
+               "scripts" (string-append #$output "/share/mcy/scripts"))
+              (copy-recursively
+               "dash" (string-append #$output "/share/mcy/dash"))
+              ;; (mkdir-p (string-append #$output "/bin"))
+              (define (install-it filename)
+                (let* ((bin (format #f "~a/bin" #$output))
+                       (bin_ (format #f "~a/~a" bin filename)))
+                  (install-file (format #f "~a.py" filename) bin)
+                  (rename-file (format #f "~a/~a.py" bin filename) bin_)
+                  (chmod bin_ #o755)))
+              (install-it "mcy")
+              (install-it "mcy-dash")))
+          (add-after 'make-install 'python:wrap
+            (@@ (guix build python-build-system) wrap)))))
+    (native-inputs
+     (list pkg-config
+           python-sphinx
+           python-minimal-wrapper       ;remove with unbundling of scintilla
+           texinfo))
+    (inputs
+     (list boost python python-click python-flask))
+    (home-page "https://yosyshq.readthedocs.io/projects/mcy/en/latest/")
+    (synopsis "Mutation Cover with Yosys")
+    (description
+     "@command{Mcy} is a tool to help digital designers and project managers
+understand and improve testbench coverage.")
+    (license license:isc)))
 
 (define-public nextpnr
   (let ((commit "ad76625d4d828cb093b55aa9f5aae59b7ba9724f")
@@ -2332,9 +2455,9 @@ suite.")
 them usable as simple logic analyzer and/or oscilloscope hardware.")
       (license license:gpl2+))))
 
-(define-public symbiyosys
+(define-public sby
   (package
-    (name "symbiyosys")
+    (name "sby")
     (version "0.59")
     (source
      (origin
@@ -2348,6 +2471,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
     (build-system gnu-build-system)
     (arguments
      (list
+      #:parallel-tests? #f
       #:test-target "test"
       #:modules `((guix build gnu-build-system)
                   ((guix build python-build-system) #:prefix python:)
@@ -2363,10 +2487,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
           ;; (add-after 'install 'build-info
           ;; (lambda _
           ;; (invoke "make" "-C" "docs" "info")))
-          (add-before 'check 'git-init
-            (lambda _
-              (invoke "git" "init")))   ;check expects a git repo
-          (add-after 'git-init 'patch-/usr/bin/env
+          (add-after 'unpack 'patch-/usr/bin/env
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "sbysrc/sby_core.py"
                 (("\"/usr/bin/env\", ")
@@ -2378,22 +2499,50 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
             (assoc-ref python:%standard-phases 'wrap)))))
     (inputs (list abc-yosyshq
                   boolector
-                  git-minimal/pinned
                   python
                   python-click
                   python-xmlschema
                   z3
                   yices
-                  yosys))
+                  yosys-clang))
     ;; TODO: see above build-info phase comment.
     ;; (native-inputs (list
     ;;                 python-sphinx python-sphinx-argparse texinfo))
-    (home-page "https://github.com/YosysHQ/sby/")
-    (synopsis "Formal hardware verification with yosys")
+    (home-page "https://yosyshq.readthedocs.io/projects/sby/en/latest/")
+    (synopsis "Formal hardware verification with Yosys")
     (description
-     "SimbyYosys is a front-end program for yosys-based formal hardware
+     "@command{sby} is a front-end program for Yosys-based formal hardware
 verification flows.")
     (license license:isc)))
+
+(define-public sby-gui
+  (let ((commit "6c977084c17c4842c504829c6d455a07d67e119c")
+        (revision "0"))
+    (package
+      (name "sby-gui")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/YosysHQ/sby-gui/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "137x3s5mwbzlcv2p6671ijvbafzwhxpvszzfi9wifq0wcli6cxxg"))))
+      (build-system qt-build-system)
+      (arguments
+       (list #:tests? #f))               ;no tests
+      (propagated-inputs (list sby))
+      (home-page "https://github.com/YosysHQ/sby-gui/")
+      (synopsis "Graphical user interface for code{sby}")
+      (description
+       "@code{sby-gui} is a GUI for front-end driver program for
+code{yosys}-based formal hardware verification flows.")
+      (license license:isc))))
+
+(define-deprecated-package symbiyosys
+  sby)
 
 (define-public systemc
   (package

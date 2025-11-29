@@ -3775,50 +3775,50 @@ supports the propositional fragment of PDDL2.2.")
        (snippet
         '(delete-file-recursively "contrib/metis"))))
     (build-system cmake-build-system)
-    (propagated-inputs
+    (inputs
      (list fltk
-           gfortran
+           fontconfig
            glu
            gmp
            hdf5
            libx11
            libxext
+           libxft
            mesa
            metis
            openblas
            opencascade-occt))
-    (inputs
-     (list fontconfig
-           libxft
-           python))
+    (native-inputs
+     (list python-wrapper))
     (arguments
-     `(#:configure-flags `("-DENABLE_SYSTEM_CONTRIB:BOOL=ON"
-                           "-DENABLE_BUILD_SHARED:BOOL=ON"
-                           "-DENABLE_BUILD_DYNAMIC:BOOL=ON")
-       #:imported-modules (,@%cmake-build-system-modules
-                           (guix build python-build-system))
-       #:modules (((guix build python-build-system) #:select (site-packages))
-                  (guix build cmake-build-system)
-                  (guix build utils))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             ;; Use the standard Guix site-package path for
-             ;; installation of the Python API.
-             (substitute* "CMakeLists.txt"
-               (("include\\(GNUInstallDirs\\)\n")
-                (string-append "include(GNUInstallDirs)\n"
-                               "  set(GMSH_PY_LIB "
-                               (site-packages inputs outputs) ")\n"))
-               (("\\$\\{GMSH\\_PY\\} DESTINATION \\$\\{GMSH\\_LIB\\}")
-                "${GMSH_PY} DESTINATION ${GMSH_PY_LIB}"))
-             ;; Find the shared library.
-             (let ((libgmsh (string-append (assoc-ref outputs "out")
-                                           "/lib/libgmsh.so")))
-               (substitute* "api/gmsh.py"
-                 (("find_library\\(\"gmsh\"\\)")
-                  (simple-format #f "\"~a\"" libgmsh)))))))))
+     (list #:configure-flags
+           #~(list "-DENABLE_SYSTEM_CONTRIB:BOOL=ON"
+                   "-DENABLE_BUILD_SHARED:BOOL=ON"
+                   "-DENABLE_BUILD_DYNAMIC:BOOL=ON")
+           #:imported-modules `(,@%cmake-build-system-modules
+                                (guix build python-build-system))
+           #:modules '(((guix build python-build-system) #:select (site-packages))
+                       (guix build cmake-build-system)
+                       (guix build utils))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-paths
+                 (lambda* (#:key inputs outputs #:allow-other-keys)
+                   ;; Use the standard Guix site-package path for
+                   ;; installation of the Python API.
+                   (substitute* "CMakeLists.txt"
+                     (("include\\(GNUInstallDirs\\)\n")
+                      (string-append "include(GNUInstallDirs)\n"
+                                     "  set(GMSH_PY_LIB "
+                                     (site-packages inputs outputs) ")\n"))
+                     (("\\$\\{GMSH\\_PY\\} DESTINATION \\$\\{GMSH\\_LIB\\}")
+                      "${GMSH_PY} DESTINATION ${GMSH_PY_LIB}"))
+                   ;; Find the shared library.
+                   (let ((libgmsh (string-append #$output
+                                                 "/lib/libgmsh.so")))
+                     (substitute* "api/gmsh.py"
+                       (("find_library\\(\"gmsh\"\\)")
+                        (simple-format #f "\"~a\"" libgmsh)))))))))
     (home-page "https://gmsh.info/")
     (synopsis "3D finite element grid generator")
     (description "Gmsh is a 3D finite element grid generator with a built-in
@@ -9710,56 +9710,6 @@ built on top of DUNE, the Distributed and Unified Numerics Environment.")
 
 (define-public dune-pdelab-openmpi
   (add-openmpi-to-dune-package dune-pdelab))
-
-(define-public mlucas
-  (package
-    (name "mlucas")
-    (version "18")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://mersenneforum.org/mayer/src/C/mlucas_v" version ".txz"))
-       (sha256
-        (base32 "0h4xj6pyyac79ka5ibqjilfa3s9j3yxnzgpwc57b54kfh2bj3447"))))
-    (build-system gnu-build-system)
-    (inputs
-     (list python-2))
-    (arguments
-     `(#:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda _
-             (chdir "src")
-             (call-with-output-file "Makefile"
-               (lambda (port)
-                 (format port "CC = gcc
-CFLAGS = -O3 ~a -DUSE_THREADS
-LDLIBS = -lm -lpthread -lrt
-Mlucas: $(addsuffix .o,$(basename $(wildcard *.c)))
-"
-                         ,(let ((system (or (%current-target-system)
-                                            (%current-system))))
-                            (cond
-                             ((string-prefix? "x86_64" system) "-DUSE_SSE2")
-                             (else ""))))))
-             #t))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((bin (string-append (assoc-ref outputs "out") "/bin")))
-               (install-file "Mlucas" bin)
-               (install-file "primenet.py" bin))
-             #t)))))
-    (home-page "https://www.mersenne.org")
-    (synopsis "Great Internet Mersenne Prime Search (GIMPS) distributed computing client")
-    (description "Mlucas performs Lucas-Lehmer primality testing of Mersenne
-numbers in search of a world-record prime.  You may use it to test any
-suitable number as you wish, but it is preferable that you do so in a
-coordinated fashion, as part of the Great Internet Mersenne Prime
-Search (GIMPS).  Mlucas also includes a simple Python script for assignment
-management via the GIMPS project's Primenet server.")
-    (license license:gpl2+)))
 
 (define-public nauty
   (package

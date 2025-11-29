@@ -4959,6 +4959,43 @@ specifying container platforms.")
 repositories.")
     (license license:asl2.0)))
 
+(define-public go-github-com-containers-winquit
+  ;; As it's seen in description, it's a Windows specific package but
+  ;; gvisor-tap-vsock can't be build if it's absent.
+  (hidden-package
+   (package
+     (name "go-github-com-containers-winquit")
+     (version "1.1.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/containers/winquit")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "00kvrjq0jcjvhpdxgcz99r9azm3n0ds43smwc0ss1rxx7jszpjpv"))))
+     (build-system go-build-system)
+     (arguments
+      (list
+       #:skip-build? #t
+       #:import-path "github.com/containers/winquit"))
+     (native-inputs
+      (list go-github-com-onsi-ginkgo-v2
+            go-github-com-onsi-gomega))
+     (propagated-inputs
+      (list go-github-com-sirupsen-logrus))
+     (home-page "https://github.com/containers/winquit")
+     (synopsis "Graceful shutdown of Windows applications support for Golang")
+     (description
+      "winquit is a golang module that supports graceful shutdown of Windows
+applications through the sending and receiving of Windows quit events on Win32
+message queues.  This allows golang applications to implement behavior
+comparable to SIGTERM signal handling on UNIX derived systems.  Additionally,
+it supports the graceful shutdown mechanism employed by Windows system tools,
+such as @code{taskkill.exe}.")
+     (license license:asl2.0))))
+
 (define-public go-github-com-coocood-freecache
   (package
     (name "go-github-com-coocood-freecache")
@@ -9951,7 +9988,7 @@ access to (URL) path parameters.")
   (package
     (inherit go-github-com-hanwen-go-fuse)
     (name "go-github-com-hanwen-go-fuse-v2")
-    (version "2.5.0")  ;check go,mod in gocryptfs before upgrading
+    (version "2.9.0")  ;check go,mod in gocryptfs before upgrading
     (source
      (origin
        (method git-fetch)
@@ -9960,7 +9997,7 @@ access to (URL) path parameters.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0wgx8gwimgf7rp7j23cl6bxx1gzzarda2kqz91i64ydc124jsqmr"))))
+        (base32 "08z0l2pnbbmrnf6fgrbdzbyq9vkb27bvdbh3yi5zryy59nkz9hcs"))))
     (build-system go-build-system)
     (arguments
      (substitute-keyword-arguments
@@ -12028,6 +12065,34 @@ iteration through a goroutine, and error handling throughout.")
 for Go.  The project is meant as alternative to
 @url{https://github.com/jinzhu/copier, jinzhu/copier} that doesn't use
 reflection.")
+    (license license:expat)))
+
+(define-public go-github-com-jmhodges-levigo
+  (package
+    (name "go-github-com-jmhodges-levigo")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jmhodges/levigo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lhh413mmclnkwn2lk1crwzargam2cx5w7k6zj8pgasy62c78iy4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: leveldb has to be added to the final target package, this is not
+      ;; included here to prevent using databases module.
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/jmhodges/levigo"))
+    (home-page "https://github.com/jmhodges/levigo")
+    (synopsis "Golang wrapper for LevelDB")
+    (description
+     "This package provides a functionality to create and access
+@url{http://code.google.com/p/leveldb/, LevelDB} databases.")
     (license license:expat)))
 
 (define-public go-github-com-jmoiron-sqlx
@@ -17022,7 +17087,7 @@ millisecond)
   (package
     (inherit go-github-com-oklog-ulid)
     (name "go-github-com-oklog-ulid-v2")
-    (version "2.1.0")
+    (version "2.1.1")
     (source
      (origin
        (method git-fetch)
@@ -17031,7 +17096,7 @@ millisecond)
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pxjrg48zrmzzdjpsz7b2d56x1vwix2wywgbbv3sdi5mqf0hz17y"))))
+        (base32 "0dn9zvg9mfm6043fkj3xdnrn504zzzvqmhh3kqxngh06jdllpwwh"))))
     (arguments
      (list
       #:import-path "github.com/oklog/ulid/v2"))))
@@ -17181,6 +17246,54 @@ fine-grained log control, extensibility, and scalability.")
      "This package provides a simple Go application to get the size of the
 terminal.")
     (license license:expat)))
+
+(define-public go-github-com-omniscale-go-osm
+  (package
+    (name "go-github-com-omniscale-go-osm")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/omniscale/go-osm")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nc02pad0bfsszw05vdwa8aq7vpjrdn82rf5xxqrdjpkm2lam74i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/omniscale/go-osm"
+      #:test-flags
+      ;; unable to fetch current sequence:Get
+      ;; "https://planet.openstreetmap.org/replication/changesets/state.yaml":
+      ;; dial tcp: lookup planet.openstreetmap.org on [::1]:53: read udp
+      ;; [::1]:48090->[::1]:53: read: connection refused
+      #~(list "-skip" "Example")))
+    (propagated-inputs
+     (list go-github-com-gogo-protobuf
+           go-gopkg-in-fsnotify-v1
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/omniscale/go-osm")
+    (synopsis "Types of OSM elements for Golang")
+    (description
+     "This package provides basic types for OSM elements
+(nodes/ways/relations/etc).
+
+It include the following submodules:
+@itemize
+@item @code{parser/changeset} - a parser for OSM changeset files
+@item @code{parser/diff} - a parser for OSM diff files (.osc)
+@item @code{parser/pbf} -  an efficient parser for OpenStreetMap PBF files
+@item @code{replication} - basic types for replication of OSM data
+@item @code{replication/changeset} - functions for downloading OSM changeset files
+@item @code{replication/diff} - functions for downloading OSM diff files
+@item @code{state} - functions for reading and writing diff status files
+@end itemize")
+    ;; XXX: No license is specified, use the same as
+    ;; https://github.com/omniscale/imposm3 where this package is in use, see:
+    ;; <https://github.com/omniscale/go-osm/issues/1>.
+    (license (list license:asl2.0))))
 
 (define-public go-github-com-op-go-logging
   (package
@@ -17988,7 +18101,7 @@ package (which is based off an earlier version of this package).")
   (package
     (inherit go-github-com-pelletier-go-toml)
     (name "go-github-com-pelletier-go-toml-v2")
-    (version "2.2.3")
+    (version "2.2.4")
     (source
      (origin
        (method git-fetch)
@@ -17997,7 +18110,7 @@ package (which is based off an earlier version of this package).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hqxj34d49snvc2m6lxfjxks3z9sic9xbb6w49ajrqbzy953spzs"))))
+        (base32 "0nahzbp7pbwm2cqvaqys5914hr9xgb0d511c6nq4gkl64sjjp9al"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -19181,6 +19294,30 @@ specification at http://partners.adobe.com/public/developer/en/tiff/TIFF6.pdf
 @end itemize")
       (license license:bsd-2))))
 
+(define-public go-github-com-rxwycdh-rxhash
+  (package
+    (name "go-github-com-rxwycdh-rxhash")
+    (version "0.0.0-20230131062142-10b7a38b400d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rxwycdh/rxhash")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qw4kn5r0xjfy9mycv57f7lmlpksybzr2qcdr4713svrxakwmgyz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/rxwycdh/rxhash"))
+    (home-page "https://github.com/rxwycdh/rxhash")
+    (synopsis "Creating unique hash value for structs in Go.")
+    (description
+     "rxhash is a Go library for creating a unique hash value for struct in Go, but
+@strong{data consistency}.")
+    (license license:expat)))
+
 (define-public go-github-com-ryanuber-columnize
   (package
     (name "go-github-com-ryanuber-columnize")
@@ -20016,6 +20153,31 @@ names.")
 compatible with the standard library logger.")
     (license license:expat)))
 
+(define-public go-github-com-sj14-astral
+  (package
+    (name "go-github-com-sj14-astral")
+    (version "0.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sj14/astral")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zwykcmlg48jqc37n0z0i5w7njsh3rp727bk75ylm9b5f96nv2sp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sj14/astral"
+      #:skip-build? #t))
+    (propagated-inputs (list go-github-com-logrusorgru-aurora-v4))
+    (home-page "https://github.com/sj14/astral")
+    (synopsis "Calculations for the position of the sun and moon")
+    (description "Calculations for the position of the sun and moon.  This is a Go port of the
+@code{python-astral} package.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-skip2-go-qrcode
   (package
     (name "go-github-com-skip2-go-qrcode")
@@ -20090,6 +20252,31 @@ GNU/Linux, this is a proxy for the @command{xdg-open} command.")
      "This package provides a bindings for
 @url{https://github.com/tree-sitter/tree-sitter, tree-sitter} in Golang.")
     (license license:expat)))
+
+(define-public go-github-com-songgao-packets
+  (package
+    (name "go-github-com-songgao-packets")
+    (version "0.0.0-20160404182456-549a10cd4091")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/songgao/packets")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wf8vslmdh6aj70d3w7h8bibjslgrlyalsccqx0ax5xq7fzqmsjr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/songgao/packets"))
+    (home-page "https://github.com/songgao/packets")
+    (synopsis "Parsing and constructing common network packets for Golang")
+    (description
+     "This package implements a functionality to parse and construct common
+ network packets.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-songgao-water
   (package
@@ -24254,6 +24441,41 @@ organization}.")
      (list
       #:import-path "go.yaml.in/yaml/v3"))))
 
+(define-public go-go-yaml-in-yaml-v4
+  (package
+    (inherit go-go-yaml-in-yaml-v3)
+    (name "go-go-yaml-in-yaml-v4")
+    (version "4.0.0-rc.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/yaml/go-yaml")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1r2mc5vk5pvmdv9lr1p6s2i1nfmari398qqmp29g7d2wncbhrh9c"))))
+    (arguments
+     (list
+      #:import-path "go.yaml.in/yaml/v4"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'copy-yaml-test-suite
+            ;; Steps are taken from Makefile.
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (copy-recursively
+                 (string-append #$(this-package-native-input
+                                   "specification-yaml-test-suite")
+                                "/share/testdata")
+                 "yts/testdata/data-2022-01-17"))))
+          (add-after 'check 'remove-yaml-test-suite
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "yts/testdata")))))))
+    (native-inputs
+     (list specification-yaml-test-suite))))
+
 (define-public go-go4-org
   ;; No release or version tag, Golang pseudo version:
   ;; 0.0.0-20230225012048-214862532bf5.
@@ -24481,6 +24703,21 @@ distributions of benchmark measurements
     (arguments
      (list
       #:import-path "gopkg.in/alecthomas/kingpin.v2"))))
+
+(define-public go-gopkg-in-fsnotify-v1
+  (package/inherit go-github-com-fsnotify-fsnotify
+    (name "go-gopkg-in-fsnotify-v1")
+    (arguments
+     (list
+      #:import-path "gopkg.in/fsnotify.v1"
+      #:test-flags #~(list "-skip" "TestDiffMatch/3")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-import-path
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\.go$")
+                  (("github.com/fsnotify/fsnotify") import-path))))))))))
 
 (define-public go-gopkg-in-inconshreveable-log15-v2
   (package
@@ -25941,7 +26178,7 @@ files, as defined in https://editorconfig.org/.")
 (define-public go-mvdan-cc-gofumpt
   (package
     (name "go-mvdan-cc-gofumpt")
-    (version "0.7.0")
+    (version "0.9.2")
     (source
      (origin
        (method git-fetch)
@@ -25950,7 +26187,7 @@ files, as defined in https://editorconfig.org/.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0sz58av4jg0q26y1s4pznnvrzp1gi8brz9zw8aa46pzdmjw394wq"))))
+        (base32 "0l93hl2k10hjzzxqn9lrnc1cdf1cj57zhsgnhqy6vaa7hbqs02ly"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -25981,7 +26218,7 @@ files, as defined in https://editorconfig.org/.")
      (list go-github-com-go-quicktest-qt))
     (propagated-inputs
      (list go-github-com-google-go-cmp
-           go-github-com-rogpeppe-go-internal
+           go-github-com-rogpeppe-go-internal-1.14
            go-golang-org-x-mod
            go-golang-org-x-sync
            go-golang-org-x-sys
@@ -26983,8 +27220,7 @@ tools."))))
     (inputs '())))
 
 (define-public go-toml
-  (package
-    (inherit go-github-com-pelletier-go-toml-v2)
+  (package/inherit go-github-com-pelletier-go-toml-v2
     (name "go-toml")
     (arguments
      (list
@@ -27045,6 +27281,21 @@ tools."))))
      (string-append (package-description go-github-com-oklog-ulid-v2)
                     "\nThis package provides a command line interface (CLI)
 tool."))))
+
+(define-public go-yaml
+  (package/inherit go-go-yaml-in-yaml-v4
+    (name "go-yaml")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-go-yaml-in-yaml-v4)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path "go.yaml.in/yaml/v4")
+        "go.yaml.in/yaml/v4/cmd/go-yaml")
+       ((#:unpack-path _ "") "go.yaml.in/yaml/v4")))
+    (description
+     "The @code{go-yaml} binary is a YAML node inspection tool that provides
+various modes for analyzing and transforming YAML data.")))
 
 (define-public gofumpt
   (package/inherit go-mvdan-cc-gofumpt

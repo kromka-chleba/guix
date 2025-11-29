@@ -16,6 +16,7 @@
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -46,6 +47,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages digest)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages gawk)
@@ -202,54 +204,52 @@ object or archive file), @command{eu-strip} (for discarding symbols),
   (package
     (name "libabigail")
     (home-page "https://sourceware.org/libabigail/")
-    (version "2.0")
+    (version "2.9")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://sourceware.org/pub/libabigail/"
-                                  "libabigail-" version ".tar.gz"))
+                                  "libabigail-" version ".tar.xz"))
               (sha256
                (base32
-                "1nkg7fsqvdr453hrskscy6xqz6fv45mylpgv1357dw3blnbsw11p"))))
+                "0f6p86ispkiaxsqlqp9xdmhn0yjyagq1w7q94pd8m8h566m6pf5l"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags '("--disable-static"
-                           "--enable-bash-completion"
-                           "--enable-manual")
-       #:make-flags '("V=1")
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'patch-source
-                    (lambda _
-                      (substitute* "build-aux/ltmain.sh"
-                        ;; Don't add -specs=/usr/lib/rpm/redhat/redhat-hardened-ld
-                        ;; to the GCC command line.
-                        (("compiler_flags=\"-specs=.*")
-                         "compiler_flags=\n"))
-                      #t))
-                  (add-after 'build 'build-documentation
-                    (lambda _
-                      (invoke "make" "-C" "doc/manuals" "html-doc" "man" "info")))
-                  (add-before 'check 'set-test-environment
-                    (lambda _
-                      (setenv "XDG_CACHE_HOME" "/tmp")
-                      #t))
-                  (add-after 'install 'install-documentation
-                    (lambda _
-                      (invoke "make" "-C" "doc/manuals"
-                              "install-man-and-info-doc")))
-                  (add-after 'install-documentation 'install-bash-completion
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (for-each (lambda (file)
-                                  (install-file
-                                   file (string-append (assoc-ref outputs "out")
-                                                       "/share/bash-completion"
-                                                       "/completions")))
-                                (find-files "bash-completion" ".*abi.*"))
-                      #t)))))
+     (list #:configure-flags #~(list "--disable-static"
+                                     "--enable-bash-completion"
+                                     "--enable-manual")
+       #:make-flags #~(list "V=1")
+       #:phases #~(modify-phases %standard-phases
+                    (add-after 'unpack 'patch-source
+                      (lambda _
+                        (substitute* "build-aux/ltmain.sh"
+                          ;; Don't add -specs=/usr/lib/rpm/redhat/redhat-hardened-ld
+                          ;; to the GCC command line.
+                          (("compiler_flags=\"-specs=.*")
+                           "compiler_flags=\n"))))
+                    (add-after 'build 'build-documentation
+                      (lambda _
+                        (invoke "make" "-C" "doc/manuals" "html-doc" "man" "info")))
+                    (add-before 'check 'set-test-environment
+                      (lambda _
+                        (setenv "XDG_CACHE_HOME" "/tmp")))
+                    (add-after 'install 'install-documentation
+                      (lambda _
+                        (invoke "make" "-C" "doc/manuals"
+                                "install-man-and-info-doc")))
+                    (add-after 'install-documentation 'install-bash-completion
+                      (lambda _
+                        (for-each (lambda (file)
+                                    (install-file
+                                     file (string-append #$output
+                                                         "/share/bash-completion"
+                                                         "/completions")))
+                                  (find-files "bash-completion" ".*abi.*")))))))
     (native-inputs
      (list pkg-config texinfo python-sphinx python))
     (propagated-inputs
      (list elfutils ;libabigail.la says -lelf
-           libxml2))           ;in Requires.private of libabigail.pc
+           libxml2  ;in Requires.private of libabigail.pc
+           xxhash))
     (synopsis "Analyze application binary interfaces (ABIs)")
     (description
      "@dfn{ABIGAIL} stands for the Application Binary Interface Generic
@@ -400,7 +400,7 @@ changed.")
 (define-public pax-utils
   (package
     (name "pax-utils")
-    (version "1.3.8")
+    (version "1.3.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -409,7 +409,7 @@ changed.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vxklqnabhy15idrg5s2m07lk1hqyf9fnvsfy66n2rdmqijn5rvw"))))
+                "1ds0bjlivvqpm3kr8y9blawrkhn134zwng2zq6cdbh5xw87vqwg4"))))
     (build-system meson-build-system)
     (arguments
      (list

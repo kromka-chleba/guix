@@ -1972,26 +1972,65 @@ and Zilog Z80 families, plus many of their variants.")
 (define-public python-psptool
   (package
     (name "python-psptool")
-    (version "2.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "psptool" version))
-              (sha256
-               (base32
-                "1kx0xpfx67m4zclk4gs97wiwjms8i7z4f6b6m68y8sfgpshy4rf3"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; IPython is not used by the package at all
-                  (substitute* '("psptool/directory.py" "psptool/entry.py")
-                    (("from IPython.*") ""))))))
-    (build-system python-build-system)
+    (version "3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/PSPReverse/psptool")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fbx3b42cr7dv07p2b9qgzrgs19i066ysfasgvlfjscg2v68j8d0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-backend #~'unittest))
+    (native-inputs
+     (list python-psptrace-bootstrap
+           python-setuptools))
     (propagated-inputs
-     (list python-cryptography python-prettytable))
+     (list python-cryptography
+           python-prettytable))
     (home-page "https://github.com/PSPReverse/psptool")
     (synopsis "Tool for dealing with AMD binary blobs")
     (description "PSPTool is a tool for dealing with AMD binary blobs")
     (license license:gpl3+)))
+
+(define-public python-psptrace
+  (package
+    (name "python-psptrace")
+    (version "0.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "psptrace" version))
+       (sha256
+        (base32 "1mrympnpkkns2dxq34h9x9qn667ihdvbbf0wpmbp3jli0n7bj7ih"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests in PyPI or Git
+    (native-inputs
+     (list python-setuptools))
+    (propagated-inputs
+     (list python-prettytable
+           python-psptool))
+    (home-page "https://github.com/PSPReverse/PSPTrace")
+    (synopsis "Capture of an AMD boot procedure")
+    (description
+     "PSPTrace is a tool for correlating an SPI capture of an AMD boot
+procedure to the PSP firmware components.")
+    (license license:gpl3+)))
+
+(define-public python-psptrace-bootstrap
+  (hidden-package
+   (package/inherit python-psptrace
+     (name "python-psptrace")
+     (arguments
+      (list #:tests? #f
+            #:phases
+            #~(modify-phases %standard-phases
+                (delete 'sanity-check))))
+     (propagated-inputs '()))))
 
 (define-public agent-proxy
   (let ((commit "8927798a71d246871ea8fc22b4512296a3fa1765")
@@ -2033,48 +2072,45 @@ whereas kdmx creates pseudo-ttys.")
 (define-public mbed-tools
   (package
     (name "mbed-tools")
-    (version "7.53.0")
+    (version "7.59.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mbed-tools" version))
        (sha256
-        (base32
-         "0gdmyxy97bqr9bmkg90v3axmrr2db734nwzq2l05z84x9qiarc9i"))))
+        (base32 "12h8g8mv3llwqcjii4zvz94mv7cmhmbc204w4nqd6nnhwfvcl6ky"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("\"Click>=7.1,<8\"")
-                "\"Click>=7.1\""))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; Remove this failing test.
-               (delete-file "tests/ci_scripts/test_sync_board_db.py")
-               (invoke "pytest" "-vv")))))))
+     (list
+      ;; tests: 631 passed, 27 skipped, 1 warning
+      #:test-flags
+      ;; E   ModuleNotFoundError: No module named 'mbed_tools_ci_scripts'
+      #~(list "--ignore=tests/ci_scripts/test_sync_board_db.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              (substitute* "pytest.ini"
+                (("addopts = .*") "")))))))
     (native-inputs
-     (list python-pytest
-           python-pytest-cov
-           python-factory-boy
+     (list python-factory-boy
+           python-pytest
            python-requests-mock
-           python-semver))
+           python-semver
+           python-setuptools
+           python-setuptools-scm))
     (propagated-inputs
-     (list python-dotenv
-           python-click
-           python-pdoc3
+     (list python-click
+           python-dotenv
            python-gitpython
-           python-tqdm
-           python-tabulate
-           python-requests
-           python-psutil
-           python-pyudev
-           python-typing-extensions
            python-jinja2
-           python-pyserial))
-    (build-system python-build-system)
+           python-psutil
+           python-pyserial
+           python-pyudev
+           python-requests
+           python-tabulate
+           python-tqdm
+           python-typing-extensions))
     (home-page "https://github.com/ARMmbed/mbed-tools")
     (synopsis "ARM Mbed command line tools")
     (description "This package is the successor of @code{mbed-cli}.  It
