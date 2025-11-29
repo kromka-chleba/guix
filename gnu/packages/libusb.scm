@@ -273,36 +273,44 @@ implementing @code{javax.usb} (JSR-80).")
        (method url-fetch)
        (uri (pypi-uri "libusb1" version))
        (sha256
-        (base32
-         "0f45rjgkq4wgyav6dz57ggj34p2l00c9n3d4639ia3z4zvgak4jp"))))
-    (build-system python-build-system)
+        (base32 "0f45rjgkq4wgyav6dz57ggj34p2l00c9n3d4639ia3z4zvgak4jp"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:modules ((srfi srfi-1)
+     (list
+      #:modules '((srfi srfi-1)
                   (guix build utils)
-                  (guix build python-build-system))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'install-license-files 'remove-incorrect-license
-           (lambda* (#:key out #:allow-other-keys)
-             ;; Was relicensed to LGPL 2.1+, but old COPYING file still left
-             ;; in source. Remove it so it does not get installed.
-             (delete-file "COPYING")))
-         (add-after 'unpack 'fix-libusb-reference
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "usb1/_libusb1.py"
-               (("libusb_path = ctypes\\.util\\.find_library\\(base_name\\)")
-                (string-append
-                 "libusb_path = \""
-                 (find (negate symbolic-link?)
-                       (find-files (assoc-ref inputs "libusb")
-                                   "^libusb.*\\.so\\..*"))
-                 "\""))))))))
+                  (guix build pyproject-build-system))
+      #:test-backend #~'custom
+      #:test-flags #~(list "-m" "usb1.testUSB1")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install-license-files 'remove-incorrect-license
+            (lambda _
+              ;; Was relicensed to LGPL 2.1+, but old COPYING file still left
+              ;; in source. Remove it so it does not get installed.
+              (delete-file "COPYING")))
+          (add-after 'unpack 'fix-libusb-reference
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "usb1/_libusb1.py"
+                (("libusb_path = ctypes\\.util\\.find_library\\(base_name\\)")
+                 (string-append "libusb_path = \""
+                                (find (negate symbolic-link?)
+                                      (find-files (assoc-ref inputs "libusb")
+                                                  "^libusb.*\\.so\\..*"))
+                                "\"")))))
+          (add-after 'check 'remove-installed-tests
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion (site-packages inputs outputs)
+                (delete-file "usb1/__pyinstaller/test_libusb1_packaging.py")
+                (delete-file "usb1/testUSB1.py")))))))
+    (native-inputs (list python-setuptools))
     (propagated-inputs (list libusb))
     (home-page "https://github.com/vpelletier/python-libusb1")
     (synopsis "Pure-python wrapper for libusb-1.0")
-    (description "Libusb is a library that gives applications easy access to
-USB devices on various operating systems.  This package provides a Python
-wrapper for accessing libusb-1.0.")
+    (description
+     "Libusb is a library that gives applications easy access to USB devices
+on various operating systems.  This package provides a Python wrapper for
+accessing libusb-1.0.")
     (license license:lgpl2.1+)))
 
 (define-public python-pyusb
@@ -314,60 +322,56 @@ wrapper for accessing libusb-1.0.")
        (method url-fetch)
        (uri (pypi-uri "pyusb" version))
        (sha256
-        (base32
-         "1fg7knfzybzija2b01pzrzhzsj989scl12sb2ra4f503l8279k54"))))
-    (build-system python-build-system)
+        (base32 "1fg7knfzybzija2b01pzrzhzsj989scl12sb2ra4f503l8279k54"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:modules '((srfi srfi-1)
-                       (srfi srfi-26)
-                       (guix build utils)
-                       (guix build python-build-system))
-           #:phases
-           #~(modify-phases %standard-phases
-               ;; Repurpose the candidates parameter to be the path to the
-               ;; library, then on each backend we substitute the candidates
-               ;; with the full path to the .so library or with None if not
-               ;; supported.
-               ;;
-               ;; While most applications could use a single back-end this
-               ;; library allows to manually select the back-end so it is
-               ;; appropriate to provide as much back-ends as possible.
-               (add-after 'unpack 'fix-libusb-reference
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (let ((libusb0 (find
-                                    (negate symbolic-link?)
-                                    (find-files (assoc-ref inputs "libusb-compat")
-                                                "^libusb-.*\\.so\\..*")))
-                         (libusb1 (find
-                                    (negate symbolic-link?)
-                                    (find-files (assoc-ref inputs "libusb")
-                                                "^libusb-.*\\.so\\..*"))))
-                     (substitute* "usb/libloader.py"
-                       (("lib = locate_library\\(candidates, find_library\\)")
-                        "lib = candidates"))
-                     (substitute* "usb/backend/libusb0.py"
-                       (("\\('usb-0\\.1', 'usb', 'libusb0'\\)")
-                        (format #f "~s" libusb0)))
-                     (substitute* "usb/backend/libusb1.py"
-                       (("\\('usb-1\\.0', 'libusb-1\\.0', 'usb'\\)")
-                        (format #f "~s" libusb1)))
-                     ;; FIXME: OpenUSB is not packaged for GNU Guix.
-                     (substitute* "usb/backend/openusb.py"
-                       (("\\('openusb',\\)") "None")))))
-               ;; Note: tests seems to succeed with libusb-compat as libusb
-               ;; fails because it doesn't have a usbfs present in the build
-               ;; environment.
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (with-directory-excursion "tests"
-                       (setenv "PYUSB_DEBUG" "debug")
-                       (setenv "LIBUSB_DEBUG" "4")
-                       (invoke "python" "testall.py"))))))))
-    (native-inputs
-     (list python-setuptools-scm))
-    (inputs
-     (list libusb libusb-compat))
+     (list
+      #:modules '((srfi srfi-1)
+                  (srfi srfi-26)
+                  (guix build utils)
+                  (guix build pyproject-build-system))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Repurpose the candidates parameter to be the path to the library,
+          ;; then on each backend we substitute the candidates with the full
+          ;; path to the .so library or with None if not supported.
+          ;;
+          ;; While most applications could use a single back-end this library
+          ;; allows to manually select the back-end so it is appropriate to
+          ;; provide as much back-ends as possible.
+          (add-after 'unpack 'fix-libusb-reference
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((libusb0 (find (negate symbolic-link?)
+                                   (find-files (assoc-ref inputs
+                                                          "libusb-compat")
+                                               "^libusb-.*\\.so\\..*")))
+                    (libusb1 (find (negate symbolic-link?)
+                                   (find-files (assoc-ref inputs "libusb")
+                                               "^libusb-.*\\.so\\..*"))))
+                (substitute* "usb/libloader.py"
+                  (("lib = locate_library\\(candidates, find_library\\)")
+                   "lib = candidates"))
+                (substitute* "usb/backend/libusb0.py"
+                  (("\\('usb-0\\.1', 'usb', 'libusb0'\\)")
+                   (format #f "~s" libusb0)))
+                (substitute* "usb/backend/libusb1.py"
+                  (("\\('usb-1\\.0', 'libusb-1\\.0', 'usb'\\)")
+                   (format #f "~s" libusb1)))
+                ;; FIXME: OpenUSB is not packaged for GNU Guix.
+                (substitute* "usb/backend/openusb.py"
+                  (("\\('openusb',\\)")
+                   "None")))))
+          ;; Note: tests seems to succeed with libusb-compat as libusb fails
+          ;; because it doesn't have a usbfs present in the build environment.
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests"
+                  (setenv "PYUSB_DEBUG" "debug")
+                  (setenv "LIBUSB_DEBUG" "4")
+                  (invoke "python" "testall.py"))))))))
+    (native-inputs (list python-setuptools-scm python-setuptools))
+    (inputs (list libusb libusb-compat))
     (home-page "https://pyusb.github.io/pyusb/")
     (synopsis "Python bindings to the libusb library")
     (description
@@ -771,39 +775,27 @@ HID-Class devices.")
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled libraries.
-        '(begin
-           (delete-file-recursively "hidapi")
-           #t))))
-    (build-system python-build-system)
+        #~(begin
+            (delete-file-recursively "hidapi")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-configuration
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "setup.py"
-               (("'/usr/include/libusb-1.0'")
-                (string-append "'" (assoc-ref inputs "libusb")
-                               "/include/libusb-1.0'"))
-               (("'/usr/include/hidapi'")
-                (string-append "'" (assoc-ref inputs "hidapi")
-                               "/include/hidapi'")))
-             #t))
-         ;; XXX Necessary because python-build-system drops the arguments.
-         (replace 'build
-           (lambda _
-             (invoke "python" "setup.py" "build" "--with-system-hidapi")))
-         (replace 'check
-           (lambda _
-             (invoke "python" "setup.py" "test" "--with-system-hidapi")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "python" "setup.py" "install" "--with-system-hidapi"
-                     (string-append "--prefix=" (assoc-ref outputs "out"))
-                     "--single-version-externally-managed" "--root=/"))))))
+     (list
+      #:test-backend #~'unittest
+      #:configure-flags
+      #~'(("--build-option" . "--with-system-hidapi"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-configuration
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "setup.py"
+                (("/usr/include/libusb-1.0")
+                 (search-input-directory inputs "include/libusb-1.0"))
+                (("/usr/include/hidapi")
+                 (search-input-directory inputs "include/hidapi"))))))))
     (inputs
      (list hidapi libusb eudev))
     (native-inputs
-     (list python-cython pkg-config))
+     (list pkg-config python-cython python-setuptools))
     (home-page "https://github.com/trezor/cython-hidapi")
     (synopsis "Cython interface to hidapi")
     (description "This package provides a Cython interface to @code{hidapi}.")

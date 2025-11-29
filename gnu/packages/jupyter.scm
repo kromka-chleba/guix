@@ -716,12 +716,12 @@ listen and respond to these events.")
        (sha256
         (base32
          "1b7ssc627vgrdl21c09w9sxk5fc1ps3g7f70laxag4yw1bb5ax5j"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'check
+          (add-before 'check 'configure-tests
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 ;; Disable isolation so that the package environment can be
@@ -729,14 +729,15 @@ listen and respond to these events.")
                 (setenv "SOURCE_DATE_EPOCH" "315532800")
                 (substitute* "tests/test_build_api.py"
                   (("\"-m\", \"build\"" all)
-                   (string-append all ", \"--no-isolation\"")))
-                (invoke "python" "-m" "pytest" "-vv")))))))
+                   (string-append all ", \"--no-isolation\"")))))))))
     (propagated-inputs
      (list python-deprecation python-packaging python-setuptools
            python-tomlkit python-wheel))
     (native-inputs
-     (list python-pypa-build python-coverage python-pytest
-           python-pytest-cov python-pytest-mock))
+     (list python-pypa-build
+           python-pytest
+           python-pytest-mock
+           python-setuptools))
     (home-page "https://jupyter.org")
     (synopsis "Jupyter packaging utilities")
     (description "This package provides tools to help build and install
@@ -1225,42 +1226,44 @@ Docker registry.")
 
 (define-public python-bash-kernel
   (package
-   (name "python-bash-kernel")
-   (version "0.7.2")
-   (source (origin
-            (method url-fetch)
-            (uri (pypi-uri "bash_kernel" version))
-            (sha256
-             (base32
-              "0w0nbr3iqqsgpk83rgd0f5b02462bkyj2n0h6i9dwyc1vpnq9350"))))
-   (build-system python-build-system)
-   (arguments
-    `(#:tests? #f
+    (name "python-bash-kernel")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "bash_kernel" version))
+       (sha256
+        (base32 "1ji8bivxm1d6hx10rda4fhai57l8djyha5g7a7bx26642sja1m9f"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ; No tests.
       #:phases
-      (modify-phases %standard-phases
-        (add-after 'unpack 'bash-references
-          (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "bash_kernel/kernel.py"
-               (("\"bash\"")
-                (string-append "\"" (assoc-ref inputs "bash") "/bin/bash\""))
-               (("\\['bash', ")
-                (string-append "['" (assoc-ref inputs "bash") "/bin/bash', ")))
-             #t))
-        (add-after 'install 'install-kernelspec
-          (lambda* (#:key outputs #:allow-other-keys)
-            (let ((out (assoc-ref outputs "out")))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'bash-references
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((bash (search-input-file inputs "bin/bash")))
+                (substitute* "bash_kernel/kernel.py"
+                  (("\"bash\"")
+                   (format #f "~s" bash))
+                  (("\\['bash', ")
+                   (format #f "['~a', " bash))))))
+          (add-after 'install 'install-kernelspec
+            (lambda _
               (setenv "HOME" "/tmp")
-              (invoke "python" "-m" "bash_kernel.install" "--prefix" out)
-              #t))))))
-   (inputs
+              (invoke "python" "-m" "bash_kernel.install"
+                      "--prefix" #$output))))))
+    (native-inputs (list python-flit-core))
+    (inputs
      (list bash
+           python-filetype
            python-pexpect
            python-ipykernel
            python-jupyter-client))
-   (home-page "https://github.com/takluyver/bash_kernel")
-   (synopsis "Jupyter kernel for Bash")
-   (description "A bash shell kernel for Jupyter.")
-   (license license:expat)))
+    (home-page "https://github.com/takluyver/bash_kernel")
+    (synopsis "Jupyter kernel for Bash")
+    (description "A bash shell kernel for Jupyter.")
+    (license license:expat)))
 
 (define-public python-sparqlkernel
   (package
@@ -1272,7 +1275,7 @@ Docker registry.")
               (sha256
                (base32
                 "004v22nyi5cnpxq4fiws89p7i5wcnzv45n3n70axdd6prh6rkapx"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? #f                       ;no test suite
@@ -1283,13 +1286,14 @@ Docker registry.")
               (substitute* "sparqlkernel/install.py"
                 (("notebook.DEFAULT_STATIC_FILES_PATH") "\"/does-not-matter\"")
                 (("install_custom_css\\( destd, PKGNAME \\)") ""))))
-          (add-after 'add-install-to-pythonpath 'install-kernelspec
+          (add-after 'wrap 'install-kernelspec
             (lambda _
               (setenv "HOME" "/tmp")
               (invoke
                (string-append #$output "/bin/jupyter-sparqlkernel")
                "install"
                (string-append "--InstallKernelSpec.prefix=" #$output)))))))
+    (native-inputs (list python-setuptools))
     (propagated-inputs
      (list python-ipykernel
            python-notebook
@@ -1299,9 +1303,10 @@ Docker registry.")
            python-traitlets))
     (home-page "https://github.com/paulovn/sparql-kernel")
     (synopsis "Jupyter kernel for SPARQL")
-    (description "This module installs a Jupyter kernel for SPARQL.  It allows
-sending queries to an SPARQL endpoint, fetching and presenting the results in
-a notebook.")
+    (description
+     "This module installs a Jupyter kernel for SPARQL.  It allows sending
+queries to an SPARQL endpoint, fetching and presenting the results in a
+notebook.")
     (license license:bsd-3)))
 
 (define-public python-ipympl

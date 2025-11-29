@@ -1748,6 +1748,45 @@ verification.")
         #~(modify-phases #$phases
             (delete 'fix-scripts)))))))
 
+(define-public python-amaranth
+  (package
+    (name "python-amaranth")
+    (version "0.5.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/amaranth-lang/amaranth/")
+              (commit (string-append "v" version))))
+       (sha256
+        (base32 "06sgc76z9r4ngphpr5slfrjqy4nr11qdx0fj1gwmzksi0b4j18w6"))
+       (file-name (git-file-name name version))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "PDM_BUILD_SCM_VERSION" #$version))))))
+    (native-inputs
+     (list python-pdm-backend
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm
+           sby
+           yices
+           yosys-clang))
+    (propagated-inputs
+     (list python-jinja2 python-jschon python-pyvcd))
+    (home-page "https://amaranth-lang.org/docs/amaranth/latest/")
+    (synopsis "Amaranth hardware definition language")
+    (description "The Amaranth project provides an open-source toolchain for
+developing hardware based on synchronous digital logic using the Python
+programming language, as well as evaluation board definitions and a System on
+Chip toolkit.")
+    (license license:bsd-3)))
+
 (define-public python-pyucis
   (package
     (name "python-pyucis")
@@ -1776,6 +1815,28 @@ verification.")
 coverage data via the @acronym{UCIS, Unified Coverage Interoperability
 Standard} data mode.")
     (license license:asl2.0)))
+
+(define-public python-pyvcd
+  (package
+    (name "python-pyvcd")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyvcd" version))
+       (sha256
+        (base32 "15nnydvr1a4ykh8cagi484sfgvdg0dnjxaw6c0ivhjbrbblpaqnw"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest-cov
+           python-setuptools
+           python-setuptools-scm))
+    (home-page "http://pyvcd.readthedocs.io/")
+    (synopsis "Library to manipulate digital wave files")
+    (description
+     "The code{PyVcd} Python library writes @acronym{VCD, Value Change Dump}
+files as specified in IEEE 1364-2005.")
+    (license license:expat)))
 
 (define-public python-cocotb
   (package
@@ -2534,7 +2595,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
                 (("\"/usr/bin/env\", ")
                  ""))
               (substitute* "sbysrc/sby.py"
-                (("/usr/bin/env python")
+                (("/usr/bin/env python3")
                  (search-input-file inputs "bin/python3")))))
           (add-after 'install 'python:wrap
             (assoc-ref python:%standard-phases 'wrap)))))
