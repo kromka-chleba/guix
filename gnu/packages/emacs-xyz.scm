@@ -14861,29 +14861,31 @@ style, or as multiple word prefixes.")
 (define-public emacs-consult
   (package
     (name "emacs-consult")
-    (version "3.0")
+    (version "3.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/minad/consult")
-             (commit version)))
+              (url "https://github.com/minad/consult")
+              (commit version)))
        (sha256
-        (base32 "0m4fsvz73pfbi4cglihvv6h19zx1iwdx3cqs2wfnxqh589vrkmr4"))
+         (base32 "1qhmlig5z5gmavzw4l7ml3rqgr6aa7as80wxrdigf5i6mdn58z67"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
      (list
-      #:tests? #f ; there are no tests
+      #:tests? #f  ;there are no tests
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'makeinfo
-            (lambda _ (emacs-makeinfo))))))
+            (lambda _
+              (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/consult")
     (synopsis "Consulting completing-read")
-    (description "This package provides various handy commands based on the
+    (description
+     "This package provides various handy commands based on the
 Emacs completion function completing-read, which allows quickly selecting from a
 list of candidates.")
     (license license:gpl3+)))
