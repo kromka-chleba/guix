@@ -211,6 +211,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crypto)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages dictionaries)
@@ -8738,6 +8739,39 @@ structure for Python.")
 textual portable description.  It also supports layout emulation via web
 browser.")
     (license license:expat)))
+
+(define-public python-klayout
+  (package
+    (name "python-klayout")
+    (version "0.30.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/klayout/klayout")
+             (commit (string-append "v" version))))
+       (sha256 (base32 "1ixl8wzpiaw6frb28x9y9jy3fvhjclmn4xl77i72rs37rf4i2a2s"))
+       (file-name (git-file-name name version))))
+    (build-system pyproject-build-system)
+    (arguments
+      '(#:tests? #f) ; skip unit-tests (TODO: how to run them successfully?)
+    )
+    (propagated-inputs
+     (list  ))
+    (native-inputs
+     (list
+           curl
+           libpng
+           expat
+           python-setuptools
+           python-tomli
+           ))
+    (home-page "https://klayout.de")
+    (synopsis "Mask layout library for Python.")
+    (description "Standalone Python API of KLayout.
+This library supports OASIS and GDS2 file formats, editing of mask layouts,
+and verification such as @acronym{DRC, Design rule checking} and @acronym{LVS, Layout Versus Schematic}.")
+    (license license:gpl3)))
 
 (define-public python-dm-tree
   (package
