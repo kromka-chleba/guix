@@ -11053,12 +11053,12 @@ objects.")
      python-cffi
      python-ply
      python-pyyaml
+     python-requests
     ))
   (native-inputs
    (list python-setuptools
      python-wheel
      python-pip
-     python-requests
      python-invoke
      python-pytest
     ))
