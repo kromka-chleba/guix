@@ -8761,8 +8761,8 @@ browser.")
     (native-inputs
      (list
            curl
-           libpng
            expat
+           libpng
            python-setuptools
            python-tomli
            ))
