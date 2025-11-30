@@ -573,6 +573,7 @@ the same, being completely separated from the Internet.")
               "--with-http_gunzip_module"
               "--with-http_addition_module"
               "--with-http_sub_module"
+              "--with-http_dav_module"
               "--with-pcre-jit"
               "--with-debug"
               "--with-compat"
