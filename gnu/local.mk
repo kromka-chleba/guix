@@ -65,7 +65,7 @@
 # Copyright © 2023 Herman Rimm <herman@rimm.ee>
 # Copyright © 2023 Troy Figiel <troy@troyfigiel.com>
 # Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
-# Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+# Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 # Copyright © 2024 Fabio Natali <me@fabionatali.com>
 # Copyright © 2024 Noé Lopez <noelopez@free.fr>
 # Copyright © 2024 Runciter <runciter@whispers-vpn.org>
@@ -2441,6 +2441,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/vcmi-disable-privacy-breach.patch	\
   %D%/packages/patches/vinagre-newer-freerdp.patch             \
   %D%/packages/patches/vinagre-newer-rdp-parameters.patch      \
+  %D%/packages/patches/vlc-3.0.21-live555-fix-build.patch      \
   %D%/packages/patches/vsearch-unbundle-cityhash.patch		\
   %D%/packages/patches/vst3sdk-3.7.7-allow-winelib-compilation.patch	\
   %D%/packages/patches/vte-CVE-2012-2738-pt1.patch			\
