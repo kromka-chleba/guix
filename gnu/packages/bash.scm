@@ -366,7 +366,7 @@ variant logs the history to syslog.")))
 (define-public bash-completion
   (package
     (name "bash-completion")
-    (version "2.11")
+    (version "2.17.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -374,7 +374,7 @@ variant logs the history to syslog.")))
                     version "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1b0iz7da1sgifx1a5wdyx1kxbzys53v0kyk8nhxfipllmm5qka3k"))
+                "0n4y1dbqqk0x3m1hfzb6jkl23s3pkzm7pbm3xcxzndb495g857fx"))
               (patches
                (search-patches "bash-completion-directories.patch"))))
     (build-system gnu-build-system)
