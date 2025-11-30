@@ -2081,6 +2081,10 @@
   (crate-source "cairo-rs" "0.20.12"
                 "1l5d1rgvagvvs4a99i28ciyhdygf9v8hhy8mpk5akbr59q7vvqwi"))
 
+(define rust-cairo-rs-0.21.1
+  (crate-source "cairo-rs" "0.21.1"
+                "044gc8k024ypnvnqqhbp7cgl7qq02hwvbi9n5fpajmdpswkg6n0i"))
+
 (define rust-cairo-rs-0.21.2
   (crate-source "cairo-rs" "0.21.2"
                 "1cc1xyhcch1p3s85b2zc732rz3qz11wpcf33wdq8hr6syi6kbr6z"))
@@ -2104,6 +2108,10 @@
 (define rust-cairo-sys-rs-0.20.10
   (crate-source "cairo-sys-rs" "0.20.10"
                 "12sgv9mimxy5nsxm4ipga1k7an59wn444xa7kbywp64qai3cg705"))
+
+(define rust-cairo-sys-rs-0.21.1
+  (crate-source "cairo-sys-rs" "0.21.1"
+                "1hv2bkrqxcidk7wdy9giy4ivgh8fdkhrkvg54wwpi3pc01wifqxr"))
 
 (define rust-cairo-sys-rs-0.21.2
   (crate-source "cairo-sys-rs" "0.21.2"
@@ -6122,6 +6130,10 @@
   (crate-source "gdk-pixbuf" "0.20.10"
                 "0371cfhxldrn2pf8zdjyx2b3xkhbfm96k988spp4nkq89j4l5lig"))
 
+(define rust-gdk-pixbuf-0.21.1
+  (crate-source "gdk-pixbuf" "0.21.1"
+                "0v2z4jq3mlf5q73p8ggkrbza11g9b6fkvbii2d1xyly6pg6k0wrw"))
+
 (define rust-gdk-pixbuf-0.21.2
   (crate-source "gdk-pixbuf" "0.21.2"
                 "03q52c62r2m5xkssld51mba91i7s7f92iz0nfvrm94ankx2n8g1a"))
@@ -6146,6 +6158,11 @@
   (crate-source "gdk-pixbuf-sys" "0.20.10"
                 "15hb2f5mmyg5amaha6lx6spaygw2b7ga4hwmgqhvv269h2sz6d2v"))
 
+(define rust-gdk-pixbuf-sys-0.21.1
+  ;; TODO: Check bundled sources.
+  (crate-source "gdk-pixbuf-sys" "0.21.1"
+                "10ma22ym76xjziiab44z84nkvx9hny9wggifj6x8rhhxjg69jn72"))
+
 (define rust-gdk-pixbuf-sys-0.21.2
   (crate-source "gdk-pixbuf-sys" "0.21.2"
                 "097ppbqq1nf65i7cpihhx324wyfin2f5y7d02d03p3wbd9xfym1q"))
@@ -6162,6 +6179,10 @@
   (crate-source "gdk-sys" "0.9.1"
                 "1fwgr1b3n0khlkhdq9145m6baz9y8207ya30d30g1gyij6g6gpva"))
 
+(define rust-gdk4-0.10.0
+  (crate-source "gdk4" "0.10.0"
+                "0ng3lkm31idb1qq47330s9apb5vgylj7fp256a968ppks9jb0rqa"))
+
 (define rust-gdk4-0.10.1
   (crate-source "gdk4" "0.10.1"
                 "1w6plimn5brysrifkmhd6846059rmd10z808qm038vn2kmj95qn7"))
@@ -6173,6 +6194,11 @@
 (define rust-gdk4-0.9.6
   (crate-source "gdk4" "0.9.6"
                 "0q1dld01fgj7qxj644by0fc242mcn36w3bagn4z1mkdfq7cwjl28"))
+
+(define rust-gdk4-sys-0.10.0
+  ;; TODO: Check bundled sources.
+  (crate-source "gdk4-sys" "0.10.0"
+                "1idjdn6f6ss1xxcf6xh7l42ahw7dj6jkv6mlplbm7f4yhw6xmnrf"))
 
 (define rust-gdk4-sys-0.10.1
   (crate-source "gdk4-sys" "0.10.1"
@@ -6409,6 +6435,10 @@
   (crate-source "gio" "0.20.12"
                 "0cdq5116cwdgs0xkdp1v146yhcqilxlpgvkncc7xbf5nwxvf49wf"))
 
+(define rust-gio-0.21.1
+  (crate-source "gio" "0.21.1"
+                "0pscn8lk5z61ysmy6n0nx0nsrlbww80dsld41pipj6yhj3ry7daj"))
+
 (define rust-gio-0.21.2
   (crate-source "gio" "0.21.2"
                 "0hjanww3rz2568r9hz4nh91h11451m44kk6ww8dpg2kl5g0yys7d"))
@@ -6432,6 +6462,11 @@
 (define rust-gio-sys-0.20.10
   (crate-source "gio-sys" "0.20.10"
                 "10vc6gqhz5crnrh040rv6r5nm09njky2r9d9ms29xj3gwnkr67jj"))
+
+(define rust-gio-sys-0.21.1
+  ;; TODO: Check bundled sources.
+  (crate-source "gio-sys" "0.21.1"
+                "1zcrdp8f172ahb6fj6rmx9r5fgqh5jrc4n8zzs65hnhycws24gx0"))
 
 (define rust-gio-sys-0.21.2
   (crate-source "gio-sys" "0.21.2"
@@ -7783,6 +7818,10 @@
   (crate-source "glib" "0.20.12"
                 "10ynn8aiabbzrsgdswmqpr47sapfkbfn5rfxsy26swflabivdi7z"))
 
+(define rust-glib-0.21.1
+  (crate-source "glib" "0.21.1"
+                "01ajrf0yfq6ksyjfzyqbaydddc3smz5zf0ckpaa5fyr5jdjc5gb0"))
+
 (define rust-glib-0.21.3
   (crate-source "glib" "0.21.3"
                 "13qcn8cghp35315gbmnwm0jzssq888pmay2q6d4whdkmaz2cpwp1"))
@@ -7811,6 +7850,10 @@
   (crate-source "glib-macros" "0.20.12"
                 "0ibi9vbpbw9vvl9ax60kxq07d7a21k0jj5lva8zmliq95zv4l278"))
 
+(define rust-glib-macros-0.21.0
+  (crate-source "glib-macros" "0.21.0"
+                "1ygh1q0nnyvr000yh3764m7qk97lc8gp8xdv27mjhk51pqg2jwp7"))
+
 (define rust-glib-macros-0.21.2
   (crate-source "glib-macros" "0.21.2"
                 "17viphsjhpvhscdn52dsdz5csyhk91xs2x6jg1nl5bndxqbakvam"))
@@ -7830,6 +7873,11 @@
 (define rust-glib-sys-0.20.10
   (crate-source "glib-sys" "0.20.10"
                 "05f29ky5dnvy8vp5rdld5f8r2lgr5w7dxqr7p27km016s4g9xdwa"))
+
+(define rust-glib-sys-0.21.1
+  ;; TODO: Check bundled sources.
+  (crate-source "glib-sys" "0.21.1"
+                "0bb2pybv7ljjd1mii8kgf7baqdwl75rg3ss53s147p57yv7l6z6w"))
 
 (define rust-glib-sys-0.21.2
   (crate-source "glib-sys" "0.21.2"
@@ -7927,6 +7975,11 @@
   (crate-source "gobject-sys" "0.20.10"
                 "1niyqv22b2c38ks33i4isas4v83d3w7jx3xzzly9x63kpfacm6pc"))
 
+(define rust-gobject-sys-0.21.1
+  ;; TODO: Check bundled sources.
+  (crate-source "gobject-sys" "0.21.1"
+                "0p1d0vwkh0nn8shk62lf74n0dikld4q4whx8d9519kibxw71k6iy"))
+
 (define rust-gobject-sys-0.21.2
   (crate-source "gobject-sys" "0.21.2"
                 "0388b5gx7v72y30q27byilvbq2nnrv72l3vvgq8fqwv1fzc433jk"))
@@ -7960,6 +8013,10 @@
   (crate-source "graphene-rs" "0.20.10"
                 "16six67j0j57ynv7frxiwnsf7dslhyy67ppirad1q98lgnnxz1kb"))
 
+(define rust-graphene-rs-0.21.1
+  (crate-source "graphene-rs" "0.21.1"
+                "11aacll6bvv2js6rsg70i0jkpmdgjdi9f8ww4zw4vh348hwi8sfr"))
+
 (define rust-graphene-sys-0.18.1
   (crate-source "graphene-sys" "0.18.1"
                 "0n8zlg7z26lwpnvlqp1hjlgrs671skqwagdpm7r8i1zwx3748hfc"))
@@ -7967,6 +8024,11 @@
 (define rust-graphene-sys-0.20.10
   (crate-source "graphene-sys" "0.20.10"
                 "1sk1736b4vay2hj9qz56c0pvqa3v0mkdch3yg7hiapidpa2kln6z"))
+
+(define rust-graphene-sys-0.21.1
+  ;; TODO: Check bundled sources.
+  (crate-source "graphene-sys" "0.21.1"
+                "0aj2m7j89wfw251w8qk3r73g5cr3dd6wkqwv0p7l385p36xhb0ng"))
 
 (define rust-grass-0.13.4
   (crate-source "grass" "0.13.4"
@@ -8060,6 +8122,10 @@
   (crate-source "group" "0.13.0"
                 "0qqs2p5vqnv3zvq9mfjkmw3qlvgqb0c3cm6p33srkh7pc9sfzygh"))
 
+(define rust-gsk4-0.10.0
+  (crate-source "gsk4" "0.10.0"
+                "0371657hjikib80swdz4k9b4lnigadpd60vwyvg21z6nxqyf7nym"))
+
 (define rust-gsk4-0.7.3
   (crate-source "gsk4" "0.7.3"
                 "0zhzs2dkgiinhgc11akpn2harq3x5n1iq21dnc4h689g3lsqx58d"))
@@ -8067,6 +8133,11 @@
 (define rust-gsk4-0.9.6
   (crate-source "gsk4" "0.9.6"
                 "0mgqq5m6cm4q7ajjgw92z13z2ikpvh6zx2gwzdjrz30wjcpygxb1"))
+
+(define rust-gsk4-sys-0.10.0
+  ;; TODO: Check bundled sources.
+  (crate-source "gsk4-sys" "0.10.0"
+                "1jcz1fy5j4m912yagkqq52afrrkshw4fxvgxdzhzs6fxalfh2xld"))
 
 (define rust-gsk4-sys-0.7.3
   (crate-source "gsk4-sys" "0.7.3"
@@ -8168,6 +8239,10 @@
   (crate-source "gtk-sys" "0.9.2"
                 "1hd4w49iaivzjkbxi0bhabqp1ifkzg9g47n822sh12xlqxhgdpjk"))
 
+(define rust-gtk4-0.10.0
+  (crate-source "gtk4" "0.10.0"
+                "0gjv60kdg4anhn9zamkqjkjjw0mwq5kx8c0cf7pda2h88fnni3ck"))
+
 (define rust-gtk4-0.7.3
   (crate-source "gtk4" "0.7.3"
                 "0hh8nzglmz94v1m1h6vy8z12m6fr7ia467ry0md5fa4p7sm53sss"))
@@ -8180,6 +8255,10 @@
   (crate-source "gtk4" "0.9.7"
                 "1mi6lcwm25jz7lznrb9glaabgyk40hnvkg4fzaxlf762080xsx7j"))
 
+(define rust-gtk4-macros-0.10.0
+  (crate-source "gtk4-macros" "0.10.0"
+                "0p1inz7cpm6xxv8hkiaq9gsy9ch8q7nncn9cp4130qwmhq3d44h9"))
+
 (define rust-gtk4-macros-0.7.2
   (crate-source "gtk4-macros" "0.7.2"
                 "0bw3cchiycf7dw1bw4p8946gv38azxy05a5w0ndgcmxnz6fc8znm"))
@@ -8187,6 +8266,11 @@
 (define rust-gtk4-macros-0.9.5
   (crate-source "gtk4-macros" "0.9.5"
                 "169rqfxfczivcpz7019slsrpkx8crqjka43ymxmikp838xn7il8f"))
+
+(define rust-gtk4-sys-0.10.0
+  ;; TODO: Check bundled sources.
+  (crate-source "gtk4-sys" "0.10.0"
+                "0x0wdb1frm3d1cnql5z021l8mqxw5i1j9pk226026rz4037vs8x9"))
 
 (define rust-gtk4-sys-0.7.3
   (crate-source "gtk4-sys" "0.7.3"
@@ -10240,6 +10324,10 @@
   (crate-source "libadwaita" "0.7.2"
                 "14c1qy6mq5l9wlwsr2x9ijbvis283msfglxgp9kvzahnkk93a0ah"))
 
+(define rust-libadwaita-0.8.0
+  (crate-source "libadwaita" "0.8.0"
+                "0hbwbdfyv742qpz080xi8csxfafidqkpmdwm684qrgap29fp3xjd"))
+
 (define rust-libadwaita-sys-0.5.3
   (crate-source "libadwaita-sys" "0.5.3"
                 "16n6xsy6jhbj0jbpz8yvql6c9b89a99v9vhdz5s37mg1inisl42y"))
@@ -10247,6 +10335,11 @@
 (define rust-libadwaita-sys-0.7.2
   (crate-source "libadwaita-sys" "0.7.2"
                 "1nqjr514hhdc4aldlsc4y3vkpnkq9q73g2jl7ypqnmf2b209i036"))
+
+(define rust-libadwaita-sys-0.8.0
+  ;; TODO: Check bundled sources.
+  (crate-source "libadwaita-sys" "0.8.0"
+                "1qksqd6a25rsmn7g5aakgbdfx3vl76d8bzxirm80466cj009by7x"))
 
 (define rust-libbzip3-sys-0.4.0+1.4.0
   ;; TODO: Package bzip3.
@@ -13375,6 +13468,10 @@
   (crate-source "pango" "0.20.12"
                 "0p5bj7k8sd2pgm7v907i9bip53ys46hahprs0jbr6rfzyq8v6xk5"))
 
+(define rust-pango-0.21.1
+  (crate-source "pango" "0.21.1"
+                "1zk2wffx29qs1dgx8z9sfca8i7qmp72j11mnmvnn999s82rzwixb"))
+
 (define rust-pango-0.21.3
   (crate-source "pango" "0.21.3"
                 "0bj08nhkibkfynkhivyxsn89bjfsnavkjzjz93rfkhhqirkplyz3"))
@@ -13398,6 +13495,11 @@
 (define rust-pango-sys-0.20.10
   (crate-source "pango-sys" "0.20.10"
                 "1yj3n87whqx6gw3vip08zbckqxfg7l5jqc2wamaf76y07xkhjs8q"))
+
+(define rust-pango-sys-0.21.1
+  ;; TODO: Check bundled sources.
+  (crate-source "pango-sys" "0.21.1"
+                "11kc250wklyraz98p6syzqq4qlc13xp0hydfkwa4wr27nk65p18z"))
 
 (define rust-pango-sys-0.21.2
   (crate-source "pango-sys" "0.21.2"
@@ -33410,6 +33512,116 @@
                                            rust-zvariant-3.15.2
                                            rust-zvariant-derive-3.15.2
                                            rust-zvariant-utils-1.0.1))
+                     (gnome-tour =>
+                                 (list rust-aho-corasick-1.1.3
+                                  rust-anstream-0.6.20
+                                  rust-anstyle-1.0.11
+                                  rust-anstyle-parse-0.2.7
+                                  rust-anstyle-query-1.1.4
+                                  rust-anstyle-wincon-3.0.10
+                                  rust-autocfg-1.5.0
+                                  rust-bitflags-2.9.3
+                                  rust-block-0.1.6
+                                  rust-cairo-rs-0.21.1
+                                  rust-cairo-sys-rs-0.21.1
+                                  rust-cc-1.2.34
+                                  rust-cfg-expr-0.20.2
+                                  rust-colorchoice-1.0.4
+                                  rust-env-filter-0.1.3
+                                  rust-env-logger-0.11.8
+                                  rust-equivalent-1.0.2
+                                  rust-field-offset-0.3.6
+                                  rust-futures-channel-0.3.31
+                                  rust-futures-core-0.3.31
+                                  rust-futures-executor-0.3.31
+                                  rust-futures-io-0.3.31
+                                  rust-futures-macro-0.3.31
+                                  rust-futures-task-0.3.31
+                                  rust-futures-util-0.3.31
+                                  rust-gdk-pixbuf-0.21.1
+                                  rust-gdk-pixbuf-sys-0.21.1
+                                  rust-gdk4-0.10.0
+                                  rust-gdk4-sys-0.10.0
+                                  rust-gettext-rs-0.7.2
+                                  rust-gettext-sys-0.22.5
+                                  rust-gio-0.21.1
+                                  rust-gio-sys-0.21.1
+                                  rust-glib-0.21.1
+                                  rust-glib-macros-0.21.0
+                                  rust-glib-sys-0.21.1
+                                  rust-gobject-sys-0.21.1
+                                  rust-graphene-rs-0.21.1
+                                  rust-graphene-sys-0.21.1
+                                  rust-gsk4-0.10.0
+                                  rust-gsk4-sys-0.10.0
+                                  rust-gtk4-0.10.0
+                                  rust-gtk4-macros-0.10.0
+                                  rust-gtk4-sys-0.10.0
+                                  rust-hashbrown-0.15.5
+                                  rust-heck-0.5.0
+                                  rust-indexmap-2.11.0
+                                  rust-is-terminal-polyfill-1.70.1
+                                  rust-jiff-0.2.15
+                                  rust-jiff-static-0.2.15
+                                  rust-lazy-static-1.5.0
+                                  rust-libadwaita-0.8.0
+                                  rust-libadwaita-sys-0.8.0
+                                  rust-libc-0.2.175
+                                  rust-locale-config-0.3.0
+                                  rust-log-0.4.27
+                                  rust-malloc-buf-0.0.6
+                                  rust-memchr-2.7.5
+                                  rust-memoffset-0.9.1
+                                  rust-objc-0.2.7
+                                  rust-objc-foundation-0.1.1
+                                  rust-objc-id-0.1.1
+                                  rust-once-cell-polyfill-1.70.1
+                                  rust-pango-0.21.1
+                                  rust-pango-sys-0.21.1
+                                  rust-pin-project-lite-0.2.16
+                                  rust-pin-utils-0.1.0
+                                  rust-pkg-config-0.3.32
+                                  rust-portable-atomic-1.11.1
+                                  rust-portable-atomic-util-0.2.4
+                                  rust-proc-macro-crate-3.3.0
+                                  rust-proc-macro2-1.0.101
+                                  rust-quote-1.0.40
+                                  rust-regex-1.11.1
+                                  rust-regex-automata-0.4.9
+                                  rust-regex-syntax-0.8.5
+                                  rust-rustc-version-0.4.1
+                                  rust-semver-1.0.26
+                                  rust-serde-1.0.219
+                                  rust-serde-derive-1.0.219
+                                  rust-serde-spanned-0.6.9
+                                  rust-shlex-1.3.0
+                                  rust-slab-0.4.11
+                                  rust-smallvec-1.15.1
+                                  rust-syn-2.0.106
+                                  rust-system-deps-7.0.5
+                                  rust-target-lexicon-0.13.2
+                                  rust-temp-dir-0.1.16
+                                  rust-toml-0.8.23
+                                  rust-toml-datetime-0.6.11
+                                  rust-toml-edit-0.22.27
+                                  rust-unicode-ident-1.0.18
+                                  rust-utf8parse-0.2.2
+                                  rust-version-compare-0.2.0
+                                  rust-winapi-0.3.9
+                                  rust-winapi-i686-pc-windows-gnu-0.4.0
+                                  rust-winapi-x86-64-pc-windows-gnu-0.4.0
+                                  rust-windows-link-0.1.3
+                                  rust-windows-sys-0.60.2
+                                  rust-windows-targets-0.53.3
+                                  rust-windows-aarch64-gnullvm-0.53.0
+                                  rust-windows-aarch64-msvc-0.53.0
+                                  rust-windows-i686-gnu-0.53.0
+                                  rust-windows-i686-gnullvm-0.53.0
+                                  rust-windows-i686-msvc-0.53.0
+                                  rust-windows-x86-64-gnu-0.53.0
+                                  rust-windows-x86-64-gnullvm-0.53.0
+                                  rust-windows-x86-64-msvc-0.53.0
+                                  rust-winnow-0.7.13))
                      (gnome-user-share =>
                                        (list rust-aho-corasick-1.1.3
                                         rust-autocfg-1.3.0

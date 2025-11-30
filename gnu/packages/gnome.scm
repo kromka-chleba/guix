@@ -10352,6 +10352,64 @@ associations for GNOME.")
     (home-page "https://gitlab.gnome.org/GNOME/libgovirt")
     (license license:gpl2+)))
 
+(define-public gnome-tour
+  (package
+    (name "gnome-tour")
+    (version "49.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.gnome.org/GNOME/gnome-tour")
+             (commit version)))
+       (sha256
+        (base32 "0fzvgffwargmycxby6j2q0fka74hcb4ff8yvbh8w8a0vpvpnc9b1"))))
+    (build-system meson-build-system)
+    (synopsis "GNOME Tour and Greeter")
+    (description "A guided tour and greeter for GNOME.")
+    (native-inputs (list pkg-config
+                         `(,glib "bin")
+                         desktop-file-utils))
+    (inputs (cons* rust
+                   `(,rust "cargo")
+                   libadwaita
+                   gettext-minimal
+                   glib
+                   gtk
+                   gtk+
+                   `(,gtk+ "bin")
+                   (cargo-inputs 'gnome-tour)))
+    (arguments
+     (list
+      #:glib-or-gtk? #t
+      #:imported-modules
+      `(,@%meson-build-system-modules
+        ,@%cargo-build-system-modules)
+      #:modules
+      `(((guix build cargo-build-system) #:prefix cargo:)
+        (guix build meson-build-system)
+        (guix build utils))
+      #:phases
+      (with-extensions (list (cargo-guile-json))
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'prepare-for-build
+              (lambda _
+                (delete-file "Cargo.lock")))
+            (add-after 'configure 'prepare-cargo-build-system
+              (lambda args
+                (for-each (lambda (phase)
+                            (format #t "Running cargo phase: ~a~%" phase)
+                            (apply (assoc-ref cargo:%standard-phases phase)
+                                   #:vendor-dir "vendor"
+                                   #:cargo-target #$(cargo-triplet)
+                                   args))
+                          '(unpack-rust-crates
+                            configure
+                            check-for-pregenerated-files
+                            patch-cargo-checksums))))))))
+    (home-page "https://apps.gnome.org/Tour/")
+    (license license:gpl3+)))
+
 (define-public gnome-weather
   (package
     (name "gnome-weather")
