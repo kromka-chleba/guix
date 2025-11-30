@@ -1502,7 +1502,7 @@ Arachnoid video plugin.")
 (define-public mupen64plus-video-glide64
   (package
     (name "mupen64plus-video-glide64")
-    (version "2.5.9")
+    (version "2.6.0")
     (source
      (origin
        (method git-fetch)
@@ -1511,7 +1511,7 @@ Arachnoid video plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jscvr2imm9wj9jsgsp5815pv27f97w8g19ix0n39y9yy851qvrg"))))
+        (base32 "15hlbamw2iw5r7l2234a986gikgmkypdzhvl3r7px0rs0pi816pl"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
