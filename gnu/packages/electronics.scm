@@ -47,6 +47,7 @@
 
 (define-module (gnu packages electronics)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
@@ -3365,6 +3366,25 @@ code{yosys}-based formal hardware verification flows.")
 
 (define-deprecated-package symbiyosys
   sby)
+
+(define-public surfer
+  (package
+    (name "surfer")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/surfer-project/surfer")
+             (commit (string-append "v" version))
+             (recursive? #t)  ))
+       (sha256 (base32 "1my62zmrf9k8j7xma41rahks109hra0lav3r0wv040b5l5xlilmc"))))
+    (build-system cargo-build-system)
+    ;(inputs (cargo-inputs 'async-std))
+    (home-page "https://gitlab.com/surfer-project/surfer")
+    (synopsis "Waveform viewer.")
+    (description "Surfer is an extensible waveform viewer for @acronym{EDA, electronic design automation}.")
+    (license license:eupl1.2) ))
 
 (define-public systemc
   (package
