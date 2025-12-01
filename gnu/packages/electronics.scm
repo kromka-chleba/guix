@@ -726,7 +726,7 @@ used in the declarative section of design units.")
     (home-page "https://codeberg.org/librecell/lctime")
     (synopsis "CMOS standard-cell characterization tool")
     (description
-     "CMOS standard-cell characterization tool")
+     "lctime extracts timing and power characteristics of CMOS standard-cells.")
     (license license:agpl3+)))
 
 
