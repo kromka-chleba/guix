@@ -2443,7 +2443,7 @@ input and outputs an XML dataset.")
     (inputs
      (list bash-minimal
            ngspice
-           octave
+           octave-cli
            qtbase
            qtcharts
            qtsvg
