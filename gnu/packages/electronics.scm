@@ -707,9 +707,8 @@ used in the declarative section of design units.")
     ;;     ;;   (lambda _
     ;;     ;;     (setenv "PYTHONPATH" (string-append (getcwd) ":${PYTHONPATH}"))))
     ;;     )))
-  (arguments
-    '(#:tests? #f) ; skip unit-tests (TODO: how to run them successfully?)
-    )
+    (arguments
+      '(#:tests? #f)) ; skip unit-tests (TODO: how to run them successfully?)
     (propagated-inputs
      (list python-joblib
            python-klayout
