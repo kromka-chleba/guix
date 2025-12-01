@@ -8754,8 +8754,7 @@ browser.")
        (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (arguments
-      '(#:tests? #f) ; skip unit-tests (TODO: how to run them successfully?)
-    )
+      '(#:tests? #f)) ; skip unit-tests (TODO: how to run them successfully?)
     (propagated-inputs
      (list  ))
     (native-inputs
@@ -8764,13 +8763,13 @@ browser.")
            expat
            libpng
            python-setuptools
-           python-tomli
-           ))
+           python-tomli ))
     (home-page "https://klayout.de")
     (synopsis "Mask layout library for Python.")
     (description "Standalone Python API of KLayout.
-This library supports OASIS and GDS2 file formats, editing of mask layouts,
-and verification such as @acronym{DRC, Design rule checking} and @acronym{LVS, Layout Versus Schematic}.")
+This library supports OASIS and GDS2 file formats,
+editing of mask layouts, and verification such as
+@acronym{DRC, Design rule checking} and @acronym{LVS, Layout Versus Schematic}.")
     (license license:gpl3)))
 
 (define-public python-dm-tree
@@ -11038,14 +11037,12 @@ objects.")
      (method git-fetch)
      (uri (git-reference
             (url "https://github.com/PySpice-org/PySpice")
-            (commit (string-append "v" version)))
-        )
+            (commit (string-append "v" version))))
      (sha256
-      (base32 "02z35gyx27npqg7g0m1gdy8wid93iy335pc72j90ycx998xf2r5k")))) 
+      (base32 "02z35gyx27npqg7g0m1gdy8wid93iy335pc72j90ycx998xf2r5k"))))
   (build-system python-build-system)
   (arguments
-    '(#:tests? #f) ; skip unit-tests (TODO: how to run them successfully?)
-    )
+    '(#:tests? #f)) ; skip unit-tests (TODO: how to run them successfully?)
   (propagated-inputs
    (list python-numpy
      python-scipy
@@ -11053,21 +11050,20 @@ objects.")
      python-cffi
      python-ply
      python-pyyaml
-     python-requests
-    ))
+     python-requests ))
   (native-inputs
    (list python-setuptools
      python-wheel
      python-pip
      python-invoke
-     python-pytest
-    ))
+     python-pytest ))
   (inputs
    (list ngspice))
   (home-page "https://pyspice.fabrice-salvaire.fr/")
   (synopsis "Python wrapper for SPICE circuit simulators")
   (description
-   "PySpice is a Python library that provides a high-level interface to SPICE circuit simulators.")
+   "PySpice is a Python library that provides a high-level interface
+to SPICE circuit simulators.")
   (license license:gpl3+)))
 
 (define-public python-spectra
@@ -17552,12 +17548,13 @@ specification.")
            python-sympy))
     (native-inputs (
       list
-        python-setuptools-scm
-    ))
+        python-setuptools-scm ))
     (home-page "https://codeberg.org/tok/liberty-parser")
     (synopsis "Liberty format parser")
     (description
-     "This package provides a parser for the Liberty format, a standard file format used in @acronym{EDA, Electronic Design Automation}.")
+     "This package provides a parser for the Liberty format,
+a standard file format used in @acronym{EDA, Electronic Design Automation}
+for example for timing information of circuits.")
     (license license:gpl3+)))
 
 (define-public python-libsass

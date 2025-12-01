@@ -707,9 +707,8 @@ used in the declarative section of design units.")
     ;;     ;;   (lambda _
     ;;     ;;     (setenv "PYTHONPATH" (string-append (getcwd) ":${PYTHONPATH}"))))
     ;;     )))
-  (arguments
-    '(#:tests? #f) ; skip unit-tests (TODO: how to run them successfully?)
-    )
+    (arguments
+      '(#:tests? #f)) ; skip unit-tests (TODO: how to run them successfully?)
     (propagated-inputs
      (list python-joblib
            python-klayout
@@ -727,7 +726,7 @@ used in the declarative section of design units.")
     (home-page "https://codeberg.org/librecell/lctime")
     (synopsis "CMOS standard-cell characterization tool")
     (description
-     "CMOS standard-cell characterization tool")
+     "lctime extracts timing and power characteristics of CMOS standard-cells.")
     (license license:agpl3+)))
 
 
