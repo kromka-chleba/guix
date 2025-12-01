@@ -815,10 +815,10 @@ The script guides you through the following:
 As root, run:
 
 @example
-# cd /tmp
-# wget https://guix.gnu.org/guix-install.sh
-# chmod +x guix-install.sh
-# ./guix-install.sh
+cd /tmp
+wget https://guix.gnu.org/guix-install.sh
+chmod +x guix-install.sh
+./guix-install.sh
 @end example
 
 The script to install Guix is also packaged in Parabola (in the pcr
@@ -840,13 +840,13 @@ source.
 @cindex substitutes, authorization thereof
 To use substitutes from @code{@value{SUBSTITUTE-SERVER-1}},
 @code{@value{SUBSTITUTE-SERVER-2}} or a mirror, you must authorize them.
-For example,
+For example, as root run
 
 @example
-# guix archive --authorize < \
-     ~root/.config/guix/current/share/guix/@value{SUBSTITUTE-SERVER-1}.pub
-# guix archive --authorize < \
-     ~root/.config/guix/current/share/guix/@value{SUBSTITUTE-SERVER-2}.pub
+guix archive --authorize < \
+   ~root/.config/guix/current/share/guix/@value{SUBSTITUTE-SERVER-1}.pub
+guix archive --authorize < \
+   ~root/.config/guix/current/share/guix/@value{SUBSTITUTE-SERVER-2}.pub
 @end example
 @end quotation
 
