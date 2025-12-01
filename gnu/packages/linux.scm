@@ -544,21 +544,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.17)))
 
-(define-public linux-libre-6.16-version "6.16.12")
-(define-public linux-libre-6.16-gnu-revision "gnu")
-(define deblob-scripts-6.16
-  (linux-libre-deblob-scripts
-   linux-libre-6.16-version
-   linux-libre-6.16-gnu-revision
-   (base32 "0qwh82z5bjmq7hhx7s41mnybpr8ihdk2g0bgjb3hzd95x6pw4w51")
-   (base32 "1i4kba2wpkc7jmj7b2qjkrgqsl0g0s1h7j9pfvc7zqyyn9v3kkqr")))
-(define-public linux-libre-6.16-pristine-source
-  (let ((version linux-libre-6.16-version)
-        (hash (base32 "0vm257d76hmimnac8hzg66gd1mdg330sai39lywfn4m9bjydx93w")))
-   (make-linux-libre-source version
-                            (%upstream-linux-source version hash)
-                            deblob-scripts-6.16)))
-
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
@@ -683,11 +668,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 (define-public linux-libre-6.17-source
   (source-with-patches linux-libre-6.17-pristine-source
-                       (list %boot-logo-patch
-                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
-
-(define-public linux-libre-6.16-source
-  (source-with-patches linux-libre-6.16-pristine-source
                        (list %boot-logo-patch
                              %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
@@ -816,11 +796,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
   (make-linux-libre-headers* linux-libre-6.17-version
                              linux-libre-6.17-gnu-revision
                              linux-libre-6.17-source))
-
-(define-public linux-libre-headers-6.16
-  (make-linux-libre-headers* linux-libre-6.16-version
-                             linux-libre-6.16-gnu-revision
-                             linux-libre-6.16-source))
 
 (define-public linux-libre-headers-6.12
   (make-linux-libre-headers* linux-libre-6.12-version
@@ -1193,14 +1168,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
   (make-linux-libre* linux-libre-6.17-version
                      linux-libre-6.17-gnu-revision
                      linux-libre-6.17-source
-                     '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
-                     #:configuration-file kernel-config))
-
-(define-public linux-libre-6.16
-  (make-linux-libre* linux-libre-6.16-version
-                     linux-libre-6.16-gnu-revision
-                     linux-libre-6.16-source
                      '("x86_64-linux" "i686-linux" "armhf-linux"
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
