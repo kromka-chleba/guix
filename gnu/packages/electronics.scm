@@ -2334,10 +2334,10 @@ automated testing of HDL code.")
       #~(list "-DQRFL_MINIMAL=ON"
               "-DCMAKE_BUILD_TYPE=Release")))
     (home-page "https://github.com/thomaslepoix/Qucs-RFlayout/")
-    (synopsis "Produce layouts from Qucs RF schematic")
+    (synopsis "Produce layouts from Qucs RF schematics")
     (description
-     "@code{qucsrflayout} command exports RF schematics to KiCad layouts and
-OpenEMS scripts.")
+     "@code{qucsrflayout} command exports @acronym{RF, Radio Frequency}
+schematics to KiCad layouts and OpenEMS scripts.")
     (license license:gpl3+)))
 
 (define-public qucsator-rf
@@ -2424,7 +2424,7 @@ input and outputs an XML dataset.")
           (add-after 'unpack 'adjust-default-settings
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "qucs/settings.cpp"
-                (("\"/usr/local/Xyce.*\"")
+                (("\"Xyce\"")
                  (format #f "~s" (search-input-file inputs "bin/Xyce")))
                 (("\"qucsrflayout\"")
                  (format #f "~s" (search-input-file inputs "bin/qucsrflayout")))
