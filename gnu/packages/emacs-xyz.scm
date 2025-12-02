@@ -1948,7 +1948,7 @@ separate, named tab groups.")
 (define-public emacs-dicom
   (package
     (name "emacs-dicom")
-    (version "1.1")
+    (version "1.2")
     (source
      (origin
        (method git-fetch)
@@ -1957,7 +1957,7 @@ separate, named tab groups.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pmqszfk5gn1wa9x37ywzsgwhf3cy44yihi3vjffgvhmik64hxpb"))))
+        (base32 "1inmzamm88zzq98x5xjc97c0kk9mgdmj9jw6vklmhiady2v8jy6y"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -1967,23 +1967,27 @@ separate, named tab groups.")
           (add-after 'unpack 'patch-commands
             (lambda* (#:key inputs #:allow-other-keys)
               (make-file-writable "dicom.el")
-              (let ((dcm2xml (search-input-file inputs "/bin/dcm2xml"))
-                    (dcmj2pnm (search-input-file inputs "/bin/dcmj2pnm"))
+              (let ((convert (search-input-file inputs "/bin/convert"))
+                    (dcm2img (search-input-file inputs "/bin/dcm2img"))
+                    (dcm2xml (search-input-file inputs "/bin/dcm2xml"))
                     (ffmpeg (search-input-file inputs "/bin/ffmpeg"))
                     (mpv (search-input-file inputs "/bin/mpv")))
                 (substitute* "dicom.el"
+                  (("(^|[^`])dcm2img" _ start)
+                   (string-append start dcm2img))
                   (("\"dcm2xml")
                    (string-append "\"" dcm2xml))
-                  (("\"dcmj2pnm")
-                   (string-append "\"" dcmj2pnm))
                   (("(^|[^`])ffmpeg" _ start)
                    (string-append start ffmpeg))
+                  ;; Guix has ImageMagick 6.
+                  (("(^|[^`])magick" _ start)
+                   (string-append start convert))
                   (("(^|[^`])mpv" _ start)
                    (string-append start mpv))))))
           (add-before 'install 'makeinfo
             (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
-    (inputs (list dcmtk ffmpeg mpv))
+    (inputs (list dcmtk ffmpeg imagemagick mpv))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/dicom")
     (synopsis
