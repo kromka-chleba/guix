@@ -78,6 +78,7 @@
 ;;; Copyright © 2025 John Kehayias <john@guixotic.coop>
 ;;; Copyright © 2025 Julian Flake <flake@uni-koblenz.de>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
+;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2477,6 +2478,63 @@ stream, playback and interact with media content.  Such content can be any
 combination of audio, video, subtitles, metadata, scalable graphics, encrypted
 media, 2D/3D graphics and ECMAScript.")
       (license license:lgpl2.1+))))
+
+(define-public gpu-screen-recorder
+  (package
+    (name "gpu-screen-recorder")
+    (version "5.9.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://repo.dec05eba.com/gpu-screen-recorder")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1k1rvn4pagyx5m88r04zjw1h85ldy9yhrarj29gk50bxsj5xa9gh"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-Dsystemd=false")
+      ;; No test suite.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'qualify-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/egl.c"
+                (("libEGL\\.so")
+                 (search-input-file inputs "lib/libEGL.so"))
+                (("libGL\\.so")
+                 (search-input-file inputs "lib/libGL.so"))))))))
+    (native-inputs (list pkg-config))
+    (inputs (list dbus
+                  ffmpeg
+                  libdrm
+                  libva
+                  libx11
+                  libxcomposite
+                  libxdamage
+                  libxrandr
+                  pulseaudio
+                  vulkan-headers
+                  wayland
+                  pipewire))
+    (propagated-inputs (list libglvnd
+                              mesa))
+    (synopsis "GPU Screen Recorder")
+    (description "This is a screen recorder that has minimal impact on system
+performance by recording your monitor using the GPU only, similar to shadowplay
+on windows.
+
+This screen recorder can be used for recording your desktop offline, for live
+streaming and for nvidia shadowplay-like instant replay, where only the last
+few minutes are saved.
+
+This software can also take screenshots.")
+    (home-page "https://git.dec05eba.com/gpu-screen-recorder/about/")
+    (license license:gpl3)))
 
 (define-public vlc
   (package
