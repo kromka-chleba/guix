@@ -34,7 +34,7 @@
 (define-public re2c
   (package
     (name "re2c")
-    (version "4.3")
+    (version "4.3.1")
     (source
      (origin
        (method git-fetch)
@@ -43,23 +43,13 @@
               (commit version)))
        (sha256
         (base32
-         "1j5xs5rfx4y189lj9nszf968dpygwsxghvfdfvq08pnpqws89wyc"))))
+         "02r7bcgw1ybbpz3qmw9srvyb47246lnig3sjz1bqi0fbl43l06wa"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:tests?
       (not (or (%current-target-system)
-               ;; run_tests.py hangs
-               (system-hurd?)))
-      #:phases
-      (if (target-arm32?)
-          #~(modify-phases %standard-phases
-              (add-after 'unpack 'patch-sources
-                (lambda _
-                  (invoke "patch" "-p1" "--force" "--input"
-                          #$(local-file (search-patch
-                                         "re2c-Use-maximum-alignment.patch"))))))
-          #~%standard-phases)))
+               (system-hurd?)))))       ; TODO run_tests.py hangs
     (native-inputs
      (list autoconf
            automake
