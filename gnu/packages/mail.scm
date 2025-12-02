@@ -4059,7 +4059,12 @@ operators and scripters.")
            (lambda _
              ;; This removes time-dependent code to make alpine reproducible.
              (substitute* "pico/blddate.c"
-               (("%02d-%s-%d") "1970-01-01")))))))
+               (("%02d-%s-%d") "1970-01-01"))))
+         (add-before 'configure 'relax-compiler-strictness
+           (lambda _
+             (setenv "CFLAGS"
+                     (string-append
+                      "-Wno-incompatible-pointer-types")))))))
     (inputs
      (list ncurses
            openssl
