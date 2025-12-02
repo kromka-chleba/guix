@@ -121,6 +121,8 @@
 
             colord-service-type
 
+            gpu-screen-recorder-service-type
+
             geoclue-application
             geoclue-configuration
             geoclue-configuration?
@@ -1009,6 +1011,31 @@ boot, which can be useful when using a bluetooth keyboard or mouse.
                  "Run @command{colord}, a system service with a D-Bus
 interface to manage the color profiles of input and output devices such as
 screens and scanners.")))
+
+
+;;;
+;;; gpu-screen-recorder.
+;;;
+
+(define gpu-screen-recorder-service-type
+  (service-type
+    (name 'gpu-screen-recorder-service)
+    (description "gpu-screen-recorder")
+    (extensions
+      (list
+        (service-extension profile-service-type
+          (const (list gpu-screen-recorder)))
+        (service-extension privileged-program-service-type
+          (const
+            (list
+              (privileged-program
+                (program (file-append gpu-screen-recorder
+                                      "/bin/gsr-kms-server"))
+                (capabilities "cap_sys_admin=ep"))
+              (privileged-program
+                (program (file-append gpu-screen-recorder
+                                      "/bin/gpu-screen-recorder"))
+                (capabilities "cap_sys_admin=ep")))))))))
 
 
 ;;;
