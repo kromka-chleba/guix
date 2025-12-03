@@ -3131,6 +3131,10 @@ parallel computing platforms.  It also supports serial execution.")
                  "ENABLE_EDITLINE := 1")
                 (("ENABLE_LIBYOSYS \\:= 0")
                  "ENABLE_LIBYOSYS := 1")
+                (("ENABLE_PYOSYS \\:= 0")
+                 "ENABLE_PYOSYS := 1")
+                (("PYOSYS_USE_UV \\:= 1")
+                 "PYOSYS_USE_UV := 0")
                 (("ABCEXTERNAL \\?=")
                  (string-append "ABCEXTERNAL = "
                                 (search-input-file inputs "/bin/abc"))))))
@@ -3160,6 +3164,7 @@ parallel computing platforms.  It also supports serial execution.")
                          gtkwave        ;for the tests
                          iverilog ;for the tests
                          pkg-config
+                         python-setuptools
                          perl))
     ;; Optional dependencies increase considerably package closure.
     ;; - gtkwave: required only for vcd2fst binary, used by ‘sim’ command.
@@ -3170,8 +3175,10 @@ parallel computing platforms.  It also supports serial execution.")
                   editline
                   libffi
                   psmisc
+                  pybind11
                   python
                   python-click
+                  python-cxxheaderparser
                   readline
                   tcl
                   z3
