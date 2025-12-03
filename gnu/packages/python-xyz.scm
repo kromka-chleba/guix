@@ -206,6 +206,7 @@
   #:use-module (gnu packages bioinformatics)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages nss)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -19752,7 +19753,7 @@ text.")
 
                           ;; XXX: Probably will be resolved in the next
                           ;; release, as botocore's refresh pace is fast.
-                          ;; 
+                          ;;
                           ;; botocore.exceptions.UnknownServiceError: Unknown
                           ;; service: <...>
                           "test_create_app_response"
@@ -35691,6 +35692,29 @@ compatible with BibTeX's own parser.")
       ;; N.B. It seems the parser was translated from WEB by hand: this
       ;; package does not contain any generated files.
       (license license:expat))))
+
+(define-public python-cxxheaderparser
+  (package
+    (name "python-cxxheaderparser")
+    (version "1.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cxxheaderparser" version))
+       (sha256
+        (base32 "0hhclcwil0b47msf4alpxawj3yw7k8mil2nq0svzninlkpk3y6xz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))  ;no tests found
+    (native-inputs
+     (list python-hatch-vcs python-hatchling python-pcpp python-pytest))
+    (home-page "https://github.com/robotpy/cxxheaderparser/")
+    (synopsis "Python C++ header parser")
+    (description "Pure python C++ header parser that parses C++ headers in a
+mildly naive manner that allows it to handle many C++ constructs, including
+many modern (C++11 and beyond) features.")
+    (license license:bsd-3)))
 
 (define-public python-cyclic
   (package
