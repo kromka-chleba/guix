@@ -14888,6 +14888,12 @@ The goal of this game is to create a tile with value 2048.  The size of the
 board and goal value can be customized.")
       (license license:gpl3+))))
 
+(define-public emacs-2048-game-superceded-version
+  (package
+    (inherit emacs-2048-game)
+    (version "20151026.1233")
+    (properties `((superseded . ,emacs-2048-game)))))
+
 (define-public emacs-chess
   (package
     (name "emacs-chess")
