@@ -174,7 +174,7 @@ printing, and psresize, for adjusting page sizes.")
 (define-public ghostscript
   (package
     (name "ghostscript")
-    (version "9.56.1")
+    (version "10.06.0")
     (source
      (origin
        (method url-fetch)
@@ -184,12 +184,7 @@ printing, and psresize, for adjusting page sizes.")
                            "/ghostscript-" version ".tar.xz"))
        (sha256
         (base32
-         "1r5qash65m6ignki6z72q4rlai9ka99xrxnmqd19n02has00cd6l"))
-       (patches (search-patches "ghostscript-no-header-creationdate.patch"
-                                "ghostscript-no-header-id.patch"
-                                "ghostscript-no-header-uuid.patch"
-                                "ghostscript-CVE-2023-36664.patch"
-                                "ghostscript-CVE-2023-36664-fixup.patch"))
+         "0qf5yg7g2vjgnp8p52zmaxyas7p0clcxq4hszflwi0f0q942cdb4"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled libraries. The bundled OpenJPEG is a patched fork so
@@ -212,6 +207,7 @@ printing, and psresize, for adjusting page sizes.")
                              (dirname (search-input-file %build-inputs
                                                          "include/zlib.h")))
               "--enable-dynamic"
+              "--disable-hidden-visibility"
               "--disable-compile-inits"
               (string-append "--with-fontpath="
                              (search-input-directory
