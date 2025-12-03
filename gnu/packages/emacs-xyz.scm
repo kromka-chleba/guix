@@ -4261,6 +4261,12 @@ Flymake diagnostic backend.  The effect is that Flymake will control when the
 checker runs, and Flymake will receive its errors.")
       (license license:gpl3+))))
 
+(define-public emacs-flymake-flycheck-superceded-version
+  (package
+    (inherit emacs-flymake-flycheck)
+    (version "20210404.2128")
+    (properties `((superseded . ,emacs-flymake-flycheck)))))
+
 (define-public emacs-flymake-quickdef
   ;; This particular commit includes bug fixes on top of 1.0.0 release.
   (let ((version "1.0.0")
