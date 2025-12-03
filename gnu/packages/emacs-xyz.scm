@@ -34171,6 +34171,12 @@ customisation options to control its behaviour.")
       (home-page "https://codeberg.org/thomp/dired-launch")
       (license license:gpl3+))))
 
+(define-public emacs-dired-launch-superceded-version
+  (package
+    (inherit emacs-dired-launch)
+    (version "20240809.1910")
+    (properties `((superseded . ,emacs-dired-launch)))))
+
 (define-public emacs-dired-rsync
   (package
     (name "emacs-dired-rsync")
