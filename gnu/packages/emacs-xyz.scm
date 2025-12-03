@@ -8337,6 +8337,12 @@ them whenever another command is invoked.")
 a command.")
       (license license:gpl3+))))
 
+(define-public emacs-keyfreq-superceded-version
+  (package
+    (inherit emacs-keyfreq)
+    (version "20160516.716")
+    (properties `((superseded . ,emacs-keyfreq)))))
+
 (define-public emacs-khardel
   (package
     (name "emacs-khardel")
