@@ -10367,18 +10367,17 @@ associations for GNOME.")
     (build-system meson-build-system)
     (synopsis "GNOME Tour and Greeter")
     (description "A guided tour and greeter for GNOME.")
-    (native-inputs (list pkg-config
-                         `(,glib "bin")
-                         desktop-file-utils))
-    (inputs (cons* rust
-                   `(,rust "cargo")
-                   libadwaita
-                   gettext-minimal
-                   glib
-                   gtk
-                   gtk+
-                   `(,gtk+ "bin")
-                   (cargo-inputs 'gnome-tour)))
+    (native-inputs (cons* pkg-config
+                          rust
+                          `(,rust "cargo")
+                          gettext-minimal
+                          `(,gtk "bin")
+                          `(,glib "bin")
+                          desktop-file-utils
+                          (cargo-inputs 'gnome-tour)))
+    (inputs (list libadwaita
+                  glib
+                  gtk+))
     (arguments
      (list
       #:glib-or-gtk? #t
