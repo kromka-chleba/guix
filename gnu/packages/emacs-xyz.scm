@@ -40158,6 +40158,12 @@ Emacs has been idle for one hour, with desktop notifications emitted for new
 messages received.")
       (license license:gpl3+))))
 
+(define-public emacs-gnus-desktop-notify-superceded-version
+  (package
+    (inherit emacs-gnus-desktop-notify)
+    (version "20250616.0809")
+    (properties `((superseded . ,emacs-gnus-desktop-notify)))))
+
 (define-public emacs-ox-epub
   (package
     (name "emacs-ox-epub")
