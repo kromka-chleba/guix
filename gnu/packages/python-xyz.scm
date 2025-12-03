@@ -2032,6 +2032,31 @@ of VT100 terminal.")
 edit distance algorithm for Python in Cython for high performance.")
     (license license:bsd-3)))
 
+(define-public python-represent
+  (package
+    (name "python-represent")
+    (version "2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Represent" version))
+       (sha256
+        (base32 "1b5wbnkjirscfqwcb6ik8klky0ajm4qs2yvabqxnpfp72if02b8b"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     ;; XXX This might be too much for testing, maybe switch them off as it's
+     ;; a simple middleware library.
+     (list python-ipython
+           python-pytest
+           python-rich
+           python-setuptools))
+    (home-page "https://github.com/RazerM/represent")
+    (synopsis "Create @code{__repr__} automatically or declaratively for Python")
+    (description
+     "This package implements a functionality to generate Python
+@code{__repr__} methods automatically or declaratively.")
+    (license license:expat)))
+
 (define-public python-rich-argparse
   (package
     (name "python-rich-argparse")
@@ -2057,6 +2082,42 @@ edit distance algorithm for Python in Cython for high performance.")
     (description
      "This package improves the look and readability of argparse's help while
 requiring minimal changes to the code.")
+    (license license:expat)))
+
+(define-public python-rush
+  (package
+    (name "python-rush")
+    (version "2021.04.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/sigmavirus24/rush")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0brqjw34n14rij58giwyqlagjnp11npvsrlwrqj5pbn7rmgd2mhx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; E ValueError: Redis URL must specify one of the following schemes
+      ;; (redis://, rediss://, unix://)
+      #~(list "-k" (string-append "not test_valid_url[redis://]"
+                                  " and not test_valid_url[rediss://]"))))
+    (native-inputs
+     (list python-mock
+           python-redis
+           python-rfc3986
+           python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-attrs))
+    (home-page "https://github.com/sigmavirus24/rush")
+    (synopsis "Throttling and rate-limiting algorithms for Python")
+    (description
+     "This package provides is a small collection of algorithms that can be
+reused when throttling user interactions with a resource (e.g., an API).")
     (license license:expat)))
 
 (define-public python-safety-schemas
@@ -2257,15 +2318,23 @@ Snake with a message.")
 (define-public python-jaconv
   (package
     (name "python-jaconv")
-    (version "0.4.0")
+    ;; Last release is not tagged.
+    (properties '((commit . "d4273468279536adb5375ffbfcd34578c6a95b70")
+                  (revision . "0")))
+    (version (git-version "0.4.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "jaconv" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ikegami-yukino/jaconv")
+             (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0qc1dx21vwlarhsg19l5rdjpjf7j7lamrcynaadf0xpj8yr79nij"))))
+        (base32 "00lvkr6jsm2h70658hly5w81ybkfp3x0rmgzpcn0s52d4n4m21fb"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-setuptools python-wheel python-nose))
+    (native-inputs (list python-setuptools python-pynose))
     (home-page "https://github.com/ikegami-yukino/jaconv")
     (synopsis
      "Pure-Python Japanese character interconverter for Hiragana, Katakana,
@@ -5074,6 +5143,67 @@ formatted files, which are HDF5 files with a different extension and some
 extra metadata.  Because HDF5 and MAT files might need to be read from
 untrusted sources, pickling is avoided in this package.")
       (license license:bsd-2))))
+
+(define-public python-prctl
+  (package
+    (name "python-prctl")
+    (version "1.8.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "python-prctl" version))
+              (sha256
+                (base32
+                  "1kk7gv582w72spnz6agr0pz0hlpgchp3l7zxzzjarwfllwjrmjml"))))
+    (build-system pyproject-build-system)
+    (arguments
+      (list #:test-backend ''custom
+            #:test-flags ''("test_prctl.py")
+            #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'unpack 'patch-tests
+                  (lambda _
+                    (substitute* "test_prctl.py"
+                      ;; actual suffix used in cpython build output dir name
+                      (("sys.version\\[0:3\\]") "sys.implementation.cache_tag")
+                      ;; test_no_new_privs assumes existance of /bin/ping, but
+                      ;; can never run anyway due to it requiring setuid ping.
+                      ;; just short circuit it instead.
+                      (("os.stat\\('/bin/ping'\\)\\.st_mode") "0")))))))
+    (inputs (list libcap))
+    (native-inputs (list python-setuptools))
+    (supported-systems (filter target-linux? %supported-systems))
+    (home-page "https://pythonhosted.org/python-prctl")
+    (synopsis "Linux capabilities library")
+    (description "This package provides a Python library for controlling Linux
+capabilities and attributes, similar to the prctl syscall.")
+    (license license:gpl3+)))
+
+(define-public python-pyhimitsu
+  (package
+    (name "python-pyhimitsu")
+    (version "0.0.9")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "py_himitsu" version))
+              (sha256
+                (base32
+                  "1kljxhjvfy945zij8fif3s6xzgcyslxz99mv460iy0anzj433pj5"))))
+    (build-system pyproject-build-system)
+    (arguments
+      (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda _
+                ;; (setenv "PYTHONPATH" (getenv "GUIX_PYTHONPATH"))
+                (invoke "make" "check"))))))
+    (native-inputs (list python-hatchling))
+    (propagated-inputs (list python-pyxdg))
+    (home-page "https://git.sr.ht/~apreiml/py-himitsu")
+    (synopsis "Himitsu client protocol implementation in Python")
+    (description "This package provides a library for writing Himitsu client
+programs in Python.")
+    (license license:expat)))
 
 (define-public python-hjson
   ;; Using commit from master branch as the PyPI version does not contain
@@ -14636,7 +14766,12 @@ container data structures in Python).")
              (lambda* (#:key inputs #:allow-other-keys)
                (substitute* "jupyter_client/localinterfaces.py"
                  (("'ip'")
-                  (format #f "'~a'" (search-input-file inputs "sbin/ip")))))))))
+                  (format #f "'~a'" (search-input-file inputs "sbin/ip"))))))
+           ;; Hatchling seems to generate entry scripts with invalid imports.
+           (add-after 'check 'fix-syntax-error
+             (lambda _
+               (substitute* (string-append #$output "/bin/.jupyter-kernelspec-real")
+                 (("import KernelSpecApp.launch_instance") "import KernelSpecApp")))))))
      (inputs (list iproute))
      (propagated-inputs
       (list python-dateutil
@@ -22694,18 +22829,30 @@ etc.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 27 passed, 8 deselected
       #:test-flags
-      #~(list "--ignore=tests/test_examples.py"
-              ;; OSError: Pillow was built without XCB support
-              "--ignore=tests/test_smart.py"
-              "--ignore=tests/test_smart2.py"
-              "--ignore=tests/test_smart_thread.py")))
+      ;; TODO: Add libxcb to python-pillow on the next python-team cycle.
+      ;; OSError: Pillow was built without XCB support
+      #~(list #$@(map (lambda (test) (string-append "--deselect="
+                                                    "tests/"
+                                                    test))
+                      (list "test_smart.py::test_slowshot"
+                            "test_smart.py::test_slowshot_with"
+                            "test_smart.py::test_slowshot_nocrop"
+                            "test_smart.py::test_slowshot_timeout"
+                            "test_smart.py::test_slowshot_timeout_nocrop"
+                            "test_smart2.py::test_double"
+                            "test_smart_thread.py::test_smart"
+                            "test_examples.py::test_screenshot")))))
     (native-inputs
-     (list python-entrypoint2 python-psutil python-pytest
-           python-setuptools python-vncdotool-bootstrap python-wheel
-           xmessage xorg-server-for-tests))
-    (propagated-inputs
-     (list python-easyprocess python-pillow))
+     (list python-easyprocess
+           python-entrypoint2
+           python-psutil
+           python-pytest
+           python-setuptools
+           python-vncdotool-bootstrap
+           xmessage
+           xorg-server-for-tests))
     (home-page "https://github.com/ponty/pyvirtualdisplay")
     (synopsis "Python wrapper for Xvfb, Xephyr and Xvnc")
     (description
@@ -35570,11 +35717,10 @@ utility.  It also provides two command-line tools, @code{bsdiff4} and
     (version "1.0.8")
     (source
      (origin
-       ;; python-mpv from pypi does not include the tests directory.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/jaseg/python-mpv")
-             (commit (string-append "v" version))))
+              (url "https://github.com/jaseg/python-mpv")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "04azy5wa2n8pa21z6lz1p1p0vy7flaqm8ypy46jb77gig2g50xrh"))))
@@ -35587,9 +35733,8 @@ utility.  It also provides two command-line tools, @code{bsdiff4} and
                    ;; Without an absolute path it is not able find and load libmpv.
                    (substitute* "mpv.py"
                      (("sofile = .*")
-                      (string-append "sofile = \""
-                                     (search-input-file inputs "/lib/libmpv.so")
-                                     "\"\n")))))
+                      (format #f "sofile = '~a/lib/libmpv.so'~%"
+                              #$(this-package-input "mpv"))))))
                (add-before 'check 'prepare-for-tests
                  (lambda _
                    ;; Fontconfig throws errors when it has no cache dir to use.
@@ -35602,8 +35747,7 @@ utility.  It also provides two command-line tools, @code{bsdiff4} and
      (list python-pytest
            python-pyvirtualdisplay
            python-setuptools
-           python-xvfbwrapper
-           python-wheel))
+           xorg-server-for-tests))
     (inputs (list mpv))
     (propagated-inputs (list python-pillow)) ;for raw screenshots
     (home-page "https://github.com/jaseg/python-mpv")

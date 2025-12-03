@@ -4896,32 +4896,34 @@ consensus sequences.")
        (snippet '(delete-file "libs/ccs"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'relax-requirements
-                    (lambda _
-                      (substitute* "setup.py"
-                        (("'argparse[^']*',")
-                         "") ;only for python2
-                        (("==")
-                         ">=")
-                        ;; This package changed names.
-                        (("python-Levenshtein")
-                         "levenshtein"))))
-                  (add-before 'build 'build-libssw
-                    (lambda _
-                      (with-directory-excursion "libs/striped_smith_waterman"
-                        (invoke "make" "libssw.so"))))
-                  (add-before 'build 'fix-reference-to-ccs
-                    (lambda* (#:key inputs #:allow-other-keys)
-                      (substitute* "CIRI_long/pipeline.py"
-                        (("'ccs -i")
-                         (string-append "'"
-                                        (assoc-ref inputs "circtools")
-                                        "/bin/ccs" " -i")))
-                      ;; yuck!
-                      (substitute* "CIRI_long/main.py"
-                        (("os.chmod\\(lib_path.*")
-                         "")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("'argparse[^']*',")
+                 "") ;only for python2
+                (("==")
+                 ">=")
+                ;; This package changed names.
+                (("python-Levenshtein")
+                 "levenshtein"))))
+          (add-before 'build 'build-libssw
+            (lambda _
+              (with-directory-excursion "libs/striped_smith_waterman"
+                (invoke "make" "libssw.so"))))
+          (add-before 'build 'fix-reference-to-ccs
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "CIRI_long/pipeline.py"
+                (("'ccs -i")
+                 (string-append "'"
+                                (assoc-ref inputs "circtools") "/bin/ccs"
+                                " -i")))
+              ;; yuck!
+              (substitute* "CIRI_long/main.py"
+                (("os.chmod\\(lib_path.*")
+                 "")))))))
     (inputs (list circtools
                   python-biopython
                   python-bwapy
@@ -4933,7 +4935,7 @@ consensus sequences.")
                   python-pyspoa
                   python-scikit-learn
                   python-scipy))
-    (native-inputs (list python-cython python-nose python-setuptools))
+    (native-inputs (list python-cython python-pynose python-setuptools))
     (home-page "https://ciri-cookbook.readthedocs.io/")
     (synopsis "Circular RNA identification for Nanopore sequencing")
     (description "CIRI-long is a package for circular RNA identification using
@@ -5472,7 +5474,7 @@ confidence to have in an alignment.")
     (native-inputs
      (list perl))
     (inputs
-     (list openmpi boost sparsehash pigz zlib))
+     (list openmpi boost-1.83 sparsehash pigz zlib))
     (supported-systems '("x86_64-linux"))
     (home-page "https://sourceforge.net/p/bless-ec/wiki/Home/")
     (synopsis "Bloom-filter-based error correction tool for NGS reads")
@@ -6296,12 +6298,11 @@ setup"))))
                   python-pysam
                   python-numpy
                   python-scipy))
-    (native-inputs (list python-setuptools-git
+    (native-inputs (list python-mock
+                         python-pynose
+                         python-pytz
                          python-setuptools
-                         python-wheel
-                         python-mock ;for tests
-                         python-nose ;for tests
-                         python-pytz)) ;for tests
+                         python-setuptools-git))
     (home-page "https://github.com/YeoLab/clipper")
     (synopsis "CLIP peak enrichment recognition")
     (description "CLIPper is a tool to define peaks in CLIP-seq datasets.")
@@ -6365,10 +6366,10 @@ gene predictor designed to work with assembled, aligned RNA-seq transcripts.")
                              (find-files "." "\\.pyc$"))
                    (delete-file-recursively ".eggs")))))
     (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; No tests in PyPI.
     (inputs (list python-bx-python python-numpy python-pybigwig python-pysam
                   zlib))
-    (native-inputs (list python-cython python-nose python-pyparsing
-                         python-setuptools python-wheel))
+    (native-inputs (list python-cython python-pyparsing python-setuptools))
     (home-page "https://crossmap.sourceforge.net/")
     (synopsis "Convert genome coordinates between assemblies")
     (description
@@ -8267,7 +8268,7 @@ dynamic programming or a variety of heuristics.")
                 (("#include \"update_check.h\"") "")
                 (("check_version\\(PACKAGE_VERSION\\);") "")))))))
     (inputs
-     (list boost bamtools protobuf zlib))
+     (list boost-1.83 bamtools protobuf zlib))
     (home-page "http://bio.math.berkeley.edu/eXpress")
     (synopsis "Streaming quantification for high-throughput genomic sequencing")
     (description
@@ -9677,7 +9678,7 @@ experiments and provide highly stable thresholds based on reproducibility.")
                  (("isnan") "std::isnan")
                  (("isinf") "std::isinf")))))))
       (inputs
-       (list boost hdf5 zlib))
+       (list boost-1.83 hdf5 zlib))
       (home-page "https://github.com/dcjones/isolator")
       (synopsis "Tools for the analysis of RNA-Seq experiments")
       (description "Isolator analyzes RNA-Seq experiments.  Isolator has a
@@ -10291,7 +10292,7 @@ form of assemblies or reads.")
                (("set\\(Boost.*") "")
                (("add_dependencies.*") "")))))))
     (inputs
-     (list zlib perl samtools htslib boost))
+     (list zlib perl samtools htslib boost-1.83))
     (home-page "https://bitbucket.org/berkeleylab/metabat")
     (synopsis
      "Reconstruction of single genomes from complex microbial communities")
@@ -10912,7 +10913,7 @@ phylogenies.")
                            "rsem-run-ebseq"
                            "rsem-run-prsem-testing-procedure"))))))))
     (inputs
-     (list bash-minimal boost r-minimal perl htslib-1.3 zlib))
+     (list bash-minimal boost-1.83 r-minimal perl htslib-1.3 zlib))
     (home-page "https://deweylab.biostat.wisc.edu/rsem/")
     (synopsis "Estimate gene expression levels from RNA-Seq data")
     (description
@@ -10939,6 +10940,7 @@ BAM and Wiggle files in both transcript-coordinate and genomic-coordinate.")
         (base32
          "0gbb9iyb7swiv5455fm5rg98r7l6qn27v564yllqjd574hncpx6m"))))
     (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; No tests.
     (inputs
      (list python-bx-python
            python-cython
@@ -10947,10 +10949,7 @@ BAM and Wiggle files in both transcript-coordinate and genomic-coordinate.")
            python-pyparsing
            python-pysam
            python-setuptools
-           python-wheel
            zlib))
-    (native-inputs
-     (list python-nose))
     (home-page "https://rseqc.sourceforge.net/")
     (synopsis "RNA-seq quality control package")
     (description
@@ -12057,16 +12056,34 @@ bioinformatics file formats, sequence alignment, and more.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/fhcrc/seqmagick")
-               (commit commit)))
+                (url "https://github.com/fhcrc/seqmagick")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
           (base32 "0syipb7m44s5bqrhs17bwr28svy2s83j8d93kbazav92jzszzsw4"))))
       (build-system pyproject-build-system)
-      (inputs
-       (list python-biopython python-pygtrie))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-version
+              ;; Alternative of setup.py version check:
+              ;;
+              ;; subprocess.call(
+              ;; ('mkdir -p seqmagick/data && '
+              ;;  'git describe --tags --dirty > seqmagick/data/ver.tmp '
+              ;;  '&& mv seqmagick/data/ver.tmp seqmagick/data/ver '
+              ;;  '|| rm -f seqmagick/data/ver.tmp'),
+              ;; shell=True, stderr=open(os.devnull, "w"))
+              ;;
+              (lambda _
+                (mkdir "seqmagick/data")
+                (with-output-to-file "seqmagick/data/ver"
+                  (lambda _ (display #$version))))))))
       (native-inputs
-       (list python-nose python-setuptools python-wheel))
+       (list python-pynose
+             python-setuptools))
+      (inputs (list python-biopython python-pygtrie))
       (home-page "https://github.com/fhcrc/seqmagick")
       (synopsis "Tools for converting and modifying sequence files")
       (description
@@ -12754,6 +12771,15 @@ sankey, alluvial and sankey bump plots in @code{ggplot2}.")
                   "11ijzy1zyjv2wgxrfcaan7g82jl27skd41hw4s2xh9lijkn8ilwh"))))
       (properties `((upstream-name . "gUtils")))
       (build-system r-build-system)
+      (arguments
+       (list
+        #:phases
+        '(modify-phases %standard-phases
+           ;; These deprecated procedures have been removed in testthat.
+           (add-after 'unpack 'testthat-compatibility
+             (lambda _
+               (substitute* "tests/testthat/test_rangeops.R"
+                 (("is_true\\(\\)") "expect_true")))))))
       (propagated-inputs
        (list r-biocgenerics
              r-data-table
@@ -12763,7 +12789,7 @@ sankey, alluvial and sankey bump plots in @code{ggplot2}.")
              r-matrix
              r-s4vectors
              r-stringr))
-      (native-inputs (list r-testthat))
+      (native-inputs (list r-testthat r-xvector))
       (home-page "https://github.com/mskilab/gUtils")
       (synopsis "Additional capabilities and speed for GenomicRanges operations")
       (description
@@ -12845,8 +12871,8 @@ file formats, and ffTrack objects in multi-track panels.")
       (license license:gpl2))))
 
 (define-public r-gchain
-  (let ((commit "dc393e8dd0d8efaf36270c04d7112db8553db36a")
-        (revision "1"))
+  (let ((commit "19f8bb924fdadca136b9827b8538574b278e86a1")
+        (revision "2"))
     (package
       (name "r-gchain")
       (version (git-version "0.2.0" revision commit))
@@ -12858,13 +12884,21 @@ file formats, and ffTrack objects in multi-track panels.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "105wgi5w2fhwq1grsvj6zjigwg0sny3z7zr577q8ki3qffjwdkj0"))))
+                  "0cg7cy97g2w2dcd980jz5fawjjrfl590hdx3rsblavcdlnzcs3x4"))))
       (properties `((upstream-name . "gChain")))
       (build-system r-build-system)
       (arguments
        (list
         #:phases
         '(modify-phases %standard-phases
+           (add-after 'unpack 'biostrings-compatibility
+             (lambda _
+               (substitute* "R/gChain.R"
+                 ((" pairwiseAlignment") " pwalign::pairwiseAlignment")
+                 (("alignedPattern") "pwalign::alignedPattern")
+                 (("deletion\\(") "pwalign::deletion(")
+                 (("insertion\\(") "pwalign::insertion(")
+                 (("Biostrings::pattern") "pwalign::pattern"))))
            (add-after 'unpack 'skip-bad-tests
              (lambda _
                (substitute* "tests/testthat/test_gChain.R"
@@ -12873,13 +12907,6 @@ file formats, and ffTrack objects in multi-track panels.")
                   (string-append m "skip('guix')"))
                  ;; C stack usage  7973568 is too close to the limit
                  ((".*'testing \"\\*\" works'.*" m)
-                  (string-append m "skip('guix')"))
-                 ;; Accuracy problem
-                 ((".*'testing cgChain\\(\\) works'.*" m)
-                  (string-append m "skip('guix')"))
-                 ;; unable to find an inherited method for function ‘strand<-’
-                 ;; for signature ‘x = "GRangesList", value = "character"’
-                 ((".*'testing permute\\(\\) works'.*" m)
                   (string-append m "skip('guix')"))))))))
       (propagated-inputs
        (list r-bamutils
@@ -16860,7 +16887,7 @@ dependency like SeqAn.")
                                     ":"
                                     (or (getenv "CPLUS_INCLUDE_PATH") ""))))))))
     (inputs
-     `(("boost" ,boost)
+     `(("boost" ,boost-1.83)
        ("eigen" ,eigen)
        ("jemalloc" ,jemalloc)
        ("jellyfish" ,jellyfish)
@@ -17041,7 +17068,7 @@ The following file formats are supported:
                 (("SALMON_QUASI_INDEX_COMMAND")
                  "SALMON_QUASI_INDEX_CMD")))))))
     (inputs
-     (list boost
+     (list boost-1.83
            bzip2
            cereal
            curl
@@ -19256,9 +19283,36 @@ is then merged.")
         '(modify-phases %standard-phases
            (add-after 'unpack 'skip-bad-tests
              (lambda _
-               ;; These tests fail.  Some fail because of unimportant
-               ;; differences in printed messages.
                (with-directory-excursion "tests/testthat/"
+                 ;; All of these fail because with_mock has been removed from
+                 ;; r-testthat.
+                 (substitute* "test-cyto_channels-helpers.R"
+                   (("^test_that.*cyto_channel_select.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_gate_draw.R"
+                   (("^test_that.*cyto_gate_draw.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_gate_helpers.R"
+                   (("^test_that.*cyto_gate_edit.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_helpers.R"
+                   (("^test_that.*cyto_markers_edit.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_details_edit.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_channel_match.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_spillover_compute.R"
+                   (("^test_that.*cyto_spillover_compute universal reference.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_spillover_compute internal reference.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-openCyto-plugins.R"
+                   (("^test_that.*cyto_gate_manual.*" m)
+                    (string-append m "skip('guix')")))
+
+                 ;; These tests fail.  Some fail because of unimportant
+                 ;; differences in printed messages.
                  (substitute* "test-cyto_channels-helpers.R"
                    (("^test_that.*cyto_channels_restrict.*" m)
                     (string-append m "skip('guix')")))
@@ -21476,7 +21530,7 @@ on the needs of the user.")
        (modify-phases %standard-phases
          (delete 'configure))))
     (inputs
-     (list boost htslib ncurses zlib))
+     (list boost-1.83 htslib ncurses zlib))
     (native-inputs
      (list lcov))
     (home-page "https://github.com/ParkerLab/ataqv")
@@ -22690,7 +22744,7 @@ frames with arbitrary sets of columns.")
            "16wqf70j7rd7pay2q513iyz12i8n9vrpg1bisah4lddbcpx5dz1n"))))
       (build-system r-build-system)
       (inputs
-       (list boost))
+       (list boost-1.83))
       (propagated-inputs
        (list r-hdf5r
              r-mass

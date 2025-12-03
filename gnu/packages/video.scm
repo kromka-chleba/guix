@@ -11,7 +11,7 @@
 ;;; Copyright © 2016 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2016 Dmitry Nikolaev <cameltheman@gmail.com>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
-;;; Copyright © 2016, 2018, 2019, 2020, 2021 Eric Bavier <bavier@posteo.net>
+;;; Copyright © 2016, 2018-2021, 2025 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2016, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2017 Feng Shu <tumashu@163.com>
 ;;; Copyright © 2017–2021 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -25,7 +25,7 @@
 ;;; Copyright © 2018-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018, 2019, 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2018, 2019, 2020, 2022 Leo Famulari <leo@famulari.name>
-;;; Copyright © 2018 Brendan Tildesley <mail@brendan.scot>
+;;; Copyright © 2018, 2025 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2018 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2018 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2018 Mark Meyer <mark@ofosos.org>
@@ -134,6 +134,7 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages bittorrent)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages cdrom)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
@@ -191,6 +192,7 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages ocr)
   #:use-module (gnu packages openkinect)
   #:use-module (gnu packages pcre)
@@ -1090,7 +1092,7 @@ H.264 (MPEG-4 AVC) video streams.")
     (build-system gnu-build-system)
     (outputs '("out" "gui")) ; "mkvtoolnix-gui" brings the closure size from ~300 MB to 1.5+ GB.
     (inputs
-     (list boost
+     (list boost-1.83
            gmp
            bzip2
            cmark
@@ -1428,6 +1430,21 @@ on the Invidious instances only as a fallback method.")
 designed to encode video or images into an H.265 / HEVC encoded bitstream.")
     (license license:gpl2+)))
 
+(define-public x265-4
+  (package/inherit x265
+    (version "4.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "https://bitbucket.org/multicoreware/x265_git"
+                            "/downloads/x265_" version ".tar.gz"))
+        (sha256
+         (base32 "0acgmzbpjhwapxggx0h40m4lppk5vykydrai055vf1lqm339j5m3"))
+        (patches (search-patches "x265-4-arm-flags.patch"))
+        (modules '((guix build utils)))
+        (snippet '(begin
+                    (delete-file-recursively "source/compat/getopt")))))))
+
 (define-public libass
   (package
     (name "libass")
@@ -1562,6 +1579,51 @@ advantages in terms of future format extensibility, without breaking file
 support in old parsers.
 libebml is a C++ library to read and write EBML files.")
     (license license:lgpl2.1)))
+
+(define-public movit
+  (package
+    (name "movit")
+    (version "1.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://movit.sesse.net/movit-" version ".tar.gz"))
+       (sha256
+        (base32 "1mg8rxgbd51h0mqcn4f6b30m2mv11aps3dybfn6f7ly28s71zb00"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      ;; Rendering tests fail due to differing results, but they fail on other
+      ;; other distros too and still requires the test suite to compile.
+      ;; Failed tests: deinterlace_effect_test ycbcr_conversion_effect_test
+      ;; resample_effect_test colorspace_conversion_effect_test
+      ;; effect_chain_test
+      #:make-flags
+      #~(list (string-append
+               "GTEST_DIR="
+               #$(this-package-native-input "googletest-source")
+               "/googletest"))))
+    (native-inputs
+     `(("pkg-config"  ,pkg-config)
+       ("googletest-source" ,(package-source googletest))))
+    (inputs (list eigen
+                  fftw
+                  libepoxy ;; for tests
+                  sdl2)) ;; for tests
+    (home-page "https://movit.sesse.net")
+    (synopsis "High-performance GPU-accelerated video filtering library")
+    (description
+     "Movit is a high-quality, high-performance library for GPU-accelerated
+video filtering built on modern OpenGL.  It provides a compact set of
+carefully implemented filters designed for predictable real-time performance
+and visually accurate results, supporting OpenGL 3.0 or GLES 3.0.
+
+Included filters provide blur, diffusion, FFT-based convolution, glow,
+color correction (lift/gamma/gain), mirror, luma-based transitions, Porter-Duff
+overlay composition, bilinear and Lanczos scaling, sharpening (unsharp mask
+and Wiener), saturation, vignette, white balance and YADIF deinterlacing.")
+    (license license:gpl2+)))
 
 (define-public libplacebo
   (package
@@ -2428,7 +2490,8 @@ media, 2D/3D graphics and ECMAScript.")
                     "/vlc-" version ".tar.xz"))
               (sha256
                (base32
-                "1c7vbbicx95nymrybgvd2d3p65q0wayhpvsx9ncs1vpsglfvxnr4"))))
+                "1c7vbbicx95nymrybgvd2d3p65q0wayhpvsx9ncs1vpsglfvxnr4"))
+              (patches (search-patches "vlc-livemedia-2024.11.28.patch"))))
     (build-system gnu-build-system)
     (native-inputs
      (list flex bison gettext-minimal pkg-config))
@@ -3134,7 +3197,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.10.22")
+    (version "2025.11.12")
     (source
      (origin
        (method git-fetch)
@@ -3146,12 +3209,14 @@ video streaming services of the Finnish national broadcasting company Yle.")
        (snippet #~(substitute* "pyproject.toml"
                     (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "19viqfk3gnl6yk9p17kp0a21w18yr32qii4grm3mys758ws881ld"))))
+        (base32 "18kqf4z4r6ls9bik8jbwqbj5j4fai7xjhgn8p7pjgkd2q0nhavqj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? (not (%current-target-system))
-      #:test-flags #~'("--ignore=test/test_websockets.py")
+      #:test-flags #~'("--ignore=test/test_websockets.py"
+                       "--deselect=test/test_socks.py::TestSocks4Proxy::test_socks4_errors"
+                       "--deselect=test/test_socks.py::TestSocks5Proxy::test_socks5_ipv4_target")
       #:phases
       #~(modify-phases %standard-phases
           ;; See <https://issues.guix.gnu.org/43418#5>.
@@ -3900,7 +3965,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
 (define-public mlt
   (package
     (name "mlt")
-    (version "7.32.0")
+    (version "7.34.1")
     (source
      (origin
        (method git-fetch)
@@ -3909,12 +3974,13 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0v7xlm526b0kjm3jfmd0yc6yr7rnggn4b61gzdx9b41zlnyfhslf"))))
+        (base32 "0rwbbcpfr0y3h9p9q596968rx1ynxy50qms1jhsanmyjpw9k82mw"))))
     (build-system cmake-build-system)
     (arguments
      (list
       #:tests? #f                       ;requires "Kwalify"
-      #:configure-flags #~(list "-DSWIG_PYTHON=On")
+      #:configure-flags #~(list "-DSWIG_PYTHON=On"
+                                "-DMOD_QT6=ON")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'install 'wrap-executable
@@ -3937,23 +4003,27 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
      (list alsa-lib
            `(,alsa-plugins "pulseaudio")
            bash-minimal
-           ffmpeg-6
+           eigen ; movit requires.private
+           ffmpeg
            fftw
            frei0r-plugins
            gdk-pixbuf
            gtk+
-           libxml2
            jack-1
            ladspa
            libebur128
            libexif
-           libvorbis
-           rubberband
            libsamplerate
+           libvorbis
+           libxml2
+           lilv
+           movit
            pulseaudio
-           qtbase-5
-           qtsvg-5
+           qt5compat
+           qtbase
+           qtsvg
            rtaudio
+           rubberband
            sdl2
            sdl2-image
            sox
@@ -4975,10 +5045,89 @@ specifications.")
 Content System specification.")
     (license license:lgpl2.1+)))
 
+;;; Custom ffmpeg package used by Handbrake, which incorporates custom
+;;; patches.  Modification include APIs that have not been upstreamed.
+(define ffmpeg-handbrake
+  (let ((ffmpeg ffmpeg))
+    (hidden-package
+     (package
+       (inherit ffmpeg)
+       (version "7.1.1")
+       (source
+        (origin
+          (method url-fetch)
+          (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
+                              version ".tar.bz2"))
+          (sha256
+           (base32
+            "1fj3y70cfzh9z33l62zxdb8a2kdvynncn1y09w0ix83r2pqs538c"))
+          (patches (search-patches "ffmpeg-svt-av1-v3.patch"))))
+       (inputs (modify-inputs (package-inputs ffmpeg)
+                 (append zimg)
+                 (replace "svt-av1" svt-av1-3)))
+       (arguments
+        (substitute-keyword-arguments (package-arguments ffmpeg)
+          ((#:configure-flags flags)
+           #~(append #$flags
+                     (list "--enable-gpl"
+                           "--disable-doc"
+                           "--disable-programs"
+                           "--disable-avdevice"
+                           "--disable-network"
+                           "--disable-postproc"
+                           "--enable-libzimg")))
+          ((#:phases phases)
+           #~(modify-phases #$phases
+               (add-after 'unpack 'apply-handbrake-patches
+                 (lambda _
+                   (mkdir-p "/tmp/handbrake")
+                   (with-directory-excursion "/tmp/handbrake"
+                     (invoke "tar" "xf" #$(package-source handbrake)
+                             (string-append "HandBrake-"
+                                            #$(package-version handbrake)
+                                            "/contrib/ffmpeg")))
+                   (for-each
+                    (lambda (patch)
+                      (invoke "patch" "--force" "--no-backup-if-mismatch"
+                              "-p1" "--input" patch))
+                    (find-files "/tmp/handbrake" "\\.patch$"))))))))))))
+
+;;; Custom x265 package used by Handbrake, which incorporates custom patches.
+;;; Modification include APIs that have not been upstreamed.
+(define x265-handbrake
+  (let ((x265 x265-4))
+    (hidden-package
+     (package
+       (inherit x265)
+       (arguments
+        (substitute-keyword-arguments (package-arguments x265)
+          ((#:phases phases)
+           #~(modify-phases #$phases
+               (add-after 'unpack 'apply-handbrake-patches
+                 (lambda _
+                   (let ((patchdir "/tmp/hanbrake"))
+                     (mkdir-p patchdir)
+                     (with-directory-excursion patchdir
+                       (invoke "tar" "xf" #$(package-source handbrake)
+                               (string-append "HandBrake-"
+                                              #$(package-version handbrake)
+                                              "/contrib/x265")))
+                     (for-each
+                      (lambda (patch)
+                        (unless (or (string-suffix?
+                                     "A06-Update-version-strings.patch"
+                                     patch)
+                                    (string-suffix?
+                                     "A08-Fix-inconsistent-bitrate-in-second-pass.patch"
+                                     patch))
+                          (invoke "patch" "--force" "--no-backup-if-mismatch"
+                                  "-p1" "--input" patch)))
+                      (find-files patchdir "\\.patch$")))))))))))))
+
 (define-public handbrake
   (package
     (name "handbrake")
-    (version "1.5.1")
+    (version "1.10.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/HandBrake/HandBrake/"
@@ -4986,86 +5135,69 @@ Content System specification.")
                                   "HandBrake-" version "-source.tar.bz2"))
               (sha256
                (base32
-                "1w1hjj6gvdydypw4mdn281w0x163is59cfm7k6bq371hsl3gx69r"))
+                "1nzqlpzgmkzs85c9lglqxj2z27p7c26w54kv20j6rhygz321qpn6"))
               (modules '((guix build utils)))
               (snippet
-               ;; Remove "contrib" and source not necessary for
-               ;; building/running under a GNU environment.
                '(begin
                   (for-each delete-file-recursively
-                            '("contrib" "macosx" "win")) ; 540KiB, 11MiB, 5.9MiB resp.
-                  (substitute* "make/include/main.defs"
-                    ;; Disable unconditional inclusion of "contrib" libraries
-                    ;; (ffmpeg, libvpx, libdvdread, libdvdnav, and libbluray),
-                    ;; which would lead to fetching and building of these
-                    ;; libraries.  Use our own instead.
-                    (("MODULES \\+= contrib") "# MODULES += contrib"))))))
-    (build-system  glib-or-gtk-build-system)
+                            ;; Remove source not needed for building/running
+                            ;; under a GNU environment.
+                            '("macosx" "win")))))) ; 11MiB, 5.9MiB resp.
+    (build-system glib-or-gtk-build-system)
     (native-inputs
-     `(("automake" ,automake)           ; GUI subpackage must be bootstrapped
-       ("autoconf" ,autoconf)
-       ("intltool" ,intltool)
-       ("libtool" ,libtool)
-       ("pkg-config" ,pkg-config)
-       ("python" ,python-2)))           ; For configuration
+     (list autoconf
+           automake
+           intltool
+           libtool
+           meson
+           ninja
+           pkg-config
+           python))                     ; For configuration
     (inputs
-     `(("bzip2" ,bzip2)
-       ("dbus-glib" ,dbus-glib)
-       ("ffmpeg" ,ffmpeg-4)
-       ("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)
-       ("glib" ,glib)
-       ("gstreamer" ,gstreamer)
-       ("gst-plugins-base" ,gst-plugins-base)
-       ("gtk+" ,gtk+)
-       ("jansson" ,jansson)
-       ("lame" ,lame)
-       ("libass" ,libass)
-       ("libbluray" ,libbluray)
-       ("libdav1d" ,dav1d)
-       ("libdvdnav" ,libdvdnav)
-       ("libdvdread" ,libdvdread)
-       ("libgudev" ,libgudev)
-       ("libjpeg-turbo" ,libjpeg-turbo)
-       ("libmpeg2" ,libmpeg2)
-       ("libnotify" ,libnotify)
-       ("libnuma" ,numactl)
-       ("libogg" ,libogg)
-       ("libopus" ,opus)
-       ("libsamplerate" ,libsamplerate)
-       ("libtheora" ,libtheora)
-       ("libvorbis" ,libvorbis)
-       ("libvpx" ,libvpx)
-       ("libxml2" ,libxml2)
-       ("libx264" ,libx264)
-       ("speex" ,speex)
-       ("x265" ,x265)
-       ("zimg" ,zimg)
-       ("zlib" ,zlib)))
+     (list bzip2
+           dav1d
+           dbus-glib
+           ffmpeg-handbrake
+           fontconfig
+           freetype
+           glib
+           gstreamer
+           gst-plugins-base
+           gtk
+           jansson
+           lame
+           libass
+           libbluray
+           libdvdnav
+           libdvdread
+           libgudev
+           libjpeg-turbo
+           libmpeg2
+           libnotify
+           libogg
+           libsamplerate
+           libtheora
+           libvorbis
+           libvpx
+           libxml2
+           libx264
+           numactl
+           opus
+           speex
+           svt-av1-3
+           x265-handbrake
+           zimg
+           zlib))
     (arguments
      `(#:tests? #f             ;tests require Ruby and claim to be unsupported
        #:configure-flags
-       (list "--disable-gtk-update-checks"
-             "--disable-nvenc"
+       (list "--disable-nvenc"
              (string-append "CPPFLAGS=-I"
                             (assoc-ref %build-inputs "libxml2")
                             "/include/libxml2")
              "LDFLAGS=-lx265")
        #:phases
        (modify-phases %standard-phases
-         (replace 'bootstrap
-           ;; Run bootstrap ahead of time so that shebangs get patched.
-           (lambda _
-             (setenv "CONFIG_SHELL" (which "sh"))
-             ;; Patch the Makefile so that it doesn't bootstrap again.
-             (substitute* "gtk/module.rules"
-               ((".*autoreconf.*") ""))
-             (with-directory-excursion "gtk"
-               (invoke "autoreconf" "-fiv"))))
-         (add-before 'configure 'patch-SHELL
-           (lambda _
-             (substitute* "gtk/po/Makefile.in.in"
-               (("SHELL = /bin/sh") "SHELL = @SHELL@"))))
          (add-before 'configure 'relax-reqs
            (lambda _
              (substitute* "make/configure.py"
@@ -5085,7 +5217,20 @@ Content System specification.")
                (apply invoke "./configure"
                       (string-append "--prefix=" out)
                       (or configure-flags '())))))
-         (add-after 'configure 'chdir-build
+         (add-after 'configure 'disable-contrib
+           (lambda _
+             (begin
+               (substitute* "make/include/main.defs"
+                 ;; Disable unconditional inclusion of "contrib" libraries
+                 ;; (ffmpeg, libvpx, libdvdread, libdvdnav, and libbluray),
+                 ;; which would lead to fetching and building of these
+                 ;; libraries.  Use our own instead.
+                 (("MODULES \\+= contrib" &) (string-append "# " &)))
+               (substitute* "gtk/meson.build"
+                 ;; Disable unconditional inclusion of "contrib" headers
+                 (("^(hb_incdirs = .*),[^,]+'contrib/include'(.*)" _ < >)
+                  (string-append < >))))))
+         (add-before 'build 'chdir-build
            (lambda _ (chdir "./build"))))))
     (home-page "https://handbrake.fr")
     (synopsis "Video transcoder")
@@ -5470,34 +5615,40 @@ iTunes-style metadata.")
 (define-public livemedia-utils
   (package
     (name "livemedia-utils")
-    (version "2020.11.19")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://download.videolan.org/contrib/live555/live."
-                    version ".tar.gz"))
-              (sha256
-               (base32
-                "16w6yxdbmjdhvffnrb752dn4llf3l0wb00dgdkyia0vqsv2qqyn7"))))
+    (version "2025.11.06")
+    (source
+     (origin
+       (method url-fetch)
+       ;; live555 home-page provides only the latest release; see
+       ;; <http://lists.live555.com/pipermail/live-devel/2011-November/014131.html>.
+       ;; Let's use a set of unofficial mirrors for now.
+       (uri (string-append
+             "https://download.videolan.org/contrib/live555/live."
+             version ".tar.gz"))
+       (sha256
+        (base32
+         "0z6iq7pvbb8d3gkh5fqf97jlzyr0q2hk0nkizm5v4q9y545gl53n"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags (list (string-append "CC=" ,(cc-for-target))
-                          (string-append "CXX=" ,(cxx-for-target))
-                          (string-append "LDFLAGS=-Wl,-rpath="
-                                         (assoc-ref %outputs "out") "/lib")
-                          (string-append "PREFIX="
-                                         (assoc-ref %outputs "out")))
-       #:phases (modify-phases %standard-phases
-                  (add-before 'configure 'fix-makefiles-generation
-                    (lambda _
-                      (substitute* "genMakefiles"
-                        (("/bin/rm") "rm"))
-                      #t))
-                  (replace 'configure
-                    (lambda _
-                      (invoke "./genMakefiles"
-                              "linux-with-shared-libraries"))))))
+     (list
+      #:tests? #f                       ; No tests.
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "CXX=" #$(cxx-for-target))
+              "CXXFLAGS=-std=c++20"     ; "test" field was added to
+                                        ; std::atomic_flag in C++20
+              (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib")
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'fix-makefiles-generation
+            (lambda _
+              (substitute* "genMakefiles"
+                (("/bin/rm") "rm"))
+              #t))
+          (replace 'configure
+            (lambda _
+              (invoke "./genMakefiles" "linux-with-shared-libraries"))))))
     (inputs
      (list openssl))
     (home-page "http://www.live555.com/liveMedia/")
@@ -5606,7 +5757,7 @@ programmers to access a standard API to open and decompress media files.")
                     "#include <boost/gil.hpp>"))
                  #t)))))
     (inputs
-     (list boost
+     (list boost-1.83
            ffms2
            fftw
            hunspell
@@ -6365,6 +6516,19 @@ applications with high performance requirements.  It mainly targets
 Intel-compatible CPUs (x86), but has limited support for other architectures.")
     (home-page "https://gitlab.com/AOMediaCodec/SVT-AV1")
     (license license:bsd-2)))
+
+(define-public svt-av1-3
+  (package/inherit svt-av1
+    (version "3.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/AOMediaCodec/SVT-AV1.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "svt-av1" version))
+       (sha256
+        (base32 "1ifvf4lmv92w87zc8si96rpcapn330iwkwywq7ysgql2vk2mqapw"))))))
 
 (define-public svt-vp9
   (package

@@ -343,6 +343,22 @@ minimal slurm package BASE-SLURM."
 ;; As noted in the link, YY.MM is the release scheme, and the 'maintenance'
 ;; digit does not introduce incompatibilities.
 
+(define-public slurm-minimal-25.05
+  (package
+    (inherit slurm-minimal)
+    (version "25.05.4")
+    (source (origin
+              (inherit (package-source slurm))
+              (method url-fetch)
+              (uri (string-append
+                    "https://download.schedmd.com/slurm/slurm-"
+                    version ".tar.bz2"))
+              (sha256
+               (base32
+                "130pjygqk794dchknjqdsinciv2b7c7r5agqsgca7m804xp09wnl"))))))
+
+(define-public slurm-25.05 (make-slurm slurm-minimal-25.05))
+
 (define-public slurm-minimal-24.05
   (package
    (inherit slurm-minimal)
@@ -406,6 +422,7 @@ minimal slurm package BASE-SLURM."
               (sha256
                (base32
                 "1vydd44wp1xns7dd6zh7yin7i5p0ia3x2bk7ql56wfzhi22yf9sd"))
+              (patches (search-patches "slurm-drmaa-25.patch"))
               (modules '((guix build utils)))
               (snippet
                ;; This is a typo fixed in upstream commit
@@ -595,7 +612,7 @@ command---e.g., @code{%salloc}, @code{%sbatch}, etc.")
       (build-system cmake-build-system)
       (arguments '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
       (inputs
-       (list googletest googlebenchmark fxdiv))
+       (list googletest-1.12 googlebenchmark fxdiv))
       (synopsis "Efficient thread pool implementation")
       (description
        "The pthreadpool library implements an efficient and portable thread
@@ -639,7 +656,7 @@ features.")
                   (string-append m "\
 GTEST_SKIP() << \"See https://github.com/pytorch/cpuinfo/issues/132\";"))))))))
       (inputs
-       (list googletest googlebenchmark))
+       (list googletest-1.13 googlebenchmark))
       (synopsis "C/C++ library to obtain information about the CPU")
       (description
        "The cpuinfo library provides a C/C++ and a command-line interface to
@@ -663,7 +680,7 @@ processor name, cache information, and topology information.")
                    (add-after 'unpack 'chdir
                      (lambda _
                        (chdir "deps/clog"))))))
-    (native-inputs (list googletest))
+    (native-inputs (list googletest-1.8))
     (inputs '())
     (synopsis "C-style logging library based on printf")
     (description

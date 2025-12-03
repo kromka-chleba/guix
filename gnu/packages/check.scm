@@ -890,46 +890,49 @@ favourite continuous integration framework.  Among Cukinia features are:
 (define-public cxxtest
   (package
     (name "cxxtest")
+    ;; 4.4 is from 2014, there is some move on master branch but still no
+    ;; fresh tag, see: <https://github.com/CxxTest/cxxtest/issues/156>.
     (version "4.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/cxxtest/cxxtest/"
-                                  version "/cxxtest-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1n7pbj4z9ivx005hqvivj9ddhq8awynzg6jishfbypf6j7ply58w"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/cxxtest/cxxtest/" version
+                           "/cxxtest-" version ".tar.gz"))
+       (sha256
+        (base32 "1n7pbj4z9ivx005hqvivj9ddhq8awynzg6jishfbypf6j7ply58w"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'chdir-to-source
-           (lambda _
-             (chdir "python")
-             #t))
-         (add-after 'install 'install-headers
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (include-dir (string-append out "/include/cxxtest")))
-               (for-each (lambda (header-file)
-                           (install-file header-file include-dir))
-                         (find-files "../cxxtest"))
-               #t)))
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc-dir (string-append out "/share/doc/cxxtest")))
-               (install-file "../README" doc-dir)
-               (install-file "../doc/guide.txt" doc-dir)
-               (copy-recursively "../sample" (string-append doc-dir "/sample"))
-               #t))))))
-    (propagated-inputs
-     (list python-ply))
-    (home-page "https://web.archive.org/web/20230604070022/http://cxxtest.com/")
+     (list
+      ;; XXX: There are SCons and CMake tests, but not pytest ones.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir-to-source
+            (lambda _
+              (chdir "python")))
+          (add-after 'install 'install-headers
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((include-dir (string-append #$output "/include/cxxtest")))
+                (for-each (lambda (header-file)
+                            (install-file header-file include-dir))
+                          (find-files "../cxxtest")))))
+          (add-after 'install 'install-doc
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((doc-dir (string-append #$output "/share/doc/cxxtest")))
+                (install-file "../README" doc-dir)
+                (install-file "../doc/guide.txt" doc-dir)
+                (copy-recursively "../sample"
+                                  (string-append doc-dir "/sample"))))))))
+    (native-inputs (list python-setuptools))
+    (propagated-inputs (list python-ply))
+    (home-page
+     "https://web.archive.org/web/20230604070022/http://cxxtest.com/")
     (synopsis "Unit testing framework for C++")
-    (description "CxxTest is a unit testing framework for C++ that is similar
-in spirit to JUnit, CppUnit, and xUnit.  CxxTest does not require precompiling
-a CxxTest testing library, it employs no advanced features of C++ (e.g. RTTI)
-and it supports a very flexible form of test discovery.")
+    (description
+     "CxxTest is a unit testing framework for C++ that is similar in spirit to
+JUnit, CppUnit, and xUnit.  CxxTest does not require precompiling a CxxTest
+testing library, it employs no advanced features of C++ (e.g. RTTI) and it
+supports a very flexible form of test discovery.")
     (license license:lgpl3+)))
 
 (define-public doctest
@@ -1063,16 +1066,16 @@ report generation engine.")
 (define-public googletest
   (package
     (name "googletest")
-    (version "1.12.1")
+    (version "1.17.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/google/googletest")
-             (commit (string-append "release-" version))))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cv55x3amwrvfan9pr8dfnicwr8r6ar3yf6cg9v6nykd6m2v3qsv"))))
+        (base32 "1zn701fgmbk29y45p49sajaswm01i2bv89ds2kkbiq8i0p2cr08w"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f
@@ -1085,21 +1088,6 @@ report generation engine.")
 discovery, death tests, assertions, parameterized tests and XML test report
 generation.")
     (license license:bsd-3)))
-
-(define-public googletest-1.17
-  (package
-    (inherit googletest)
-    (name "googletest")
-    (version "1.17.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/google/googletest")
-              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1zn701fgmbk29y45p49sajaswm01i2bv89ds2kkbiq8i0p2cr08w"))))))
 
 (define-public googletest-1.13
   (package
@@ -1115,6 +1103,21 @@ generation.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1x5lr1k4kgw3i8d7c12vp759p0w8c8r2y8lwvqswswxvwygw8lid"))))))
+
+(define-public googletest-1.12
+  (package
+    (inherit googletest-1.13)
+    (name "googletest")
+    (version "1.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/google/googletest")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cv55x3amwrvfan9pr8dfnicwr8r6ar3yf6cg9v6nykd6m2v3qsv"))))))
 
 (define-public googletest-1.8
   (package
@@ -1475,19 +1478,22 @@ for every Python test framework.  It supports nose, py.test, and unittest.")
 (define-public python-minimock
   (package
     (name "python-minimock")
-    (version "1.2.8")
+    (version "1.3.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "MiniMock" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lowks/minimock")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0k2sxb1ibnyg05iblz7zhbv825f1zk9906rab7883iqgvzmdzpsz"))))
-    (build-system python-build-system)
-    (home-page "https://pypi.org/project/MiniMock")
+        (base32 "0mby3y78w8zka3dwp2dnsq3a0bq9nxr5g0h538p6zbyjrqly5paj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pynose python-setuptools))
+    (home-page "https://github.com/lowks/minimock")
     (synopsis "Simple Python library for using mock objects")
-    (description "MiniMock is a simple library for building mock objects with
-doctest.")
+    (description
+     "MiniMock is a simple library for building mock objects with doctest.")
     (license license:expat)))
 
 (define-public python-mock

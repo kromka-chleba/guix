@@ -1146,7 +1146,10 @@ The following systems are supported:
           ((#:configure-flags flags ''())
            ;; Relax error checks to avoid a build failure with GCC 14.
            #~(cons "-DCMAKE_C_FLAGS=-Wno-error=incompatible-pointer-types"
-                   #$flags))))))))
+                   #$flags))))
+      (inputs
+        (modify-inputs (package-inputs mgba)
+                       (replace "ffmpeg" ffmpeg-6)))))))
 
 (define-public sameboy
   (package
@@ -1558,7 +1561,7 @@ Glide64 video plugin.")
     (native-inputs
      (list pkg-config which))
     (inputs
-     (list boost
+     (list boost-1.83
            libpng
            mesa
            mupen64plus-core
@@ -3405,7 +3408,7 @@ This is a part of the TiLP project.")
            texinfo))
     (inputs
      (list alsa-lib
-           asio
+           asio-1.28
            expat
            flac
            fontconfig

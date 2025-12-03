@@ -920,7 +920,6 @@ KAccounts system.")
     (inputs
      (list akonadi
            akonadi-mime
-           akonadi-notes
            boost
            kcalendarcore
            kcalutils
@@ -1024,6 +1023,7 @@ verifiedserverdialogtest" ;SEGFAULT
              (guix build qt-build-system)
              (guix build utils))
            #:phases
+           (with-extensions (list (cargo-guile-json))
            #~(modify-phases %standard-phases
                (add-before 'configure 'change-directory-to-adblock
                  (lambda _
@@ -1046,7 +1046,7 @@ verifiedserverdialogtest" ;SEGFAULT
                  (lambda* (#:key tests? (test-exclude "") #:allow-other-keys)
                    (setenv "HOME" "/tmp")
                    (when tests?
-                     (invoke "dbus-launch" "ctest" "-E" test-exclude)))))))
+                     (invoke "dbus-launch" "ctest" "-E" test-exclude))))))))
     (native-inputs
      (list corrosion
            dbus
@@ -1061,7 +1061,6 @@ verifiedserverdialogtest" ;SEGFAULT
             akonadi-contacts
             akonadi-import-wizard
             akonadi-mime
-            akonadi-notes
             discount
             grantlee
             grantleetheme
@@ -1135,7 +1134,6 @@ as KMail, KAddressBook etc.")
            akonadi-calendar
            akonadi-contacts
            akonadi-mime
-           akonadi-notes
            boost
            cyrus-sasl
            grantleetheme
@@ -1975,7 +1973,6 @@ using a Qt/KMime C++ API.")
      (list extra-cmake-modules gnupg libxml2))
     (inputs
      (list akonadi-contacts
-           akonadi-notes
            akonadi-search
            boost
            gpgme
@@ -2130,7 +2127,6 @@ application \"Parts\" to be embedded as a Kontact component (or plugin).")
            akonadi-calendar
            akonadi-contacts
            akonadi-mime
-           akonadi-notes
            akonadi-search
            boost
            breeze-icons ; default icon set, required for tests

@@ -872,55 +872,6 @@ such as those made in pneumatics, hydraulics, process industries, electronics,
 and others.")
     (license license:gpl2+)))
 
-(define-public gerbv
-  (package
-    (name "gerbv")
-    (version "2.10.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/gerbv/gerbv")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "06bcm5zw7whsnnmfld3gl2j907lxc68gnsbzr2pc4w6qc923rgmj"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:configure-flags #~(list "CFLAGS=-O2 -g -fcommon")
-      #:phases #~(modify-phases %standard-phases
-                   (add-after 'unpack 'patch-version-generator
-                     (lambda _
-                       (substitute* "utils/git-version-gen.sh"
-                         (("/bin/bash")
-                          (which "bash"))))))))
-    (native-inputs (list autoconf
-                         automake
-                         desktop-file-utils
-                         gettext-minimal
-                         ;; Version generator needs git to work properly:
-                         ;; https://github.com/gerbv/gerbv/issues/244
-                         git-minimal/pinned
-                         `(,glib "bin")
-                         libtool
-                         pkg-config))
-    (inputs (list cairo
-                  ;; As of 2.10.0 gerbv is still GTK+2 only.  GTK 3/4 porting
-                  ;; issue: https://github.com/gerbv/gerbv/issues/71.
-                  gtk+-2))
-    (home-page "https://gerbv.github.io/")
-    (synopsis "Gerber file viewer")
-    (description
-     "Gerbv is a viewer for files in the Gerber format (RS-274X only), which
-is commonly used to represent printed circuit board (PCB) layouts.  Gerbv lets
-you load several files on top of each other, do measurements on the displayed
-image, etc.  Besides viewing Gerbers, you may also view Excellon drill files
-as well as pick-place files.")
-    ;; This CVE has been fixed in version 2.10.0.
-    (properties '((lint-hidden-cve . ("CVE-2023-4508"))))
-    (license license:gpl2+)))
-
 (define-public translate2geda
   ;; There has been no formal release yet.
   (let ((commit "2ec576e608a6f6eead5f6bc1952234d9874703c7")
@@ -1586,7 +1537,11 @@ use on a given system.")
         (base32 "1gginbl76vmpccjwx93cmg8ibap8l40swly3bjv7rhmdwv6ikpnk"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags '("--disable-bindings")))
+     (list
+      #:configure-flags
+      #~(list "--disable-bindings"
+              #$(string-append "CFLAGS="
+                               " -Wno-error=implicit-function-declaration"))))
     (native-inputs
      (list libxml2
            parallel
@@ -2584,7 +2539,7 @@ for reverse engineers.")
                         (mkdir-p dir)
                         (symlink act (string-append dir "/act.linux"))))))))
     (native-inputs
-     (list automatic-component-toolkit googletest pkg-config))
+     (list automatic-component-toolkit googletest-1.12 pkg-config))
     (inputs
      (list `(,util-linux "lib") libzip libressl zlib))
     (synopsis "Implementation of the 3D Manufacturing Format (3MF) file standard")
@@ -2938,7 +2893,7 @@ ontinuous-time and discret-time expressions.")
               (lambda _
                 ;; Required for fontconfig
                 (setenv "HOME" "/tmp"))))))
-      (inputs (list boost
+      (inputs (list boost-1.83
                     cairomm
                     cgal
                     clipper2
@@ -3204,7 +3159,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
            swig))
     (inputs
      (list bash-minimal
-           boost
+           boost-1.83
            coin3d
            double-conversion
            eigen
@@ -4145,7 +4100,7 @@ perform various useful functions such as:
     ;;      We would need to patch the CMake recipe to build a shared library
     ;;      with all of these.
     (inputs
-     `(("boost" ,boost)
+     `(("boost" ,boost-1.83)
        ("cgal" ,cgal)
        ("eigen" ,eigen)
        ("embree" ,embree-3)
@@ -4380,7 +4335,7 @@ G-codes to binary and vice versa.")
     (native-inputs
      (list pkg-config catch2-3.8))
     (inputs
-     (list boost
+     (list boost-1.83
            cereal
            cgal
            curl
@@ -4522,7 +4477,7 @@ facilitate the communication between Cura and its backend and similar code.")
         (base32 "0xp2r0m5wwfsh9wdb3biqzvfqfz5jsmyw4bww93aksw0rgli07bp"))))
     (build-system cmake-build-system)
     (native-inputs
-     (list googletest pkg-config))
+     (list googletest-1.13 pkg-config))
     (inputs
      (list libarcus protobuf stb-image))
     (arguments
@@ -5240,7 +5195,7 @@ and mogan.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list glibmm-2.66 gmp python boost gtkmm-3 sqlite python-gmpy2 python-sympy
+     (list glibmm-2.66 gmp python boost-1.83 gtkmm-3 sqlite python-gmpy2 python-sympy
            python-mpmath python-matplotlib texlive-dvipng
            `(,util-linux "lib")))
     (synopsis "Computer algebra system geared towards field theory")

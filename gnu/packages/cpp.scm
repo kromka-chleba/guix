@@ -457,7 +457,7 @@ data structures for C++.")
         (base32 "08w3ppd43wx9vq641ljw5izjd7p5w7drynw13ll9shwy41ydif9n"))))
     (build-system cmake-build-system)
     (native-inputs
-     (list googletest pkg-config))
+     (list googletest-1.13 pkg-config))
     (synopsis "Guidelines Support Library")
     (description "c++-gsl contains functions and types that are suggested for
 use by the C++ Core Guidelines maintained by the Standard C++ Foundation.")
@@ -912,7 +912,7 @@ same name.")
 (define-public google-highway
   (package
     (name "google-highway")
-    (version "1.2.0")
+    (version "1.3.0")
     (source
      (origin
        (method git-fetch)
@@ -921,7 +921,7 @@ same name.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ykhc6n3ai18dijdmi38fm1d7pa8i6nbgh64jrxd4499k7jhg568"))))
+        (base32 "1bl576f3zlygxfmjqs5rrk3sag411hlhx2210lpq461plvvs80zi"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DHWY_SYSTEM_GTEST=on"
@@ -947,7 +947,7 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
 (define-public hyprgraphics
   (package
     (name "hyprgraphics")
-    (version "0.2.0")
+    (version "0.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -958,7 +958,7 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
               (snippet #~(substitute* "CMakeLists.txt" (("libjxl_cms") "")))
               (sha256
                (base32
-                "1xr2pbawwnnwjwzkgsy9s4wq1j85x4qhj3m4s2pwb9wp6g69da2g"))))
+                "1jii9l9qbksp6x1vwbm84a985hy9q9xcpl703bliprd5rkpi6w96"))))
     (build-system cmake-build-system)
     (native-inputs (list gcc-15 pkg-config))
     (inputs (list cairo
@@ -982,7 +982,7 @@ utilities used across the hypr* ecosystem.")
 (define-public hyprlang
   (package
     (name "hyprlang")
-    (version "0.6.4")
+    (version "0.6.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -991,7 +991,7 @@ utilities used across the hypr* ecosystem.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "080kibsllxfrlck4gix0ygr12gnvf9p9ybi589fsvpab9p9xw857"))))
+                "13lqlwrpcd3gs5xw51sj1zx2w7kvsywvgdal81dp841rpph91z00"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1016,7 +1016,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.10.0")
+    (version "0.10.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1025,10 +1025,11 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0l4gdingspjv3fh7zkmdin37bjjxgxnxycn8agv4cr3n0kn9smxg"))))
+                "08b65pssaci780rgb5qgqc61zvbxmb9qda4gb58j8nh9yi3ya0jx"))))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f ; No tests in Release build type
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-cross-compilation
@@ -1909,7 +1910,7 @@ development of concurrent and multithreaded applications in C++.")
 (define-public taskflow
   (package
     (name "taskflow")
-    (version "3.6.0")
+    (version "3.10.0")
     (source
      (origin
        (method git-fetch)
@@ -1918,7 +1919,7 @@ development of concurrent and multithreaded applications in C++.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cv74l181137lchc1rxygcg401cnq216ymq5qz2njsw99j342br3"))))
+        (base32 "08z7vif8lk4jri9m77j9gqyyv7nwza5qfgab0bk5gl9akb63qh5k"))))
     (build-system cmake-build-system)
     (home-page "https://taskflow.github.io/")
     (synopsis
@@ -2133,7 +2134,7 @@ point and then, after each tween step, plugging back the result.")
                 (("check_target\\(gtest_main\\)") "")
                 (("check_target\\(gmock\\)") "")))))))
     (native-inputs
-     (list googletest))
+     (list googletest-1.12))
     (home-page "https://abseil.io")
     (synopsis "Augmented C++ standard library")
     (description "Abseil is a collection of C++ library code designed to
@@ -2146,7 +2147,7 @@ Google's C++ code base.")
     (package
       (inherit base)
       (name "abseil-cpp")
-      (version "20250127.1")
+      (version "20250814.1")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -2155,7 +2156,7 @@ Google's C++ code base.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0r2j360csym12jlgmcy92rgwdmng63shchxvfmln3j5402lv0g21"))
+                  "1wm2271hwy2pnfv9b5iy0y9xvbhiwffdf9i6s3dn89k630wh6928"))
                 (patches
                  (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
       (arguments
@@ -2179,7 +2180,28 @@ Google's C++ code base.")
                               (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
                               (invoke "ctest" "-E"
                                       "absl_symbolize_test|absl_log_format_test")))))
-                     #~()))))))))
+                     #~())))))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "googletest" googletest))))))
+
+(define-public abseil-cpp-20250127
+  (let ((base abseil-cpp))
+    (package
+      (inherit base)
+      (name "abseil-cpp")
+      (version "20250127.1")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/abseil/abseil-cpp")
+                      (commit version)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0r2j360csym12jlgmcy92rgwdmng63shchxvfmln3j5402lv0g21"))
+                (patches
+                 (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch")))))))
 
 (define (abseil-cpp-for-c++-standard base version)
   (hidden-package
@@ -2393,7 +2415,7 @@ standard GNU style syntax for options.")
 (define-public folly
   (package
     (name "folly")
-    (version "2024.09.09.00")
+    (version "2025.11.10.00")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2402,7 +2424,7 @@ standard GNU style syntax for options.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "17fdigkaxivbrww5yhz9fh25d8pirqjp126zbv4kg4qsprywfww5"))))
+                "11gdrc2jhb9dzjgpq6h3p5453f8gyvv4ngsnrqi4rylfil8a3b3i"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2665,7 +2687,7 @@ composable sequential transformations.")
                           (lambda _
                             (delete-file-recursively "test/event_loop")))
                         (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
-   (inputs (list boost immer zug))
+   (inputs (list boost-1.83 immer zug))
    (native-inputs (list catch2 cereal))
    (home-page "https://sinusoid.es/lager")
    (synopsis "Library for value-oriented design")
@@ -3288,7 +3310,8 @@ validation.")
                                         "bslh_hash.t"
                                         "bslstl_deque.0[1345].t"
                                         "bslstl_queue.t"
-                                        "bslstl_stack.t")
+                                        "bslstl_stack.t"
+                                        "bslstl_string_test.t")
                                   "|")
       #:modules '((guix build cmake-build-system)
                   ((guix build gnu-build-system) #:prefix gnu:)

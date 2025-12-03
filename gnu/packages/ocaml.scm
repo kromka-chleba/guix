@@ -162,7 +162,35 @@
          #:phases
          (modify-phases %standard-phases
            (delete 'configure)
-           (add-before 'build 'no-autocompile
+           (add-after 'unpack 'patch-makefile
+             (lambda _
+               (substitute*
+                   ;; Problems during the configure phase tend to cause build
+                   ;; failures ("<feature> not implemented") after hours of
+                   ;; compile time. Run the configure script verbosely to make
+                   ;; these problems more visible.
+                   "Makefile"
+                 (("bash configure") "bash configure --verbose"))))
+           (add-after 'unpack 'patch-cflags
+             (lambda _
+               (substitute*
+                   "ocaml-src/configure"
+                 ;; Disable error for redefined macro `sigsetjmp`
+                 (("-Wall -Werror") "-Wall")
+                 ;; Disable strict checks in GCC 14
+                 (("\"-O2 -fno-strict-aliasing -fwrapv\"")
+                  (string-append "\"-O2 -fno-strict-aliasing -fwrapv "
+                                 "-Wno-incompatible-pointer-types "
+                                 "-Wno-implicit-function-declaration\"")))
+               ;; The GCC 14 flags above apply to the source build itself but
+               ;; not when calling config helper scripts, so update these too.
+               (substitute*
+                   '("ocaml-src/config/auto-aux/hasgot"
+                     "ocaml-src/config/auto-aux/hasgot2")
+                 (("[$]cflags")
+                  (string-append "$cflags -Wno-incompatible-pointer-types "
+                                 "-Wno-implicit-function-declaration")))))
+	   (add-before 'build 'no-autocompile
              (lambda _
                ;; prevent a guile warning
                (setenv "GUILE_AUTO_COMPILE" "0")))
@@ -532,6 +560,26 @@ depend: $(STDLIB_MLIS) $(STDLIB_DEPS)"))
       (substitute-keyword-arguments (package-arguments ocaml-4.09)
         ((#:phases phases)
          `(modify-phases ,phases
+            (add-after 'unpack 'patch-cflags
+              (lambda _
+                (substitute*
+                    "configure"
+                  ;; Disable error for redefined macro `sigsetjmp`
+                  (("-Wall -Werror") "-Wall")
+                  ;; Disable strict checks in GCC 14
+                  (("\"-O2 -fno-strict-aliasing -fwrapv\"")
+                   (string-append "\"-O2 -fno-strict-aliasing -fwrapv "
+                                  "-Wno-incompatible-pointer-types "
+                                  "-Wno-implicit-function-declaration\"")))
+                ;; The GCC 14 flags above apply to the source build
+                ;; itself but not when calling config helper scripts, so
+                ;; update these too.
+                (substitute*
+                    '("config/auto-aux/hasgot"
+                      "config/auto-aux/hasgot2")
+                  (("[$]cflags")
+                   (string-append "$cflags -Wno-incompatible-pointer-types "
+                                  "-Wno-implicit-function-declaration")))))
             (add-before 'configure 'copy-bootstrap
               (lambda* (#:key inputs #:allow-other-keys)
                 (let ((ocaml (assoc-ref inputs "ocaml")))
@@ -9548,7 +9596,15 @@ bibliography files in BibTeX format, a bibliography in HTML format.")
          "0yxdkrhrrbwvay5sn0p26rh3f11876k6kdharmpi4afxknml74ql"))))
     (build-system dune-build-system)
     (arguments
-     `(#:tests? #f)) ; no tests
+     `(#:tests? #f ;; no tests
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-gcc-flags
+           (lambda _
+             (substitute* "config/discover.ml"
+               ;; Disable a strict default added in GCC 14.
+               (("libffi.P.cflags")
+                "[\"-Wno-int-conversion\"] @ libffi.P.cflags")))))))
     (propagated-inputs
      (list ocaml-sexplib
            ocaml-ctypes

@@ -4903,7 +4903,16 @@ configuration (iptunnel, ipmaddr).")
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
-               (delete 'configure))
+               (delete 'configure)
+               #$@(if (target-ppc32?)
+                      #~((add-after 'unpack 'apply-patch
+                           (lambda _
+                             (let ((patch
+                                  #$(local-file
+                                     (search-patch
+                                      "libcap-magic-glibc-constant.patch"))))
+                             (invoke "patch" "--force" "-p1" "-i" patch)))))
+                      #~()))
            #:test-target "test"
            #:make-flags
            #~(list "lib=lib"
@@ -9104,6 +9113,16 @@ of flash storage.")
      (list
       #:configure-flags #~(list "--disable-static")
       #:phases #~(modify-phases %standard-phases
+                   #$@(if (target-ppc32?)
+                          ;; This test is removed upstream. See upstream commit
+                          ;; 7db46d72f13c172b290818f624c2966bd0db5677
+                          #~((add-after 'unpack 'skip-62-sim-arch-tests
+                               (lambda _
+                                 (substitute*
+                                   "tests/62-sim-arch_transactions.tests"
+                                   (("test type: bpf-sim-fuzz") "")
+                                   (("62-sim-arch_transactions 5") "")))))
+                          #~())
                    (add-before 'check 'skip-load-test
                      (lambda _
                        ;; This test does a native system call and fails when

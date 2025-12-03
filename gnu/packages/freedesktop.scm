@@ -1605,7 +1605,7 @@ multiplexer to the KMS/DRM Linux kernel devices.")
 (define-public wev
   (package
     (name "wev")
-    (version "1.0.0")
+    (version "1.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1614,7 +1614,7 @@ multiplexer to the KMS/DRM Linux kernel devices.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0l71v3fzgiiv6xkk365q1l08qvaymxd4kpaya6r2g8yzkr7i2hms"))))
+                "06890chzir0pp77akx04m4slyiyqr3kv9vjplqgmdf83sghki46i"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f ; no tests
@@ -3290,7 +3290,7 @@ interfaces.")
 (define-public xdg-desktop-portal-hyprland
   (package
     (name "xdg-desktop-portal-hyprland")
-    (version "1.3.10")
+    (version "1.3.11")
     (source
      (origin
        (method git-fetch)
@@ -3299,7 +3299,7 @@ interfaces.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "079k4zni2ammd2407av55b9vqcsfv8h3hx1xd4zl0fbc3cnsrkcf"))))
+        (base32 "1qxl9csqhhflwbg7n1p80xn9sxkn5srmnvx9vf7gpizndjbdwxg4"))))
     (build-system qt-build-system)
     (arguments
      (list #:tests? #f                  ;No tests.
@@ -3474,7 +3474,8 @@ notifies the user using any notification daemon implementing
          (guix build meson-build-system)
          (guix build utils))
        #:phases
-       #~(modify-phases %standard-phases
+       (with-extensions (list (cargo-guile-json))
+        #~(modify-phases %standard-phases
            (add-after 'unpack 'prepare-cargo-build-system
              (lambda args
                (for-each
@@ -3484,7 +3485,14 @@ notifies the user using any notification daemon implementing
                    '(unpack-rust-crates
                      configure
                      check-for-pregenerated-files
-                     patch-cargo-checksums)))))
+                     patch-cargo-checksums))))
+           (add-after 'unpack 'patch-vulkan
+             (lambda* (#:key inputs #:allow-other-keys)
+               (substitute* "src/dmabuf.rs"
+                 (("Entry::load\\(\\)")
+                  (string-append "Entry::load_from(\""
+                                 (search-input-file inputs "lib/libvulkan.so")
+                                 "\")")))))))
        #:configure-flags
        #~(list "-Dwith_lz4=enabled"
                "-Dwith_vaapi=enabled"

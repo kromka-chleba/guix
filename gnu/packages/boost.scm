@@ -69,22 +69,15 @@
 (define-public boost
   (package
     (name "boost")
-    (version "1.83.0")
+    (version "1.89.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archives.boost.io/release/"
                                   version "/source/boost_"
                                   (version-with-underscores version) ".tar.bz2"))
-              (patches
-                (append
-                 (search-patches "boost-fix-duplicate-definitions-bug.patch")
-                 (list (boost-patch
-                        "0001-unordered-fix-copy-assign.patch" version
-                        "09j61m5xh7099k5na9i43x5rra51znf7vm2nyh89yqpizcll9q66"))))
-              (patch-flags '("-p2"))
               (sha256
                (base32
-                "13iviiwk1srpw9dmiwabkxv56v0pl0zggjp8zxy1419k5zzfsy34"))))
+                "0yhcb8dn7g5k9dfr54j99wpd4qwk59g1lpp8z0ag7d114si3z8w5"))))
     (build-system gnu-build-system)
     (inputs
      (append
@@ -133,16 +126,54 @@
                         "binary-format=elf"
                         "target-os=linux"
                         #$@(cond
+                            ((string-prefix? "x86_64" (%current-target-system))
+                             #~()) ; Implies boost.stacktrace.from_exception=on
+                            ;;; Note: With llvm's libc++, enabling that for
+                            ;;; non-x86_64 non-mingw32 would be a bad idea.
+                            ;;; libc++'s backtrace is not thread-safe and
+                            ;;; would leak then.
+                            ;;;
+                            ;;; We disable it here completely.  Alternatively,
+                            ;;; we could disable it only if the user used
+                            ;;; (package-with-c-toolchain ... clang) or
+                            ;;; otherwise has libc++ in their dependencies.
+                            ;;;
+                            ;;; In the latter case, we would have to set
+                            ;;; BOOST_STACKTRACE_LIBCXX_RUNTIME_MAY_CAUSE_MEMORY_LEAK
+                            ;;; and that seems ill-advised (if a future
+                            ;;; update broke it in other ways, we would
+                            ;;; be blind to it).
+                            ;;;
+                            ;;; See also:
+                            ;;; <https://codeberg.org/guix/guix/issues/4541>.
                             ((string-prefix? "arm" (%current-target-system))
                              #~("abi=aapcs"
                                 "address-model=32"
-                                "architecture=arm"))
+                                "architecture=arm"
+                                ;; See also:
+                                ;; <https://codeberg.org/guix/guix/issues/4541>.
+                                "boost.stacktrace.from_exception=off"))
                             ((string-prefix? "aarch64" (%current-target-system))
                              #~("abi=aapcs"
                                 "address-model=64"
-                                "architecture=arm"))
-                            (else #~())))
-                     #~()))
+                                "architecture=arm"
+                                ;; See also:
+                                ;; <https://codeberg.org/guix/guix/issues/4541>.
+                                "boost.stacktrace.from_exception=off"))
+                            (else
+                             ;; See also:
+                             ;; <https://codeberg.org/guix/guix/issues/4541>.
+                             #~("boost.stacktrace.from_exception=off"))))
+                     ;; Not cross-compiling.
+                     #~(#$@(cond
+                         ((string-suffix? "mingw32" (%current-system))
+                          #~()) ; Implies boost.stacktrace.from_exception=on
+                         ((string-prefix? "x86_64" (%current-system))
+                          #~()) ; Implies boost.stacktrace.from_exception=on
+                         (else
+                          ;; See also:
+                          ;; <https://codeberg.org/guix/guix/issues/4541>.
+                          #~("boost.stacktrace.from_exception=off"))))))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-shells
@@ -208,7 +239,7 @@ across a broad spectrum of applications.")
     (license (license:x11-style "https://www.boost.org/LICENSE_1_0.txt"
                                 "Some components have other similar licences."))))
 
-(define-public boost-for-source-highlight
+(define-public boost-1.83
   (hidden-package (package (inherit boost)
     (name "boost")
     (version "1.83.0")
@@ -224,7 +255,33 @@ across a broad spectrum of applications.")
               (patch-flags '("-p2"))
               (sha256
                (base32
-                "13iviiwk1srpw9dmiwabkxv56v0pl0zggjp8zxy1419k5zzfsy34")))))))
+                "13iviiwk1srpw9dmiwabkxv56v0pl0zggjp8zxy1419k5zzfsy34"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments boost)
+      ((#:make-flags _ #f)
+       #~(list "threading=multi" "link=shared"
+              ;; Set the RUNPATH to $libdir so that the libs find each other.
+              (string-append "linkflags=-Wl,-rpath="
+                             #$output "/lib")
+              #$@(if (%current-target-system)
+                     #~("--user-config=user-config.jam"
+                        ;; Python is not supported when cross-compiling.
+                        "--without-python"
+                        "binary-format=elf"
+                        "target-os=linux"
+                        #$@(cond
+                            ((string-prefix? "arm" (%current-target-system))
+                             #~("abi=aapcs"
+                                "address-model=32"
+                                "architecture=arm"))
+                            ((string-prefix? "aarch64" (%current-target-system))
+                             #~("abi=aapcs"
+                                "address-model=64"
+                                "architecture=arm"))
+                            (else
+                             #~())))
+                     ;; Not cross-compiling.
+                     #~()))))))))
 
 (define-deprecated-package boost-with-python3
   boost)
@@ -292,7 +349,7 @@ across a broad spectrum of applications.")
 
 (define-public boost-numpy
   (package
-    (inherit boost)
+    (inherit boost-1.83)
     (name "boost-numpy")
     (native-inputs
      (modify-inputs (package-native-inputs boost)
@@ -399,7 +456,7 @@ signals and slots system.")
     (build-system gnu-build-system)
     (native-inputs (list autoconf automake))
     (propagated-inputs
-      (list boost)) ; inclusion of header files
+      (list boost-1.83)) ; inclusion of header files
     (home-page "https://gitlab.com/mdds/mdds")
     (synopsis "Multi-dimensional C++ data structures and indexing algorithms")
     (description "Mdds (multi-dimensional data structure) provides a

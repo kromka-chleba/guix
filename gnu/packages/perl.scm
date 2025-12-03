@@ -2474,8 +2474,7 @@ versa.")
                                  "--version")))))))
     (native-inputs (list perl-module-build perl-test-deep))
     (inputs (list bash-minimal))
-    (propagated-inputs (list perltidy
-                             perl-exception-class
+    (propagated-inputs (list perl-exception-class
                              perl-io-string
                              perl-ppi
                              perl-ppix-regexp
@@ -2492,7 +2491,8 @@ versa.")
                              perl-ppix-utilities
                              perl-readonly
                              perl-string-format
-                             perl-task-weaken))
+                             perl-task-weaken
+                             perl-tidy))
     (home-page "https://metacpan.org/release/Perl-Critic")
     (synopsis "Critique Perl source code for best-practices")
     (description
@@ -4555,6 +4555,25 @@ of the SHA family. It also provides the @code{shasum} binary.")
      "This package provides @code{Digest::SHA1}, an implementation of the NIST
 SHA-1 message digest algorithm for use by Perl programs.")
     (home-page "https://metacpan.org/release/Digest-SHA1")
+    (license (package-license perl))))
+
+(define-public perl-digest-sha3
+  (package
+    (name "perl-digest-sha3")
+    (version "1.05")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://cpan/authors/id/M/MS/MSHELOR/"
+                                  "Digest-SHA3-" version ".tar.gz"))
+              (sha256
+               (base32
+                "08l5b93crjb657yha8m8gsci4pqa8fhpfj3hwmaify1bkc3vkwdd"))))
+    (build-system perl-build-system)
+    (synopsis "Perl implementation of the SHA-3 message digest algorithm")
+    (description
+     "This package provides @code{Digest::SHA3}, an implementation of the NIST
+SHA-3 message digest algorithm for use by Perl programs.")
+    (home-page "https://metacpan.org/release/Digest-SHA3")
     (license (package-license perl))))
 
 (define-public perl-dist-checkconflicts
@@ -13400,37 +13419,17 @@ system.")
 as exceptions to standard program flow.")
     (license (package-license perl))))
 
-(define-public perltidy
-  (package
-    (name "perltidy")
-    (version "20180220")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/perltidy/" version
-                                  "/Perl-Tidy-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0w1k5ffcrpx0fm9jgprrwy0290k6cmy7dyk83s61063migi3r5z9"))))
-    (build-system perl-build-system)
-    (home-page "https://perltidy.sourceforge.net/")
-    (synopsis "Perl script tidier")
-    (description "This package contains a Perl script which indents and
-reformats Perl scripts to make them easier to read.   The formatting can be
-controlled with command line parameters.  The default parameter settings
-approximately follow the suggestions in the Perl Style Guide.")
-    (license license:gpl2+)))
-
 (define-public perl-tidy
   (package
     (name "perl-tidy")
-    (version "20250616")
+    (version "20250912")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/S/SH/SHANCOCK/Perl-Tidy-"
              version ".tar.gz"))
        (sha256
-        (base32 "16k83qmfdiq5360n3166vkvhi46p8y436r86i6j2938ryviifxdh"))))
+        (base32 "197hkkbiz1v0id6s6vr3pgildw1rlp2mj70gvqpspkpv6n4f93ml"))))
     (build-system perl-build-system)
     (home-page "https://metacpan.org/release/Perl-Tidy")
     (synopsis "Perl module to indent and reformat Perl scripts")
@@ -13439,6 +13438,9 @@ approximately follow the suggestions in the Perl Style Guide.")
 parameters may be omitted, in which case the @code{@@ARGV} array will be used
 to provide input parameters as described in the @samp{perltidy(1)} man page.")
     (license license:gpl2+)))
+
+;; Deprecated on 2025-11-20.
+(define-deprecated-package perltidy perl-tidy)
 
 (define-public perl-tie-cycle
   (package

@@ -369,7 +369,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
 (define-public hyprland
   (package
     (name "hyprland")
-    (version "0.51.1")
+    (version "0.52.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/hyprwm/Hyprland"
@@ -386,7 +386,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
                               "subprojects"))))
               (sha256
                (base32
-                "0cb1wrqf9796pad6gi49xz3asmjspgbs9qvqjsylm4y9xz8vhqpm"))))
+                "09gz250n5cpxk5niv9ilb05wwzl8620sxjv542v53p5bcihaqgf4"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;No tests.
@@ -1099,15 +1099,20 @@ your own layouts, widgets, and built-in commands.")
     (arguments
      (list
       #:tests? #f ; tests are development-only for now
+      ;; NOTE: Ninja used because that is what upstream uses and because
+      ;; parallel build with Makefile fails.
+      #:generator "Ninja"
       #:configure-flags
-      #~(list "-GNinja"
-              "-DCRASH_REPORTER=OFF" ; Breakpad is not packaged in Guix
-              "-DDISTRIBUTOR=\"GNU Guix\""
-              "-DDISTRIBUTOR_DEBUGINFO_AVAILABLE=NO")
+      #~(list
+         "-DCRASH_REPORTER=OFF" ; Breakpad is not packaged in Guix
+         "-DDISTRIBUTOR=\"GNU Guix\""
+         "-DDISTRIBUTOR_DEBUGINFO_AVAILABLE=NO"
+         ;; Shared object libraries for other Qt/QML tooling to find definitions
+         ;; of Quickshell values. Quickshell statically links to its own
+         ;; libraries by default.
+         "-DINSTALL_QML_PREFIX=lib/qt6/qml")
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'build (lambda _ (invoke "cmake" "--build" ".")))
-          (replace 'install (lambda _ (invoke "cmake" "--install" ".")))
           (add-after 'install 'wrap-program
             (lambda _
               (wrap-program (string-append #$output "/bin/quickshell")
@@ -2192,6 +2197,7 @@ limited size and a few external dependencies.  It is configurable via
    (build-system cargo-build-system)
    (arguments
     (list #:install-source? #f
+          #:cargo-install-paths ''(".")
           #:modules
           '((ice-9 match)
             (guix build utils)
@@ -2358,7 +2364,7 @@ XDG-Output for wlclock to work.")
 (define-public wlroots
   (package
     (name "wlroots")
-    (version "0.19.1")
+    (version "0.19.2")
     (source
      (origin
        (method git-fetch)
@@ -2367,7 +2373,7 @@ XDG-Output for wlclock to work.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1w3nlrvy7625jh4f0l923f7irywzfdashcw5hbf8jq9kpjhpm323"))))
+        (base32 "0w1mq72r92zk9z650gdik17h6rxqnxjy63r2mfj423zxl54s2lzi"))))
     (build-system meson-build-system)
     (arguments
      (list #:phases

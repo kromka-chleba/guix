@@ -67,6 +67,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system hare)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
@@ -104,6 +105,7 @@
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
+  #:use-module (gnu packages hare-xyz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages kerberos)
   #:use-module (gnu packages libffi)
@@ -470,7 +472,7 @@ in an encrypted database, which is locked with a master key or key file.")
       #:configure-flags
       #~(list "-DGTEST_BUILD=OFF")))
     (native-inputs
-     (list gettext-minimal googletest perl zip))
+     (list gettext-minimal googletest-1.13 perl zip))
     (inputs
      (list curl
            file
@@ -1060,6 +1062,47 @@ from the @code{password-store} package.  Files are encrypted with the
 one-time-password (OTP) secrets, generating OTP codes, and displaying secret
 key URIs using the standard otpauth:// scheme.")
     (license license:gpl3+)))
+
+(define-public pass-update
+  (package
+    (name "pass-update")
+    (version "2.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/roddhjav/pass-update")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1srg0zpgfj2rcsc8aynq7jy2wd9l2h21rpp73si6rwiccff4ymrl"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:test-target "tests"
+      #:make-flags
+      #~(list (string-append "PREFIX="
+                             #$output)
+              (string-append "BASHCOMPDIR="
+                             #$output "/share/bash-completion/completions"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build)
+          (add-before 'check 'setenv
+            (lambda _
+              ;; Tests need the env var TMP
+              (mkdir "/tmp/pw")
+              (setenv "TMP" "/tmp/pw")))
+          (delete 'configure))))
+    (native-inputs (list password-store gnupg git))
+    (home-page "https://github.com/roddhjav/pass-update")
+    (synopsis "Extension to @code{password-store} for updating passwords")
+    (description
+     "@code{pass-update} extends the pass utility with an update command
+providing an easy flow for updating passwords.  It supports path, directory
+and wildcard update.  Moreover, you can select how to update your passwords by
+automatically generating new passwords or manually setting your own.")
+    (license license:gpl3)))
 
 (define-public qtpass
   (package
@@ -2078,3 +2121,159 @@ generates strong passphrases, inspired by
                    license:lgpl2.0 ;finnish word list
                    license:lgpl2.1 ;portuguese word list
                    license:mpl1.1)))) ;portuguese word list
+
+(define-public himitsu
+  ;; As of time of packaging, a side channel attack was fixed but not yet
+  ;; included in a numbered version.
+  (let ((commit "270cc4b8816fd7dd2020896ced04d2c83f48c4fc")
+        (revision "0"))
+    (package
+      (name "himitsu")
+      (version (git-version "0.9" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://git.sr.ht/~sircmpwn/himitsu")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                  (base32
+                    "111cf31vymxb752777gjingwhqdnwhr3zn1x59kg798nl88nikp7"))))
+      (build-system hare-build-system)
+      (native-inputs (list scdoc))
+      (supported-systems %hare-supported-systems)
+      (home-page "https://himitsustore.org/")
+      (synopsis "Password and secret manager daemon")
+      (description "Himitsu is a daemon-oriented secret storage tool, including
+both a client and daemon program.  Secrets, including passwords and keys, may be
+requested either through clients such as @code{himitsu-ssh} or through the
+included @code{hiq} tool.  Upon request, the user is prompted to authorize
+access for that process to that specific secret.  Himitsu uses the Hare
+cryptographic library, which has not been audited.")
+      (license license:gpl3))))
+
+(define-public hiprompt-gtk
+  (let ((commit "2a45540af9da35967f93d1a1a32d57a494ab318c")
+        (revision "0"))
+    (package
+      (name "hiprompt-gtk")
+      (version (git-version "0.9" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://git.sr.ht/~sircmpwn/hiprompt-gtk")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                  (base32
+                    "0l79cmyks54kh49dbl0byz80gkydr5226rdgwvzqc0bkh933vwg4"))))
+      (build-system hare-build-system)
+      (arguments
+        (list #:tests? #f
+              #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))))
+      (inputs (list himitsu hare-gi hare-adwaita hare-gtk4-layer-shell))
+      (native-inputs (list (list glib "bin") pkg-config))
+      (supported-systems %hare-supported-systems)
+      (home-page "https://git.sr.ht/~sircmpwn/hiprompt-gtk")
+      (synopsis "GTK prompter for Himitsu")
+      (description "This package provides a GTK prompter for Himitsu, used to
+request user consent for application access to stored secrets.")
+      (license license:gpl3))))
+
+(define-public himitsu-ssh
+  (package
+    (name "himitsu-ssh")
+    (version "0.9.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://git.sr.ht/~sircmpwn/himitsu-ssh")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+                (base32
+                  "07l152rdmp1sn9jvdvad0knkgh2pj77fia4ml9r4jj392gzv30vx"))))
+    (build-system hare-build-system)
+    (inputs (list himitsu hare-ssh))
+    (native-inputs (list scdoc))
+    (supported-systems %hare-supported-systems)
+    (home-page "https://git.sr.ht/~sircmpwn/himitsu-ssh")
+    (synopsis "Himitsu ssh-agent")
+    (description "This package provides an ssh-agent implementation that
+stores and secures keys through Himitsu.")
+    (license license:gpl3)))
+
+(define-public himitsu-git
+  (package
+    (name "himitsu-git")
+    (version "0.9.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://git.sr.ht/~sircmpwn/himitsu-git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+                (base32
+                  "09ww866k4ns9cpyqm9vixlyadwk3q8y24pxhqs0zxc3i4i3168yz"))))
+    (build-system hare-build-system)
+    (arguments (list #:tests? #f)) ; no tests
+    (inputs (list himitsu))
+    (native-inputs (list scdoc))
+    (supported-systems %hare-supported-systems)
+    (home-page "https://git.sr.ht/~sircmpwn/himitsu-git")
+    (synopsis "Himitsu git credential helper")
+    (description "This package provides a git credential helper that queries
+Himitsu for credentials.")
+    (license license:gpl3)))
+
+(define-public himitsu-secret-service
+  (package
+    (name "himitsu-secret-service")
+    (version "0.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://git.sr.ht/~apreiml/himitsu-secret-service")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+                (base32
+                  "0d77p07l30qshihs5j8wlsi82rfg7y9v83rnjw7qcri7z51irgzg"))))
+    (build-system pyproject-build-system)
+    (arguments
+      (list #:tests? #f
+            #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'build 'build-docs
+                  (lambda _
+                    (invoke "make" "docs")))
+                (add-after 'install 'install-docs
+                  (lambda _
+                    (install-file "hisecrets-agent.1"
+                      (string-append #$output "/share/man/man1"))
+                    (install-file "himitsu-secret-service.5"
+                      (string-append #$output "/share/man/man5"))
+                    (install-file "himitsu-secret-service.7"
+                      (string-append #$output "/share/man/man7"))))
+                (add-after 'wrap 'wrap-agent
+                  (lambda _
+                    (let ((bin (string-append #$output "/bin/hisecrets-agent"))
+                          (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
+                      (wrap-program bin
+                        `("GI_TYPELIB_PATH" prefix (,gi-typelib-path))
+                        '("CRYPTO_BACKEND" = ("cryptodome"))))))
+                (delete 'sanity-check)))) ; we have a slightly too old pygobject
+    (inputs (cons* python-dbus-python
+                   python-pycryptodome
+                   python-pygobject
+                   python-pyhimitsu
+              ;; python-prctl is optional, and is only used on Linux platforms.
+              (if (target-linux?) `(,python-prctl) '())))
+    (native-inputs (list python-hatchling python-setuptools scdoc))
+    (home-page "https://git.sr.ht/~apreiml/himitsu-secret-service")
+    (synopsis "Freedesktop secret-service daemon implementation for Himitsu")
+    (description "This package provides a secret service implementation for
+Himitsu, allowing seamless access for applications storing secrets through the
+protocol.")
+    (license license:expat)))

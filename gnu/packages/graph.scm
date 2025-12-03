@@ -376,10 +376,7 @@ algorithm for community detection in large networks.")
     (native-inputs
      (list util-linux ;for lscpu
            python-anndata
-           python-black
-           python-coverage
-           python-coveralls
-           python-nose
+           python-pynose
            python-nose2
            python-pandas
            python-parameterized
@@ -840,7 +837,7 @@ transformed into common image formats for display or printing.")
     (native-inputs
      (list ncurses pkg-config))
     (inputs
-     (list boost
+     (list boost-1.83
            cairomm-1.14
            cgal
            expat

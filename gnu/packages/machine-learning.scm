@@ -154,7 +154,7 @@
 (define-public dlpack
   (package
     (name "dlpack")
-    (version "1.1")
+    (version "1.2")
     (source
      (origin
        (method git-fetch)
@@ -163,7 +163,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vlp8gcf7s3snalj6xmvgqxxn96fki6gw9hzph30gmgdbaz730j6"))))
+        (base32 "1zm28s4das0isa5rrh5a1c6iv1k1mcjqgnihbva74s78d52a7hpn"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))      ;No tests.
     (home-page "https://dmlc.github.io/dlpack/latest/")
@@ -346,7 +346,7 @@ distributions.")
                 (when tests?
                   (with-directory-excursion "tests"
                     (invoke "./fann_tests"))))))))
-      (native-inputs (list googletest))
+      (native-inputs (list googletest-1.8))
       (home-page "https://leenissen.dk/")
       (synopsis "Fast Artificial Neural Network")
       (description
@@ -683,7 +683,7 @@ training, HMM clustering, HMM mixtures.")
       (license license:lgpl2.0+))))
 
 (define-public llama-cpp
-  (let ((tag "b6101"))
+  (let ((tag "b7126"))
     (package
       (name "llama-cpp")
       (version (string-append "0.0.0-" tag))
@@ -695,7 +695,7 @@ training, HMM clustering, HMM mixtures.")
                (commit tag)))
          (file-name (git-file-name name tag))
          (sha256
-          (base32 "0yz97dk19pxqck9l83wvlwzf1i78wrc55hrk9ynraqybdz7yqjdc"))))
+          (base32 "00fpp0gi3790yxxn5p22z0vxk93a04zslnkanmxbgi3k537ph8f6"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -1904,7 +1904,7 @@ with a single function call.")
                #:outputs `(("out" . ,#$output:python)))))))))
     (outputs (list "out" "python"))
     (inputs
-     (list abseil-cpp
+     (list abseil-cpp-20250127
            boost
            cpuinfo
            dlpack
@@ -2565,7 +2565,7 @@ and a few related numerical optimization tools.")
 (define-public python-cmaes
   (package
     (name "python-cmaes")
-    (version "0.11.1")
+    (version "0.12.0")
     (source
      (origin
        (method git-fetch) ;no tests in PyPI
@@ -2573,10 +2573,14 @@ and a few related numerical optimization tools.")
              (url "https://github.com/CyberAgentAILab/cmaes")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1xh7cwcz38g7qk9y4668bxv4qc33wwv6q0gkql6d0dzwv59s0q5v"))
+        (base32 "1sykjif7dkq3aa2c672sh567i1d69cswrmb7fmkqh912rmxcvz8j"))
        (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (arguments
+     (list
+      #:test-flags                      ;see .github/workflows/tests.yml
+      #~(list "tests" "--ignore=" "tests/test_free_threaded.py")))
+    (native-inputs (list python-pytest python-setuptools))
     (propagated-inputs (list python-numpy))
     (home-page "https://github.com/CyberAgentAILab/cmaes")
     (synopsis "CMA-ES implementation for Python")
@@ -2654,36 +2658,36 @@ adjoint method for constant memory cost.")
   (package
     (name "lightgbm")
     (version "2.0.12")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/Microsoft/LightGBM")
-                     (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "0jlvyn7k81dzrh9ij3zw576wbgiwmmr26rzpdxjn1dbpc3njpvzi"))
-              (file-name (git-file-name name version))))
-    (native-inputs
-     (list python-pytest python-nose))
-    (inputs
-     (list openmpi))
-    (propagated-inputs
-     (list python-numpy python-scipy))
-    (arguments
-     `(#:configure-flags
-       '("-DUSE_MPI=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (with-directory-excursion "../source"
-               (invoke "pytest" "tests/c_api_test/test_.py")))))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Microsoft/LightGBM")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "0jlvyn7k81dzrh9ij3zw576wbgiwmmr26rzpdxjn1dbpc3njpvzi"))
+       (file-name (git-file-name name version))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DUSE_MPI=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "../source"
+                  (invoke "pytest" "tests/c_api_test/test_.py"))))))))
+    (native-inputs (list python python-pytest))
+    (inputs (list openmpi))
+    (propagated-inputs (list python-numpy python-scipy))
     (home-page "https://github.com/Microsoft/LightGBM")
     (synopsis "Gradient boosting framework based on decision tree algorithms")
-    (description "LightGBM is a gradient boosting framework that uses tree
-based learning algorithms.  It is designed to be distributed and efficient with
-the following advantages:
+    (description
+     "LightGBM is a gradient boosting framework that uses tree based learning
+algorithms.  It is designed to be distributed and efficient with the following
+advantages:
 
 @itemize
 @item Faster training speed and higher efficiency
@@ -2691,7 +2695,8 @@ the following advantages:
 @item Better accuracy
 @item Parallel and GPU learning supported (not enabled in this package)
 @item Capable of handling large-scale data
-@end itemize\n")
+@end itemize
+")
     (license license:expat)))
 
 (define-public vowpal-wabbit
@@ -2708,28 +2713,26 @@ the following advantages:
                (base32
                 "04bwzk6ifgnz3fmzid8b7avxf9n5pnx9xcjm61nkjng1vv0bpj8x"))
               (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "--with-boost=" #$(this-package-input "boost")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'make-files-writable
+            (lambda _
+              (for-each make-file-writable (find-files "." ".*"))))
+          (add-after 'install 'install-more-headers
+            (lambda _
+              (for-each
+               (lambda (file)
+                 (install-file
+                  file (string-append #$output "/include/vowpalwabbit")))
+               (find-files "vowpalwabbit" "\\.h$")))))))
     (inputs
      (list boost zlib))
-    (arguments
-     `(#:configure-flags
-       (list (string-append "--with-boost="
-                            (assoc-ref %build-inputs "boost")))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'make-files-writable
-           (lambda _
-             (for-each make-file-writable (find-files "." ".*")) #t))
-         (add-after 'install 'install-more-headers
-           (lambda* (#:key outputs #:allow-other-keys)
-             (for-each
-               (lambda (file)
-                 (install-file file (string-append
-                                      (assoc-ref outputs "out")
-                                      "/include/vowpalwabbit")))
-               (find-files "vowpalwabbit" "\\.h$"))
-             #t)))))
-    (build-system gnu-build-system)
-    (home-page "https://github.com/JohnLangford/vowpal_wabbit")
+    (home-page "https://vowpalwabbit.org")
     (synopsis "Fast machine learning library for online learning")
     (description "Vowpal Wabbit is a machine learning system with techniques
 such as online, hashing, allreduce, reductions, learning2search, active, and
@@ -2779,11 +2782,7 @@ interactive learning.")
            python-six
            python-tqdm))
     (native-inputs
-     (list python-black
-           python-nose
-           python-pymongo
-           python-pytest
-           python-wheel))
+     (list python-pymongo python-pynose python-pytest))
     (home-page "https://hyperopt.github.io/hyperopt/")
     (synopsis "Library for hyperparameter optimization")
     (description "Hyperopt is a Python library for serial and parallel
@@ -2794,13 +2793,13 @@ discrete, and conditional dimensions.")
 (define-public python-deepxde
   (package
     (name "python-deepxde")
-    (version "1.13.2")
+    (version "1.14.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "deepxde" version))
               (sha256
                (base32
-                "11fm9c717pf2j5kb7skvy1nshdqz76m783ndxsd3q3lr5lkqg087"))))
+                "1dzh0q772fv192znjxshd616kqfwyp3b5iz2833d9n1m98wpxgbw"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f                  ; there are no tests
@@ -2813,7 +2812,7 @@ discrete, and conditional dimensions.")
     ;; DeepXDE supported backends are TensorFlow (v1 and v2), PyTorch, JAX and
     ;; PaddlePaddle.  We test with PyTorch because we have it up to date.
     (native-inputs (list python-pytorch python-setuptools
-                         python-setuptools-scm python-wheel))
+                         python-setuptools-scm))
     (propagated-inputs (list python-matplotlib python-numpy
                              python-scikit-learn python-scikit-optimize
                              python-scipy))
@@ -3249,7 +3248,7 @@ Python.")
 (define-public tensorflow-lite
   (package
     (name "tensorflow-lite")
-    (version "2.15.1")
+    (version "2.16.2")
     (source
      (origin
        (method git-fetch)
@@ -3259,7 +3258,7 @@ Python.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "01cjdilxxr2h0q3sbjwhy0p5b82sbyvi224s5vx5gn2gix3nhdyx"))))
+         "082qqv7987qb559skkh8199v8knigylbxgxvz49v4m3467sd4468"))))
     (build-system cmake-build-system)
     (outputs (list "out" "python"))
     (arguments
@@ -3325,6 +3324,7 @@ Python.")
          "-DFARMHASH_SOURCE_DIR=/tmp/farmhash"
          (string-append "-Dgemmlowp_ROOT=" #$(this-package-input "gemmlowp")))
       #:phases
+      (with-extensions (list (pyproject-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _
@@ -3383,6 +3383,12 @@ find_library(ML_DTYPES_LIBRARIES
               (substitute* "kernels/internal/common.h"
                 (("#include \"fixedpoint/fixedpoint\\.h\"")
                  "#include <fixedpoint/fixedpoint.h>"))))
+          (add-after 'gemmlowp-fix 'xnn-delegate-fix
+              ;; undefined function, remove call to it
+            (lambda _
+              (substitute* "delegates/xnnpack/xnnpack_delegate.cc"
+                (("xnn_experiment_enable_adaptive_avx_optimization\\(\\);")
+                 ""))))
           (add-after 'build 'build-shared-library
             (lambda* (#:key configure-flags #:allow-other-keys)
               (mkdir-p "c")
@@ -3444,7 +3450,7 @@ find_library(ML_DTYPES_LIBRARIES
               ((assoc-ref py:%standard-phases 'sanity-check)
                #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
                           ,@inputs)
-               #:outputs `(("out" . ,#$output:python))))))))
+               #:outputs `(("out" . ,#$output:python)))))))))
     (inputs
      (list abseil-cpp
            cpuinfo
@@ -3885,7 +3891,7 @@ and Darknet.")
              fxdiv
              psimd
              pthreadpool
-             googletest))
+             googletest-1.12))
       (native-inputs
        `(,python
          ,@(if (target-x86-64?) (list python-peachpy) '())
@@ -3935,7 +3941,7 @@ and Darknet.")
                   (("(TARGET_LINK_LIBRARIES.*) fp16 (.*)" _ before after)
                    (string-append before " " after))))))))
       (inputs (list clog cpuinfo fp16 fxdiv psimd pthreadpool))
-      (native-inputs (list googletest googlebenchmark))
+      (native-inputs (list googletest-1.12 googlebenchmark))
       (home-page "https://github.com/pytorch/qnnpack")
       (synopsis "Quantized Neural Network PACKage")
       (description "QNNPACK is a library for low-precision neural network
@@ -4682,7 +4688,7 @@ PyTorch.")
             fxdiv
             gemmlowp
             gloo
-            googletest
+            googletest-1.12
             googlebenchmark
             libuv
             miniz-for-pytorch

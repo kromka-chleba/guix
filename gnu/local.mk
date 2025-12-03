@@ -112,6 +112,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/dotfiles.scm		\
   %D%/home/services/symlink-manager.scm		\
   %D%/home/services/fontutils.scm		\
+  %D%/home/services/gnome.scm			\
   %D%/home/services/gnupg.scm			\
   %D%/home/services/guix.scm			\
   %D%/home/services/mail.scm			\
@@ -121,6 +122,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/music.scm			\
   %D%/home/services/niri.scm			\
   %D%/home/services/pm.scm			\
+  %D%/home/services/secrets.scm			\
   %D%/home/services/shells.scm			\
   %D%/home/services/shepherd.scm		\
   %D%/home/services/sound.scm			\
@@ -305,7 +307,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/game-development.scm		\
   %D%/packages/games.scm			\
   %D%/packages/gawk.scm				\
-  %D%/packages/gcal.scm				\
   %D%/packages/gcc.scm				\
   %D%/packages/gd.scm				\
   %D%/packages/gdb.scm				\
@@ -356,6 +357,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/gxmessage.scm			\
   %D%/packages/hardware.scm			\
   %D%/packages/hare.scm				\
+  %D%/packages/hare-xyz.scm			\
   %D%/packages/haskell.scm			\
   %D%/packages/haskell-apps.scm			\
   %D%/packages/haskell-check.scm		\
@@ -1281,6 +1283,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ffmpeg-jami-remove-mjpeg-log.patch	\
   %D%/packages/patches/ffmpeg-jami-screen-sharing-x11-fix.patch	\
   %D%/packages/patches/ffmpeg-4-binutils-2.41.patch	\
+  %D%/packages/patches/ffmpeg-svt-av1-v3.patch			\
   %D%/packages/patches/fgallery-also-look-for-7z.patch		\
   %D%/packages/patches/fifengine-boost-compat.patch		\
   %D%/packages/patches/fifengine-python-3.9-compat.patch	\
@@ -1724,6 +1727,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libbraiding-no-s.patch                   \
   %D%/packages/patches/libcaca-CVE-2021-3410-pt1.patch		\
   %D%/packages/patches/libcaca-CVE-2021-3410-pt2.patch		\
+  %D%/packages/patches/libcap-magic-glibc-constant.patch	\
   %D%/packages/patches/libcanberra-sound-theme-freedesktop.patch \
   %D%/packages/patches/libcanberra-wayland-crash.patch \
   %D%/packages/patches/libcroco-CVE-2020-12825.patch		\
@@ -2304,6 +2308,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/slim-login.patch				\
   %D%/packages/patches/slim-display.patch			\
   %D%/packages/patches/slurm-23-salloc-fallback-shell.patch	\
+  %D%/packages/patches/slurm-drmaa-25.patch			\
   %D%/packages/patches/stex-copy-from-immutable-store.patch	\
   %D%/packages/patches/sysdig-shared-falcosecurity-libs.patch	\
   %D%/packages/patches/syslinux-gcc10.patch			\
@@ -2441,6 +2446,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/vcmi-disable-privacy-breach.patch	\
   %D%/packages/patches/vinagre-newer-freerdp.patch             \
   %D%/packages/patches/vinagre-newer-rdp-parameters.patch      \
+  %D%/packages/patches/vlc-livemedia-2024.11.28.patch          \
   %D%/packages/patches/vsearch-unbundle-cityhash.patch		\
   %D%/packages/patches/vst3sdk-3.7.7-allow-winelib-compilation.patch	\
   %D%/packages/patches/vte-CVE-2012-2738-pt1.patch			\
@@ -2468,6 +2474,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/wordnet-CVE-2008-3908-pt2.patch			\
   %D%/packages/patches/wpa-supplicant-dbus-group-policy.patch		\
   %D%/packages/patches/x265-arm-flags.patch			\
+  %D%/packages/patches/x265-4-arm-flags.patch			\
   %D%/packages/patches/xdg-desktop-portal-disable-portal-tests.patch\
   %D%/packages/patches/xdg-desktop-portal-disable-configuration-search-exit.patch\
   %D%/packages/patches/xdg-desktop-portal-wlr-harcoded-length.patch\

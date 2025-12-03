@@ -747,14 +747,14 @@ archiving.  Lzip is a clean implementation of the LZMA algorithm.")
 (define-public lziprecover
   (package
     (name "lziprecover")
-    (version "1.23")
+    (version "1.25")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://savannah/lzip/lziprecover/"
                                   "lziprecover-" version ".tar.gz"))
               (sha256
                (base32
-                "0wmmyi03fv2lflsir5ldrsv04q57k3hmlqajzb1m3p86gwbh967j"))))
+                "0icbzw7kmp4rn711sh3f0w3sxlxly6q6dc8d7pp6dqhag2f2yfag"))))
     (build-system gnu-build-system)
     (arguments
      ;; The configure script doesn't recognise the --build or --host
@@ -762,6 +762,7 @@ archiving.  Lzip is a clean implementation of the LZMA algorithm.")
      `(,@(if (%current-target-system)
              `(#:make-flags (list ,(string-append "CXX=" (cxx-for-target))))
              '())))
+    (native-inputs (list lzip))
     (home-page "https://www.nongnu.org/lzip/lziprecover.html")
     (synopsis "Recover and decompress data from damaged lzip files")
     (description
@@ -1039,14 +1040,14 @@ decompression of some loosely related file formats used by Microsoft.")
 (define-public lz4
   (package
     (name "lz4")
-    (version "1.9.3")
+    (version "1.10.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference (url "https://github.com/lz4/lz4")
                            (commit (string-append "v" version))))
        (sha256
-        (base32 "1w02kazh1fps3sji2sn89fz862j1199c5ajrqcgl1bnlxj09kcbz"))
+        (base32 "12sfwid95zhk2r2ijpwwknc5a2xlll2s9xhf0s21ca2jkygvblgx"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (outputs (list "out" "static"))
@@ -1897,11 +1898,11 @@ speed.")
     (outputs '("out"))
     (inputs
      `(,@(if (%current-target-system)
-             `(("googletest" ,googletest))
+             `(("googletest" ,googletest-1.8))
              '())))
     (native-inputs
      `(,@(if (%current-system)
-             `(("googletest" ,googletest))
+             `(("googletest" ,googletest-1.8))
              '())))
     (arguments
      `(#:phases
@@ -2304,14 +2305,14 @@ corrupted input.")
 (define-public plzip
   (package
     (name "plzip")
-    (version "1.11")
+    (version "1.12")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://savannah/lzip/plzip/"
                            "plzip-" version ".tar.gz"))
        (sha256
-        (base32 "0sv2sp0ppxkdds4qiwb3ddvlv22ydv61n3hk74rkh8ljbkjcpqyq"))))
+        (base32 "0c5fmp7hkb41ybc5gmrj96xz7g74mmpfhya2ha6asm51dynimmsh"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -2349,7 +2350,7 @@ single-member files which can't be decompressed in parallel.")
    (build-system cmake-build-system)
    (arguments
     `(#:tests? #f))
-   (inputs (list boost xz))
+   (inputs (list boost-1.83 xz))
    (native-inputs (list pkg-config))
    (home-page "https://constexpr.org/innoextract/")
    (synopsis "Tool for extracting Inno Setup installers")

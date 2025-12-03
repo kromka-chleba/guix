@@ -1421,6 +1421,50 @@ clustering schemes efficiently.  The package is made with two interfaces to
 standard software: R and Python.")
     (license license:bsd-2)))
 
+(define-public python-fgivenx
+  (package
+    (name "python-fgivenx")
+    (version "2.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fgivenx" version))
+       (sha256
+        (base32 "1ji6fqxsxmp58yvc16r41wjakgnw710gwhwviyi6q42bfj9lag6z"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 24 passed, 1 deselected, 167578 warnings
+      #:test-flags
+      ;; AttributeError: 'GrouperView' object has no attribute 'join'
+      #~(list "--deselect=fgivenx/test/test_drivers.py::test_plotting")))
+    (native-inputs
+     (list python-pytest
+           python-pytest-mpl
+           python-setuptools))
+    (propagated-inputs
+     (list python-getdist
+           python-matplotlib
+           python-joblib
+           python-numpy
+           python-scipy
+           python-tqdm))
+    (home-page "https://github.com/fgivenx/fgivenx")
+    (synopsis "Functional Posterior Plotter")
+    (description
+     "@code{fgivenx} is a Python package for plotting posteriors of functions.
+It is currently used in astronomy, but will be of use to any scientists
+performing Bayesian analyses which have predictive posteriors that are
+functions.
+
+This package allows one to plot a predictive posterior of a function,
+dependent on sampled parameters.  It assumes one has a Bayesian posterior
+@code{Post(theta|D,M)} described by a set of posterior samples
+@code{{theta_i}~Post}. If there is a function parameterised by theta
+@code{y=f(x;theta)}, then this script will produce a contour plot of the
+conditional posterior @code{P(y|x,D,M)} in the @code{(x,y)} plane.")
+    (license license:expat)))
+
 (define-public python-formulaic
   (package
     (name "python-formulaic")
@@ -2073,6 +2117,70 @@ between dataframe libraries.
     (synopsis "Python library for manipulating indices of ndarrays")
     (description "This package provides a Python library for manipulating
 indices of @code{ndarrays}.")
+    (license license:expat)))
+
+(define-public python-nestcheck
+  (package
+    (name "python-nestcheck")
+    ;; 0.2.1 was placed in 2019, there are a lot of changes providing
+    ;; comparability with Python 3.11, use the latest commit from master's
+    ;; HEAD.
+    (properties '((commit . "513ef962ef7b0d66377686f9fe0a9e354dad48b3")
+                  (revision . "0")))
+    (version (git-version "0.2.1"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ejhigson/nestcheck")
+              (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zzms2jkiapawnjyr5i7c61m7pmg6yd3nmpv23bdx51glz2fmglc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 58 passed, 6 deselected, 10 warnings
+      #:test-flags
+      ;; TypeError: MultiIndex.set_levels() got an unexpected keyword argument
+      ;; 'inplace'
+      #~(list "-k" (string-append "not test_run_list_error_summary"
+                                  ;; AttributeError: 'Series' object has no
+                                  ;; attribute 'iteritems'
+                                  " and not test_kde_plot_df"
+                                  ;; Test is not determenistic and fails with
+                                  ;; assertion not equal for DF array.
+                                  " and not test_summary_df"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-pytest
+            (lambda _
+              (substitute* "tests/test_core.py"
+                (("'nose'") "'pytest'")))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-fgivenx
+           python-matplotlib
+           python-numpy
+           python-pandas
+           python-scipy
+           python-tqdm))
+    (home-page "https://github.com/ejhigson/nestcheck")
+    (synopsis "Nested sampling calculations utilities")
+    (description
+     "This package implements a functionality to work with
+@url{https://en.wikipedia.org/wiki/Nested_sampling_algorithm, Nested
+sampling}, a popular numerical method for Bayesian computation, which
+simultaneously generates samples from the posterior distribution and an
+estimate of the Bayesian evidence for a given likelihood and prior.
+@code{nestcheck} provides Python utilities for analysing samples produced by
+nested sampling, and estimating uncertainties on nested sampling
+calculations (which have different statistical properties to calculations
+using other numerical methods).")
     (license license:expat)))
 
 (define-public python-nibabel
@@ -4517,30 +4625,22 @@ docs dependency in support of other libraries.")
 (define-public python-unyt
   (package
     (name "python-unyt")
-    (version "3.0.3")
+    (version "3.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "unyt" version))
        (sha256
-        (base32 "0jrq2vhan2h280h6cw1sm5hys2nzmf19w4py64k3nrkc320z9mni"))))
+        (base32 "04qjjv5zga7dh355ygsvkckfqi86nf03w6ckw5zm0120xw9p1shp"))))
     (build-system pyproject-build-system)
-    (arguments
-     ;; This is a Numpy DeprecationWarning, remove it on next update.
-     (list #:test-flags ''("-k" "not test_h5_io")))
-    ;; Pint is optional, but we do not propagate it due to its size.
+    ;; tests: 647 passed, 56 skipped, 2 xfailed
     (native-inputs
-     (list python-pint
-           python-pytest
+     (list python-pytest
            python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    ;; Astropy is an optional import, but we do not include it as it creates a
-    ;; module cycle: astronomy->python-science->astronomy.
+           python-setuptools-scm))
     (propagated-inputs
-     (list python-h5py        ; optional import
-           python-matplotlib  ; optional import
-           python-numpy
+     (list python-numpy
+           python-packaging
            python-sympy))
     (home-page "https://unyt.readthedocs.io")
     (synopsis "Library for working with data that has physical units")

@@ -203,7 +203,7 @@
              (substitute* "CMakeLists.txt"
                (("/etc") (string-append (assoc-ref outputs "out") "/etc"))))))))
    (build-system cmake-build-system)
-   (inputs (list botan
+   (inputs (list botan-2
                  expat
                  libiconv
                  libidn
@@ -2667,7 +2667,7 @@ asynchronicity.")
    (native-inputs
     (list googletest pkg-config))
    (inputs
-    (list boost protobuf icu4c))
+    (list boost-1.83 protobuf icu4c))
    (synopsis "Library for parsing and using phone numbers")
    (description
     "This package provides a C++ library for parsing, formatting, and

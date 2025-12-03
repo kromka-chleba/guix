@@ -139,6 +139,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages security-token)
+  #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tex)
@@ -171,9 +172,7 @@
            #~(list
               "-DBUILD_GUI=ON"
               "-DBUILD_BENCH=ON"
-              "-DWITH_ZMQ=ON"
-              ;; TODO: Enable IPC once capnproto is built with -fPIC.
-              "-DENABLE_IPC=OFF")
+              "-DWITH_ZMQ=ON")
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'build 'set-no-git-flag
@@ -182,14 +181,10 @@
                    ;; (and thus no information regarding this build is available
                    ;; from git).
                    (setenv "BITCOIN_GENBUILD_NO_GIT" "1")))
-               (add-before 'check 'set-home
-                 (lambda _
-                   ;; Tests write to $HOME.
-                   (setenv "HOME" (getenv "TMPDIR"))))
                (add-after 'check 'check-functional
                  (lambda _
                    (invoke
-                    "python3" "./test/functional/test_runner.py"
+                    "python3" "./test/functional/test_runner.py" "--timeout-factor=2"
                     (string-append "--jobs=" (number->string (parallel-job-count)))))))))
     (native-inputs
      (list bash ; provides the sh command for system_tests
@@ -200,6 +195,7 @@
            qttools))
     (inputs
      (list boost
+           capnproto
            libevent
            qrencode
            qtbase
@@ -237,7 +233,7 @@ line client and a client based on Qt.")
            python-scipy
            qttools-5))
     (inputs
-     (list bdb-5.3
+     (list bdb
            boost
            expat
            gmp
@@ -433,7 +429,7 @@ and dynamically with report tools based on filtering and graphical charts.")
                      (search-input-directory inputs
                                              "share/zoneinfo")))))))
     (inputs
-     (list boost
+     (list boost-1.83
            gmp
            libedit
            mpfr

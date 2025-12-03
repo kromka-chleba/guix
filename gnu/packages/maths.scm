@@ -71,6 +71,7 @@
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Sören Tempel <soeren@soeren-tempel.net>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
+;;; Copyright © 2025 Reza Housseini <reza@housseini.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2386,7 +2387,7 @@ Blosc-compressed datasets.")
               "-DHIGHFIVE_UNIT_TESTS=ON"
               "-GNinja")))
     (native-inputs
-     (list boost
+     (list boost-1.83
            catch2-3
            ninja))
     (inputs
@@ -3696,7 +3697,13 @@ This is the certified version of the Open Cascade Technology (OCCT) library.")
     (version "7.6.1")
     (source
       (origin
-        (inherit (package-source opencascade-occt))
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://git.dev.opencascade.org/repos/occt.git")
+              (commit
+               (string-append "V"
+                              (string-map (lambda (x) (if (eq? x #\.) #\_ x))
+                                          version)))))
         (file-name (git-file-name name version))
         (sha256
          (base32 "1cc7n4rs26lm1awwn2bijvjq9b3kz204ffnks02lrpgs7pf8yk8b")))))))
@@ -7693,14 +7700,14 @@ A unique design feature of Trilinos is its focus on packages.")
 (define-public dealii
   (package
     (name "dealii")
-    (version "9.6.0")
+    (version "9.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/dealii/dealii/releases/"
                            "download/v" version "/dealii-" version ".tar.gz"))
        (sha256
-        (base32 "1vbvw76xv8h1diwfgybgarm7qwn51rxd1kp2jgy2rvcfxgq26lv7"))
+        (base32 "0hyyly71ljnb7fsl2yan7wf3zxhkly7i8gczpv7gsm6vhgprc80g"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled boost, Kokkos, muparser, TBB and UMFPACK.
@@ -7715,6 +7722,7 @@ A unique design feature of Trilinos is its focus on packages.")
            openblas
            gfortran
            muparser
+           taskflow
            zlib))
     (propagated-inputs
      ;; Some scripts are installed into share/deal.II/scripts that require
@@ -8353,7 +8361,7 @@ find_package(louvain_communities)")
    (inputs (list btor2tools
                  boost cryptominisat louvain-community sqlite
                  gmp))
-   (native-inputs (list googletest pkg-config python-wrapper))
+   (native-inputs (list googletest-1.8 pkg-config python-wrapper))
    (home-page "https://boolector.github.io")
    (synopsis "Bitvector-based theory solver")
    (description "Boolector is a @acronym{SMT, satisfiability modulo theories}
@@ -10696,7 +10704,7 @@ high-performance multidimensional array containers for scientific computing.")
                 (patches (search-patches "fxdiv-system-libraries.patch"))))
       (build-system cmake-build-system)
       (inputs
-       (list googletest googlebenchmark))
+       (list googletest-1.8 googlebenchmark))
       (synopsis
        "C++ library for division via fixed-point multiplication by inverse")
       (description
@@ -10751,7 +10759,7 @@ when an application performs repeated divisions by the same divisor.")
       (native-inputs
        (list python-wrapper))
       (inputs
-       (list psimd googletest googlebenchmark))
+       (list psimd googletest-1.8 googlebenchmark))
       (synopsis "C++ library for half-precision floating point formats")
       (description
        "This header-only C++ library implements conversion to and from
@@ -11131,7 +11139,7 @@ systems and symbolic manipulations.")
                 ;; tensorflow.
                 "-DCMAKE_CXX_FLAGS=-fPIC ")))
       (inputs (list cpuinfo))
-      (native-inputs (list googletest))
+      (native-inputs (list googletest-1.12))
       (home-page "https://github.com/google/ruy")
       (synopsis "Matrix multiplication library")
       (description
@@ -11547,3 +11555,67 @@ expression parsing and evaluation.")
 linear programming (LP), mixed-integer programming (MIP), and quadratic
 programming (QP) models")
     (license license:expat)))
+
+(define-public trilinos-zoltan
+  (package
+    (name "trilinos-zoltan")
+    (version "16.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url "https://github.com/trilinos/Trilinos")
+                           (commit (string-append "trilinos-release-"
+                                                  (string-replace-substring
+                                                   version "." "-")))))
+       (file-name (git-file-name "trilinos" version))
+       (sha256 (base32 "1snn8vzxwrk9qsvv9wsv4zf99cvcja4shgjpsavp893v9gvgp2gm"))))
+    (build-system cmake-build-system)
+    (inputs (list openmpi
+                  perl
+                  python
+                  python-wrapper
+                  tcsh
+                  pt-scotch
+                  zlib))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DTrilinos_ENABLE_Zoltan=ON"
+              "-DBUILD_SHARED_LIBS=ON"
+              "-DTPL_ENABLE_MPI=ON"
+              "-DTPL_ENABLE_METIS=OFF"
+              "-DTPL_ENABLE_Scotch=ON"
+              "-DTPL_ENABLE_Zlib=ON"
+              "-DTrilinos_ENABLE_Fortran=OFF"
+              "-DZoltan_ENABLE_TESTS=ON"
+              ;; disable failing tests
+              "-DZoltan_ch_brack2_3_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_grid20x19_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_hg_felix_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_hg_ibm03_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_degenerate_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_degenerateAA_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_ewgt_scotch_parallel_DISABLE=ON"
+              "-DZoltan_ch_hammond_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_hammond_scotch_parallel_DISABLE=ON"
+              "-DZoltan_ch_hammond2_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_hughes_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_simple_scotch_parallel_DISABLE=ON"
+              "-DZoltan_hg_cage10_zoltan_parallel_DISABLE=ON"
+              "-DZoltan_ch_vwgt_scotch_parallel_DISABLE=ON")))
+    (home-page "https://trilinos.github.io/")
+    (synopsis
+     "Parallel partitioning, load balancing and data-management services")
+    (description
+     "The Zoltan library is a collection of data management services for parallel,
+unstructured, adaptive, and dynamic applications. It simplifies the
+load-balancing, data movement, unstructured communication, and memory usage
+difficulties that arise in dynamic applications such as adaptive
+finite-element methods, particle methods, and crash simulations. Zoltan's
+data-structure neutral design also lets a wide range of applications use it
+without imposing restrictions on application data structures. Its object-based
+interface provides a simple and inexpensive way for application developers to
+use the library and researchers to make new capabilities available under a
+common interface.
+")
+    (license license:bsd-3)))

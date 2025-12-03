@@ -100,7 +100,7 @@
                      (("^FetchContent_MakeAvailable\\(fmt\\)")
                       "find_package(fmt REQUIRED)")))))))
     (inputs
-     (list boost fmt snappy))
+     (list boost-1.83 fmt snappy))
     (home-page "https://avro.apache.org/")
     (synopsis "Data serialization system")
     (description "Apache Avro is a data serialization system.  Avro provides:
@@ -196,7 +196,7 @@ serialization.")
   (package
     (inherit msgpack-c)
     (name "msgpack-cxx")
-    (version "6.1.0")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
@@ -205,7 +205,7 @@ serialization.")
          "https://github.com/msgpack/msgpack-c/releases/download/"
          "cpp-" version "/" name "-" version ".tar.gz"))
        (sha256
-        (base32 "1rrrf3nskcv994z3pbq6a5z2021piz118rccmm1y7zlf7klygv93"))))
+        (base32 "0vqmpdwsrfjavbkhqy38ax1zpcbz3cg98kwxab70543vgspvf13m"))))
     (build-system cmake-build-system)
     (propagated-inputs (list boost zlib)) ;included in headers
     (description "Msgpack is a library for C++ that implements binary
@@ -551,7 +551,7 @@ character limit for implicit keys.")
                              "-DYAML_USE_SYSTEM_GTEST=ON")))
       (native-inputs
        (list python))
-      (inputs (list googletest))
+      (inputs (list googletest-1.8))
       (home-page "https://github.com/jbeder/yaml-cpp")
       (synopsis "YAML parser and emitter in C++")
       (description "YAML parser and emitter in C++ matching the YAML 1.2 spec.")
@@ -1061,7 +1061,7 @@ Apache Arrow-based Feather binary columnar serialization data frame format.")
               (lambda _
                 (copy-recursively
                  "include" (string-append #$output "/include")))))))
-      (native-inputs (list googletest))
+      (native-inputs (list googletest-1.12))
       (home-page "https://github.com/google/libnop")
       (synopsis "C++ Native Object Protocols")
       (description "@code{libnop} is a header-only library for serializing and

@@ -56,9 +56,9 @@
   #:use-module (guix sets)
   #:export (%input-style
 
-            %bioconductor-version
             download
             fetch-description
+            extract-imports
 
             cran->guix-package
             bioconductor->guix-package
@@ -199,9 +199,9 @@ package definition."
 (define %cran-canonical-url "https://cran.r-project.org/package=")
 (define %bioconductor-url "https://bioconductor.org/packages/")
 
-;; The latest Bioconductor release is 3.21.  Bioconductor packages should be
+;; The latest Bioconductor release is 3.22.  Bioconductor packages should be
 ;; updated together.
-(define %bioconductor-version "3.21")
+(define %bioconductor-version "3.22")
 
 (define* (bioconductor-packages-list-url #:optional type)
   (string-append "https://bioconductor.org/packages/"
@@ -569,12 +569,30 @@ referenced in build system files."
     ;; Quiet imports
     "(suppressPackageStartupMessages\\()?"
     ;; the actual import statement.
-    "(require|library)\\(\"?([^, \")]+)"
+    "(require|library|check_installed)\\(\"?([^, \")]+)"
     ;; Or perhaps...
     "|"
     ;; ...direct namespace access.
-    " *([A-Za-z0-9]+):::?"
+    " *([A-Za-z0-9._]+):::?"
     ")")))
+
+(define* (extract-imports line
+                          #:key (initial-set (set)) (ignored-names (list)))
+  "Return a set of strings corresponding to R libraries that are directly
+referenced by namespace on LINE."
+  (fold (lambda (match acc)
+          (let ((imported (or (match:substring match 4)
+                              (match:substring match 5))))
+            (if (or (not imported)
+                    ;; Likely inside a string.
+                    (odd? (string-count (match:prefix match) #\"))
+                    ;; Part of a bigger expression.
+                    (string-suffix? ":" (match:prefix match))
+                    (member imported ignored-names))
+                acc
+                (set-insert imported acc))))
+        initial-set
+        (list-matches import-pattern line)))
 
 (define (needed-test-inputs-in-directory dir)
   "Return a set of R package names that are found in library import
@@ -598,17 +616,10 @@ statements in files in the directory DIR."
                                  (cond
                                   ((eof-object? line) packages)
                                   (else
-                                   (loop
-                                    (fold (lambda (match acc)
-                                            (let ((imported (or (match:substring match 4)
-                                                                (match:substring match 5))))
-                                              (if (or (not imported)
-                                                      (string=? imported package-directory-name)
-                                                      (member imported default-r-packages))
-                                                  acc
-                                                  (set-insert imported acc))))
-                                          packages
-                                          (list-matches import-pattern line))))))))))
+                                   (loop (extract-imports line
+                                                          #:initial-set packages
+                                                          #:ignored-names (cons package-directory-name
+                                                                                default-r-packages))))))))))
                        (set)
                        (append-map (lambda (directory)
                                      (find-files directory "\\.(R|Rmd)"))

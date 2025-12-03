@@ -58,6 +58,7 @@
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Antoine Côté <antoine.cote@posteo.net>
 ;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
+;;; Copyright © 2025 Evgenii Klimov <eugene.dev@lipklim.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -248,6 +249,39 @@ hardware and software audio capabilities, reducing implementation effort, and
 promoting the market for advanced audio.")
     (home-page "https://www.khronos.org/opensles/")
     (license (license:non-copyleft "file:///LICENSE.txt"))))
+
+(define-public python-sounddevice
+  (package
+    (name "python-sounddevice")
+    (version "0.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sounddevice" version))
+       (sha256
+        (base32 "0b4vcaj79sy9aqsrgcszkp35x2fc0i4pqzk96d2viflg35h2pb6b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #false		; no tests
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'patch-generated-file-shebangs 'add-path-to-portaudio
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "sounddevice.py"
+                     (("_find_library\\(_libname\\)")
+                      (string-append "\""
+                                     (search-input-file inputs
+                                                        "/lib/libportaudio.so.2")
+                                     "\""))))))))
+    (inputs (list portaudio))
+    (propagated-inputs (list python-cffi python-numpy))
+    (native-inputs (list python-setuptools))
+    (home-page "https://python-sounddevice.readthedocs.io/")
+    (synopsis "Play and record sound with Python")
+    (description "This Python module provides bindings for the PortAudio
+library and a few convenience functions to play and record NumPy arrays
+containing audio signals.")
+    (license license:expat)))
 
 (define-public wildmidi
   (package
@@ -1927,7 +1961,7 @@ synthesis.")
 (define-public snapcast
   (package
     (name "snapcast")
-    (version "0.32.3")
+    (version "0.34.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1936,7 +1970,7 @@ synthesis.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "06hllji1621f29g6ymbysi1vkndjsrwj63f5ph30f6kvv3c8sqx4"))))
+                "0jqzzjw1njixapj89yvgbhk7yrfc14xsfd94pf6z6lfna8c01yq4"))))
     (build-system cmake-build-system)
     (arguments '(#:tests? #f))                    ;no included tests
     (inputs
@@ -2044,6 +2078,8 @@ emulation (valve, tape), bit fiddling (decimator, pointer-cast), etc.")
        (sha256
         (base32 "0g0yfmwmrkvrkvynx84bays6jph3wq2hq1md5ylr7n5a8g0c17hn"))))
     (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f))
     (native-inputs
      (list boost pkg-config))
     (inputs
@@ -2866,7 +2902,7 @@ partial release of the General MIDI sound set.")
                     (("'rU'") "'r'")))))))
     (inputs
      (list libsndfile
-           boost
+           boost-1.83
            curl
            avahi
            eigen
@@ -4436,7 +4472,7 @@ link REQUIRED)"))))))
                   eudev                 ;for user interactions with devices
                   avahi                 ;zeroconf service discovery support
                   icu4c
-                  boost
+                  boost-1.83
                   boost-sync
                   yaml-cpp
                   python-wrapper        ;there were warnings in the build process

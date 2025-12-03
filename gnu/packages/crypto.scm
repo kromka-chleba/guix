@@ -79,6 +79,7 @@
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-crypto)
@@ -102,6 +103,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
@@ -132,7 +134,7 @@
                ;; TODO: perhaps infer #:tests?
                (if #$(%current-target-system)
                    "OFF" "ON")))))
-    (native-inputs (list googletest))
+    (native-inputs (list googletest-1.12))
     (home-page "https://github.com/google/crc32c")
     (synopsis "Cyclic redundancy check")
     (description
@@ -251,7 +253,7 @@ communication, encryption, decryption, signatures, etc.")
 (define-public libmd
   (package
     (name "libmd")
-    (version "1.0.4")
+    (version "1.1.0")
     (source (origin
             (method url-fetch)
             (uri
@@ -262,11 +264,12 @@ communication, encryption, decryption, signatures, etc.")
                              version ".tar.xz")))
             (sha256
              (base32
-              "03skgv013v0y9hxh6j143xdwynb5cmbmbdylvvgfsjz38889477m"))))
+              "0cmkfq3v0hqzjwpsyp02i3a1z2sfjrdjxky784qsy4sk4x1ammhv"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list "--disable-static")))
+     (list
+      #:configure-flags
+      #~(list "--disable-static")))
     (synopsis "Message Digest functions from BSD systems")
     (description
      "The currently provided message digest algorithms are:
@@ -982,14 +985,16 @@ SHA256, SHA512, SHA3, AICH, ED2K, Tiger, DC++ TTH, BitTorrent BTIH, GOST R
 (define-public botan
   (package
     (name "botan")
-    (version "2.19.3")
+    (version "3.9.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://botan.randombit.net/releases/"
-                                  "Botan-" version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/randombit/botan/")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0m9dh00zibx13pbjij8lbncf86pix3cxklxmgl47z965k7rlgq6s"))))
+                "1k5dyn39b77bfawly2yms0crbkn6g7msh16q7bxnh7dra4cnkmsn"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1030,6 +1035,24 @@ using ctypes is included, and several other language bindings are available.")
     (home-page "https://botan.randombit.net")
     (license license:bsd-2)))
 
+;; Needed explicitly by biboumi
+(define-public botan-2
+  (hidden-package
+   (package
+     (inherit botan)
+     (name "botan")
+     (version "2.19.3")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/randombit/botan/")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "16dsrxb7z245hvbjzapq7qf65ip1fh2390qap30hpfd383dyvilw")))))))
+
 (define-public ccrypt
   (package
     (name "ccrypt")
@@ -1054,8 +1077,8 @@ security.")
     (license license:gpl2)))
 
 (define-public asignify
-  (let ((commit "08af003e1f4833713db28b871759d94f9b2b1469")
-        (revision "1"))
+  (let ((commit "d6b3651fa96f05aeefc318f75503fc9ca77b1f58")
+        (revision "2"))
     (package
       (name "asignify")
       (version (git-version "1.1" revision commit))
@@ -1067,26 +1090,28 @@ security.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1zacpqa8b5lg270z1g06r5ik9vnb91crb4ivyy20381dny82xvr1"))))
+                  "0a6k21gb2n45bj1d2qy34lgi4qsd3ck59jxcycbxafs0wdglsyl9"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:configure-flags
-         (list "--enable-openssl"
-               (string-append "--with-openssl="
-                              (assoc-ref %build-inputs "openssl")))))
+       (list
+        #:configure-flags
+        #~(list "--enable-openssl"
+                (string-append "--with-openssl="
+                               #$(this-package-input "openssl")))))
       (native-inputs
        (list autoconf automake libtool))
       (inputs
        (list openssl))
       (home-page "https://github.com/vstakhov/asignify")
-      (synopsis "Cryptographic authentication and encryption tool and library")
+      (synopsis
+       "Cryptographic authentication and encryption tool and library")
       (description "Asignify offers public cryptographic signatures and
-encryption with a library or a command-line tool.  The tool is heavily inspired
-by signify as used in OpenBSD.  The main goal of this project is to define a
-high level API for signing files, validating signatures and encrypting using
-public-key cryptography.  Asignify is designed to be portable and self-contained
-with zero external dependencies.  Asignify can verify OpenBSD signatures, but it
-cannot sign messages in OpenBSD format yet.")
+encryption with a library or a command-line tool.  The tool is heavily
+inspired by signify as used in OpenBSD.  The main goal of this project is to
+define a high level API for signing files, validating signatures and
+encrypting using public-key cryptography.  Asignify is designed to be portable
+and self-contained with zero external dependencies.  Asignify can verify
+OpenBSD signatures, but it cannot sign messages in OpenBSD format yet.")
       (license license:bsd-2))))
 
 (define-public enchive
@@ -1104,17 +1129,19 @@ cannot sign messages in OpenBSD format yet.")
                 (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target         '
-       #:make-flags (list ,(string-append "CC=" (cc-for-target))
-                          "PREFIX=$(out)")
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure)
-                  (add-after 'install 'post-install
-                    (lambda _
-                      (let* ((out (assoc-ref %outputs "out"))
-                             (lisp (string-append out "/share/emacs/site-lisp")))
-                        (install-file "enchive-mode.el" lisp)
-                        #t))))))
+     (list
+      #:tests? #f                      ;no check target         '
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'install 'post-install
+            (lambda _
+              (install-file
+               "enchive-mode.el"
+               (string-append #$output "/share/emacs/site-lisp")))))))
     (synopsis "Encrypted personal archives")
     (description
      "Enchive is a tool to encrypt files to yourself for long-term
@@ -1270,27 +1297,24 @@ utility/testing functions.")
                 "1fb5yi3d2k8kd4zm7liiqagpz610y168xrr1cvn7cbq314jm2my1"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; No test suite
-       #:make-flags
-       (list (string-append "PREFIX=" (assoc-ref %outputs "out"))
-             ;; Build the program and the docs.
-             "SUBDIRS=src doc")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure) ; No ./configure script
-         (add-after 'unpack 'patch-path
-           (lambda _
-             (substitute* '("src/Makefile" "doc/Makefile")
-               (("/usr/bin/install")
-                "install"))))
-         (add-before 'install 'make-output-directories
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (man1 (string-append out "/share/man/man1")))
-               (mkdir-p bin)
-               (mkdir-p man1)
-               #t))))))
+     (list
+      #:tests? #f ; No test suite
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output)
+              ;; Build the program and the docs.
+              "SUBDIRS=src doc")
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure) ; No ./configure script
+          (add-after 'unpack 'patch-path
+            (lambda _
+              (substitute* '("src/Makefile" "doc/Makefile")
+                (("/usr/bin/install")
+                 "install"))))
+          (add-before 'install 'make-output-directories
+            (lambda _
+              (mkdir-p (string-append #$output "/bin"))
+              (mkdir-p (string-append #$output "/share/man/man1")))))))
     (inputs
      (list libsodium openssl))
     (synopsis "High-performance command-line tool for stream encryption")
@@ -1305,7 +1329,7 @@ quickly by using all your CPU cores and hardware acceleration.")
 (define-public minisign
   (package
     (name "minisign")
-    (version "0.11")
+    (version "0.12")
     (source
      (origin
        (method git-fetch)
@@ -1314,7 +1338,7 @@ quickly by using all your CPU cores and hardware acceleration.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vv2bhhsyhlpnjclfa7gkqgd9xi3jfcdrss7abbdxvvflyrwdk5i"))))
+        (base32 "1b7iagx8jdyhvni24qhq13qydsinbh42gvb9dgn8d9vx3f33645a"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no test suite
@@ -1337,7 +1361,7 @@ Trusted comments are signed, thus verified, before being displayed.")
 (define-public olm
   (package
     (name "olm")
-    (version "3.2.14")
+    (version "3.2.16")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1345,7 +1369,7 @@ Trusted comments are signed, thus verified, before being displayed.")
                     (commit version)))
               (sha256
                (base32
-                "0pj7gs32ixhlls792wah7xf49j5pra0avp7dpvy9cndkdkg6biq5"))
+                "19yibssxn12q6ddl15nvqzvcf1hwqial48ng6llfafwbkfdb8z95"))
               (file-name (git-file-name name version))
               ;; Delete the bundled blob.  It's free, but unauditable,
               ;; and apparently only required for android.
@@ -1353,58 +1377,60 @@ Trusted comments are signed, thus verified, before being displayed.")
                          "android/gradle/wrapper/gradle-wrapper.jar"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (with-directory-excursion "tests"
-                 (invoke "ctest" "."))))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests"
+                  (invoke "ctest" "."))))))))
     (synopsis "Implementation of the Olm and Megolm cryptographic ratchets")
     (description "The Olm library implements the Double Ratchet
 cryptographic ratchet.  It is written in C and C++11, and exposed as a C
 API.")
-    (home-page "https://matrix.org/docs/projects/other/olm/")
+    (home-page "https://gitlab.matrix.org/matrix-org/olm/")
     (license license:asl2.0)))
 
 (define-deprecated-package libolm
   olm)
 
+;; TODO: This is the only Python package here, consider to build from source
+;; directly without inheritance and move to python-crypto module.
 (define-public python-olm
   (package
     ;; python-olm is part of olm and must be updated at the same time.
     (inherit olm)
     (name "python-olm")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'chdir
-           (lambda _
-             (chdir "python")))
-         (add-before 'build 'set-preprocessor
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CPP" "gcc -E")))
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "python")))
+          (add-before 'build 'set-preprocessor
+            (lambda _
+              (setenv "CPP" "gcc -E"))))))
     (inputs (list olm))
     (propagated-inputs
      (list python-cffi python-future))
     (native-inputs
-     (list python-pytest python-pytest-benchmark python-aspectlib))
+     (list python-aspectlib
+           python-pytest
+           python-pytest-benchmark
+           python-setuptools))
     (synopsis "Python bindings for Olm")
     (description "The Olm library implements the Double Ratchet
 cryptographic ratchet.  This package contains its Python bindings.")))
 
 (define-public hash-extender
-  (let ((commit "cb8aaee49f93e9c0d2f03eb3cafb429c9eed723d")
-        (revision "2"))
+  (let ((commit "f00b1a02eca02b0907e26726f7efe437bc396aa4")
+        (revision "0"))
     (package
       (name "hash-extender")
-      (version (git-version "0.0" revision commit))
+      (version (git-version "0.02" revision commit)) ;from hash_extender.c
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -1412,26 +1438,23 @@ cryptographic ratchet.  This package contains its Python bindings.")))
                       (commit commit)))
                 (sha256
                  (base32
-                  "1fj118566hr1wv03az2w0iqknazsqqkak0mvlcvwpgr6midjqi9b"))
+                  "12hh2vs8ppavjj47rgyp60cdw70lm2zqdpdv1zdgb3jgdzkg7bf2"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (delete 'configure)
-           (replace 'check
-             (lambda _
-               (invoke "./hash_extender_test")))
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((outdir (assoc-ref outputs "out"))
-                      (bindir (string-append outdir "/bin"))
-                      (docdir (string-append outdir
-                                             "/share/doc/hash-extender-"
-                                             ,version)))
-                 (install-file "hash_extender" bindir)
-                 (install-file "README.md" docdir)
-                 #t))))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            ;; See: https://github.com/iagox86/hash_extender/issues/29
+            (delete 'check)
+            (replace 'install
+              (lambda _
+                (install-file "hash_extender" (string-append #$output "/bin"))
+                (install-file
+                 "README.md"
+                 (string-append
+                  #$output "/share/doc/hash-extender-" #$version)))))))
       (inputs
        (list openssl))
       (synopsis "Tool for hash length extension attacks")
@@ -1456,18 +1479,16 @@ SHA-256, SHA-512, and WHIRLPOOL hashes.")
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; no test suite
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'set-cflags
-           (lambda _
-             (setenv "CFLAGS" "-O3")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((outdir (assoc-ref outputs "out"))
-                    (bindir (string-append outdir "/bin")))
-               (install-file "mkp224o" bindir)
-               #t))))))
+     (list
+      #:tests? #f ; no test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'set-cflags
+            (lambda _
+              (setenv "CFLAGS" "-O3")))
+          (replace 'install
+            (lambda _
+              (install-file "mkp224o" (string-append #$output "/bin")))))))
     (native-inputs
      (list autoconf))
     (inputs
@@ -1482,7 +1503,7 @@ addresses using a brute-force method.")
 (define-public transcrypt
   (package
     (name "transcrypt")
-    (version "2.1.0")
+    (version "2.3.1")
     (source
      (origin
        (method git-fetch)
@@ -1490,19 +1511,20 @@ addresses using a brute-force method.")
              (url "https://github.com/elasticdog/transcrypt")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0bpz1hazbhfb6pqi68x55kq6a31bgh6vwij836slmi4jqiwvnh5a"))
+        (base32 "1yp1s69wphhsaks46rfj2ann8z397jgvbbq22ikdwxcw96f49pmk"))
        (file-name (git-file-name name version))))
     (inputs
      (list git openssl))
     (build-system copy-build-system)
     (arguments
-     `(#:install-plan
-       '(("transcrypt" "bin/transcrypt")
-         ("man/transcrypt.1" "share/man/man1/transcrypt.1")
-         ("contrib/bash/transcrypt"
-          "share/bash-completion/completions/transcrypt")
-         ("contrib/zsh/_transcrypt"
-          "share/zsh/site-functions/_transcrypt"))))
+     (list
+      #:install-plan
+      #~'(("transcrypt" "bin/transcrypt")
+          ("man/transcrypt.1" "share/man/man1/transcrypt.1")
+          ("contrib/bash/transcrypt"
+           "share/bash-completion/completions/transcrypt")
+          ("contrib/zsh/_transcrypt"
+           "share/zsh/site-functions/_transcrypt"))))
     (home-page "https://github.com/elasticdog/transcrypt")
     (synopsis "Transparently encrypt files within a git repository")
     (description
@@ -1570,7 +1592,7 @@ non-encrypted files.")
     (native-inputs
      (list pkg-config python-wrapper))
     (inputs
-     (list boost curl fuse-2 range-v3 spdlog))
+     (list boost-1.83 curl fuse-2 range-v3 spdlog))
     (home-page "https://www.cryfs.org/")
     (synopsis "Encrypted FUSE filesystem for the cloud")
     (description "CryFS encrypts your files, so you can safely store them anywhere.
@@ -1584,19 +1606,20 @@ structure.  However CryFS is not considered stable yet by the developers.")
 (define-public b3sum
   (package
     (name "b3sum")
-    (version "1.8.1")
+    (version "1.8.2")
     (source
       (origin
         (method url-fetch)
         (uri (crate-uri "b3sum" version))
         (file-name (string-append name "-" version ".tar.gz"))
         (sha256
-         (base32 "1zfyj3a8s1mg6w6l4j5hchrs8n5mfij92mg9m24pzxfi4da4543a"))))
+         (base32 "06qc6iv574km4j1ja4qhxyai680jkll58qzpz4mb79c0rk750dpd"))))
     (build-system cargo-build-system)
     (arguments
-      `(#:install-source? #f
-        #:phases
-        (modify-phases %standard-phases
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
           (add-before 'check 'patch-tests
             (lambda _
               (substitute* "tests/cli_tests.rs"
@@ -1650,7 +1673,7 @@ SunMD5, sha1crypt, NT, bsdicrypt, bigcrypt, and descrypt.")
 (define-public keychain
   (package
     (name "keychain")
-    (version "2.9.5")
+    (version "2.9.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1659,21 +1682,23 @@ SunMD5, sha1crypt, NT, bsdicrypt, bigcrypt, and descrypt.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1i698n0mp2wxk1yd8lhwq7i1dj5v01li1g9qi047aqc34r4079lq"))))
+                "0nj5rq9vzvf5g8axmicy5zfcjir7a6fr1ai4ha3cpqj4zgridga7"))))
     (build-system gnu-build-system)
-    (propagated-inputs (list procps))
-    (native-inputs (list perl))
     (arguments
-     `(#:tests? #f ; No test suite
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure)
-                  (replace 'install
-                    (lambda _
-                      (install-file "keychain"
-                                    (string-append %output "/bin/"))
-                      (install-file "keychain.1"
-                                    (string-append %output "/share/man/man1"))
-                      #t)))))
+     (list
+      #:tests? #f ; No test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'install
+            (lambda _
+              (install-file "keychain" (string-append #$output "/bin/"))
+              (install-file "keychain.1"
+                            (string-append #$output "/share/man/man1")))))))
+    (propagated-inputs
+     (list procps))
+    (native-inputs
+     (list perl))
     (synopsis
      "SSH or GPG agent frontend that can share a single agent on the same
 system")

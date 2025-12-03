@@ -2,7 +2,7 @@
 ;;; Copyright © 2016, 2017, 2018 Theodoros Foradis <theodoros@foradis.org>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Clément Lassieur <clement@lassieur.org>
-;;; Copyright © 2021, 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
@@ -24,6 +24,8 @@
 ;;; Copyright © 2025, Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;; Copyright © 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
+;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -110,6 +112,7 @@
   #:use-module (gnu packages ruby)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
+  #:use-module (gnu packages shells)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages stb)
@@ -171,9 +174,8 @@
               (assoc-ref glib-or-gtk:%standard-phases
                          'glib-or-gtk-wrap))
             (add-after 'glib-or-gtk-wrap 'wrap-aacircuit
-              (lambda* (#:key outputs #:allow-other-keys)
-                (wrap-program (string-append (assoc-ref outputs "out")
-                                             "/bin/aacircuit")
+              (lambda _
+                (wrap-program (string-append #$output "/bin/aacircuit")
                   `("GDK_PIXBUF_MODULE_FILE" =
                     (,(getenv "GDK_PIXBUF_MODULE_FILE")))
                   `("GI_TYPELIB_PATH" ":" prefix
@@ -183,9 +185,8 @@
        ;; <https://docs.pytest.org/en/7.1.x/how-to/nose.html> after report to
        ;; the upstream to modify them, use deprecated Nose test runner for
        ;; now.
-       (list python-nose
+       (list python-pynose
              python-setuptools
-             python-wheel
              xvfb-run))
       (inputs
        (list bash-minimal
@@ -261,7 +262,7 @@ formal verification.  This is the Yosyshq fork of ABC.")
 (define-public apycula
   (package
     (name "apycula")
-    (version "0.27")
+    (version "0.28")
     ;; The pypi tar.gz file includes the necessary .pickle files, not available
     ;; in the home-page repository.
     (source
@@ -269,11 +270,11 @@ formal verification.  This is the Yosyshq fork of ABC.")
        (method url-fetch)
        (uri (pypi-uri "apycula" version))
        (sha256
-        (base32 "15ndyjfpikn1hhgwp2l43pzlnjg3jg7zc86zr6vk5qr6jxpzm6j1"))))
+        (base32 "0llwcz4fji4sbdajlr43spf3mgdaw42rm15va1l9zb8314fn7wq1"))))
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))      ;requires Gowin EDA tools
     (inputs (list python-crc))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/YosysHQ/apicula/")
     (synopsis "Gowin FPGA bitstream format")
     (description
@@ -382,7 +383,7 @@ individual low-level driver modules.")
           (add-after 'install 'python:wrap
             (@@ (guix build python-build-system) wrap)))))
     (native-inputs
-     (list clang python-minimal-wrapper python-sphinx texinfo yosys-clang))
+     (list clang python-minimal-wrapper python-sphinx texinfo yosys))
     (inputs
      (list python-click python-json5 readline))
     (home-page "https://yosyshq.readthedocs.io/projects/eqy/en/latest/")
@@ -465,6 +466,55 @@ Description Language} Analysis and Standardization Group.")
 hardware designs in Verilog.")
       (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
+
+(define-public gerbv
+  (package
+    (name "gerbv")
+    (version "2.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/gerbv/gerbv")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06bcm5zw7whsnnmfld3gl2j907lxc68gnsbzr2pc4w6qc923rgmj"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "CFLAGS=-O2 -g -fcommon")
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'patch-version-generator
+                     (lambda _
+                       (substitute* "utils/git-version-gen.sh"
+                         (("/bin/bash")
+                          (which "bash"))))))))
+    (native-inputs (list autoconf
+                         automake
+                         desktop-file-utils
+                         gettext-minimal
+                         ;; Version generator needs git to work properly:
+                         ;; https://github.com/gerbv/gerbv/issues/244
+                         git-minimal/pinned
+                         `(,glib "bin")
+                         libtool
+                         pkg-config))
+    (inputs (list cairo
+                  ;; As of 2.10.0 gerbv is still GTK+2 only.  GTK 3/4 porting
+                  ;; issue: https://github.com/gerbv/gerbv/issues/71.
+                  gtk+-2))
+    (home-page "https://gerbv.github.io/")
+    (synopsis "Gerber file viewer")
+    (description
+     "Gerbv is a viewer for files in the Gerber format (RS-274X only), which
+is commonly used to represent printed circuit board (PCB) layouts.  Gerbv lets
+you load several files on top of each other, do measurements on the displayed
+image, etc.  Besides viewing Gerbers, you may also view Excellon drill files
+as well as pick-place files.")
+    ;; This CVE has been fixed in version 2.10.0.
+    (properties '((lint-hidden-cve . ("CVE-2023-4508"))))
+    (license license:gpl2+)))
 
 (define-public gtkwave
   ;; The last release is more than 2 years old, and there are improvements in
@@ -838,6 +888,37 @@ an embedded event driven algorithm.")
       (license (list license:expat      ;libfst and fastlz-derived sources
                      license:bsd-2))))) ;for lz4-derived sources
 
+(define-public libpsf
+  ;; There are no release nor tags.
+  (let ((commit "001dc734e01725e739847c8cde6480a0cf35a082")
+        (revision "0"))
+    (package
+      (name "libpsf")
+      (version (git-version "0.2" revision commit)) ;0.2 from configure.ac
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://gitlab.com/libpsf/libpsf-core")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "19k03hwwz4pkb98hd7vf15x6dnhfd48iqj62n90s7ycx1y5a378r"))
+         (modules '((guix build utils)))
+         ;; remove broken psftest binary using hardcoded paths
+         (snippet '(substitute* "src/Makefile.am"
+                    (("bin_PROGRAMS = psftest") "bin_PROGRAMS =")))))
+      ;; tests are broken due to missing test/data/tran.tran file
+      (arguments (list #:tests? #f))
+      (build-system gnu-build-system)
+      (native-inputs (list autoconf automake libtool))
+      (inputs (list boost))
+      (synopsis "PSF simulation data c++ library")
+      (description "@code{libpsf} is a c++ library that reads Cadence
+@acronym{PSF, Parameter Storage Format} binary waveform files.")
+      (home-page "https://gitlab.com/libpsf/libpsf-core")
+      (license license:lgpl3))))
+
 (define-public libserialport
   (package
     (name "libserialport")
@@ -1194,7 +1275,7 @@ understand and improve testbench coverage.")
              yosys))
       (inputs
        (list apycula
-             boost
+             boost-1.83
              corrosion
              eigen
              pybind11
@@ -1247,7 +1328,7 @@ understand and improve testbench coverage.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.18.1")
+    (version "1.18.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1256,7 +1337,7 @@ understand and improve testbench coverage.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1l4aiaf2009wak7bccpm8x2pr27pr2b5w2naz874y8k98wqq5zlr"))))
+                "0930bjaprvx9d0g8152xyzl2hxbx34gd36198ljvr55brrisfmvb"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t
@@ -1496,7 +1577,7 @@ chip database for NG-Ultra architecture from NanoXplore.")
                 (copy-recursively "tools"
                                   (string-append datadir "/tools"))))))))
     (inputs
-     (list boost))
+     (list boost-1.83))
     (synopsis "GateMate FPGAs bitstream tools")
     (description
      "@code{Prjpeppercorn} includes programming tools for GateMate
@@ -1544,7 +1625,7 @@ architecture from Cologne Chip.  It also provides data needed to produce a
               (lambda _
                 (chdir "libtrellis"))))))
       (native-inputs (list python))
-      (inputs (list openocd boost pybind11))
+      (inputs (list openocd boost-1.83 pybind11))
       (synopsis "Placement and routing for ECP5 FPGAs")
       (description
        "Project Trellis is a Nextpnr backend compatible with ECP5 FPGAs.
@@ -1639,7 +1720,7 @@ formats.")
     (native-inputs
      (list pkg-config qttools-5))
     (inputs
-     (list boost
+     (list boost-1.83
            glib
            glibmm
            libsigrok
@@ -1727,6 +1808,61 @@ library, scripting API, and co-simulation capability for FPGA or ASIC
 verification.")
     (license license:asl2.0)))
 
+(define-public open-logic
+  (package
+    (name "open-logic")
+    (version "4.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/open-logic/open-logic/")
+              (commit version)
+              ;; Required by the en_cl_fix submodule.
+              (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0azapw9dyr5l5qal7qd409lyq0w6pw2wyjwvxfl44sykpbfxdl2x"))))
+    (outputs
+     '("out" "test"))
+    (properties
+     `((output-synopsis "test" "Testing code")
+       (output-synopsis "out" "Source code")))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "sim"
+                  (substitute* "run.py"
+                    ;; This is required to comply with current VUnit, see:
+                    ;; https://github.com/VUnit/vunit/issues/777
+                    (("compile_builtins=False, ")
+                     ""))
+                  (invoke "python3" "run.py" "--nvc" "-v"))))))
+      #:install-plan
+      #~'(("src" "share/open-logic/src" #:exclude-regexp ("core"))
+          ("3rdParty" "share/open-logic/3rdParty")
+          ("test" "share/open-logic/test" #:output "test"))))
+    (native-inputs
+     (list nvc python-matplotlib python-minimal python-vunit))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "OPEN_LOGIC")
+             (separator #f)
+             (files (list "share/open-logic")))))
+    (home-page "https://github.com/open-logic/open-logic/")
+    (synopsis "Open library of VHDL standard components")
+    (description "Open Logic implements commonly used design units in a
+reusable and vendor/tool-independent way.  It is written following the VHDL
+2008 standard, but can also be used from System Verilog.")
+    (license (list license:lgpl2.1
+                   license:expat)))) ;en_cl_fix uses Expat license
+
 ;;; Required by python-vunit.
 (define osvvm-2023.04
   (package
@@ -1752,6 +1888,53 @@ verification.")
        ((#:phases phases #~%standard-phases)
         #~(modify-phases #$phases
             (delete 'fix-scripts)))))))
+
+(define-public pyspice
+  (package
+    (name "pyspice")
+    (version "1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PySpice-org/PySpice")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02z35gyx27npqg7g0m1gdy8wid93iy335pc72j90ycx998xf2r5k"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      #:tests? #f ;we check the build after installation
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'patch-libngspice
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "PySpice/Spice/NgSpice/Shared.py"
+                ((" path = .*" _)
+                 (string-append " path = \""
+                                (search-input-file inputs "lib/libngspice.so")
+                                "\"")))))
+          (add-after 'install 'check-after-install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (add-installed-pythonpath inputs outputs)
+              (invoke (string-append #$output "/bin/pyspice-post-installation")
+                      "--check-install"))))))
+    (native-inputs (list python-pytest python-wheel))
+    (propagated-inputs (list python-matplotlib python-pyyaml))
+    (inputs (list libngspice
+                  ngspice
+                  python-invoke
+                  python-ply
+                  python-requests
+                  python-scipy))
+    (home-page "https://pyspice.fabrice-salvaire.fr/")
+    (synopsis "Circuit simulator Python interface.")
+    (description "PySpice implements a Ngspice binding and provides an
+oriented object API on top of SPICE, the simulation output is converted to
+Numpy arrays for convenience.")
+    (license license:gpl3+)))
+
 
 (define-public python-amaranth
   (package
@@ -1781,7 +1964,7 @@ verification.")
            python-setuptools-scm
            sby
            yices
-           yosys-clang))
+           yosys))
     (propagated-inputs
      (list python-jinja2 python-jschon python-pyvcd))
     (home-page "https://amaranth-lang.org/docs/amaranth/latest/")
@@ -1846,7 +2029,7 @@ files as specified in IEEE 1364-2005.")
 (define-public python-cocotb
   (package
     (name "python-cocotb")
-    (version "2.0.0")
+    (version "2.0.1")
     (source
      (origin
        (method git-fetch)
@@ -1855,7 +2038,7 @@ files as specified in IEEE 1364-2005.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0b9wc14df11wkwa20wkij4iip07841qsr0yir9g7dww069rj36q6"))))
+        (base32 "0lyv0q1zqldrzfpyy3k1cxdnsw05gv73x5iid20yagvgb6l0sx1d"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2611,7 +2794,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
                   python-xmlschema
                   z3
                   yices
-                  yosys-clang))
+                  yosys))
     ;; TODO: see above build-info phase comment.
     ;; (native-inputs (list
     ;;                 python-sphinx python-sphinx-argparse texinfo))
@@ -2654,7 +2837,7 @@ code{yosys}-based formal hardware verification flows.")
 (define-public systemc
   (package
     (name "systemc")
-    (version "3.0.1")
+    (version "3.0.2")
     (source
      (origin
        (method git-fetch)
@@ -2663,7 +2846,7 @@ code{yosys}-based formal hardware verification flows.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1c8brlv3702p2ivifai9929bg20y30jb301ap0gdmz305q8mcb33"))))
+        (base32 "0gbk8ma0nhaf02alcxk808isvk74b5wadaazdvzwbmj0ybx06ml1"))))
     (native-inputs (list perl))
     (build-system cmake-build-system)
     (arguments
@@ -2735,7 +2918,7 @@ VPI Interface, Elaborator, Serialization, Visitor and Listener.")
   ;; TODO: Remove when we have modular Trilinos packages?
   (package
     (name "trilinos-serial-xyce")
-    (version "12.12.1")
+    (version "14.4.0")                  ;version used by xyce, sync updates
     (source
      (origin
        (method git-fetch)
@@ -2750,23 +2933,30 @@ VPI Interface, Elaborator, Serialization, Visitor and Listener.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1smz3wlpfyjn0czmpl8bj4hw33p1zi9nnfygpsx7jl1523nypa1n"))))
+         "19ny75z1x2sfa9jv20prq4wqxznkzqryxj4gv12rzzlz9ihd1dcd"))))
     (build-system cmake-build-system)
     (arguments
      (list
-      #:tests? #f                       ;no tests
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Delete unneeded tribits(build system) directory which makes
-          ;; validate-runpath phase to fail.
-          (add-before 'validate-runpath 'delete-tribits
-            (lambda _
-              (delete-file-recursively
-               (string-append #$output "/lib/cmake/tribits")))))
       #:configure-flags
       #~(list "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
               "-DCMAKE_C_FLAGS=-O3 -fPIC"
               "-DCMAKE_Fortran_FLAGS=-O3 -fPIC"
+              "-DBUILD_SHARED_LIBS=ON"
+              "-DTrilinos_ENABLE_TESTS=ON"
+              (string-append "-DBLAS_LIBRARY_DIRS="
+                             #$(this-package-input "openblas") "/lib")
+              (string-append "-DLAPACK_LIBRARY_DIRS="
+                             #$(this-package-input "lapack") "/lib")
+              ;; From xyce configure phase:
+              ;; ...
+              ;; -- Looking for Trilinos
+              ;; Required packages:
+              ;; Amesos Epetra EpetraExt Ifpack NOX Teuchos Sacado
+              ;; Triutils AztecOO Belos TrilinosCouplings
+              ;; Optional packages:
+              ;; Isorropia Zoltan ShyLU ShyLU_DDCore Amesos2 Stokhos ROL MKL
+              ;; ...
+              ;; List from TRILINOS_SERIAL_ARGS in XyceSuperBuild.cmake.
               "-DTrilinos_ENABLE_NOX=ON"
               "-DNOX_ENABLE_LOCA=ON"
               "-DTrilinos_ENABLE_EpetraExt=ON"
@@ -2775,30 +2965,38 @@ VPI Interface, Elaborator, Serialization, Visitor and Listener.")
               "-DEpetraExt_BUILD_GRAPH_REORDERINGS=ON"
               "-DTrilinos_ENABLE_TrilinosCouplings=ON"
               "-DTrilinos_ENABLE_Ifpack=ON"
-              "-DTrilinos_ENABLE_Isorropia=ON"
+              ;; "-DTrilinos_ENABLE_Isorropia=OFF"
               "-DTrilinos_ENABLE_AztecOO=ON"
               "-DTrilinos_ENABLE_Belos=ON"
               "-DTrilinos_ENABLE_Teuchos=ON"
               "-DTeuchos_ENABLE_COMPLEX=ON"
               "-DTrilinos_ENABLE_Amesos=ON"
               "-DAmesos_ENABLE_KLU=ON"
-              "-DAmesos_ENABLE_UMFPACK=ON"
               "-DTrilinos_ENABLE_Sacado=ON"
-              "-DTrilinos_ENABLE_Kokkos=OFF"
+              ;; "-DTrilinos_ENABLE_Kokkos=OFF"
               "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF"
+              "-DTrilinos_ENABLE_CXX11=ON"
               "-DTPL_ENABLE_AMD=ON"
-              "-DTPL_ENABLE_UMFPACK=ON"
               "-DTPL_ENABLE_BLAS=ON"
-              "-DTPL_ENABLE_LAPACK=ON")))
-    (native-inputs (list gfortran swig))
-    (inputs (list boost lapack suitesparse))
-    (home-page "https://trilinos.org")
+              "-DTPL_ENABLE_LAPACK=ON"
+              "-DTPL_ENABLE_DLlib:BOOL=OFF")))
+    (native-inputs (list gfortran perl python-minimal-wrapper swig tcsh))
+    (inputs (list boost lapack openblas suitesparse-amd))
+    (home-page "https://trilinos.github.io/")
     (synopsis "Engineering and scientific problems algorithms")
     (description
      "The Trilinos Project is an effort to develop algorithms and enabling
 technologies within an object-oriented software framework for the solution of
 large-scale, complex multi-physics engineering and scientific problems.  A
 unique design feature of Trilinos is its focus on packages.")
+    ;; The Trilinos project is a collection of open-source packages licensed
+    ;; individually under multiple open-source licenses. Licensing terms are
+    ;; available at the Trilinos website:
+    ;; https://trilinos.github.io/license.html
+    ;; For information about the software license for a particular package,
+    ;; see package-specific documentation (e.g., Trilinos/packages/<package
+    ;; name>/LICENSE).
+    ;; Only found these two licenses:
     (license (list license:lgpl2.1+
                    license:bsd-3))))
 
@@ -2810,10 +3008,19 @@ unique design feature of Trilinos is its focus on packages.")
      (substitute-keyword-arguments
          (package-arguments trilinos-serial-xyce)
        ((#:configure-flags flags)
+        ;; List from TRILINOS_PARALLEL_ARGS in XyceSuperBuild.cmake.
         #~(cons* "-DTrilinos_ENABLE_ShyLU=ON"
                  "-DTrilinos_ENABLE_Zoltan=ON"
+                 "-DTrilinos_ENABLE_Isorropia=ON"
                  "-DTPL_ENABLE_MPI=ON"
-                 #$flags))))
+                 "-DCMAKE_C_COMPILER=mpicc"
+                 "-DCMAKE_CXX_COMPILER=mpicxx"
+                 "-DCMAKE_Fortran_COMPILER=mpifort"
+                 "-DCMAKE_CXX_FLAGS=-O3 -fPIC -lmpi"
+                 "-DCMAKE_C_FLAGS=-O3 -fPIC -lmpi"
+                 (delete "-DCMAKE_C_FLAGS=-O3 -fPIC"
+                         (delete
+                          "-DCMAKE_CXX_FLAGS=-O3 -fPIC" #$flags))))))
     (inputs
      (modify-inputs (package-inputs trilinos-serial-xyce)
        (prepend openmpi)))))
@@ -2821,7 +3028,7 @@ unique design feature of Trilinos is its focus on packages.")
 (define-public verilator
   (package
     (name "verilator")
-    (version "5.040")
+    (version "5.042")
     (source
      (origin
        (method git-fetch)
@@ -2830,7 +3037,7 @@ unique design feature of Trilinos is its focus on packages.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xw2w7fikli3jffwd819rx8bwbh3zsymhrn3zbq34glklff07rsb"))))
+        (base32 "0md5ngfl59xrccbfrz9dn1803n641cz37i4mmpwapx1nvqxfl5zs"))))
     (native-inputs
      (list autoconf
            automake
@@ -2907,32 +3114,34 @@ support for ESD or COMEDI sources.")
 (define-public xyce-serial
   (package
     (name "xyce-serial")
-    (version "6.8")
+    (version "7.10.0")
     (source
-     (origin (method url-fetch)
-             (uri (string-append "https://archive.org/download/Xyce-"
-                                 version "/Xyce-" version ".tar.gz"))
-             (sha256
-              (base32
-               "09flp1xywbb2laayd9rg8vd0fjsh115y6k1p71jacy0nrbdvvlcg"))))
-    (build-system gnu-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Xyce/Xyce")
+              (commit (string-append "Release-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "05wlrk554ajsl8n1q4608ckxy9df6x8yshvhjd89b4dj22af1jzi"))))
+    (build-system cmake-build-system)
     (arguments
      (list
-      #:tests? #f
       #:configure-flags
       #~(list
-         "CXXFLAGS=-O3"
-         (string-append "CFLAGS="
-                        " -Wno-error=builtin-declaration-mismatch"
-                        " -Wno-error=implicit-function-declaration"
-                        " -Wno-error=implicit-int")
-         (string-append "ARCHDIR=" #$trilinos-serial-xyce))))
+         (string-append
+          "-DTrilinos_ROOT=" #$(this-package-input "trilinos-serial-xyce"))
+         "-DXyce_PLUGIN_SUPPORT=ON"
+         "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
+         "-DCMAKE_C_FLAGS=-O3 -fPIC"
+         "-DCMAKE_Fortran_FLAGS=-O3 -fPIC")))
     (native-inputs
-     (list bison-3.0                    ;'configure' fails with Bison 3.4
+     (list bison
            flex
            gfortran))
     (inputs
-     (list fftw lapack suitesparse trilinos-serial-xyce))
+     (list adms fftw lapack openblas suitesparse-amd trilinos-serial-xyce))
     (home-page "https://xyce.sandia.gov/")
     (synopsis "High-performance analog circuit simulator")
     (description
@@ -2949,27 +3158,24 @@ parallel computing platforms.  It also supports serial execution.")
      (substitute-keyword-arguments
          (package-arguments xyce-serial)
        ((#:configure-flags flags)
-        #~(list "CXXFLAGS=-O3"
-                "CXX=mpiCC"
-                "CC=mpicc"
-                "F77=mpif77"
-                "--enable-mpi"
-                (string-append
-                 "CFLAGS="
-                 " -Wno-error=builtin-declaration-mismatch"
-                 " -Wno-error=implicit-function-declaration"
-                 " -Wno-error=implicit-int")
-                (string-append "ARCHDIR=" #$trilinos-parallel-xyce)))))
-    (propagated-inputs (list openmpi))
+        #~(cons* "-DTPL_ENABLE_MPI=ON"
+                 "-DCMAKE_C_COMPILER=mpicc"
+                 "-DCMAKE_CXX_COMPILER=mpicxx"
+                 "-DCMAKE_Fortran_COMPILER=mpifort"
+                 "-DCMAKE_CXX_FLAGS=-O3 -fPIC -lmpi"
+                 "-DCMAKE_C_FLAGS=-O3 -fPIC -lmpi"
+                 (delete "-DCMAKE_C_FLAGS=-O3 -fPIC"
+                         (delete
+                          "-DCMAKE_CXX_FLAGS=-O3 -fPIC" #$flags))))))
     (inputs
      (modify-inputs (package-inputs xyce-serial)
-       (append zlib)
+       (prepend openmpi)
        (replace "trilinos-serial-xyce" trilinos-parallel-xyce)))))
 
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.59")
+    (version "0.59.1")
     (source
      (origin
        (method git-fetch)
@@ -2977,19 +3183,13 @@ parallel computing platforms.  It also supports serial execution.")
               (url "https://github.com/YosysHQ/yosys")
               (commit (string-append "v" version))))
        (sha256
-        (base32 "0bgijlivkhq338rbd056pjhdbjgwbd8l10afzp2dzlhn03j4l140"))
+        (base32 "1fjvhsxk9g1q072bfpp8vxwyiaa73nn0b20ciff2gl2jnp07fvpp"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:test-target "test"
-      #:make-flags
-      #~(list (string-append "CC="
-                             #$(cc-for-target))
-              (string-append "CXX="
-                             #$(cxx-for-target))
-              (string-append "PREFIX="
-                             #$output))
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'configure 'fix-paths
@@ -2998,23 +3198,24 @@ parallel computing platforms.  It also supports serial execution.")
                 (("\\['z3")
                  (string-append "['"
                                 (search-input-file inputs "bin/z3"))))
-              (substitute* "kernel/fstdata.cc"
-                (("vcd2fst")
-                 (search-input-file inputs "bin/vcd2fst")))
               (substitute* "kernel/driver.cc"
                 (("^#include \"libs/cxxopts/include/cxxopts.hpp\"")
                  "#include <cxxopts.hpp>"))
               (substitute* '("passes/cmds/show.cc" "passes/cmds/viz.cc")
-                (("exec xdot")
-                 (string-append "exec "
-                                (search-input-file inputs "bin/xdot")))
-                (("dot -")
-                 (string-append (search-input-file inputs "bin/dot") " -"))
                 (("fuser")
                  (search-input-file inputs "bin/fuser")))))
           (replace 'configure
-            (lambda* (#:key make-flags #:allow-other-keys)
-              (apply invoke "make" "config-gcc" make-flags)))
+            (lambda* (#:key (configure-flags '()) #:allow-other-keys)
+              ;; Default to clang-toolchain.
+              ;; Fall back to gcc-toolchain with:
+              ;;     "--with-configure-flag=yosys=config-gcc"
+              (let* ((flags (if (null? configure-flags)
+                                (list "config-clang" "CC=clang" "CXX=clang++")
+                                `(,@configure-flags
+                                  ,(string-append "CC="#$(cc-for-target))
+                                  ,(string-append "CXX="#$(cxx-for-target))))))
+                (format #t "CONFIGURE FLAGS: ~s~%" flags)
+                (apply invoke "make" flags))))
           (add-after 'configure 'configure-makefile
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* '("Makefile")
@@ -3046,22 +3247,24 @@ parallel computing platforms.  It also supports serial execution.")
                          cxxopts ;header-only library
                          flex
                          gawk ;for the tests and "make" progress pretty-printing
+                         gtkwave        ;for the tests
                          iverilog ;for the tests
                          pkg-config
                          perl
                          python
                          tcl)) ;tclsh for the tests
+    ;; Optional dependencies increase considerably package closure.
+    ;; - gtkwave: required only for vcd2fst binary, used by ???sim??? command.
+    ;; - graphviz, xdot: used by ???show??? command to display schematics.
     (inputs (list abc-yosyshq
                   bash-minimal
-                  graphviz
-                  gtkwave
+                  clang
                   libffi
                   psmisc
                   python
                   python-click
                   readline
                   tcl
-                  xdot
                   z3
                   zlib))
     (home-page "https://yosyshq.net/yosys/")
@@ -3069,23 +3272,4 @@ parallel computing platforms.  It also supports serial execution.")
     (description "Yosys synthesizes Verilog-2005.")
     (license license:isc)))
 
-(define-public yosys-clang
-  (package
-    (inherit yosys)
-    (name "yosys-clang")
-    (arguments
-     (substitute-keyword-arguments (package-arguments yosys)
-       ((#:make-flags _ #f)
-        #~(list "CC=clang"
-                "CXX=clang++"
-                (string-append "PREFIX=" #$output)))
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (replace 'configure
-              (lambda* (#:key make-flags #:allow-other-keys)
-                (apply invoke "make" "config-clang" make-flags)))))))
-    (inputs
-     (modify-inputs (package-inputs yosys)
-       (append clang)))
-    (synopsis "FPGA Verilog RTL synthesizer (Clang variant)")))
-
+(define-deprecated-package yosys-clang yosys)

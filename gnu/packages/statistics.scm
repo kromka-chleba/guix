@@ -829,24 +829,22 @@ posteriors and evidences.")
 (define-public r-testthat
   (package
     (name "r-testthat")
-    (version "3.2.3")
+    (version "3.3.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "testthat" version))
               (sha256
                (base32
-                "1by17pjy05xjc0clbp8kam2lrzy5w00fd0nqqp76l0dwbd57j2qq"))))
+                "082nd13fj2f7miz0ny4n2vv6924gcavndmdans1gw6p4inal4qnb"))))
     (properties
-     '((updater-ignored-native-inputs . ("r-testthat"))))
+     '((updater-ignored-native-inputs . ("r-testthat"))
+       (updater-extra-native-inputs . ("r-digest"))))
     (build-system r-build-system)
-    ;; Some tests require r-xml2, which uses r-testthat.
-    (arguments (list #:tests? #false))
     (propagated-inputs
      (list r-brio
            r-callr
            r-cli
            r-desc
-           r-digest
            r-evaluate
            r-jsonlite
            r-lifecycle
@@ -859,7 +857,7 @@ posteriors and evidences.")
            r-rlang
            r-waldo
            r-withr))
-    (native-inputs (list r-knitr))
+    (native-inputs (list r-digest r-knitr))
     (home-page "https://github.com/hadley/testthat")
     (synopsis "Unit testing for R")
     (description
@@ -922,25 +920,31 @@ like tidy evaluation.")
 (define-public r-tibble
   (package
     (name "r-tibble")
-    (version "3.2.1")
+    (version "3.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "tibble" version))
        (sha256
         (base32
-         "0c916wl19wbhncv05hjzs2vmvvbcxlswjl6i232ygmkzal62v9v5"))))
+         "14p1zqi7yflcqg87mfphmh0lxazvj1pxgn13b6ja9b5i26gl6k3z"))))
+    ;; r-diagrammer contains massive amounts of minified JavaScript.
+    (properties
+     '((updater-ignored-native-inputs . ("r-diagrammer"))))
     (build-system r-build-system)
     (propagated-inputs
-     (list r-fansi
+     (list r-cli
            r-lifecycle
            r-magrittr
            r-pillar
            r-pkgconfig
            r-rlang
            r-vctrs))
+    ;; The importer adds a lot more packages, but we don't need any of them.
     (native-inputs
-     (list r-knitr r-testthat))
+     (list r-knitr
+           r-testthat
+           r-withr))
     (home-page "https://github.com/hadley/tibble")
     (synopsis "Simple data frames")
     (description
@@ -1587,17 +1591,16 @@ Features:
 (define-public r-rversions
   (package
     (name "r-rversions")
-    (version "2.1.2")
+    (version "3.0.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "rversions" version))
               (sha256
                (base32
-                "0q5ip3rkhcxz7472fbqddrw3a2wm31b18w7ax0pi6wc27qiihn6y"))))
+                "1q9k169vd31pvigf8q5lwc0zvacbycv7nl584kdh2mzbbyfjb06s"))))
     (build-system r-build-system)
-    (propagated-inputs
-     (list r-curl r-xml2))
-    (native-inputs (list r-testthat))
+    (propagated-inputs (list r-curl))
+    (native-inputs (list r-testthat r-webfakes r-withr))
     (home-page "https://github.com/metacran/rversions")
     (synopsis "Query R versions, including 'r-release' and 'r-oldrel'")
     (description
@@ -1609,13 +1612,13 @@ previous R versions and their release dates.")
 (define-public r-roxygen2
   (package
     (name "r-roxygen2")
-    (version "7.3.2")
+    (version "7.3.3")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "roxygen2" version))
               (sha256
                (base32
-                "0701v8dglv0mdsjs1mijpylpciiijb2schplavkf5drjj6gqg25p"))))
+                "0jk1b71j7r61kmfa7028yybfyw3wjjka2hidlh6n3vdbw8z6whfs"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-brew
@@ -1633,7 +1636,13 @@ previous R versions and their release dates.")
            r-withr
            r-xml2))
     (native-inputs
-     (list r-knitr r-testthat))
+     (list r-digest
+           r-knitr
+           r-magrittr
+           r-r-methodss3
+           r-r-oo
+           r-rmarkdown
+           r-testthat))
     (home-page "https://github.com/klutometis/roxygen")
     (synopsis "In-source documentation system for R")
     (description
@@ -1664,13 +1673,13 @@ informative error messages when it's not available.")
 (define-public r-readr
   (package
     (name "r-readr")
-    (version "2.1.5")
+    (version "2.1.6")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "readr" version))
               (sha256
                (base32
-                "02p1jjal73j39r49ba4jlvbx8bdqmm96nsdp47igyv54w1gmm9hg"))))
+                "1na60ma6aa37yz7h939hi42fz8p5szaq41gabnp4hd25n2iknx4x"))))
     (build-system r-build-system)
     (properties
      '((updater-extra-native-inputs . ("r-stringi"))))
@@ -1698,7 +1707,13 @@ informative error messages when it's not available.")
            r-tzdb
            r-vroom))
     (native-inputs
-     (list r-knitr r-stringi r-testthat tzdata-for-tests))
+     (list r-dplyr
+           r-knitr
+           r-spelling
+           r-stringi
+           r-testthat
+           r-withr
+           tzdata-for-tests))
     (home-page "https://github.com/hadley/readr")
     (synopsis "Read tabular data")
     (description
@@ -1709,13 +1724,13 @@ disk (or a connection).")
 (define-public r-rcpparmadillo
   (package
     (name "r-rcpparmadillo")
-    (version "14.4.3-1")
+    (version "15.2.2-1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RcppArmadillo" version))
               (sha256
                (base32
-                "0f54x1nphwd5b0ipjqj3xql6zxgby8m3xri881zh2a9yih2mckqi"))))
+                "1sjlkasdbkc5lnv938jfkz3qkai10jqn8g5b6pah7539im2db0lj"))))
     (properties `((upstream-name . "RcppArmadillo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -1738,19 +1753,22 @@ the header files from the templated Armadillo library.")
 (define-public r-rprojroot
   (package
     (name "r-rprojroot")
-    (version "2.0.4")
+    (version "2.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "rprojroot" version))
        (sha256
         (base32
-         "16bf6ga5fgm83j3m67plw5i54az2vdbvw5m99ixaqkd24pxn7x5m"))))
+         "1s8p0mgg44chpbb5zdd4rvjjvx692ixk3p38izb9rza5xyxqjfa7"))))
+    (properties
+     '(;; Avoid a dependency cycles.
+       (updater-ignored-native-inputs . ("r-testthat"))))
     (build-system r-build-system)
     ;; Tests require r-testthat, which uses this package.
     (arguments (list #:tests? #false))
     (native-inputs
-     (list r-knitr))
+     (list r-knitr r-rlang r-withr))
     (home-page "https://github.com/krlmlr/rprojroot")
     (synopsis "Finding files in project subdirectories")
     (description
@@ -1763,16 +1781,19 @@ certain criterion, e.g., it contains a certain regular file.")
 (define-public r-rmarkdown
   (package
     (name "r-rmarkdown")
-    (version "2.29")
+    (version "2.30")
     (source
       (origin
         (method url-fetch)
         (uri (cran-uri "rmarkdown" version))
         (sha256
-          (base32 "0a0995dc0h4dvdkb0ivd23pnwzyrr9l59fg3ssm9r1kc662sqqk6"))))
+          (base32 "0f53lnppigjnrl8qsfs9js6vnrisz2x6rxyzjk9xxaf1639d6ajd"))))
     (properties
      `((upstream-name . "rmarkdown")
-       (updater-extra-propagated-inputs . ("pandoc"))))
+       (updater-extra-propagated-inputs . ("pandoc"))
+       ;; Avoid dependency cycles.
+       (updater-ignored-native-inputs
+        . ("r-cleanrmd" "r-devtools" "r-dygraphs"))))
     (build-system r-build-system)
     (propagated-inputs
      (list pandoc
@@ -1787,7 +1808,12 @@ certain criterion, e.g., it contains a certain regular file.")
            r-xfun
            r-yaml))
     (native-inputs
-     (list esbuild r-knitr r-testthat))
+     (list esbuild
+           r-data-table
+           r-knitr
+           r-testthat
+           r-withr
+           r-xml2))
     (home-page "https://rmarkdown.rstudio.com")
     (synopsis "Convert R Markdown documents into a variety of formats")
     (description
@@ -1798,13 +1824,13 @@ variety of formats.")
 (define-public r-rsqlite
   (package
     (name "r-rsqlite")
-    (version "2.3.11")
+    (version "2.4.4")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RSQLite" version))
               (sha256
                (base32
-                "0n87p111wqkwc0hck8z9rcq8194pglrc3cb2s8y0h41bfsdj2siz"))))
+                "0aph8iicg8wx44y6k6g6kivq1myl5sgd7cv843dz3m2bss4dca9j"))))
     (properties
      '((upstream-name . "RSQLite")
        ;; These are not strictly necessary for running tests and adding them
@@ -2353,14 +2379,14 @@ following problems:
 (define-public r-runit
   (package
     (name "r-runit")
-    (version "0.4.33")
+    (version "0.4.33.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "RUnit" version))
        (sha256
         (base32
-         "0pybwvd57vf71vvlxdrynw5n6s5gnbqnwvq0qpd395ggqypwb95j"))))
+         "01bz34hf4j93mldwharwdc691db324zbl09zg1qnwjnhm0xzla45"))))
     (properties `((upstream-name . "RUnit")))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/RUnit")
@@ -2373,15 +2399,29 @@ framework, with additional code inspection and report generation tools.")
 (define-public r-sfsmisc
   (package
     (name "r-sfsmisc")
-    (version "1.1-20")
+    (version "1.1-23")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "sfsmisc" version))
        (sha256
         (base32
-         "0svpqdcwq62y5d2ywcdrqn1lpq1jvfqx9mxl0dxxa08whahhyqs4"))))
+         "0pnj3lwyypvdb0rv4mx81vs2cg16kx4mlsv2fxf5cmns221zl7xq"))))
+    (properties
+     '((updater-extra-propagated-inputs . ("procps"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-reference-to-procps
+           (lambda _
+             (substitute* "R/u.goodies.R"
+               (("if\\(rel >= 2006\\)" m)
+                (let ((ps (which "ps")))
+                  (string-append
+                   "if(file.exists(\"" ps "\")) \"" ps " w\" else " m)))))))))
+    (propagated-inputs (list procps))
     (home-page "https://cran.r-project.org/web/packages/sfsmisc")
     (synopsis "Utilities from \"Seminar fuer Statistik\" ETH Zurich")
     (description
@@ -2445,13 +2485,13 @@ representation of R code.")
 (define-public r-statmod
   (package
     (name "r-statmod")
-    (version "1.5.0")
+    (version "1.5.1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "statmod" version))
               (sha256
                (base32
-                "1jbf07h0mnncn2qp4wcw5bnbvsw3lizpd3cg0cpb8mcxn3wkw76n"))))
+                "15qk57r8sdzzbs41c0k49m4clay32b521wvjbpjpaaim2y0kh14g"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/statmod")
     (native-inputs
@@ -2515,21 +2555,38 @@ forest of trees using random inputs, for classification and regression.")
 (define-public r-robustbase
   (package
     (name "r-robustbase")
-    (version "0.99-4-1")
+    (version "0.99-6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "robustbase" version))
        (sha256
         (base32
-         "14gz260amdy60shm3bfsw214471by27yac6r66fs6rjgc7kxw7j8"))))
+         "078syd64mqlbwgzrqmm77n7ddkjnsk8ppmazf8814lms5hnc827s"))))
     (build-system r-build-system)
-    ;; FIXME: test failure
-    ;; Error in if (grepl("^Fedora", osVersion) && !is32) identical(i.a4Out,  :
-    ;; missing value where TRUE/FALSE needed
-    (arguments (list #:tests? #false))
+    (properties
+     '((updater-extra-native-inputs . ("r-cluster" "r-matrix" "r-ggplot2"))
+       ;; Avoid dependency cycle.
+       (updater-ignored-native-inputs . ("r-ggally"))))
+    (arguments
+     (list
+      ;; Vignettes require r-ggally.
+      #:test-types '(list "tests")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'delete-bad-tests
+           (lambda _
+             ;; These tests require r-rrcov, leading to a dependency cycle.
+             (delete-file "tests/tmcd.R"))))))
     (native-inputs
-     (list gfortran))
+     (list gfortran
+           r-cluster
+           r-lattice
+           r-mass
+           r-matrix
+           r-reshape2
+           r-sfsmisc
+           r-xtable))
     (propagated-inputs
      (list r-deoptimr))
     (home-page "https://robustbase.r-forge.r-project.org/")
@@ -2589,15 +2646,17 @@ multivariate analysis.")
 (define-public r-trimcluster
   (package
     (name "r-trimcluster")
-    (version "0.1-5")
+    (version "0.2-0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "trimcluster" version))
        (sha256
         (base32
-         "12siv8yx8dcavsz8jk96lwscbj257ar8jpaxksl2zb06987g4fcj"))))
+         "0vmj3hrwm3rcd4sf7a6jq3ay7qgr39x3zpzmgi67gd8d8cr2hnfh"))))
     (build-system r-build-system)
+    (propagated-inputs (list r-tclust))
+    (native-inputs (list r-fpc))
     (home-page "https://cran.r-project.org/web/packages/trimcluster")
     (synopsis "Cluster analysis with trimming")
     (description
@@ -2710,14 +2769,14 @@ multivariate case.")
 (define-public r-tclust
   (package
     (name "r-tclust")
-    (version "2.1-0")
+    (version "2.1-2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "tclust" version))
        (sha256
         (base32
-         "1vx9nbm20hclf54js2ip09h6fhqhkn0gq90a08hhn5b1n25gvvxk"))))
+         "0x5rgxjlll9552bb59jf59mv7040rb0l14j3sh8vylwv6wpbnc85"))))
     (properties
      '((updater-extra-native-inputs . ("r-cluster" "r-mclust" "r-sn"))))
     (build-system r-build-system)
@@ -3348,13 +3407,13 @@ the presence of variance components/nonparametric terms for models fit with
 (define-public r-simr
   (package
     (name "r-simr")
-    (version "1.0.7")
+    (version "1.0.8")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "simr" version))
        (sha256
-        (base32 "1rfnhyqvdazvar7r1ml71lskh1hdk3yfzv5jlcz18wzffscgkgmb"))))
+        (base32 "14vzyncs9p10n0n9bqx1p4bxr0l3zanmvf6dppi4rjpfl1q22kzy"))))
     (properties `((upstream-name . "simr")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3368,7 +3427,7 @@ the presence of variance components/nonparametric terms for models fit with
            r-plyr
            r-rlrsim
            r-stringr))
-    (native-inputs (list r-knitr r-testthat))
+    (native-inputs (list r-knitr))
     (home-page "https://github.com/pitakakariki/simr")
     (synopsis
      "Power analysis for generalized linear mixed models by simulation")

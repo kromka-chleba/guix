@@ -26,6 +26,7 @@
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 Patrick Norton <patrick.147.norton@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -695,6 +696,37 @@ style).
      "Package ddmin implements the
 @url{https://users.cs.utah.edu/~regehr/papers/mintest.pdf, delta-minimization}
 test minimization algorithm.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-dnaeon-go-vcr
+  (package
+    (name "go-github-com-dnaeon-go-vcr")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/dnaeon/go-vcr")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1aw8s3aljhw9vpzcf8m64r5yv5g0j09dky30shzxvpjwpl5yxhir"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/dnaeon/go-vcr"))
+    (propagated-inputs
+     (list go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/dnaeon/go-vcr")
+    (synopsis "Record and replay your HTTP interactions")
+    (description
+     "@@code{go-vcr} simplifies testing by recording your HTTP interactions
+and replaying them in future runs in order to provide fast, deterministic and
+accurate testing of your code.")
     (license license:bsd-2)))
 
 (define-public go-github-com-dvyukov-go-fuzz
@@ -2022,6 +2054,33 @@ between tests and a test harness.  This package helps Go to generate TAP
 output.")
     (license license:unlicense)))
 
+(define-public go-github-com-modocache-gover
+  (package
+    (name "go-github-com-modocache-gover")
+    (version "0.0.0-20171022184752-b58185e213c5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/sozorogami/gover")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1w7pzqh8ljacpxhwq9f4s4ax908dgl22qfxyrx51mblylwzvm6va"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/modocache/gover"))
+    (native-inputs
+     (list go-github-com-onsi-ginkgo))
+    (home-page "https://github.com/modocache/gover")
+    (synopsis "Integration with coveralls.io for *.coverprofile files")
+    (description
+     "This package inplements a functionality to collect all
+@code{.coverprofile} files rooted in the project and concatenante them into a
+single file ready for https://coveralls.io/.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-nbio-st
   (package
     (name "go-github-com-nbio-st")
@@ -2365,6 +2424,32 @@ GIT_TRACE mechanism.")
     (description
      "This package provides tools for detecting deadlocks at run-time in Go.")
     (license license:asl2.0)))
+
+(define-public go-github-com-shabbyrobe-gocovmerge
+  (package
+    (name "go-github-com-shabbyrobe-gocovmerge")
+    (version "0.0.0-20230507112040-c3350d9342df")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/shabbyrobe/gocovmerge")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1853x61fcc0gnqgizggqhh4w9d3i6dcdw72z3gzncr6fhb03y4mz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/shabbyrobe/gocovmerge"))
+    (propagated-inputs
+     (list go-golang-org-x-tools))
+    (home-page "https://github.com/shabbyrobe/gocovmerge")
+    (synopsis "Merge coverprofile results from multiple test coverage runs")
+    (description
+     "This package takes the results from multiple
+@code{go test -coverprofile} runs and merges them into one profile.")
+    (license license:bsd-2)))
 
 (define-public go-github-com-smarty-assertions
   (package
@@ -3042,62 +3127,58 @@ the source code, it only prints out style mistakes.")
 
 (define-public go-gopkg-in-dnaeon-go-vcr-v3
   (package
+    (inherit go-github-com-dnaeon-go-vcr)
     (name "go-gopkg-in-dnaeon-go-vcr-v3")
-    (version "3.2.0")
+    (version "3.2.2")
     (source
      (origin
+       (inherit (package-source go-github-com-dnaeon-go-vcr))
        (method git-fetch)
        (uri (git-reference
-             (url "https://gopkg.in/dnaeon/go-vcr.v3")
-             (commit (string-append "v" version))))
+              (url "https://github.com/dnaeon/go-vcr")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nij7rjbnrbsgjlm7fwpg298qffrgi2ic3wb51vqzxl6s9qkbzrq"))
-       (snippet
-        #~(begin (use-modules (guix build utils))
-                 (delete-file-recursively "vendor")))))
-    (build-system go-build-system)
+        (base32 "0p8lnkksjajnil1cwsfmpdajvnx1i3z6sfpgqk4hyvlz3apki8vg"))))
     (arguments
-     (list
-      #:import-path "gopkg.in/dnaeon/go-vcr.v3"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; XXX: Workaround for go-build-system's lack of Go modules
-          ;; support.
-          (delete 'build)
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./..."))))))))
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-dnaeon-go-vcr)
+       ((#:import-path _) "gopkg.in/dnaeon/go-vcr.v3")))
     (propagated-inputs
-     (list go-gopkg-in-yaml-v3))
-    (home-page "https://gopkg.in/dnaeon/go-vcr.v3")
-    (synopsis "Record and replay your HTTP interactions")
-    (description
-     "@@code{go-vcr} simplifies testing by recording your HTTP interactions
-and replaying them in future runs in order to provide fast, deterministic and
-accurate testing of your code.")
-    (license license:bsd-2)))
+     (list go-gopkg-in-yaml-v3))))
 
 (define-public go-gopkg-in-dnaeon-go-vcr-v4
   (package
     (inherit go-gopkg-in-dnaeon-go-vcr-v3)
     (name "go-gopkg-in-dnaeon-go-vcr-v4")
-    (version "4.0.2")
+    (version "4.0.6")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gopkg.in/dnaeon/go-vcr.v4")
-             (commit (string-append "v" version))))
+              (url "https://github.com/dnaeon/go-vcr")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1p1a4hbk303k2bv9dmaf770dml71zr3260g5z7yd84vzhj8i0rzb"))))
+        (base32 "10zgsiaibdr6lc8bn5hl2qbqgakg8vmvc3l2v8pc8p2b5hjp3vqp"))))
     (arguments
      (list
       #:skip-build? #t
-      #:import-path "gopkg.in/dnaeon/go-vcr.v4"))))
+      #:import-path "gopkg.in/dnaeon/go-vcr.v4"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'make-test-file-writable
+            (lambda* (#:key import-path #:allow-other-keys)
+              ;; Tests write to the file: middleware_test.go:42: open
+              ;; testdata/middleware.yaml: permission denied
+              (with-directory-excursion (string-append "src/" import-path)
+                (make-file-writable "examples/testdata/middleware.yaml"))))
+          (add-after 'check 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "examples")))))))
+    (propagated-inputs
+     (list go-go-yaml-in-yaml-v4))))
 
 (define-public go-gopkg-in-go-playground-assert-v1
   (package

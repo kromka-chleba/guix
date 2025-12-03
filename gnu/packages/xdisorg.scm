@@ -381,7 +381,7 @@ command line, without displaying a keyboard at all.")
 (define-public aquamarine
   (package
     (name "aquamarine")
-    (version "0.9.5")
+    (version "0.10.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -390,7 +390,7 @@ command line, without displaying a keyboard at all.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lxna15f46739wmz5h3iyz8xrmg63cly9a9p3k5jr4cznlfdip2h"))))
+                "082pkm8lj7gi9940fxmy787c2g6k3fyp966syslzhpay5a61cyay"))))
     (build-system cmake-build-system)
     (arguments
      (list ;; TODO: Figure out what's expected in the test environment.
@@ -1023,10 +1023,7 @@ typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
      (list
       #:configure-flags
       #~(list "-Dtimers=true"
-              "-Dgnuplot=true"
-              #$@(if (target-arm32?)
-                     '("-Darm-simd=disabled")
-                     '()))))
+              "-Dgnuplot=true")))
     (synopsis "Low-level pixel manipulation library")
     (description "Pixman is a low-level software library for pixel
 manipulation, providing features such as image compositing and trapezoid
@@ -3849,7 +3846,7 @@ using @command{dmenu}.")
 (define-public fuzzel
   (package
     (name "fuzzel")
-    (version "1.12.0")
+    (version "1.13.1")
     (home-page "https://codeberg.org/dnkl/fuzzel")
     (source (origin
               (method git-fetch)
@@ -3857,7 +3854,7 @@ using @command{dmenu}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hsw98v499bz2nxvlw3ykq5qyyad3ci5a7x723r3cl84brabqrp3"))))
+                "07cjm6nj995nwc88n0dq6g7rr80hchs2cqzh4mdbpiysnny8qvi5"))))
     (build-system meson-build-system)
     (arguments
      (list #:build-type "release"
@@ -4187,7 +4184,7 @@ GPU-accelerated screen locking utility.")
 (define-public hyprpaper
   (package
    (name "hyprpaper")
-   (version "0.7.5")
+   (version "0.7.6")
    (source (origin
             (method git-fetch)
             (uri (git-reference
@@ -4196,7 +4193,7 @@ GPU-accelerated screen locking utility.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "0j3hbqfx40cjxkvaiqzfij8pgblg2hyv9lbbjjh4iahciwgh7623"))))
+              "1g9d2yp5gsyv6b0gvvw6dz9f97nqqs34pbmkwdpvb75zi8rv3wwp"))))
    (build-system cmake-build-system)
    (arguments '(#:tests? #f)) ;; no test
    (native-inputs (list gcc-15 pkg-config))

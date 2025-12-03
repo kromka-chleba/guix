@@ -29,6 +29,7 @@
 ;;; Copyright © 2025 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
+;;; Copyright © 2025 Patrick Norton <patrick.147.norton@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -680,6 +681,30 @@ The purpose of this library is to encode spec structures and consts in code,
 as well as provide a consistent implementation of image encryption across
 container runtimes and build tools.")
     (license license:asl2.0)))
+
+(define-public go-github-com-cronokirby-saferith
+  (package
+    (name "go-github-com-cronokirby-saferith")
+    (version "0.33.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cronokirby/saferith")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g510g9zcqp6rjjxlqdv72jsb0m7hmahcia3nvmw5gac1nml7q2q"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/cronokirby/saferith"))
+    (home-page "https://github.com/cronokirby/saferith")
+    (synopsis "Safe arbitrary-sized arithmetic")
+    (description
+     "The purpose of this package is to provide a version of arbitrary sized
+arithmetic, in a safer (i.e. constant-time) way, for cryptography.")
+    (license license:expat)))
 
 (define-public go-github-com-davidlazar-go-crypto
   (package
@@ -2255,6 +2280,30 @@ Counter-cryptanalysis from Marc Stevens.  The original ubc implementation was
 done by Marc Stevens and Dan Shumow, and can be found at:
 @@url{https://github.com/cr-marcstevens/sha1collisiondetection,https://github.com/cr-marcstevens/sha1collisiondetection}.")
     (license license:asl2.0)))
+
+(define-public go-github-com-protonmail-bcrypt
+  (package
+    (name "go-github-com-protonmail-bcrypt")
+    (version "0.0.0-20211005172633-e235017c1baf")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ProtonMail/bcrypt")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0znxsia69c2p4vgj9qckqq3p06rg2b5qzdm7p7svs3x46bp28s3s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ProtonMail/bcrypt"))
+    (home-page "https://github.com/ProtonMail/bcrypt")
+    (synopsis "Bcrypt hash algorithm in Golang")
+    (description
+     "This package provides a Golang implementation of the bcrypt hash
+algorithm.  It is a fork of github.com/jameskeane/bcrypt.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-protonmail-go-crypto
   (package

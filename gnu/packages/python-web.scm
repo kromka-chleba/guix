@@ -7134,31 +7134,6 @@ Services (AWS) API.")
            python-pytest
            python-pytest-xdist))))
 
-;; This is not an official release of awscli version 2, so it should not be
-;; named awscli.
-(define-public awscliv2
-  (package
-    (inherit awscli)
-    (name "awscliv2")
-    (version "2.3.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri name version))
-       (sha256
-        (base32
-         "1bpp6kmb75qdhgzsx69ki04345bfkzwnmg84y5x6nyfpph2g3fsz"))))
-    (arguments
-     ;; FIXME: The 'pypi' release does not contain tests.
-     '(#:tests? #f))
-    (inputs
-     (list python-importlib-resources
-           python-executor))
-    (native-inputs
-     (list python-poetry-core
-           python-pytest))))
-
-
 (define-public python-wsgiproxy2
   (package
     (name "python-wsgiproxy2")
@@ -7566,28 +7541,6 @@ Protocol, WAMP}
      "Requests-OAuthlib uses the Python Requests and OAuthlib libraries to
 provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients.")
     (license license:isc)))
-
-(define-public python-url
-  (package
-    (name "python-url")
-    (version "0.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "url" version))
-              (sha256
-               (base32
-                "0v879yadcz9qxfl41ak6wkga1kimp9cflla9ddz03hjjvgkqy5ki"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-publicsuffix))
-    (native-inputs
-     (list python-coverage python-nose))
-    (arguments
-     `(#:tests? #f)) ; FIXME: tests fail with "ImportError: No module named 'tests'"
-    (home-page "https://github.com/seomoz/url-py")
-    (synopsis "URL Parsing")
-    (description "Library for parsing urls.")
-    (license license:expat)))
 
 (define-public python-cachecontrol
   (package

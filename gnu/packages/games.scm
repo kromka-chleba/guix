@@ -2334,7 +2334,7 @@ well as Simple Simon boards.")
          (delete 'configure))
        #:tests? #f)) ;; No check target.
     (inputs
-     `(("boost" ,boost)
+     `(("boost" ,boost-1.83)
        ("sdl-union" ,(sdl-union (list sdl sdl-image sdl-mixer)))
        ("freetype" ,freetype)
        ("fontconfig" ,fontconfig)
@@ -3733,6 +3733,10 @@ equipped with spoken co-driver notes and co-driver icons.")
        (base32
         "1dns0nhymak44by18sv48m4xb2skiwbi2i3nb9hl6w9iwd2i2brf"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "CFLAGS=-Wno-error=implicit-function-declaration")))
     (inputs
      (list libxaw libxt))
     (home-page "https://www.gnu.org/software/gnushogi/")
@@ -4612,7 +4616,7 @@ Widgets, and allows users to create more.")
            libogg
            glew
            libvorbis
-           boost
+           boost-1.83
            fifechan
            swig
            python))
@@ -5188,7 +5192,7 @@ falling, themeable graphics and sounds, and replays.")
                      (("#include \"(lua|lualib|lauxlib)\\.h\"")
                       "#include \"lua.hpp\"")))))))
     (inputs
-     (list boost
+     (list boost-1.83
            curl
            dbus
            libvorbis
@@ -5220,7 +5224,7 @@ next campaign.")
     (inherit wesnoth)
     (name "wesnoth-server")
     (inputs
-     (list boost icu4c lua-5.4 openssl))
+     (list boost-1.83 icu4c lua-5.4 openssl))
     (native-inputs
      (list pkg-config))
     (arguments
@@ -6881,7 +6885,7 @@ with the \"Stamp\" tool within Tux Paint.")
               (("sq_getinstanceup\\(vm, 1, &data, nullptr" all)
                (string-append all ", 0"))))))))
    (build-system cmake-build-system)
-   (inputs (list boost
+   (inputs (list boost-1.83
                  curl
                  freetype
                  glew
@@ -8160,7 +8164,7 @@ fight against their plot and save his fellow rabbits from slavery.")
            wxwidgets
            zlib))
     (native-inputs
-     (list boost
+     (list boost-1.83
            cmake-minimal
            cxxtest
            mesa
@@ -9102,7 +9106,7 @@ Github or Gitlab.")
            po4a
            python-wrapper))
     (inputs
-     (list boost
+     (list boost-1.83
            glew
            libogg
            libpng
@@ -10370,53 +10374,6 @@ the net.  There can be 1 to 8 balls in game.  Once one ball touches
 the ground, the set ends and all balls are served again.")
     (license license:gpl3+)))
 
-(define-public 4dtris
-  (package
-    (name "4dtris")
-    (version "0.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://launchpad.net/4dtris/"
-                           (version-major+minor version)
-                           "/" version "/+download/4dtris_"
-                           version ".orig.tar.gz"))
-       (sha256
-        (base32
-         "1nfkhcm0l89jyw8yr65na97g4l385zhjf7whkyg47c3v5sdqq2g7"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:configure-flags '("CFLAGS=-fcommon")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-install-directories
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (substitute* "Makefile.in"
-                 (("bindir = /usr/games")
-                  (string-append "bindir = " out "/bin"))
-                 (("/usr/share/applications")
-                  (string-append out "/share/applications"))
-                 (("/usr/share/games/4dtris")
-                  (string-append out "/share/4dtris"))))
-             #t))
-         (add-after 'set-paths 'set-sdl-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CPATH"
-                     (string-append
-                      (search-input-directory inputs "/include/SDL")
-                      ":" (or (getenv "CPATH") ""))))))))
-    (inputs
-     `(("fontconfig" ,fontconfig)
-       ("freeglut" ,freeglut)
-       ("sdl" ,(sdl-union (list sdl sdl-ttf)))))
-    (home-page "https://launchpad.net/4dtris/")
-    (synopsis "4D Tetris")
-    (description "4D-TRIS is an alteration of the well-known Tetris game.  The
-game field is extended to 4D space, which has to filled up by the gamer with
-4D hyper cubes.")
-    (license license:gpl3)))
-
 (define-public arx-libertatis
   (package
     (name "arx-libertatis")
@@ -10625,8 +10582,8 @@ a fortress beyond the forbidden swamp.")
                        #:tests? tests? #:test-target "tests" args)
                 (invoke "tests/tests")))))))
     (native-inputs
-     (list (package-source googletest)
-           googletest
+     (list (package-source googletest-1.12)
+           googletest-1.12
            pkg-config))
     (inputs
      (list c-template-sort
@@ -10899,15 +10856,19 @@ levels to unlock.")
 (define simgear
   (package
     (name "simgear")
-    (version "2020.3.18")
+    (version "2024.1.3")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://sourceforge/flightgear/release-"
-                           (version-major+minor version) "/"
-                           "simgear-" version ".tar.bz2"))
+       (method git-fetch)
+       ;; (uri (string-append "mirror://sourceforge/flightgear/release-"
+       ;;                     (version-major+minor version) "/"
+       ;;                     "simgear-" version ".tar.bz2"))
+       (uri (git-reference
+              (url "https://gitlab.com/flightgear/simgear")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1jin6rbz4s83x4k91lbdw5gb0vrc8frbmwpc55wl0wmiaqjwzhbc"))
+        (base32 "1gjx1yylrsqhzp2g6am6wljriyf4cmsbvkqihxqbak93abzg0dnp"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -10918,9 +10879,10 @@ levels to unlock.")
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DSYSTEM_EXPAT=ON")
-       #:test-exclude "(http|dns)"))
+       #:test-exclude "(http|dns|repository|catalog)"))
     (inputs
      `(("boost" ,boost)
+       ("c-ares" ,c-ares)
        ("curl" ,curl)
        ("expat" ,expat)
        ("mesa" ,mesa)
@@ -10941,12 +10903,13 @@ and also provides the base for the FlightGear Flight Simulator.")
     (version (package-version simgear))
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://sourceforge/flightgear/release-"
-                           (version-major+minor version) "/"
-                           "flightgear-" version ".tar.bz2"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/flightgear/flightgear")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0dyyi1v97w3mdwsv9kdd194inz1461wqv3zy3wyai0n17wdf7a1r"))
+        (base32 "1w4zsqfhn2fg2qh37b91z2q5r611mgqv5yj669ms5h0p0ddxp1lv"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -10972,6 +10935,16 @@ and also provides the base for the FlightGear Flight Simulator.")
                       (string-append "// " all))
                      (("CPPUNIT_TEST\\(testFinalLegCourse\\);" all)
                       (string-append "// " all)))))
+               (add-after 'unpack 'fix-namespace
+                 (lambda _
+                   (substitute*
+                       "test_suite/unit_tests/Main/test_timeManager.cxx"
+                     (("using namespace flightgear;" all)
+                      (string-append all "\nusing namespace std::string_literals;")))
+                   (substitute*
+                       "test_suite/unit_tests/Instrumentation/test_commRadio.cxx"
+                     (("#include <Main/locale.hxx>" all)
+                      (string-append all "\nusing namespace std::string_literals;")))))
                (add-after 'build 'build-test-suite
                  (lambda* args
                    ((assoc-ref %standard-phases 'build)
@@ -10990,6 +10963,8 @@ and also provides the base for the FlightGear Flight Simulator.")
                  (assoc-ref %standard-phases 'check)))))
     (inputs
      (list boost
+           c-ares
+           curl
            dbus
            eudev
            freeglut
@@ -10999,9 +10974,10 @@ and also provides the base for the FlightGear Flight Simulator.")
            openal
            openscenegraph
            plib
-           qtbase-5
            qtdeclarative-5
+           qtquickcontrols2-5
            qtsvg-5
+           qtwayland-5
            simgear
            speexdsp
            sqlite
@@ -11018,7 +10994,7 @@ and also provides the base for the FlightGear Flight Simulator.")
                                "FlightGear-" version "-data.txz"))
            (sha256
             (base32
-             "0f2jn2br27ahf5gggx70zcp80wrylahw7nbqdcx7ml9qphg6rjak"))))))
+             "1xp2c6gfbch4c59w7w1zblqw5casn8ch52j094kmv11mjfwdds60"))))))
     (home-page "https://www.flightgear.org/")
     (synopsis "Flight simulator")
     (description "The goal of the FlightGear project is to create a
@@ -11422,7 +11398,7 @@ often the contract is set (for team play).")
     (native-inputs
      (list googletest))
     (inputs
-     (list boost
+     (list boost-1.83
            opencl-icd-loader
            openblas
            opencl-headers
@@ -12173,7 +12149,7 @@ game.")  ;thanks to Debian for description
        (patches (search-patches "pokerth-boost.patch"))))
     (build-system qt-build-system)
     (inputs
-     (list boost
+     (list boost-1.83
            curl
            gsasl
            libgcrypt
@@ -12752,7 +12728,7 @@ play; it will look for them at @file{~/.local/share/fheroes2} folder.")
            ;; Pass -DENABLE_TEST to configure to enable.
            #:tests? #f))
     (native-inputs
-     (list boost
+     (list boost-1.83
            ffmpeg
            fuzzylite
            ;; googletest ; needed for tests, but tests are disabled

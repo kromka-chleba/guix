@@ -180,7 +180,7 @@ using the CMake build system.")
 (define-public cmake-bootstrap
   (package
     (name "cmake-bootstrap")
-    (version "3.31.8")
+    (version "3.31.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://cmake.org/files/v"
@@ -188,7 +188,7 @@ using the CMake build system.")
                                   "/cmake-" version ".tar.gz"))
               (sha256
                (base32
-                "1akcmx9w5wbygq088hrr13l6n4b5npqvh9jk20934bfwhg5f7kg3"))))
+                "0a9y7nqr27rl8acvjyj8s57q87bdjxa9w2g5mphsh7ylsvgzl1ng"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -367,7 +367,7 @@ and workspaces that can be used in the compiler environment of your choice.")
   (package
     (inherit cmake-minimal)
     (name "cmake")
-    (version "4.0.3")
+    (version "4.1.3")
     (source (origin
               (inherit (package-source cmake-minimal))
               (method url-fetch)
@@ -382,7 +382,7 @@ and workspaces that can be used in the compiler environment of your choice.")
                                   ,@rest))))
               (sha256
                (base32
-                "1yrzkwkr2nxl8hcjkk333l9ycbw9prkg363k4km609kknyvkfdcd"))))
+                "125yhgkmh5ap14w9yyh442manbb7k96dws4pa3hz32qp7njpjn3n"))))
     (outputs '("out" "doc"))
     (arguments
      (substitute-keyword-arguments (package-arguments cmake-minimal)

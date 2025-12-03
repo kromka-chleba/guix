@@ -770,7 +770,7 @@ FFC is part of the FEniCS Project.")
                       (string-append front "$ENV{CATCH_DIR}/include" back "\n")))))))
     (build-system cmake-build-system)
     (inputs (list openblas
-                  boost
+                  boost-1.83
                   eigen
                   hdf5-parallel-openmpi
                   libxml2
@@ -1419,7 +1419,7 @@ sequences that lead from a given start lanelet to some goal lanelet(s).")
                   python
                   xerces-c
                   zlib))
-    (native-inputs (list googletest python))
+    (native-inputs (list googletest-1.8 python))
     (home-page "https://eclipse.org/sumo")
     (synopsis "Traffic simulator")
     (description "@acronym{SUMO, Simulation of Urban MObility} is a traffic
