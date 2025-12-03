@@ -1921,12 +1921,10 @@ reusable and vendor/tool-independent way.  It is written following the VHDL
               (invoke (string-append #$output "/bin/pyspice-post-installation")
                       "--check-install"))))))
     (native-inputs (list python-pytest python-wheel))
-    (propagated-inputs (list python-matplotlib python-pyyaml))
+    (propagated-inputs (list python-matplotlib python-pyyaml python-requests python-ply))
     (inputs (list libngspice
                   ngspice
                   python-invoke
-                  python-ply
-                  python-requests
                   python-scipy))
     (home-page "https://pyspice.fabrice-salvaire.fr/")
     (synopsis "Circuit simulator Python interface.")
