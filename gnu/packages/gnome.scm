@@ -83,6 +83,7 @@
 ;;; Copyright © 2025 Noé Lopez <noelopez@free.fr>
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Abra K. <abra_k_332@protonmail.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
