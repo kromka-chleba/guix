@@ -467,6 +467,43 @@ hardware designs in Verilog.")
       (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
 
+(define-public gds3d
+  (let ((commit "dc6d965225c9f5ed2a6faefb7ea30665429060fe")
+        (revision "0"))
+      (package
+        (name "gds3d")
+        (version "0.0")
+        (source (origin
+                  (method git-fetch)
+                  (uri (git-reference
+                         (url "https://github.com/trilomix/GDS3D.git")
+                         (commit commit)))
+                  (file-name (git-file-name name version))
+                  (sha256
+                   (base32
+                    "0952j1npmqmllqmvqf2rp3i4mi26sg5y0srl19i3scy404x5q7ly"))))
+        (build-system gnu-build-system)
+        (arguments
+         (list
+          #:make-flags #~(list "-C" "linux")
+          #:tests? #f ;no tests
+          #:phases
+          #~(modify-phases %standard-phases
+              (delete 'configure)
+              (replace 'install
+                (lambda _
+                  (let ((out (string-append #$output "/bin/")))
+                    (mkdir-p out)
+                    (install-file "linux/GDS3D" out)))))))
+        (inputs (list glu libx11 mesa perl))
+        (home-page "https://github.com/trilomix/GDS3D")
+        (synopsis "IC layout 3D renderer")
+        (description "GDS3D is an application that can interpret so called IC
+layouts and render them in 3D. The program accepts standard GDSII files as
+input data. Along with the layout file, it requires a so called process
+definition file which contains the 3D parameters of the process being used.")
+        (license license:gpl2))))
+
 (define-public gerbv
   (package
     (name "gerbv")
