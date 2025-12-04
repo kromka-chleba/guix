@@ -50281,6 +50281,7 @@ services)}.
 * Mail: Mail Home Services.     Services for managing mail.
 * Messaging: Messaging Home Services.  Services for managing messaging.
 * Media: Media Home Services.   Services for managing media.
+* Toys: Toys channel search.    Setting up Toys search engine for Guix channels.
 * Niri: Niri window manager.    Setting up the Niri.
 * Sway: Sway window manager.    Setting up the Sway configuration.
 * Networking: Networking Home Services.  Networking services.
@@ -52923,6 +52924,28 @@ object @code{%unset-value} (from @code{(gnu services configuration)}).
 @code{zimg-threads}.
 
 @end deffn
+
+@node Toys channel search
+@subsection Toys channel search
+
+@cindex toys, Home Service
+@cindex toys, configuration
+@cindex Guix channel search engine
+@cindex search engine for Guix channels
+The @code{(gnu home services toys)} module provides the
+@code{home-toys-service-type} service, which installs and configures
+@uref{https://git.sr.ht/~whereiseveryone/toys, Toys}, a search engine for Guix channels.
+
+Here is a minimal example service declaration for your
+@code{home-environment} configuration:
+
+@example
+(service home-toys-service-type)
+@end example
+
+For more advanced configurations, you can customize the service with a
+@code{home-toys-configuration} record to specify additional environment
+variables.
 
 @node Niri window manager
 @subsection Niri window manager

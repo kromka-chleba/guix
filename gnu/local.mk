@@ -129,6 +129,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/ssh.scm			\
   %D%/home/services/sway.scm			\
   %D%/home/services/syncthing.scm		\
+  %D%/home/services/toys.scm			\
   %D%/home/services/mcron.scm			\
   %D%/home/services/upnp.scm			\
   %D%/home/services/utils.scm			\
