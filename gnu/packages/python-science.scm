@@ -3955,7 +3955,7 @@ tissue-specificity metrics for gene expression.")
 (define-public python-pandas-2
   (package
     (name "python-pandas")
-    (version "2.2.3")
+    (version "2.3.3")
     (source
      (origin
        (method git-fetch)
@@ -3964,7 +3964,7 @@ tissue-specificity metrics for gene expression.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00f6jnplwg7iffnxdm4hpfls0ncbarc23933xq1rm5nk5g8dcldx"))
+        (base32 "0qf4frgj31kd9i544n8v03a0bv9mgml3f7n9n1rik187q3r8ygfg"))
        (patches (search-patches "python-pandas-2-no-pytz_datetime.patch"))))
     (build-system pyproject-build-system)
     (arguments
@@ -3985,16 +3985,11 @@ tissue-specificity metrics for gene expression.")
                      ;; Not testing ~ expansion.
                      "test_expand_user"
                      "test_get_handle_with_path"
-                     ;; These test access the internet (see:
-                     ;; https://github.com/pandas-dev/pandas/issues/45085).:
-                     ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[lxml]
-                     ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[etree]
-                     "test_wrong_url"
                      ;; TODO: Missing input
                      "TestS3"
                      "s3"
                      ;; This test fails when run with pytest-xdist
-                     ;; (see: https://github.com/pandas-dev/pandas/issues/39096).
+                     ;; (see: <https://github.com/pandas-dev/pandas/issues/39096>).
                      "test_memory_usage"
                      "test_parsing_tzlocal_deprecated"
                      ;; PyArrow is optional.
@@ -4008,9 +4003,6 @@ tissue-specificity metrics for gene expression.")
                      ;; It requires a fresh python-tzdata, including new
                      ;; timezones.
                      "test_repr"
-                     ;; Fails with Pytest@8.4.1, fixed on main branch.
-                     ;; See: <https://github.com/pandas-dev/pandas/issues/61557>.
-                     "test_groupby_raises_category_on_category"
                      ;; These tests should be skipped on 32bit systems:
                      ;; Cannot cast array data from dtype('int64') to dtype('int32')
                      #$@(if (not (target-64bit?))
