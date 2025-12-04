@@ -10365,19 +10365,6 @@ associations for GNOME.")
        (sha256
         (base32 "0fzvgffwargmycxby6j2q0fka74hcb4ff8yvbh8w8a0vpvpnc9b1"))))
     (build-system meson-build-system)
-    (synopsis "GNOME Tour and Greeter")
-    (description "A guided tour and greeter for GNOME.")
-    (native-inputs (cons* pkg-config
-                          rust
-                          `(,rust "cargo")
-                          gettext-minimal
-                          `(,gtk "bin")
-                          `(,glib "bin")
-                          desktop-file-utils
-                          (cargo-inputs 'gnome-tour)))
-    (inputs (list libadwaita
-                  glib
-                  gtk+))
     (arguments
      (list
       #:glib-or-gtk? #t
@@ -10406,6 +10393,19 @@ associations for GNOME.")
                             configure
                             check-for-pregenerated-files
                             patch-cargo-checksums))))))))
+    (native-inputs (cons* pkg-config
+                          rust
+                          `(,rust "cargo")
+                          gettext-minimal
+                          `(,gtk "bin")
+                          `(,glib "bin")
+                          desktop-file-utils
+                          (cargo-inputs 'gnome-tour)))
+    (inputs (list libadwaita
+                  glib
+                  gtk+))
+    (synopsis "GNOME Tour and Greeter")
+    (description "A guided tour and greeter for GNOME.")
     (home-page "https://apps.gnome.org/Tour/")
     (license license:gpl3+)))
 
