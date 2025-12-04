@@ -2226,6 +2226,9 @@ Google's C++ code base.")
 (define-public abseil-cpp-cxxstd17
   (abseil-cpp-for-c++-standard abseil-cpp 17))  ;XXX: the default with GCC 11?
 
+(define-public abseil-cpp-20250127-cxxstd17 ;Kept for telegram-desktop
+  (abseil-cpp-for-c++-standard abseil-cpp-20250127 17))
+
 (define-public abseil-cpp-cxxstd11
   (abseil-cpp-for-c++-standard abseil-cpp-20220623 11)) ;last version on C++11
 

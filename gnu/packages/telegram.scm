@@ -334,7 +334,7 @@
                                      libyuv-to)))))))
        (native-inputs (list pkg-config python-wrapper yasm))
        (inputs
-        (list abseil-cpp-cxxstd17
+        (list abseil-cpp-20250127-cxxstd17
               crc32c
               ffmpeg
               glib
@@ -611,7 +611,7 @@ support for high performance Telegram Bot creation.")
            python-wrapper
            xdg-desktop-portal))
     (inputs
-     (list abseil-cpp-cxxstd17
+     (list abseil-cpp-20250127-cxxstd17
            alsa-lib
            boost
            c++-gsl
