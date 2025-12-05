@@ -2180,6 +2180,20 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
     (synopsis "Azure authentication helpers for Go")
     (description
      "This package provides authentication helpers for Azure REST operations.")))
+
+(define-public go-github-com-azure-go-autorest-autorest-azure
+  (package
+    (inherit go-github-com-azure-go-autorest-autorest)
+    (name "go-github-com-azure-go-autorest-autorest-azure")
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/go-autorest/autorest/azure"
+      #:unpack-path "github.com/Azure/go-autorest"))
+    (synopsis "Azure helpers for Go autorest")
+    (description
+     "This package provides Azure-specific helpers for go-autorest.")))
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
