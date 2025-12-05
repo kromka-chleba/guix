@@ -5752,6 +5752,42 @@ with caching and de-duplication that works across a set of peer processes.")
 Protocol (DAP) specification.")
     (license license:asl2.0)))
 
+(define-public go-github-com-google-go-github-v30
+  (package
+    (name "go-github-com-google-go-github-v30")
+    (version "30.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-github")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1k6ysddi3822rhj1qarahys3jm3zcjqwsbm8iggm6irhwfqr9gaf"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodule with its own go.mod file
+            (when (file-exists? "scrape")
+              (delete-file-recursively "scrape"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/google/go-github/v30"))
+    (propagated-inputs
+     (list go-github-com-google-go-querystring
+           go-golang-org-x-crypto
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync))
+    (home-page "https://github.com/google/go-github/")
+    (synopsis "Client library for accessing the GitHub API v3")
+    (description "@code{go-github} is a Go client library for accessing the
+GitHub API v3.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-google-go-github-v31
   (package
     (name "go-github-com-google-go-github-v31")
