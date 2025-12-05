@@ -22745,6 +22745,36 @@ Singularity/Apptainer for packaging applications.")
 storage system.")
     (license license:bsd-2)))
 
+(define-public go-github-com-takama-daemon
+  (package
+    (name "go-github-com-takama-daemon")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/takama/daemon")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18zv061303369hi46srj6p85pw1smz9i729did4j194pkp7c56b2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/takama/daemon"
+      ;; Tests require systemd/init system
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-robfig-cron
+           go-golang-org-x-sys))
+    (home-page "https://github.com/takama/daemon")
+    (synopsis "Daemon package for Go services")
+    (description
+     "This package provides a library for writing system daemons in Go.
+It supports installing, removing, starting, and stopping services on
+Linux (systemd, upstart, sysv), macOS, and Windows.")
+    (license license:expat)))
+
 (define-public go-github-com-tannerryan-ring
   (package
     (name "go-github-com-tannerryan-ring")
