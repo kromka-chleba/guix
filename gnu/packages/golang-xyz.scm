@@ -8389,6 +8389,33 @@ quoting, commenting, and escaping.")
       (home-page "https://github.com/flynn-archive/go-shlex")
       (license license:asl2.0))))
 
+(define-public go-github-com-flynn-go-docopt
+  (let ((commit "f6dd2ebbb31e9721c860cf1faf5c944aa73e3844")
+        (revision "0"))
+    (package
+      (name "go-github-com-flynn-go-docopt")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/flynn/go-docopt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "07s8fvnab40mcfmlsgrrddgvrirgm1krb7kaqgipcikjcmj8j6ql"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:tests? #f ; test runner returns error despite all tests passing
+        #:import-path "github.com/flynn/go-docopt"))
+      (home-page "https://github.com/flynn/go-docopt")
+      (synopsis "Command-line interface description language for Go")
+      (description
+       "Go-docopt implements docopt command-line interface description language
+for Go.  It parses command-line arguments based on a help message.")
+      (license license:expat))))
+
 ;; XXX: This project isn't maintained upstream, consider to find alternative
 ;; fork, see <https://github.com/fogleman/gg/issues/185> and remove the
 ;; package when it has no users.
