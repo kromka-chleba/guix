@@ -15018,6 +15018,32 @@ to provide functions similar to C++ STL.")
 used by DevPod and other Loft tools for managing development environments.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-analytics-client
+  (package
+    (name "go-github-com-loft-sh-analytics-client")
+    (version "0.0.0-20240219162240-2f4c64b2494e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/analytics-client")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fkchww5cknv6mn4bn4ny86c7m90v754p8krrn3pbinkdy4a0j5b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/analytics-client"))
+    (home-page "https://github.com/loft-sh/analytics-client")
+    (synopsis "Loft analytics client library")
+    (description
+     "This package provides an analytics client library for Loft tools
+to send usage telemetry data.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
