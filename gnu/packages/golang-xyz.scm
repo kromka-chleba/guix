@@ -20593,6 +20593,30 @@ exploration and data entry.")
 the current user.")
     (license license:expat)))
 
+(define-public go-github-com-robfig-cron
+  (package
+    (name "go-github-com-robfig-cron")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/robfig/cron")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nv31m3940d9kf38lw2zs4hpj435bdi9mmim098rb3n4l07qrvva"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/robfig/cron"))
+    (home-page "https://godoc.org/github.com/robfig/cron")
+    (synopsis "Cron library for Go")
+    (description
+     "This package provides a cron library for Go.  It implements a cron spec
+parser and job runner.")
+    (license license:expat)))
+
 (define-public go-github-com-robfig-cron-v3
   (package
     (name "go-github-com-robfig-cron-v3")
