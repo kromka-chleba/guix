@@ -8946,6 +8946,34 @@ killing a command.  All operations are safe to call from multiple
 goroutines.")
     (license license:expat)))
 
+(define-public go-github-com-go-chi-chi
+  (package
+    (name "go-github-com-go-chi-chi")
+    (version "4.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-chi/chi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wiy7bb0i12smhqxfp5a1n7040ibs4ajlp32b1zaaasnjp8qn78d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests fail to compile with Go 1.24 and Go 1.25 due to non-constant
+      ;; format strings in test code.
+      #:tests? #f
+      #:import-path "github.com/go-chi/chi"))
+    (home-page "https://github.com/go-chi/chi")
+    (synopsis "Lightweight router for building Go HTTP services")
+    (description
+     "Chi is a lightweight, idiomatic and composable router for building Go
+HTTP services.  It is based on the standard Go @code{net/http} package and
+supports middleware, routing groups, and URL parameters.")
+    (license license:expat)))
+
 ;; For delve@1.25.1
 (define-public go-github-com-go-delve-liner
   (hidden-package
