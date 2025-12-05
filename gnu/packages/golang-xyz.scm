@@ -15096,6 +15096,36 @@ to send usage telemetry data.")
 a Kubernetes-native development platform for teams.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-apiserver
+  (package
+    (name "go-github-com-loft-sh-apiserver")
+    (version "0.0.0-20250910060242-4b9f3ffe0646")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/apiserver")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p631prj9jb5b8qi2v25dvad3zwd9b32b1j6jpardyxhrnz85f65"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/apiserver"))
+    (home-page "https://github.com/loft-sh/apiserver")
+    (synopsis "Loft API server components")
+    (description
+     "This package provides API server components for the Loft platform.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
