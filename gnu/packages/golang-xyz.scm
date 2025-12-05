@@ -23402,6 +23402,35 @@ many small values.  For multi-line CSV parsing, the standard library is
 recommended.")
     (license license:expat)))
 
+(define-public go-github-com-secure-systems-lab-go-securesystemslib-0.4
+  (package
+    (name "go-github-com-secure-systems-lab-go-securesystemslib")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/secure-systems-lab/go-securesystemslib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nrzy78r10dy1jc6i57k2fc439msmg8b1jf0gj4y4alrzb69p5j0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/secure-systems-lab/go-securesystemslib"))
+    (propagated-inputs
+     (list go-github-com-codahale-rfc6979
+           go-golang-org-x-crypto))
+    (home-page "https://github.com/secure-systems-lab/go-securesystemslib")
+    (synopsis "Common cryptographic routines for secure systems")
+    (description
+     "This package provides a Go implementation of common cryptographic
+routines used in secure systems.")
+    (license license:expat)))
+
 (define-public go-github-com-tonistiigi-dchapes-mode
   (package
     (name "go-github-com-tonistiigi-dchapes-mode")
