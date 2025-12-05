@@ -78,6 +78,7 @@
 ;;; Copyright © 2025 John Kehayias <john@guixotic.coop>
 ;;; Copyright © 2025 Julian Flake <flake@uni-koblenz.de>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
+;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4180,7 +4181,7 @@ be used for realtime video capture via Linux-specific APIs.")
     (inputs
      (list
       alsa-lib
-      asio
+      asio-1.28
       bash-minimal
       curl
       eudev
