@@ -25105,6 +25105,33 @@ way to create observable objects and subscribe to their changes.")
 utilities for writing cleaner test code.")
     (license license:expat)))
 
+(define-public go-github-com-ysmood-fetchup
+  (package
+    (name "go-github-com-ysmood-fetchup")
+    (version "0.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ysmood/fetchup")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xyqiywynidrn7fmh07vg80wscy55fch1q7rng27sg3zq824z7xh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ysmood/fetchup"))
+    (propagated-inputs
+     (list go-github-com-ysmood-gop
+           go-github-com-ysmood-got))
+    (home-page "https://github.com/ysmood/fetchup")
+    (synopsis "Go helper to download and unpack files")
+    (description
+     "Fetchup is a Go helper library for downloading and unpacking files from
+URLs.  It supports various archive formats and provides progress tracking.")
+    (license license:expat)))
+
 (define-public go-github-com-zalando-go-keyring
   (package
     (name "go-github-com-zalando-go-keyring")
