@@ -419,6 +419,32 @@ Actions} locally.")
 It's a static checker for GitHub Actions workflow files.")
     (license license:expat)))
 
+(define-public go-github-com-tcnksm-go-gitconfig
+  (package
+    (name "go-github-com-tcnksm-go-gitconfig")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tcnksm/go-gitconfig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sz7h383h7ngrqkk35ic37kfvhlk07g4kanps8bnapwczrcm2am9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tcnksm/go-gitconfig"))
+    (native-inputs
+     (list git-minimal go-github-com-onsi-gomega))
+    (home-page "https://github.com/tcnksm/go-gitconfig")
+    (synopsis "Go library to get Git configuration values")
+    (description
+     "This package provides a Go library to read values from Git
+configuration files (@file{~/.gitconfig}, @file{.git/config}).")
+    (license license:expat)))
+
 (define-public go-github-com-xanzy-go-gitlab
   (package
     (name "go-github-com-xanzy-go-gitlab")
