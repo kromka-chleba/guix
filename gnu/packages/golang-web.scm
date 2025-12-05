@@ -17637,6 +17637,35 @@ feature set and features are added on as the need arises.")
 @url{https://www.storj.io/, Storj Labs} decentralized storage network.")
     (license license:expat)))
 
+(define-public go-tailscale-com
+  (package
+    (name "go-tailscale-com")
+    (version "1.76.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/tailscale")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v65pvhv4wj5z39psfdmcvvzjf20glm220cr8p776xara0dgpq5n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Skip build due to complex system dependencies (wireguard, netlink).
+      #:skip-build? #t
+      ;; Tests require complex system dependencies and network access.
+      #:tests? #f
+      #:import-path "tailscale.com"))
+    (home-page "https://tailscale.com/")
+    (synopsis "Tailscale VPN client library")
+    (description
+     "This package provides the Go libraries for Tailscale, a mesh VPN built
+on WireGuard.  It includes networking, control client, and utility code used
+by the Tailscale VPN client.")
+    (license license:bsd-3)))
+
 ;;;
 ;;; Executables:
 ;;;
