@@ -22679,6 +22679,42 @@ suffix comparison, rather than the string-based or tree-based approaches.")
      "This package provides utilities for manipulating POSIX capabilities.")
     (license license:bsd-2)))
 
+(define-public go-github-com-sylabs-sif-v2
+  (package
+    (name "go-github-com-sylabs-sif-v2")
+    (version "2.19.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sylabs/sif")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "037ah6nrwzns92gap3qv83mqjj0sc4r35kg8pr18m0i2f5hmgmv4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; No Go files in root directory; source-only library.
+      #:skip-build? #t
+      #:import-path "github.com/sylabs/sif/v2"
+      ;; Tests require external tools and test fixtures.
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-protonmail-go-crypto
+           go-github-com-google-go-containerregistry
+           go-github-com-google-uuid
+           go-github-com-sigstore-sigstore
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag))
+    (home-page "https://github.com/sylabs/sif")
+    (synopsis "Singularity Image Format reference implementation")
+    (description
+     "This package provides a Go implementation for reading and writing
+Singularity Image Format (SIF) files.  SIF is a container format used by
+Singularity/Apptainer for packaging applications.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-syndtr-goleveldb
   (package
     (name "go-github-com-syndtr-goleveldb")
