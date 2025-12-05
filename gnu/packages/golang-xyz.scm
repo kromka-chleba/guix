@@ -23601,6 +23601,35 @@ routines used in secure systems.")
 file copying and change detection.")
     (license license:expat)))
 
+(define-public go-github-com-in-toto-in-toto-golang
+  (package
+    (name "go-github-com-in-toto-in-toto-golang")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/in-toto/in-toto-golang")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bg7l9xya31k9ca0x7v51ky3rgib07l38n4hqc1mhp64sfjz3qw9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/in-toto/in-toto-golang"))
+    (propagated-inputs
+     (list go-github-com-shibumi-go-pathspec
+           go-github-com-secure-systems-lab-go-securesystemslib-0.4))
+    (home-page "https://github.com/in-toto/in-toto-golang")
+    (synopsis "Go implementation of in-toto")
+    (description
+     "This package provides a Go implementation of in-toto, a framework to
+protect software supply chain integrity.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-tonistiigi-dchapes-mode
   (package
     (name "go-github-com-tonistiigi-dchapes-mode")
