@@ -2222,6 +2222,32 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
     (synopsis "Tracing for Go autorest")
     (description
      "This package provides tracing support for go-autorest.")))
+
+(define-public go-github-com-azure-azure-sdk-for-go-version
+  (package
+    (name "go-github-com-azure-azure-sdk-for-go-version")
+    (version "46.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Azure/azure-sdk-for-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bd8hjn1fidzkd4gcj0jflzv389v5il3gwcq25g5b1gk2jw0kq2a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/azure-sdk-for-go/version"
+      #:unpack-path "github.com/Azure/azure-sdk-for-go"))
+    (home-page "https://github.com/Azure/azure-sdk-for-go")
+    (synopsis "Version information for Azure SDK for Go")
+    (description
+     "This package provides version information for the Azure SDK for Go.")
+    (license license:asl2.0)))
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
