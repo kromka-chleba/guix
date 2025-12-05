@@ -14991,6 +14991,33 @@ library bevacqua/fuzzysearch.")
 to provide functions similar to C++ STL.")
     (license license:expat)))
 
+(define-public go-github-com-loft-sh-agentapi
+  (package
+    (name "go-github-com-loft-sh-agentapi")
+    (version "0.0.0-20250122152707-aaca94f8bd08")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/agentapi")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qbkvip5anga5nspfx7q7shq1p6vhbmbzqm2pk7q12rp4kyh1svx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/agentapi/v4"
+      #:unpack-path "github.com/loft-sh/agentapi/v4"))
+    (home-page "https://github.com/loft-sh/agentapi")
+    (synopsis "Loft agent API definitions")
+    (description
+     "This package provides API definitions for Loft agent communication,
+used by DevPod and other Loft tools for managing development environments.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
