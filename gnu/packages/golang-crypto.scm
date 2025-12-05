@@ -2335,6 +2335,36 @@ done by Marc Stevens and Dan Shumow, and can be found at:
 @@url{https://github.com/cr-marcstevens/sha1collisiondetection,https://github.com/cr-marcstevens/sha1collisiondetection}.")
     (license license:asl2.0)))
 
+(define-public go-github-com-proglottis-gpgme
+  (package
+    (name "go-github-com-proglottis-gpgme")
+    (version "0.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/proglottis/gpgme")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1y5si0i5lwlqcq6xb288yznmbbbkgbhjxdqwsw2zi98a1d3lpk3p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests require gpg-connect-agent and GPG v1.x
+      #:import-path "github.com/proglottis/gpgme"))
+    (inputs
+     (list gpgme))
+    (native-inputs
+     (list pkg-config))
+    (home-page "https://github.com/proglottis/gpgme")
+    (synopsis "Go bindings for GPGME")
+    (description
+     "This package provides Go bindings for GPGME, the GnuPG Made Easy
+library.  It allows Go programs to use GPG for encryption, decryption,
+signing, and verification operations.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-protonmail-bcrypt
   (package
     (name "go-github-com-protonmail-bcrypt")
