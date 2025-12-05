@@ -28908,6 +28908,33 @@ scripting language.")
 unmarshaling functions based on @code{encoding/json} @code{Unmarshal()}.")
     (license license:asl2.0)))
 
+(define-public go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client
+  (package
+    (name "go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client")
+    (version "0.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes-sigs/apiserver-network-proxy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a32i0wplzp686nbps4iscw3bvsia3zq6qqzmgp4fq7al78rfj4x"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "sigs.k8s.io/apiserver-network-proxy/konnectivity-client"
+      #:unpack-path "sigs.k8s.io/apiserver-network-proxy"))
+    (home-page "https://github.com/kubernetes-sigs/apiserver-network-proxy")
+    (synopsis "Konnectivity client for Kubernetes API server network proxy")
+    (description
+     "This package provides the konnectivity client library for the Kubernetes
+API server network proxy.")
+    (license license:asl2.0)))
+
 (define-public go-sigs-k8s-io-kustomize-cmd-config
   (package
     (name "go-sigs-k8s-io-kustomize-cmd-config")
