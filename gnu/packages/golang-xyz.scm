@@ -24992,6 +24992,33 @@ provides Go APIs that allow you to easily embed a scripting language to your
 Go host programs.")
     (license license:expat)))
 
+(define-public go-github-com-ysmood-gop
+  (package
+    (name "go-github-com-ysmood-gop")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ysmood/gop")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d90p476k6qpr2wbxblcfa7fk405m3ci2by83kihljp8220qqigg"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ysmood/gop"
+      ;; TestStyle, TestTokenize, and TestFixNestedStyle fail due to ANSI
+      ;; escape sequence differences in the build environment.
+      #:test-flags #~(list "-skip" "TestStyle|TestTokenize|TestFixNestedStyle")))
+    (home-page "https://github.com/ysmood/gop")
+    (synopsis "Go pretty printer for data structures")
+    (description
+     "Gop is a Go pretty printer that formats Go data structures in a readable
+format for debugging and logging purposes.")
+    (license license:expat)))
+
 (define-public go-github-com-zalando-go-keyring
   (package
     (name "go-github-com-zalando-go-keyring")
