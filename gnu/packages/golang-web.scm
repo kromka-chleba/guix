@@ -2771,6 +2771,41 @@ pattern.")
     (description "This package provides a CSS parser and inliner.")
     (license license:expat)))
 
+(define-public go-github-com-chrismellard-docker-credential-acr-env
+  (package
+    (name "go-github-com-chrismellard-docker-credential-acr-env")
+    (version "0.0.0-20230304212654-82a0ddb27589")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chrismellard/docker-credential-acr-env")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g6mdbxy3i387sl2kdi1blm5dkjjbjwcxka826fscp0z04hqzn4b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/chrismellard/docker-credential-acr-env"))
+    (propagated-inputs
+     (list go-github-com-azure-azure-sdk-for-go-services-containerregistry
+           go-github-com-azure-go-autorest-autorest
+           go-github-com-azure-go-autorest-autorest-adal
+           go-github-com-azure-go-autorest-autorest-azure-auth
+           go-github-com-docker-docker-credential-helpers
+           go-github-com-mitchellh-go-homedir
+           go-github-com-spf13-cobra
+           go-github-com-spf13-viper))
+    (home-page "https://github.com/chrismellard/docker-credential-acr-env")
+    (synopsis "Azure Container Registry Docker credential helper")
+    (description
+     "This package provides a Docker credential helper for Azure Container
+Registry that uses environment variables for authentication.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-circonus-labs-circonus-gometrics
   (package
     (name "go-github-com-circonus-labs-circonus-gometrics")
