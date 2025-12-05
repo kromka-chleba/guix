@@ -16562,6 +16562,60 @@ parsing.")
      "@code{geohash} provides encoding and decoding of string and integer geohashes.")
     (license license:expat)))
 
+(define-public go-github-com-moby-buildkit
+  (package
+    (name "go-github-com-moby-buildkit")
+    (version "0.17.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/buildkit")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vps9rdlznnsyxp8nnga2yga6swfrhgrshkgb1z3y2ngdrh1np7q"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; Many tests require root or container runtime.
+      #:tests? #f
+      #:import-path "github.com/moby/buildkit"))
+    (propagated-inputs
+     (list go-github-com-containerd-console
+           go-github-com-containerd-continuity
+           go-github-com-containerd-errdefs
+           go-github-com-containerd-platforms
+           go-github-com-containerd-ttrpc
+           go-github-com-containerd-typeurl-v2
+           go-github-com-docker-cli
+           go-github-com-google-cel-go
+           go-github-com-in-toto-in-toto-golang
+           go-github-com-moby-locker
+           go-github-com-moby-sys-signal
+           go-github-com-morikuni-aec
+           go-github-com-planetscale-vtprotobuf-0.6
+           go-github-com-tonistiigi-fsutil
+           go-google-golang-org-genproto-protobuf-field-mask
+           go-github-com-tonistiigi-go-csvvalue
+           go-github-com-tonistiigi-units
+           go-github-com-tonistiigi-vt100
+           go-go-opentelemetry-io-contrib-instrumentation-net-http-httptrace-otelhttptrace))
+    (home-page "https://github.com/moby/buildkit")
+    (synopsis "Concurrent, cache-efficient, and Dockerfile-agnostic builder toolkit")
+    (description
+     "BuildKit is a toolkit for converting source code to build artifacts in
+an efficient, expressive and repeatable manner.  It is used as the build
+backend for Docker and provides features like build caching, parallel builds,
+and Dockerfile frontend support.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-moby-docker-image-spec
   (package
     (name "go-github-com-moby-docker-image-spec")
