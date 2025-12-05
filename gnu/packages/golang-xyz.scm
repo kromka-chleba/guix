@@ -20422,6 +20422,41 @@ routines querying a database but without sending too much queries in order to
 not overload the given database.")
     (license license:expat)))
 
+(define-public go-github-com-rhysd-go-github-selfupdate
+  (package
+    (name "go-github-com-rhysd-go-github-selfupdate")
+    (version "1.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rhysd/go-github-selfupdate")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yf2dcmh9c0d3v5y8w17iqyxnd2yf1jcgy9igdphg40cv54594ni"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require network access to api.github.com
+      #:tests? #f
+      #:import-path "github.com/rhysd/go-github-selfupdate/selfupdate"
+      #:unpack-path "github.com/rhysd/go-github-selfupdate"))
+    (propagated-inputs
+     (list go-github-com-blang-semver
+           go-github-com-google-go-github-v30
+           go-github-com-inconshreveable-go-update
+           go-github-com-tcnksm-go-gitconfig
+           go-github-com-ulikunitz-xz
+           go-golang-org-x-oauth2))
+    (home-page "https://github.com/rhysd/go-github-selfupdate")
+    (synopsis "Self-update mechanism for Go commands using GitHub releases")
+    (description
+     "This package provides a library to enable self-updating Go commands
+via GitHub releases.  It detects the latest release on GitHub, downloads
+the appropriate binary, and replaces the currently running executable.")
+    (license license:expat)))
+
 (define-public go-github-com-rican7-retry
   (package
     (name "go-github-com-rican7-retry")
