@@ -5023,6 +5023,25 @@ attachments, etc.")
     ;; Don't expose since it's a partial package.
     (properties '((hidden? . #t)))))
 
+(define-public go-github-com-containerd-containerd-1.7.22
+  (package
+    (inherit go-github-com-containerd-containerd)
+    (name "go-github-com-containerd-containerd")
+    (version "1.7.22")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/containerd")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yfda4qnygy4lcqb6cqc7v7h2lf0gl64xhvkp39zngmqm0lw30gh"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))))
+
 (define-public go-github-com-containerd-continuity
   (package
     (name "go-github-com-containerd-continuity")
