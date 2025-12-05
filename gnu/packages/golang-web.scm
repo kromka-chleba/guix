@@ -2131,6 +2131,20 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
      "This package provides HTTP client pipeline for Azure REST operations.")
     (license license:asl2.0)))
 
+(define-public go-github-com-azure-go-autorest-logger
+  (package
+    (inherit go-github-com-azure-go-autorest-autorest)
+    (name "go-github-com-azure-go-autorest-logger")
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/go-autorest/logger"
+      #:unpack-path "github.com/Azure/go-autorest"))
+    (synopsis "Logger for Go autorest")
+    (description
+     "This package provides logging support for go-autorest.")))
+
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
