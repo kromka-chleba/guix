@@ -26114,6 +26114,38 @@ for projects that don't require a full database server such as Postgres or
 MySQL.")
     (license license:expat)))
 
+;; The etcd monorepo contains multiple Go modules. This package provides
+;; all of them in a single package to avoid conflicts when used together.
+(define-public go-go-etcd-io-etcd
+  (package
+    (name "go-go-etcd-io-etcd")
+    (version "3.6.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/etcd-io/etcd")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1snfkli587r6frpbf3g7jxwqrpqqfn3jhmn6khan63qflz9zxp52"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.etcd.io/etcd"))
+    (propagated-inputs
+     (list go-github-com-coreos-go-semver
+           go-github-com-coreos-go-systemd-v22))
+    (home-page "https://etcd.io")
+    (synopsis "Etcd distributed key-value store libraries for Go")
+    (description
+     "This package provides the Go client libraries for etcd, a distributed
+reliable key-value store.  It includes the API definitions, client libraries,
+and utility packages.")
+    (license license:asl2.0)))
+
 (define-public go-go-lsp-dev-jsonrpc2
   (package
     (name "go-go-lsp-dev-jsonrpc2")
