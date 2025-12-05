@@ -5335,6 +5335,40 @@ projects.")
 OpenAPI 2.0).")
     (license license:asl2.0)))
 
+(define-public go-github-com-go-rod-rod
+  (package
+    (name "go-github-com-go-rod-rod")
+    (version "0.116.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-rod/rod")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1szq6j9ascf1qpq8d6vzq8ka7gsr297g8ywpz1p3sk8wrpf35ycb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-rod/rod"
+      ;; Tests require a browser and network access.
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-ysmood-fetchup
+           go-github-com-ysmood-goob
+           go-github-com-ysmood-got
+           go-github-com-ysmood-gotrace
+           go-github-com-ysmood-gson
+           go-github-com-ysmood-leakless))
+    (home-page "https://go-rod.github.io/")
+    (synopsis "Chrome DevTools Protocol driver for browser automation")
+    (description
+     "Rod is a high-level driver for Chrome DevTools Protocol.  It's designed
+for web automation and scraping, providing a simple API to control Chrome or
+Chromium browsers programmatically.")
+    (license license:expat)))
+
 (define-public go-github-com-go-resty-resty-v2
   (package
     (name "go-github-com-go-resty-resty-v2")
