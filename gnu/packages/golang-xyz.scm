@@ -25073,6 +25073,38 @@ goroutine leaks and understanding goroutine lifecycles.")
 way to create observable objects and subscribe to their changes.")
     (license license:expat)))
 
+(define-public go-github-com-ysmood-got
+  (package
+    (name "go-github-com-ysmood-got")
+    (version "0.40.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ysmood/got")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09wfjgbyw60bja4iqq0m0yzfih4wnbdy1v4b3q4cslq3f20a6mh3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ysmood/got"
+      ;; Tests fail due to: ANSI escape/terminal color differences, tests using
+      ;; gotrace which requires GODEBUG="tracebackancestors=N" environment, and
+      ;; some submodules requiring missing benchmark dependencies.
+      #:tests? #f))
+    (native-inputs
+     (list go-github-com-ysmood-gotrace))
+    (propagated-inputs
+     (list go-github-com-ysmood-gop))
+    (home-page "https://github.com/ysmood/got")
+    (synopsis "Go test helpers and assertion library")
+    (description
+     "Got is a Go test helper library that provides assertion functions and
+utilities for writing cleaner test code.")
+    (license license:expat)))
+
 (define-public go-github-com-zalando-go-keyring
   (package
     (name "go-github-com-zalando-go-keyring")
