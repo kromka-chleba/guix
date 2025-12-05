@@ -5111,6 +5111,31 @@ attachments, etc.")
 packages.")
     (license license:asl2.0)))
 
+;; containerd 1.7.22 requires errdefs v0.1.0 which has ToGRPC/FromGRPC
+;; functions at the root level (later versions moved them to pkg/errgrpc).
+(define-public go-github-com-containerd-errdefs-0.1
+  (package
+    (inherit go-github-com-containerd-errdefs)
+    (name "go-github-com-containerd-errdefs")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/errdefs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hlzn3gz70s3azcy20xd2wg8ryysrym3cdl0mnwv2hrcaqcw09s4"))))
+    (arguments
+     (list
+      ;; Tests fail with Go 1.25+ due to stricter format string checking
+      #:tests? #f
+      #:import-path "github.com/containerd/errdefs"))
+    (propagated-inputs
+     (list go-google-golang-org-grpc
+           go-google-golang-org-protobuf))))
+
 (define-public go-github-com-containerd-errdefs-pkg
   (package
     (name "go-github-com-containerd-errdefs-pkg")
