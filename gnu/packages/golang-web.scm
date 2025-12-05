@@ -2194,6 +2194,20 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
     (synopsis "Azure helpers for Go autorest")
     (description
      "This package provides Azure-specific helpers for go-autorest.")))
+
+(define-public go-github-com-azure-go-autorest-autorest-date
+  (package
+    (inherit go-github-com-azure-go-autorest-autorest)
+    (name "go-github-com-azure-go-autorest-autorest-date")
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/go-autorest/autorest/date"
+      #:unpack-path "github.com/Azure/go-autorest"))
+    (synopsis "Date handling for Go autorest")
+    (description
+     "This package provides date handling utilities for go-autorest.")))
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
