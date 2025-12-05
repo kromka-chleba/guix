@@ -23660,6 +23660,34 @@ protect software supply chain integrity.")
 unmarshal code.")
     (license license:bsd-3)))
 
+(define-public go-google-golang-org-genproto-protobuf-field-mask
+  (package
+    (name "go-google-golang-org-genproto-protobuf-field-mask")
+    (version "0.0.0-20240123012728-ef4313101c80")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/googleapis/go-genproto")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02npxhhqh6ijix70b3xhdp99ly54q5qyb866vgf91q5kj9xa46q5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:unpack-path "google.golang.org/genproto"
+      #:import-path "google.golang.org/genproto/protobuf/field_mask"))
+    (propagated-inputs
+     (list go-google-golang-org-protobuf))
+    (home-page "https://github.com/googleapis/go-genproto")
+    (synopsis "Generated protobuf field_mask types for Go")
+    (description
+     "This package provides generated protobuf field_mask types for Go.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-tonistiigi-dchapes-mode
   (package
     (name "go-github-com-tonistiigi-dchapes-mode")
