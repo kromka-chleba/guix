@@ -23688,6 +23688,32 @@ unmarshal code.")
      "This package provides generated protobuf field_mask types for Go.")
     (license license:asl2.0)))
 
+(define-public go-go-opentelemetry-io-contrib-instrumentation-net-http-httptrace-otelhttptrace
+  (package
+    (name "go-go-opentelemetry-io-contrib-instrumentation-net-http-httptrace-otelhttptrace")
+    (version "0.46.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/open-telemetry/opentelemetry-go-contrib")
+              (commit (string-append "instrumentation/net/http/httptrace/otelhttptrace/v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pynysb31jyy4w9qaj8w205c1hyff28a7gj8ir483izbng822mnd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:unpack-path "go.opentelemetry.io/contrib"
+      #:import-path "go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"))
+    (home-page "https://github.com/open-telemetry/opentelemetry-go-contrib")
+    (synopsis "OpenTelemetry HTTP trace instrumentation")
+    (description
+     "This package provides OpenTelemetry instrumentation for HTTP tracing.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-tonistiigi-dchapes-mode
   (package
     (name "go-github-com-tonistiigi-dchapes-mode")
