@@ -2248,6 +2248,27 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
     (description
      "This package provides version information for the Azure SDK for Go.")
     (license license:asl2.0)))
+
+(define-public go-github-com-azure-azure-sdk-for-go-services-containerregistry
+  (package
+    (inherit go-github-com-azure-azure-sdk-for-go-version)
+    (name "go-github-com-azure-azure-sdk-for-go-services-containerregistry")
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/runtime/2019-08-15-preview/containerregistry"
+      #:unpack-path "github.com/Azure/azure-sdk-for-go"))
+    (propagated-inputs
+     (list go-github-com-azure-go-autorest-autorest
+           go-github-com-azure-go-autorest-autorest-azure
+           go-github-com-azure-go-autorest-autorest-date
+           go-github-com-azure-go-autorest-tracing))
+    (synopsis "Azure Container Registry SDK for Go")
+    (description
+     "This package provides the Azure Container Registry runtime SDK for Go.")
+    (license license:expat)))
+
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
