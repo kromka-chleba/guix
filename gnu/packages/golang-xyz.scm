@@ -23630,6 +23630,36 @@ file copying and change detection.")
 protect software supply chain integrity.")
     (license license:asl2.0)))
 
+(define-public go-github-com-planetscale-vtprotobuf-0.6
+  (package
+    (name "go-github-com-planetscale-vtprotobuf")
+    (version "0.6.1-0.20240319094008-0393e58bdf10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/planetscale/vtprotobuf")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "168whmrlirh4kkyjlm6nlrd5sh73h57ib8zyfxp8nnpgppjfw773"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/planetscale/vtprotobuf"))
+    (propagated-inputs
+     (list go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/planetscale/vtprotobuf")
+    (synopsis "Protocol Buffers compiler for ProtoBuf APIv2 Golang code")
+    (description
+     "This package provides @code{protoc-gen-go-vtproto} plug-in for
+@code{protoc}, which is used by Vitess to generate optimized marshall &
+unmarshal code.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tonistiigi-dchapes-mode
   (package
     (name "go-github-com-tonistiigi-dchapes-mode")
