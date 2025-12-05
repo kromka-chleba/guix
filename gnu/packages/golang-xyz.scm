@@ -23575,6 +23575,32 @@ recommended.")
 routines used in secure systems.")
     (license license:expat)))
 
+(define-public go-github-com-tonistiigi-fsutil
+  (package
+    (name "go-github-com-tonistiigi-fsutil")
+    (version "0.0.0-20241028165955-397af5306b5c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tonistiigi/fsutil")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kdk9k5gs9bpx5z7sb32jjjpddg5gw4xrd9wyxmgr2nz4adqpzl1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/tonistiigi/fsutil"))
+    (home-page "https://github.com/tonistiigi/fsutil")
+    (synopsis "File system utilities for Go")
+    (description
+     "This package provides file system utilities for Go, including efficient
+file copying and change detection.")
+    (license license:expat)))
+
 (define-public go-github-com-tonistiigi-dchapes-mode
   (package
     (name "go-github-com-tonistiigi-dchapes-mode")
