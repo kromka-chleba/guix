@@ -8290,6 +8290,36 @@ known as JOSE) technologies.")
            go-github-com-valyala-fastjson
            go-golang-org-x-crypto))))
 
+(define-public go-github-com-letsencrypt-boulder
+  (package
+    (name "go-github-com-letsencrypt-boulder")
+    (version "0.0.0-20240620165639-de9c06129bec")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/letsencrypt/boulder")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r9c0q168939sx4yqkvvyi5jw6vapnvs1ixjjlggfvb2218mhdqz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/letsencrypt/boulder/goodkey"
+      #:unpack-path "github.com/letsencrypt/boulder"
+      ;; Tests require database and network access.
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-titanous-rocacheck))
+    (home-page "https://github.com/letsencrypt/boulder")
+    (synopsis "ACME-based certificate authority used by Let's Encrypt")
+    (description
+     "Boulder is the software that runs @url{https://letsencrypt.org,Let's
+Encrypt} certificate authority.  This package provides the goodkey subpackage
+for checking RSA and ECDSA public keys for common weaknesses.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-letsencrypt-challtestsrv
   (package
     (name "go-github-com-letsencrypt-challtestsrv")
