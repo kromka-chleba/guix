@@ -45,6 +45,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages docker)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
@@ -825,3 +826,180 @@ layer to create a new image.
 @end itemize")
     (home-page "https://buildah.io")
     (license license:asl2.0)))
+
+(define-public devpod
+  (package
+    (name "devpod")
+    (version "0.6.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/devpod")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14wgslrww56kazzlzy1p66j59cfzs0qxd1fw82wza3hwn6nma62z"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.25
+      #:install-source? #f
+      #:tests? #f ; tests require container runtime
+      #:import-path "github.com/loft-sh/devpod"
+      #:build-flags
+      #~(list (string-append "-ldflags="
+                             "-X github.com/loft-sh/devpod/pkg/version.version="
+                             #$version))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp")))
+          (add-after 'unpack 'delete-vendor
+            (lambda* (#:key import-path #:allow-other-keys)
+              ;; Remove bundled dependencies; use Guix packages instead.
+              (delete-file-recursively
+               (string-append "src/" import-path "/vendor"))))
+          (add-before 'build 'fix-securesystemslib-version-conflict
+            (lambda _
+              ;; DevPod requires go-securesystemslib v0.4.0 which has different
+              ;; dsse file structure than v0.9.1. When both versions are present
+              ;; in propagated inputs, delete the v0.9.1-specific files that
+              ;; cause redeclaration errors.
+              (let ((dsse-dir "src/github.com/secure-systems-lab/go-securesystemslib/dsse"))
+                (for-each (lambda (f)
+                            (let ((file (string-append dsse-dir "/" f)))
+                              (when (file-exists? file)
+                                (delete-file file))))
+                          '("envelope.go" "signerverifier.go")))))
+          (add-before 'build 'fix-errdefs-version-conflict
+            (lambda _
+              ;; containerd 1.7.22 requires errdefs v0.1.0. When both v0.1.0
+              ;; and v1.0.0 are present, delete v1.0.0-specific files that
+              ;; reference error types not in v0.1.0.
+              (let ((errdefs-dir "src/github.com/containerd/errdefs"))
+                (for-each (lambda (f)
+                            (let ((file (string-append errdefs-dir "/" f)))
+                              (when (file-exists? file)
+                                (delete-file file))))
+                          '("resolve.go" "resolve_test.go")))))
+          (add-before 'build 'dereference-embed-symlinks
+            (lambda _
+              ;; Go's embed doesn't follow symlinks properly for extensionless
+              ;; files even with GODEBUG=embedfollowsymlinks=1. Dereference
+              ;; symlinks in directories that need to be embedded.
+              (for-each
+               (lambda (file)
+                 (when (symbolic-link? file)
+                   (let ((target (readlink file)))
+                     (delete-file file)
+                     (copy-file target file))))
+               (append
+                (find-files "src/github.com/santhosh-tekuri/jsonschema/v6/metaschemas"
+                            #:directories? #f)
+                (find-files "src/github.com/google/cel-go/cel/templates"
+                            #:directories? #f)
+                (find-files "src/github.com/compose-spec/compose-go/v2/schema"
+                            "compose-spec\\.json$" #:directories? #f)))))
+          (add-before 'build 'fix-loft-import-paths
+            (lambda _
+              ;; loft-sh packages have import path comments (in doc.go files)
+              ;; that don't match the actual directory structure (pkg/apis vs apis).
+              ;; Remove the import comments to let Go use the actual paths.
+              (for-each
+               (lambda (file)
+                 (substitute* file
+                   (("package v1 // import \"github.com/loft-sh/[^\"]+\"")
+                    "package v1")))
+               (find-files "src/github.com/loft-sh" "doc\\.go$")))))))
+    (native-inputs
+     (list go-github-com-alessio-shellescape
+           go-github-com-anmitsu-go-shlex
+           go-github-com-awslabs-amazon-ecr-credential-helper
+           go-github-com-azure-azure-sdk-for-go-version
+           go-github-com-azure-go-autorest-logger
+           go-github-com-blang-semver
+           go-github-com-bmatcuk-doublestar-v4
+           go-github-com-charmbracelet-huh
+           go-github-com-chrismellard-docker-credential-acr-env
+           go-github-com-compose-spec-compose-go-v2
+           go-github-com-containers-image-v5
+           go-github-com-creack-pty
+           go-github-com-denisbrodbeck-machineid
+           go-github-com-distribution-reference
+           go-github-com-docker-cli
+           go-github-com-docker-docker
+           go-github-com-docker-go-connections
+           go-github-com-evanphx-json-patch
+           go-github-com-ghodss-yaml
+           go-github-com-gofrs-flock
+           go-github-com-google-go-containerregistry
+           go-github-com-google-uuid
+           go-github-com-gorilla-handlers
+           go-github-com-gorilla-websocket
+           go-github-com-joho-godotenv
+           go-github-com-julienschmidt-httprouter
+           go-github-com-loft-sh-admin-apis
+           go-github-com-loft-sh-agentapi
+           go-github-com-loft-sh-analytics-client
+           go-github-com-loft-sh-api
+           go-github-com-loft-sh-apiserver
+           go-github-com-loft-sh-log
+           go-github-com-loft-sh-programming-language-detection
+           go-github-com-loft-sh-ssh
+           go-github-com-mattn-go-isatty
+           go-github-com-mgutz-ansi
+           go-github-com-mitchellh-go-wordwrap
+           go-github-com-moby-buildkit
+           go-github-com-moby-patternmatcher
+           go-github-com-moby-term
+           go-github-com-onsi-ginkgo-v2
+           go-github-com-onsi-gomega
+           go-github-com-otiai10-copy
+           go-github-com-paesslerag-jsonpath
+           go-github-com-pkg-errors
+           go-github-com-pkg-sftp
+           go-github-com-rhysd-go-github-selfupdate
+           go-github-com-santhosh-tekuri-jsonschema-v6
+           go-github-com-sirupsen-logrus
+           go-github-com-skratchdot-open-golang
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-takama-daemon
+           go-github-com-tidwall-jsonc
+           go-gomodules-xyz-jsonpatch-v2
+           go-golang-org-x-crypto
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf
+           go-gopkg-in-square-go-jose-v2
+           go-gopkg-in-yaml-v2
+           go-k8s-io-api
+           go-k8s-io-apiextensions-apiserver
+           go-k8s-io-apimachinery
+           go-k8s-io-apiserver
+           go-k8s-io-cli-runtime
+           go-k8s-io-client-go
+           go-k8s-io-klog-v2
+           go-k8s-io-kube-aggregator
+           go-k8s-io-kubectl
+           go-mvdan-cc-sh-v3
+           go-sigs-k8s-io-controller-runtime
+           go-tailscale-com
+           ;; Must be last to override older versions from other deps
+           go-github-com-secure-systems-lab-go-securesystemslib-0.4
+           go-github-com-containerd-containerd-1.7.22
+           go-github-com-containerd-errdefs-0.1))
+    (home-page "https://devpod.sh")
+    (synopsis "Codespaces but open-source, client-only and unopinionated")
+    (description
+     "DevPod is a tool to create reproducible developer environments.  Each
+developer environment runs in a container and is specified through a
+@code{devcontainer.json}.  DevPod providers can create these containers on
+any infrastructure, such as the local computer, a Kubernetes cluster, any
+reachable remote machine, or in a VM in the cloud.  It uses custom providers
+which are simple shell scripts, enabling integration with any container
+runtime including @code{guix shell --container}.")
+    (license license:mpl2.0)))
