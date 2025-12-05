@@ -27787,6 +27787,35 @@ kubernetes-independent packages supplementing the
 @url{https://pkg.go.dev/std#stdlib,Go standard libs}.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-component-base
+  (package
+    (name "go-k8s-io-component-base")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/component-base")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "090ghb66zh4mln9fvp89vfq0g4pysm5y4lrp5n6801491mngyndm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/component-base"))
+    (propagated-inputs
+     (list go-github-com-blang-semver-v4
+           go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracegrpc))
+    (home-page "https://github.com/kubernetes/component-base")
+    (synopsis "Kubernetes component base libraries")
+    (description
+     "This package provides shared utility libraries for Kubernetes components
+such as configuration, flags, metrics, and tracing.")
+    (license license:asl2.0)))
+
 (define-public go-kernel-org-pub-linux-libs-security-libcap-cap
   (package
     (name "go-kernel-org-pub-linux-libs-security-libcap-cap")
