@@ -21804,6 +21804,50 @@ components including Rekor transparency log entries, Fulcio certificates,
 and bundle formats.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-sigstore
+  (package
+    (name "go-github-com-sigstore-sigstore")
+    (version "1.8.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/sigstore")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12swy3b2q739596g0a6gy409mqhbwvi6hjjww0l8r6iya1wnd2vh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; No Go files in root directory; source-only library.
+      #:skip-build? #t
+      #:import-path "github.com/sigstore/sigstore"
+      ;; Tests require network access and have circular deps with go-tuf.
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-coreos-go-oidc-v3
+           go-github-com-go-jose-go-jose-v3
+           go-github-com-go-rod-rod
+           go-github-com-google-go-containerregistry
+           go-github-com-letsencrypt-boulder
+           go-github-com-pkg-browser
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-sigstore-protobuf-specs
+           go-github-com-skratchdot-open-golang
+           go-github-com-theupdateframework-go-tuf
+           go-golang-org-x-crypto
+           go-golang-org-x-oauth2
+           go-golang-org-x-term))
+    (home-page "https://sigstore.dev/")
+    (synopsis "Common Go library for Sigstore services")
+    (description
+     "Sigstore is a Go library providing common functionality for Sigstore
+services.  It includes cryptographic utilities, OAuth/OIDC authentication,
+certificate handling, and tools for interacting with Sigstore infrastructure
+like Fulcio and Rekor.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-sirupsen-logrus
   (package
     (name "go-github-com-sirupsen-logrus")
