@@ -15126,6 +15126,43 @@ a Kubernetes-native development platform for teams.")
      "This package provides API server components for the Loft platform.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-log
+  (package
+    (name "go-github-com-loft-sh-log")
+    (version "0.0.0-20240219160058-26d83ffb46ac")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/log")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a1cv38hrskcrccfvazwj7dxddsxg1lyx36cpy64c6xavgzsvhfz"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/log"))
+    (propagated-inputs
+     (list go-github-com-alecaivazis-survey-v2
+           go-github-com-k0kubun-go-ansi
+           go-github-com-olekukonko-tablewriter-0.0.5
+           go-github-com-sirupsen-logrus
+           go-gopkg-in-natefinch-lumberjack-v2))
+    (home-page "https://github.com/loft-sh/log")
+    (synopsis "Structured logging library for Loft tools")
+    (description
+     "This package provides a structured logging library used by Loft tools
+including DevPod.  It wraps logrus and zap with additional features.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
