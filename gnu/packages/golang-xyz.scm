@@ -28133,6 +28133,33 @@ custom resources and aggregated API servers.")
 plugins.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-kubectl
+  (package
+    (name "go-k8s-io-kubectl")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/kubectl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "018i2amnchmr4fiszf9r8fhkljl15019dsdhx058kns10sc45mw6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/kubectl"))
+    (home-page "https://github.com/kubernetes/kubectl")
+    (synopsis "Kubernetes command-line tool library")
+    (description
+     "This package provides the library components of kubectl, the Kubernetes
+command-line tool for deploying applications, inspecting resources, and
+managing cluster operations.")
+    (license license:asl2.0)))
+
 (define-public go-kernel-org-pub-linux-libs-security-libcap-cap
   (package
     (name "go-kernel-org-pub-linux-libs-security-libcap-cap")
