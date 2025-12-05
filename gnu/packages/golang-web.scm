@@ -2145,6 +2145,22 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
     (description
      "This package provides logging support for go-autorest.")))
 
+(define-public go-github-com-azure-go-autorest-autorest-adal
+  (package
+    (inherit go-github-com-azure-go-autorest-autorest)
+    (name "go-github-com-azure-go-autorest-autorest-adal")
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/go-autorest/autorest/adal"
+      #:unpack-path "github.com/Azure/go-autorest"))
+    (propagated-inputs
+     (list go-github-com-golang-jwt-jwt-v4
+           go-golang-org-x-crypto))
+    (synopsis "Azure Active Directory authentication for Go")
+    (description
+     "This package provides Azure Active Directory token authentication.")))
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
