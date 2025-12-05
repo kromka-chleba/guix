@@ -28078,6 +28078,33 @@ Definitions (CRDs).  It enables extending the Kubernetes API with custom
 resources that can be managed just like built-in resources.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-kube-aggregator
+  (package
+    (name "go-k8s-io-kube-aggregator")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/kube-aggregator")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b2qvjbw8r3r1wkh3l8y7h85a5qsdcmj20p7qhvlzy9f6hv21xk0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/kube-aggregator"))
+    (home-page "https://github.com/kubernetes/kube-aggregator")
+    (synopsis "Kubernetes aggregation layer API server")
+    (description
+     "Kube-aggregator provides an API for registering API servers with the
+Kubernetes API server.  It is used for extending the Kubernetes API with
+custom resources and aggregated API servers.")
+    (license license:asl2.0)))
+
 (define-public go-kernel-org-pub-linux-libs-security-libcap-cap
   (package
     (name "go-kernel-org-pub-linux-libs-security-libcap-cap")
