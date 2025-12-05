@@ -15044,6 +15044,31 @@ used by DevPod and other Loft tools for managing development environments.")
 to send usage telemetry data.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-admin-apis
+  (package
+    (name "go-github-com-loft-sh-admin-apis")
+    (version "0.0.0-20241127134028-9cfb6b23ec44")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/admin-apis")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wd1y9gzh6fy7pc4fsihri7825q8478dy4fg835qnm71i9fl4izj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/admin-apis"))
+    (home-page "https://github.com/loft-sh/admin-apis")
+    (synopsis "Loft admin API definitions")
+    (description
+     "This package provides admin API definitions for the Loft platform.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
