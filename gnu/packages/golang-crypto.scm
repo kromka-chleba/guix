@@ -3516,7 +3516,51 @@ encryption primitives, it SHOULD NOT be used for new applications.")
     (description "GoPtLib is a library for writing Tor pluggable transports in
 Go.")
     (license license:cc0)))
+
+(define-public go-gopkg-in-square-go-jose-v2
+  (package
+    (name "go-gopkg-in-square-go-jose-v2")
+    (version "2.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-jose/go-jose")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b1nhqxfmhzwrfk7pkvp2w3z3d0pf5ir00vizmy2d4xdbnldn70r"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Fix non-constant format string errors for Go 1.24+.
+            (substitute* "doc_test.go"
+              (("fmt\\.Printf\\(string\\(decrypted\\)\\)")
+               "fmt.Printf(\"%s\", decrypted)")
+              (("fmt\\.Printf\\(string\\(output\\)\\)")
+               "fmt.Printf(\"%s\", output)"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/square/go-jose.v2"
+      ;; TestSignerWithBrokenRand expects RSA signing to fail with broken
+      ;; randomness, but Go 1.20+ uses deterministic RSA-PSS (RFC 6979).
+      #:test-flags #~(list "-skip" "TestSignerWithBrokenRand")))
+    (native-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-stretchr-testify
+           go-gopkg-in-alecthomas-kingpin-v2))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/go-jose/go-jose")
+    (synopsis "Implementation of JOSE standards in Go")
+    (description
+     "This package provides a Go implementation of the Javascript Object
+Signing and Encryption (JOSE) standards, including JSON Web Encryption (JWE),
+JSON Web Signature (JWS), and JSON Web Token (JWT).")
+    (license license:asl2.0)))
 
+
 ;;;
 ;;; Executables:
 ;;;
