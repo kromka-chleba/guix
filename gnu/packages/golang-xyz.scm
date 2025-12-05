@@ -25019,6 +25019,32 @@ Go host programs.")
 format for debugging and logging purposes.")
     (license license:expat)))
 
+(define-public go-github-com-ysmood-gotrace
+  (package
+    (name "go-github-com-ysmood-gotrace")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ysmood/gotrace")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06jzxbi27mknkx5kp5zramca16r9i423dhmlp17r4r75znhklgaz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ysmood/gotrace"
+      ;; Tests require GODEBUG="tracebackancestors=N" environment setting.
+      #:tests? #f))
+    (home-page "https://github.com/ysmood/gotrace")
+    (synopsis "Go goroutine tracer")
+    (description
+     "Gotrace is a Go library for tracing goroutines, useful for debugging
+goroutine leaks and understanding goroutine lifecycles.")
+    (license license:expat)))
+
 (define-public go-github-com-zalando-go-keyring
   (package
     (name "go-github-com-zalando-go-keyring")
