@@ -1789,6 +1789,31 @@ the OTEL Go SDK.")
 the OTEL Go SDK.")
     (license license:asl2.0)))
 
+(define-public go-github-com-awslabs-amazon-ecr-credential-helper
+  (package
+    (name "go-github-com-awslabs-amazon-ecr-credential-helper")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/awslabs/amazon-ecr-credential-helper")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fj663hxyfhhvahy70vinzy0g4glmfh2rlja12qdx72x4xk025jd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/awslabs/amazon-ecr-credential-helper"))
+    (home-page "https://github.com/awslabs/amazon-ecr-credential-helper")
+    (synopsis "Amazon ECR Docker credential helper")
+    (description
+     "This package provides a Docker credential helper for Amazon ECR that
+automatically gets credentials for Amazon ECR registries.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-aymerick-douceur
   (package
     (name "go-github-com-aymerick-douceur")
