@@ -11617,6 +11617,33 @@ ABI}.")
      "This package provides a fast non-allocating cron parser in Ragel and Go.")
     (license license:expat)))
 
+(define-public go-github-com-inconshreveable-go-update
+  (package
+    (name "go-github-com-inconshreveable-go-update")
+    (version "0.0.0-20160112193335-8152e7eb6ccf")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/inconshreveable/go-update")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07czhspakpi7al004rm669cmf4h5l0vnygsm11280nkfn2zxqdi3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require bsdiff which is not available
+      #:tests? #f
+      #:import-path "github.com/inconshreveable/go-update"))
+    (home-page "https://github.com/inconshreveable/go-update")
+    (synopsis "Self-update Go programs from the internet")
+    (description
+     "This package provides a library for self-updating Go programs.
+It allows programs to update themselves by downloading new versions
+from the internet and replacing their own executable.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-invopop-yaml
   (package
     (name "go-github-com-invopop-yaml")
