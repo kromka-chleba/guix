@@ -19289,6 +19289,37 @@ throughput and hit ratio performance.  It's a fork of
 @code{dgraph-io/ristretto} project.")
     (license license:asl2.0)))
 
+(define-public go-github-com-paesslerag-gval
+  (package
+    (name "go-github-com-paesslerag-gval")
+    (version "1.2.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PaesslerAG/gval")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "006my38wxv4kmhlbmbps01r7gbkq2a80a4h7hdcni3cjbn6zspps"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require go-github-com-paesslerag-jsonpath which depends on
+      ;; this package, creating a cycle.
+      #:tests? #f
+      #:import-path "github.com/PaesslerAG/gval"))
+    (propagated-inputs
+     (list go-github-com-shopspring-decimal))
+    (home-page "https://github.com/PaesslerAG/gval")
+    (synopsis "Expression evaluation library for Go")
+    (description
+     "Gval is a highly customizable expression language library for Go.  It can
+evaluate expressions at runtime with support for logical operators, arithmetic,
+function calls, and custom operators.  It's useful for configuration files,
+user-defined rules, and data filtering.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-panjf2000-ants-v2
   (package
     (name "go-github-com-panjf2000-ants-v2")
