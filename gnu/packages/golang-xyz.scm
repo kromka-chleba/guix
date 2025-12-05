@@ -15069,6 +15069,33 @@ to send usage telemetry data.")
      "This package provides admin API definitions for the Loft platform.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-api
+  (package
+    (name "go-github-com-loft-sh-api")
+    (version "0.0.0-20250122152938-293ef7c4ec2b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/api")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w8nr35brgr88hmln14qgqliwl30q2ndgmvc75qnc2a8931aajsk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/api/v4"
+      #:unpack-path "github.com/loft-sh/api/v4"))
+    (home-page "https://github.com/loft-sh/api")
+    (synopsis "Loft platform API definitions")
+    (description
+     "This package provides API definitions for the Loft platform,
+a Kubernetes-native development platform for teams.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
