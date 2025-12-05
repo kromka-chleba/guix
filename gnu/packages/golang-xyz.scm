@@ -15163,6 +15163,32 @@ a Kubernetes-native development platform for teams.")
 including DevPod.  It wraps logrus and zap with additional features.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-programming-language-detection
+  (package
+    (name "go-github-com-loft-sh-programming-language-detection")
+    (version "0.0.0-20230511103030-dda0d9170669")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/programming-language-detection")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fyf0m9zs4b9wqpz5djx9mwapivk9bvrbzi1mdmg1lmi3vyns1dz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/loft-sh/programming-language-detection"
+      #:tests? #f))
+    (home-page "https://github.com/loft-sh/programming-language-detection")
+    (synopsis "Detect programming languages in directories")
+    (description
+     "This package provides utilities for detecting programming languages
+used in a directory or project.  It is used by DevPod to suggest appropriate
+development container configurations.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
