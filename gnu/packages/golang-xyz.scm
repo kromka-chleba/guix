@@ -3775,6 +3775,45 @@ glamorous default themes.")
      "A simple, efficient spring animation library for smooth, natural motion.")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-huh
+  (package
+    (name "go-github-com-charmbracelet-huh")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/huh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f7nmwqncj4pq262ipkpagd394xim541md7yxissxxy97vnzh4pc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/huh"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/examples")))))))
+    (propagated-inputs
+     (list go-github-com-catppuccin-go
+           go-github-com-charmbracelet-bubbles
+           go-github-com-charmbracelet-bubbletea
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-exp-strings
+           go-github-com-mitchellh-hashstructure-v2))
+    (home-page "https://github.com/charmbracelet/huh")
+    (synopsis "Interactive terminal forms and prompts")
+    (description
+     "Huh is a library for building interactive terminal forms and prompts.
+It provides various input types including text inputs, selections, confirms,
+and multi-selects with a focus on user experience and aesthetics.")
+    (license license:expat)))
+
 (define-public go-github-com-charmbracelet-lipgloss
   (package
     (name "go-github-com-charmbracelet-lipgloss")
