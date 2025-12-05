@@ -837,7 +837,7 @@ they exist.")
            python-httpx
            python-jinja2
            python-nodeenv
-           python-pydantic-2
+           python-pydantic
            python-tomlkit
            python-typing-extensions))
     (home-page "https://github.com/RobertCraigie/prisma-client-py")
@@ -3892,7 +3892,7 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
            python-poetry-core
            python-psycopg
            python-psycopg-pool
-           python-pydantic-2
+           python-pydantic
            python-pyodbc
            python-pytest))
     (propagated-inputs
@@ -3964,7 +3964,7 @@ similarity distances for scementic search using embeddings.")
     (native-inputs
      (list python-cryptography
            python-pdm-backend
-           python-pydantic-2
+           python-pydantic
            python-pydantic-settings
            python-pytest
            python-pytest-asyncio
