@@ -29279,6 +29279,33 @@ unmarshaling functions based on @code{encoding/json} @code{Unmarshal()}.")
 API server network proxy.")
     (license license:asl2.0)))
 
+(define-public go-sigs-k8s-io-controller-runtime
+  (package
+    (name "go-sigs-k8s-io-controller-runtime")
+    (version "0.19.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes-sigs/controller-runtime")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1f4ai8jc4clfskj9iwybbs8ppbln7x3pkri9z91q4f1y40r9j2pl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "sigs.k8s.io/controller-runtime"))
+    (home-page "https://github.com/kubernetes-sigs/controller-runtime")
+    (synopsis "Kubernetes controller runtime library")
+    (description
+     "Controller-runtime is a set of Go libraries for building Kubernetes
+controllers and operators.  It provides high-level abstractions for common
+controller patterns and integrates with the Kubernetes API machinery.")
+    (license license:asl2.0)))
+
 (define-public go-sigs-k8s-io-kustomize-cmd-config
   (package
     (name "go-sigs-k8s-io-kustomize-cmd-config")
