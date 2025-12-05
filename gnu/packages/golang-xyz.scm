@@ -28051,6 +28051,33 @@ kubernetes-independent packages supplementing the
 such as configuration, flags, metrics, and tracing.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-apiextensions-apiserver
+  (package
+    (name "go-k8s-io-apiextensions-apiserver")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/apiextensions-apiserver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nmmqzwxvrjj6k0dp7k7lz8yzgy1znvhxi00zlbnlqa2chb8r2kd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/apiextensions-apiserver"))
+    (home-page "https://github.com/kubernetes/apiextensions-apiserver")
+    (synopsis "Kubernetes API extensions server")
+    (description
+     "This package provides the API server for Kubernetes Custom Resource
+Definitions (CRDs).  It enables extending the Kubernetes API with custom
+resources that can be managed just like built-in resources.")
+    (license license:asl2.0)))
+
 (define-public go-kernel-org-pub-linux-libs-security-libcap-cap
   (package
     (name "go-kernel-org-pub-linux-libs-security-libcap-cap")
