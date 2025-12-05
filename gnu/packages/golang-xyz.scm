@@ -25045,6 +25045,34 @@ format for debugging and logging purposes.")
 goroutine leaks and understanding goroutine lifecycles.")
     (license license:expat)))
 
+(define-public go-github-com-ysmood-goob
+  (package
+    (name "go-github-com-ysmood-goob")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ysmood/goob")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1z4632i1mx9rxslq7b9jd4zg600wangxyirh99fxsv0i2jprak53"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ysmood/goob"
+      ;; Tests use gotrace which requires GODEBUG="tracebackancestors=N".
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-ysmood-gotrace))
+    (home-page "https://github.com/ysmood/goob")
+    (synopsis "Go observable pattern library")
+    (description
+     "Goob is a Go implementation of the observable pattern, providing a simple
+way to create observable objects and subscribe to their changes.")
+    (license license:expat)))
+
 (define-public go-github-com-zalando-go-keyring
   (package
     (name "go-github-com-zalando-go-keyring")
