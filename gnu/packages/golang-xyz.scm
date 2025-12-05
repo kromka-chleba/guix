@@ -23102,6 +23102,33 @@ types.  BoltDB is an embedded key-value store, and bolthold servers a similar
 use case however with a higher level interface for common uses of BoltDB.")
     (license license:expat)))
 
+(define-public go-github-com-titanous-rocacheck
+  (let ((commit "afe73141d399b0c79c3d6412d4bdcf4c672c496a")
+        (revision "0"))
+    (package
+      (name "go-github-com-titanous-rocacheck")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/titanous/rocacheck")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1xb0hii3dffi88hczd81jb5p1hi7yk1davlsfz6q2xiza03x95dg"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/titanous/rocacheck"))
+      (home-page "https://github.com/titanous/rocacheck")
+      (synopsis "Check RSA keys for ROCA vulnerability")
+      (description
+       "Rocacheck is a Go library for checking RSA public keys for the ROCA
+vulnerability (CVE-2017-15361) that affected certain Infineon cryptographic
+libraries and smart cards.")
+      (license license:bsd-3))))
+
 (define-public go-github-com-tinylib-msgp
   (package
     (name "go-github-com-tinylib-msgp")
