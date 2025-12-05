@@ -13803,6 +13803,32 @@ Features:
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-tidwall-jsonc
+  (package
+    (name "go-github-com-tidwall-jsonc")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/jsonc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07157dp8n3jjbn36llwykql9b2bbx4597d980lvhn3fhj8smdscm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/jsonc"))
+    (home-page "https://github.com/tidwall/jsonc")
+    (synopsis "JSON with comments for Go")
+    (description
+     "This package provides a Go library for parsing JSON with comments.  It
+strips out C-style line comments and block comments from JSON input, making it
+easier to use JSON as a configuration file format while still allowing human
+readable annotations.")
+    (license license:expat)))
+
 (define-public go-github-com-tj-go-elastic
   (package
     (name "go-github-com-tj-go-elastic")
