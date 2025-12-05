@@ -21768,6 +21768,42 @@ names.")
     (description "gopdf is a Go library for generating PDF documents.")
     (license license:expat)))
 
+(define-public go-github-com-sigstore-protobuf-specs
+  (package
+    (name "go-github-com-sigstore-protobuf-specs")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/protobuf-specs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0avc3b4yx3byqlcswz29g6qgaf2n808cdvf3bnaz3xwg18byr7hv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t ; no Go files at root, only in gen/pb-go
+      #:import-path "github.com/sigstore/protobuf-specs"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-protoc-builder
+            ;; protoc-builder contains Dockerfile.go which isn't valid Go
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/protoc-builder")))))))
+    (propagated-inputs
+     (list go-google-golang-org-genproto-googleapis-api
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/sigstore/protobuf-specs")
+    (synopsis "Sigstore protobuf specifications")
+    (description
+     "This package contains the protobuf specifications for Sigstore
+components including Rekor transparency log entries, Fulcio certificates,
+and bundle formats.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-sirupsen-logrus
   (package
     (name "go-github-com-sirupsen-logrus")
