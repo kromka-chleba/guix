@@ -2105,6 +2105,32 @@ used.")
 Manager,NTLM}/Negotiate authentication over HTTP.")
     (license license:expat)))
 
+(define-public go-github-com-azure-go-autorest-autorest
+  (package
+    (name "go-github-com-azure-go-autorest-autorest")
+    (version "0.11.29")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Azure/go-autorest")
+             (commit (string-append "autorest/v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hknm1vm3ccqpwvzi4r40x8skjdp0nis1z9nxjcn91pcvryr45v0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/Azure/go-autorest/autorest"
+      #:unpack-path "github.com/Azure/go-autorest"))
+    (home-page "https://github.com/Azure/go-autorest")
+    (synopsis "Azure Go HTTP pipeline for REST operations")
+    (description
+     "This package provides HTTP client pipeline for Azure REST operations.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-azuread-microsoft-authentication-library-for-go
   (package
     (name "go-github-com-azuread-microsoft-authentication-library-for-go")
