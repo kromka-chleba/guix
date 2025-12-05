@@ -28105,6 +28105,34 @@ Kubernetes API server.  It is used for extending the Kubernetes API with
 custom resources and aggregated API servers.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-cli-runtime
+  (package
+    (name "go-k8s-io-cli-runtime")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/cli-runtime")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fp2awydb9ir14lk20jwn12r7wi5qac4z684scaim60h9m79375k"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/cli-runtime"))
+    (propagated-inputs
+     (list go-github-com-liggitt-tabwriter))
+    (home-page "https://github.com/kubernetes/cli-runtime")
+    (synopsis "Kubernetes CLI runtime helpers")
+    (description
+     "This package provides set of helpers for creating kubectl commands and
+plugins.")
+    (license license:asl2.0)))
+
 (define-public go-kernel-org-pub-linux-libs-security-libcap-cap
   (package
     (name "go-kernel-org-pub-linux-libs-security-libcap-cap")
