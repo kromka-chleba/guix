@@ -15189,6 +15189,32 @@ used in a directory or project.  It is used by DevPod to suggest appropriate
 development container configurations.")
     (license license:asl2.0)))
 
+(define-public go-github-com-loft-sh-ssh
+  (package
+    (name "go-github-com-loft-sh-ssh")
+    (version "0.0.0-20241213060459-7dba74dbc165")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/loft-sh/ssh")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bbc536knxipjkd6b9cfld94qy5n9pw3pc8bdjvmsiapa5356417"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/loft-sh/ssh"))
+    (home-page "https://github.com/loft-sh/ssh")
+    (synopsis "SSH library for Loft tools")
+    (description
+     "This package provides SSH functionality for Loft tools including DevPod.
+It handles SSH connections to development environments.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
