@@ -5401,6 +5401,71 @@ images, layers, and containers on the filesystem.  It supports multiple
 storage drivers including overlay, devicemapper, btrfs, and vfs.")
     (license license:asl2.0)))
 
+(define-public go-github-com-containers-image-v5
+  (package
+    (name "go-github-com-containers-image-v5")
+    (version "5.33.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containers/image")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kkblcqv7ggfahmidv2g3k699dvp8l4rrn74l3avqzfxhzj1zr45"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containers/image/v5"
+      ;; Tests require container runtime and network access.
+      #:tests? #f))
+    (propagated-inputs
+     (list go-dario-cat-mergo
+           go-github-com-burntsushi-toml
+           go-github-com-containers-libtrust
+           go-github-com-containers-ocicrypt
+           go-github-com-containers-storage
+           go-github-com-cyberphone-json-canonicalization
+           go-github-com-distribution-reference
+           go-github-com-docker-cli
+           go-github-com-docker-distribution
+           go-github-com-docker-docker
+           go-github-com-docker-docker-credential-helpers
+           go-github-com-docker-go-connections
+           go-github-com-go-openapi-strfmt
+           go-github-com-hashicorp-go-retryablehttp
+           go-github-com-klauspost-compress
+           go-github-com-klauspost-pgzip
+           go-github-com-manifoldco-promptui
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec
+           go-github-com-opencontainers-selinux
+           go-github-com-proglottis-gpgme
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-sigstore-fulcio
+           go-github-com-sigstore-rekor
+           go-github-com-sigstore-sigstore
+           go-github-com-sirupsen-logrus
+           go-github-com-sylabs-sif-v2
+           go-github-com-ulikunitz-xz
+           go-github-com-vbatts-tar-split
+           go-github-com-vbauerster-mpb-v8
+           go-go-etcd-io-bbolt
+           go-golang-org-x-crypto
+           go-golang-org-x-exp
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync
+           go-golang-org-x-term
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/containers/image")
+    (synopsis "Container image library for Go")
+    (description
+     "This package provides a Go library for working with container images,
+including copying between registries, validating signatures, and converting
+between different image formats like Docker and OCI.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-containers-winquit
   ;; As it's seen in description, it's a Windows specific package but
   ;; gvisor-tap-vsock can't be build if it's absent.
