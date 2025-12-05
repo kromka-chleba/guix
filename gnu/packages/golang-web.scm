@@ -5762,6 +5762,50 @@ replacement for memcached in many cases.  It provides a data loading mechanism
 with caching and de-duplication that works across a set of peer processes.")
     (license license:asl2.0)))
 
+(define-public go-github-com-google-go-containerregistry
+  (package
+    (name "go-github-com-google-go-containerregistry")
+    (version "0.20.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-containerregistry")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03m3gpj5z5q9zffns4kwxb2g8qil3213gvia63wifdrnwiswlcjh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t ; root has no Go files
+      #:import-path "github.com/google/go-containerregistry"
+      ;; Tests require network access
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-containerd-stargz-snapshotter-estargz
+           go-github-com-docker-cli
+           go-github-com-docker-distribution
+           go-github-com-docker-docker
+           go-github-com-google-go-cmp
+           go-github-com-klauspost-compress
+           go-github-com-mitchellh-go-homedir
+           go-github-com-moby-docker-image-spec
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec
+           go-github-com-spf13-cobra
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync
+           go-golang-org-x-tools))
+    (home-page "https://github.com/google/go-containerregistry")
+    (synopsis "Go library and tools for working with container registries")
+    (description
+     "This package provides a Go library for interacting with container
+registries.  It includes tools like @code{crane} for interacting with remote
+images and registries, @code{gcrane} for GCR-specific operations, and
+libraries for building and manipulating container images.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-google-go-dap
   (package
     (name "go-github-com-google-go-dap")
