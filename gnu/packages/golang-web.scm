@@ -15854,6 +15854,7 @@ go.opentelemetry.io/otel/trace.")
      (list go-github-com-stretchr-testify))
     (propagated-inputs
      (list go-github-com-cenkalti-backoff-v5
+           go-go-opentelemetry-io-otel-exporters-otlp-otlptrace
            go-go-opentelemetry-io-proto-otlp
            go-go-uber-org-goleak
            go-google-golang-org-genproto-googleapis-rpc
