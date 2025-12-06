@@ -4623,6 +4623,31 @@ for \"realtime\" in the index of the Guix manual to learn how to achieve this
 using Guix System.")
     (license license:gpl2+)))
 
+(define-public supercollider-sc3-plugins
+  (package
+    (name "supercollider-sc3-plugins")
+    (version "3.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/supercollider/sc3-plugins")
+             (commit (string-append "Version-" version))
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12klrm4f778xqh0r18k75i0jjx30scvvpxr7h4prl0npnd1kzs6g"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ;upstream has no tests
+    (native-inputs (list supercollider-3.13.0 ;needs matching SuperCollider version
+                         fftw fftwf))
+    (synopsis "Community plugins for SuperCollider")
+    (description "This packages contains community plugins for SuperCollider.")
+    (home-page "https://supercollider.github.io/sc3-plugins/")
+    (license license:gpl2+)))
+
 (define-public libshout-idjc
   (package
     (name "libshout-idjc")
