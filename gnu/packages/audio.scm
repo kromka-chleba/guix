@@ -4648,6 +4648,53 @@ using Guix System.")
     (home-page "https://supercollider.github.io/sc3-plugins/")
     (license license:gpl2+)))
 
+(define-public supercollider-with-sc3-plugins
+  (package
+    (name "supercollider-with-sc3-plugins")
+    (version "3.13.0")
+    (source
+     #f)
+    (inputs (list bash-minimal supercollider-3.13.0 supercollider-sc3-plugins))
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils)
+                  (guix build union))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils)
+                       (guix build union))
+          (let* ((out #$output)
+                 (base #$supercollider-3.13.0)
+                 (sc3 #$supercollider-sc3-plugins)
+                 (share (string-append out "/share"))
+                 (data (string-append share "/SuperCollider"))
+                 (base-data (string-append base "/share/SuperCollider"))
+                 (sc3-data (string-append sc3 "/share/SuperCollider"))
+                 (sc3-plugins (string-append sc3 "/lib/SuperCollider/plugins"))
+                 (bin (string-append out "/bin"))
+                 (base-bin (string-append base "/bin"))
+                 (shell (string-append #$bash-minimal "/bin/sh")))
+            (mkdir-p share)
+            (union-build bin
+                         (list base-bin))
+            (union-build data
+                         (list base-data sc3-data))
+            (map (lambda (program)
+                   (let ((wrapped (string-append bin "/" program)))
+                     (wrap-program wrapped
+                       #:sh shell
+                       `("SC_DATA_DIR" ":" =
+                         (,data))
+                       `("SC_PLUGIN_PATH" suffix
+                         (,sc3-plugins)))))
+                 '("sclang" "scsynth" "supernova"))))))
+    (home-page #f)
+    (synopsis "Synthesis engine and programming language with plugins")
+    (description "This package merges the SuperCollider core package
+with the community plugins.")
+    (license license:gpl2+)))
+
 (define-public libshout-idjc
   (package
     (name "libshout-idjc")
