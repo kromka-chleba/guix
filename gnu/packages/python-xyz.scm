@@ -27121,6 +27121,51 @@ library: to minimize boilerplate code in traditional extension modules by
 inferring type information using compile-time introspection.")
     (license license:bsd-3)))
 
+(define-public pybind11-3
+  (package
+    (inherit pybind11)
+    (name "pybind11")
+    (version "3.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pybind/pybind11")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gpax61ndhbr1r179bbgavh50j3aylkddzvbklhyj51mq4d0sb36"))))
+    (build-system cmake-build-system) ; or pyproject
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "-DCATCH_INCLUDE_DIR="
+                           (assoc-ref %build-inputs "catch2")
+                           "/include/catch"))
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check) args)))
+          (add-after 'install 'install-python
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (with-directory-excursion "../source"
+                  (setenv "PYBIND11_USE_CMAKE" "yes")
+                  (invoke "pip" "install" "--no-deps" "--no-build-isolation"
+                          "--prefix" out "."))))))))
+    (native-inputs
+     `(("python-wrapper" ,python-wrapper)
+
+       ;; The following dependencies are used for tests.
+       ("python-pytest" ,python-pytest)
+       ("catch2" ,catch2-1)
+       ("eigen" ,eigen)
+       ("python-scikit-build-core" ,python-scikit-build-core)))))
+
 ;; Needed for scipy
 (define-public pybind11-2.10
   (package
