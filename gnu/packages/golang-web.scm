@@ -10697,6 +10697,44 @@ mainly for managing the configuration of Open vSwitch and OVN, but it could
 also be used to manage your stamp collection.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-fulcio
+  (package
+    (name "go-github-com-sigstore-fulcio")
+    (version "1.6.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/fulcio")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wyhgrzya2wafnqx9nyama0wxjzf8vv24613wbx5x53hjv3h845j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; Tests require cloud SDK, database, and additional dependencies.
+      #:tests? #f
+      #:import-path "github.com/sigstore/fulcio"))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-client-model
+           go-github-com-prometheus-common
+           go-github-com-sigstore-sigstore
+           go-google-golang-org-genproto-googleapis-api
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/sigstore/fulcio")
+    (synopsis "Sigstore certificate authority for code signing")
+    (description
+     "Fulcio is a free-to-use certificate authority for issuing code signing
+certificates for an OpenID Connect (OIDC) identity, such as email address.
+It is part of the Sigstore project for software supply chain security.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-pascaldekloe-goe
   (package
     (name "go-github-com-pascaldekloe-goe")
