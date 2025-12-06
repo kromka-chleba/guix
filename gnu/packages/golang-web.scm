@@ -10783,6 +10783,39 @@ within a software project's supply chain.  It is part of the Sigstore project
 for recording signed software artifacts.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-apiserver
+  (package
+    (name "go-k8s-io-apiserver")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/apiserver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y156bmwpx0wkml20qzcrbc9s3fg5gayfldna3kxabljxc6pw7js"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "k8s.io/apiserver"))
+    (propagated-inputs
+     (list go-github-com-grpc-ecosystem-go-grpc-prometheus
+          go-go-etcd-io-etcd
+           go-go-opentelemetry-io-contrib-instrumentation-google-golang-org-grpc-otelgrpc
+           go-k8s-io-component-base
+           go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client
+           go-sigs-k8s-io-structured-merge-diff-v4))
+    (home-page "https://github.com/kubernetes/apiserver")
+    (synopsis "Kubernetes API server library")
+    (description
+     "This package provides the library for building Kubernetes-style API
+servers.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-pascaldekloe-goe
   (package
     (name "go-github-com-pascaldekloe-goe")
