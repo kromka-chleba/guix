@@ -10735,6 +10735,54 @@ certificates for an OpenID Connect (OIDC) identity, such as email address.
 It is part of the Sigstore project for software supply chain security.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-rekor
+  (package
+    (name "go-github-com-sigstore-rekor")
+    (version "1.3.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/rekor")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g1csa8wj80jsy1sn53zbnjkdq5hs8slh00ynlysmifbw5fsg129"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; Tests require cloud SDK and database dependencies.
+      #:tests? #f
+      #:import-path "github.com/sigstore/rekor"))
+    (propagated-inputs
+     (list go-github-com-blang-semver
+           go-github-com-cyberphone-json-canonicalization
+           go-github-com-go-chi-chi
+          go-github-com-go-openapi-errors
+           go-github-com-go-openapi-runtime
+           go-github-com-go-openapi-strfmt
+           go-github-com-go-openapi-swag
+           go-github-com-go-openapi-validate
+           go-github-com-mitchellh-mapstructure
+           go-github-com-prometheus-client-golang
+           go-github-com-sigstore-sigstore
+           go-github-com-theupdateframework-go-tuf
+           go-github-com-transparency-dev-merkle
+           go-go-uber-org-zap
+           go-golang-org-x-exp
+           go-golang-org-x-mod
+           go-golang-org-x-sync
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/sigstore/rekor")
+    (synopsis "Sigstore transparency log for software artifacts")
+    (description
+     "Rekor provides an immutable tamper-resistant ledger of metadata generated
+within a software project's supply chain.  It is part of the Sigstore project
+for recording signed software artifacts.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-pascaldekloe-goe
   (package
     (name "go-github-com-pascaldekloe-goe")
