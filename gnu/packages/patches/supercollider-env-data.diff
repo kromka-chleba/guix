@@ -1,0 +1,13 @@
+diff -Naurd supercollider-3.13.1/common/SC_Filesystem_unix.cpp supercollider-3.13.1-env/common/SC_Filesystem_unix.cpp
+--- supercollider-3.13.1/common/SC_Filesystem_unix.cpp	2025-11-13 13:02:49.404690285 +0100
++++ supercollider-3.13.1-env/common/SC_Filesystem_unix.cpp	2025-11-13 13:04:23.745638750 +0100
+@@ -94,6 +94,9 @@
+ }
+ 
+ Path SC_Filesystem::defaultSystemAppSupportDirectory() {
++    const char* sc_data_dir = getenv("SC_DATA_DIR");
++    if (sc_data_dir)
++        return Path(sc_data_dir);
+ #    ifdef SC_DATA_DIR
+     return Path(SC_DATA_DIR);
+ #    else
