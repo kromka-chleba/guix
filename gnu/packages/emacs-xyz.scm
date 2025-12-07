@@ -46606,15 +46606,19 @@ a vertical completion UI.")
     (version "0.3")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/window-tool-bar-"
-                           version ".tar"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/chaosemer/window-tool-bar")
+              (commit (string-append "v" version))))
        (sha256
-        (base32 "00kggfpfi1nj05mzy5zig0fs4as7qh99wqgvya3xj2kw8141cvd6"))))
+        (base32
+         "0sa5whb5nyx88sn2ha76gmsy3kyjnl3g8rxpylwfm8xwamj59imd"))))
     (build-system emacs-build-system)
-    (arguments (list #:tests? #f)) ;there are no tests
-    (propagated-inputs (list emacs-compat))
-    (home-page "http://github.com/chaosemer/window-tool-bar")
+    (arguments
+     (list #:tests? #f))                ; No tests.
+    (propagated-inputs
+     (list emacs-compat))
+    (home-page "https://github.com/chaosemer/window-tool-bar")
     (synopsis "Add tool bars inside Emacs windows")
     (description
      "This package puts a tool bar in each Emacs window.  This allows you to see
