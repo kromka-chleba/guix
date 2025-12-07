@@ -73,6 +73,50 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match))
 
+(define-public boomaga
+  (let ((commit "7f7ad4754b20a1027c5095b660c5229353b64c8d")
+        (revision "1"))
+    (package
+      (name "boomaga")
+      (version (git-version "v3.0.0" revision commit))
+      (source
+           (origin
+             (method git-fetch)
+             (uri (git-reference
+                   (url "https://github.com/Boomaga/boomaga")
+                   (commit commit)))
+             (file-name (git-file-name name version))
+             (sha256
+              (base32 "1mbi66nym7s90x8zhb0dlx3wvrh7by54zs1xfafbmavg9934sdx4"))
+             (patches (list (search-patch "boomaga-enable-testing.patch")
+                            (search-patch "boomaga-icon-dir.patch")))))
+      (build-system cmake-build-system)
+      (arguments
+           (list
+            #:configure-flags
+            #~(list "-DBUILD_TESTS=Yes"
+                    ;; Install output, CUPS backend and PPD to output dir
+                    (string-append "-DCMAKE_INSTALL_PREFIX=" #$output)
+                    (string-append "-DCUPS_BACKEND_DIR=" #$output
+                                   "/lib/cups/backend")
+                    (string-append "-DCUPS_PPD_DIR=" #$output
+                                   "/share/ppd/boomaga"))))
+      (inputs
+       (list qtbase-5
+             qttools-5
+             poppler-qt5
+             cups))
+      (native-inputs
+       (list pkg-config
+             `(,ghostscript "out"))) ; for tests
+      (home-page "https://github.com/Boomaga/boomaga")
+      (synopsis "Virtual printer for CUPS, supporting booklets")
+      (description
+       "Boomaga (BOOklet MAnager) is a virtual printer for viewing a document
+       before printing it out using the physical printer.  It can be used for
+       print preview or for printing booklets.")
+      (license license:lgpl2.1+))))
+
 (define-public brlaser
   (package
     (name "brlaser")

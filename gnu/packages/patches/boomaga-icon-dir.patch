@@ -1,0 +1,40 @@
+From c60bbf88226789cae55c488800a21f719b063bd8 Mon Sep 17 00:00:00 2001
+From: John Khoo <johnkhootf@gmail.com>
+Date: Tue, 25 Nov 2025 09:49:57 +0800
+Subject: [PATCH 3/3] Patch src/boomaga/gui/icon.cpp to use GUIX_PROFILE
+
+---
+ src/boomaga/gui/icon.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/boomaga/gui/icon.cpp b/src/boomaga/gui/icon.cpp
+index 37afef3..068a615 100644
+--- a/src/boomaga/gui/icon.cpp
++++ b/src/boomaga/gui/icon.cpp
+@@ -28,6 +28,7 @@
+
+ #include <QHash>
+ #include <QDebug>
++#include <QProcessEnvironment>
+ #include <QDir>
+
+ /************************************************
+@@ -68,12 +69,11 @@ QIcon loadMainIcon(const QString &iconName)
+         failback << "elementary";
+         failback << "gnome";
+
+-
+-        QDir usrDir("/usr/share/icons/");
+-        QDir usrLocalDir("/usr/local/share/icons/");
++        QProcessEnvironment env(QProcessEnvironment::systemEnvironment());
++        QDir iconDir(env.value("GUIX_PROFILE") + "/share/icons");
+         foreach (QString s, failback)
+         {
+-            if (usrDir.exists(s) || usrLocalDir.exists(s))
++            if (iconDir.exists(s))
+             {
+                 QIcon::setThemeName(s);
+                 break;
+--
+2.51.0
+

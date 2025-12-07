@@ -1,0 +1,53 @@
+From b7dac914a59bfbe2d40c840d30e8724de0811f36 Mon Sep 17 00:00:00 2001
+From: John Khoo <johnkhootf@gmail.com>
+Date: Sun, 7 Dec 2025 23:05:42 +0800
+Subject: [PATCH] Enable tests
+
+---
+ CMakeLists.txt                   | 5 +++++
+ cmake/tools.cmake                | 2 --
+ src/boomaga/tests/CMakeLists.txt | 1 +
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 52ab5e5..07f15af 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -115,6 +115,11 @@ if (USE_DBUS)
+   add_definitions(-DUSE_DBUS=1)
+ endif()
+ 
++option(BUILD_TESTS "Build tests." $ENV{BUILD_TESTS})
++if (BUILD_TESTS)
++  enable_testing()
++endif()
++
+ 
+ ###########################################################
+ 
+diff --git a/cmake/tools.cmake b/cmake/tools.cmake
+index f59b822..5b75f84 100644
+--- a/cmake/tools.cmake
++++ b/cmake/tools.cmake
+@@ -29,8 +29,6 @@ endmacro()
+ 
+ 
+ macro(add_tests TESTS_DIR)
+-  option(BUILD_TESTS "Build tests." $ENV{BUILD_TESTS})
+-
+   if(BUILD_TESTS)
+     add_definitions(-DBUILD_TESTS)
+     add_subdirectory(${TESTS_DIR})
+diff --git a/src/boomaga/tests/CMakeLists.txt b/src/boomaga/tests/CMakeLists.txt
+index a184fa2..f8600dd 100644
+--- a/src/boomaga/tests/CMakeLists.txt
++++ b/src/boomaga/tests/CMakeLists.txt
+@@ -93,4 +93,5 @@ find_package(Qt5 REQUIRED
+ 
+ 
+ add_executable(${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES})
++add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+ target_link_libraries(${PROJECT_NAME} ${LIBRARIES} Qt5::Core Qt5::Test Qt5::Widgets Qt5::PrintSupport Qt5::DBus)
+-- 
+2.51.0
+
