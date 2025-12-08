@@ -2081,10 +2081,6 @@
   (crate-source "cairo-rs" "0.20.12"
                 "1l5d1rgvagvvs4a99i28ciyhdygf9v8hhy8mpk5akbr59q7vvqwi"))
 
-(define rust-cairo-rs-0.21.1
-  (crate-source "cairo-rs" "0.21.1"
-                "044gc8k024ypnvnqqhbp7cgl7qq02hwvbi9n5fpajmdpswkg6n0i"))
-
 (define rust-cairo-rs-0.21.2
   (crate-source "cairo-rs" "0.21.2"
                 "1cc1xyhcch1p3s85b2zc732rz3qz11wpcf33wdq8hr6syi6kbr6z"))
@@ -2112,10 +2108,6 @@
 (define rust-cairo-sys-rs-0.20.10
   (crate-source "cairo-sys-rs" "0.20.10"
                 "12sgv9mimxy5nsxm4ipga1k7an59wn444xa7kbywp64qai3cg705"))
-
-(define rust-cairo-sys-rs-0.21.1
-  (crate-source "cairo-sys-rs" "0.21.1"
-                "1hv2bkrqxcidk7wdy9giy4ivgh8fdkhrkvg54wwpi3pc01wifqxr"))
 
 (define rust-cairo-sys-rs-0.21.2
   (crate-source "cairo-sys-rs" "0.21.2"
@@ -6146,10 +6138,6 @@
   (crate-source "gdk-pixbuf" "0.20.10"
                 "0371cfhxldrn2pf8zdjyx2b3xkhbfm96k988spp4nkq89j4l5lig"))
 
-(define rust-gdk-pixbuf-0.21.1
-  (crate-source "gdk-pixbuf" "0.21.1"
-                "0v2z4jq3mlf5q73p8ggkrbza11g9b6fkvbii2d1xyly6pg6k0wrw"))
-
 (define rust-gdk-pixbuf-0.21.2
   (crate-source "gdk-pixbuf" "0.21.2"
                 "03q52c62r2m5xkssld51mba91i7s7f92iz0nfvrm94ankx2n8g1a"))
@@ -6178,11 +6166,6 @@
   (crate-source "gdk-pixbuf-sys" "0.20.10"
                 "15hb2f5mmyg5amaha6lx6spaygw2b7ga4hwmgqhvv269h2sz6d2v"))
 
-(define rust-gdk-pixbuf-sys-0.21.1
-  ;; TODO: Check bundled sources.
-  (crate-source "gdk-pixbuf-sys" "0.21.1"
-                "10ma22ym76xjziiab44z84nkvx9hny9wggifj6x8rhhxjg69jn72"))
-
 (define rust-gdk-pixbuf-sys-0.21.2
   (crate-source "gdk-pixbuf-sys" "0.21.2"
                 "097ppbqq1nf65i7cpihhx324wyfin2f5y7d02d03p3wbd9xfym1q"))
@@ -6204,10 +6187,6 @@
   (crate-source "gdk-sys" "0.9.1"
                 "1fwgr1b3n0khlkhdq9145m6baz9y8207ya30d30g1gyij6g6gpva"))
 
-(define rust-gdk4-0.10.0
-  (crate-source "gdk4" "0.10.0"
-                "0ng3lkm31idb1qq47330s9apb5vgylj7fp256a968ppks9jb0rqa"))
-
 (define rust-gdk4-0.10.1
   (crate-source "gdk4" "0.10.1"
                 "1w6plimn5brysrifkmhd6846059rmd10z808qm038vn2kmj95qn7"))
@@ -6223,11 +6202,6 @@
 (define rust-gdk4-0.9.6
   (crate-source "gdk4" "0.9.6"
                 "0q1dld01fgj7qxj644by0fc242mcn36w3bagn4z1mkdfq7cwjl28"))
-
-(define rust-gdk4-sys-0.10.0
-  ;; TODO: Check bundled sources.
-  (crate-source "gdk4-sys" "0.10.0"
-                "1idjdn6f6ss1xxcf6xh7l42ahw7dj6jkv6mlplbm7f4yhw6xmnrf"))
 
 (define rust-gdk4-sys-0.10.1
   (crate-source "gdk4-sys" "0.10.1"
@@ -6478,10 +6452,6 @@
   (crate-source "gio" "0.20.12"
                 "0cdq5116cwdgs0xkdp1v146yhcqilxlpgvkncc7xbf5nwxvf49wf"))
 
-(define rust-gio-0.21.1
-  (crate-source "gio" "0.21.1"
-                "0pscn8lk5z61ysmy6n0nx0nsrlbww80dsld41pipj6yhj3ry7daj"))
-
 (define rust-gio-0.21.2
   (crate-source "gio" "0.21.2"
                 "0hjanww3rz2568r9hz4nh91h11451m44kk6ww8dpg2kl5g0yys7d"))
@@ -6509,11 +6479,6 @@
 (define rust-gio-sys-0.20.10
   (crate-source "gio-sys" "0.20.10"
                 "10vc6gqhz5crnrh040rv6r5nm09njky2r9d9ms29xj3gwnkr67jj"))
-
-(define rust-gio-sys-0.21.1
-  ;; TODO: Check bundled sources.
-  (crate-source "gio-sys" "0.21.1"
-                "1zcrdp8f172ahb6fj6rmx9r5fgqh5jrc4n8zzs65hnhycws24gx0"))
 
 (define rust-gio-sys-0.21.2
   (crate-source "gio-sys" "0.21.2"
@@ -7870,10 +7835,6 @@
   (crate-source "glib" "0.20.12"
                 "10ynn8aiabbzrsgdswmqpr47sapfkbfn5rfxsy26swflabivdi7z"))
 
-(define rust-glib-0.21.1
-  (crate-source "glib" "0.21.1"
-                "01ajrf0yfq6ksyjfzyqbaydddc3smz5zf0ckpaa5fyr5jdjc5gb0"))
-
 (define rust-glib-0.21.3
   (crate-source "glib" "0.21.3"
                 "13qcn8cghp35315gbmnwm0jzssq888pmay2q6d4whdkmaz2cpwp1"))
@@ -7906,10 +7867,6 @@
   (crate-source "glib-macros" "0.20.12"
                 "0ibi9vbpbw9vvl9ax60kxq07d7a21k0jj5lva8zmliq95zv4l278"))
 
-(define rust-glib-macros-0.21.0
-  (crate-source "glib-macros" "0.21.0"
-                "1ygh1q0nnyvr000yh3764m7qk97lc8gp8xdv27mjhk51pqg2jwp7"))
-
 (define rust-glib-macros-0.21.2
   (crate-source "glib-macros" "0.21.2"
                 "17viphsjhpvhscdn52dsdz5csyhk91xs2x6jg1nl5bndxqbakvam"))
@@ -7933,11 +7890,6 @@
 (define rust-glib-sys-0.20.10
   (crate-source "glib-sys" "0.20.10"
                 "05f29ky5dnvy8vp5rdld5f8r2lgr5w7dxqr7p27km016s4g9xdwa"))
-
-(define rust-glib-sys-0.21.1
-  ;; TODO: Check bundled sources.
-  (crate-source "glib-sys" "0.21.1"
-                "0bb2pybv7ljjd1mii8kgf7baqdwl75rg3ss53s147p57yv7l6z6w"))
 
 (define rust-glib-sys-0.21.2
   (crate-source "glib-sys" "0.21.2"
@@ -8040,11 +7992,6 @@
   (crate-source "gobject-sys" "0.20.10"
                 "1niyqv22b2c38ks33i4isas4v83d3w7jx3xzzly9x63kpfacm6pc"))
 
-(define rust-gobject-sys-0.21.1
-  ;; TODO: Check bundled sources.
-  (crate-source "gobject-sys" "0.21.1"
-                "0p1d0vwkh0nn8shk62lf74n0dikld4q4whx8d9519kibxw71k6iy"))
-
 (define rust-gobject-sys-0.21.2
   (crate-source "gobject-sys" "0.21.2"
                 "0388b5gx7v72y30q27byilvbq2nnrv72l3vvgq8fqwv1fzc433jk"))
@@ -8083,10 +8030,6 @@
   (crate-source "graphene-rs" "0.20.10"
                 "16six67j0j57ynv7frxiwnsf7dslhyy67ppirad1q98lgnnxz1kb"))
 
-(define rust-graphene-rs-0.21.1
-  (crate-source "graphene-rs" "0.21.1"
-                "11aacll6bvv2js6rsg70i0jkpmdgjdi9f8ww4zw4vh348hwi8sfr"))
-
 (define rust-graphene-rs-0.21.5
   (crate-source "graphene-rs" "0.21.5"
                 "1yg23ws354622ya5qccwvf9gpjn188vhkrz1pzc3yrnvr4506c17"))
@@ -8098,11 +8041,6 @@
 (define rust-graphene-sys-0.20.10
   (crate-source "graphene-sys" "0.20.10"
                 "1sk1736b4vay2hj9qz56c0pvqa3v0mkdch3yg7hiapidpa2kln6z"))
-
-(define rust-graphene-sys-0.21.1
-  ;; TODO: Check bundled sources.
-  (crate-source "graphene-sys" "0.21.1"
-                "0aj2m7j89wfw251w8qk3r73g5cr3dd6wkqwv0p7l385p36xhb0ng"))
 
 (define rust-graphene-sys-0.21.5
   ;; TODO: Check bundled sources.
@@ -8201,10 +8139,6 @@
   (crate-source "group" "0.13.0"
                 "0qqs2p5vqnv3zvq9mfjkmw3qlvgqb0c3cm6p33srkh7pc9sfzygh"))
 
-(define rust-gsk4-0.10.0
-  (crate-source "gsk4" "0.10.0"
-                "0371657hjikib80swdz4k9b4lnigadpd60vwyvg21z6nxqyf7nym"))
-
 (define rust-gsk4-0.10.3
   (crate-source "gsk4" "0.10.3"
                 "0lx17acgawg9xn216lgikcdpy1lxjvhqk2q2mazcb5jqijfxwmg7"))
@@ -8216,11 +8150,6 @@
 (define rust-gsk4-0.9.6
   (crate-source "gsk4" "0.9.6"
                 "0mgqq5m6cm4q7ajjgw92z13z2ikpvh6zx2gwzdjrz30wjcpygxb1"))
-
-(define rust-gsk4-sys-0.10.0
-  ;; TODO: Check bundled sources.
-  (crate-source "gsk4-sys" "0.10.0"
-                "1jcz1fy5j4m912yagkqq52afrrkshw4fxvgxdzhzs6fxalfh2xld"))
 
 (define rust-gsk4-sys-0.10.3
   ;; TODO: Check bundled sources.
@@ -8327,10 +8256,6 @@
   (crate-source "gtk-sys" "0.9.2"
                 "1hd4w49iaivzjkbxi0bhabqp1ifkzg9g47n822sh12xlqxhgdpjk"))
 
-(define rust-gtk4-0.10.0
-  (crate-source "gtk4" "0.10.0"
-                "0gjv60kdg4anhn9zamkqjkjjw0mwq5kx8c0cf7pda2h88fnni3ck"))
-
 (define rust-gtk4-0.10.3
   (crate-source "gtk4" "0.10.3"
                 "1971514d9kadzj61rn28fgc4gjk77g2335sl8fpvzxy6rx9ivcmc"))
@@ -8347,10 +8272,6 @@
   (crate-source "gtk4" "0.9.7"
                 "1mi6lcwm25jz7lznrb9glaabgyk40hnvkg4fzaxlf762080xsx7j"))
 
-(define rust-gtk4-macros-0.10.0
-  (crate-source "gtk4-macros" "0.10.0"
-                "0p1inz7cpm6xxv8hkiaq9gsy9ch8q7nncn9cp4130qwmhq3d44h9"))
-
 (define rust-gtk4-macros-0.10.3
   (crate-source "gtk4-macros" "0.10.3"
                 "0hiy02q0gnfqg1bj8iycb5xmgm0jz80q2psxh521551x9ahvbkrw"))
@@ -8362,11 +8283,6 @@
 (define rust-gtk4-macros-0.9.5
   (crate-source "gtk4-macros" "0.9.5"
                 "169rqfxfczivcpz7019slsrpkx8crqjka43ymxmikp838xn7il8f"))
-
-(define rust-gtk4-sys-0.10.0
-  ;; TODO: Check bundled sources.
-  (crate-source "gtk4-sys" "0.10.0"
-                "0x0wdb1frm3d1cnql5z021l8mqxw5i1j9pk226026rz4037vs8x9"))
 
 (define rust-gtk4-sys-0.10.3
   ;; TODO: Check bundled sources.
@@ -10441,10 +10357,6 @@
   (crate-source "libadwaita" "0.7.2"
                 "14c1qy6mq5l9wlwsr2x9ijbvis283msfglxgp9kvzahnkk93a0ah"))
 
-(define rust-libadwaita-0.8.0
-  (crate-source "libadwaita" "0.8.0"
-                "0hbwbdfyv742qpz080xi8csxfafidqkpmdwm684qrgap29fp3xjd"))
-
 (define rust-libadwaita-0.8.1
   (crate-source "libadwaita" "0.8.1"
                 "0js8slasp2y4zr4hqjbqpp70rk38fq59v0sw66rl4czpz0my22gv"))
@@ -10456,11 +10368,6 @@
 (define rust-libadwaita-sys-0.7.2
   (crate-source "libadwaita-sys" "0.7.2"
                 "1nqjr514hhdc4aldlsc4y3vkpnkq9q73g2jl7ypqnmf2b209i036"))
-
-(define rust-libadwaita-sys-0.8.0
-  ;; TODO: Check bundled sources.
-  (crate-source "libadwaita-sys" "0.8.0"
-                "1qksqd6a25rsmn7g5aakgbdfx3vl76d8bzxirm80466cj009by7x"))
 
 (define rust-libadwaita-sys-0.8.1
   ;; TODO: Check bundled sources.
@@ -13602,10 +13509,6 @@
   (crate-source "pango" "0.20.12"
                 "0p5bj7k8sd2pgm7v907i9bip53ys46hahprs0jbr6rfzyq8v6xk5"))
 
-(define rust-pango-0.21.1
-  (crate-source "pango" "0.21.1"
-                "1zk2wffx29qs1dgx8z9sfca8i7qmp72j11mnmvnn999s82rzwixb"))
-
 (define rust-pango-0.21.3
   (crate-source "pango" "0.21.3"
                 "0bj08nhkibkfynkhivyxsn89bjfsnavkjzjz93rfkhhqirkplyz3"))
@@ -13633,11 +13536,6 @@
 (define rust-pango-sys-0.20.10
   (crate-source "pango-sys" "0.20.10"
                 "1yj3n87whqx6gw3vip08zbckqxfg7l5jqc2wamaf76y07xkhjs8q"))
-
-(define rust-pango-sys-0.21.1
-  ;; TODO: Check bundled sources.
-  (crate-source "pango-sys" "0.21.1"
-                "11kc250wklyraz98p6syzqq4qlc13xp0hydfkwa4wr27nk65p18z"))
 
 (define rust-pango-sys-0.21.2
   (crate-source "pango-sys" "0.21.2"
