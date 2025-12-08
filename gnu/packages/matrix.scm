@@ -463,7 +463,8 @@ asyncio_mode = auto")))))
            python-pytest-asyncio
            python-setuptools))
     (propagated-inputs
-     (list python-aiohttp
+     (list gobject-introspection
+           python-aiohttp
            python-attrs
            python-cachetools
            python-click
