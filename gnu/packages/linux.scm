@@ -3679,7 +3679,7 @@ module.")
               (base32
                "0g76fhnyzr2awwybd6c16439l80r5dv4kbfaq7cr908fr9j2w908"))))
     (build-system gnu-build-system)
-    (inputs (list `(,util-linux "lib")))
+    (inputs (list fuse `(,util-linux "lib")))
     (native-inputs (list pkg-config
                          texinfo ;for the libext2fs Info manual
                          ;; For tests.
@@ -3819,7 +3819,7 @@ module.")
              ;; Do not build shared libraries.
              (substitute-keyword-arguments (package-arguments e2fsprogs)
                ((#:configure-flags _)
-                '(list "--disable-blkid"))
+                '(list "--disable-blkid" "--disable-fuse2fs"))
                ((#:make-flags _)
                 '(list)))))))
 
