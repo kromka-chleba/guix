@@ -491,11 +491,13 @@ buffer, a file on your disk, or a string from the kill ring.")
     (version "0.7.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://elpa.gnu.org/packages/activities-" version ".tar"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/alphapapa/activities.el")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1b6d77b5h2vikfxqjlb1jx5pnij5bif788nysvvn3wlzpwdi88s0"))))
+        (base32 "068s23jmbcypvq975j1plw7nclf9jxmjxgqbjnq2i1kshrsl0llf"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-persist))
     (home-page "https://github.com/alphapapa/activities.el")
