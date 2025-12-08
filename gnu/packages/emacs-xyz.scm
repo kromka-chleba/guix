@@ -1866,23 +1866,30 @@ mode to preview a font whose file is among the installed ones.")
     (license license:gpl3+)))
 
 (define-public emacs-sed-mode
-  (package
-    (name "emacs-sed-mode")
-    (version "1.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/sed-mode-" version
-                           ".tar"))
-       (sha256
-        (base32 "0zhga0xsffdcinh10di046n6wbx35gi1zknnqzgm9wvnm2iqxlyn"))))
-    (build-system emacs-build-system)
-    (home-page "https://elpa.gnu.org/packages/sed-mode.html")
-    (synopsis "Major mode to edit sed scripts")
-    (description
-     "The Sed major mode provides basic support for sed scripts.  The
+  (let ((version "1.1")
+        (revision "0")
+        (commit "6009f57567959387b9e34068567e982b6991eb24"))
+    (package
+      (name "emacs-sed-mode")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://git.savannah.gnu.org/git/emacs/elpa.git")
+                (commit commit)))
+         (sha256
+          (base32
+           "0pr1zrnl177fkvk37n315fhz98h5zpzn2xawil7afd1qwxvrhfac"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:tests? #f))              ; No tests.
+      (home-page "https://elpa.gnu.org/packages/sed-mode.html")
+      (synopsis "Major mode to edit sed scripts")
+      (description
+       "The Sed major mode provides basic support for sed scripts.  The
 functionalities supported are font-locking and auto-indentation.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-spaceline-all-the-icons
   (package
