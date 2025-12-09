@@ -443,11 +443,12 @@ valid.  Append SUFFIX to the job name."
 (define (manifests->jobs store manifests systems)
   "Return the list of jobs for the entries in MANIFESTS, a list of file
 names, for each one of SYSTEMS."
-  (define (load-manifest manifest)
+  (define (load-manifest system manifest)
     (save-module-excursion
      (lambda ()
        (set-current-module (make-user-module '((guix profiles) (gnu))))
-       (primitive-load manifest))))
+       (parameterize ((%current-system system))
+         (primitive-load manifest)))))
 
   (define (manifest-entry-job-name entry)
     (string-append (manifest-entry-name entry) "-"
@@ -470,13 +471,14 @@ names, for each one of SYSTEMS."
                        #:max-silent-time max-silent-time
                        #:timeout timeout)))
 
-  (let ((entries (delete-duplicates
-                  (append-map (compose manifest-entries load-manifest)
-                              manifests)
-                  manifest-entry=?)))
-    (append-map (lambda (system)
-                  (map (cut manifest-entry->job <> system) entries))
-                systems)))
+  (append-map (lambda (system)
+                (map (cut manifest-entry->job <> system)
+                     (delete-duplicates
+                      (append-map (compose manifest-entries
+                                           (cut load-manifest system <>))
+                                  manifests)
+                      manifest-entry=?)))
+              systems))
 
 (define (arguments->systems arguments)
   "Return the systems list from ARGUMENTS."
