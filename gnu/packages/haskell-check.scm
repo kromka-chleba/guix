@@ -15,6 +15,7 @@
 ;;; Copyright © 2020 Carlo Holl <carloholl@gmail.com>
 ;;; Copyright © 2021 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
+;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -774,22 +775,23 @@ Haskell, inspired by the Ruby library RSpec.")
 (define-public ghc-hspec-expectations
   (package
     (name "ghc-hspec-expectations")
-    (version "0.8.2")
+    (version "0.8.4")
     (source
      (origin
        (method url-fetch)
        (uri (hackage-uri "hspec-expectations" version))
        (sha256
-        (base32
-         "1vxl9zazbaapijr6zmcj72j9wf7ka1pirrjbwddwwddg3zm0g5l1"))))
+        (base32 "1zr1pqchcwglfr5dvcrgc1l5x924n9w09n2zr68dmkqf4dzdx3bv"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "hspec-expectations")))
     ;; Tests depend on ghc-nanospec.
-    (arguments '(#:tests? #f))
+    (arguments
+     '(#:tests? #f))
     (inputs (list ghc-hunit))
     (home-page "https://github.com/sol/hspec-expectations")
     (synopsis "Catchy combinators for HUnit")
-    (description "This library provides catchy combinators for HUnit, see
+    (description
+     "This library provides catchy combinators for HUnit, see
 @uref{https://github.com/sol/hspec-expectations#readme, the README}.")
     (license license:expat)))
 
