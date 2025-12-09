@@ -738,13 +738,13 @@ used to test the in-development version of Hspec.")
 (define-public ghc-hspec
   (package
     (name "ghc-hspec")
-    (version "2.9.7")
-    (source (origin
-              (method url-fetch)
-              (uri (hackage-uri "hspec" version))
-              (sha256
-               (base32
-                "092sfqjkargxxszp9jjqa8ldjz0xv34jwn6k21q59ys5ckvsrpc1"))))
+    (version "2.11.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec" version))
+       (sha256
+        (base32 "16rh30v2mx01yi72k8kiwmwgnv98xv59d9n6ap8jpyn7p96nmsir"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "hspec")))
     (inputs (list ghc-quickcheck ghc-hspec-core hspec-discover
