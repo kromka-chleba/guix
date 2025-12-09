@@ -661,13 +661,13 @@ JUnit tool for Java.")
 (define-public hspec-discover
   (package
     (name "hspec-discover")
-    (version "2.9.7")
-    (source (origin
-              (method url-fetch)
-              (uri (hackage-uri "hspec-discover" version))
-              (sha256
-               (base32
-                "0536kdxjw6p8b6gcwvmr22jbmb6cgzbddi0fkd01b2m847z37sb5"))))
+    (version "2.11.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec-discover" version))
+       (sha256
+        (base32 "054l0k6rn7n1mm3ivhvv00zmqdkdnrp91h5l2wy6sbibrvrl8rhp"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "hspec-discover")))
     (native-inputs (list ghc-quickcheck ghc-hspec-meta ghc-mockery-bootstrap))
