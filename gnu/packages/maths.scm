@@ -2528,7 +2528,6 @@ similar to MATLAB, GNU Octave or SciPy.")
      (list doxygen graphviz m4))
     (inputs
      (list curl
-           hdf4-alt
            hdf5
            libaec
            libjpeg-turbo
@@ -2539,8 +2538,7 @@ similar to MATLAB, GNU Octave or SciPy.")
      (list #:configure-flags
            #~'("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
                "--enable-doxygen" "--enable-dot"
-               "--enable-hdf4" "--disable-dap-remote-tests")
-
+               "--disable-dap-remote-tests")
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'configure 'fix-source-date
@@ -2576,6 +2574,18 @@ library defines a machine-independent format for representing scientific data.
 Together, the interface, library, and format support the creation, access, and
 sharing of scientific data.")
     (license (license:x11-style "file://COPYRIGHT"))))
+
+(define-public netcdf-with-hdf4
+  (package
+    (inherit netcdf)
+    (name "netcdf-with-hdf4")
+    (inputs (modify-inputs (package-inputs netcdf)
+              (append hdf4-alt)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments netcdf)
+       ((#:configure-flags flags)
+        #~(cons* "--enable-hdf4"
+                 #$flags))))))
 
 (define-public netcdf-parallel-openmpi
   (package/inherit netcdf
