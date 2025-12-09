@@ -710,22 +710,25 @@ be used to extend Hspec's functionality.")
 (define-public ghc-hspec-meta
   (package
     (name "ghc-hspec-meta")
-    (version "2.9.3")
-    (source (origin
-              (method url-fetch)
-              (uri (hackage-uri "hspec-meta" version))
-              (sha256
-               (base32
-                "1raxwpsmcijl3x2h5naw6aydhbiknxvhj3x7v384bi1rqi51ainm"))))
+    (version "2.11.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec-meta" version))
+       (sha256
+        (base32 "09cl2dknj548zzmdfx1pyd27jywgcr4000hf1rscn85b4r2riymm"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "hspec-meta")))
     (inputs (list ghc-quickcheck
                   ghc-ansi-terminal
                   ghc-call-stack-boot
                   ghc-clock
+                  ghc-haskell-lexer
+                  ghc-hspec-expectations
                   ghc-quickcheck-io
                   ghc-random
-                  ghc-setenv))
+                  ghc-setenv
+                  ghc-tf-random))
     (home-page "http://hspec.github.io/")
     (synopsis "Version of Hspec to test Hspec itself")
     (description "This library provides a stable version of Hspec which is
