@@ -680,13 +680,13 @@ runs Hspec tests.")
 (define-public ghc-hspec-core
   (package
     (name "ghc-hspec-core")
-    (version "2.9.7")
-    (source (origin
-              (method url-fetch)
-              (uri (hackage-uri "hspec-core" version))
-              (sha256
-               (base32
-                "040rzqiqwkp373jjpij8lkmv08pp2ya92zzcf95bw8px215rp08n"))))
+    (version "2.11.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "hspec-core" version))
+       (sha256
+        (base32 "0qzzwyx71741v53qd9pah5bqq8md3mj0l6ykaw3d4816c2np5wdi"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "hspec-core")))
     (inputs (list ghc-hunit
