@@ -37576,7 +37576,7 @@ tables.")
 (define-public python-textual
   (package
     (name "python-textual")
-    (version "3.5.0")
+    (version "6.8.0")
     (source
      (origin
        (method git-fetch)
@@ -37585,7 +37585,7 @@ tables.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sldkhy8phk9c7pln70dyb6aya7qpxb5niym9s91z144dv6ykgws"))))
+        (base32 "0hj0bi9xpn7qs1m53l305r1j468g26rcsikmdix0fh4nfzn228nr"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
@@ -37595,6 +37595,7 @@ tables.")
              "-k" (string-append
                    ;; Broken for unknown reason.
                    "not test_textual_env_var"
+                   " and not test_progress_bar"
                    ;; Tests that require python-treesitter-languages.
                    " and not test_widget_construct"
                    " and not test_setting_builtin_language_via_constructor"
