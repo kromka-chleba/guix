@@ -112,6 +112,9 @@ text editors.")
                   (("tput colors")
                    (string-append tput " colors"))
                   (("locale") locale)
+                  ;; If other commands are added, it's important to bypass the
+                  ;; has_cmd checks, since it relies on command -v.
+                  (("has_cmd tput") "true")
                   (("file -")
                    (string-append file " -")))))))))
     (inputs
