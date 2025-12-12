@@ -3970,9 +3970,10 @@ perform various useful functions such as:
                            #$(this-package-input "catch2"))
                    (format #f "-DSpectra_DIR=~a/share/pectra/cmake/"
                            #$(this-package-input "spectra"))
-                   ;; The following options disable tests for the corresponding
-                   ;; libraries.  The options do not affect whether the libraries are
-                   ;; linked to libigl or not, they are used for tests.
+                   ;; The following options disable tests for the
+                   ;; corresponding libraries.  The options do not affect
+                   ;; whether the libraries are linked to libigl or not, they
+                   ;; are used for tests.
                    "-DLIBIGL_WITH_COMISO=OFF"
                    "-DLIBIGL_WITH_CORK=OFF"
                    "-DLIBIGL_MATLAB=OFF"
@@ -3981,229 +3982,225 @@ perform various useful functions such as:
                    ;;      <https://github.com/libigl/libigl/issues/2313>
                    "-DLIBIGL_GLFW_TESTS=OFF")
            #:build-type "Release"
-       #:phases
-       #~(modify-phases %standard-phases
-         (add-after 'unpack 'unpack-external
-           (lambda _
-             (setenv "HOME" (getcwd)) ;; cmake needs this to export modules
-             (mkdir "external")
-             (copy-recursively (assoc-ref %build-inputs "libigl-glad")
-                               "external/glad")
-             (copy-recursively (assoc-ref %build-inputs "libigl-test-data")
-                               "external/test-data")
-             (copy-recursively (assoc-ref %build-inputs "libigl-comiso")
-                               "external/comiso")
-             (copy-recursively (assoc-ref %build-inputs "libigl-tetgen")
-                               "external/tetgen")
-             (copy-recursively (assoc-ref %build-inputs "libigl-predicates")
-                               "external/predicates")
-             (copy-recursively (assoc-ref %build-inputs "imguizmo")
-                               "external/imguizmo")
-             (copy-recursively (assoc-ref %build-inputs "eigen")
-                               "external/eigen")))
-         (add-after 'unpack-external 'patch-cmake
-           (lambda* (#:key inputs #:allow-other-keys)
-             (define (source-dir library-name)
-               (format #f "SOURCE_DIR \"~a\""
-                       (assoc-ref %build-inputs library-name)))
-             (define (fix-external-library cmake source)
-               (substitute* (format #f "cmake/recipes/external/~a.cmake"
-                                    cmake)
-                 (("GIT_REPOSITORY.*") (source-dir source))
-                 (("GIT_TAG.*")        "")))
-             ;; Fix references to external libraries
-             (fix-external-library "comiso" "libigl-comiso")
-             (fix-external-library "tetgen" "libigl-tetgen")
-             (fix-external-library "triangle" "libigl-triangle")
-             (fix-external-library "predicates" "libigl-predicates")
-             (fix-external-library "glad" "libigl-glad")
-             (fix-external-library "libigl_tests_data" "libigl-test-data")
-             (fix-external-library "stb" "libigl-stb")
-             (substitute* "cmake/recipes/external/imguizmo.cmake"
-               (("if\\(TARGET imguizmo::imguizmo\\)")
-                "if(true)")
-               (("target_link_libraries.*")
-                (format #f "include_directories(~a/include/imgui/)"
-                        (assoc-ref inputs "imgui"))))
-
-             (substitute* "cmake/igl/igl_add_test.cmake"
-               (("include\\(\".*/contrib/Catch.cmake\"\\)")
-                (format #f
-                        "include(\"~a/lib/cmake/Catch2/Catch.cmake\")"
-                        (assoc-ref inputs "catch2"))))
-             (substitute* "cmake/recipes/external/cgal.cmake"
-               (("FetchContent_Populate\\(cgal\\)")
-                "find_package(CGAL CONFIG COMPONENTS Core)\nreturn()"))
-             (substitute* "cmake/recipes/external/eigen.cmake"
-               (("FetchContent_Populate\\(eigen\\)")
-                "find_package(Eigen3 CONFIG REQUIRED)\nreturn()"))
-             (substitute* "cmake/recipes/external/catch2.cmake"
-               (("message.*")
-                "find_package(Catch2 CONFIG)\nreturn()"))
-             (substitute* "cmake/recipes/external/libigl_imgui_fonts.cmake"
-               (("if\\(TARGET igl::imgui_fonts\\)")
-                "if(true)"))
-             (substitute* "cmake/recipes/external/tinyxml2.cmake"
-               (("FetchContent_Populate\\(tinyxml2\\)")
-                "find_package(tinyxml2 CONFIG REQUIRED)\nreturn()"))
-             (substitute* "cmake/recipes/external/embree.cmake"
-               (("FetchContent_MakeAvailable\\(embree\\)")
-                (string-join (list "find_package(Embree 3 CONFIG)"
-                                   "add_library(embree::embree ALIAS embree)"
-                                   "return()")
-                             "\n")))
-             (substitute* "cmake/recipes/external/glfw.cmake"
-               (("FetchContent_MakeAvailable\\(glfw\\)")
-                (string-join
-                 (list "find_package(glfw3 CONFIG REQUIRED)"
-                       "add_library(glfw::glfw ALIAS glfw)"
-                       "return()")
-                 "\n")))
-             (substitute* "cmake/recipes/external/imgui.cmake"
-               (("FetchContent_MakeAvailable\\(imgui\\)")
-                "return()"))))
-
-         (add-after 'unpack-external 'fix-assertions
-           (lambda _
-             ;; Current Tetgen version has a bug.
-             (substitute* "include/igl/copyleft/tetgen/tetgenio_to_tetmesh.cpp"
-               (("assert\\(out.numberofpoints == out.numberofpointmarkers\\);")
-                ";"))
-             ;; CGAL has a bug in assertion as well.
-             (substitute* "include/igl/copyleft/cgal/trim_with_solid.cpp"
-               (("assert\\(I.size\\(\\) == Vr.rows\\(\\)\\);")
-                ";"))))
-
-         ;; XXX: Install modules as CMake fails to install them.
-         (add-after 'install 'install-includes
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (include-dir (string-append out "/include/igl/")))
-               (for-each (lambda (module)
-                           (copy-recursively (format #f
-                                                     "../source/include/igl/~a"
-                                                     module)
-                                             (format #f
-                                                     "~a/~a"
-                                                     include-dir
-                                                     module)))
-                         (list "copyleft/cgal"
-                               "copyleft/opengl2"
-                               "copyleft/tetgen"
-                               "embree"
-                               "opengl"
-                               "predicates"
-                               "xml"))))))))
-
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'unpack-external
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (setenv "HOME" (getcwd)) ;; cmake needs this to export modules
+                   (mkdir "external")
+                   ;; libigl-glad
+                   (copy-recursively
+                    (dirname
+                     (dirname (search-input-file inputs "src/glad.c")))
+                    "external/glad")
+                   ;; libigl-test-data
+                   (copy-recursively
+                    (dirname
+                     (search-input-file inputs "arm-weights.dmat"))
+                    "external/test-data")
+                   ;; libigl-comiso
+                   (copy-recursively
+                    (dirname
+                     (search-input-file inputs "CoMISo.cmake"))
+                    "external/comiso")
+                   ;; libigl-tetgen
+                   (copy-recursively
+                    (dirname
+                     (search-input-file inputs "tetgen.cxx"))
+                    "external/tetgen")
+                   ;; libigl-predicates
+                   (copy-recursively
+                    (dirname
+                     (search-input-file inputs "predicates.c"))
+                    "external/predicates")
+                   ;; imguizmo
+                   (copy-recursively
+                    (dirname
+                     (search-input-file inputs "ImGuizmo.cpp"))
+                    "external/imguizmo")
+                   (copy-recursively
+                    #$(this-package-input "eigen") "external/eigen")))
+               (add-after 'unpack-external 'patch-cmake
+                 (lambda _
+                   (define (source-dir library-name)
+                     (format #f "SOURCE_DIR \"~a\""
+                             (assoc-ref %build-inputs library-name)))
+                   (define (fix-external-library cmake source)
+                     (substitute* (format #f "cmake/recipes/external/~a.cmake"
+                                          cmake)
+                       (("GIT_REPOSITORY.*") (source-dir source))
+                       (("GIT_TAG.*")        "")))
+                   ;; Fix references to external libraries
+                   (fix-external-library "comiso" "libigl-comiso")
+                   (fix-external-library "tetgen" "libigl-tetgen")
+                   (fix-external-library "triangle" "libigl-triangle")
+                   (fix-external-library "predicates" "libigl-predicates")
+                   (fix-external-library "glad" "libigl-glad")
+                   (fix-external-library "libigl_tests_data" "libigl-test-data")
+                   (fix-external-library "stb" "libigl-stb")
+                   (substitute* "cmake/recipes/external/imguizmo.cmake"
+                     (("if\\(TARGET imguizmo::imguizmo\\)")
+                      "if(true)")
+                     (("target_link_libraries.*")
+                      (format #f "include_directories(~a/include/imgui/)"
+                              #$(this-package-input "imgui"))))
+                   (substitute* "cmake/igl/igl_add_test.cmake"
+                     (("include\\(\".*/contrib/Catch.cmake\"\\)")
+                      (format #f
+                              "include(\"~a/lib/cmake/Catch2/Catch.cmake\")"
+                              #$(this-package-native-input "catch2"))))
+                   (substitute* "cmake/recipes/external/cgal.cmake"
+                     (("FetchContent_Populate\\(cgal\\)")
+                      "find_package(CGAL CONFIG COMPONENTS Core)\nreturn()"))
+                   (substitute* "cmake/recipes/external/eigen.cmake"
+                     (("FetchContent_Populate\\(eigen\\)")
+                      "find_package(Eigen3 CONFIG REQUIRED)\nreturn()"))
+                   (substitute* "cmake/recipes/external/catch2.cmake"
+                     (("message.*")
+                      "find_package(Catch2 CONFIG)\nreturn()"))
+                   (substitute* "cmake/recipes/external/libigl_imgui_fonts.cmake"
+                     (("if\\(TARGET igl::imgui_fonts\\)")
+                      "if(true)"))
+                   (substitute* "cmake/recipes/external/tinyxml2.cmake"
+                     (("FetchContent_Populate\\(tinyxml2\\)")
+                      "find_package(tinyxml2 CONFIG REQUIRED)\nreturn()"))
+                   (substitute* "cmake/recipes/external/embree.cmake"
+                     (("FetchContent_MakeAvailable\\(embree\\)")
+                      (string-join (list "find_package(Embree 3 CONFIG)"
+                                         "add_library(embree::embree ALIAS embree)"
+                                         "return()")
+                                   "\n")))
+                   (substitute* "cmake/recipes/external/glfw.cmake"
+                     (("FetchContent_MakeAvailable\\(glfw\\)")
+                      (string-join
+                       (list "find_package(glfw3 CONFIG REQUIRED)"
+                             "add_library(glfw::glfw ALIAS glfw)"
+                             "return()")
+                       "\n")))
+                   (substitute* "cmake/recipes/external/imgui.cmake"
+                     (("FetchContent_MakeAvailable\\(imgui\\)")
+                      "return()"))))
+               (add-after 'unpack-external 'fix-assertions
+                 (lambda _
+                   ;; Current Tetgen version has a bug.
+                   (substitute* "include/igl/copyleft/tetgen/tetgenio_to_tetmesh.cpp"
+                     (("assert\\(out.numberofpoints == out.numberofpointmarkers\\);")
+                      ";"))
+                   ;; CGAL has a bug in assertion as well.
+                   (substitute* "include/igl/copyleft/cgal/trim_with_solid.cpp"
+                     (("assert\\(I.size\\(\\) == Vr.rows\\(\\)\\);")
+                      ";"))))
+               ;; XXX: Install modules as CMake fails to install them.
+               (add-after 'install 'install-includes
+                 (lambda _
+                   (for-each
+                    (lambda (module)
+                      (copy-recursively
+                       (format #f "../source/include/igl/~a" module)
+                       (format #f "~a/~a"
+                               (string-append #$output "/include/igl/")
+                               module)))
+                    (list "copyleft/cgal"
+                          "copyleft/opengl2"
+                          "copyleft/tetgen"
+                          "embree"
+                          "opengl"
+                          "predicates"
+                          "xml")))))))
     (native-inputs (list catch2))
     ;; XXX: Inputs are currently only used to build tests.
     ;;      We would need to patch the CMake recipe to build a shared library
     ;;      with all of these.
     (inputs
-     `(("boost" ,boost-1.83)
-       ("cgal" ,cgal)
-       ("eigen" ,eigen)
-       ("embree" ,embree-3)
-       ("glfw" ,glfw-3.4)
-       ("gmp" ,gmp)
-       ("mesa" ,mesa)
-       ("mpfr" ,mpfr)
-       ("tbb" ,tbb)
-       ("tinyxml2" ,tinyxml2)
-       ("openblas" ,openblas)
-       ("imgui" ,imgui)
-       ("spectra" ,spectra)
-       ;; When updating this package, update commit fields below according to
-       ;; the hashes listed in "cmake/LibiglDownloadExternal.cmake".
-       ("libigl-test-data"
-        ,(origin
-           (method git-fetch)
-           (uri (git-reference
-                 (url "https://github.com/libigl/libigl-tests-data")
-                 (commit "19cedf96d70702d8b3a83eb27934780c542356fe")))
-           (file-name (git-file-name "libigl-test-data" version))
-           (sha256
-            (base32 "1wxglrxw74xw4a4jmmjpm8719f3mnlbxbwygjb4ddfixxxyya4i2"))))
-       ("libigl-glad"
-        ,(let* ((commit "ead2d21fd1d9f566d8f9a9ce99ddf85829258c7a")
-                (revision "0")
-                (version (git-version "0.0.0" revision commit)))
+     (list boost-1.83
+           cgal
+           eigen
+           embree-3
+           glfw-3.4
+           gmp
+           imgui
+           mesa
+           mpfr
+           openblas
+           spectra
+           tbb
+           tinyxml2
+           ;; When updating this package, update commit fields below according to
+           ;; the hashes listed in "cmake/LibiglDownloadExternal.cmake".
            (origin
              (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/libigl/libigl-glad")
-                   (commit commit)))
-             (file-name (git-file-name "libigl-glad" version))
-             (sha256
-              (base32 "079fd5yrbd713nq7slhhgq79wns85pc564ydlkjl9gf43d3220ay")))))
-       ("libigl-stb"
-        ,(origin
-           (method git-fetch)
-           (uri (git-reference
-                 (url "https://github.com/libigl/libigl-stb.git")
-                 (commit "cd0fa3fcd90325c83be4d697b00214e029f94ca3")))
-           (file-name (git-file-name "libigl-stb" version))
-           (sha256
-            (base32 "0wwlb370z40y63ic3ny6q7lxibhixg2k1pjdkl4ymzv79zld28kj"))))
-       ("libigl-predicates"
-        ,(let* ((commit "50c2149e7a520d13cd10e9aeff698bd68edd5a4f")
-                (revision "0")
-                (version (git-version "0.0.0" revision commit)))
+             (uri
+              (git-reference
+                (url "https://github.com/libigl/libigl-tests-data")
+                (commit "19cedf96d70702d8b3a83eb27934780c542356fe")))
+             (file-name (git-file-name "libigl-test-data" version))
+             (sha256 (base32 "1wxglrxw74xw4a4jmmjpm8719f3mnlbxbwygjb4ddfixxxyya4i2")))
+           (let* ((commit "ead2d21fd1d9f566d8f9a9ce99ddf85829258c7a")
+                  (revision "0")
+                  (version (git-version "0.0.0" revision commit)))
+             (origin
+               (method git-fetch)
+               (uri
+                (git-reference
+                  (url "https://github.com/libigl/libigl-glad") (commit commit)))
+               (file-name (git-file-name "libigl-glad" version))
+               (sha256 (base32 "079fd5yrbd713nq7slhhgq79wns85pc564ydlkjl9gf43d3220ay"))))
            (origin
              (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/libigl/libigl-predicates.git")
-                   (commit commit)))
-             (file-name (git-file-name "libigl-predicates" version))
-             (sha256
-              (base32 "0yiqhzry2qhb1p0v9sldlnpqsn4y8cln8r6y08lafkc9kc4qy8jz")))))
-       ;; TODO: Package tetgen separately from <http://www.tetgen.org>
-       ("libigl-tetgen"
-        ,(let* ((commit "4f3bfba3997f20aa1f96cfaff604313a8c2c85b6")
-                (revision "0")
-                (version (git-version "0.0.0" revision commit)))
+             (uri
+              (git-reference
+                (url "https://github.com/libigl/libigl-stb.git")
+                (commit "cd0fa3fcd90325c83be4d697b00214e029f94ca3")))
+             (file-name (git-file-name "libigl-stb" version))
+             (sha256 (base32 "0wwlb370z40y63ic3ny6q7lxibhixg2k1pjdkl4ymzv79zld28kj")))
+           (let* ((commit "50c2149e7a520d13cd10e9aeff698bd68edd5a4f")
+                  (revision "0")
+                  (version (git-version "0.0.0" revision commit)))
+             (origin
+               (method git-fetch)
+               (uri
+                (git-reference
+                  (url "https://github.com/libigl/libigl-predicates.git") (commit commit)))
+               (file-name (git-file-name "libigl-predicates" version))
+               (sha256 (base32 "0yiqhzry2qhb1p0v9sldlnpqsn4y8cln8r6y08lafkc9kc4qy8jz"))))
+           ;; TODO: Package tetgen separately from <http://www.tetgen.org>
+           (let* ((commit "4f3bfba3997f20aa1f96cfaff604313a8c2c85b6")
+                  (revision "0")
+                  (version (git-version "0.0.0" revision commit)))
+             (origin
+               (method git-fetch)
+               (uri
+                (git-reference
+                  (url "https://github.com/libigl/tetgen.git") (commit commit)))
+               (file-name (git-file-name "libigl-tetgen" version))
+               (sha256 (base32 "1k724syssw37py7kwmibk3sfwkkgyjyy7qkijnhn6rjm91g8qxsg"))))
+           (let* ((commit "562efe333edc8e649dc101469614f43378b1eb55")
+                  (revision "0")
+                  (version (git-version "0.0.0" revision commit)))
+             (origin
+               (method git-fetch)
+               (uri
+                (git-reference
+                  (url "https://github.com/libigl/comiso.git") (commit commit)))
+               (file-name (git-file-name "libigl-comiso" version))
+               (sha256 (base32 "048zryh9ydd1dqwzs14vj7r3fd6yyq6n4zl6d1b0yb1iwrqfy6ba"))))
            (origin
              (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/libigl/tetgen.git")
-                   (commit commit)))
-             (file-name (git-file-name "libigl-tetgen" version))
-             (sha256
-              (base32 "1k724syssw37py7kwmibk3sfwkkgyjyy7qkijnhn6rjm91g8qxsg")))))
-       ("libigl-comiso"
-        ,(let* ((commit "562efe333edc8e649dc101469614f43378b1eb55")
-                (revision "0")
-                (version (git-version "0.0.0" revision commit)))
+             (uri
+              (git-reference
+                (url "https://github.com/libigl/triangle.git")
+                (commit "6bbd92c7ddd6c803c403e005e1132eadb38fbe68")))
+             (file-name (git-file-name "libigl-triangle" version))
+             (sha256 (base32 "0d35mfqwdk99xn1lpjzz9w5axq016r6xy5vr00lb4mvb05limxl3")))
+           ;; XXX: This is a source-only library which is currently required only
+           ;;      for libigl.
            (origin
              (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/libigl/comiso.git")
-                   (commit commit)))
-             (file-name (git-file-name "libigl-comiso" version))
-             (sha256
-              (base32 "048zryh9ydd1dqwzs14vj7r3fd6yyq6n4zl6d1b0yb1iwrqfy6ba")))))
-       ("libigl-triangle"
-        ,(origin
-           (method git-fetch)
-           (uri (git-reference
-                 (url "https://github.com/libigl/triangle.git")
-                 (commit "6bbd92c7ddd6c803c403e005e1132eadb38fbe68")))
-           (file-name (git-file-name "libigl-triangle" version))
-           (sha256
-            (base32 "0d35mfqwdk99xn1lpjzz9w5axq016r6xy5vr00lb4mvb05limxl3"))))
-
-       ;; XXX: This is a source-only library which is currently required only
-       ;;      for libigl.
-
-       ("imguizmo"
-        ,(origin
-           (method git-fetch)
-           (uri (git-reference
-                 (url "https://github.com/CedricGuillemet/ImGuizmo")
-                 (commit "1.83")))
-           (file-name (git-file-name "imguizmo" version))
-           (sha256
-            (base32 "14ywf96nvxf5c081pwypyzjwx9vyq78glbzinc81558v1sxiy2v0"))))))
+             (uri
+              (git-reference
+                (url "https://github.com/CedricGuillemet/ImGuizmo") (commit "1.83")))
+             (file-name (git-file-name "imguizmo" version))
+             (sha256 (base32 "14ywf96nvxf5c081pwypyzjwx9vyq78glbzinc81558v1sxiy2v0")))))
     (home-page "https://libigl.github.io/")
     (synopsis "Simple C++ geometry processing library")
     (description "This library provides functionality for shape modelling,
