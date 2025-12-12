@@ -100,6 +100,8 @@
   #:use-module (gnu packages m4)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
+  #:use-module (gnu packages ninja)
+  #:use-module (gnu packages opencl)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
@@ -1124,6 +1126,57 @@ supported devices, as well as input/output file format support.")
        "Libsigrokdecode is a shared library written in C, which provides
 (streaming) protocol decoding functionality.")
       (license license:gpl3+))))
+
+(define-public loom
+  (package
+    (name "loom")
+    (version "0.14.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/broccolimicro/loom")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1flvw3wkc93j9gicmg24vp6a9ydfvk54f7rkdl84ia4rz036idca"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'patch-sources
+            (lambda _
+              (substitute* "bin/ckt/src/weaver/project.cpp"
+                  (("/usr/local/share/tech")
+                   (string-append #$output "/share/tech")))))
+          (add-before 'check 'enable-tests
+              (lambda _
+                ;; Build the tests.
+                (invoke "make" "test")
+                ;; Fontconfig needs a writable cache.
+                (setenv "HOME" "/tmp/home"))))))
+    (native-inputs
+     (list cmake-minimal
+           graphviz-minimal
+           mesa-opencl))
+    (inputs
+     (list googletest
+           libclc
+           ninja
+           opencl-clhpp
+           opencl-headers
+           opencl-icd-loader
+           python-wrapper
+           qhull
+           zlib))
+    (home-page "https://broccolimicro.io/")
+    (synopsis "Weaver circuit compiler")
+    (description "Loom is a tool to ease the design of complex computer architectures that are
+both performant and energy efficient.  It is a circuit compiler for the Weaver
+language.")
+    (license license:gpl3+)))
 
 (define-public m8c
   (package
