@@ -13,6 +13,7 @@
 ;;; Copyright © 2021 Mathieu Laparie <mlaparie@disr.it>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 VnPower <vnpower@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -60,6 +61,7 @@
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages graphics)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages hunspell)
   #:use-module (gnu packages icu4c)
@@ -69,6 +71,7 @@
   #:use-module (gnu packages libreoffice)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages music)
+  #:use-module (gnu packages markup)
   #:use-module (gnu packages pantheon)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages pkg-config)
@@ -83,8 +86,10 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages speech)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages unicode)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
@@ -358,6 +363,111 @@ e-books for convenient reading.")
                    license:public-domain
                    license:silofl1.1
                    license:cc-by-sa3.0))))
+
+(define-public crengine-ng
+  (package
+    (name "crengine-ng")
+    (version "0.9.13")
+    (source (origin
+	      (method git-fetch)
+	      (uri (git-reference
+		     (url "https://gitlab.com/coolreader-ng/crengine-ng.git")
+		     (commit version)))
+	      (sha256
+	       (base32 "1j759fcinzc5iyw4bfrvwqjhp7liiakhcqkajiagpzrcl41b3xyk"))
+	      (patches
+               (search-patches "crengine-ng-use-system-lib.patch"))
+	      (snippet
+	       ;; TODO: Unbundle antiword, chmlib, qimagescale
+	       ;; These libraries were patched in some way, so I decided to
+	       ;; leave them be for now. The deleted ones below either does not
+	       ;; contain any patches or unused in this build.
+               #~(begin
+		   (use-modules (guix build utils))
+		   (delete-file-recursively "thirdparty/cmark-gfm")
+		   (delete-file-recursively "thirdparty/md4c")
+		   (delete-file-recursively "thirdparty/nanosvg")
+		   (delete-file-recursively "thirdparty/rfc6234-shas")))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f ;; no tests
+	   #:configure-flags
+	   #~(list
+	      "-DCRE_BUILD_SHARED=ON"
+	      "-DCRE_BUILD_STATIC=ON"
+	      "-DADD_DEBUG_EXTRA_OPTS=OFF"
+	      "-DDOC_DATA_COMPRESSION_LEVEL=1"
+	      "-DDOC_BUFFER_SIZE=0x400000"
+	      "-DMAX_IMAGE_SCALE_MUL=0"
+	      "-DGRAY_BACKBUFFER_BITS=4"
+	      "-DENABLE_LARGEFILE_SUPPORT=ON"
+	      "-DUSE_COLOR_BACKBUFFER=ON"
+	      "-DUSE_LOCALE_DATA=ON"
+	      "-DLDOM_USE_OWN_MEM_MAN=ON"
+	      "-DUSE_GIF=ON"
+	      "-DBUILD_TOOLS=OFF"
+	      "-DENABLE_UNITTESTING=OFF"
+	      "-DOFFLINE_BUILD_MODE=ON"
+	      "-DENABLE_LTO=OFF"
+	      "-DUSE_NANOSVG=ON"
+	      "-DUSE_CHM=ON"
+	      "-DUSE_ANTIWORD=ON"
+	      "-DUSE_SHASUM=OFF"
+	      "-DUSE_CMARK_GFM=OFF"
+	      "-DUSE_MD4C=ON"
+	      "-DWITH_LIBPNG=ON"
+	      "-DWITH_LIBJPEG=ON"
+	      "-DWITH_FREETYPE=ON"
+	      "-DWITH_HARFBUZZ=ON"
+	      "-DWITH_LIBUNIBREAK=ON"
+	      "-DWITH_FRIBIDI=ON"
+	      "-DWITH_ZSTD=ON"
+	      "-DWITH_UTF8PROC=ON"
+	      "-DUSE_FONTCONFIG=ON")))
+    (inputs (list zlib
+		  libpng
+		  libjpeg-turbo
+		  freetype
+		  harfbuzz
+		  fontconfig
+		  fribidi
+		  libunibreak
+		  utf8proc
+		  md4c
+		  nanosvg
+		  `(,zstd "lib")))
+    (synopsis "Cross-platform library designed to implement text viewers and e-book readers")
+    (description "@code{crengine-ng} is cross-platform library designed to implement text viewers
+and e-book readers.")
+    (home-page "https://gitlab.com/coolreader-ng/crengine-ng")
+    (license license:gpl2+)))
+
+(define-public crqt-ng
+  (package
+    (name "crqt-ng")
+    (version "1.0.15")
+    (source (origin
+	      (method git-fetch)
+	      (uri (git-reference
+		     (url "https://gitlab.com/coolreader-ng/crqt-ng.git")
+		     (commit version)))
+	      (file-name (git-file-name name version))
+	      (sha256
+	       (base32 "10hd8lpv4das3fr41dqjqc34vnl4mnzaa5px8jsl40s65wap0c8p"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:tests? #f  ;; no tests
+      #:qtbase qtbase-5))
+    (native-inputs
+     (list qttools-5))
+    (inputs (list crengine-ng
+		  qtwayland-5))
+    (synopsis "Cross-platform open source e-book reader using crengine-ng")
+    (description "@code{crqt-ng} is cross-platform open source e-book reader using @code{crengine-ng}.
+It is a fork of the CoolReader project.")
+    (home-page "https://gitlab.com/coolreader-ng/crqt-ng")
+    (license license:gpl2+)))
 
 (define-public ebook-tools
   (package
