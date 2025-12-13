@@ -984,6 +984,30 @@ Features include:
 configuration instructions.")
     (license license:expat)))
 
+(define-public iwmenu
+  (package
+    (name "iwmenu")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/e-tho/iwmenu")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11myjsrsl2kz8f9g6swhd5lfd3vzhkh8rsympr5vfpiiajibn1sy"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f))
+    (inputs (cargo-inputs 'iwmenu))
+    (home-page "https://github.com/e-tho/iwmenu")
+    (synopsis "Launcher-driven Wi-Fi manager for Linux")
+    (description
+     "@code{iwmenu} (iNet Wireless Menu) manages Wi-Fi through your launcher of choice.
+Supported launchers are: dmenu, fuzzel, rofi, walker and custom.")
+    (license license:gpl3)))
+
 (define-public evremap
   (let ((commit "cc618e8b973f5c6f66682d1477b3b868a768c545")) ;version bump
     (package
