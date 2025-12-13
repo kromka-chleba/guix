@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2012-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013 Cyril Roelandt <tipecaml@gmail.com>
+;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2015, 2016, 2018, 2019, 2020 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2015-2018, 2020-2023 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2015, 2016 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
@@ -2876,6 +2877,27 @@ reliability depending on the manufacturer.  This will often include usage
 status for the CPU sockets, expansion slots (e.g. AGP, PCI, ISA) and memory
 module slots, and the list of I/O ports (e.g. serial, parallel, USB).")
     (license license:gpl2+)))
+
+(define-public acct
+  (package
+    (name "acct")
+    (version "6.6.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnu/acct/acct-"
+                           version ".tar.gz"))
+       (sha256
+        (base32
+         "0gv6m8giazshvgpvwbng98chpas09myyfw1zr2y7hqxib0mvy5ac"))))
+    (build-system gnu-build-system)
+    (synopsis "Standard login and process accounting utilities")
+    (description
+     "GNU acct provides a means for system administrators to determine
+system usage patterns.  It provides information on, for example, connections,
+programs executed, and system resources used.")
+    (home-page "https://www.gnu.org/software/acct/")
+    (license license:gpl3+)))
 
 (define-public acpica
   (package
