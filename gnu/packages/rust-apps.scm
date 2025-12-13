@@ -1008,6 +1008,31 @@ configuration instructions.")
 Supported launchers are: dmenu, fuzzel, rofi, walker and custom.")
     (license license:gpl3)))
 
+(define-public bzmenu
+  (package
+    (name "bzmenu")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/e-tho/bzmenu")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1r3l1v0kgkrfz6b7yjpsin09yy273bip3h2s7d5phrvh73ngyxp5"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f))
+    (native-inputs (list pkg-config))
+    (inputs (cons* dbus (cargo-inputs 'bzmenu)))
+    (home-page "https://github.com/e-tho/bzmenu")
+    (synopsis "Launcher-driven Bluetooth manager for Linux")
+    (description
+     "@code{bzmenu} (BlueZ Menu) manages Bluetooth through your launcher of choice.
+Supported launchers are: dmenu, fuzzel, rofi, walker and custom.")
+    (license license:gpl3)))
+
 (define-public evremap
   (let ((commit "cc618e8b973f5c6f66682d1477b3b868a768c545")) ;version bump
     (package
