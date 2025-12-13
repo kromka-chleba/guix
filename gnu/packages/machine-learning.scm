@@ -3698,45 +3698,35 @@ in a fast and accurate way.")
       #:tests? #f ; all tests require network access
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'preparations
+          (add-after 'unpack 'chdir
             (lambda _
-              ;; Move python-package content to parent directory to silence
-              ;; some warnings about files not being found if we chdir.
-              (rename-file "python-package/xgboost" "xgboost")
-              (rename-file "python-package/README.rst" "README.rst")
-              (rename-file "python-package/setup.cfg" "setup.cfg")
-              (rename-file "python-package/setup.py" "setup.py")
-              ;; Skip rebuilding libxgboost.so.
-              (substitute* "setup.py"
-                (("ext_modules=\\[CMakeExtension\\('libxgboost'\\)\\],") "")
-                (("'install_lib': InstallLib,") ""))
-              ;; Remove bad dataset.  This has been removed in scipy.
-              (substitute* "tests/python/testing.py"
-                (("TestDataset\\('boston', get_boston, 'reg:squarederror', 'rmse'\\),")
-                 "")
-                (("datasets.load_boston")
-                 "datasets.load_digits"))))
-          (add-after 'install 'install-version-and-libxgboost
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let* ((pylib (string-append #$output "/lib/python"
-                                           #$(version-major+minor
-                                              (package-version python))
-                                           "/site-packages"))
-                     (xgbdir (string-append pylib "/xgboost"))
-                     (version-file (string-append xgbdir "/VERSION"))
-                     (libxgboost (string-append (assoc-ref inputs "xgboost")
-                                                "/lib/libxgboost.so")))
-                (with-output-to-file version-file
-                  (lambda ()
-                    (display #$(package-version xgboost))))
-                (mkdir-p (string-append xgbdir "/lib"))
-                (symlink libxgboost (string-append xgbdir "/lib"
-                                                   "/libxgboost.so"))))))))
+              (chdir "python-package")))
+          ;; (add-after 'install 'install-version-and-libxgboost
+          ;;   (lambda* (#:key inputs #:allow-other-keys)
+          ;;     (let* ((pylib (string-append #$output "/lib/python"
+          ;;                                  #$(version-major+minor
+          ;;                                     (package-version python))
+          ;;                                  "/site-packages"))
+          ;;            (xgbdir (string-append pylib "/xgboost"))
+          ;;            (version-file (string-append xgbdir "/VERSION"))
+          ;;            (libxgboost (string-append (assoc-ref inputs "xgboost")
+          ;;                                       "/lib/libxgboost.so")))
+          ;;       (with-output-to-file version-file
+          ;;         (lambda ()
+          ;;           (display #$(package-version xgboost))))
+          ;;       (mkdir-p (string-append xgbdir "/lib"))
+          ;;       (symlink libxgboost (string-append xgbdir "/lib"
+          ;;                                          "/libxgboost.so")))))
+          )))
     (native-inputs
-     (list python-pandas python-pytest python-scikit-learn python-setuptools
-           python-wheel))
+     (list cmake
+           python-hatchling
+           python-pandas
+           python-pytest
+           python-scikit-learn
+           python-setuptools))
     (inputs
-     (list xgboost))
+     (list xgboost dmlc-core))
     (propagated-inputs
      (list python-numpy python-scipy))
     (synopsis "Python interface for the XGBoost library")))
