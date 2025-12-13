@@ -27340,6 +27340,33 @@ which may be tedious to do by hand.  This comint mode is barebones and
 unstructured, meant for quick @code{JavaScript} experiments.")
     (license license:gpl3+)))
 
+(define-public emacs-firefox-release-notes
+  (package
+    (name "emacs-firefox-release-notes")
+    (version "1.6")
+    (license license:gpl3+)
+    (home-page "https://codeberg.org/emacs-weirdware/firefox-release-notes")
+    (synopsis "Work with Firefox release notes")
+    (description "Aids maintenance of Firefox-based packages in Guix
+by fetching CVEs from Firefox release notes and formatting them for
+Guix commit message.")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url (string-append "https://codeberg.org/emacs-weirdware/"
+                              name ".git"))
+          (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vyp6y33mpx2snvy249irwppx44ldpan0zl1i5b932xjz5rwjspc"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:emacs emacs                     ; Needs emacs for libxml.
+      #:tests? #f))))                   ; No tests.
+
 (define-public emacs-emacsql
   (package
     (name "emacs-emacsql")
