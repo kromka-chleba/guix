@@ -1277,8 +1277,14 @@ intrusive VPN.  This is also known as a split-tunnel VPN, since it splits your
 traffic between the VPN tunnel and your normal network interfaces.
 
 By default, vpn-slice only routes traffic for specific hosts or subnets
-through the VPN.  It automatically looks up named hosts, using the VPN's DNS
-servers, and adds entries for them to your @file{/etc/hosts} (which it cleans
-up after VPN disconnection), however it does not otherwise alter your
-@file{/etc/resolv.conf} at all.")
+through the VPN.
+
+vpn-slice automatically looks up named hosts, using the VPN's DNS servers,
+and tries to add entries for them to your @file{/etc/hosts}.  However, this
+will not work on Guix because @code{/etc/hosts} is a symlink to a read-only
+file in the store.  It is therefore necessary to call vpn-slice with the
+@code{--no-host-names --no-ns-hosts} arguments and add the host entries
+explicitly to the system configuration through a @code{hosts-service-type}.
+
+vpn-slice it does not alter your @file{/etc/resolv.conf} at all.")
     (license license:gpl3+)))
