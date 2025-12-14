@@ -1433,9 +1433,9 @@ allows you to declare the libraries your project depends on and it will
 manage (install/update) them for you.")
     (license license:expat)))
 
-(define-public conda
+(define-public conda-bootstrap
   (package
-    (name "conda")
+    (name "conda-bootstrap")
     (version "25.9.1")
     (source
      (origin
@@ -1573,7 +1573,6 @@ manage (install/update) them for you.")
               (setenv "HOME" "/tmp")
               (invoke (string-append #$output "/bin/conda") "init")))
           (add-after 'unpack 'set-default-solver-to-classic
-            ;; XXX: Remove when conda-libmamba-solver is packaged.
             (lambda _
               (substitute* "conda/base/constants.py"
                 (("DEFAULT_SOLVER: Final = \"libmamba\"")
@@ -1583,14 +1582,14 @@ manage (install/update) them for you.")
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
           (add-before 'check 'pre-check
             (lambda _
-              ;; TODO: Package libsolv, libmamba, and conda-libmamba-solver:
-              ;; <https://github.com/openSUSE/libsolv>,
-              ;; <https://github.com/conda/conda-libmamba-solver>,
-              ;; <https://github.com/mamba-org/mamba>.
               (setenv "CONDA_CLASSIC_SOLVER" "classic")
               (setenv "CONDA_DEFAULT_SOLVER" "classic")
+              ;(setenv "CONDA_SOLVER" "classic")
               (setenv "CONDA_TEST_SOLVERS" "classic")
-              (setenv "HOME" "/tmp")))
+              (setenv "HOME" "/tmp")
+              ;; Prevent tests from writing package cache to the output
+              ;; directory, which would cause non-reproducible builds.
+              (setenv "CONDA_PKGS_DIRS" "/tmp/conda-pkgs")))
           (add-after 'wrap 'wrap-executable
             (lambda _
               (wrap-program (string-append #$output "/bin/conda")
@@ -1619,12 +1618,11 @@ manage (install/update) them for you.")
            python-pytest-xprocess
            python-responses
            python-werkzeug))
-    (inputs
+    (propagated-inputs
      (list python-archspec
            python-boltons
            python-boto3
            python-charset-normalizer
-           ;; python-conda-libmamba-solver       ;TODO: not packaged yet
            python-conda-package-handling
            python-conda-content-trust
            python-distro
@@ -1640,8 +1638,9 @@ manage (install/update) them for you.")
            python-setuptools
            python-tqdm
            python-truststore
-           python-wrapper               ;XXX: Check if it's actually required
            python-zstandard))
+    (inputs
+     (list python-wrapper)) ; for the tests test_init_all, test_initialize_dev_bash, test_initialize_dev_cmd_exe
     (home-page "https://github.com/conda/conda")
     (synopsis "Cross-platform, OS-agnostic, system-level binary package manager")
     (description
