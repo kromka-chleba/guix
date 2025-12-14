@@ -706,7 +706,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/wireservice.scm				\
   %D%/packages/wm.scm				\
   %D%/packages/wordnet.scm			\
-  %D%/packages/wv.scm				\
   %D%/packages/wxwidgets.scm			\
   %D%/packages/xfig.scm				\
   %D%/packages/xiph.scm				\

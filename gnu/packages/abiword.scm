@@ -3,7 +3,7 @@
 ;;; Copyright © 2016, 2018 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2017 Leo Famulari <leo@famulari.name>
-;;; Copyright © 2018, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
@@ -24,35 +24,36 @@
 
 (define-module (gnu packages abiword)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages)
-  #:use-module (guix build-system glib-or-gtk)
-  #:use-module (guix gexp)
-  #:use-module (guix git-download)
-  #:use-module (gnu packages)
   #:use-module (gnu packages aspell)
-  #:use-module (gnu packages bash)
-  #:use-module (gnu packages gnupg)
   #:use-module (gnu packages autogen)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages enchant)
-  #:use-module (gnu packages fribidi)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages fribidi)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
   #:use-module (gnu packages ots)
   #:use-module (gnu packages perl)
-  #:use-module (gnu packages popt)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages popt)
   #:use-module (gnu packages python)
   #:use-module (gnu packages readline)
+  #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
-  #:use-module (gnu packages wv)
-  #:use-module (gnu packages xml))
+  #:use-module (gnu packages)
+  #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix download)
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages))
 
 (define-public abiword
   (package
@@ -165,4 +166,37 @@
     (description "AbiWord is a word processing program.  It is rapidly
 becoming a state of the art word processor, with lots of features useful for
 your daily work, personal needs, or for just some good old typing fun.")
+    (license license:gpl2+)))
+
+(define-public wv
+  (package
+    (name "wv")
+    (version "1.2.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://abiword.org/downloads/wv/"
+                           version "/wv-" version ".tar.gz"))
+       (sha256
+        (base32 "17f16lkdv1c3amaz2hagiicih59ynpp4786k1m2qa1sw68xhswsc"))))
+    (build-system gnu-build-system)
+    (inputs
+     (list glib
+           libgsf
+           libjpeg-turbo
+           libpng
+           zlib))
+    (native-inputs
+     (list `(,glib "bin")
+           pkg-config))
+    (synopsis "Microsoft Word conversion library and utilities")
+    (description
+     "wv converts files written by Word 2000, 97, 95, and 6 (known internally as
+Word 9, 8, 7, and 6) to HTML or LaTeX.  Word 2 documents can still be converted
+to plain text but will lack formatting.
+
+Other programs can use wv as a library to convert Word documents to other
+formats.  AbiWord uses it as its Word importer, and KWord uses concepts and
+code from wv in theirs.")
+    (home-page "https://wvware.sourceforge.net/")
     (license license:gpl2+)))

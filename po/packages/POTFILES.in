@@ -558,7 +558,6 @@ gnu/packages/zig.scm
 gnu/packages/virtualization.scm
 gnu/packages/wget.scm
 gnu/packages/wine.scm
-gnu/packages/wv.scm
 gnu/packages/xdisorg.scm
 gnu/packages/zig-xyz.scm
 gnu/packages/zile.scm
