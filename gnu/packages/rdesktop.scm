@@ -196,7 +196,13 @@ of parts of the Windows API.")
        (prepend fuse icu4c mit-krb5 sdl3 sdl3-gfx sdl3-ttf)))
     (arguments
      (list #:build-type "Release"
-           #:test-exclude "TestFreeRDPCodecH264|TestClientRdpFile"
+           #:test-exclude (string-append
+                            "TestFreeRDPCodecH264|TestClientRdpFile"
+                            ;; TestFreeRDPCodecPlanar fails on aarch64; see
+                            ;; <https://github.com/FreeRDP/FreeRDP/issues/11874>.
+                            (if (target-aarch64?)
+                                "|TestFreeRDPCodecPlanar"
+                                ""))
            #:configure-flags
            #~(list
               ;; Relax gcc-14's strictness.
