@@ -1360,7 +1360,7 @@ write native speed custom Git applications in any language with bindings.")
 (define-public libgit2-1.9
   (package
     (inherit libgit2-1.8)
-    (version "1.9.1")
+    (version "1.9.2")
     (source (origin
               (inherit (package-source libgit2-1.8))
               (uri (git-reference
@@ -1373,7 +1373,7 @@ write native speed custom Git applications in any language with bindings.")
                                "libgit2-path-max.patch"))
               (sha256
                (base32
-                "1k7h0phxz1i8i8qhd4dsyii62f30f33gmrpziqgri1ndnazkf4pz"))))))
+                "1f3wnw0s5fx4lf68i400mj6l7qyw9hf6mr7i2xlqqmp9q23q89sc"))))))
 
 (define-public libgit2-1.6
   (package
