@@ -186,6 +186,7 @@
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages nss)
+  #:use-module (gnu packages node-xyz)
   #:use-module (gnu packages ocr)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages package-management)
@@ -926,6 +927,68 @@ aims to combine an elegant and immersive browsing experience with simple
 and straightforward controls.")
     (home-page "https://wiki.gnome.org/Apps/Music")
     (license license:gpl2+)))
+
+(define-public decibels
+  (package
+    (name "decibels")
+    (version "48.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "mirror://gnome/sources/" name "/"
+                       (version-major version) "/"
+                       name "-" version ".tar.xz"))
+       (sha256
+        (base32
+         "0x0z0dgcdy6wg9acxbpqc9ib57v5mzag07z2qfwbqiri4sli36r2"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:glib-or-gtk? #t
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'skip-gnome-post-install
+            (lambda _
+              (substitute* "meson.build"
+                (("gtk_update_icon_cache: true")
+                 "gtk_update_icon_cache: false")
+                (("update_desktop_database: true")
+                 "update_desktop_database: false"))))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (let ((typelib-path (getenv "GI_TYPELIB_PATH")))
+                (wrap-program (string-append #$output "/bin/org.gnome.Decibels")
+                  `("GI_TYPELIB_PATH" ":" prefix (,typelib-path))))))
+          (add-after 'glib-or-gtk-wrap 'install-alias
+            (lambda _
+              (symlink (string-append #$output "/bin/org.gnome.Decibels")
+                       (string-append #$output "/bin/decibels")))))))
+    (native-inputs
+     (list blueprint-compiler
+           gettext-minimal
+           `(,glib "bin")
+           pkg-config
+           node-typescript))
+    (inputs
+     (list
+      bash-minimal
+      gjs
+      gst-plugins-bad                   ;for GstPlay
+      gstreamer
+      libadwaita))
+    (home-page "https://gitlab.gnome.org/GNOME/decibels")
+    (synopsis "GNOME audio file player")
+    (description "Decibels, also known as Audio Player, is an audio player
+focused on simplicity.  It offers few advanced features such as:
+
+@itemize
+@item{An elegant waveform of the track.}
+@item{Adjustable playback speed.}
+@item{Easy seek controls.}
+@item{Playing multiple files at the same time.}
+@end itemize")
+    (license license:gpl3)))            ;https://gitlab.gnome.org/GNOME/decibels/-/issues/114
 
 (define-public portablexdr
   (package
