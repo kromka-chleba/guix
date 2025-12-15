@@ -4342,6 +4342,30 @@ functions only use native Julia code, so there is no need to depend on
 @code{librmath} or similar libraries.")
     (license license:expat)))
 
+(define-public julia-loggingextras
+  (package
+    (name "julia-loggingextras")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaLogging/LoggingExtras.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yvf914pliiw5kppklvlamrfpl0s3gik7qmqc2pqixla4f84z2js"))))
+    (build-system julia-build-system)
+    (home-page "https://github.com/JuliaLogging/LoggingExtras.jl")
+    (synopsis "Composable loggers for Julia Logging")
+    (description
+     "@code{LoggingExtras} allows routing logged information
+to different places when constructing complicated log plumbing systems.
+Built upon the concept of simple parts composed together,
+subtyping @code{AbstractLogger} provides a powerful and flexible definition
+for your logging system without a need to define any custom loggers.")
+    (license license:expat)))
+
 (define-public julia-macrotools
   (package
     (name "julia-macrotools")
