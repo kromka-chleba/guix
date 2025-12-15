@@ -2708,6 +2708,30 @@ functions (or any callable object, really) using forward mode automatic
 differentiation (AD).")
     (license license:expat)))
 
+(define-public julia-franklintemplates
+  (package
+    (name "julia-franklintemplates")
+    (version "0.10.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/JuliaDocs/FranklinTemplates.jl")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kzxnhzwmjp81b467x89fqbgm0rzzp486ag2hh8dqf545rg4q71i"))))
+    (build-system julia-build-system)
+    (propagated-inputs
+     (list julia-liveserver))
+    (arguments '(#:tests? #f))          ;no test
+    (home-page "https://juliadocs.org/FranklinTemplates.jl/")
+    (synopsis "Templates for the static-site generator Franklin")
+    (description
+     "Most of these templates are adapted from existing, popular templates
+with minor modifications to accommodate Franklin's content.")
+    (license license:expat)))
+
 (define-public julia-functionwrappers
   (package
     (name "julia-functionwrappers")
