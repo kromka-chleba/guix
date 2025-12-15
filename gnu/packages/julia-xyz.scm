@@ -4284,6 +4284,33 @@ AbstractGraph type.")
 implemented in Julia.")
     (license license:expat)))
 
+(define-public julia-literate
+  (package
+    (name "julia-literate")
+    (version "2.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fredrikekre/Literate.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jpq9sj7qz4jazgh2f5d5rkcdp73ivcx0l8npzzy3klr8244jcy4"))))
+    (build-system julia-build-system)
+    (native-inputs
+     (list julia-displayas))
+    (propagated-inputs
+     (list julia-iocapture julia-json))
+    (home-page "https://fredrikekre.github.io/Literate.jl/")
+    (synopsis "Literate programming for Julia examples/tutorials")
+    (description
+     "@code{Literate} can generate markdown pages, and Jupyter notebooks,
+from the same source file.  Using a single source file for multiple purposes
+reduces maintenance, and makes sure your different output formats
+are synced with each other.")
+    (license license:expat)))
+
 (define-public julia-logexpfunctions
   (package
     (name "julia-logexpfunctions")
