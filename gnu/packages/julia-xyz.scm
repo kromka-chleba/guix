@@ -6,6 +6,7 @@
 ;;; Copyright © 2021 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024, 2025 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2026 Nguyễn Gia Phong <cnx@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1859,6 +1860,30 @@ dictionaries where values associated with a particular key may change,
     (synopsis "Alternative interface for dictionaries in Julia")
     (description "This package provides an alternative interface for
 dictionaries in Julia, for improved productivity and performance.")
+    (license license:expat)))
+
+(define-public julia-displayas
+  (package
+    (name "julia-displayas")
+    (version "0.1.6")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/tkf/DisplayAs.jl")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1a2wq22fb1lj0lmgd8lqma4y0y6w6iik2gddg440lpz3xyviw0gp"))))
+    (build-system julia-build-system)
+    (native-inputs
+     (list julia-aqua))
+    (home-page "https://tkf.github.io/DisplayAs.jl/")
+    (synopsis "Julia functions to show object in a chosen MIME type")
+    (description
+     "This package provides functions to show objects in a chosen MIME type.
+It is also possible to use nesting in order to allow the object
+to be displayed as multiple MIME types.")
     (license license:expat)))
 
 (define-public julia-distances
