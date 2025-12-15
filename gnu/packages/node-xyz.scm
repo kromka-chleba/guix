@@ -2941,7 +2941,7 @@ tablets.
         (commit (string-append "v" version))))
       (file-name (git-file-name name version))
       (sha256
-        (base32 "1gzczfiz5zlrfvk73y4iwdnc7r8brs2cgyy3pv0b4979xxj66z7x"))))
+        (base32 "1dlwf83bc9kwnj35ng6ji9vl2hx23c9fl988rqq0hy29bmxl1rhm"))))
     (build-system node-build-system)
     (native-inputs (list
       node-dprint-formatter ; 0.x
@@ -2981,6 +2981,7 @@ tablets.
               "azure-devops-node-api"
               "c8"
               "chai"
+              "chalk"
               "chokidar"
               "diff"
               "dprint"
