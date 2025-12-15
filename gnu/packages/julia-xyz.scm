@@ -4637,6 +4637,30 @@ displayed where.")
 format to arrange into rows and columns of cells.")
     (license license:expat)))
 
+(define-public julia-mimes
+  (package
+    (name "julia-mimes")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaWeb/MIMEs.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xc0dni6x2121wlwckkxsnxswndgy86gz6xj0zhmjgx9dwgjdjs3"))))
+    (build-system julia-build-system)
+    (native-inputs
+     (list julia-jive))
+    (home-page "https://github.com/JuliaWeb/MIMEs.jl")
+    (synopsis "Mapping between MIME types and file extensions")
+    (description
+     "This package provides transformations between file extensions
+and MIME types, with bonus features like text encoding detection
+and compression recommendation.")
+    (license license:expat)))
+
 (define-public julia-missings
   (package
     (name "julia-missings")
