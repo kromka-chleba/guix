@@ -4311,6 +4311,43 @@ reduces maintenance, and makes sure your different output formats
 are synced with each other.")
     (license license:expat)))
 
+(define-public julia-liveserver
+  (package
+    (name "julia-liveserver")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaDocs/LiveServer.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02khwz5fjgr4k5f8hjjid19lwc56jg7cf008mqvlpjj5jf5719f3"))))
+    (build-system julia-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               ;; FIXME: server tests cannot seem to open ports to listen
+               (add-after 'link-depot 'skip-failing-test
+                 (lambda _
+                   (substitute* "test/runtests.jl"
+                     (("include\\(\"server\\.jl\"\\)") "")))))))
+    (propagated-inputs
+     (list julia-http
+           julia-loggingextras
+           julia-mimes))
+    (native-inputs
+     (list julia-crayons))
+    (home-page "https://github.com/JuliaDocs/LiveServer.jl")
+    (synopsis "Simple development server with live-reload capability")
+    (description
+     "@code{LiveServer} is a simple and lightweight development web-server
+written in Julia, based on @code{julia-http}.  It has live-reload capability,
+i.e. when modifying a file, every browser (tab) currently displaying
+the corresponding page is automatically refreshed.")
+    (license license:expat)))
+
 (define-public julia-logexpfunctions
   (package
     (name "julia-logexpfunctions")
