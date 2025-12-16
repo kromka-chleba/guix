@@ -47,6 +47,85 @@
        (base32
         "0n0fl2j8iyd41y6mdzhjyymh76piggb9wfy91g1dmyyc77dwy9mf")))))
 
+(define %bison-bootstrapped
+  (package
+    (name "bison-bootstrapped")
+    (version "3.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnu/bison/bison-"
+                           version ".tar.xz"))
+       (sha256
+        (base32
+         "03c2pmq3bs0drdislnz6gm1rwz3n4pb2rz9navyxydppxg2rl597"))
+       (snippet
+        #~(begin
+            (delete-file "src/parse-gram.c")
+            (delete-file "src/parse-gram.h")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      ;; Building in parallel on many-core systems may cause an error such as
+      ;; "mv: cannot stat 'examples/c/reccalc/scan.stamp.tmp': No such file or
+      ;; directory".  See <https://bugs.gnu.org/36238>.
+      #:parallel-build? #f
+      ;; Similarly, when building tests in parallel, Make may produce this error:
+      ;; "./examples/c/reccalc/scan.l:13:10: fatal error: parse.h: No such file
+      ;; or directory".  Full log in <https://bugs.gnu.org/36238>.
+      #:parallel-tests? #f
+      #:configure-flags
+      ;; On the Hurd with glibc 2.41 bison uses weak symbols from pthread
+      ;; but does not link to it.
+      (if (target-hurd?)
+          #~(list "LIBS=-lpthread")
+          #~(list))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'save-parse-gram-y
+            (lambda _
+              (rename-file "src/parse-gram.y" "src/parse-gram.y.bak")))
+          (add-after 'save-parse-gram-y 'inject-bootstrap-files
+            (lambda* (#:key inputs #:allow-other-keys)
+              (copy-file (search-input-file inputs "parse-gram.y") "src/parse-gram.y")
+              (copy-file (search-input-file inputs "parse-gram.c") "src/parse-gram.c")
+              (copy-file (search-input-file inputs "parse-gram.h") "src/parse-gram.h")
+              (chmod "src/parse-gram.y" #o755)
+              (chmod "src/parse-gram.c" #o755)
+              (chmod "src/parse-gram.h" #o755)))
+          (add-after 'configure 'build-pass-1
+            (assoc-ref %standard-phases 'build))
+          (add-after 'build-pass-1 'touch-parse-gram-y
+            (lambda _
+              (chmod "src/parse-gram.y" #o755)
+              (invoke "touch" "src/parse-gram.y")))
+          (add-after 'touch-parse-gram-y 'build-pass-2
+            (assoc-ref %standard-phases 'build))
+          (add-after 'build-pass-2 'bring-back-parse-gram-y
+            (lambda _
+              (delete-file "src/parse-gram.y")
+              (rename-file "src/parse-gram.y.bak" "src/parse-gram.y")
+              (chmod "src/parse-gram.y" #o755))))))
+    (native-inputs
+     (list perl
+           ;; m4 is not present in PATH when cross-building.
+           m4
+           %bison-bootstrap-files))
+    (inputs
+     (list flex))
+    (propagated-inputs
+     (list m4))
+    (home-page "https://www.gnu.org/software/bison/")
+    (synopsis "Yacc-compatible parser generator")
+    (description
+     "GNU Bison is a general-purpose parser generator.  It can build a
+deterministic or generalized LR parser from an annotated, context-free
+grammar.  It is versatile enough to have many applications, from parsers for
+simple tools through complex programming languages.
+
+Bison also provides an implementation of @command{yacc}, as specified by POSIX.")
+    (license license:gpl3+)))
+
 (define-public bison
   (package
     (name "bison")
