@@ -5100,36 +5100,102 @@ support forum.  It runs with the @code{/exec} command in most IRC clients.")
 (define-public python-pyudev
   (package
     (name "python-pyudev")
-    (version "0.22.0")
+    (version "0.24.4")
     (source
       (origin
-        (method url-fetch)
-        (uri (pypi-uri "pyudev" version))
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/pyudev/pyudev")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
         (sha256
           (base32
-            "0xmj6l08iih2js9skjqpv4w7y0dhxyg91zmrs6v5aa65gbmipfv9"))))
-    (build-system python-build-system)
+            "1m7xrsazbij5dcmnirn9hq6cwrfmzam5mr3kmvvcgnh24nhm401x"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f ; Tests require /sys
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-ctypes-udev
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((eudev (assoc-ref inputs "eudev")))
-               (substitute* "src/pyudev/core.py"
-                (("'udev'")
-                 (string-append "'" eudev "/lib/libudev.so'")))
-               (substitute* "src/pyudev/_ctypeslib/utils.py"
-                ;; Use absolute paths instead of keys.
-                (("= find_library") "= "))
-               #t))))))
+     (list
+      #:test-flags
+      #~(list ;these tests actually try to read /sys/devices
+         "--deselect=tests/test_device.py::TestAttributes::test_getitem"
+         "--deselect=tests/test_device.py::TestAttributes::test_getitem_nonexisting"
+         "--deselect=tests/test_device.py::TestAttributes::test_non_iterable"
+         "--deselect=tests/test_device.py::TestAttributes::test_asstring"
+         "--deselect=tests/test_device.py::TestAttributes::test_asint"
+         "--deselect=tests/test_device.py::TestAttributes::test_asbool"
+         "--deselect=tests/test_device.py::TestAttributes::test_unsetitem"
+         "--deselect=tests/test_device.py::TestDevice::test_parent"
+         "--deselect=tests/test_device.py::TestDevice::test_ancestors"
+         "--deselect=tests/test_device.py::TestDevice::test_find_parent_no_devtype_mock"
+         "--deselect=tests/test_device.py::TestDevice::test_find_parent_with_devtype_mock"
+         "--deselect=tests/test_device.py::TestDevice::test_traverse"
+         "--deselect=tests/test_device.py::TestDevice::test_sys_path"
+         "--deselect=tests/test_device.py::TestDevice::test_device_path"
+         "--deselect=tests/test_device.py::TestDevice::test_subsystem"
+         "--deselect=tests/test_device.py::TestDevice::test_device_sys_name"
+         "--deselect=tests/test_device.py::TestDevice::test_sys_number"
+         "--deselect=tests/test_device.py::TestDevice::test_type"
+         "--deselect=tests/test_device.py::TestDevice::test_driver"
+         "--deselect=tests/test_device.py::TestDevice::test_device_node"
+         "--deselect=tests/test_device.py::TestDevice::test_device_number"
+         "--deselect=tests/test_device.py::TestDevice::test_is_initialized"
+         "--deselect=tests/test_device.py::TestDevice::test_is_initialized_mock"
+         "--deselect=tests/test_device.py::TestDevice::test_time_since_initialized"
+         "--deselect=tests/test_device.py::TestDevice::test_time_since_initialized_mock"
+         "--deselect=tests/test_device.py::TestDevice::test_links"
+         "--deselect=tests/test_device.py::TestDevice::test_action"
+         "--deselect=tests/test_device.py::TestDevice::test_action_mock"
+         "--deselect=tests/test_device.py::TestDevice::test_sequence_number"
+         "--deselect=tests/test_device.py::TestDevice::test_attributes"
+         "--deselect=tests/test_device.py::TestDevice::test_tags"
+         "--deselect=tests/test_device.py::TestDevice::test_iteration"
+         "--deselect=tests/test_device.py::TestDevice::test_length"
+         "--deselect=tests/test_device.py::TestDevice::test_key_subset"
+         "--deselect=tests/test_device.py::TestDevice::test_getitem"
+         "--deselect=tests/test_device.py::TestDevice::test_getitem_nonexisting"
+         "--deselect=tests/test_device.py::TestDevice::test_asint"
+         "--deselect=tests/test_device.py::TestDevice::test_asbool"
+         "--deselect=tests/test_device.py::TestDevice::test_hash"
+         "--deselect=tests/test_device.py::TestDevice::test_equality"
+         "--deselect=tests/test_device.py::TestDevice::test_inequality"
+         "--deselect=tests/test_device.py::TestDevice::test_device_ordering"
+         "--deselect=tests/test_device.py::TestDevices::test_from_path"
+         "--deselect=tests/test_device.py::TestDevices::test_from_path_strips_leading_slash"
+         "--deselect=tests/test_device.py::TestDevices::test_from_sys_path"
+         "--deselect=tests/test_device.py::TestDevices::test_from_name"
+         "--deselect=tests/test_device.py::TestDevices::test_from_name_no_device_in_existing_subsystem"
+         "--deselect=tests/test_device.py::TestDevices::test_from_device_number"
+         "--deselect=tests/test_device.py::TestDevices::test_from_device_number_wrong_type"
+         "--deselect=tests/test_device.py::TestDevices::test_from_device_file"
+         "--deselect=tests/test_device.py::TestTags::test_iteration_mock"
+         "--deselect=tests/test_device.py::TestTags::test_contains_mock"
+         "--deselect=tests/test_discover.py::TestDiscovery::test_device_number"
+         "--deselect=tests/test_discover.py::TestDiscovery::test_path"
+         "--deselect=tests/test_discover.py::TestDiscovery::test_name"
+         "--deselect=tests/test_discover.py::TestDiscovery::test_anything"
+         "--deselect=tests/test_enumerate.py::TestEnumerator::test_match_subsystem"
+         "--deselect=tests/test_enumerate.py::TestEnumerator::test_match_subsystem_nomatch_unfulfillable"
+         "--deselect=tests/test_enumerate.py::TestEnumerator::test_match_subsystem_nomatch_complete"
+         "--deselect=tests/test_enumerate.py::TestEnumerator::test_match_property_bool"
+         "--deselect=tests/test_enumerate.py::TestEnumerator::test_match_parent"
+         "--deselect=tests/test_enumerate.py::TestEnumeratorMatchCombinations::test_match"
+         "--deselect=tests/test_monitor.py::TestMonitorObserver::test_deprecated_handler"
+         "--deselect=tests/test_monitor.py::TestMonitorObserver::test_fake"
+         "--deselect=tests/test_observer.py::test_fake_monitor")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-ctypes-udev
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((eudev (assoc-ref inputs "eudev")))
+                (substitute* "src/pyudev/core.py"
+                  (("\"udev\"")
+                   (string-append "'" eudev "/lib/libudev.so'")))
+                (substitute* "src/pyudev/_ctypeslib/utils.py"
+                  ;; Use absolute paths instead of keys.
+                  (("= find_library") "= "))))))))
     (inputs
      (list eudev))
-    (propagated-inputs
-     (list python-six))
     (native-inputs
-     (list python-docutils python-hypothesis python-mock python-pytest
-           python-sphinx))
+     (list python-pytest python-setuptools))
     (home-page "https://pyudev.readthedocs.io/")
     (synopsis "Python udev binding")
     (description "This package provides @code{udev} bindings for Python.")
