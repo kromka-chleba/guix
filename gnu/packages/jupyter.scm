@@ -245,6 +245,8 @@ the namespace @code{/nbclassic/}.")
 (define-public python-notebook
   (package
     (name "python-notebook")
+    ;; XXX: Newer version requires Jupyterlab, see:
+    ;; <https://codeberg.org/guix/guix/pulls/2073>.
     (version "6.5.7")
     (source (origin
               (method url-fetch)
@@ -266,7 +268,10 @@ the namespace @code{/nbclassic/}.")
                    " and not test_merge_config"
                    " and not test_load_ordered"
                    " and not test_list_running_sock_servers"
-                   " and not test_run")
+                   " and not test_run"
+                   ;; tornado.simple_httpclient.HTTPTimeoutError: Timeout
+                   ;; during request
+                   " and not test_connections")
         ;; These tests require a browser.
         "--ignore=notebook/tests/selenium")
       #:phases
