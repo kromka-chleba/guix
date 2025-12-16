@@ -74,6 +74,7 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system go)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
   #:use-module (guix download)
@@ -293,6 +294,39 @@ storage protocols (S3, NFS, and others) through the RADOS gateway.")
                    license:cc-by-sa3.0           ;documentation
                    license:bsd-3                 ;isa-l,jerasure,++
                    license:expat))))             ;civetweb,java bindings
+
+(define-public s5cmd
+  (package
+    (name "s5cmd")
+    (version "2.3.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/peak/s5cmd")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1y1bwma6f68j00jfdjxvw5flp9l4cdys7dgkrr0yvfz68lk9a17v"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:tests? #f ;required internet access
+           #:import-path "github.com/peak/s5cmd/v2"
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'rename-binaries
+                 (lambda _
+                   (rename-file
+                    (string-append #$output "/bin/v2")
+                    (string-append #$output "/bin/s5cmd")))))))
+    (home-page "https://github.com/peak/s5cmd")
+    (synopsis "Parallel S3 and local filesystem execution tool")
+    (description
+     "@code{s5cmd} is a very fast S3 and local filesystem execution tool.  It comes
+with support for a multitude of operations including tab completion and wildcard
+support for files, which can be very handy for your object storage workflow
+while working with large number of files.")
+    (license license:expat)))
 
 (define-public spdk
   (package
