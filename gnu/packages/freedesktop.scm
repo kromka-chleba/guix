@@ -145,6 +145,7 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages vim)
   #:use-module (gnu packages virtualization)
   #:use-module (gnu packages vulkan)
   #:use-module (gnu packages w3m)
@@ -3583,3 +3584,37 @@ implements the decoration drawing.")
     (description
      "@code{iio-sensor-proxy} is a daemon which passes IIO sensor data to D-Bus.")
     (license license:gpl3+)))
+
+(define-public rtkit
+  (package
+    (name "rtkit")
+    (version "0.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append
+         "https://gitlab.freedesktop.org/pipewire/rtkit/-/archive/v"
+         version "/rtkit-v" version ".tar.gz"))
+       (sha256
+        (base32 "0nay1agmcr8g3zq8xcdyn060abb0kpg7diidbrjq2azm26dkgpam"))))
+    (build-system meson-build-system)
+    (inputs (list libcap xxd dbus polkit))
+    (native-inputs (list pkg-config))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "-Ddbus_interfacedir="
+                             #$output "/share/dbus-1/interfaces")
+              (string-append "-Ddbus_systemservicedir="
+                             #$output "/share/dbus-1/system-services")
+              (string-append "-Dpolkit_actiondir="
+                             #$output "/share/polkit-1/actions"))))
+    (home-page "https://gitlab.freedesktop.org/pipewire/rtkit")
+    (synopsis "Realtime Policy and Watchdog Daemon")
+    (description
+     "RealtimeKit is a D-Bus system service that changes the scheduling policy
+of user processes/threads to SCHED_RR (i.e. realtime scheduling mode) on
+request.  It is intended to be used as a secure mechanism to allow real-time
+scheduling to be used by normal user processes.")
+    (license license:gpl3)))
