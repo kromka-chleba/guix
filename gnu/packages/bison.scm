@@ -28,9 +28,24 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
   #:use-module (guix gexp)
+  #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1))
+
+(define %bison-bootstrap-files
+  (let ((revision "0")
+        (commit "84b2baffb845badd7f466aa1592206a32be98750"))
+    (origin
+      (method git-fetch)
+      (uri (git-reference
+             (url "https://gitlab.com/giomasce/bison-bootstrap")
+             (commit commit)))
+      (file-name (git-file-name "bison-bootstrap-files"
+                                (git-version "0" revision commit)))
+      (sha256
+       (base32
+        "0n0fl2j8iyd41y6mdzhjyymh76piggb9wfy91g1dmyyc77dwy9mf")))))
 
 (define-public bison
   (package
