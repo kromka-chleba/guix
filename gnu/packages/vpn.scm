@@ -425,83 +425,84 @@ networks bypassing intermediate firewalls.")
                         "libstrongswan/asn1/oid.h")))))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'patch-command-file-names
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "src/ipsec/_ipsec.in"
-               (("cat|kill|sleep|rm|uname" command)
-                (string-append (assoc-ref inputs "coreutils")
-                               "/bin/" command)))
-             (substitute* "src/libstrongswan/utils/process.c"
-               (("/bin/sh")
-                (search-input-file inputs "/bin/sh")))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'patch-command-file-names
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/ipsec/_ipsec.in"
+                (("cat|kill|sleep|rm|uname" command)
+                 (string-append (assoc-ref inputs "coreutils")
+                                "/bin/" command)))
+              (substitute* "src/libstrongswan/utils/process.c"
+                (("/bin/sh")
+                 (search-input-file inputs "/bin/sh")))
 
-             (substitute* "src/libstrongswan/tests/suites/test_process.c"
-               (("/bin/sh") (which "sh"))
-               (("/bin/echo") (which "echo"))
-               (("cat") (which "cat")))))
-         (add-before 'check 'set-up-test-environment
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "TZDIR"
-                     (search-input-directory inputs "share/zoneinfo"))
-             ;; Speed-up the test suite on some of the architectures.
-             ,@(if (not (target-x86-64?))
-                   `((setenv "TESTS_SUITES_EXCLUDE" "rsa"))
-                   '()))))
-       #:configure-flags
-       (list
-        "--disable-ldap"
-        "--disable-mysql"
-        "--disable-systemd"
+              (substitute* "src/libstrongswan/tests/suites/test_process.c"
+                (("/bin/sh") (which "sh"))
+                (("/bin/echo") (which "echo"))
+                (("cat") (which "cat")))))
+          (add-before 'check 'set-up-test-environment
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TZDIR"
+                      (search-input-directory inputs "share/zoneinfo"))
+              ;; Speed-up the test suite on some of the architectures.
+              #$@(if (not (target-x86-64?))
+                     #~((setenv "TESTS_SUITES_EXCLUDE" "rsa"))
+                     #~()))))
+      #:configure-flags
+      #~(list
+         "--disable-ldap"
+         "--disable-mysql"
+         "--disable-systemd"
 
-        ;; Disable BSD-4 licensed plugins.
-        "--disable-blowfish"
-        "--disable-des"
+         ;; Disable BSD-4 licensed plugins.
+         "--disable-blowfish"
+         "--disable-des"
 
-        ;; Make it usable.  The default configuration is far too minimal to be
-        ;; used with most common VPN set-ups.
-        ;; See <https://wiki.strongswan.org/projects/strongswan/wiki/Autoconf>.
-        ;; AESNI expects on hardware support from x86 systems.
-        ,@(if (target-x86?)
-              `("--enable-aesni")
-              `("--disable-aesni"))
-        "--enable-attr-sql"
-        "--enable-chapoly"
-        "--enable-curl"
-        "--enable-dhcp"
-        "--enable-eap-aka"
-        "--enable-eap-aka-3gpp"
-        "--enable-eap-dynamic"
-        "--enable-eap-identity"
-        "--enable-eap-md5"
-        "--enable-eap-mschapv2"
-        "--enable-eap-peap"
-        "--enable-eap-radius"
-        "--enable-eap-sim"
-        "--enable-eap-sim-file"
-        "--enable-eap-simaka-pseudonym"
-        "--enable-eap-simaka-reauth"
-        "--enable-eap-simaka-sql"
-        "--enable-eap-tls"
-        "--enable-eap-tnc"
-        "--enable-eap-ttls"
-        "--enable-ext-auth"
-        "--enable-farp"
-        "--enable-ha"
-        "--enable-led"
-        "--enable-md4"
-        "--enable-mediation"
-        "--enable-openssl"
-        "--enable-soup"
-        "--enable-sql"
-        "--enable-sqlite"
-        "--enable-xauth-eap"
-        "--enable-xauth-noauth"
-        "--enable-xauth-pam"
+         ;; Make it usable.  The default configuration is far too minimal to be
+         ;; used with most common VPN set-ups.
+         ;; See <https://wiki.strongswan.org/projects/strongswan/wiki/Autoconf>.
+         ;; AESNI expects on hardware support from x86 systems.
+         #$@(if (target-x86?)
+                #~("--enable-aesni")
+                #~("--disable-aesni"))
+         "--enable-attr-sql"
+         "--enable-chapoly"
+         "--enable-curl"
+         "--enable-dhcp"
+         "--enable-eap-aka"
+         "--enable-eap-aka-3gpp"
+         "--enable-eap-dynamic"
+         "--enable-eap-identity"
+         "--enable-eap-md5"
+         "--enable-eap-mschapv2"
+         "--enable-eap-peap"
+         "--enable-eap-radius"
+         "--enable-eap-sim"
+         "--enable-eap-sim-file"
+         "--enable-eap-simaka-pseudonym"
+         "--enable-eap-simaka-reauth"
+         "--enable-eap-simaka-sql"
+         "--enable-eap-tls"
+         "--enable-eap-tnc"
+         "--enable-eap-ttls"
+         "--enable-ext-auth"
+         "--enable-farp"
+         "--enable-ha"
+         "--enable-led"
+         "--enable-md4"
+         "--enable-mediation"
+         "--enable-openssl"
+         "--enable-soup"
+         "--enable-sql"
+         "--enable-sqlite"
+         "--enable-xauth-eap"
+         "--enable-xauth-noauth"
+         "--enable-xauth-pam"
 
-        ;; Use libcap by default.
-        "--with-capabilities=libcap")))
+         ;; Use libcap by default.
+         "--with-capabilities=libcap")))
     (inputs
      (list coreutils
            curl
