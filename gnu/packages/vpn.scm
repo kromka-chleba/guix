@@ -77,6 +77,7 @@
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages gperf)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
@@ -399,30 +400,18 @@ networks bypassing intermediate firewalls.")
 (define-public strongswan
   (package
     (name "strongswan")
-    (version "5.9.14")
+    (version "6.0.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://download.strongswan.org/strongswan-"
-                           version ".tar.bz2"))
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://github.com/strongswan/strongswan")
+          (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0y1nqd7vb4s6wzvyrbmxpbglw9wcvcypvjffqiklrcscvbfjg03j"))
-       (snippet
-        #~(begin
-            (use-modules (guix build utils))
-            (with-directory-excursion "src"
-              (for-each delete-file
-                      '("starter/parser/lexer.c"
-                        "libstrongswan/settings/settings_lexer.c"
-                        "starter/parser/parser.c"
-                        "starter/parser/parser.h"
-                        "libstrongswan/settings/settings_parser.c"
-                        "libstrongswan/settings/settings_parser.h"
-                        "libstrongswan/plugins/bliss/bliss_huffman_code_1.c"
-                        "libstrongswan/plugins/bliss/bliss_huffman_code_3.c"
-                        "libstrongswan/plugins/bliss/bliss_huffman_code_4.c"
-                        "libstrongswan/asn1/oid.c"
-                        "libstrongswan/asn1/oid.h")))))))
+        (base32
+         "0i566b9h9w0fm8adnpdd60dyf0x3qi2axkhbh67pzhkfp8gw85r9"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -437,7 +426,6 @@ networks bypassing intermediate firewalls.")
               (substitute* "src/libstrongswan/utils/process.c"
                 (("/bin/sh")
                  (search-input-file inputs "/bin/sh")))
-
               (substitute* "src/libstrongswan/tests/suites/test_process.c"
                 (("/bin/sh") (which "sh"))
                 (("/bin/echo") (which "echo"))
@@ -509,11 +497,21 @@ networks bypassing intermediate firewalls.")
            gmp
            libcap
            libgcrypt
-           libsoup-minimal-2
+           libsoup-minimal
            linux-pam
            openssl))
     (native-inputs
-     (list bison coreutils flex perl pkg-config tzdata-for-tests))
+     (list autoconf
+           automake
+           bison
+           coreutils
+           flex
+           gperf
+           libtool
+           perl
+           pkg-config
+           python-wrapper
+           tzdata-for-tests))
     (synopsis "IKEv1/v2 keying daemon")
     (description "StrongSwan is an IPsec implementation originally based upon
 the FreeS/WAN project.  It contains support for IKEv1, IKEv2, MOBIKE, IPv6,
