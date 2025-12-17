@@ -4779,6 +4779,8 @@ based on asyncio.")
         (base32
          "0nqyb274hq30agg1c0zkb5ijmcirgg35sp4dp4n292l665dlijwn"))))
     (build-system python-build-system)
+    (arguments
+     (list #:tests? #f))                ; no tests
     (home-page "https://github.com/jazzband/imaplib2/")
     (synopsis "Threaded Python IMAP4 client")
     (description "This package provides a threaded Python IMAP4 client, based
