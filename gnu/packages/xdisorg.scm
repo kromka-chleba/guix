@@ -486,6 +486,7 @@ program.")
      (list xrandr libxcb))
     (arguments
      (list
+      #:tests? #f                       ; no tests
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'configure
