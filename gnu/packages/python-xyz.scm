@@ -15391,17 +15391,42 @@ structures.")
 (define-public python-pulp
   (package
     (name "python-pulp")
-    (version "2.4")
+    (version "3.3.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "PuLP" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/coin-or/pulp")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "1dammrg0f1v0r028i3rpxbf2bsyxmjq0q6ihb4x2wsdki44z3bxj"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-amply))
+         "06gyi0zc0l996hd3cqzylqnqn0yn21ly54naqpinvw42lhk97nkg"))
+       (snippet #~(begin
+                    ;; The solverdir contains several binaries; use
+                    ;; the Guix cbc package instead.
+                    (use-modules (guix build utils))
+                    (delete-file-recursively "pulp/solverdir")))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-system-cbc
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "pyproject.toml"
+                ;; Do not copy the binaries.
+                ((".*solverdir.*") ""))
+              (let ((cbc (search-input-file inputs "/bin/cbc")))
+                ;; PuLP default points to pulp/solverdir/../cbc,
+                ;; use cbc from Guix instead.
+                (substitute* "pulp/apis/coin_api.py"
+                  ((".*solverdir.*")
+                   (string-append "    r\"" cbc "\"\n")))))))))
+    ;; TODO: Add more solvers? Like highs
+    (inputs (list cbc))
+    (native-inputs
+     (list python-pytest python-setuptools))
     (home-page "https://github.com/coin-or/pulp")
     (synopsis "Linear Programming modeler")
     (description
