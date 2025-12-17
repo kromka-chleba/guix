@@ -344,7 +344,8 @@ sinks.")
                 "1jagx9zmz5pfsld8y2rj2kqg6ww9f6vqiawfy3vhqc49x3xx92p4"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #f                      ; no tests
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-path
            (lambda* (#:key inputs #:allow-other-keys)
