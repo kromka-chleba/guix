@@ -5054,9 +5054,10 @@ means--it's all programmable).")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32
-                "0rmcwvf8whf49qq5rgp5hhmhfjli1vhjlc7fjhj24gyy1kkjir2k"))))
-    (build-system python-build-system)
+               (base32 "0rmcwvf8whf49qq5rgp5hhmhfjli1vhjlc7fjhj24gyy1kkjir2k"))
+              ;; Upstreamed patch, remove in the next release.
+              (patches (search-patches "rss2email-use-poetry-core.patch"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -5075,6 +5076,7 @@ means--it's all programmable).")
           (add-after 'install 'install-documentation
             (lambda _
               (install-file "r2e.1" (string-append #$output "share/man/man1")))))))
+    (native-inputs (list python-poetry-core))
     (inputs
      (list python-feedparser python-html2text))
     (home-page "https://github.com/rss2email/rss2email")
