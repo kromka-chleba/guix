@@ -337,6 +337,7 @@ entry points."
     "Create a Python script from an entry point’s NAME, MODULE and FUNCTION
 and return write it to PATH/NAME."
     (let ((interpreter (which "python"))
+          (function-or-class (first (string-split function #\.)))
           (file-path (string-append path "/" name)))
       (format #t "Creating entry point for '~a.~a' at '~a'.~%"
               module function file-path)
@@ -350,7 +351,7 @@ and return write it to PATH/NAME."
 import sys
 from ~a import ~a
 if __name__ == '__main__':
-    sys.exit(~a())~%" interpreter module function function)))
+    sys.exit(~a())~%" interpreter module function-or-class function)))
       (chmod file-path #o755)))
 
   (let* ((site-dir (site-packages inputs outputs))
