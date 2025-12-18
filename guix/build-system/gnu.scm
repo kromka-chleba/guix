@@ -233,7 +233,7 @@ use `--strip-all' as the arguments to `strip'."
             flags))))
     (replacement (and=> (package-replacement p) static-package))))
 
-(define* (dist-package p source #:key (phases '%dist-phases))
+(define* (dist-package p source #:key (phases #~%dist-phases))
   "Return a package that takes source files from the SOURCE directory,
 runs `make distcheck' and whose result is one or more source tarballs.  The
 exact build phases are defined by PHASES."
@@ -251,7 +251,10 @@ exact build phases are defined by PHASES."
           `((guix build gnu-dist)
             ,@modules))
          ((#:phases _ #f)
-          phases)))
+          phases)
+         ;; Tarballs should have no local store paths embedded.
+         ((#:allowed-references _ '())
+          '())))
       (native-inputs
        ;; Add autotools & co. as inputs.
        (let ((ref (lambda (module var)

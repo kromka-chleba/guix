@@ -31,12 +31,9 @@
 ;;;
 ;;; Code:
 
-(define* (build #:key build-before-dist? make-flags (dist-target "distcheck")
+(define* (build #:key make-flags (dist-target "distcheck")
                 #:allow-other-keys
                 #:rest args)
-  (when build-before-dist?
-    (let ((build (assq-ref %standard-phases 'build)))
-      (apply build args)))
   (format #t "building target `~a'~%" dist-target)
   (setenv "DISTCHECK_CONFIGURE_FLAGS"
           (string-append "SHELL=" (which "sh")))
@@ -49,13 +46,69 @@
               (find-files "." "\\.tar\\."))
     #t))
 
+;; Back up the source so that patch-shebang modifications in it can be reverted later.
+;; This assumes that the source is not changed by `make dist`, new files can
+;; be created, but existing ones cannot be modified.
+(define %bootstrap-sources
+  (cons*
+   "git-version-gen"
+   %bootstrap-scripts))
+
+;; Copy over the files that are patched during bootstrap.
+(define* (backup-source #:key outputs #:allow-other-keys)
+  (mkdir "../source.bcp")
+  (copy-recursively
+   "." "../source.bcp"
+   #:keep-mtime? #t))
+
+;; Copy over only the files that weren't copied yet, ie.
+;; what boostrap or configure has made.
+(define* (backup-new-files #:key outputs #:allow-other-keys)
+  (let ((source ".")
+        (target "../source.bcp"))
+    (copy-recursively
+     source target
+     #:keep-mtime? #t
+     ;; Do not copy over sources that were already copied.
+     #:select?
+     (lambda (file st)
+       (let* ((relative-path (string-drop file (string-length source)))
+              (target-path (string-append target relative-path)))
+         (or (eq? (stat:type st) 'directory)
+             (not (file-exists? target-path))))))))
+
+;; Restore the saved source without the patched shebangs.
+(define* (restore-source #:key outputs #:allow-other-keys)
+  (copy-recursively
+   "../source.bcp" "."
+   #:keep-mtime? #t
+   #:copy-file
+   (lambda (from to)
+     (delete-file to)
+     (copy-file from to))
+   ;; Skip symlinks.
+   #:select?
+   (lambda (file st)
+     (not (eq? (stat:type st) 'symlink)))))
+
 (define %dist-phases
   ;; Phases for building a source tarball.
   (modify-phases %standard-phases
     (delete 'strip)
+
+    (add-after 'unpack 'backup-source backup-source)
+    ;; Back up files made by bootstrap phase, before they are patched.
+    (add-after 'bootstrap 'backup-bootstrap-files backup-new-files)
+    ;; Back up files made by configure phase, before they are patched.
+    (add-after 'configure 'backup-configure-files backup-new-files)
+
+    ;; Restore the backed up source, removing the patched shebangs.
+    (add-after 'build 'restore-source restore-source)
+
     (replace 'install install-dist)
-    (add-after 'build 'build-dist build)
-    (delete 'build)
+    ;; Ensure the dist is made only after the source is restored.
+    ;; This ensures there are no store paths in the tarball.
+    (add-after 'restore-source 'build-dist build)
     (delete 'install-license-files)))            ;don't create 'OUT/share/doc'
 
 ;;; gnu-dist.scm ends here
