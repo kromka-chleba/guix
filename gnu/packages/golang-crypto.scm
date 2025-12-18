@@ -3516,7 +3516,7 @@ traffic.")))
 (define-public ssh-to-pgp
   (package
     (name "ssh-to-pgp")
-    (version "1.1.4")
+    (version "1.1.6")
     (source
      (origin
        (method git-fetch)
@@ -3525,7 +3525,7 @@ traffic.")))
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xaj6pnk5y2flnxm57j9bpdpll9vhg1rbjj4v3a7hn1gginxpprx"))))
+        (base32 "10n4xggambw3b9nw0qsz36v7xzyvg31s8xqj66j179f78rdclpw7"))))
     (build-system go-build-system)
     (arguments
      (list
