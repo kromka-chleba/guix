@@ -709,7 +709,8 @@
   (let ((result (call-with-input-file "/var/run/utmpx" read-utmpx)))
     (or (utmpx? result) (eof-object? result))))
 
-(when (zero? (getuid))
+(when (or (not (access? "/dev/urandom" W_OK))
+          (zero? (getuid)))
   (test-skip 1))
 (test-equal "add-to-entropy-count"
   EPERM
