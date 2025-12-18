@@ -1723,10 +1723,11 @@ existing compilers together.")
   (package
     (inherit clang)
     (name "python-clang")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (outputs '("out"))
     (arguments
      (list
+      #:test-backend #~'unittest
       #:phases #~(modify-phases %standard-phases
                    (add-before 'build 'change-directory
                      (lambda _
