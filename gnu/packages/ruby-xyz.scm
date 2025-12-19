@@ -278,6 +278,31 @@ announcement.")
                (base32
                 "02vmphnfzna1dbb1l5nczcvlvvsg4flr26bdhmvdyf447bpswa63"))))))
 
+(define-public ruby-mister-bin
+  (package
+    (name "ruby-mister-bin")
+    (version "0.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "mister_bin" version))
+       (sha256
+        (base32 "1zz3vpy6xrgzln2dpxgcnrq1bpzz0syl60whqc9zf8j29mayw1fy"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (propagated-inputs (list ruby-colsole ruby-docopt-ng))
+    (synopsis "Easily add command line interface to your gems")
+    (description "Develop rich, scalable and testable command line interfaces.")
+    (home-page "https://github.com/dannyben/mister_bin")
+    (license license:expat)))
+
 (define-public ruby-rsync
   (package
     (name "ruby-rsync")
