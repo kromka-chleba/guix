@@ -11684,6 +11684,14 @@ programming language.")
    "build-provider"
    "Bouncy Castle provider for GraalPy"
    "Crypto provider from Bouncy Castle built for GraalPy."))
+
+(define-public java-bcutil-for-graalpy
+  (bc-java-1.78.1-package
+   "java-bcutil-for-graalpy"
+   "bcutil-jdk18on"
+   "build-util"
+   "Bouncy Castle utility classes for GraalPy"
+   "Utility support classes from Bouncy Castle for GraalPy."))
 (define-public java-lmax-disruptor
   (package
     (name "java-lmax-disruptor")
