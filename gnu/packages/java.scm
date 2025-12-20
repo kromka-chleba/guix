@@ -11692,6 +11692,15 @@ programming language.")
    "build-util"
    "Bouncy Castle utility classes for GraalPy"
    "Utility support classes from Bouncy Castle for GraalPy."))
+
+(define-public java-bcpkix-for-graalpy
+  (bc-java-1.78.1-package
+   "java-bcpkix-for-graalpy"
+   "bcpkix-jdk18on"
+   "build-pkix"
+   "Bouncy Castle PKIX/CMS for GraalPy"
+   "PKIX and CMS support from Bouncy Castle for GraalPy."))
+
 (define-public java-lmax-disruptor
   (package
     (name "java-lmax-disruptor")
