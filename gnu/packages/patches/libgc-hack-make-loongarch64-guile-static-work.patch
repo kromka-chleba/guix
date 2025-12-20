@@ -1,0 +1,20 @@
+For some reason, the `__data_start` value is 0 when statically cross-compiling
+to loongarch64, which causes %guile-static-3.0 report:
+
+Wrong DATASTART/END pair: (nil) .. 0x120469c48
+Wrong DATASTART/END pair
+
+diff -u a/include/private/gcconfig.h b/include/private/gcconfig.h
+--- a/include/private/gcconfig.h
++++ b/include/private/gcconfig.h
+@@ -1717,9 +1717,7 @@
+ # ifdef LOONGARCH
+ #   define MACH_TYPE "LoongArch"
+ #   ifdef LINUX
+-#     pragma weak __data_start
+-      extern int __data_start[];
+-#     define DATASTART ((ptr_t)(__data_start))
++#     define SEARCH_FOR_DATA_START
+ #     define CPP_WORDSZ _LOONGARCH_SZPTR
+ #     define ALIGNMENT (_LOONGARCH_SZPTR/8)
+ #   endif
