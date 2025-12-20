@@ -192,6 +192,9 @@
     {165, 168}, {172, 181}, {184, 191}, {193, 242}, {258, 259}, {261, 265}, \
     {267, 291}, {293, 294}, {403, 414}, {416, 466} }
 #define AUDIT_ARCH_NATIVE AUDIT_ARCH_RISCV32
+#elif __loongarch64
+#define AUDIT_ARCH_NATIVE AUDIT_ARCH_LOONGARCH64
+#define NATIVE_SYSCALL_RANGES { {0, 248}, {258, 294}, {403, 414}, {416, 470} }
 #else
 #error cannot determine which AUDIT_ARCH_* value to use for AUDIT_ARCH_NATIVE
 #endif

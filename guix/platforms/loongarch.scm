@@ -24,7 +24,7 @@
 (define loongarch64-linux
   (platform
    (target "loongarch64-linux-gnu")
-   (system #f)
+   (system "loongarch64-linux")
    (linux-architecture "loongarch")
    (rust-target "loongarch64-unknown-linux-gnu")
    (glibc-dynamic-linker "/lib/ld-linux-loongarch-lp64d.so.1")))

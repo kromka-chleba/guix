@@ -205,11 +205,11 @@ including, for example, recursive directory searching.")
                 "0bi808vfkg3szmpy9g5wc7jnn2yk6djiz412d30km9rky0c8liyi"))))
     (build-system gnu-build-system)
     (synopsis "Stream editor")
-    (native-inputs (append (if (target-loongarch64?)
+    (native-inputs (append (if (and (target-loongarch64?) (%current-target-system))
                                (list config)
                                '())
                            (list perl)))                    ;for tests
-    (arguments (if (target-loongarch64?)
+    (arguments (if (and (target-loongarch64?) (%current-target-system))
                    (list #:phases
                          #~(modify-phases %standard-phases
                              (add-after 'unpack 'update-config-scripts

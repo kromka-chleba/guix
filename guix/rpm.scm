@@ -76,6 +76,7 @@
     ((? (cut string-prefix? "arm" <>)) 12)
     ("aarch64" 19)
     ((? (cut string-prefix? "riscv" <>)) 22)
+    ("loongarch64" 23)
     (_ (error "no RPM number known for machine type" type))))
 
 (define (u16-number->u8-list number)

@@ -809,6 +809,7 @@ terminating nul character."
                        ("aarch64" 294)
                        ("ppc64le" 382)
                        ("riscv64" 294)
+                       ("loongarch64" 294)
                        (_ #f))))
     (lambda* (kernel-fd initrd-fd command-line #:optional (flags 0))
       "Load for eventual use of kexec(8) the Linux kernel from
@@ -1229,6 +1230,7 @@ another means, since there is no Guile API to do so."
                        ("aarch64" 220)
                        ("ppc64le" 120)
                        ("riscv64" 220)
+                       ("loongarch64" 220)
                        (_ #f))))
     (lambda (flags)
       "Create a new child process by duplicating the current parent process.

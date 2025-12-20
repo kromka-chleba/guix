@@ -422,7 +422,7 @@ from forcing GEXP-PROMISE."
 (define %64bit-supported-systems
   ;; This is the list of 64-bit system types that are supported.
   '("x86_64-linux" "mips64el-linux" "aarch64-linux" "powerpc64le-linux"
-    "riscv64-linux" "x86_64-gnu"))
+    "riscv64-linux" "x86_64-gnu" "loongarch64-linux"))
 
 (define %supported-systems
   ;; This is the list of system types that are supported.  By default, we

@@ -176,7 +176,7 @@ number/base32-hash tuples, directly usable in the 'patch-series' form."
       (outputs '("out"
                  "doc"                  ;1.7 MiB of HTML and extra files
                  "include"))            ;headers used by extensions
-      (native-inputs (if (target-loongarch64?)
+      (native-inputs (if (and (target-loongarch64?) (%current-target-system))
                          (list config)
                          '()))
       (inputs (list readline ncurses))  ;TODO: add texinfo
@@ -249,7 +249,7 @@ number/base32-hash tuples, directly usable in the 'patch-series' form."
                    (("^INSTALL =.*")
                     "INSTALL = install -c\n"))
                  #t)))
-           ,@(if (target-loongarch64?)
+           ,@(if (and (target-loongarch64?) (%current-target-system))
                  `((add-after 'unpack 'update-config-scripts
                      (lambda* (#:key inputs native-inputs #:allow-other-keys)
                        ;; Replace outdated config.guess and config.sub.

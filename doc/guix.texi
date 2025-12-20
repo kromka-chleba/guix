@@ -17584,6 +17584,7 @@ The available systems are:
    - armhf-linux
    - i586-gnu
    - i686-linux
+   - loongarch64-linux
    - mips64el-linux
    - powerpc-linux
    - powerpc64le-linux

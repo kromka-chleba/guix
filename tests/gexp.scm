@@ -50,7 +50,7 @@
 (define (bootstrap-guile-effective-version)
   ;; TODO The package version of %bootstrap-guile is incorrect for
   ;; riscv64-linux
-  (if (string=? "riscv64-linux" (%current-system))
+  (if (member (%current-system) (list "riscv64-linux" "loongarch64-linux"))
       "3.0"
       (package-version %bootstrap-guile)))
 
