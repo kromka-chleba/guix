@@ -117,54 +117,20 @@ the Linux kernel CIFS client.")
 (define-public iniparser
   (package
     (name "iniparser")
-    (version "4.1")
+    (version "4.2.6")
     (source (origin
              (method git-fetch)
              (uri (git-reference
-                    (url "https://github.com/ndevilla/iniparser")
+                    (url "https://gitlab.com/iniparser/iniparser")
                     (commit (string-append "v" version))))
              (file-name (git-file-name name version))
              (sha256
               (base32
-               "0dhab6pad6wh816lr7r3jb6z273njlgw2vpw8kcfnmi7ijaqhnr5"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:make-flags
-       (list ,(string-append "CC=" (cc-for-target)))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* '("Makefile" "test/Makefile")
-               (("/usr/lib")
-                (string-append (assoc-ref outputs "out") "/lib")))
-             #t))
-         (replace 'build
-           (lambda* (#:key make-flags #:allow-other-keys)
-             (apply invoke "make" "libiniparser.so.1"
-                    make-flags)))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out  (assoc-ref outputs "out"))
-                    (lib  (string-append out "/lib"))
-                    (inc  (string-append out "/include"))
-                    (doc  (string-append out "/share/doc/" ,name))
-                    (html (string-append doc "/html")))
-               (define (install dir)
-                 (lambda (file)
-                   (install-file file dir)))
-               (for-each (install lib)
-                         (find-files "." "^lib.*\\.so"))
-               (with-directory-excursion lib
-                 (symlink "libiniparser.so.1" "libiniparser.so"))
-               (for-each (install inc)
-                         (find-files "src" "\\.h$"))
-               (for-each (install html)
-                         (find-files "html" ".*"))
-               (for-each (install doc)
-                         '("AUTHORS" "INSTALL" "LICENSE" "README.md"))
-               #t))))))
-    (home-page "https://github.com/ndevilla/iniparser")
+               "1gi2kxp55095bq2qrdfy0hxiwzpc47413ydj15xvg9nbw3s14pfg"))))
+    (build-system cmake-build-system)
+    ;; Tests require packaging unity-test.
+    (arguments (list #:tests? #f))
+    (home-page "https://gitlab.com/iniparser/iniparser")
     (synopsis "Simple @file{.ini} configuration file parsing library")
     (description
      "The iniParser C library reads and writes Windows-style @file{.ini}
@@ -174,7 +140,7 @@ are easy to read, write, and modify.
 
 The library is small, thread safe, and written in portable ANSI C with no
 external dependencies.")
-    (license license:x11)))
+    (license license:expat)))
 
 (define-public nss-wrapper
   (package
