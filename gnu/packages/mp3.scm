@@ -708,15 +708,15 @@ FFmpeg, etc.")
 (define-public python-pyacoustid
   (package
     (name "python-pyacoustid")
-    (version "1.2.2")
+    (version "1.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyacoustid" version))
        (sha256
         (base32
-         "0ha15m41r8ckmanc4k9nrlb9hprvhdjxndzw40a1yj3z1b1xjyf2"))))
-    (build-system python-build-system)
+         "0xyikq3lqmqlm6b8nmmi6aijs4vz56svgcbhha8bp7n1j5qlhksz"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -730,7 +730,9 @@ FFmpeg, etc.")
                (("'fpcalc'")
                 (string-append "'" (assoc-ref inputs "chromaprint")
                                "/bin/fpcalc'")))
-             #t)))))
+             #t)))
+       #:tests? #f)) ; This package does not have tests and, as a result, the build fails when tests are enabled.
+    (native-inputs (list python-setuptools))
     (inputs (list chromaprint))
     (propagated-inputs
      (list python-audioread python-requests))
