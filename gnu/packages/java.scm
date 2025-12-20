@@ -13220,6 +13220,31 @@ find most of the command editing features of JLine to be familiar.
 This package includes the line reader.")
     (license license:bsd-3)))
 
+(define-public java-juniversalchardet
+  (package
+    (name "java-juniversalchardet")
+    (version "2.5.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/albfernandez/juniversalchardet")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "039v25hmaf89mc949jn3sg70gp68gn0vilq2v159aavyircza0w7"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:jar-name "juniversalchardet.jar"
+       #:jdk ,openjdk11
+       #:tests? #f
+       #:source-dir "src/main/java"))
+    (home-page "https://github.com/albfernandez/juniversalchardet")
+    (synopsis "Character encoding detection library for Java")
+    (description "JUniversalChardet is a Java port of universalchardet,
+a character encoding detection library.")
+    (license license:mpl2.0)))
+
 (define-public java-jline-native-for-graal-truffle
   (package
     (name "java-jline-native-for-graal-truffle")
