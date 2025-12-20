@@ -8990,6 +8990,21 @@ actual rendering.")
 sources by ANTLR.")
     (license license:bsd-3)))
 
+(define-public java-antlr4-runtime-for-graal-truffle
+  (package
+    (inherit java-antlr4-runtime)
+    (name "java-antlr4-runtime-for-graal-truffle")
+    (version "4.13.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/antlr/antlr4")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1dpmqjq5z0r0543jfsbl9rwjrv459dxj378vs6qhy52hw4pm270g"))))))
+
 (define-public java-antlr4-runtime-cpp
   (package
     (inherit java-antlr4-runtime)
