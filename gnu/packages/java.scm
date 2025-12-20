@@ -13450,6 +13450,41 @@ This package includes the line reader.")
 GraalVM's TRUFFLE_JSON distribution.")
     (license license:public-domain)))
 
+(define-public java-capnproto-runtime-for-graal-truffle
+  (package
+    (name "java-capnproto-runtime-for-graal-truffle")
+    (version "0.1.16")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/capnproto/capnproto-java")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "0faq213kkrb2441k6bn7868yj5bdqvanq1xxsp2gc9mcf922vrpf"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:jar-name "capnproto-runtime.jar"
+       #:source-dir "runtime/src/main/java"
+       #:tests? #f ; Tests require JUnit, skip for now
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'build 'create-sources-jar
+           (lambda _
+             (invoke "jar" "cf" "capnproto-runtime-sources.jar"
+                     "-C" "runtime/src/main/java" "org")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((share (string-append (assoc-ref outputs "out")
+                                         "/share/java/")))
+               (install-file "capnproto-runtime-sources.jar" share)))))))
+    (home-page "https://capnproto.org/")
+    (synopsis "Cap'n Proto runtime library for Java")
+    (description "Cap'n Proto is an extremely fast data interchange format
+and capability-based RPC system.  This package provides the Java runtime
+library needed by GraalVM's SubstrateVM.")
+    (license license:expat)))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
