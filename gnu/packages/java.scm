@@ -13220,6 +13220,35 @@ find most of the command editing features of JLine to be familiar.
 This package includes the line reader.")
     (license license:bsd-3)))
 
+(define-public java-jline-native-for-graal-truffle
+  (package
+    (name "java-jline-native-for-graal-truffle")
+    (version "3.28.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/jline/jline3")
+                    (commit (string-append "jline-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "06804s31zxxwbh8nnf2hd4w5kbzgpgfnp4mcr9bk5h3mkgrp6lkj"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:jar-name "jline-native.jar"
+       #:tests? #f
+       #:jdk ,openjdk25
+       #:source-dir "native/src/main/java"
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'remove-build-file
+           (lambda _
+             (delete-file "build"))))))
+    (home-page "https://github.com/jline/jline3")
+    (synopsis "JLine native library support for GraalVM Truffle")
+    (description "JLine native library module for GraalVM Truffle.")
+    (license license:bsd-3)))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
