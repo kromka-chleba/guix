@@ -7027,3 +7027,31 @@ working directory, user, pid, command, and so on.")
     (description "This package contains a debugging tool for Allwinner devices
 (connects via USB OTG).")
     (license license:expat)))
+
+(define-public yoctofetch
+  (package
+    (name "yoctofetch")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/Phosphenius/yoctofetch.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0iw3fjsw36hm7lj9q0hjxwkh6707ggvj1wdfrjq1ypi6hrk3n5pv"))))
+    (supported-systems '("x86_64-linux" "aarch64-linux"))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (home-page "https://codeberg.org/Phosphenius/yoctofetch")
+    (synopsis
+     "Fast and low footprint system fetch tool for OS’ based on Linux™")
+    (description
+     "This package provides a system fetch tool, similar to neofetch, fastfetch
+     , etc.  It is lightweight and has a focus on performance.
+
+     It can be used as a greeter by starting it from .bashrc for example.")
+    (license license:agpl3+)))
