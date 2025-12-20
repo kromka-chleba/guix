@@ -563,6 +563,34 @@ files in a directory.")
 hosts by wrapping the @file{rsync} binary.")
     (license license:expat)))
 
+(define-public ruby-tty-screen
+  (package
+    (name "ruby-tty-screen")
+    (version "0.8.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "tty-screen" version))
+       (sha256
+        (base32 "0l4vh6g333jxm9lakilkva2gn17j6gb052626r1pdbmy2lhnb460"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (synopsis
+     "Terminal screen detection")
+    (description
+     "Terminal screen size detection that works on Linux, @code{macOS} and
+Windows systems and supports Ruby MRI, JRuby, @code{TruffleRuby} and Rubinius
+interpreters.")
+    (home-page "https://ttytoolkit.org")
+    (license license:expat)))
+
 (define-public ruby-i18n
   (package
     (name "ruby-i18n")
