@@ -378,6 +378,31 @@ announcement.")
                (base32
                 "02vmphnfzna1dbb1l5nczcvlvvsg4flr26bdhmvdyf447bpswa63"))))))
 
+(define-public ruby-logger
+  (package
+    (name "ruby-logger")
+    (version "1.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "logger" version))
+       (sha256
+        (base32 "00q2zznygpbls8asz5knjvvj2brr3ghmqxgr83xnrdj4rk3xwvhr"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (synopsis "Simple logging utility")
+    (description
+     "This package provides a simple logging utility for outputting messages.")
+    (home-page "https://github.com/ruby/logger")
+    (license (list license:bsd-2))))
+
 (define-public ruby-mister-bin
   (package
     (name "ruby-mister-bin")
