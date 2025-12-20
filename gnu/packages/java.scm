@@ -13249,6 +13249,65 @@ This package includes the line reader.")
     (description "JLine native library module for GraalVM Truffle.")
     (license license:bsd-3)))
 
+(define-public java-jline-terminal-for-graal-truffle
+  (package
+    (inherit java-jline-terminal)
+    (name "java-jline-terminal-for-graal-truffle")
+    (version "3.28.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/jline/jline3")
+                    (commit (string-append "jline-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "06804s31zxxwbh8nnf2hd4w5kbzgpgfnp4mcr9bk5h3mkgrp6lkj"))))
+    (arguments
+     `(#:jar-name "jline-terminal.jar"
+       #:tests? #f
+       #:jdk ,openjdk25
+       #:source-dir "terminal/src/main/java"
+       #:test-dir "terminal/src/test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'remove-build-file
+           (lambda _
+             (delete-file "build")))
+         (add-after 'unpack 'patch-paths
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "terminal/src/main/java/org/jline/utils/OSUtils.java"
+               (("= \"infocmp\"")
+                (string-append "= \"" (assoc-ref inputs "ncurses")
+                               "/bin/infocmp\""))
+               (("= \"(s?tty)\"" _ cmd)
+                (string-append "= \"" (assoc-ref inputs "coreutils")
+                               "/bin/" cmd "\"")))))
+         (add-after 'build 'add-resources
+           (lambda* (#:key jar-name source-dir #:allow-other-keys)
+             (let ((build (string-append (getcwd) "/build")))
+               (with-directory-excursion
+                   (string-append source-dir "/../resources")
+                 (apply invoke "jar" "-uvf"
+                        (string-append build "/jar/" jar-name)
+                        (find-files "."))))))
+         (add-after 'add-resources 'create-sources-jar
+           (lambda* (#:key source-dir #:allow-other-keys)
+             ;; Create a sources JAR from the source files.
+             ;; mx shading needs .java source files, not .class files.
+             (let ((sources-jar (string-append (getcwd) "/build/jar/jline-terminal-sources.jar")))
+               (invoke "jar" "cf" sources-jar "-C" source-dir "org")
+               ;; Also add resources to the sources JAR.
+               (with-directory-excursion (string-append source-dir "/../resources")
+                 (apply invoke "jar" "-uvf" sources-jar (find-files "."))))))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/share/java")))
+               (install-file "build/jar/jline-terminal-sources.jar" lib)))))))
+    (inputs
+     (list ncurses java-jline-native-for-graal-truffle))))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
