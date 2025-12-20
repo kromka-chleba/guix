@@ -13308,6 +13308,44 @@ This package includes the line reader.")
     (inputs
      (list ncurses java-jline-native-for-graal-truffle))))
 
+(define-public java-jline-reader-for-graal-truffle
+  (package
+    (inherit java-jline-reader)
+    (name "java-jline-reader-for-graal-truffle")
+    (version "3.28.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/jline/jline3")
+                    (commit (string-append "jline-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "06804s31zxxwbh8nnf2hd4w5kbzgpgfnp4mcr9bk5h3mkgrp6lkj"))))
+    (arguments
+     `(#:jar-name "jline-reader.jar"
+       #:tests? #f
+       #:jdk ,openjdk25
+       #:source-dir "reader/src/main/java"
+       #:test-dir "reader/src/test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'remove-build-file
+           (lambda _
+             (delete-file "build")))
+         (add-after 'build 'create-sources-jar
+           (lambda* (#:key source-dir #:allow-other-keys)
+             ;; Create a sources JAR from the source files.
+             (invoke "jar" "cf" "build/jar/jline-reader-sources.jar"
+                     "-C" source-dir "org")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/share/java")))
+               (install-file "build/jar/jline-reader-sources.jar" lib)))))))
+    (inputs
+     (list java-jline-terminal-for-graal-truffle))))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
