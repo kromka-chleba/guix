@@ -13382,6 +13382,37 @@ This package includes the line reader.")
     (synopsis "JLine builtins for GraalVM Truffle")
     (description "JLine builtins module for GraalVM Truffle.")))
 
+(define-public java-jline-terminal-ffm-for-graal-truffle
+  (package
+    (inherit java-jline-reader-for-graal-truffle)
+    (name "java-jline-terminal-ffm-for-graal-truffle")
+    (arguments
+     `(#:jar-name "jline-terminal-ffm.jar"
+       #:tests? #f
+       #:jdk ,openjdk25
+       #:source-dir "terminal-ffm/src/main/java"
+       #:test-dir "terminal-ffm/src/test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'remove-build-file
+           (lambda _
+             (delete-file "build")))
+         (add-after 'build 'create-sources-jar
+           (lambda* (#:key source-dir #:allow-other-keys)
+             ;; Create a sources JAR from the source files.
+             (invoke "jar" "cf" "build/jar/jline-terminal-ffm-sources.jar"
+                     "-C" source-dir "org")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/share/java")))
+               (install-file "build/jar/jline-terminal-ffm-sources.jar" lib)))))))
+    (inputs
+     (list java-jline-terminal-for-graal-truffle
+           java-jline-native-for-graal-truffle))
+    (synopsis "JLine terminal FFM for GraalVM Truffle")
+    (description "JLine terminal FFM (Foreign Function Memory) module for GraalVM Truffle.")))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
