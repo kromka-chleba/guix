@@ -5460,6 +5460,29 @@ including java-asm.")
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((share (string-append (assoc-ref outputs "out") "/share/java")))
                (install-file "build/jar/asm9-sources.jar" share)))))))))
+
+(define-public java-asm-tree-for-graal-truffle
+  (package
+    (inherit java-asm-tree-9)
+    (name "java-asm-tree-for-graal-truffle")
+    (version "9.7.1")
+    (source (package-source java-asm-for-graal-truffle))
+    (arguments
+     `(#:jar-name "asm-tree.jar"
+       #:source-dir "asm-tree/src/main/java"
+       #:test-dir "asm-tree/src/test"
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'build 'create-sources-jar
+           (lambda _
+             (invoke "jar" "cf" "build/jar/asm-tree-sources.jar"
+                     "-C" "asm-tree/src/main/java" ".")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((share (string-append (assoc-ref outputs "out") "/share/java")))
+               (install-file "build/jar/asm-tree-sources.jar" share)))))))
+    (inputs (list java-asm-for-graal-truffle))))
 (define-public java-cglib
   (package
     (name "java-cglib")
