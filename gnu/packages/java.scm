@@ -5522,6 +5522,13 @@ including java-asm.")
              (let ((share (string-append (assoc-ref outputs "out") "/share/java")))
                (install-file "build/jar/asm-commons-sources.jar" share)))))))
     (inputs (list java-asm-for-graal-truffle java-asm-analysis-for-graal-truffle java-asm-tree-for-graal-truffle))))
+
+;; Truffle needs hamcrest-core 1.3, which is the exact version in Guix.
+;; We create a separate package to keep graal-truffle dependencies explicit.
+(define-public java-hamcrest-core-for-graal-truffle
+  (package
+    (inherit java-hamcrest-core)
+    (name "java-hamcrest-core-for-graal-truffle")))
 (define-public java-cglib
   (package
     (name "java-cglib")
