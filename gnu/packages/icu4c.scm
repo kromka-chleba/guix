@@ -295,6 +295,31 @@ Java part.")
                  (mkdir-p share)
                  (install-file "icu4j.jar" share)
                  (install-file "icu4j-sources.jar" share))))))))))
+
+(define-public java-icu4j-charset-for-graal-truffle
+  (package
+    (inherit java-icu4j-for-graal-truffle)
+    (name "java-icu4j-charset-for-graal-truffle")
+    (arguments
+     (substitute-keyword-arguments (package-arguments java-icu4j-for-graal-truffle)
+       ((#:build-target _) "icu4j-charset.jar")
+       ((#:phases phases)
+        `(modify-phases ,phases
+           (replace 'create-sources-jar
+             (lambda _
+               ;; Create a sources JAR from the charset source files.
+               (invoke "jar" "cf" "icu4j-charset-sources.jar"
+                       "-C" "main/classes/charset/src" "com")))
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let ((share (string-append (assoc-ref outputs "out")
+                                           "/share/java/")))
+                 (mkdir-p share)
+                 (install-file "icu4j-charset.jar" share)
+                 (install-file "icu4j-charset-sources.jar" share))))))))
+    (inputs (list java-icu4j-for-graal-truffle))
+    (synopsis "ICU4J charset provider for GraalVM Truffle")))
+
 (define-public icu4c-for-skia
   ;; The current version of skia needs this exact commit
   ;; for its test dependencies.
