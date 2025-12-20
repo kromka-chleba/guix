@@ -5491,6 +5491,14 @@ including java-asm.")
     (version "9.7.1")
     (source (package-source java-asm-for-graal-truffle))
     (inputs (list java-asm-for-graal-truffle java-asm-tree-for-graal-truffle))))
+
+(define-public java-asm-util-for-graal-truffle
+  (package
+    (inherit java-asm-util-9)
+    (name "java-asm-util-for-graal-truffle")
+    (version "9.7.1")
+    (source (package-source java-asm-for-graal-truffle))
+    (inputs (list java-asm-for-graal-truffle java-asm-analysis-for-graal-truffle java-asm-tree-for-graal-truffle))))
 (define-public java-cglib
   (package
     (name "java-cglib")
