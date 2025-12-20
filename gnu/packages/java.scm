@@ -51,9 +51,11 @@
   #:use-module (guix gexp)
   #:use-module (guix build-system ant)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system maven)
   #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages attr)
   #:use-module (gnu packages autotools)
@@ -86,6 +88,7 @@
   #:use-module (gnu packages maven)
   #:use-module (gnu packages maven-parent-pom)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages web)
@@ -5426,6 +5429,37 @@ including java-asm.")
            #:tests? #f))
     (inputs (list java-asm-9 java-asm-analysis-9 java-asm-tree-9))))
 
+;;; Java packages for GraalVM Truffle (specific versions required)
+
+(define-public java-asm-for-graal-truffle
+  (package
+    (inherit java-asm-9)
+    (name "java-asm-for-graal-truffle")
+    (version "9.7.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://gitlab.ow2.org/asm/asm")
+                     (commit "ASM_9_7_1")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0q1i01al9mpggf3256iwmhx9yj9pg52v4vi1gdni2x9jcikq65lf"))))
+    (arguments
+     `(#:jar-name "asm9.jar"
+       #:source-dir "asm/src/main/java"
+       #:test-dir "asm/src/test"
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'build 'create-sources-jar
+           (lambda _
+             (invoke "jar" "cf" "build/jar/asm9-sources.jar"
+                     "-C" "asm/src/main/java" ".")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((share (string-append (assoc-ref outputs "out") "/share/java")))
+               (install-file "build/jar/asm9-sources.jar" share)))))))))
 (define-public java-cglib
   (package
     (name "java-cglib")
