@@ -50,6 +50,7 @@
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2025 Philippe Swartvagher <phil.swart@gmx.fr>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1046,6 +1047,40 @@ language used in Hyprland.")
     (description
      "This package provides a C++ library for utilities used across Hyprland
 ecosystem.")
+    (license license:bsd-3)))
+
+(define-public hyprwire
+  (package
+    (name "hyprwire")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hyprwm/hyprwire")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rzclhk42x9im9n6fz2bj98l9lb7jhl3vijvck4rj6yhb80kvli0"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key parallel-tests? tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "../source"
+                  (invoke "ctest" "-j"
+                          (if parallel-tests?
+                              (number->string (parallel-job-count)) "1")
+                          "--test-dir" "tests"))))))))
+    (native-inputs (list gcc-15 pkg-config))
+    (inputs (list hyprutils libffi pugixml))
+    (home-page "https://github.com/hyprwm/hyprwire")
+    (synopsis "Wire protocol for Inter-Process Communication (IPC)")
+    (description
+     "Inter-Process Communication system of the Hyprland ecosystem.")
     (license license:bsd-3)))
 
 (define-public xsimd-benchmark
