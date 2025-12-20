@@ -659,6 +659,37 @@ toolkit.")
     (home-page "https://ttytoolkit.org")
     (license license:expat)))
 
+(define-public ruby-tty-markdown
+  (package
+    (name "ruby-tty-markdown")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "tty-markdown" version))
+       (sha256
+        (base32 "04f599zn5rfndq4d9l0acllfpc041bzdkkz2h6x0dl18f2wivn0y"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (propagated-inputs (list ruby-kramdown
+                             ruby-pastel
+                             ruby-rouge
+                             ruby-strings
+                             ruby-tty-color
+                             ruby-tty-screen))
+    (synopsis "Provides a Markdown processing component for the TTY Toolkit")
+    (description
+     "Convert a markdown text or document into a terminal friendly output.")
+    (home-page "https://ttytoolkit.org")
+    (license license:expat)))
+
 (define-public ruby-tty-screen
   (package
     (name "ruby-tty-screen")
