@@ -20614,6 +20614,26 @@ Eventlet, or gevent.  Tasks can execute asynchronously (in the background) or
 synchronously (wait until ready).")
     (license license:bsd-3)))
 
+(define-public python-celery-bootstrap
+  (hidden-package
+   (package
+     (inherit python-celery)
+     (name "python-celery-bootstrap")
+     (arguments
+      (list #:tests? #f))
+     (native-inputs
+      (list python-azure-core
+            python-dnspython
+            python-flaky
+            python-gevent
+            python-google-cloud-storage
+            python-iniconfig
+            python-moto
+            python-msgpack
+            python-pymongo
+            python-redis
+            python-setuptools)))))
+
 (define-public python-anyqt
   (package
     (name "python-anyqt")
