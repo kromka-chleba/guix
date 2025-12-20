@@ -642,6 +642,31 @@ interpreters.")
     (home-page "https://ttytoolkit.org")
     (license license:expat)))
 
+(define-public ruby-unicode-utils
+  (package
+    (name "ruby-unicode-utils")
+    (version "1.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "unicode_utils" version))
+       (sha256
+        (base32 "0h1a5yvrxzlf0lxxa1ya31jcizslf774arnsd89vgdhk4g7x08mr"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (synopsis "additional Unicode aware functions for Ruby 1.9")
+    (description "UnicodeUtils implements Unicode algorithms for case
+conversion, normalization, text segmentation and more in pure Ruby code.")
+    (home-page "https://github.com/lang/unicode_utils")
+    (license license:bsd-2)))
+
 (define-public ruby-i18n
   (package
     (name "ruby-i18n")
