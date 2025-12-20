@@ -84,6 +84,7 @@
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -183,6 +184,7 @@
   #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rust-apps)
+  #:use-module (gnu packages samba)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages suckless)
@@ -1733,6 +1735,52 @@ the XDG Autostart specification.")
     (description "Fnott is a keyboard driven and lightweight notification daemon
 for wlroots-based Wayland compositors.")
     (license license:expat)))
+
+(define-public hyprtoolkit
+  (package
+    (name "hyprtoolkit")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hyprwm/hyprtoolkit")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15llnv23hc5krslrwp4syi8wg7x0bgy7jxv0rmx742pfzcx8f090"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list
+                           ;; Required to make tests run.
+                           "-DCMAKE_BUILD_TYPE=Debug")))
+    (native-inputs (list pkg-config
+                         gcc-15
+                         googletest
+                         hyprwayland-scanner
+                         ;; for wayland-scanner
+                         wayland))
+    (inputs (list cairo
+                  hyprutils
+                  hyprlang
+                  libglvnd
+                  libxkbcommon
+                  libdrm
+                  hyprgraphics
+                  mesa
+                  pango
+                  pixman
+                  wayland
+                  wayland-protocols
+                  aquamarine
+                  iniparser))
+    (home-page "https://github.com/hyprwm/hyprtoolkit")
+    (synopsis "Wayland-native GUI toolkit")
+    (description
+     "Hyprpolkit is the toolkit for making GUI applications for the
+Hyprland ecosystem.")
+    (license license:bsd-3)))
 
 (define-public awesome
   (package
