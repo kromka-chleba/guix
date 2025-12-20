@@ -563,6 +563,31 @@ files in a directory.")
 hosts by wrapping the @file{rsync} binary.")
     (license license:expat)))
 
+(define-public ruby-tty-color
+  (package
+    (name "ruby-tty-color")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "tty-color" version))
+       (sha256
+        (base32 "0aik4kmhwwrmkysha7qibi2nyzb4c8kp42bd5vxnf8sf7b53g73g"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (synopsis "Terminal color capabilities detection")
+    (description "Provides independent color support detection component for TTY
+toolkit.")
+    (home-page "https://ttytoolkit.org")
+    (license license:expat)))
+
 (define-public ruby-tty-screen
   (package
     (name "ruby-tty-screen")
