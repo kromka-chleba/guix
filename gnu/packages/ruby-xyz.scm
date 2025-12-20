@@ -331,6 +331,34 @@ announcement.")
     (home-page "https://github.com/dannyben/mister_bin")
     (license license:expat)))
 
+(define-public ruby-module-methods
+  (package
+    (name "ruby-module-methods")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "module_methods" version))
+       (sha256
+        (base32 "1886wjscfripgzlmyvcd0jmlzwr6hxvklm2a5rm32dw5bf7bvjki"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (synopsis
+     "Extendable module for modules with instance and class methods")
+    (description
+     "Extendable module for modules with instance and class methods. These
+modules can be included into each other modules and saving all chain, including
+`inherited` or `included` (class) methods.")
+    (home-page "https://github.com/AlexWayfer/module_methods")
+    (license license:expat)))
+
 (define-public ruby-rsync
   (package
     (name "ruby-rsync")
