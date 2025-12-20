@@ -151,6 +151,7 @@
   #:use-module (gnu packages haskell-check)
   #:use-module (gnu packages haskell-web)
   #:use-module (gnu packages haskell-xyz)
+  #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages jemalloc)
@@ -167,6 +168,7 @@
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpd)
   #:use-module (gnu packages pciutils)
+  #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages music)
   #:use-module (gnu packages ninja)
   #:use-module (gnu packages pantheon)
@@ -1779,6 +1781,48 @@ for wlroots-based Wayland compositors.")
     (synopsis "Wayland-native GUI toolkit")
     (description
      "Hyprpolkit is the toolkit for making GUI applications for the
+Hyprland ecosystem.")
+    (license license:bsd-3)))
+
+(define-public hyprlauncher
+  (package
+    (name "hyprlauncher")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hyprwm/hyprlauncher")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1v3yq715k6vjxfpmmqwcwm4wjsgajv0wc8wdlwgfwz4i1c88gji8"))))
+    (build-system cmake-build-system)
+    (arguments
+     ;; No tests.
+     (list
+      #:tests? #f))
+    (native-inputs (list gcc-15 pkg-config))
+    (inputs (list hyprutils
+                  hyprtoolkit
+                  pixman
+                  libdrm
+                  hyprwire
+                  hyprlang
+                  icu4c-73
+                  fontconfig
+                  libdrm
+                  libnotify
+                  libqalculate
+                  aquamarine
+                  hyprgraphics
+                  cairo
+                  libxkbcommon
+                  gmp
+                  mpfr))
+    (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprlauncher/")
+    (synopsis "Multipurpose launcher/picker for Hyprland")
+    (description "@code{hyprlauncher} is the launcher application of the
 Hyprland ecosystem.")
     (license license:bsd-3)))
 
