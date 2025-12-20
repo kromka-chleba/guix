@@ -507,6 +507,32 @@ class itself.")
     (home-page "https://github.com/ruby/ostruct")
     (license (list license:bsd-2))))
 
+(define-public ruby-pastel
+  (package
+    (name "ruby-pastel")
+    (version "0.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "pastel" version))
+       (sha256
+        (base32 "0xash2gj08dfjvq4hy6l1z22s5v30fhizwgs10d6nviggpxsj7a8"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "rspec" "-c" "spec"))))))
+    (native-inputs (list ruby-rspec))
+    (propagated-inputs (list ruby-tty-color))
+    (synopsis "Terminal strings styling with intuitive and clean API.")
+    (description "Terminal output styling with intuitive and clean API that
+doesn't monkey patch String class.")
+    (home-page "https://ttytoolkit.org")
+    (license license:expat)))
+
 (define-public ruby-requires
   (package
     (name "ruby-requires")
