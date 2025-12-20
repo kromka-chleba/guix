@@ -13346,6 +13346,42 @@ This package includes the line reader.")
     (inputs
      (list java-jline-terminal-for-graal-truffle))))
 
+(define-public java-jline-builtins-for-graal-truffle
+  (package
+    (inherit java-jline-reader-for-graal-truffle)
+    (name "java-jline-builtins-for-graal-truffle")
+    (arguments
+     `(#:jar-name "jline-builtins.jar"
+       #:tests? #f
+       #:jdk ,openjdk25
+       #:source-dir "builtins/src/main/java"
+       #:test-dir "builtins/src/test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'remove-build-file
+           (lambda _
+             (delete-file "build")))
+         (add-after 'build 'create-sources-jar
+           (lambda* (#:key source-dir #:allow-other-keys)
+             ;; Create a sources JAR from the source files.
+             (invoke "jar" "cf" "build/jar/jline-builtins-sources.jar"
+                     "-C" source-dir "org")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/share/java")))
+               (install-file "build/jar/jline-builtins-sources.jar" lib)))))))
+    (inputs
+     (list java-jline-terminal-for-graal-truffle
+           java-jline-reader-for-graal-truffle
+           ;; Needed to compile Nano.java which imports UniversalDetector.
+           ;; GraalVM's mx build patches this out during shading (in
+           ;; org.graalvm.shadowed.org.jline) and adds a stub class, so mx
+           ;; itself does not need juniversalchardet--only this Guix build does.
+           java-juniversalchardet))
+    (synopsis "JLine builtins for GraalVM Truffle")
+    (description "JLine builtins module for GraalVM Truffle.")))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
