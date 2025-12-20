@@ -11622,6 +11622,68 @@ algorithms and xxHash hashing algorithm.")
 programming language.")
     (license license:expat)))
 
+;;; Bouncy Castle 1.78.1 components for GraalPy (needs jdk18on jars)
+
+(define bc-java-1.78.1-source
+  (origin
+    (method url-fetch)
+    (uri "https://codeload.github.com/bcgit/bc-java/tar.gz/refs/tags/r1rv78v1")
+    (file-name "bc-java-1.78.1.tar.gz")
+    (sha256
+     (base32 "09i973ypv1dhvp2m50jnr71wwqsxs64qdpinm62phib3hw4nhwvb"))))
+
+(define (bc-java-1.78.1-package name jar-name build-target synopsis description)
+  (package
+    (name name)
+    (version "1.78.1")
+    (source bc-java-1.78.1-source)
+    (build-system ant-build-system)
+    (arguments
+     (list
+      #:jar-name (string-append jar-name ".jar")
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'build
+            (lambda _
+              (invoke "ant" "-f" "ant/jdk18+.xml" #$build-target)))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (share (string-append out "/share/java"))
+                     ;; bc-java appends version as 17801 (no dots)
+                     (src-jar (string-append "build/artifacts/jdk1.8/jars/"
+                                             #$jar-name "-17801.jar"))
+                     (src-dir (string-append "build/artifacts/jdk1.8/"
+                                             #$jar-name "-17801/src"))
+                     ;; MX_URLREWRITES expects bcprov-jdk18on.jar (no version)
+                     (dst-jar (string-append share "/" #$jar-name ".jar"))
+                     (dst-sources-jar (string-append share "/" #$jar-name "-sources.jar")))
+                (mkdir-p share)
+                (copy-file src-jar dst-jar)
+                ;; Create sources JAR from the source directory
+                (invoke "jar" "cf" dst-sources-jar "-C" src-dir ".")))))))
+    (native-inputs (list unzip java-junit java-native-access java-native-access-platform))
+    (home-page "https://www.bouncycastle.org")
+    (synopsis synopsis)
+    (description description)
+    (license license:expat)))
+
+;;; These are separate packages because GraalPy's MX_URLREWRITES mechanism
+;;; rewrites Maven artifact URLs to local paths. Maven artifacts are per-JAR,
+;;; so each JAR needs its own Guix package to map to the expected path:
+;;;   org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1.jar
+;;;   org/bouncycastle/bcutil-jdk18on/1.78.1/bcutil-jdk18on-1.78.1.jar
+;;;   org/bouncycastle/bcpkix-jdk18on/1.78.1/bcpkix-jdk18on-1.78.1.jar
+;;; A single combined package would not satisfy these individual URL rewrites.
+
+(define-public java-bcprov-for-graalpy
+  (bc-java-1.78.1-package
+   "java-bcprov-for-graalpy"
+   "bcprov-jdk18on"
+   "build-provider"
+   "Bouncy Castle provider for GraalPy"
+   "Crypto provider from Bouncy Castle built for GraalPy."))
 (define-public java-lmax-disruptor
   (package
     (name "java-lmax-disruptor")
