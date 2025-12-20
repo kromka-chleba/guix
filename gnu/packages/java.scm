@@ -5529,6 +5529,34 @@ including java-asm.")
   (package
     (inherit java-hamcrest-core)
     (name "java-hamcrest-core-for-graal-truffle")))
+
+;; mx expects NINJA as a zip file containing a ninja binary.
+;; We create a zip from Guix's ninja package.
+(define-public ninja-for-graal-truffle
+  (package
+    (name "ninja-for-graal-truffle")
+    (version "1.10.2")  ; Version mx expects
+    (source #f)
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((ninja-bin (string-append #$(this-package-input "ninja") "/bin/ninja"))
+                 (out #$output)
+                 (share (string-append out "/share/ninja"))
+                 (zip-file (string-append share "/ninja.zip")))
+            (mkdir-p share)
+            ;; Create a zip file containing the ninja binary
+            (invoke #$(file-append (@ (gnu packages compression) zip) "/bin/zip")
+                    "-j" zip-file ninja-bin)))))
+    (inputs (list (@ (gnu packages ninja) ninja)))
+    (home-page "https://ninja-build.org/")
+    (synopsis "Ninja build tool packaged for GraalVM mx")
+    (description "Ninja build system repackaged as a zip for GraalVM's mx build tool.")
+    (license license:asl2.0)))
 (define-public java-cglib
   (package
     (name "java-cglib")
