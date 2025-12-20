@@ -323,6 +323,35 @@ It can be used as a replacement for the Apache @code{CBZip2InputStream} /
 algorithms in Java.")
     (license license:public-domain)))
 
+(define-public java-xz-for-graal-truffle
+  (package
+    (inherit java-xz)
+    (name "java-xz-for-graal-truffle")
+    (version "1.10")
+    (source (origin
+              (method url-fetch/zipbomb)
+              (uri (string-append "https://tukaani.org/xz/xz-java-" version ".zip"))
+              (sha256
+               (base32 "1rbzbzab8iizic4yqh2ps9hmjxxym7hghc4gkiggscpl8bd54an0"))))
+    (arguments
+     `(#:tests? #f
+       #:jdk ,openjdk
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'build 'create-sources-jar
+           (lambda _
+             ;; Create a sources JAR from the source files.
+             ;; Only include org/tukaani/xz - exclude demo files in root.
+             (invoke "jar" "cf" "build/jar/xz-sources.jar"
+                     "-C" "src" "org")))
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (share (string-append out "/share/java")))
+               (mkdir-p share)
+               (install-file "build/jar/xz.jar" share)
+               (install-file "build/jar/xz-sources.jar" share)))))))))
+
 (define-public java-zstd
   (package
     (name "java-zstd")
