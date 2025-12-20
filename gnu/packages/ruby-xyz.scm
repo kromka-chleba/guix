@@ -589,6 +589,24 @@ files in a directory.")
 hosts by wrapping the @file{rsync} binary.")
     (license license:expat)))
 
+(define-public ruby-strings-ansi
+  (package
+    (name "ruby-strings-ansi")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "strings-ansi" version))
+       (sha256
+        (base32 "120wa6yjc63b84lprglc52f40hx3fx920n4dmv14rad41rv2s9lh"))))
+    (build-system ruby-build-system)
+    (arguments (list #:tests? #f)) ;; test seems to depend on parent ruby-strings
+    (synopsis "Handle ANSI escape codes in strings")
+    (description
+     "Provides methods for processing ANSI escape codes in strings.")
+    (home-page "https://github.com/piotrmurach/strings-ansi")
+    (license license:expat)))
+
 (define-public ruby-tty-color
   (package
     (name "ruby-tty-color")
