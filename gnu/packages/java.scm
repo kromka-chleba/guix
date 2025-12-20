@@ -1871,6 +1871,51 @@ blacklisted.certs.pem"
 ;;; Convenience alias to point to the latest version of OpenJDK.
 (define-public openjdk openjdk25)
 
+;; OpenJDK variant with static libraries for building GraalVM/SubstrateVM.
+;; This is required because SubstrateVM's native-image needs to extract JVM_*
+;; symbols from static JDK libraries to generate JvmFuncsFallbacks.c.
+;; See: <https://bugs.openjdk.org/browse/JDK-8236921>
+(define-public openjdk-for-graal
+  (package
+    (inherit openjdk25)
+    (name "openjdk-for-graal")
+    (outputs '("out" "jdk" "doc"))
+    (arguments
+     (substitute-keyword-arguments (package-arguments openjdk25)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            ;; Build graal-builder-image which includes static libraries.
+            (replace 'build
+              (lambda* (#:key parallel-build? make-flags #:allow-other-keys)
+                (apply invoke "make" "graal-builder-image"
+                       `(,@(if parallel-build?
+                               (list (string-append "JOBS="
+                                                    (number->string (parallel-job-count))))
+                               '("JOBS=1"))
+                         ,@make-flags))))
+            ;; graal-builder-image already includes everything, no need for
+            ;; separate jre build.
+            (delete 'build-jre)
+            ;; Install from graal-builder-jdk instead of jdk.
+            (replace 'install
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let ((images (car (find-files "build" "-server-release"
+                                               #:directories? #t))))
+                  (copy-recursively (string-append images "/images/graal-builder-jdk")
+                                    (assoc-ref outputs "jdk"))
+                  (copy-recursively (string-append images "/images/graal-builder-jdk")
+                                    (assoc-ref outputs "out"))
+                  ;; graal-builder-image doesn't produce docs, create empty dir.
+                  (mkdir-p (assoc-ref outputs "doc")))))
+            ;; Delete phases that reference #$output:doc which we don't have
+            ;; (graal-builder-image doesn't build docs).
+            (delete 'remove-timestamp-from-api-summary)
+            (delete 'strip-archive-timestamps)))))
+    (synopsis "OpenJDK with static libraries for GraalVM")
+    (description "This package provides OpenJDK built with static libraries
+required for building GraalVM's SubstrateVM and native-image.  The static
+libraries are needed for the JvmFuncsFallbacks build task.")))
+
 
 ;; This version of JBR is here in order to be able to build custom
 ;; IntelliJ plugins.  Those usually need both jbr11 and jbr17 for
