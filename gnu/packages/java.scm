@@ -1885,6 +1885,15 @@ blacklisted.certs.pem"
     (outputs '("out" "jdk" "doc"))
     (arguments
      (substitute-keyword-arguments (package-arguments openjdk25)
+       ;; Set version string to "25.0.1+8" instead of "25.0.1+-adhoc.nixbld.source".
+       ;; GraalVM's JVMCIVersionCheck requires java.vm.version to be parseable
+       ;; as a release version (pre() empty or "ea"), not an adhoc build.
+       ;; Build number 8 comes from the jdk-25.0.1+8 tag which points to the
+       ;; same commit as jdk-25.0.1-ga (78770bfaefd23ae77ec4f8ddd769c1c2d9c282df).
+       ((#:configure-flags flags #~'())
+        #~(append #$flags
+                  '("--with-version-opt="
+                    "--with-version-build=8")))
        ((#:phases phases)
         #~(modify-phases #$phases
             ;; Build graal-builder-image which includes static libraries.
