@@ -13413,6 +13413,43 @@ This package includes the line reader.")
     (synopsis "JLine terminal FFM for GraalVM Truffle")
     (description "JLine terminal FFM (Foreign Function Memory) module for GraalVM Truffle.")))
 
+;; org.json JSON library for GraalVM Truffle
+;; GraalVM needs this for TRUFFLE_JSON which is used by TRUFFLE_PROFILER in tools.
+(define-public java-json-for-graal-truffle
+  (package
+    (name "java-json-for-graal-truffle")
+    (version "20250517")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/stleary/JSON-java/archive/refs/tags/"
+                                  version ".tar.gz"))
+              (file-name (string-append "java-json-" version ".tar.gz"))
+              (sha256
+               (base32 "0291f9fkr9v8qh4vlxkv62vzs4dadpzhxrrcw5pbg69ml0pwq5wz"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:jar-name "json.jar"
+       #:source-dir "src/main/java"
+       #:tests? #f ; No test source directory in release tarball
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'build 'create-sources-jar
+           (lambda _
+             ;; Create a sources JAR from the source files.
+             ;; mx shading needs .java source files, not .class files.
+             (invoke "jar" "cf" "json-sources.jar"
+                     "-C" "src/main/java" "org")))
+         (add-after 'install 'install-sources-jar
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((share (string-append (assoc-ref outputs "out")
+                                         "/share/java/")))
+               (install-file "json-sources.jar" share)))))))
+    (home-page "https://github.com/stleary/JSON-java")
+    (synopsis "JSON library for Java")
+    (description "Reference implementation of a JSON parser in Java, used by
+GraalVM's TRUFFLE_JSON distribution.")
+    (license license:public-domain)))
+
 (define-public java-xmlunit
   (package
     (name "java-xmlunit")
