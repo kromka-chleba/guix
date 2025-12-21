@@ -39,6 +39,60 @@
   #:use-module (gnu packages version-control))
 
 ;;;
+;;; GraalVM build tool and components
+;;;
+
+;; The Universal Permissive License (UPL) 1.0 is an FSF-approved,
+;; GPL-compatible, permissive free software license.
+;; See: <https://www.fsf.org/blogs/licensing/universal-permissive-license-added-to-license-list>
+(define upl1.0
+  (license:non-copyleft "https://opensource.org/licenses/UPL"
+                        "Universal Permissive License 1.0"))
+
+;;; Shared version and source definitions
+
+(define %graalvm-version "25.0.1")
+
+;; Main graal repository source (used by sdk, truffle)
+(define %graal-source
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/oracle/graal")
+          (commit (string-append "vm-" %graalvm-version))))
+    (file-name (git-file-name "graal" %graalvm-version))
+    (sha256
+     (base32 "06m8nbjrjawn5falr7fzgsqqav23zapzhc5f774320cdjbj90zvx"))
+    (modules '((guix build utils)))
+    (snippet
+     #~(begin
+         (use-modules (guix build utils))
+         ;; Use GCC toolchain instead of clang
+         (substitute* '("sdk/mx.sdk/mx_sdk_vm_impl.py"
+                        "sdk/mx.sdk/mx_sdk_vm_ng.py")
+           (("sdk:LLVM_NINJA_TOOLCHAIN") "mx:DEFAULT_NINJA_TOOLCHAIN"))
+         (substitute* '("sdk/mx.sdk/suite.py"
+                        "truffle/mx.truffle/suite.py")
+           (("\"toolchain\"\\s*:\\s*\"sdk:LLVM_NINJA_TOOLCHAIN\"")
+            "\"toolchain\": \"mx:DEFAULT_NINJA_TOOLCHAIN\""))
+         ;; Remove clang-specific flags that GCC doesn't understand.
+         (substitute* '("sdk/mx.sdk/suite.py"
+                        "sdk/mx.sdk/mx_sdk_vm_impl.py"
+                        "sdk/mx.sdk/mx_sdk_vm_ng.py")
+           (("-stdlib=libc\\+\\+") "")
+           (("-static-libstdc\\+\\+") "")
+           (("-l:libc\\+\\+abi\\.a") ""))
+         ;; Fix missing #include <memory> for GCC.
+         (substitute* "sdk/src/org.graalvm.launcher.native/src/launcher.cc"
+           (("#include <sys/stat.h>")
+            "#include <sys/stat.h>
+#include <memory>"))
+         ;; Patch the libffi bootstrap Makefile patch to use bash explicitly.
+         (substitute* "truffle/src/libffi/patches/others/0001-Add-mx-bootstrap-Makefile.patch"
+           (("\\.\\./(\\$\\(SOURCES\\))/configure" all sources)
+            (string-append "$(SHELL) ../" sources "/configure")))))))
+
+;;;
 ;;; MX URL Rewrite Helpers
 ;;;
 ;;; The mx build tool downloads dependencies from Maven and other URLs.
@@ -71,6 +125,26 @@
       (let ((rewrites (string-append "[" (string-join (map make-rewrite '#$specs) ",") "]")))
         (format #t "Setting MX_URLREWRITES:~%~a~%" rewrites)
         (setenv "MX_URLREWRITES" rewrites))))
+
+;; Build install phase that uses `mx paths` to find distribution JARs.
+;; dists: list of distribution names (e.g., '("GRAAL_SDK" "WORD"))
+;; subdir: output subdirectory under lib/ (default "graal")
+(define* (make-mx-install-phase dists #:optional (subdir "graal"))
+  #~(lambda* (#:key outputs #:allow-other-keys)
+      (use-modules (ice-9 popen) (ice-9 rdelim))
+      (define (mx-paths dist)
+        (let* ((port (open-pipe* OPEN_READ "mx" "--user-home" (getcwd) "paths" dist))
+               (path (read-line port)))
+          (close-pipe port)
+          path))
+      (let* ((out (assoc-ref outputs "out"))
+             (lib (string-append out "/lib/" #$subdir)))
+        (mkdir-p lib)
+        (for-each (lambda (dist)
+                    (let ((jar (mx-paths dist)))
+                      (format #t "Installing ~a -> ~a~%" dist jar)
+                      (install-file jar lib)))
+                  '#$dists))))
 
 ;; ASM bytecode manipulation library (version 9.7.1)
 (define %mx-rewrites-asm
@@ -343,3 +417,38 @@ Chrome Inspector and other debugging tools.  It provides WebSocket client
 and server implementations for the Truffle framework.")
     (license upl1.0)))
 
+;; GraalVM SDK - standalone foundation with no suite imports.
+;; Provides: POLYGLOT, COLLECTIONS, NATIVEIMAGE, WORD, LAUNCHER_COMMON.
+(define-public graal-sdk
+  (package
+    (name "graal-sdk")
+    (version %graalvm-version)
+    (source %graal-source)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir-to-sdk
+            (lambda _ (chdir "sdk")))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "JAVA_HOME" (assoc-ref inputs "openjdk"))
+              (setenv "MX_PYTHON" (which "python3"))
+              ;; Redirect mx's build output and cache to writable locations.
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; Build the core SDK distributions (without LAUNCHER_COMMON which needs JLINE).
+              (invoke "mx" "--user-home" (getcwd)
+                      "build" "--dependencies" "GRAAL_SDK,WORD,COLLECTIONS,NATIVEIMAGE,POLYGLOT")))
+          (replace 'install
+            #$(make-mx-install-phase '("GRAAL_SDK" "WORD" "COLLECTIONS" "NATIVEIMAGE" "POLYGLOT"))))))
+    (native-inputs (list graalvm-mx (list openjdk "jdk")))
+    (inputs (list python-3))
+    (home-page "https://www.graalvm.org/")
+    (synopsis "GraalVM SDK and Polyglot API")
+    (description "Foundation libraries for GraalVM including the Polyglot API
+for language interoperability, collections, and native image support.")
+    (license upl1.0)))
