@@ -304,3 +304,42 @@
 GraalVM projects.  It provides commands for building, testing, and packaging
 polyglot language implementations built on the Truffle framework.")
     (license license:gpl2)))
+
+;; TruffleJWS - WebSocket implementation used by GraalVM tools (chromeinspector)
+;; Built from source jar distributed by Oracle at lafo.ssw.uni-linz.ac.at
+(define-public java-trufflejws-for-graal
+  (package
+    (name "java-trufflejws-for-graal")
+    (version "1.5.7")
+    (source (origin
+              (method url-fetch)
+              (uri "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/trufflejws-1.5.7-src.jar")
+              (sha256
+               (base32 "0c6ccyl9s07mimdnscc4g56zkhc31qd6qvhy16vidrj12h8cxgfn"))))
+    (build-system ant-build-system)
+    (arguments
+     (list
+      #:jar-name "trufflejws.jar"
+      #:source-dir "."
+      #:tests? #f  ; no tests in source jar
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source #:allow-other-keys)
+              ;; Source is a jar file containing .java files.
+              (invoke "unzip" "-q" source)))
+          (add-after 'install 'install-sources
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (share (string-append out "/share/java")))
+                ;; Copy source jar as sources jar for mx.
+                (copy-file #$source
+                           (string-append share "/trufflejws-sources.jar"))))))))
+    (native-inputs (list unzip))
+    (home-page "https://www.graalvm.org")
+    (synopsis "WebSocket implementation for GraalVM tools")
+    (description "TruffleJWS is a WebSocket library used by GraalVM's
+Chrome Inspector and other debugging tools.  It provides WebSocket client
+and server implementations for the Truffle framework.")
+    (license upl1.0)))
+
