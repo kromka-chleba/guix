@@ -34550,11 +34550,10 @@ arrangements.")
   (sbcl-package->clasp-package sbcl-xhtmlambda))
 
 (define-public sbcl-xkbcommon
-  (let ((commit "aa9513d93f42d7816f88dd1bd8bd21375e7d7512")
-        (revision "0"))
+  (let ((commit "0.2.0"))
     (package
       (name "sbcl-xkbcommon")
-      (version (git-version "0.0.0" revision commit))
+      (version commit)
       (source
        (origin
          (method git-fetch)
@@ -34563,7 +34562,7 @@ arrangements.")
                (commit commit)))
          (file-name (git-file-name "cl-xkbcommon" version))
          (sha256
-          (base32 "02zdbkh7yliw9vg8i8wx2xgcpfni0fr4z0w19kkxvaib8xm9rx1q"))))
+          (base32 "0qkaamc8sikpn2q6z21s8249sygszj6bhd0slr8f77k9c2ph1mbb"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        (list #:phases
