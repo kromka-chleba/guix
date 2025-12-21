@@ -421,7 +421,7 @@ It comes with a German-English dictionary with approximately 270,000 entries.")
         (base32 "076jv3ywdgqqzg92bfbagc7ypy08xjq5zn4vgna6j9350fkfqhzn"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:tests? #f)) ;no tests provided with the project
+     (list #:test-backend #~'unittest))
     (native-inputs
      (list python-setuptools))
     (home-page "https://grammalecte.net")
