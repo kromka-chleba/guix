@@ -15,6 +15,7 @@
 ;;; Copyright © 2021 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2022, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2022, 2023 Ekaitz Zarraga <ekaitz@elenq.tech>
+;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2416,6 +2417,10 @@ exec " gcc "/bin/" program
                          "--disable-shared"
                          "--enable-languages=c,c++"
 
+                         ;; Enabling the lto-plugin will cause the compilation to fail.
+                         #$@(if (target-loongarch64?)
+                                #~("--disable-lto-plugin")
+                                '())
                          ;; libstdc++ cannot be built at this stage
                          ;; ("Link tests are not allowed after
                          ;; GCC_NO_EXECUTABLES.").
@@ -2534,6 +2539,7 @@ exec " gcc "/bin/" program
                                    ("riscv64-linux" (make-libstdc++-boot0 gcc-7))
                                    ("i586-gnu" (make-libstdc++-boot0 gcc-5))
                                    ("x86_64-gnu" (make-libstdc++-boot0 gcc-14))
+                                   ("loongarch64-linux" (make-libstdc++-boot0 gcc-14))
                                    (_ libstdc++-boot0)))
 
               ;; Call it differently so that the builder can check whether
