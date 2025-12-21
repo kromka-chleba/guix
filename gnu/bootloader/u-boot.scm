@@ -35,6 +35,7 @@
             u-boot-a20-olinuxino-lime2-bootloader
             u-boot-a20-olinuxino-micro-bootloader
             u-boot-bananapi-m2-ultra-bootloader
+            u-boot-am335x-evm-bootloader
             u-boot-beaglebone-black-bootloader
             u-boot-cubietruck-bootloader
             u-boot-firefly-rk3399-bootloader
@@ -91,6 +92,27 @@ is BLOCK-SIZE * COUNT, or FILE size if COUNT is not given."
       (if bootloader
         (error "Failed to install U-Boot"))))
 
+(define install-am335x-evm-u-boot
+  (write-u-boot-image
+   ;; According to the "26.1.8.5.5 MMC/SD Read Sector Procedure in Raw Mode"
+   ;; section in the "AM335x and AMIC110 Sitara™ Processors Technical
+   ;; Reference Manual", we have offset, the bootrom tries to load code at the
+   ;; offsets 0x0, 0x20000 (128KB), 0x40000 (256KB) and 0x60000
+   ;; (384KB). Puting MLO at 128 KB doesn't conflict with the MBR or the
+   ;; GPT.
+   '(("MLO" 256 256)
+     ;; We can also put MLO at 256 KiB for more reliability as the
+     ;; doc/board/ti/am335x_evm.rst documentation in u-boot advise us to do
+     ;; that.
+     ("MLO" 512 256)
+     ;; At the time of writing, u-boot.img is 1.4 MiB, and it is at offset
+     ;; 0x60000 (384KB) as per CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR. We
+     ;; also need to align the first partition to make sure read/writes are
+     ;; properly aligned. All can fit into 2MiB (u-boot.img can grow up to
+     ;; 1664 KiB), but we want a bit more space in case u-boot.img grows over
+     ;; time, so we allow u-boot to grow until the 4 MiB offset.
+     ("u-boot.img" 768 7424)) 512))
+
 (define install-beaglebone-black-u-boot
   ;; http://wiki.beyondlogic.org/index.php?title=BeagleBoneBlack_Upgrading_uBoot
   ;; This first stage bootloader called MLO (U-Boot SPL) is expected at
@@ -146,6 +168,33 @@ is BLOCK-SIZE * COUNT, or FILE size if COUNT is not given."
    (package #f)
    (installer #f)
    (disk-image-installer install-u-boot)))
+
+(define u-boot-am335x-evm-bootloader
+  (bootloader
+   (inherit u-boot-bootloader)
+   ;; This bootloader supports the following computers:
+   ;; - SanCloud BeagleBone Enhanced
+   ;; - SanCloud BeagleBone Enhanced Extended WiFi
+   ;; - SanCloud BeagleBone Enhanced Lite
+   ;; - Seeed Studio BeagleBone Green Eco
+   ;; - TI AM3359 ICE-V2
+   ;; - TI AM335x BeagleBone
+   ;; - TI AM335x BeagleBone Black
+   ;; - TI AM335x BeagleBone Green
+   ;; - TI AM335x EVM
+   ;; - TI AM335x EVM-SK
+   ;; - TI AM335x PocketBeagle
+   ;;
+   ;; This list was made by retrieving the list of Devicetrees used in
+   ;; configs/am335x_evm_defconfig in u-boot source code. Once we have that we
+   ;; can look at each Devicetree in arch/arm/boot/dts/ti/omap/ inside Linux,
+   ;; and in each file, look at the model property to find the name of the
+   ;; computers that this image supports.
+   (package u-boot-am335x-evm)
+   ;; At the time of writing, our u-boot.img is 1.4 MiB. This is why we can't
+   ;; reuse install-beaglebone-black-u-boot. And having the same image being
+   ;; able to boot on multiple computers is useful.
+   (disk-image-installer install-am335x-evm-u-boot)))
 
 (define u-boot-beaglebone-black-bootloader
   (bootloader
