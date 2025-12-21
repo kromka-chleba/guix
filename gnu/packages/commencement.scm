@@ -2956,6 +2956,14 @@ memoized as a function of '%current-system'."
                               "/lib/python"
                               ,(version-major+minor version)
                               "/test"))))
+         ,@(if (target-loongarch64?)
+               ;; Avoid conflicts between sinpi in python and sinpi in glibc
+               ;; Make sure the math module is compiled. The glibc script requires this.
+               `((add-after 'unpack 'fix-sinpi
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "Modules/mathmodule.c"
+                         (("sinpi") "m_sinpi")))))
+               '())
          ,@(if (system-hurd?)
                `((add-before 'build 'fix-regen
                    (lambda* (#:key inputs #:allow-other-keys)
