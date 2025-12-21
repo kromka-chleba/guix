@@ -2566,6 +2566,14 @@ exec " gcc "/bin/" program
              (substitute-keyword-arguments (package-arguments perl)
                ((#:phases phases)
                 #~(modify-phases #$phases
+                    ;; rt has been merged into libc
+                    #$@(if (target-loongarch64?)
+                           #~((add-after 'unpack 'disable-rt
+                                (lambda _
+                                  (substitute* '("dist/Time-HiRes/hints/linux.pl"
+                                                 "dist/Time-HiRes/hints/dec_osf.pl")
+                                    (("'-lrt'") "")))))
+                          #~())
                     ;; Pthread support is missing in the bootstrap compiler
                     ;; (broken spec file), so disable it.
                     (add-before 'configure 'disable-pthreads
