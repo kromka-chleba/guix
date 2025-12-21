@@ -760,6 +760,62 @@ than traditional JVM-based applications.  The resulting binaries include the
 application code, required libraries, and a minimal runtime called Substrate VM.")
     (license (list license:gpl2+  ; with Classpath exception
                    upl1.0))))
+
+(define-public graal-wasm
+  (package
+    (name "graal-wasm")
+    (version %graalvm-version)
+    (source %graal-source)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir-to-wasm
+            (lambda _
+              (chdir "wasm")))
+          (add-before 'build 'setup-mx-urlrewrites
+            #$(make-mx-urlrewrites-phase %mx-rewrites-truffle))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "JAVA_HOME" (assoc-ref inputs "openjdk"))
+              (setenv "MX_PYTHON" (which "python3"))
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; Build the WebAssembly runtime and launcher.
+              (invoke "mx" "--user-home" (getcwd) "build"
+                      "--dependencies" "WASM,WASM_LAUNCHER")))
+          (replace 'install
+            #$(make-mx-install-phase '("WASM" "WASM_LAUNCHER") "wasm")))))
+    (native-inputs
+     (list (list "mx" graalvm-mx)
+           (list "openjdk" openjdk-for-graal "jdk")
+           (list "java-asm" java-asm-for-graal-truffle)
+           (list "java-asm-tree" java-asm-tree-for-graal-truffle)
+           (list "java-asm-analysis" java-asm-analysis-for-graal-truffle)
+           (list "java-asm-util" java-asm-util-for-graal-truffle)
+           (list "java-asm-commons" java-asm-commons-for-graal-truffle)
+           (list "java-antlr4-runtime" java-antlr4-runtime-for-graal-truffle)
+           (list "java-hamcrest-core" java-hamcrest-core-for-graal-truffle)
+           (list "java-icu4j" java-icu4j-for-graal-truffle)
+           (list "java-icu4j-charset" java-icu4j-charset-for-graal-truffle)
+           (list "java-xz" java-xz-for-graal-truffle)
+           (list "java-jline-terminal" java-jline-terminal-for-graal-truffle)
+           (list "java-jline-reader" java-jline-reader-for-graal-truffle)
+           (list "java-jline-builtins" java-jline-builtins-for-graal-truffle)
+           (list "java-jline-terminal-ffm" java-jline-terminal-ffm-for-graal-truffle)
+           (list "ninja" ninja-for-graal-truffle)
+           (list "libffi-3.4.8.tar.gz" (package-source libffi-for-graal-truffle))))
+    (inputs (list python-3))
+    (home-page "https://www.graalvm.org/webassembly/")
+    (synopsis "High-performance WebAssembly runtime for Java")
+    (description "GraalWasm is a high-performance embeddable WebAssembly runtime
+for Java.  It can be used to run WebAssembly modules in Java applications using
+the GraalVM Polyglot API.  GraalWasm supports the WebAssembly MVP specification
+and various post-MVP proposals.")
+    (license upl1.0)))
 ;; GraalPy - Python 3.12 implementation on GraalVM
 (define-public graalpy-community
   (package
