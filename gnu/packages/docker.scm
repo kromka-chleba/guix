@@ -270,17 +270,21 @@ management tool.")
     (version "0.4.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "dockerpty" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/d11wtq/dockerpty")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1kjn64wx23jmr8dcc6g7bwlmrhfmxr77gh6iphqsl39sayfxdab9"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-six))
+        (base32 "1p4inagrjkqzvsqvlb3ggsyj55yfhghgw4b8qs99v5bifnfa2jf4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))              ; XXX: Requires outdated python-expects.
+    (native-inputs (list python-setuptools python-six))
     (home-page "https://github.com/d11wtq/dockerpty")
     (synopsis "Python library to use the pseudo-TTY of a Docker container")
-    (description "Docker PTY provides the functionality needed to operate the
+    (description
+     "Docker PTY provides the functionality needed to operate the
 pseudo-terminal (PTY) allocated to a Docker container using the Python
 client.")
     (license license:asl2.0)))
