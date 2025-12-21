@@ -39,6 +39,209 @@
   #:use-module (gnu packages version-control))
 
 ;;;
+;;; MX URL Rewrite Helpers
+;;;
+;;; The mx build tool downloads dependencies from Maven and other URLs.
+;;; MX_URLREWRITES redirects these to Guix-built JARs with computed SHA512 digests.
+
+;; Build MX_URLREWRITES JSON from a list of rewrite specifications.
+;; Each spec is: (maven-url path-pattern)
+;;   maven-url: the URL mx tries to fetch
+;;   path-pattern: pattern for search-input-file, or input key for assoc-ref if no "/"
+(define (make-mx-urlrewrites-phase specs)
+  #~(lambda* (#:key inputs #:allow-other-keys)
+      (use-modules (ice-9 popen) (ice-9 rdelim))
+      (define (file-sha512 path)
+        (let* ((port (open-pipe* OPEN_READ "sha512sum" "--" path))
+               (line (read-line port))
+               (hash (car (string-split line #\space))))
+          (close-pipe port)
+          hash))
+      (define (resolve-path path-pattern)
+        (if (string-index path-pattern #\/)
+            (search-input-file inputs path-pattern)
+            (assoc-ref inputs path-pattern)))
+      (define (make-rewrite spec)
+        (let* ((maven-url (car spec))
+               (path-pattern (cadr spec))
+               (local-path (resolve-path path-pattern))
+               (sha512 (file-sha512 local-path)))
+          (format #f "{\"~a\":{\"replacement\":\"file://~a\",\"digest\":\"sha512:~a\"}}"
+                  maven-url local-path sha512)))
+      (let ((rewrites (string-append "[" (string-join (map make-rewrite '#$specs) ",") "]")))
+        (format #t "Setting MX_URLREWRITES:~%~a~%" rewrites)
+        (setenv "MX_URLREWRITES" rewrites))))
+
+;; ASM bytecode manipulation library (version 9.7.1)
+(define %mx-rewrites-asm
+  '(("https://repo1.maven.org/maven2/org/ow2/asm/asm/9.7.1/asm-9.7.1.jar"
+     "share/java/asm9.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm/9.7.1/asm-9.7.1-sources.jar"
+     "share/java/asm9-sources.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.7.1/asm-tree-9.7.1.jar"
+     "share/java/asm-tree.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.7.1/asm-tree-9.7.1-sources.jar"
+     "share/java/asm-tree-sources.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.7.1/asm-analysis-9.7.1.jar"
+     "share/java/asm-analysis.jar")
+    ;; asm-analysis sources -> binary (no sources JAR available)
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.7.1/asm-analysis-9.7.1-sources.jar"
+     "share/java/asm-analysis.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-util/9.7.1/asm-util-9.7.1.jar"
+     "share/java/asm-util8.jar")
+    ;; asm-util sources -> binary
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-util/9.7.1/asm-util-9.7.1-sources.jar"
+     "share/java/asm-util8.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.7.1/asm-commons-9.7.1.jar"
+     "share/java/asm-commons8.jar")
+    ("https://repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.7.1/asm-commons-9.7.1-sources.jar"
+     "share/java/asm-commons-sources.jar")))
+
+;; ANTLR4 parser runtime (version 4.13.2)
+(define %mx-rewrites-antlr
+  '(("https://repo1.maven.org/maven2/org/antlr/antlr4-runtime/4.13.2/antlr4-runtime-4.13.2.jar"
+     "share/java/java-antlr4-runtime.jar")
+    ;; sources -> binary
+    ("https://repo1.maven.org/maven2/org/antlr/antlr4-runtime/4.13.2/antlr4-runtime-4.13.2-sources.jar"
+     "share/java/java-antlr4-runtime.jar")))
+
+;; ICU4J unicode library (mx wants 76.1, we provide 73.2)
+(define %mx-rewrites-icu
+  '(("https://repo1.maven.org/maven2/com/ibm/icu/icu4j/76.1/icu4j-76.1.jar"
+     "share/java/icu4j.jar")
+    ("https://search.maven.org/remotecontent?filepath=com/ibm/icu/icu4j/76.1/icu4j-76.1.jar"
+     "share/java/icu4j.jar")
+    ("https://repo1.maven.org/maven2/com/ibm/icu/icu4j/76.1/icu4j-76.1-sources.jar"
+     "share/java/icu4j-sources.jar")
+    ("https://repo1.maven.org/maven2/com/ibm/icu/icu4j-charset/76.1/icu4j-charset-76.1.jar"
+     "share/java/icu4j-charset.jar")
+    ("https://search.maven.org/remotecontent?filepath=com/ibm/icu/icu4j-charset/76.1/icu4j-charset-76.1.jar"
+     "share/java/icu4j-charset.jar")
+    ("https://repo1.maven.org/maven2/com/ibm/icu/icu4j-charset/76.1/icu4j-charset-76.1-sources.jar"
+     "share/java/icu4j-charset-sources.jar")))
+
+;; XZ compression library (version 1.10)
+(define %mx-rewrites-xz
+  '(("https://repo1.maven.org/maven2/org/tukaani/xz/1.10/xz-1.10.jar"
+     "share/java/xz.jar")
+    ("https://search.maven.org/remotecontent?filepath=org/tukaani/xz/1.10/xz-1.10.jar"
+     "share/java/xz.jar")
+    ("https://repo1.maven.org/maven2/org/tukaani/xz/1.10/xz-1.10-sources.jar"
+     "share/java/xz-sources.jar")))
+
+;; Ninja build tool
+(define %mx-rewrites-ninja
+  '(("https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/ninja-1.10.2-linux-amd64.zip"
+     "share/ninja/ninja.zip")))
+
+;; Hamcrest test matchers
+(define %mx-rewrites-hamcrest
+  '(("https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
+     "lib/m2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar")
+    ("https://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
+     "lib/m2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar")
+    ;; sources -> binary
+    ("https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar"
+     "lib/m2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar")
+    ("https://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar"
+     "lib/m2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar")))
+
+;; libffi source tarball
+(define %mx-rewrites-libffi
+  '(("https://github.com/libffi/libffi/releases/download/v3.4.8/libffi-3.4.8.tar.gz"
+     "libffi-3.4.8.tar.gz")
+    ("https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/libffi-3.4.8.tar.gz"
+     "libffi-3.4.8.tar.gz")))
+
+;; JLine terminal library (version 3.28.0)
+(define %mx-rewrites-jline
+  '(("https://repo1.maven.org/maven2/org/jline/jline-terminal/3.28.0/jline-terminal-3.28.0.jar"
+     "share/java/jline-terminal.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-terminal/3.28.0/jline-terminal-3.28.0-sources.jar"
+     "share/java/jline-terminal-sources.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-reader/3.28.0/jline-reader-3.28.0.jar"
+     "share/java/jline-reader.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-reader/3.28.0/jline-reader-3.28.0-sources.jar"
+     "share/java/jline-reader-sources.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-builtins/3.28.0/jline-builtins-3.28.0.jar"
+     "share/java/jline-builtins.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-builtins/3.28.0/jline-builtins-3.28.0-sources.jar"
+     "share/java/jline-builtins-sources.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-terminal-ffm/3.28.0/jline-terminal-ffm-3.28.0.jar"
+     "share/java/jline-terminal-ffm.jar")
+    ("https://repo1.maven.org/maven2/org/jline/jline-terminal-ffm/3.28.0/jline-terminal-ffm-3.28.0-sources.jar"
+     "share/java/jline-terminal-ffm-sources.jar")))
+
+;; JSON library (version 20250517)
+(define %mx-rewrites-json
+  '(("https://repo1.maven.org/maven2/org/json/json/20250517/json-20250517.jar"
+     "share/java/json.jar")
+    ("https://repo1.maven.org/maven2/org/json/json/20250517/json-20250517-sources.jar"
+     "share/java/json-sources.jar")))
+
+;; BouncyCastle crypto library (version 1.78.1)
+(define %mx-rewrites-bouncycastle
+  '(("https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1.jar"
+     "share/java/bcprov-jdk18on.jar")
+    ("https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1-sources.jar"
+     "share/java/bcprov-jdk18on-sources.jar")
+    ("https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.78.1/bcutil-jdk18on-1.78.1.jar"
+     "share/java/bcutil-jdk18on.jar")
+    ("https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.78.1/bcutil-jdk18on-1.78.1-sources.jar"
+     "share/java/bcutil-jdk18on-sources.jar")
+    ("https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.78.1/bcpkix-jdk18on-1.78.1.jar"
+     "share/java/bcpkix-jdk18on.jar")
+    ("https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.78.1/bcpkix-jdk18on-1.78.1-sources.jar"
+     "share/java/bcpkix-jdk18on-sources.jar")))
+
+;; Cap'n Proto runtime (version 0.1.16)
+(define %mx-rewrites-capnproto
+  '(("https://repo1.maven.org/maven2/org/capnproto/runtime/0.1.16/runtime-0.1.16.jar"
+     "share/java/capnproto-runtime.jar")
+    ("https://repo1.maven.org/maven2/org/capnproto/runtime/0.1.16/runtime-0.1.16-sources.jar"
+     "share/java/capnproto-runtime-sources.jar")))
+
+;; TruffleJWS WebSocket library
+(define %mx-rewrites-trufflejws
+  '(("https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/trufflejws-1.5.7.jar"
+     "share/java/trufflejws.jar")
+    ("https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/trufflejws-1.5.7-src.jar"
+     "share/java/trufflejws-sources.jar")))
+
+;; Native source tarballs for graalpy
+(define %mx-rewrites-native-sources
+  '(("https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/graalpython/bzip2-1.0.8.tar.gz"
+     "bzip2-1.0.8.tar.gz")
+    ("https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/xz-5.6.2.tar.gz"
+     "xz-5.6.2.tar.gz")))
+
+;; Composed rewrite lists for each package tier
+(define %mx-rewrites-regex
+  (append %mx-rewrites-asm
+          %mx-rewrites-antlr
+          %mx-rewrites-icu
+          %mx-rewrites-xz
+          %mx-rewrites-ninja))
+
+(define %mx-rewrites-truffle
+  (append %mx-rewrites-regex
+          %mx-rewrites-hamcrest
+          %mx-rewrites-libffi
+          %mx-rewrites-jline))
+
+(define %mx-rewrites-tools
+  (append %mx-rewrites-truffle
+          %mx-rewrites-json))
+
+(define %mx-rewrites-graalpy
+  (append %mx-rewrites-truffle
+          %mx-rewrites-json
+          %mx-rewrites-bouncycastle
+          %mx-rewrites-capnproto
+          %mx-rewrites-trufflejws
+          %mx-rewrites-native-sources))
+
+;;;
 ;;; Packages
 ;;;
 
