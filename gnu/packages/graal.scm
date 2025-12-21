@@ -307,6 +307,10 @@
   (append %mx-rewrites-truffle
           %mx-rewrites-json))
 
+(define %mx-rewrites-substratevm
+  (append %mx-rewrites-truffle
+          %mx-rewrites-capnproto))
+
 (define %mx-rewrites-graalpy
   (append %mx-rewrites-truffle
           %mx-rewrites-json
@@ -692,6 +696,68 @@ the JVM that can be used as a replacement for the C2 compiler.  It provides
 optimizations specifically tuned for dynamic languages and can be used with
 any JVM that supports JVMCI.  Use with @code{-XX:+EnableJVMCI} and add the
 compiler JARs to @code{--upgrade-module-path}.")
+    (license (list license:gpl2+  ; with Classpath exception
+                   upl1.0))))
+
+;; SubstrateVM - Ahead-of-time compilation for Java (native-image)
+;; This builds the substratevm suite which imports compiler and espresso-shared.
+(define-public graal-substratevm
+  (package
+    (name "graal-substratevm")
+    (version %graalvm-version)
+    (source %graal-source)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir-to-substratevm
+            (lambda _ (chdir "substratevm")))
+          (add-before 'build 'setup-mx-urlrewrites
+            #$(make-mx-urlrewrites-phase %mx-rewrites-substratevm))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "JAVA_HOME" (assoc-ref inputs "openjdk"))
+              (setenv "MX_PYTHON" (which "python3"))
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; Build the native-image driver and its dependencies.
+              ;; SVM_DRIVER is the native-image building tool.
+              ;; SVM is the main SubstrateVM image builder.
+              (invoke "mx" "--user-home" (getcwd) "build"
+                      "--dependencies" "SVM_DRIVER,SVM")))
+          (replace 'install
+            #$(make-mx-install-phase '("SVM_DRIVER" "SVM") "svm")))))
+    (native-inputs
+     (list (list "mx" graalvm-mx)
+           (list "openjdk" openjdk-for-graal "jdk")
+           (list "java-asm" java-asm-for-graal-truffle)
+           (list "java-asm-tree" java-asm-tree-for-graal-truffle)
+           (list "java-asm-analysis" java-asm-analysis-for-graal-truffle)
+           (list "java-asm-util" java-asm-util-for-graal-truffle)
+           (list "java-asm-commons" java-asm-commons-for-graal-truffle)
+           (list "java-antlr4-runtime" java-antlr4-runtime-for-graal-truffle)
+           (list "java-hamcrest-core" java-hamcrest-core-for-graal-truffle)
+           (list "java-icu4j" java-icu4j-for-graal-truffle)
+           (list "java-icu4j-charset" java-icu4j-charset-for-graal-truffle)
+           (list "java-xz" java-xz-for-graal-truffle)
+           (list "java-jline-terminal" java-jline-terminal-for-graal-truffle)
+           (list "java-jline-reader" java-jline-reader-for-graal-truffle)
+           (list "java-jline-builtins" java-jline-builtins-for-graal-truffle)
+           (list "java-jline-terminal-ffm" java-jline-terminal-ffm-for-graal-truffle)
+           (list "ninja" ninja-for-graal-truffle)
+           (list "libffi-3.4.8.tar.gz" (package-source libffi-for-graal-truffle))
+           (list "java-capnproto-runtime" java-capnproto-runtime-for-graal-truffle)))
+    (inputs (list python-3))
+    (home-page "https://www.graalvm.org/")
+    (synopsis "Ahead-of-time compilation for Java applications")
+    (description "SubstrateVM provides ahead-of-time (AOT) compilation for Java
+applications using the @command{native-image} tool.  It compiles Java bytecode
+into standalone native executables that start instantly and use less memory
+than traditional JVM-based applications.  The resulting binaries include the
+application code, required libraries, and a minimal runtime called Substrate VM.")
     (license (list license:gpl2+  ; with Classpath exception
                    upl1.0))))
 ;; GraalPy - Python 3.12 implementation on GraalVM
