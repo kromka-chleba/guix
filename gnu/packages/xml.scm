@@ -39,6 +39,7 @@
 ;;; Copyright © 2025 Antoine Côté <antoine.cote@posteo.net>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -209,7 +210,7 @@ hierarchical form with variable field lengths.")
      (list
       #:phases
       #~(modify-phases %standard-phases
-          #$@(if (target-loongarch64?)
+          #$@(if (and (target-loongarch64?) (%current-target-system))
                  #~((add-after 'unpack 'update-config-scripts
                       (lambda* (#:key inputs native-inputs #:allow-other-keys)
                         ;; Replace outdated config.guess and config.sub.
@@ -253,7 +254,7 @@ hierarchical form with variable field lengths.")
     ;; See https://codeberg.org/guix/guix/pulls/3161#issuecomment-7521193
     (inputs (list python-minimal xz))
     (propagated-inputs (list zlib)) ; libxml2.la says '-lz'.
-    (native-inputs (append (if (target-loongarch64?)
+    (native-inputs (append (if (and (target-loongarch64?) (%current-target-system))
                                (list config)
                                '())
                            (list perl pkg-config python-minimal)))
