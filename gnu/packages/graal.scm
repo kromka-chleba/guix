@@ -634,6 +634,66 @@ profiler, and other development utilities.")
 used by GraalVM languages for pattern matching operations.")
     (license upl1.0)))
 
+;; Graal Compiler - the JIT compiler for GraalVM
+;; This builds the compiler suite which imports truffle, regex, and sdk.
+(define-public graal-compiler
+  (package
+    (name "graal-compiler")
+    (version %graalvm-version)
+    (source %graal-source)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir-to-compiler
+            (lambda _ (chdir "compiler")))
+          (add-before 'build 'setup-mx-urlrewrites
+            #$(make-mx-urlrewrites-phase %mx-rewrites-truffle))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "JAVA_HOME" (assoc-ref inputs "openjdk"))
+              (setenv "MX_PYTHON" (which "python3"))
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; Build the core compiler distributions.
+              ;; GRAAL is the main compiler JAR for use with --upgrade-module-path.
+              ;; GRAAL_MANAGEMENT provides JMX management beans.
+              (invoke "mx" "--user-home" (getcwd) "build"
+                      "--dependencies" "GRAAL,GRAAL_MANAGEMENT")))
+          (replace 'install
+            #$(make-mx-install-phase '("GRAAL" "GRAAL_MANAGEMENT"))))))
+    (native-inputs
+     (list (list "mx" graalvm-mx)
+           (list "openjdk" openjdk-for-graal "jdk")
+           (list "java-asm" java-asm-for-graal-truffle)
+           (list "java-asm-tree" java-asm-tree-for-graal-truffle)
+           (list "java-asm-analysis" java-asm-analysis-for-graal-truffle)
+           (list "java-asm-util" java-asm-util-for-graal-truffle)
+           (list "java-asm-commons" java-asm-commons-for-graal-truffle)
+           (list "java-antlr4-runtime" java-antlr4-runtime-for-graal-truffle)
+           (list "java-hamcrest-core" java-hamcrest-core-for-graal-truffle)
+           (list "java-icu4j" java-icu4j-for-graal-truffle)
+           (list "java-icu4j-charset" java-icu4j-charset-for-graal-truffle)
+           (list "java-xz" java-xz-for-graal-truffle)
+           (list "java-jline-terminal" java-jline-terminal-for-graal-truffle)
+           (list "java-jline-reader" java-jline-reader-for-graal-truffle)
+           (list "java-jline-builtins" java-jline-builtins-for-graal-truffle)
+           (list "java-jline-terminal-ffm" java-jline-terminal-ffm-for-graal-truffle)
+           (list "ninja" ninja-for-graal-truffle)
+           (list "libffi-3.4.8.tar.gz" (package-source libffi-for-graal-truffle))))
+    (inputs (list python-3))
+    (home-page "https://www.graalvm.org/")
+    (synopsis "Graal JIT compiler for the JVM")
+    (description "The Graal compiler is a high-performance JIT compiler for
+the JVM that can be used as a replacement for the C2 compiler.  It provides
+optimizations specifically tuned for dynamic languages and can be used with
+any JVM that supports JVMCI.  Use with @code{-XX:+EnableJVMCI} and add the
+compiler JARs to @code{--upgrade-module-path}.")
+    (license (list license:gpl2+  ; with Classpath exception
+                   upl1.0))))
 ;; GraalPy - Python 3.12 implementation on GraalVM
 (define-public graalpy-community
   (package
