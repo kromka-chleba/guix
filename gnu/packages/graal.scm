@@ -633,3 +633,155 @@ profiler, and other development utilities.")
     (description "TRegex is a high-performance regular expression engine
 used by GraalVM languages for pattern matching operations.")
     (license upl1.0)))
+
+;; GraalPy - Python 3.12 implementation on GraalVM
+(define-public graalpy-community
+  (package
+    (name "graalpy-community")
+    (version %graalvm-version)
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/oracle/graalpython")
+                    (commit (string-append "graal-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "19w22gw1ixkgy2c79m9xfhw9xvxl5vc68vddal7vq6dbsyh3g2lh"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'fix-cmake-minimum-version
+            (lambda _
+              ;; pegparser.generator uses cmake 3.0 which is rejected by newer cmake.
+              (substitute* "graalpython/com.oracle.graal.python.pegparser.generator/CMakeLists.txt"
+                (("cmake_minimum_required\\(VERSION 3\\.0\\)")
+                 "cmake_minimum_required(VERSION 3.5)"))))
+          (add-after 'unpack 'setup-graal-sources
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; mx expects to find the graal repository as a sibling directory.
+              ;; The graalpython suite.py imports sdk, truffle, tools, regex from graal.
+              ;;
+              ;; We MUST use copy-recursively here, NOT symlink, because mx needs
+              ;; to write to various directories during the build:
+              ;;
+              ;; 1. ShadedLibraryProject (mx_sdk_shaded.py): These projects generate
+              ;;    shaded/relocated Java bytecode at build time. mx creates output
+              ;;    directories like truffle/src/com.oracle.truffle.api.impl.asm/
+              ;;    to store the generated .class files. There are ~10 such projects
+              ;;    across espresso, sdk, substratevm, and truffle suites.
+              ;;
+              ;; 2. DefaultNativeProject (mx_native.py): These projects create
+              ;;    'include' subdirectories for header files and write build
+              ;;    artifacts to various locations within native project directories.
+              ;;
+              ;; 3. Build outputs: mx writes various build artifacts, caches, and
+              ;;    intermediate files throughout the source tree during compilation.
+              (let ((graal-src (assoc-ref inputs "graal-25.0.1-checkout")))
+                (copy-recursively graal-src "../graal")
+                (when (not (file-exists? "../graal/sdk/mx.sdk/suite.py"))
+                  (error "graal source not set up correctly")))))
+          (add-before 'build 'setup-mx-urlrewrites
+            #$(make-mx-urlrewrites-phase %mx-rewrites-graalpy))
+          (add-after 'setup-graal-sources 'setup-environment
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((jdk (assoc-ref inputs "openjdk")))
+                (setenv "JAVA_HOME" jdk))
+              ;; Do NOT set STANDALONE_JAVA_HOME - we want mx to build a full
+              ;; jimage with libgraal (libjvmcicompiler.so) baked in.
+              (setenv "MX_PYTHON" (which "python3"))
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; CONFIG_SHELL is needed so autoconf-based builds (like libffi)
+              ;; use the correct shell instead of /bin/sh which doesn't exist
+              (setenv "CONFIG_SHELL" (which "bash"))
+              (setenv "SHELL" (which "bash"))
+              ;; OpenJDK JVMCI: 25.0.1, GraalVM expects: 25.0.1+8-jvmci-b01
+              (setenv "JVMCI_VERSION_CHECK" "ignore")))
+          (add-before 'build 'patch-libgraal-env
+            (lambda _
+              ;; Add svm,ni so native-image is available to build libjvmcicompiler.so.
+              (substitute* "mx.graalpython/jvm-ce-libgraal"
+                (("COMPONENTS=LibGraal")
+                 "COMPONENTS=LibGraal,svm,ni"))
+              ;; Remove musl from extra_native_targets to avoid needing musl toolchain.
+              (substitute* "../graal/substratevm/mx.substratevm/mx_substratevm.py"
+                (("'linux-default-glibc', 'linux-default-musl'")
+                 "'linux-default-glibc'"))
+              ;; Fix launcher_template.sh shebang - /usr/bin/env doesn't exist in Guix.
+              ;; The native-image bash launcher uses this template.
+              (let ((bash (which "bash")))
+                (substitute* "../graal/sdk/mx.sdk/vm/launcher_template.sh"
+                  (("#!/usr/bin/env bash")
+                   (string-append "#!" bash))))
+              ;; Propagate gcc environment variables through native-image's env sanitization.
+              ;; native-image's sanitizeJVMEnvironment (NativeImage.java) strips all env vars
+              ;; except a whitelist (PATH, HOME, etc). The -E<varname> flag passes vars through.
+              ;; mx already does this for JVMCI_VERSION_CHECK; we add gcc include/library paths.
+              (substitute* "../graal/sdk/mx.sdk/mx_sdk_vm_impl.py"
+                (("'-EJVMCI_VERSION_CHECK',")
+                 (string-append "'-EJVMCI_VERSION_CHECK',\n"
+                                "            '-EC_INCLUDE_PATH',\n"
+                                "            '-ECPLUS_INCLUDE_PATH',\n"
+                                "            '-ELIBRARY_PATH',\n"
+                                "            '-ECPATH',  # C include path\n")))))
+          (replace 'build
+            (lambda _
+              ;; Build Python for JVM with Graal JIT compiler using jvm-ce-libgraal env.
+              (invoke "mx" "--user-home" (getcwd)
+                      "--env" "jvm-ce-libgraal"
+                      "build"
+                      "--target" "GRAALPY_JVM_STANDALONE")))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (standalone-dir (car (find-files
+                                           (string-append (getcwd) "/mxbuild-output/graalpython")
+                                           "^GRAALPY_JVM_STANDALONE$"
+                                           #:directories? #t))))
+                (copy-recursively standalone-dir out)))))))
+    (native-inputs
+     (list (list "mx" graalvm-mx)
+           ;; Use openjdk-for-graal which provides static JDK libraries
+           ;; required for SubstrateVM's JvmFuncsFallbacks build task.
+           (list "openjdk" openjdk-for-graal "jdk")
+           (list "python" python-3)
+           (list "graal-25.0.1-checkout" %graal-source)
+           (list "java-asm" java-asm-for-graal-truffle)
+           (list "java-asm-tree" java-asm-tree-for-graal-truffle)
+           (list "java-asm-analysis" java-asm-analysis-for-graal-truffle)
+           (list "java-asm-util" java-asm-util-for-graal-truffle)
+           (list "java-asm-commons" java-asm-commons-for-graal-truffle)
+           (list "java-antlr4-runtime" java-antlr4-runtime-for-graal-truffle)
+           (list "java-hamcrest-core" java-hamcrest-core-for-graal-truffle)
+           (list "java-icu4j" java-icu4j-for-graal-truffle)
+           (list "java-icu4j-charset" java-icu4j-charset-for-graal-truffle)
+           (list "java-xz" java-xz-for-graal-truffle)
+           (list "java-jline-terminal" java-jline-terminal-for-graal-truffle)
+           (list "java-jline-reader" java-jline-reader-for-graal-truffle)
+           (list "java-jline-builtins" java-jline-builtins-for-graal-truffle)
+           (list "java-jline-terminal-ffm" java-jline-terminal-ffm-for-graal-truffle)
+           (list "java-json" java-json-for-graal-truffle)
+           (list "java-capnproto-runtime" java-capnproto-runtime-for-graal-truffle)
+           (list "java-bcprov" java-bcprov-for-graalpy)
+           (list "java-bcutil" java-bcutil-for-graalpy)
+           (list "java-bcpkix" java-bcpkix-for-graalpy)
+           (list "java-trufflejws" java-trufflejws-for-graal)
+           (list "ninja" ninja-for-graal-truffle)
+           (list "cmake" cmake)
+           (list "git" git-minimal)
+           (list "libffi-3.4.8.tar.gz" (package-source libffi-for-graal-truffle))
+           (list "bzip2-1.0.8.tar.gz" (package-source bzip2))
+           (list "xz-5.6.2.tar.gz" (package-source xz-for-graal-truffle))))
+    (inputs (list zlib
+                  bzip2
+                  xz))
+    (home-page "https://www.graalvm.org/python/")
+    (synopsis "Python 3.12 implementation on GraalVM")
+    (description "GraalPy is a high-performance Python 3.12 implementation
+built on the Truffle framework.  It provides Java interoperability and can
+use the system toolchain for building C extensions.")
+    (license upl1.0)))
