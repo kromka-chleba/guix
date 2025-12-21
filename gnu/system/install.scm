@@ -33,6 +33,7 @@
   #:use-module (guix store)
   #:use-module (guix modules)
   #:use-module ((guix packages) #:select (package-version supported-package?))
+  #:use-module (guix build-system trivial)
   #:autoload   (guix channels) (channel? channel-commit)
   #:use-module (guix platform)
   #:use-module (guix utils)
@@ -339,13 +340,17 @@ templates under @file{/etc/configuration}.")))
                                                     platform-target->system)
                                                    (%current-system))))
   ;; List of services of the installation system.
-  (let ((motd (plain-file "motd" "
+  (let* ((installer (installer-program))
+         (installer-executable "run-guix-installer")
+         (motd (plain-file "motd" (string-append "
 \x1b[1;37mWelcome to the installation of GNU Guix!\x1b[0m
 
 \x1b[2m\
 Using this shell, you can carry out the installation process \"manually.\"
 Access documentation at any time by pressing Alt-F2.\x1b[0m
-")))
+
+In case you want to start the installer here, execute `" installer-executable "`.
+"))))
     (define (normal-tty tty)
       (service mingetty-service-type
                (mingetty-configuration (tty tty)
@@ -364,18 +369,39 @@ Access documentation at any time by pressing Alt-F2.\x1b[0m
          (apply (lambda* (#:key commit #:allow-other-keys) commit)
                 (package-arguments guix)))))
 
+    (define* (installer-command-package installer-program
+                                        #:key executable)
+      (package
+        (name executable)
+        (version "0")
+        (source #f)
+        (build-system trivial-build-system)
+        (arguments
+         (list #:builder (with-imported-modules '((guix build utils))
+                           #~(begin
+                               (use-modules (guix build utils))
+
+                               (mkdir-p (string-append #$output "/bin"))
+
+                               (symlink #$installer-program
+                                        (string-append #$output "/bin/" #$executable))))))
+        (home-page #f)
+        (synopsis "Provides the Guix System installer as run-guix-installer command")
+        (description "Provides the Guix System installer as run-guix-installer command.")
+        (license #f)))
+
     (append
      ;; Generic services
      (list (service virtual-terminal-service-type)
 
            (service kmscon-service-type
                     (kmscon-configuration
-                     (virtual-terminal "tty1")
-                     (login-program (installer-program))))
+                      (virtual-terminal "tty1")
+                      (login-program installer)))
 
            (service login-service-type
                     (login-configuration
-                     (motd motd)))
+                      (motd motd)))
 
            ;; Documentation.  The manual is in UTF-8, but
            ;; 'console-font-service' sets up Unicode support and loads a font
@@ -398,30 +424,37 @@ Access documentation at any time by pressing Alt-F2.\x1b[0m
            ;; network.  It can be faster than fetching from remote servers.
            (service avahi-service-type)
 
+           ;; Allow runninng the installer command on headless setups.
+           (simple-service 'installer-program-profile
+                           profile-service-type
+                           (list (installer-command-package
+                                  installer
+                                  #:executable installer-executable)))
+
            ;; The build daemon.
            (service guix-service-type
                     (guix-configuration
-                     ;; Register the default substitute server key(s) as
-                     ;; trusted to allow the installation process to use
-                     ;; substitutes by default.
-                     (authorize-key? #t)
+                      ;; Register the default substitute server key(s) as
+                      ;; trusted to allow the installation process to use
+                      ;; substitutes by default.
+                      (authorize-key? #t)
 
-                     ;; Install and run the current Guix rather than an older
-                     ;; snapshot.
-                     (guix (let ((guix (current-guix)))
-                             (package
-                               (inherit guix)
-                               ;; Do not leak the local checkout URL.
-                               (source (channel
-                                        (inherit %default-guix-channel)
-                                        (commit (guix-package-commit guix)))))))))
+                      ;; Install and run the current Guix rather than an older
+                      ;; snapshot.
+                      (guix (let ((guix (current-guix)))
+                              (package
+                                (inherit guix)
+                                ;; Do not leak the local checkout URL.
+                                (source (channel
+                                          (inherit %default-guix-channel)
+                                          (commit (guix-package-commit guix)))))))))
 
            ;; Start udev so that useful device nodes are available.
            ;; Use device-mapper rules for cryptsetup & co; enable the CRDA for
            ;; regulations-compliant WiFi access.
            (service udev-service-type
                     (udev-configuration
-                     (rules (list lvm2 crda))))
+                      (rules (list lvm2 crda))))
 
            ;; Add the 'cow-store' service, which users have to start manually
            ;; since it takes the installation directory as an argument.
@@ -447,21 +480,21 @@ Access documentation at any time by pressing Alt-F2.\x1b[0m
            ;; Add an SSH server to facilitate remote installs.
            (service openssh-service-type
                     (openssh-configuration
-                     (port-number 22)
-                     (permit-root-login #t)
-                     ;; The root account is passwordless, so make sure
-                     ;; a password is set before allowing logins.
-                     (allow-empty-passwords? #f)
-                     (password-authentication? #t)
+                      (port-number 22)
+                      (permit-root-login #t)
+                      ;; The root account is passwordless, so make sure
+                      ;; a password is set before allowing logins.
+                      (allow-empty-passwords? #f)
+                      (password-authentication? #t)
 
-                     ;; Don't start it upfront.
-                     (%auto-start? #f)))
+                      ;; Don't start it upfront.
+                      (%auto-start? #f)))
 
            ;; Since this is running on a USB stick with a overlayfs as the root
            ;; file system, use an appropriate cache configuration.
            (service nscd-service-type
                     (nscd-configuration
-                     (caches %nscd-minimal-caches)))
+                      (caches %nscd-minimal-caches)))
 
            ;; Having /bin/sh is a good idea.  In particular it allows Tramp
            ;; connections to this system to work.
@@ -476,7 +509,7 @@ Access documentation at any time by pressing Alt-F2.\x1b[0m
            (service dbus-root-service-type)
            (service connman-service-type
                     (connman-configuration
-                     (disable-vpn? #t)))
+                      (disable-vpn? #t)))
 
            ;; Keep a reference to BARE-BONES-OS to make sure it can be
            ;; installed without downloading/building anything.  Also keep the
