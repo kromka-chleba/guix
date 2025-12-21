@@ -3478,6 +3478,72 @@ developers providing an advanced true color console, input, and lots of other
 utilities frequently used in roguelikes.")
     (license license:bsd-3)))
 
+(define-public lobster-core
+  (package
+    (name "lobster-core")
+    (version "2025.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/aardappel/lobster")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mm7jpbfbg3pmbqw6mygnijlwc9zayfr0m1xa98hv5id5fs9lgkd"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            ;; Binaries.
+            (delete-file-recursively "bin")
+            ;; Fonts and multimedia.
+            (delete-file-recursively "data")
+            (substitute* "dev/CMakeLists.txt"
+              (("install\\(.+data.+\\)") "")
+              ;; We don't need to install tests.
+              (("install\\(.+tests.+\\)") "")
+              ;; Samples don't work without the "engine" installed.
+              (("install\\(.+samples.+\\)") "")
+              ;; Speed tests just make the build take longer.
+              (("add_test\\(speedtest.+\\)") ""))
+            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <> (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "dev/external"
+                            ;; Only these are both specialized and needed for
+                            ;; core functionality.
+                            "flatbuffers" "libtcc")))))
+    (build-system cmake-build-system)
+    (outputs '("out" "doc"))
+    (arguments
+     (list
+      #:configure-flags #~(list "-DLOBSTER_ENGINE=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'cd-and-embed-paths
+            (lambda _
+              (chdir "dev")
+              (substitute* "CMakeLists.txt"
+                (("(install.+doc.+)\\$\\{DOCDIR\\}" _ prefix)
+                 (string-append prefix #$output:doc "/share/docs"))
+                (("test \\$\\{EXE_NAME\\}")
+                 (string-append "test " #$output:out "/bin/lobster")))))
+          (delete 'check)
+          (add-after 'install 'check (assoc-ref %standard-phases 'check)))))
+    (home-page "https://strlen.com/lobster/")
+    (synopsis "Programming language designed for making games")
+    (description "Lobster is a programming language that tries to combine the
+advantages of static typing and compile-time memory management with a very
+lightweight, friendly and terse syntax.  While it is a general purpose
+language, its implementation is biased towards games and other graphical
+things, with plenty of ``batteries included'' functionality.")
+    (license license:asl2.0)))
+
 (define-public dhewm3
   (package
     (name "dhewm3")
