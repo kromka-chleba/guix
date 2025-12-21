@@ -527,3 +527,61 @@ for language interoperability, collections, and native image support.")
 as self-modifying Abstract Syntax Tree (AST) interpreters.  Languages built on
 Truffle can achieve high performance through the Graal JIT compiler.")
     (license upl1.0)))
+
+;; Graal Tools - debugging and profiling utilities.
+;; This builds the tools suite which imports truffle, so it needs the same
+;; URL rewrites and dependencies as graal-truffle.
+(define-public graal-tools
+  (package
+    (name "graal-tools")
+    (version %graalvm-version)
+    (source %graal-source)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir-to-tools
+            (lambda _ (chdir "tools")))
+          (add-before 'build 'setup-mx-urlrewrites
+            #$(make-mx-urlrewrites-phase %mx-rewrites-tools))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "JAVA_HOME" (assoc-ref inputs "openjdk"))
+              (setenv "MX_PYTHON" (which "python3"))
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; Only build TRUFFLE_PROFILER - this is what graalpy needs.
+              ;; The full tools suite needs many more dependencies (GUAVA, JIMFS, JSON, etc.)
+              (invoke "mx" "--user-home" (getcwd) "build"
+                      "--dependencies" "TRUFFLE_PROFILER")))
+          (replace 'install
+            #$(make-mx-install-phase '("TRUFFLE_PROFILER"))))))
+    (native-inputs
+     (list (list "mx" graalvm-mx)
+           (list "openjdk" openjdk "jdk")
+           (list "java-asm" java-asm-for-graal-truffle)
+           (list "java-asm-tree" java-asm-tree-for-graal-truffle)
+           (list "java-asm-analysis" java-asm-analysis-for-graal-truffle)
+           (list "java-asm-util" java-asm-util-for-graal-truffle)
+           (list "java-asm-commons" java-asm-commons-for-graal-truffle)
+           (list "java-antlr4-runtime" java-antlr4-runtime-for-graal-truffle)
+           (list "java-hamcrest-core" java-hamcrest-core-for-graal-truffle)
+           (list "java-icu4j" java-icu4j-for-graal-truffle)
+           (list "java-icu4j-charset" java-icu4j-charset-for-graal-truffle)
+           (list "java-xz" java-xz-for-graal-truffle)
+           (list "java-jline-terminal" java-jline-terminal-for-graal-truffle)
+           (list "java-jline-reader" java-jline-reader-for-graal-truffle)
+           (list "java-jline-builtins" java-jline-builtins-for-graal-truffle)
+           (list "java-jline-terminal-ffm" java-jline-terminal-ffm-for-graal-truffle)
+           (list "java-json" java-json-for-graal-truffle)
+           (list "ninja" ninja-for-graal-truffle)
+           (list "libffi-3.4.8.tar.gz" (package-source libffi-for-graal-truffle))))
+    (inputs (list python-3))
+    (home-page "https://www.graalvm.org/")
+    (synopsis "GraalVM debugging and profiling tools")
+    (description "Development tools for GraalVM languages including debugger,
+profiler, and other development utilities.")
+    (license upl1.0)))
