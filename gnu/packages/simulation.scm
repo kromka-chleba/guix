@@ -1310,6 +1310,34 @@ solution in time.  The tool is typically applied to the modelling of
 river flooding.")
       (license license:cecill))))
 
+(define-public python-simpy
+  (package
+    (name "python-simpy")
+    (version "4.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "simpy" version))
+       (sha256
+	(base32 "19h1a3wxygyi819njmnl8cbmzvflqv3hpki0iq71xcc4g057bl06"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~'("tests")))
+    (native-inputs
+     (list python-pytest
+	   python-setuptools-scm))
+    (home-page "https://gitlab.com/team-simpy/simpy")
+    (synopsis "Process-based discrete-event simulation framework")
+    (description
+     "SimPy is a process-based discrete-event simulation framework based
+on standard Python. Processes in SimPy are defined by Python generator functions and
+can, for example, be used to model active components like customers, vehicles or
+agents.  SimPy also provides various types of shared resources to model
+limited capacity congestion points (like servers, checkout counters and
+tunnels).")
+    (license license:bsd-2)))
+
 (define-public python-meshio
   (package
     (name "python-meshio")
