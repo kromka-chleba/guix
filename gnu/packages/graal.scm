@@ -452,3 +452,78 @@ and server implementations for the Truffle framework.")
     (description "Foundation libraries for GraalVM including the Polyglot API
 for language interoperability, collections, and native image support.")
     (license upl1.0)))
+
+;; Truffle - Language implementation framework
+;; Imports: sdk (as subdir)
+;; Provides: TRUFFLE_API, TRUFFLE_NFI, TRUFFLE_DSL_PROCESSOR
+(define-public graal-truffle
+  (package
+    (name "graal-truffle")
+    (version %graalvm-version)
+    (source %graal-source)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'chdir-to-truffle
+            (lambda _
+              (chdir "truffle")))
+          (add-before 'build 'setup-mx-urlrewrites
+            #$(make-mx-urlrewrites-phase %mx-rewrites-truffle))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "JAVA_HOME" (assoc-ref inputs "openjdk"))
+              (setenv "MX_PYTHON" (which "python3"))
+              ;; Redirect mx's build output and cache to writable locations.
+              (setenv "MX_ALT_OUTPUT_ROOT" (string-append (getcwd) "/mxbuild-output"))
+              (setenv "MX_CACHE_DIR" (string-append (getcwd) "/mx-cache"))
+              ;; Build only the pure-Java Truffle distributions.
+              ;; Distributions that require native tooling (LLVM) or JLINE are excluded.
+              ;; GraalPy needs these core distributions:
+              ;;   TRUFFLE_API, TRUFFLE_DSL_PROCESSOR, TRUFFLE_ICU4J, TRUFFLE_NFI,
+              ;;   TRUFFLE_NFI_PANAMA, TRUFFLE_RUNTIME, TRUFFLE_TCK, TRUFFLE_XZ
+              ;; Excluded (need LLVM/JLINE):
+              ;;   TRUFFLE_NFI_LIBFFI - needs LIBFFI_SOURCES + native compilation
+              ;;   TRUFFLE_NFI_NATIVE_GRAALVM_SUPPORT - needs sdk:LLVM_NINJA_TOOLCHAIN
+              ;;   TRUFFLE_ATTACH_GRAALVM_SUPPORT - may need JLINE for launcher
+              (invoke "mx" "--user-home" (getcwd) "build"
+                      "--dependencies" (string-join
+                                        '("TRUFFLE_API"
+                                          "TRUFFLE_DSL_PROCESSOR"
+                                          "TRUFFLE_ICU4J"
+                                          "TRUFFLE_NFI"
+                                          "TRUFFLE_NFI_PANAMA"
+                                          "TRUFFLE_RUNTIME"
+                                          "TRUFFLE_XZ")
+                                        ","))))
+          (replace 'install
+            #$(make-mx-install-phase '("TRUFFLE_API" "TRUFFLE_DSL_PROCESSOR" "TRUFFLE_ICU4J" "TRUFFLE_NFI" "TRUFFLE_NFI_PANAMA" "TRUFFLE_RUNTIME" "TRUFFLE_XZ"))))))
+    (native-inputs
+     (list (list "mx" graalvm-mx)
+           (list "openjdk" openjdk "jdk")
+           (list "java-asm" java-asm-for-graal-truffle)
+           (list "java-asm-tree" java-asm-tree-for-graal-truffle)
+           (list "java-asm-analysis" java-asm-analysis-for-graal-truffle)
+           (list "java-asm-util" java-asm-util-for-graal-truffle)
+           (list "java-asm-commons" java-asm-commons-for-graal-truffle)
+           (list "java-antlr4-runtime" java-antlr4-runtime-for-graal-truffle)
+           (list "java-hamcrest-core" java-hamcrest-core-for-graal-truffle)
+           (list "java-icu4j" java-icu4j-for-graal-truffle)
+           (list "java-icu4j-charset" java-icu4j-charset-for-graal-truffle)
+           (list "java-xz" java-xz-for-graal-truffle)
+           (list "java-jline-terminal" java-jline-terminal-for-graal-truffle)
+           (list "java-jline-reader" java-jline-reader-for-graal-truffle)
+           (list "java-jline-builtins" java-jline-builtins-for-graal-truffle)
+           (list "java-jline-terminal-ffm" java-jline-terminal-ffm-for-graal-truffle)
+           (list "ninja" ninja-for-graal-truffle)
+           (list "libffi-3.4.8.tar.gz" (package-source libffi-for-graal-truffle))))
+    (inputs (list python-3))
+    (home-page "https://www.graalvm.org/")
+    (synopsis "Truffle language implementation framework")
+    (description "Truffle is a framework for implementing programming languages
+as self-modifying Abstract Syntax Tree (AST) interpreters.  Languages built on
+Truffle can achieve high performance through the Graal JIT compiler.")
+    (license upl1.0)))
