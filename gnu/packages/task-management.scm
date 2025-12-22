@@ -38,6 +38,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages game-development)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -65,6 +66,7 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
+  #:use-module (gnu packages wxwidgets)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix hg-download)
@@ -352,6 +354,64 @@ execution, and libreadline support.")
 you to record time spent on activities.  You may be tracking your time for
 curiosity, or because your work requires it.")
     (license license:expat)))
+
+(define-public treesheets
+  (package
+    (name "treesheets")
+    (version "2895")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/aardappel/treesheets")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18cpzjgmb79z3qv776cavqknmg9nhh3jgg2k5lmh74pqk67pw0f5"))
+       (modules '((guix build utils)))
+       ;; Only used for Windows.
+       (snippet #~(delete-file-recursively "thirdparty/StackWalker"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "-DTREESHEETS_VERSION=" #$version))
+      #:tests? #f                       ;There are no tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-build
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("FetchContent_MakeAvailable\\(wxwidgets lobster\\)")
+                 (string-append
+                  "\
+find_package(wxWidgets COMPONENTS aui adv core xml net REQUIRED)
+include_directories(SYSTEM ${wxWidgets_INCLUDE_DIRS})
+set(wxWidgets_CONFIG_OPTIONS --toolkit=base --prefix="
+                  (dirname (search-input-file %build-inputs "bin/wx-config"))
+                  "/../)
+set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} ${wxWidgets_CXX_FLAGS}\")
+add_compile_definitions(${wxWidgets_DEFINITIONS})"))
+                (("\\$\\{lobster_SOURCE_DIR\\}")
+                 (string-append
+                  (dirname
+                   (search-input-file %build-inputs "dev/build_osx.sh"))
+                  "/../"))
+                (("wx::aui wx::adv wx::core wx::xml wx::net")
+                 "${wxWidgets_LIBRARIES}")))))))
+    (inputs (list wxwidgets))
+    (native-inputs (list (package-source lobster-core)))
+    (home-page "https://strlen.com/treesheets/")
+    (synopsis "``Hierarchical spreadsheet''-based organizer")
+    (description "TreeSheets is a ``hierarchical spreadsheet'' software
+allowing the management of both tabular and hierarchical data at once, giving
+it the properties of a mind mapper, an outliner, and a text editor all at
+once.  It is suitable for to-do lists, calendars, project management,
+brainstorming, and more.")
+    (license (list license:zlib
+                   license:apsl2        ;images/material
+                   license:cc-by4.0     ;images/material (vscode)
+                   license:lgpl2.1))))  ;images/nuvola
 
 (define-public worklog
   (let ((commit "0f545ad6697ef4de7f68d92cd7cc5c6a4c60517b")
