@@ -266,6 +266,24 @@ of DEB-FILES with 'dpkg -i'."
 
           #$(guix-daemon-test-cases #~marionette)
 
+          (test-equal "restart guix-daemon.service"
+            0
+            (marionette-eval '(system* "systemctl" "restart"
+                                       "guix-daemon.service")
+                             marionette))
+
+          (test-equal "guix build hello after guix-daemon.service restart"
+            0
+            (marionette-eval '(system* "guix" "build"
+                                       "hello" "--no-grafts"
+                                       "--check")
+                             marionette))
+
+          (test-equal "guix gc after guix-daemon.service"
+            0
+            (marionette-eval '(system* "guix" "gc")
+                             marionette))
+
           (test-assert "screenshot after"
             (marionette-control (string-append "screendump " #$output
                                                "/after-install.ppm")
