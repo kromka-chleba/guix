@@ -51,8 +51,9 @@
     (build-system gnu-build-system)
     (native-inputs
      (if (or (and=> (%current-target-system) target-aarch64?)
-             (and=> (%current-target-system) target-riscv64?))
-         `(("config" ,config)) ; for config.sub
+             (and=> (%current-target-system) target-riscv64?)
+             (and=> (%current-target-system) target-loongarch64?))
+         (list config) ; for config.sub
          '()))
     (arguments
      `(,@(if (%current-target-system)
@@ -69,7 +70,8 @@
                                        "--localstatedir=/var"))
              '())
        ,@(if (or (and=> (%current-target-system) target-aarch64?)
-                 (and=> (%current-target-system) target-riscv64?))
+                 (and=> (%current-target-system) target-riscv64?)
+                 (and=> (%current-target-system) target-loongarch64?))
              `(#:phases
                (modify-phases %standard-phases
                  (add-before 'configure 'update-config.sub
