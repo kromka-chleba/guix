@@ -6786,6 +6786,42 @@ remove spurious artifacts in the data.")
 dumps.  It can inspect what a process is doing or what it was doing when it
 crashed, without modifying any memory or executing code in the target process.")
     (license license:asl2.0)))
+
+(define-public python-orsopy
+  (package
+    (name "python-orsopy")
+    (version "1.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "orsopy" version))
+       (sha256
+        (base32 "1fpp9h93p55sa4cfsix71ibj74fdrgh2kzmw2rg06ya8q0c4ndik"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "pytest" "-vv"
+                        ;; These tests require network access.
+                        "--ignore=orsopy/slddb/tests/test_webapi.py"
+                        "--deselect=orsopy/fileio/tests/test_model_language.py::TestSubStack::test_resolve_layers"
+                        "--deselect=orsopy/fileio/tests/test_model_language.py::TestMaterial::test_density_lookup_elements"
+                        "--deselect=orsopy/fileio/tests/test_model_language.py::TestSampleModel::test_resolve_to_layers")))))))
+    (propagated-inputs
+     (list python-numpy python-pyyaml python-jsonschema python-h5py))
+    (native-inputs
+     (list python-pytest python-pint))
+    (home-page "https://github.com/reflectivity/orsopy")
+    (synopsis "Open Reflectometry Standards Organization Python tools")
+    (description
+     "This package provides Python tools for the Open Reflectometry Standards
+Organization (ORSO).  It includes utilities for working with reflectometry
+data files and the ORSO file format.")
+    (license license:expat)))
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
