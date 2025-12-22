@@ -58,13 +58,28 @@
     (build-system gnu-build-system)
     (outputs '("out" "bin"))
     (arguments
-     ;; This skips some of the tests which fail on armhf and aarch64.
-     '(#:configure-flags '("--disable-libevent-regress"
-                           "--disable-openssl")))
+     (append (if (target-loongarch64?)
+                 (list #:phases
+                       #~(modify-phases %standard-phases
+                           (add-after 'unpack 'update-config
+                             (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                               (for-each (lambda (file)
+                                           (install-file
+                                            (search-input-file
+                                             (or native-inputs inputs)
+                                             (string-append "/bin/" file)) "build-aux"))
+                                         '("config.guess" "config.sub"))))))
+                 (list))
+             ;; This skips some of the tests which fail on armhf and aarch64.
+             '(#:configure-flags '("--disable-libevent-regress"
+                                   "--disable-openssl"))))
     (inputs
      (list python-wrapper))             ;for 'event_rpcgen.py'
     (native-inputs
-     (list which))
+     (append (if (target-loongarch64?)
+                       (list config)
+                       (list))
+             (list which)))
     (home-page "https://libevent.org/")
     (synopsis "Event notification library")
     (description
