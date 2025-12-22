@@ -57,15 +57,14 @@
                 ("valgrind" "valgrind-3.20.0.RC1.tar.bz2")))))
 
 (test-assert "tarball->version"
-  (let ((tarball->version (@@ (guix gnu-maintenance) tarball->version)))
-    (every (match-lambda
-             ((file version)
-              (equal? (tarball->version file) version)))
-           '(("coreutils-8.32.tar.gz" "8.32")
-             ("mediainfo_20.09.tar.xz" "20.09")
-             ("exiv2-0.27.3-Source.tar.gz" "0.27.3")
-             ("mpg321_0.3.2.orig.tar.gz" "0.3.2")
-             ("bvi-1.4.1.src.tar.gz" "1.4.1")))))
+  (every (match-lambda
+           ((file version)
+            (equal? (tarball->version file) version)))
+         '(("coreutils-8.32.tar.gz" "8.32")
+           ("mediainfo_20.09.tar.xz" "20.09")
+           ("exiv2-0.27.3-Source.tar.gz" "0.27.3")
+           ("mpg321_0.3.2.orig.tar.gz" "0.3.2")
+           ("bvi-1.4.1.src.tar.gz" "1.4.1"))))
 
 (test-assert "latest-html-release, scheme-less URIs"
   (with-http-server

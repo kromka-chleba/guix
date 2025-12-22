@@ -72,6 +72,7 @@
             import-release
             gnu-release-archive-types
             gnu-package-name->name+version
+            tarball->version
 
             %gnu-updater
             %gnu-ftp-updater
