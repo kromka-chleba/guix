@@ -1209,50 +1209,6 @@ upstream status")
                       '()
                       str)))
 
-(define official-gnu-packages*
-  (mlambda ()
-    "A memoizing version of 'official-gnu-packages' that returns the empty
-list when something goes wrong, such as a networking issue."
-    (let ((gnus (false-if-exception (official-gnu-packages))))
-      (or gnus '()))))
-
-(define (check-gnu-synopsis+description package)
-  "Make sure that, if PACKAGE is a GNU package, it uses the synopsis and
-descriptions maintained upstream."
-  (match (find (lambda (descriptor)
-                 (string=? (gnu-package-name descriptor)
-                           (package-name package)))
-               (official-gnu-packages*))
-    (#f                                   ;not a GNU package, so nothing to do
-     '())
-    (descriptor                                   ;a genuine GNU package
-     (append
-      (let ((upstream   (gnu-package-doc-summary descriptor))
-            (downstream (package-synopsis package)))
-        (if (and upstream
-                 (or (not (string? downstream))
-                     (not (string=? upstream downstream))))
-            (list
-             (make-warning package
-                           (G_ "proposed synopsis: ~s~%")
-                           (list upstream)
-                           #:field 'synopsis))
-            '()))
-
-      (let ((upstream   (gnu-package-doc-description descriptor))
-            (downstream (package-description package)))
-        (if (and upstream
-                 (or (not (string? downstream))
-                     (not (string=? (fill-paragraph upstream 100)
-                                    (fill-paragraph downstream 100)))))
-            (list
-             (make-warning
-              package
-              (G_ "proposed description:~%     \"~a\"~%")
-              (list (fill-paragraph (escape-quotes upstream) 77 7))
-              #:field 'description))
-            '()))))))
-
 (define (origin-uris origin)
   "Return the list of URIs (strings) for ORIGIN."
   (match (origin-uri origin)
@@ -2183,10 +2139,6 @@ or a list thereof")
      (name        'synopsis)
      (description "Validate package synopses")
      (check       check-synopsis-style))
-   (lint-checker
-     (name        'gnu-description)
-     (description "Validate synopsis & description of GNU packages")
-     (check       check-gnu-synopsis+description))
    (lint-checker
      (name        'home-page)
      (description "Validate home-page URLs")
