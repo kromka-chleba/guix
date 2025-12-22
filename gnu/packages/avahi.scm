@@ -23,11 +23,13 @@
 
 (define-module (gnu packages avahi)
   #:use-module ((guix licenses) #:select (lgpl2.1+))
+  #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages gettext)
@@ -86,6 +88,17 @@
                   (guix build gnu-build-system))
        #:phases
        ,#~(modify-phases %standard-phases
+            #$@(if (and (%current-target-system)
+                        (target-loongarch64?))
+                   #~((add-after 'unpack 'update-config
+                        (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                          (for-each (lambda (file)
+                                      (install-file
+                                       (search-input-file
+                                        (or native-inputs inputs)
+                                        (string-append "/bin/" file)) "."))
+                                    '("config.guess" "config.sub")))))
+                   (list))
             (add-after 'patch-shebangs 'patch-more-shebangs
               (lambda* (#:key inputs #:allow-other-keys)
                 (define path
@@ -111,7 +124,11 @@
     (native-inputs
      `(("gettext" ,gettext-minimal)
        ("glib" ,glib "bin")
-       ("pkg-config" ,pkg-config)))
+       ("pkg-config" ,pkg-config)
+       ,@(if (and (%current-target-system)
+                  (target-loongarch64?))
+             `(("config" ,config))
+             '())))
     (synopsis "Implementation of mDNS/DNS-SD protocols")
     (description
      "Avahi is a system which facilitates service discovery on a local
