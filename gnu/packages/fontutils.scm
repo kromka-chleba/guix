@@ -1429,6 +1429,9 @@ Font Format (WOFF).")
      (native-inputs
       `(("gperf" ,gperf)
         ("pkg-config" ,pkg-config)
+        ,@(if (target-loongarch64?)
+              `(("config" ,config))
+              '())
         ("python" ,python-minimal)))    ;to avoid a cycle through tk
      (arguments
       `(#:configure-flags
@@ -1440,6 +1443,16 @@ Font Format (WOFF).")
                              "/share/fonts"))
         #:phases
         (modify-phases %standard-phases
+          ,@(if (target-loongarch64?)
+                `((add-after 'unpack 'update-config
+                    (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                      (for-each (lambda (file)
+                                  (install-file
+                                   (search-input-file
+                                    (or native-inputs inputs)
+                                    (string-append "/bin/" file)) "."))
+                                '("config.guess" "config.sub")))))
+                '())
           (add-before 'check 'skip-problematic-tests
             (lambda _
               ;; SOURCE_DATE_EPOCH doesn't make sense when ignoring mtime
