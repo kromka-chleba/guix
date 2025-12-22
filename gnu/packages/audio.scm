@@ -6324,6 +6324,11 @@ representations.")
                    (setenv "HOME"
                            (getcwd))
                    (invoke "sh" "autogen.sh")))
+               (add-after 'unpack 'fix-path
+                 (lambda _
+                   (substitute* '("config.c" "configure.ac")
+                     (("iniparser.h")
+                      "iniparser/iniparser.h"))))
                (add-before 'build 'make-cava-ldflags
                  (lambda _
                    (mkdir-p (string-append #$output "/lib"))))
