@@ -116,7 +116,7 @@ PUBLIC_KEYSERVERS="keys.openpgp.org pgpkeys.eu keyserver.ubuntu.com"
 
 _err()
 { # All errors go to stderr.
-    printf "[%s]: ${ERR}%s\n" "$(date +%s.%3N)" "$1"
+    printf "[%s]: ${ERR}%s\n" "$(date +%s.%3N)" "$1" 1>&2
 }
 
 _msg()
@@ -217,7 +217,7 @@ Would you like me to fetch it for you?"; then
                    --tries=1 --timeout=30 --no-verbose -O- | gpg --import -; then
                 continue
             fi
-            
+
             key_obtained=false
             # Try to fetch keys from an available keyserver
             for key_server in $PUBLIC_KEYSERVERS; do
@@ -226,7 +226,7 @@ Would you like me to fetch it for you?"; then
                     break
                 fi
             done
-            
+
             if $key_obtained; then
                 continue
             fi

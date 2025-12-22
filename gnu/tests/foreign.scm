@@ -266,11 +266,93 @@ of DEB-FILES with 'dpkg -i'."
 
           #$(guix-daemon-test-cases #~marionette)
 
-          (test-assert "screenshot after"
+          (test-assert "screenshot after guix-daemon tests"
             (marionette-control (string-append "screendump " #$output
                                                "/after-install.ppm")
                                 marionette))
 
+          ;; Also checks no errors are printed out.
+          (test-equal "uninstall guix"
+            '(0 . ())
+            (marionette-eval
+             '(begin
+                (use-modules (ice-9 rdelim)
+                             (ice-9 regex)
+                             (ice-9 popen)
+                             (srfi srfi-26))
+
+                (let* ((pipe (open-input-pipe
+                              (string-append
+                               "yes '' | sh "
+                               (in-vicinity
+                                "/host"
+                                (string-drop #$%guix-install-script
+                                             #$(string-length
+                                                (%store-prefix))))
+                               " --uninstall 2>&1")))
+                       (output (string-split (read-string pipe) #\newline))
+                       (error-r (make-regexp "err|fail" regexp/icase))
+                       (errors (filter (cut regexp-exec error-r <>)
+                                       output))
+                       (status (close-pipe pipe)))
+                  (cons (status:exit-val status) errors)))
+             marionette))
+
+          (test-equal "no known guix files are present"
+            '()
+            (marionette-eval
+             '(filter file-exists?
+                      (list "/gnu/store" "/var/guix"
+                            "/etc/profile.d/zzz-guix.sh"
+                            ; systemd
+                            "/etc/systemd/system/guix-daemon.service"
+                            "/etc/systemd/system/gnu-store.mount"
+                            ; AppArmor
+                            "/etc/apparmor.d/guix" "/etc/apparmor.d/guix-daemon"
+                            "/etc/apparmor.d/tunables/guix"
+                            ; shell completions
+                            "/etc/bash_completion.d/guix"
+                            "/etc/bash_completion.d/guix-daemon"
+                            "/usr/share/zsh/site-functions/_guix"
+                            "/usr/share/fish/vendor_completions.d/guix.fish"
+                            ; root home files
+                            "/root/.guix-profile" "/root/.config/guix"))
+             marionette))
+
+          (test-equal "no files pointing to /gnu/store or /var/guix are present"
+            '()
+            (marionette-eval
+             '(begin
+                (use-modules
+                 (ice-9 regex)
+                 (ice-9 ftw))
+                (let* ((skip-dirs '("//dev" "//host" "//proc" "//gnu"
+                                    ; currently points to the store
+                                    "//usr/local/share/info"))
+                       (regexp (make-regexp "^(/gnu/store|/var/guix)"))
+                       (process
+                        (lambda (path stat result)
+                          (if (and
+                               (eq? (stat:type stat) 'symlink)
+                               (regexp-exec regexp (readlink path)))
+                              (cons path result)
+                              result))))
+                  (file-system-fold
+                   (lambda (path stat result)
+                     (not (member path skip-dirs)))
+                   process ; leaf
+                   process ; down
+                   process ; up
+                   (lambda (path stat result) result) ; ignore skip
+                   (lambda (path stat errno result) ; ignore errors
+                     result)
+                   '() "/")))
+             marionette))
+
+          (test-assert "screenshot after uninstall"
+            (marionette-control (string-append "screendump " #$output
+                                               "/after-uninstall.ppm")
+                                marionette))
           (test-end))))
 
   (mlet* %store-monad ((profile (profile-derivation
