@@ -27,7 +27,9 @@
 
 (define-module (gnu packages libevent)
   #:use-module (gnu packages)
+  #:use-module (guix gexp)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -100,7 +102,22 @@ loop.")
                 "1sjs4324is7fp21an4aas2z4dwsvs6z4xwrmp72vwpq1s6wbfzjh"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags '("--disable-static")))
+     (append (if (target-loongarch64?)
+                 (list #:phases
+                       #~(modify-phases %standard-phases
+                           (add-after 'unpack 'update-config
+                             (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                               (for-each (lambda (file)
+                                           (install-file
+                                            (search-input-file
+                                             (or native-inputs inputs)
+                                             (string-append "/bin/" file)) "."))
+                                         '("config.guess" "config.sub"))))))
+                 (list))
+             (list #:configure-flags #~'("--disable-static"))))
+    (native-inputs (if (target-loongarch64?)
+                       (list config)
+                       (list)))
     (home-page "http://software.schmorp.de/pkg/libev.html")
     (synopsis "Event loop loosely modelled after libevent")
     (description
