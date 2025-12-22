@@ -314,6 +314,24 @@ like Jasmine or Mocha.")
            (base32
             "04qg1p9afdd6453k18qskazrvscysdcjz9j6w4i6p5x4xyma19v6")))))))
     (build-system gnu-build-system)
+    (native-inputs (if (target-loongarch64?)
+                       (list config)
+                       (list)))
+
+    (arguments
+     (if (and (target-loongarch64?)
+              (%current-target-system))
+         (list #:phases
+               #~(modify-phases %standard-phases
+                   (add-after 'unpack 'update-config
+                     (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                       (for-each (lambda (file)
+                                   (install-file
+                                    (search-input-file
+                                     (or native-inputs inputs)
+                                     (string-append "/bin/" file)) "."))
+                                 '("config.guess" "config.sub"))))))
+         '()))
     (home-page "https://libcheck.github.io/check/")
     (synopsis "Unit test framework for C")
     (description
