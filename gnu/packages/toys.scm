@@ -39,10 +39,13 @@
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages backup)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages datastructures)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
@@ -51,7 +54,9 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg))
 
@@ -511,6 +516,45 @@ on the text terminal.  It serves no useful purpose but to discourage
 mistakenly typing @command{sl} instead of @command{ls}.")
     (license (license:non-copyleft "file://LICENSE"
                                    "See LICENSE in the distribution."))))
+
+(define-public wl-shimeji
+  (package
+    (name "wl-shimeji")
+    ;; The latest release (0.0.2) uses f-strings which only work with
+    ;; python>=3.12, breaking the CLI script, see:
+    ;; https://github.com/CluelessCatBurger/wl_shimeji/commit/b3a3b96
+    (version "0")
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure) ; no configure script
+          (delete 'check))))  ; no test target
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/CluelessCatBurger/wl_shimeji")
+                     (recursive? #t)
+                     (commit "84ec07059bc1c7a1f9e4a5f246587a5b083f59aa")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0zbzqbyv6ixp4asjmwciix3d2pifxqwinpm9840klii05jglcfd1"))))
+    (inputs
+     (list wayland wayland-protocols libarchive uthash))
+    (native-inputs
+     (list pkg-config (@ (gnu packages base) which)))
+    (propagated-inputs
+     (list python python-pillow))
+    (license license:gpl2)
+    (home-page "https://github.com/CluelessCatBurger/wl_shimeji")
+    (synopsis "Shimeji reimplementation for the Wayland")
+    (description "This is a reimplementation of the
+@uref{https://kilkakon.com/shimeji/, Shimeji} for Wayland in C.")))
 
 (define-public xfishtank
   (package
