@@ -158,6 +158,7 @@ in intelligent transportation networks.")
     (build-system gnu-build-system)
     (native-inputs
      (append (list pkg-config)
+             (if (target-loongarch64?) (list config) '())
              (if (target-hurd?)
                  (list autoconf automake gettext-minimal libtool)
                  '())))
@@ -183,6 +184,16 @@ in intelligent transportation networks.")
                                   (replace 'bootstrap
                                     (lambda _
                                       (invoke "autoreconf" "-fiv"))))
+                               #~())
+                        #$@(if (target-loongarch64?)
+                               #~((add-after 'unpack 'update-config
+                                    (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                                      (for-each (lambda (file)
+                                                  (install-file
+                                                   (search-input-file
+                                                    (or native-inputs inputs)
+                                                    (string-append "/bin/" file)) "build/litter/"))
+                                                '("config.guess" "config.sub")))))
                                #~())
                         (add-before 'check 'prepare-tests
                           (lambda _
