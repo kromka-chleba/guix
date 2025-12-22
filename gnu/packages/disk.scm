@@ -1256,7 +1256,17 @@ passphrases.")
                    (substitute* "git-version-gen"
                      (("/bin/sh") (which "sh")))
                    (substitute* "git-version"
-                     (("/bin/bash") (which "bash"))))))))
+                     (("/bin/bash") (which "bash")))))
+               (add-after 'unpack 'fix-path
+                 (lambda _
+                   (substitute* "meson.build"
+                     (("'iniparser.h'")
+                      "'iniparser/iniparser.h'")
+                     (("'dictionary.h'")
+                      "'iniparser/dictionary.h'"))
+                   (substitute* "util/parse-configs.c"
+                     (("iniparser.h")
+                      "iniparser/iniparser.h")))))))
     (native-inputs
      (list asciidoc
            bash-completion
