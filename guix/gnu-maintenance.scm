@@ -41,28 +41,12 @@
   #:use-module (guix i18n)
   #:autoload   (guix combinators) (fold2)
   #:use-module (guix memoization)
-  #:use-module (guix records)
   #:use-module (guix upstream)
   #:use-module (guix packages)
   #:autoload   (guix import utils) (false-if-networking-error find-version)
   #:autoload   (zlib) (call-with-gzip-input-port)
   #:autoload   (htmlprag) (html->sxml)            ;from Guile-Lib
-  #:export (gnu-package-name
-            gnu-package-mundane-name
-            gnu-package-copyright-holder
-            gnu-package-savannah
-            gnu-package-fsd
-            gnu-package-language
-            gnu-package-logo
-            gnu-package-doc-category
-            gnu-package-doc-summary
-            gnu-package-doc-description
-            gnu-package-doc-urls
-            gnu-package-download-url
-
-            official-gnu-packages
-            find-package
-            gnu-package?
+  #:export (gnu-package?
 
             uri-mirror-rewrite
             rewrite-url
@@ -94,147 +78,49 @@
 ;;; List of GNU packages.
 ;;;
 
-(define %gnumaint-base-url
-  "https://web.cvs.savannah.gnu.org/viewvc/*checkout*/www/www/prep/gnumaint/")
-
-(define %package-list-url
-  (string->uri
-   (string-append %gnumaint-base-url "rec/gnupackages.rec")))
-
-(define %package-description-url
-  ;; This file contains package descriptions in recutils format.
-  ;; See <https://lists.gnu.org/archive/html/guix-devel/2013-10/msg00071.html>
-  ;; and <https://lists.gnu.org/archive/html/guix-devel/2018-06/msg00362.html>.
-  (string->uri
-   (string-append %gnumaint-base-url "rec/pkgblurbs.rec")))
-
-(define-record-type* <gnu-package-descriptor>
-  gnu-package-descriptor
-  make-gnu-package-descriptor
-
-  gnu-package-descriptor?
-
-  (name             gnu-package-name)
-  (mundane-name     gnu-package-mundane-name)
-  (copyright-holder gnu-package-copyright-holder)
-  (savannah         gnu-package-savannah)
-  (fsd              gnu-package-fsd)
-  (language         gnu-package-language)         ; list of strings
-  (logo             gnu-package-logo)
-  (doc-category     gnu-package-doc-category)
-  (doc-summary      gnu-package-doc-summary)
-  (doc-description  gnu-package-doc-description)  ; taken from 'pkgdescr.txt'
-  (doc-urls         gnu-package-doc-urls)         ; list of strings
-  (download-url     gnu-package-download-url))
-
-(define* (official-gnu-packages
-          #:optional (fetch http-fetch/cached))
-  "Return a list of records, which are GNU packages.  Use FETCH,
-to fetch the list of GNU packages over HTTP."
-  (define (read-records port)
-    ;; Return a list of alists.  Each alist contains fields of a GNU
-    ;; package.
-    (let loop ((alist  (recutils->alist port))
-               (result '()))
-      (if (null? alist)
-          (reverse result)
-          (loop (recutils->alist port)
-
-                ;; Ignore things like "%rec" (info "(recutils) Record
-                ;; Descriptors").
-                (if (assoc-ref alist "package")
-                    (cons alist result)
-                    result)))))
-
-  (define official-description
-    (let ((db (read-records (fetch %package-description-url #:text? #t))))
-      (lambda (name)
-        ;; Return the description found upstream for package NAME, or #f.
-        (and=> (find (lambda (alist)
-                       (equal? name (assoc-ref alist "package")))
-                     db)
-               (lambda (record)
-                 (let ((field (assoc-ref record "blurb")))
-                   ;; The upstream description file uses "redirect PACKAGE" as
-                   ;; a blurb in cases where the description of the two
-                   ;; packages should be considered the same (e.g., GTK+ has
-                   ;; "redirect gnome".)  This is usually not acceptable for
-                   ;; us because we prefer to have distinct descriptions in
-                   ;; such cases.  Thus, ignore the 'blurb' field when that
-                   ;; happens.
-                   (and field
-                        (not (string-prefix? "redirect " field))
-                        field)))))))
-
-  (map (lambda (alist)
-         (let ((name (assoc-ref alist "package")))
-           (alist->record `(("description" . ,(official-description name))
-                            ,@alist)
-                          make-gnu-package-descriptor
-                          (list "package" "mundane_name" "copyright_holder"
-                                "savannah" "fsd" "language" "logo"
-                                "doc_category" "doc_summary" "description"
-                                "doc_url"
-                                "download_url")
-                          '("doc_url" "language"))))
-       (let* ((port (fetch %package-list-url #:text? #t))
-              (lst  (read-records port)))
-         (close-port port)
-         lst)))
-
-(define (find-package name)
-  "Find GNU package called NAME and return it.  Return #f if it was not
-found."
-  (find (lambda (package)
-          (string=? name (gnu-package-name package)))
-        (official-gnu-packages)))
-
 (define gnu-package?
-  (let ((official-gnu-packages (memoize official-gnu-packages)))
-    (mlambdaq (package)
-      "Return true if PACKAGE is a GNU package.  This procedure may access the
+  (mlambdaq (package)
+    "Return true if PACKAGE is a GNU package.  This procedure may access the
 network to check in GNU's database."
-      (define (mirror-type url)
-        (let ((uri (string->uri url)))
-          (and (eq? (uri-scheme uri) 'mirror)
-               (cond
-                ((member (uri-host uri)
-                         '("gnu" "gnupg" "gcc" "gnome"))
-                 ;; Definitely GNU.
-                 'gnu)
-                ((equal? (uri-host uri) "cran")
-                 ;; Possibly GNU: mirror://cran could be either GNU R itself
-                 ;; or a non-GNU package.
-                 #f)
-                (else
-                 ;; Definitely non-GNU.
-                 'non-gnu)))))
+    (define (mirror-type url)
+      (let ((uri (string->uri url)))
+        (and (eq? (uri-scheme uri) 'mirror)
+             (cond
+              ((member (uri-host uri)
+                       '("gnu" "gnupg" "gcc" "gnome"))
+               ;; Definitely GNU.
+               'gnu)
+              ((equal? (uri-host uri) "cran")
+               ;; Possibly GNU: mirror://cran could be either GNU R itself
+               ;; or a non-GNU package.
+               #f)
+              (else
+               ;; Probably non-GNU.
+               'non-gnu)))))
 
-      (define (gnu-home-page? package)
-        (letrec-syntax ((>> (syntax-rules ()
-                              ((_ value proc)
-                               (and=> value proc))
-                              ((_ value proc rest ...)
-                               (and=> value
-                                      (lambda (next)
-                                        (>> (proc next) rest ...)))))))
-          (>> package package-home-page
-              string->uri uri-host
-              (lambda (host)
-                (member host '("www.gnu.org" "gnu.org"))))))
+    (define (gnu-home-page? package)
+      (letrec-syntax ((>> (syntax-rules ()
+                            ((_ value proc)
+                             (and=> value proc))
+                            ((_ value proc rest ...)
+                             (and=> value
+                                    (lambda (next)
+                                      (>> (proc next) rest ...)))))))
+        (>> package package-home-page
+            string->uri uri-host
+            (lambda (host)
+              (member host '("www.gnu.org" "gnu.org"))))))
 
-      (or (gnu-home-page? package)
-          (match (package-source package)
-            ((? origin? origin)
-             (let ((url  (origin-uri origin))
-                   (name (package-upstream-name package)))
-               (case (and (string? url) (mirror-type url))
-                 ((gnu) #t)
-                 ((non-gnu) #f)
-                 (else
-                  (and (member name (map gnu-package-name (official-gnu-packages)))
-                       #t)))))
-            (_ #f))))))
+    (or (gnu-home-page? package)
+        (match (package-source package)
+          ((? origin? origin)
+           (let ((url  (origin-uri origin))
+                 (name (package-upstream-name package)))
+             (case (and (string? url) (mirror-type url))
+               ((gnu) #t)
+               ((non-gnu) #f)
+               (else #f))))
+          (_ #f)))))
 
 
 ;;;
