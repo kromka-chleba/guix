@@ -8333,15 +8333,18 @@ authentication for Flask routes.")
 (define-public python-uritemplate
   (package
     (name "python-uritemplate")
-    (version "4.1.1")
+    (version "4.2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "uritemplate" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/python-hyper/uritemplate")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1w14a775d92mx9pdhb5zimifpfr2lfcn0vfdpjagcy9vbkyfsij3"))))
-    (build-system python-build-system)
+        (base32 "07b1971vdjs6x5jy3l12xcvcpwwjzqxablplyvdz8jbvqz6d9mpm"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools))
     (home-page "https://uritemplate.readthedocs.org")
     (synopsis "Library to deal with URI Templates")
     (description "@code{uritemplate} provides Python library to deal with URI
