@@ -1384,9 +1384,9 @@ of the CRC32C hashing algorithm.")
         (sha256
          (base32
           "1jhxk5vhxmxxjp3zj526ry521v9inzzl8jqaaf0ma65w6k332ak2"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-nose))
+     (list python-nose python-setuptools))
     (home-page "https://github.com/casebeer/python-hkdf")
     (synopsis "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)")
     (description "This package provides a Python implementation of the HMAC Key
