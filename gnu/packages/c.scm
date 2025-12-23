@@ -1035,7 +1035,7 @@ portability.")
 (define-public byacc
   (package
     (name "byacc")
-    (version "20240109")
+    (version "20241231")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -1043,7 +1043,7 @@ portability.")
                    version ".tgz"))
              (sha256
               (base32
-               "0il4w1vwbglayakywyghiqhcjpg1yvv5ww2p8ylz32bi05wpg2gj"))
+               "0wwnc0zdx7qz34crr0cz15jjfqafkizn4ld49d8pykld0jp2yb0r"))
              (snippet
               #~(begin (delete-file "configure")
                        (delete-file "btyaccpar.c")
