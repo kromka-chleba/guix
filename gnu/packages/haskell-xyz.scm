@@ -8241,6 +8241,27 @@ package are usable on your design.")
 standard library.")
     (license license:bsd-3)))
 
+(define-public ghc-numinstances
+  (package
+    (name "ghc-numinstances")
+    (version "1.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "NumInstances" version))
+       (sha256
+        (base32 "0ycnwn09izajv330l7a31mc0alifqmxjsn9qmfswwnbg6i4jmnyb"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "NumInstances")))
+    (home-page "https://github.com/conal/NumInstances")
+    (synopsis "Instances of numeric classes for functions and tuples")
+    (description
+     "Instances of numeric classes for functions and tuples.  Import
+\"Data.@code{NumInstances}\" to get all the instances.  If you want only function
+or only tuple instances, import \"Data.@code{NumInstances.Function}\" or
+\"Data.@code{NumInstances.Tuple}\".")
+    (license license:bsd-3)))
+
 (define-public ghc-objectname
   (package
     (name "ghc-objectname")
