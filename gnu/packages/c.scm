@@ -1036,18 +1036,19 @@ portability.")
   (package
     (name "byacc")
     (version "20241231")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://invisible-mirror.net/archives/byacc/byacc-"
-                   version ".tgz"))
-             (sha256
-              (base32
-               "0wwnc0zdx7qz34crr0cz15jjfqafkizn4ld49d8pykld0jp2yb0r"))
-             (snippet
-              #~(begin (delete-file "configure")
-                       (delete-file "btyaccpar.c")
-                       (delete-file "yaccpar.c")))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://invisible-mirror.net/archives/byacc/byacc-"
+             version ".tgz"))
+       (sha256
+        (base32
+         "0wwnc0zdx7qz34crr0cz15jjfqafkizn4ld49d8pykld0jp2yb0r"))
+       (snippet
+        #~(begin (delete-file "configure")
+                 (delete-file "btyaccpar.c")
+                 (delete-file "yaccpar.c")))))
     (native-inputs
      (list autoconf
            automake
