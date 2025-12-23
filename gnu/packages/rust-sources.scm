@@ -662,3 +662,28 @@ intelligence.")
 webview, a tiny cross-platform library to render web-based GUIs as desktop
 applications.")
        (license license:expat)))))
+
+(define-public rust-typstfmt-0.13.1.cdfe44e
+  (hidden-package
+    (package
+      (name "rust-typstfmt")
+      (version "0.13.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+              (url "https://github.com/Myriad-Dreamin/typstfmt")
+              (commit "cdfe44ed065a90d80040c3b29dee7ed431a710ee")))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "15a058va7wd8zh9qrb1l1zdr1bc4ic2m7kn6g47cdmp7zvyp6sc2"))))
+      (build-system cargo-build-system)
+      (arguments
+        (list #:skip-build? #t
+              #:cargo-package-crates ''("typstfmt" "typstfmt")))
+      (inputs (cargo-inputs 'rust-typstfmt-0.13.1.cdfe44e))
+      (home-page "https://github.com/astrale-sharp/typstfmt")
+      (synopsis "soon to be formatter for the typst lang")
+      (description
+       "This package provides a soon to be formatter for the typst lang.")
+      (license (list license:expat license:asl2.0)))))
