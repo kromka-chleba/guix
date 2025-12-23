@@ -2771,6 +2771,25 @@ function performs the conversion you desire.")
 code.")
     (license license:bsd-3)))
 
+(define-public ghc-csound-expression-opcodes
+  (package
+    (name "ghc-csound-expression-opcodes")
+    (version "0.0.5.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "csound-expression-opcodes" version))
+       (sha256
+        (base32 "07lihnq0360vg6mbvwzgmangzvq796y9v55y33vaw9ppj8spifz3"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "csound-expression-opcodes")))
+    (inputs (list ghc-csound-expression-dynamic ghc-csound-expression-typed))
+    (home-page "http://hackage.haskell.org/package/csound-expression-opcodes")
+    (synopsis "Opcodes for the library csound-expression")
+    (description
+     "opcodes for the library csound-expression.  docs are generated.")
+    (license license:bsd-3)))
+
 (define-public ghc-csound-expression-typed
   (package
     (name "ghc-csound-expression-typed")
