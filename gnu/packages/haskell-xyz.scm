@@ -2981,6 +2981,24 @@ fixpoint type, you get fold and unfold operations for free.
 Thanks for contribution to: Matej Kollar, Herbert Valerio Riedel")
     (license license:bsd-3)))
 
+(define-public ghc-data-fix-cse
+  (package
+    (name "ghc-data-fix-cse")
+    (version "0.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "data-fix-cse" version))
+       (sha256
+        (base32 "1v8ffi5c0sz8q2fla6fab4css3pkjmi0knx5d04mvffhw66bjhbz"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "data-fix-cse")))
+    (inputs (list ghc-data-fix))
+    (home-page "https://github.com/spell-music/data-fix-cse")
+    (synopsis "Common subexpression elimination for the fixpoint types")
+    (description "Common subexpression elimination for the fixpoint types.")
+    (license license:bsd-3)))
+
 (define-public ghc-data-hash
   (package
     (name "ghc-data-hash")
