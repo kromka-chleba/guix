@@ -1045,10 +1045,13 @@ portability.")
               (base32
                "0il4w1vwbglayakywyghiqhcjpg1yvv5ww2p8ylz32bi05wpg2gj"))
              (snippet
-              #~(begin (delete-file "btyaccpar.c")
+              #~(begin (delete-file "configure")
+                       (delete-file "btyaccpar.c")
                        (delete-file "yaccpar.c")))))
     (native-inputs
-     (list gawk))
+     (list autoconf
+           automake
+           gawk))
     (build-system gnu-build-system)
     (home-page "https://invisible-island.net/byacc/byacc.html")
     (synopsis "Berkeley Yacc LALR parser generator")
