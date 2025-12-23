@@ -1702,6 +1702,27 @@ parser isolation, and labeled blocks for better error messages.")
 @code{Sources}, @code{Sinks}, and @code{Conduits}.")
     (license license:bsd-3)))
 
+(define-public ghc-cereal-text
+  (package
+    (name "ghc-cereal-text")
+    (version "0.1.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "cereal-text" version))
+       (sha256
+        (base32 "0k1ml0z5rksvrhz15i9afld7bybgylqmy5nmvik3p98zd3s1ayiw"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "cereal-text")))
+    (inputs (list ghc-cereal))
+    (home-page "https://github.com/ulikoehler/cereal-text")
+    (synopsis "Data.Text instances for the cereal serialization library")
+    (description
+     "Data.Text instances for the cereal serialization library.  Provides
+instances for Text and lazy Text.  Uses UTF-8 encoding for serialization.
+Use @@import Data.Serialize.Text ()@@ to import instances.")
+    (license license:asl2.0)))
+
 ;; XXX: bytestring <0.11, time >=1.5 && <1.10
 (define-public ghc-cgi
   (package
