@@ -2771,6 +2771,33 @@ function performs the conversion you desire.")
 code.")
     (license license:bsd-3)))
 
+(define-public ghc-csound-expression-typed
+  (package
+    (name "ghc-csound-expression-typed")
+    (version "0.2.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "csound-expression-typed" version))
+       (sha256
+        (base32 "0xj77qxdy2ryb4p3fl935bbh12alimih5cdvjk14059rdyj6fhlc"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "csound-expression-typed")))
+    (inputs (list ghc-boolean
+                  ghc-colour
+                  ghc-csound-expression-dynamic
+                  ghc-data-default
+                  ghc-hashable
+                  ghc-numinstances
+                  ghc-temporal-media
+                  ghc-wl-pprint-text))
+    (home-page "https://github.com/spell-music/csound-expression-typed")
+    (synopsis "Typed core for the library csound-expression")
+    (description
+     "Typed core for library csound-expression.  Provides typed core lang for
+csound.")
+    (license license:bsd-3)))
+
 (define-public ghc-csv
   (package
     (name "ghc-csv")
