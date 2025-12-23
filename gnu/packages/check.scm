@@ -3211,9 +3211,9 @@ JSON APIs with Behave.")
         (uri (pypi-uri "nose-timer" version))
         (sha256
           (base32 "05wzkc88vbzw62pqkvhl33211b90kns0lny70b7qw62rcg4flzk4"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-nose python-termcolor))
+     (list python-nose python-termcolor python-setuptools))
     (home-page "https://github.com/mahmoudimus/nose-timer")
     (synopsis "Timer plugin for nosetests")
     (description "Shows how much time was needed to run individual tests.")
