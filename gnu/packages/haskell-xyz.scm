@@ -2738,6 +2738,26 @@ pure @code{Either} value.  This means that you need not remember which specific
 function performs the conversion you desire.")
     (license license:bsd-3)))
 
+(define-public ghc-csound-expression
+  (package
+    (name "ghc-csound-expression")
+    (version "5.4.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "csound-expression" version))
+       (sha256
+        (base32 "13z3sp3q2bswkwlfaazyp964ar5l85k0xz68fajpmc2bkg32ivba"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "csound-expression")))
+    (inputs (list ghc-boolean ghc-colour ghc-csound-expression-dynamic
+                  ghc-csound-expression-opcodes))
+    (home-page "https://github.com/spell-music/csound-expression")
+    (synopsis "Haskell framework for electronic music")
+    (description
+     "This package provides a Haskell framework for electronic music.")
+    (license license:bsd-3)))
+
 (define-public ghc-csound-expression-dynamic
   (package
     (name "ghc-csound-expression-dynamic")
