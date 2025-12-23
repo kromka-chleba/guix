@@ -12518,6 +12518,26 @@ an index.")
 interface for extracting and creating tar files.")
     (license license:expat)))
 
+(define-public ghc-temporal-media
+  (package
+    (name "ghc-temporal-media")
+    (version "0.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "temporal-media" version))
+       (sha256
+        (base32 "04qbbx32rs6mz5w3j7wj2hx744x858rv60hmpla3zpx2491r0qi9"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "temporal-media")))
+    (inputs (list ghc-boolean))
+    (home-page "https://github.com/spell-music/temporal-media")
+    (synopsis "Data types for temporal media")
+    (description
+     "An embedded domain-specific language (EDSL) for creating lists of
+constant time events related in time.")
+    (license license:bsd-3)))
+
 (define-public ghc-temporary
   (package
     (name "ghc-temporary")
