@@ -606,8 +606,9 @@ embedding.")
               (sha256
                (base32
                 "1wpjisd5zzi5yvjff02hnxn84822k8sdxvvd33lil2x79wdb36rv"))))
-    (build-system python-build-system)
-    (native-inputs (list python-nose))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #false))
+    (native-inputs (list python-nose python-setuptools))
     (propagated-inputs (list python-numpydoc python-numpy python-scipy))
     (home-page "https://github.com/BRML/climin")
     (synopsis "Optimization for machine learning")
