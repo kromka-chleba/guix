@@ -4380,18 +4380,19 @@ websites such as Libre.fm.")
           (add-after 'unpack 'skip-tests-that-need-internet
             (lambda _
               (substitute* "test/test_importer.py"
-                (("^([ \t]+)(def test_merge_duplicate_album\\(self\\):)" _ indentation rest)
-                  (string-append indentation "@pytest.mark.skip()\n" indentation rest)))))
+                (("^([ \t]+)(def test_merge_duplicate_album\\(self\\):)"
+                  _ indentation rest)
+                 (string-append indentation "@pytest.mark.skip()\n"
+                                indentation rest)))))
           ;; Wrap the executable, so it can find python-gi (aka
           ;; pygobject) and gstreamer plugins.
           (add-after 'wrap 'wrap-typelib
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((prog (string-append #$output "/bin/beet"))
-                    (plugins (getenv "GST_PLUGIN_SYSTEM_PATH"))
-                    (types (getenv "GI_TYPELIB_PATH")))
-                (wrap-program prog
-                  `("GST_PLUGIN_SYSTEM_PATH" ":" prefix (,plugins))
-                  `("GI_TYPELIB_PATH" ":" prefix (,types))))))
+            (lambda _
+              (wrap-program (string-append #$output "/bin/beet")
+                `("GST_PLUGIN_SYSTEM_PATH" ":" prefix
+                  (,(getenv "GST_PLUGIN_SYSTEM_PATH")))
+                `("GI_TYPELIB_PATH" ":" prefix
+                  (,(getenv "GI_TYPELIB_PATH"))))))
           (add-after 'wrap 'install-completion
             (lambda _
               (let ((completion-path
@@ -4440,7 +4441,6 @@ websites such as Libre.fm.")
            python-pylast ; For lastgenre, lastimport.
            python-pyxdg ; For thumbnails.
            python-rarfile ; For import.
-           python-reflink ; For reflink.
            python-requests
            python-requests-oauthlib)) ; For beatport.
     (home-page "https://beets.io")
