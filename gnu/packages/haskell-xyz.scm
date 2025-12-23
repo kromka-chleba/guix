@@ -17375,6 +17375,63 @@ customisable via a phantom type parameter.  The instances can be rendered to the
 original type using DerivingVia.")
     (license license:bsd-3)))
 
+(define-public ghc-deriving-compat
+  (package
+    (name "ghc-deriving-compat")
+    (version "0.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "deriving-compat" version))
+       (sha256
+        (base32 "0ak9csg3843wppjgdh2lvfhszdxgahscn4sbmxs2l0dr5l0rggxi"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "deriving-compat")))
+    (inputs (list ghc-th-abstraction ghc-transformers-compat))
+    (native-inputs (list ghc-base-compat
+                         ghc-base-orphans
+                         ghc-hspec
+                         ghc-quickcheck
+                         ghc-tagged
+                         ghc-void
+                         hspec-discover))
+    (home-page "https://github.com/haskell-compat/deriving-compat")
+    (synopsis "Backports of GHC deriving extensions")
+    (description
+     "@@deriving-compat@@ provides Template Haskell functions that mimic @@deriving@@
+extensions that were introduced or modified in recent versions of GHC.
+Currently, the following typeclasses/extensions are covered: . * Deriving
+@@Bounded@@ . * Deriving @@Enum@@ . * Deriving @@Ix@@ . * Deriving @@Eq@@ . *
+Deriving @@Ord@@ . * Deriving @@Read@@ . * Deriving @@Show@@ . *
+@code{@@DeriveFoldable}@@ . * @code{@@DeriveFunctor}@@ . *
+@code{@@DeriveTraversable}@@ . * @code{@@GeneralizedNewtypeDeriving}@@ (with GHC
+8.2 or later) . * @code{@@DerivingVia}@@ (with GHC 8.2 or later) .  See the
+\"Data.Deriving\" module for a full list of backported changes. .  In addition,
+@@deriving-compat@@ also provides some additional @@deriving@@ functionality
+that has not yet been merged into upstream GHC. Aside from the GHC @@deriving@@
+extensions mentioned above, @@deriving-compat@@ also permits deriving instances
+of classes in the @@Data.Functor.Classes@@ module, covering the @@Eq1@@,
+@@Eq2@@, @@Ord1@@, @@Ord2@@, @@Read1@@, @@Read2@@, @@Show1@@, and @@Show2@@
+classes.  This extra functionality is outside of the main scope of
+@@deriving-compat@@, as it does not backport extensions that exist in today's
+GHC. Nevertheless, the underlying Template Haskell machinery needed to derive
+@@Eq@@ and friends extends very naturally to @@Eq1@@ and friends, so this extra
+functionality is included in @@deriving-compat@@ as a convenience. .  Note that
+some recent GHC typeclasses/extensions are not covered by this package: . *
+@code{@@DeriveDataTypeable}@@ . * @code{@@DeriveGeneric}@@, which was
+introducted in GHC 7.2 for deriving @@Generic@@ instances, and modified in GHC
+7.6 to allow derivation of @@Generic1@@ instances.  Use @@Generics.Deriving.TH@@
+from @@<http://hackage.haskell.org/package/generic-deriving generic-deriving>@@
+to derive @@Generic(1)@@ using Template Haskell. . * @code{@@DeriveLift}@@,
+which was introduced in GHC 8.0 for deriving @@Lift@@ instances.  Use
+@@Language.Haskell.TH.Lift@@ from @@<http://hackage.haskell.org/package/th-lift
+th-lift>@@ to derive @@Lift@@ using Template Haskell. . * The @@Bifunctor@@
+typeclass, which was introduced in GHC 7.10, as well as the @@Bifoldable@@ and
+@@Bitraversable@@ typeclasses, which were introduced in GHC 8.2.  Use
+@@Data.Bifunctor.TH@@ from @@<http://hackage.haskell.org/package/bifunctors
+bifunctors>@@ to derive these typeclasses using Template Haskell.")
+    (license license:bsd-3)))
+
 (define-public ghc-leancheck
   (package
     (name "ghc-leancheck")
