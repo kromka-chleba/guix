@@ -33,6 +33,7 @@
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
+;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1136,6 +1137,24 @@ library for Haskell.")
     (description "This package provides both mutable and immutable Bloom
 filter data types, along with a family of hash functions and an easy-to-use
 interface.")
+    (license license:bsd-3)))
+
+(define-public ghc-boolean
+  (package
+    (name "ghc-boolean")
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "Boolean" version))
+       (sha256
+        (base32 "1y7f8lqx86m06ccq1bjym2hywc7r17s2bvx16jswb2ibn09n08b7"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "Boolean")))
+    (inputs (list))
+    (home-page "https://github.com/conal/Boolean")
+    (synopsis "Generalized booleans")
+    (description "This package provides generalized booleans.")
     (license license:bsd-3)))
 
 (define-public ghc-boxes
@@ -17461,7 +17480,6 @@ operate in either the @code{ST} monad or the @code{IO} monad.")
 providing boxed wrappers for @code{ByteArray} and
 @code{MutableByteArray} and relevant instances for GHC < 9.4.")
     (license license:bsd-3)))
-
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
