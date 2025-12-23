@@ -4436,3 +4436,58 @@ $(which espanso)}.  On a Guix system, you can define the following in your
       #:features '(list "modulo" "vendored-tls" "wayland")))
     (inputs (modify-inputs (package-inputs espanso-x11)
               (append wl-clipboard)))))
+
+(define-public tinymist
+  (package
+    (name "tinymist")
+    (version "0.14.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Myriad-Dreamin/tinymist/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet
+         ;; we do not need the benchmarking code
+         '(begin (delete-file-recursively "crates/crityp")))
+       (sha256
+        (base32 "0sh4iqrqa8a3gv05fqpmfzh2lvfz879zyl6mfxs965wipf3a5f2d"))))
+    (build-system cargo-build-system)
+    (arguments (list
+      #:rust rust-1.88
+      #:tests? #f ;; just hangs
+      #:cargo-install-paths ''("crates/tinymist-cli"
+                               "crates/tinymist-l10n"
+                               "crates/typlite")
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'package) ;; fails in workspace
+          (add-after 'unpack 'use-guix-vendored-dependencies
+            (lambda _
+              (substitute* "Cargo.toml"
+                ;; use vendored typst sources
+                (("^typst[ -].*git.*") "") ;; do not touch typstfmt
+                ;; use vendored typstfmt
+                (("^typstfmt.*") "typstfmt = { version = \"0\" }\n")
+                ;; use upstream docx-rs package
+                (("^docx-rs.*") "docx-rs = { version = \"0.4.18\" }\n")
+                ;; disable benchmarking code
+                (("benches/\\*") ""))))
+          (add-after 'configure 'patch
+            ;; apply various changes to typst by tinymist authors
+            (lambda _
+              (let ((patch-file
+                     #$(local-file
+                        (search-patch "tinymist-typst-0.14.diff"))))
+                (invoke "patch" "--force" "-p1" "-i" patch-file)))))))
+    (inputs (cargo-inputs 'tinymist))
+    (home-page "https://github.com/Myriad-Dreamin/tinymist")
+    (synopsis "Language Server Provider (LSP) for Typst")
+    (description
+     "This package provides an integrated language service for Typst.
+Besides the LSP functionality tinymist also incorporates a preview server
+for documents written in Typst.")
+    (license license:asl2.0)))
