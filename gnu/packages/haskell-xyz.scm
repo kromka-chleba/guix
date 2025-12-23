@@ -2738,6 +2738,39 @@ pure @code{Either} value.  This means that you need not remember which specific
 function performs the conversion you desire.")
     (license license:bsd-3)))
 
+(define-public ghc-csound-expression-dynamic
+  (package
+    (name "ghc-csound-expression-dynamic")
+    (version "0.4.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "csound-expression-dynamic" version))
+       (sha256
+        (base32 "0kvirsagmlbgsrl9x8a0xmi9rypspsg85l7yqkk3cph4w4s60brl"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "csound-expression-dynamic")))
+    (inputs (list ghc-boolean
+                  ghc-base64-bytestring
+                  ghc-cereal
+                  ghc-cereal-text
+                  ghc-cryptohash-sha256
+                  ghc-data-default
+                  ghc-data-fix
+                  ghc-data-fix-cse
+                  ghc-deriving-compat
+                  ghc-pretty-show
+                  ghc-safe
+                  ghc-unordered-containers
+                  ghc-vector
+                  ghc-wl-pprint-text))
+    (home-page "https://github.com/spell-music/csound-expression-dynamic")
+    (synopsis "Basic bare bone library to generate Csound code")
+    (description
+     "This package provides a basic bare bone library to generate Csound
+code.")
+    (license license:bsd-3)))
+
 (define-public ghc-csv
   (package
     (name "ghc-csv")
