@@ -3883,11 +3883,15 @@ library.")
     (version "1.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "slicerator" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/soft-matter/slicerator")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0ik0bmh18zgffd9kx53254jp3yyih6zcmd8kfb080xnqbizhl0a4"))))
-    (build-system python-build-system)
+        (base32 "027x80w3vwjmnj6a3k4khhji7k3kiyfcqifawifsl4ryi72zf6k1"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-numpy python-pytest python-setuptools))
     (home-page "https://github.com/soft-matter/slicerator")
     (synopsis "Lazy-loading, fancy-sliceable iterable")
     (description
