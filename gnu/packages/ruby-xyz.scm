@@ -11020,6 +11020,34 @@ defined in a @file{.env} file.")
 defined in a @file{.env} file.  This is the Rails variant, adapted for use
 with Ruby on Rails projects.")))
 
+(define-public ruby-drb
+  (package
+    (name "ruby-drb")
+    (version "2.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ruby/drb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d0kfrz6i8h6xp4m1mvq7wrw6y5m70znp30lhf4x6vdsy55bf975"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-rake ruby-test-unit ruby-test-unit-ruby-core))
+    (synopsis "Distributed object system for Ruby")
+    (description
+     "@code{dRuby} is a distributed object system for Ruby.  It allows an
+object in one Ruby process to invoke methods on an object in another Ruby
+process on the same or a different machine.
+
+The Ruby standard library contains the core classes of the dRuby package.
+However, the full package also includes access control lists and the Rinda
+tuple-space distributed task management system, as well as a large number of
+samples.")
+    (home-page "https://github.com/ruby/drb")
+    (license (list license:ruby license:bsd-2))))
+
 (define-public ruby-http-accept
   (package
     (name "ruby-http-accept")
