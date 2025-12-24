@@ -7446,6 +7446,36 @@ interface so that Terraform can be more easily invoked from Ruby code.")
   (home-page "https://github.com/infrablocks/ruby_terraform")
   (license license:expat)))
 
+(define-public ruby-pstore
+  (package
+    (name "ruby-pstore")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch) ;for tests
+       (uri (git-reference
+             (url "https://github.com/ruby/pstore")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dqyhdmqdrzimw7lxdp8gqf13nmfwxz2f0rzcx3pz065lx9gs9sp"))))
+    (build-system ruby-build-system)
+    (native-inputs (list bundler ruby-rake ruby-test-unit
+                         ruby-test-unit-ruby-core))
+    (synopsis "Implements a file based persistence mechanism based on a Hash")
+    (description
+     "PStore implements a file based persistence mechanism based on a Hash.
+User code can store hierarchies of Ruby objects (values) into the data store
+file by name (keys).  An object hierarchy may be just a single object.  User
+code may later read values back from the data store or even update data, as
+needed.
+
+The transactional behavior ensures that any changes succeed or fail together.
+This can be used to ensure that the data store is not left in a transitory state,
+where some values were updated but others were not.")
+    (home-page "https://github.com/ruby/pstore")
+    (license (list license:bsd-2 license:ruby))))
+
 (define-public ruby-pstree
   (package
     (name "ruby-pstree")
