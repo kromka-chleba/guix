@@ -4249,6 +4249,50 @@ applications.")
      "This package provides the Windows API used at Charmbracelet.")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-x-xpty
+  (package
+    (name "go-github-com-charmbracelet-x-xpty")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (string-append "xpty/v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lxylvflfdjhfq6s9da6cr7nq6zk8klisjilcpngw1rskv4p3ckx"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "xpty")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/xpty"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs
+     (list go-github-com-charmbracelet-x-conpty
+           go-github-com-charmbracelet-x-term
+           go-github-com-charmbracelet-x-termios
+           go-github-com-creack-pty
+           go-golang-org-x-sys))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Platform-independent pseudo-terminal interface for Go")
+    (description
+     "This package provides platform-independent interfaces to interact with
+pseudo-terminals (PTYs) in Go.  It abstracts the differences between Unix and
+Windows systems and supports both ConPTY and classic Unix PTYs.")
+    (license license:expat)))
+
 (define-public go-github-com-checkpoint-restore-go-criu-v6
   (package
     (name "go-github-com-checkpoint-restore-go-criu-v6")
