@@ -16018,6 +16018,47 @@ functions in packages @code{fmt} and @code{log}.")
 requests.  Browse requests are not supported yet.")
     (license license:expat)))
 
+(define-public go-github-com-microsoft-dev-tunnels
+  (package
+    (name "go-github-com-microsoft-dev-tunnels")
+    (version "0.1.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/microsoft/dev-tunnels")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c837h253mzf64p0khs5i9sskxawjq95fjb5a1gshgnxaynbjpw0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/microsoft/dev-tunnels"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                ;; Only run tests in ssh/messages subpackage.  The ssh package
+                ;; fails to build with Go 1.25 due to non-constant format
+                ;; strings, and the tunnels package requires network access.
+                (invoke "go" "test" "-v"
+                        (string-append "github.com/microsoft/dev-tunnels"
+                                       "/go/tunnels/ssh/messages"))))))))
+    (propagated-inputs
+     (list go-github-com-gorilla-websocket
+           go-github-com-rodaine-table
+           go-golang-org-x-crypto))
+    (home-page "https://github.com/microsoft/dev-tunnels")
+    (synopsis "Dev tunnels SDK for Go")
+    (description
+     "This package provides a Go SDK for Microsoft Dev Tunnels, enabling secure
+port forwarding and tunneling for development workflows.  It supports creating
+and managing tunnels with SSH-based connections.")
+    (license license:expat)))
+
 (define-public go-github-com-miolini-datacounter
   (package
     (name "go-github-com-miolini-datacounter")
