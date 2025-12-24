@@ -12786,27 +12786,27 @@ possible, supporting most common functionality.")
     (name "python-http-client")
     (version "3.3.7")
     (home-page "https://github.com/sendgrid/python-http-client")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url home-page)
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0z0ziw3f4zw5fj4spiwhhs2x8qs3i5999ry2p6a5sc8b1lkkj2zi"))
-              (snippet #~(begin
-                           (use-modules (guix build utils))
-                           (delete-file "tests/profile.py")))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z0ziw3f4zw5fj4spiwhhs2x8qs3i5999ry2p6a5sc8b1lkkj2zi"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-tests
-                 (lambda _
-                   ;; The test expects the copyright to be updated each year.
-                   (substitute* "tests/test_daterange.py"
-                     (("time\\.strftime\\(\"%Y\"\\)") "2022")))))))
+     (list
+      #:test-flags #~(list "--ignore=tests/profile.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda _
+              ;; The test expects the copyright to be updated each year.
+              (substitute* "tests/test_daterange.py"
+                (("time\\.strftime\\(\"%Y\"\\)") "2022")))))))
+    (native-inputs (list python-pytest python-setuptools))
     (synopsis "HTTP REST client for Python")
     (description
      "This package provides access to any RESTful or RESTful-like API.")
