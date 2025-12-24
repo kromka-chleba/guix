@@ -113,6 +113,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages specifications)
+  #:use-module (gnu packages tls)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg))
 
@@ -6728,6 +6729,32 @@ on throughput and hit ratio performance.")
 BIOS (@url{https://en.wikipedia.org/wiki/System_Management_BIOS, SMBIOS}) and
 Desktop Management Interface (DMI) data and structures.")
     (license license:asl2.0)))
+
+(define-public go-github-com-digitorus-pkcs7
+  (package
+    (name "go-github-com-digitorus-pkcs7")
+    (version "0.0.0-20250730155240-ffadbf3f398c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/digitorus/pkcs7")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0snamp6fbg5vir0lsw5wzvyagrdd832lw6k7cnvcahcgp8l084zc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/digitorus/pkcs7"))
+    (native-inputs
+     (list openssl))
+    (home-page "https://github.com/digitorus/pkcs7")
+    (synopsis "PKCS#7 implementation for Go")
+    (description
+     "This package implements parsing and generation of some PKCS#7 structures
+for Go applications.")
+    (license license:expat)))
 
 (define-public go-github-com-dimchansky-utfbom
   (package
