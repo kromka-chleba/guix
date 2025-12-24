@@ -16226,6 +16226,32 @@ primary goal is to format command-line output, but of course word wrapping is
 a generally useful thing to do.")
     (license license:expat)))
 
+(define-public go-github-com-mitchellh-hashstructure
+  (package
+    (name "go-github-com-mitchellh-hashstructure")
+    (version "2.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mitchellh/hashstructure")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yyr1igvyv7dzjxs9hbwk7qhshwxys0hq59sy2g2a46hjgi311iv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mitchellh/hashstructure/v2"))
+    (home-page "https://github.com/mitchellh/hashstructure")
+    (synopsis "Go library for creating hash values from Go structures")
+    (description
+     "This package provides a Go library for creating a unique hash value for
+arbitrary values in Go.  It can hash nearly any Go type, including complex
+types like structs, arrays, slices, and maps.  This is useful for creating
+cache keys, detecting changes, or implementing set operations.")
+    (license license:expat)))
+
 ;; XXX: This package is in maintenance mode: "This repository has been
 ;; archived by the owner on Jul 22, 2024. It is now read-only."
 (define-public go-github-com-mitchellh-mapstructure
