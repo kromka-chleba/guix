@@ -12815,7 +12815,7 @@ possible, supporting most common functionality.")
 (define-public python-sendgrid
   (package
     (name "python-sendgrid")
-    (version "6.9.7")
+    (version "6.11.0")
     (home-page "https://github.com/sendgrid/sendgrid-python/")
     (source (origin
               (method git-fetch)
@@ -12825,16 +12825,23 @@ possible, supporting most common functionality.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0kvp4gm3bpcsj2mkv05pgvlcv1jlsfhcljcv61wz5kq9d273h7rg"))))
-    (build-system python-build-system)
+                "1cdsxnf2priqwmkpvbcki2lyim46vrcz5jswls2cr99l9xshpi61"))))
+    (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f))       ;241/340 tests fail due to attempted web access
-    (propagated-inputs (list python-http-client python-starkbank-ecdsa))
+    (native-inputs (list python-pytest python-setuptools))
+    (propagated-inputs
+     (list python-flask
+           python-http-client
+           python-six
+           python-starkbank-ecdsa
+           python-werkzeug
+           python-pyyaml))
     (synopsis "SendGrid API library for Python")
     (description
-     "The @code{sendgrid} Python library allows access to the
-SendGrid Web API v3.  Version 3+ of the library provides full support for all
-SendGrid Web API v3 endpoints, including the new v3 /mail/send.")
+     "The @code{sendgrid} Python library allows access to the SendGrid Web API
+v3.  Version 3+ of the library provides full support for all SendGrid Web API
+v3 endpoints, including the new v3 /mail/send.")
     (license license:expat)))
 
 (define-public python-starlette
