@@ -7753,7 +7753,7 @@ you about the changes.")
 (define-public ruby-loofah
   (package
     (name "ruby-loofah")
-    (version "2.24.1")
+    (version "2.25.0")
     (source
      (origin
        ;; Build from git because the gem lacks tests.
@@ -7762,16 +7762,8 @@ you about the changes.")
                            (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "07ngn69i86afqcpwv3yc977krbgq8b201gxz0pg3kp8wrliig44f"))))
+        (base32 "1fv1343biivz7h4g6nqy704ckkql06xqmmy6b6p74yb0qgi5yijg"))))
     (build-system ruby-build-system)
-    (arguments
-     (list
-      ;; tests: 1093 runs, 3586 assertions, 0 failures, 0 errors, 0 skips
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'skip-failing-tests
-            (lambda _
-              (delete-file "test/assets/testdata_sanitizer_tests1.dat"))))))
     (native-inputs
      (list ruby-hoe ruby-hoe-markdown ruby-rr))
     (propagated-inputs
