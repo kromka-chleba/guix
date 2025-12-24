@@ -3773,6 +3773,47 @@ glamorous default themes.")
      "A simple, efficient spring animation library for smooth, natural motion.")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-huh
+  (package
+    (name "go-github-com-charmbracelet-huh")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/huh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gbmlw9njfd3ayg3isbj61v9g0f30v772dwp4jv32h6nx14dbqc2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/charmbracelet/huh"
+      ;; Test only the main library packages.  The examples/ directory is a
+      ;; separate Go module with additional dependencies.
+      #:test-subdirs ''("" "spinner" "accessibility")))
+    (propagated-inputs
+     (list go-github-com-catppuccin-go
+           go-github-com-charmbracelet-bubbles
+           go-github-com-charmbracelet-bubbletea
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-cellbuf
+           go-github-com-charmbracelet-x-exp-strings
+           go-github-com-charmbracelet-x-term
+           go-github-com-charmbracelet-x-xpty
+           go-github-com-mitchellh-hashstructure))
+    (home-page "https://github.com/charmbracelet/huh")
+    (synopsis "Terminal forms and prompts library for Go")
+    (description
+     "This package provides components to build terminal-based forms and
+prompts with an interactive and user-friendly interface.  It supports various
+input types including text fields, text areas, selects, multi-selects, and
+confirm dialogs.")
+    (license license:expat)))
+
 (define-public go-github-com-charmbracelet-lipgloss
   (package
     (name "go-github-com-charmbracelet-lipgloss")
