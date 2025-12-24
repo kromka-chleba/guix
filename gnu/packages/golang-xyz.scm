@@ -4644,6 +4644,30 @@ iteration.")
      "This package provides a token bucket implementation in Golang.")
     (license license:asl2.0)))
 
+(define-public go-github-com-codahale-rfc6979
+  (package
+    (name "go-github-com-codahale-rfc6979")
+    (version "0.0.0-20141003034818-6a90f24967eb")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/codahale/rfc6979")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07p51hmvvzvn84mg1c3kmp799j7jf7w15770qw8qz9q7j8frx03f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/codahale/rfc6979"))
+    (home-page "https://github.com/codahale/rfc6979")
+    (synopsis "Deterministic DSA implementation")
+    (description
+     "This package provides an implementation of RFC 6979's
+deterministic DSA.")
+    (license license:expat)))
+
 (define-public go-github-com-code-hex-go-generics-cache
   (package
     (name "go-github-com-code-hex-go-generics-cache")
