@@ -4144,6 +4144,45 @@ package provides an API for comparing Golden files.")
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-x-termios
+  (package
+    (name "go-github-com-charmbracelet-x-termios")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (string-append "termios/v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17nc4wz65j6kmxg00ww44qiqhgzkkr5cl0p7svq8qv3phpxy2kj7"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "termios")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/termios"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Terminal I/O control for Go")
+    (description
+     "This package provides terminal I/O control (termios) functionality for Go
+applications.")
+    (license license:expat)))
+
 (define-public go-github-com-charmbracelet-x-windows
   (package
     (name "go-github-com-charmbracelet-x-windows")
