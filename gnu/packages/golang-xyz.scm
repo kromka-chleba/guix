@@ -53,7 +53,7 @@
 ;;; Copyright © 2024 Jean Simard <woshilapin@tuziwo.info>
 ;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
 ;;; Copyright © 2024 Luis Higino <luishenriquegh2701@gmail.com>
-;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2024, 2025 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2024 Simen Endsjø <contact@simendsjo.me>
 ;;; Copyright © 2024 Spencer Peters <spencerpeters@protonmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
@@ -3393,6 +3393,30 @@ that are automatically cleaned up (even in the event of an unexpected process
 exit).")
     (license (list license:bsd-3
                    license:expat))))
+
+(define-public go-github-com-catppuccin-go
+  (package
+    (name "go-github-com-catppuccin-go")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/catppuccin/go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gqbgsap69abq1jdc4dhxvsrfb9yqc9423x6za6d7slfky1f736d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/catppuccin/go"))
+    (home-page "https://github.com/catppuccin/go")
+    (synopsis "Catppuccin color palette for Go")
+    (description
+     "This package provides the Catppuccin color palette for Go applications.
+Catppuccin is a soothing pastel theme for developers and tinkerers.")
+    (license license:expat)))
 
 (define-public go-github-com-cention-sany-utf7
   (package
