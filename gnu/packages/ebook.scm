@@ -430,7 +430,12 @@ accessing and converting various ebook file formats.")
           (add-after 'install 'wrap-libs
             (lambda _
               (wrap-program (string-append #$output "/bin/foliate")
-                `("GI_TYPELIB_PATH" ":" = (,(getenv "GI_TYPELIB_PATH")))))))))
+                `("GI_TYPELIB_PATH" ":" = (,(getenv "GI_TYPELIB_PATH"))))))
+          (add-after 'unpack 'skip-icon-cache
+            (lambda _
+              (substitute* "meson.build"
+                (("gtk_update_icon_cache: true")
+                 "gtk_update_icon_cache: false")))))))
     (native-inputs
      (list desktop-file-utils
            gettext-minimal
@@ -460,7 +465,8 @@ It supports the following formats:
 @item PDF
 @end enumerate")
     (home-page "https://johnfactotum.github.io/foliate/")
-    (license license:gpl3+))))
+    (license (list license:gpl3+
+                   license:expat)))))
 
 (define-public inkbox
   (package
