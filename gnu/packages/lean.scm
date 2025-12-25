@@ -139,6 +139,9 @@ interactive and automated theorem proving.")
               (substitute* "src/lean.mk.in"
                (("SHELL = /usr/bin/env bash")
                 "SHELL = bash"))
+              (substitute* "src/stdlib.make.in"
+               (("/usr/bin/env bash")
+                "bash"))
               (setenv "SHELL" "bash -euo pipefail")))
           (replace 'check
             (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
