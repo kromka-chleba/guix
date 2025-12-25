@@ -417,7 +417,7 @@ accessing and converting various ebook file formats.")
         (git-reference
           (url "https://github.com/johnfactotum/foliate")
           (commit commit)
-          (recursive? #true) ))
+          (recursive? #t) ))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0xacmsksfwa0asb8gvn9l91w4sgdfaq5b7jz2ryrfkkrw8rjakim"))))
