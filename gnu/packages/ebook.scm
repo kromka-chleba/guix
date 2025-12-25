@@ -440,11 +440,14 @@ accessing and converting various ebook file formats.")
            pkg-config
            webkitgtk))
     (inputs
-     (list gjs
+     (list bash-minimal ; for wrap-program
+           gjs
            gtk
            libadwaita))
     (synopsis "E-Book reader")
-    (description "@code{foliate} is a GTK e-book reader. Read in paginated or scrolled mode. Adjust the font, spacing, margins, and color scheme. Window controls hide automatically to minimize distraction.
+    (description "@code{foliate} is a GTK e-book reader.  Read in paginated or
+scrolled mode.  Adjust the font, spacing, margins, and color scheme.  Window
+controls hide automatically to minimize distraction.
 
 It supports the following formats:
 
@@ -456,7 +459,7 @@ It supports the following formats:
 @item CBZ
 @item PDF
 @end enumerate")
-    (home-page "https://johnfactotum.github.io/foliate")
+    (home-page "https://johnfactotum.github.io/foliate/")
     (license license:gpl3+))))
 
 (define-public inkbox
