@@ -708,7 +708,7 @@ LLVM Core libraries for code generation."
             #:bootstrap-dmd ldc-1.25
             #:llvm (delay llvm-20)
             #:clang-runtime (delay clang-runtime-20)))
-(define-public ldc ldc-1.38)
+(define-public ldc ldc-1.41)
 
 ;;; Bootstrap version of phobos that is built with GDC, using GDC's standard
 ;;; library.
