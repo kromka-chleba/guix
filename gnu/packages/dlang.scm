@@ -607,7 +607,7 @@ LLVM Core libraries for code generation."
          (stage2 (make-ldc-stage 2 stage1)))
     stage2))
 
-(define ldc-1.25
+(define-public ldc-1.25
   (make-ldc "1.25.1" "0h30gzl8fl6c5gjf3xrrjj4i6m5r1mzn6y5g8vkir3y0z0mgpd31"
             #:frontend-version "2.095.1"
             #:llvm (delay llvm-12)
