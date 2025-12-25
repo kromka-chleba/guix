@@ -5995,6 +5995,34 @@ values.  It supports almost all kind of types: @code{int/8/16/32/64},
 metrics to Graphite.")
     (license license:bsd-2)))
 
+(define-public go-github-com-cyberphone-json-canonicalization
+  (package
+    (name "go-github-com-cyberphone-json-canonicalization")
+    (version "0.0.0-20241213000000-19d51d7fe467")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cyberphone/json-canonicalization")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g1q784rsj5jam7zs049dlb637dqsswkf79ncsjy7x8rl18gg8bs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; Tests use non-standard GOPATH import paths
+      #:skip-build? #t
+      #:import-path "github.com/cyberphone/json-canonicalization"))
+    (home-page "https://github.com/cyberphone/json-canonicalization")
+    (synopsis "JSON canonicalization for Go")
+    (description
+     "This package provides a JSON canonicalization implementation in Go,
+following the JSON Canonicalization Scheme (JCS) as specified in RFC 8785.
+It transforms JSON data into a canonical form suitable for digital signatures
+and hashing.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-cyphar-filepath-securejoin
   (package
     (name "go-github-com-cyphar-filepath-securejoin")
