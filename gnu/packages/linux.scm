@@ -12238,7 +12238,7 @@ This tool supports checking Kconfig options and kernel cmdline parameters.")
 (define-public firejail
   (package
     (name "firejail")
-    (version "0.9.74")
+    (version "0.9.76")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -12246,7 +12246,7 @@ This tool supports checking Kconfig options and kernel cmdline parameters.")
                     "/firejail-" version ".tar.xz" ))
               (sha256
                (base32
-                "04w11jjh62ghs66ippw5xlg3l7l9mi3b5cpch1cg3fw7gxnbbn3h"))))
+                "0jly9lrivfrrhxx7r2fni3c6jmjm9nbk1cw32766azw921zabykb"))))
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
