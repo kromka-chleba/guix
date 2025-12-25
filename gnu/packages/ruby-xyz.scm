@@ -2828,6 +2828,31 @@ extensions.")
     (home-page "http://codeforpeople.com/lib/ruby/orderedhash/")
     (license license:public-domain)))
 
+(define-public ruby-ostruct
+  (package
+    (name "ruby-ostruct")
+    (version "0.6.3")
+    (source
+     (origin
+       (method git-fetch) ;for tests
+       (uri (git-reference
+             (url "https://github.com/ruby/ostruct")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yl4n1mc9zqw2xgkm42zxpzlyv1r36fbjqwlj93y7nvhqyj7qa98"))))
+    (build-system ruby-build-system)
+    (native-inputs (list bundler ruby-rake ruby-test-unit
+                         ruby-test-unit-ruby-core))
+    (synopsis "OpenStruct implementation")
+    (description
+     "An OpenStruct is a data structure, similar to a Hash, that
+allows the definition of arbitrary attributes with their accompanying values.
+This is accomplished by using Ruby's metaprogramming to define methods on the
+class itself.")
+    (home-page "https://github.com/ruby/ostruct")
+    (license (list license:ruby license:bsd-2))))
+
 (define-public ruby-libxml
   (package
     (name "ruby-libxml")
