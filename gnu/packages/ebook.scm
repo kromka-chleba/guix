@@ -443,8 +443,19 @@ accessing and converting various ebook file formats.")
      (list gjs
            gtk
            libadwaita))
-    (synopsis "Simple and modern GTK eBook reader.")
-    (description "Read e-books in style. Open EPUB, Mobipocket, Kindle, FB2, CBZ, and PDF files. Read in paginated or scrolled mode. Adjust the font, spacing, margins, and color scheme. Window controls hide automatically to minimize distraction.")
+    (synopsis "E-Book reader")
+    (description "@code{foliate} is a GTK e-book reader. Read in paginated or scrolled mode. Adjust the font, spacing, margins, and color scheme. Window controls hide automatically to minimize distraction.
+
+It supports the following formats:
+
+@enumerate
+@item EPUB
+@item Mobipocket
+@item Kindle
+@item FB2
+@item CBZ
+@item PDF
+@end enumerate")
     (home-page "https://johnfactotum.github.io/foliate")
     (license license:gpl3+))))
 
