@@ -91,6 +91,7 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xdisorg)
+  #:use-module (gnu packages webkit)
   #:use-module (gnu packages wxwidgets))
 
 (define-public chmlib
@@ -402,6 +403,50 @@ e-books for convenient reading.")
     (description "This package provides command-line tools and a library for
 accessing and converting various ebook file formats.")
     (license license:expat)))
+
+(define-public foliate
+  (let ((commit "afc4b033e76904f1d20604640b2727a58a2e8106")
+        (revision "1"))
+  (package
+    (name "foliate")
+    (version (git-version "3.2.1" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://github.com/johnfactotum/foliate")
+          (commit commit)
+          (recursive? #true) ))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xacmsksfwa0asb8gvn9l91w4sgdfaq5b7jz2ryrfkkrw8rjakim"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:glib-or-gtk? #t
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-libs
+            (lambda _
+              (wrap-program (string-append #$output "/bin/foliate")
+                `("GI_TYPELIB_PATH" ":" = (,(getenv "GI_TYPELIB_PATH")))))))))
+    (native-inputs
+     (list desktop-file-utils
+           gettext-minimal
+           `(,glib "bin")
+           gsettings-desktop-schemas
+           `(,gtk "bin")
+           pkg-config
+           webkitgtk))
+    (inputs
+     (list gjs
+           gtk
+           libadwaita))
+    (synopsis "Simple and modern GTK eBook reader.")
+    (description "Read e-books in style. Open EPUB, Mobipocket, Kindle, FB2, CBZ, and PDF files. Read in paginated or scrolled mode. Adjust the font, spacing, margins, and color scheme. Window controls hide automatically to minimize distraction.")
+    (home-page "https://johnfactotum.github.io/foliate")
+    (license license:gpl3+))))
 
 (define-public inkbox
   (package
