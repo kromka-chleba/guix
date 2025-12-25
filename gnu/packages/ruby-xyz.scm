@@ -15785,6 +15785,23 @@ templates.")
 encoding.")
     (license license:expat)))
 
+(define-public ruby-base58
+  (package
+    (name "ruby-base58")
+    (version "0.2.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "base58" version))
+       (sha256
+        (base32 "1gpk3g32c3w976k9kax2y13bm274s710jlqs1nnjkd58pp9wb9gx"))))
+    (build-system ruby-build-system)
+    (home-page "https://github.com/dougal/base58")
+    (synopsis "Ruby library/gem for converting ints to and from base58")
+    (description "Ruby gem for encoding/decoding integers to/from Base58.
+Supports Flickr, Bitcoin, and Ripple alphabets.")
+    (license license:expat)))
+
 (define-public ruby-dhall
   (package
     (name "ruby-dhall")
