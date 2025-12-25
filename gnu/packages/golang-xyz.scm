@@ -22800,6 +22800,51 @@ environment")
        (sha256
         (base32 "15qi7v2a1kbf70yi3w6y26wbwj0sm8hv9f6xjrb4rl6nv9l8j88c"))))))
 
+(define-public go-github-com-theupdateframework-go-tuf
+  (package
+    (name "go-github-com-theupdateframework-go-tuf")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/theupdateframework/go-tuf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00yc5rj6x0lxv0011ynl7b82yz9lrqix5rgwi514km4h4m9rsl99"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/theupdateframework/go-tuf"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'delete-python-interop-tests
+            (lambda _
+              (let ((path (string-append
+                           "src/github.com/theupdateframework/"
+                           "go-tuf/client/python_interop")))
+                (delete-file-recursively path)))))))
+    (native-inputs
+     (list go-github-com-flynn-go-docopt
+           go-github-com-google-gofuzz
+           go-github-com-stretchr-testify
+           go-gopkg-in-check-v1))
+    (propagated-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-syndtr-goleveldb
+           go-golang-org-x-crypto
+           go-golang-org-x-term))
+    (home-page "https://github.com/theupdateframework/go-tuf")
+    (synopsis "Go implementation of The Update Framework (TUF)")
+    (description
+     "This package provides a Go implementation of The Update Framework (TUF),
+a framework for securing software update systems.  TUF provides a flexible
+framework that can be used to secure any software update system, and is
+designed to be resistant to key compromise and other attacks.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-thlib-go-timezone-local
   (package
     (name "go-github-com-thlib-go-timezone-local")
