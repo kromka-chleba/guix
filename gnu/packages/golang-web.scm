@@ -12988,6 +12988,37 @@ needing to download the whole archive file.")
      "Package jsonrpc2 provides a Go implementation of JSON-RPC 2.0.")
     (license license:expat)))
 
+(define-public go-github-com-spiffe-go-spiffe-v2
+  (package
+    (name "go-github-com-spiffe-go-spiffe-v2")
+    (version "2.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/spiffe/go-spiffe")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ng0f3w3va4m7z3ip0w2gn60afrivh7lqd9idxg02j7000dz5yzi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; Tests require running SPIRE agent
+      #:skip-build? #t
+      #:import-path "github.com/spiffe/go-spiffe/v2"))
+    (propagated-inputs
+     (list go-github-com-go-jose-go-jose-v4
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/spiffe/go-spiffe")
+    (synopsis "SPIFFE Workload API client library for Go")
+    (description
+     "This package provides a Go client library for the SPIFFE Workload API,
+enabling applications to fetch and validate SPIFFE identities (SVIDs).
+It supports X.509-SVID and JWT-SVID workload identity documents.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-ssgelm-cookiejarparser
   (package
     (name "go-github-com-ssgelm-cookiejarparser")
