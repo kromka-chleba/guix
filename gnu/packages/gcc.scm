@@ -1592,6 +1592,9 @@ also includes the druntime and phobos libraries."
 @acronym{GNU D Compiler,GDC}.")
       (license gpl3+))))
 
+(define-public gdmd-9
+  (make-gdmd gdc-9))
+
 (define-public gdmd
   (make-gdmd gdc))
 
