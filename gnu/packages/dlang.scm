@@ -642,6 +642,12 @@ LLVM Core libraries for code generation."
             #:bootstrap-dmd ldc-1.25
             #:llvm (delay llvm-14)
             #:clang-runtime (delay clang-runtime-14)))
+(define-public ldc-1.31
+  (make-ldc "1.31.0" "1zv321jw5y0vvggfky8chrr4m9cm2xs71w0qik4sizp4286msjy7"
+            #:frontend-version "2.101.2"
+            #:bootstrap-dmd ldc-1.25
+            #:llvm (delay llvm-14)
+            #:clang-runtime (delay clang-runtime-14)))
 (define-public ldc
   (make-ldc "1.38.0" "068gqv368mhi9jywk9dcx9xssywcix5ypixxs9hi87cz3w913xbp"
             #:frontend-version "2.108.1"
