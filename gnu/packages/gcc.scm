@@ -1598,6 +1598,9 @@ also includes the druntime and phobos libraries."
 (define-public gdmd-10
   (make-gdmd gdc-10))
 
+(define-public gdmd-11
+  (make-gdmd gdc-11))
+
 (define-public gdmd
   (make-gdmd gdc))
 
