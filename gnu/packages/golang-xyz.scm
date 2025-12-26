@@ -8959,6 +8959,35 @@ operations.")
      (list
       #:import-path "github.com/go-git/go-git-fixtures/v5"))))
 
+(define-public go-github-com-go-gota-gota
+  (package
+    (name "go-github-com-go-gota-gota")
+    (version "0.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-gota/gota")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sf9a04brmlpd0bivmgsyb98nnjl1s630h4aa2vvjkjm0pjlgfr7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; non-constant format string in call to fmt.Errorf
+      #:test-flags
+      #~(list "-vet=off")
+      #:skip-build? #t
+      #:import-path "github.com/go-gota/gota"))
+    (propagated-inputs (list go-gonum-org-v1-gonum go-golang-org-x-net))
+    (home-page "https://github.com/go-gota/gota")
+    (synopsis "Dataframes and data wrangling in Go")
+    (description
+     "This package provides an implementation of DataFrames, Series and data
+wrangling methods for the Go programming language.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-go-ini-ini
   (package
     (name "go-github-com-go-ini-ini")
