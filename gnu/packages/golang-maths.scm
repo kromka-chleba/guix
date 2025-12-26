@@ -30,6 +30,7 @@
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages serialization))
@@ -566,6 +567,49 @@ libraries for matrices and linear algebra; statistics, probability
 distributions, and sampling; tools for function differentiation,integration,
 and optimization; network creation and analysis")
     (license license:expat)))
+
+(define-public go-gorgonia-org-gorgonia
+  (package
+    (name "go-gorgonia-org-gorgonia")
+    (version "0.9.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/gorgonia")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bg1q5cg2cn7ykzqjl45lkqkcfbrflkgk50ckwcpk6m2ayabalqb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require CUDA
+      #:tests? #f
+      #:import-path "gorgonia.org/gorgonia"))
+    (propagated-inputs (list go-github-com-awalterschulze-gographviz
+                             go-github-com-cheggaaa-pb
+                             go-github-com-chewxy-hm
+                             go-github-com-chewxy-math32
+                             go-github-com-go-gota-gota
+                             go-github-com-leesper-go-rng
+                             go-github-com-pkg-errors
+                             go-github-com-stretchr-testify
+                             go-github-com-xtgo-set
+                             go-gonum-org-v1-gonum
+                             ;; go-gonum-org-v1-netlib
+                             ;; go-gorgonia-org-cu ;; Requires CUDA, not in Guix
+                             go-gorgonia-org-dawson
+                             go-gorgonia-org-tensor
+                             go-gorgonia-org-vecf32
+                             go-gorgonia-org-vecf64))
+    (home-page "https://gorgonia.org/gorgonia/")
+    (synopsis "Library for machine learning in Go")
+    (description
+     "Package gorgonia is a library that helps facilitate machine learning in Go.
+Write and evaluate mathematical equations involving multidimensional arrays
+easily.  Do differentiation with them just as easily.")
+    (license license:asl2.0)))
 
 (define-public go-gorgonia-org-tensor
   (package
