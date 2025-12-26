@@ -4321,6 +4321,48 @@ patterns, designed for efficient and high-performing database access, adapted
 into a simple and Pythonic domain language.")
     (license license:expat)))
 
+(define-public python-sqlalchemy-cratedb
+  (package
+    (name "python-sqlalchemy-cratedb")
+    (version "0.41.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/crate/sqlalchemy-cratedb")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19sb4milvljp1rwghq22nkvcpns0sqs4a7by4nyhwmr39pyghksk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f  ; XXX: Requires packaging python-cratedb-toolkit.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"verlib2==.*\",")
+                 "\"verlib2\"")))))))
+    (propagated-inputs
+     (list python-crate
+           python-geojson
+           python-importlib-resources
+           python-sqlalchemy
+           python-verlib2))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-mock
+           python-setuptools
+           tzdata-for-tests))
+    (home-page "https://github.com/crate/sqlalchemy-cratedb")
+    (synopsis "SQLAlchemy dialect for CrateDB.")
+    (description
+     "This package provides the SQLAlchemy dialect for @code{CrateDB}.")
+    (license license:asl2.0)))
+
 (define-public python-sqlalchemy-stubs
   (package
     (name "python-sqlalchemy-stubs")
