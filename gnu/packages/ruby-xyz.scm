@@ -821,6 +821,29 @@ itamae.")
     (home-page "https://github.com/mizzy/specinfra")
     (license license:expat)))
 
+(define-public ruby-semantic
+  (package
+    (name "ruby-semantic")
+    (version "1.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jlindsey/semantic")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09h4aj3y0zv1iskh6jryi25jzjdxhair6jci1y6w2ikc5x9jf58h"))))
+    (build-system ruby-build-system)
+    (arguments (list #:test-target "spec"))
+    (native-inputs (list ruby-rake ruby-rspec))
+    (synopsis "Ruby Semantic Version class")
+    (description
+     "A small Ruby utility class to aid in the storage, parsing, and
+comparison of @url{SemVer-style, http://semver.org/} Version strings.")
+    (home-page "https://github.com/jlindsey/semantic")
+    (license license:expat)))
+
 (define-public ruby-serverspec
   (package
     (name "ruby-serverspec")
