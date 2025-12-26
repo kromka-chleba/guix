@@ -11516,6 +11516,62 @@ ABI}.")
      "This package provides a fast non-allocating cron parser in Ragel and Go.")
     (license license:expat)))
 
+(define-public go-github-com-ingenimax-agent-sdk-go
+  (package
+    (name "go-github-com-ingenimax-agent-sdk-go")
+    (version "0.2.28")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Ingenimax/agent-sdk-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l43a5a2vn87zcy820541wpz4sxzipbck2yvgck06lz0dfhcd7qm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; TODO: Tests require lots of unpackaged dependencies
+      #:tests? #f
+      #:import-path "github.com/Ingenimax/agent-sdk-go"))
+    (propagated-inputs (list go-cloud-google-com-go-auth
+                        ;; go-github-com-alicebob-miniredis-v2
+                        ;; go-github-com-google-go-github-v45
+                        ;; go-github-com-google-jsonschema-go
+                        go-github-com-google-uuid
+                        go-github-com-go-openapi-strfmt
+                        ;; go-github-com-go-redis-redis-v8
+                        go-github-com-lib-pq
+                        ;; go-github-com-modelcontextprotocol-go-sdk
+                        go-github-com-openai-openai-go-v2
+                        go-github-com-rs-zerolog
+                        go-github-com-spf13-viper
+                        go-github-com-stretchr-testify
+                        ;; go-github-com-supabase-community-postgrest-go
+                        ;; go-github-com-supabase-community-supabase-go
+                        ;; go-github-com-weaviate-weaviate
+                        ;; go-github-com-weaviate-weaviate-go-client-v5
+                        go-golang-org-x-oauth2
+                        go-google-golang-org-genai
+                        go-google-golang-org-grpc
+                        go-google-golang-org-protobuf
+                        go-go-opentelemetry-io-otel
+                        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace
+                        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracegrpc
+                        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracehttp
+                        go-go-opentelemetry-io-otel-sdk
+                        go-go-opentelemetry-io-otel-trace
+                        go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/Ingenimax/agent-sdk-go")
+    (synopsis "Agent Go SDK")
+    (description
+     "This package provides a powerful Go framework for building production-ready AI
+agents that seamlessly integrates memory management, tool execution, multi-LLM
+support, and enterprise features into a flexible, extensible architecture.")
+    (license license:expat)))
+
 (define-public go-github-com-invopop-yaml
   (package
     (name "go-github-com-invopop-yaml")
