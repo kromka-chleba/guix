@@ -2619,6 +2619,32 @@ simplicity while maintaining accuracy.")
 range of pretty terminal strings.")
     (license license:expat)))
 
+(define-public go-github-com-aybabtme-uniplot
+  (package
+    (name "go-github-com-aybabtme-uniplot")
+    (version "0.0.0-20151203143629-039c559e5e7e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aybabtme/uniplot")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0m592b99xhi2mc1n490p1k234swg43lm6qpb19a93h3gn8kl2xqq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;No tests
+      #:import-path "github.com/aybabtme/uniplot"))
+    (home-page "https://github.com/aybabtme/uniplot")
+    (synopsis "Makes terminal histograms and barcharts")
+    (description
+     "This package provides a small collection of plot helpers.  They can make
+Unicode barcharts, histograms, or realtime spark lines.")
+    (license license:expat)))
+
 (define-public go-github-com-aymanbagabas-go-osc52-v2
   (package
     (name "go-github-com-aymanbagabas-go-osc52-v2")
