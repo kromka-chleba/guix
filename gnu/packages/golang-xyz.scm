@@ -22916,6 +22916,42 @@ framework that can be used to secure any software update system, and is
 designed to be resistant to key compromise and other attacks.")
     (license license:bsd-3)))
 
+(define-public go-github-com-theupdateframework-go-tuf-v2
+  (package
+    (name "go-github-com-theupdateframework-go-tuf-v2")
+    (version "2.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/theupdateframework/go-tuf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yhz8awi43hlrna3vzpr4kwim5vaf8v2m7dl5n8mqcf3r7gygiyg"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/theupdateframework/go-tuf/v2"
+      ;; Tests in metadata/updater use network to fetch test repositories.
+      ;; Run only the self-contained metadata tests.
+      #:test-subdirs #~(list "metadata")))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-cenkalti-backoff-v5
+           go-github-com-go-logr-stdr
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-sigstore-sigstore
+           go-github-com-spf13-cobra))
+    (home-page "https://github.com/theupdateframework/go-tuf")
+    (synopsis "Go implementation of The Update Framework (TUF) v2")
+    (description
+     "This package provides a Go implementation of The Update Framework (TUF)
+version 2, a framework for securing software update systems.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-thlib-go-timezone-local
   (package
     (name "go-github-com-thlib-go-timezone-local")
