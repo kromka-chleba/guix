@@ -166,6 +166,10 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gnuzilla)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-maths)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphics)
@@ -5358,6 +5362,101 @@ world}, @uref{http://evolonline.org, Evol Online} and
     ;; "data/themes/{golden-delicious,jewelry}/*" are under CC-BY-SA.
     ;; The rest is under GPL2+.
     (license (list license:gpl2+ license:zlib license:cc-by-sa4.0))))
+
+(define-public macondo
+  (package
+    (name "macondo")
+    (version "0.11.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/domino14/macondo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00dkm8rn43a1l0w6ivfgpvlsm5xyrrnnzpazbxjp93x9hqg1fnpw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/domino14/macondo"
+      ;; Tests require data-path
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Macondo has no top-level go files; commands are hidden in the /cmd directory
+          (replace 'build
+            (lambda* (#:key import-path #:allow-other-keys)
+              (for-each (lambda (cmd)
+                          (invoke "go" "install" "-trimpath" "-ldflags=-s -w"
+                                  (string-append import-path "/cmd/" cmd))
+                          (copy-file (string-append #$output "/bin/" cmd)
+                                     (string-append #$output "/bin/macondo_"
+                                                    cmd)))
+                        '("shell" "bot" "bot_shell" "analyze"))))
+          (add-after 'install 'install-data
+            (lambda* (#:key inputs #:allow-other-keys)
+              (copy-recursively (string-append #$source "/data")
+                                (string-append #$output "/data"))
+              (copy-recursively (search-input-directory inputs
+                                 "/liwords-ui/public/wasm/2024")
+                                (string-append #$output "/data/lexica/gaddag"))))
+          (add-after 'install-data 'wrap-executable
+            (lambda _
+              (for-each (lambda (cmd)
+                          (wrap-program (string-append #$output
+                                                       "/bin/macondo_" cmd)
+                            `("DATA_PATH" ":" =
+                              (,(string-append #$output "/data")))))
+                        '("shell" "bot" "bot_shell" "analyze")))))))
+    (native-inputs
+     ;; TODO: If/when liwords gets added, merge this with the origin of liwords
+     ;; Note: We don't actually need the whole of liwords (in fact, liwords the
+     ;; package depends on macondo), but we do need the lexica to copy into data/
+     (list (origin
+             (method git-fetch)
+             (uri (git-reference (url "https://github.com/woogles-io/liwords")
+                                 (commit "v0.3.1")))
+             (file-name (git-file-name "liwords-lexica" "v0.3.1"))
+             (sha256 (base32
+                      "1kas4kahq2hhw1npcxszz2sjilr6x56x0xqnccag1rlmax2f5azs")))))
+    (inputs (list bash-minimal
+                  go-github-com-avast-retry-go-v4
+                  go-github-com-aws-aws-lambda-go
+                  go-github-com-aws-aws-sdk-go-v2
+                  go-github-com-aws-aws-sdk-go-v2-config
+                  go-github-com-aybabtme-uniplot
+                  go-github-com-cespare-xxhash
+                  go-github-com-chzyer-readline
+                  go-github-com-cjoudrey-gluahttp
+                  go-github-com-domino14-word-golib
+                  go-github-com-ingenimax-agent-sdk-go
+                  go-github-com-kballard-go-shellquote
+                  go-github-com-matryer-is
+                  go-github-com-nats-io-nats-go
+                  go-github-com-owulveryck-onnx-go
+                  go-github-com-pbnjay-memory
+                  go-github-com-rs-zerolog
+                  go-github-com-samber-lo
+                  go-github-com-spf13-viper
+                  go-github-com-stretchr-testify
+                  go-github-com-yuin-gopher-lua
+                  go-golang-org-x-sync
+                  go-golang-org-x-text
+                  go-gonum-org-v1-gonum
+                  go-google-golang-org-genai
+                  go-google-golang-org-grpc
+                  go-google-golang-org-protobuf
+                  go-gopkg-in-yaml-v3
+                  go-gorgonia-org-tensor
+                  go-layeh-com-gopher-json
+                  go-lukechampine-com-frand))
+    (home-page "https://github.com/domino14/macondo")
+    (synopsis "Crossword board game solver")
+    (description
+     "This package provides a crossword board game solver.  It supports Scrabble by
+default.")
+    (license license:gpl3)))
 
 (define openttd-engine
   (package
