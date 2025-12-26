@@ -4240,6 +4240,35 @@ code is based on the Go-based PHaul implementation from the CRIU repository.")
       #:import-path "github.com/cheggaaa/pb/v3"
       #:unpack-path "github.com/cheggaaa/pb"))))
 
+(define-public go-github-com-chewxy-hm
+  (package
+    (name "go-github-com-chewxy-hm")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chewxy/hm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f4qwg1q2lc9y64wrl9qxyimqnnandlqg78gn3yv4vsmyci025r7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to fmt.Fprintf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:import-path "github.com/chewxy/hm"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-pkg-errors go-github-com-xtgo-set))
+    (home-page "https://github.com/chewxy/hm")
+    (synopsis "Hindley-Milner type inference for Go")
+    (description
+     "Package hm is a simple Hindley-Milner type inference system in Go.  It provides
+the necessary data structures and functions for creating such a system.")
+    (license license:expat)))
+
 (define-public go-github-com-chilts-sid
   (package
     (name "go-github-com-chilts-sid")
