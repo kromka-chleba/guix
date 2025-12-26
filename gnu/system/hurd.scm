@@ -54,7 +54,7 @@
             %hurd-default-operating-system-kernel
             %hurd64-default-operating-system
             %hurd64-default-operating-system-kernel
-            %setuid-programs/hurd))
+            %privileged-programs/hurd))
 
 ;;; Commentary:
 ;;;
@@ -111,7 +111,7 @@
 
 (define %desktop-services/hurd %base-services/hurd)
 
-(define %setuid-programs/hurd
+(define %privileged-programs/hurd
   ;; Default set of setuid-root programs.
   (map file-like->setuid-program
        (list (file-append shadow "/bin/passwd")
@@ -141,8 +141,8 @@
     (locale-libcs (list glibc/hurd))
     (name-service-switch #f)
     (essential-services (hurd-default-essential-services this-operating-system))
-    (privileged-programs '())
-    (setuid-programs %setuid-programs/hurd)))
+    (privileged-programs %privileged-programs/hurd)
+    (setuid-programs '())))
 
 (define %hurd64-default-operating-system
   (operating-system

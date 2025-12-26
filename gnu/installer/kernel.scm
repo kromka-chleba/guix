@@ -36,6 +36,6 @@
         (locale-libcs (list glibc/hurd))
         (name-service-switch #f)
         (essential-services (hurd-default-essential-services this-operating-system))
-        (privileged-programs '())
-        (setuid-programs %setuid-programs/hurd))
+        (privileged-programs %privileged-programs/hurd)
+        (setuid-programs '()))
       '()))
