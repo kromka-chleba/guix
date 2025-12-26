@@ -1546,6 +1546,30 @@ cryptographic hash as specified in
 hash.")
     (license license:expat)))
 
+(define-public go-github-com-leesper-go-rng
+  (package
+    (name "go-github-com-leesper-go-rng")
+    (version "0.0.0-20190531154944-a612b043e353")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/leesper/go_rng")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1k52vsv68l9way5i36iz4yd8chqxgzbadcwcb77a6922b2zcd4af"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/leesper/go_rng"))
+    (home-page "https://github.com/leesper/go_rng")
+    (synopsis "Pseudo-random number generator in Go")
+    (description
+     "Package rng implements a series of pseudo-random number generator based on a
+variety of common probability distributions.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-libp2p-go-libp2p-crypto
   (let ((commit "7240b40a3ddc47c4d17c15baabcbe45e5219171b")
         (revision "0"))
