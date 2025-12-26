@@ -24104,6 +24104,30 @@ popular Levenshtein distance (aka Edit Distance or Wagner-Fischer), as well as
 the Jaro distance, the Jaro-Winkler distance, and more.")
     (license license:expat)))
 
+(define-public go-github-com-xtgo-set
+  (package
+    (name "go-github-com-xtgo-set")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xtgo/set")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "148jb5f87lf7090jg8340f24r29818krydajkm75vpzylaw6yd8w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/xtgo/set"))
+    (home-page "https://github.com/xtgo/set")
+    (synopsis "Type-safe set algorithms for Go")
+    (description
+     "This package implements type-safe, non-allocating algorithms that operate on
+ordered sets.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-xtgo-uuid
   (package
     (name "go-github-com-xtgo-uuid")
