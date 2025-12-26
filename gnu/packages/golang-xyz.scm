@@ -7506,6 +7506,32 @@ go/cgo, rather than cgo bindings for libsigar.  This package provides an
 alternative fork of @url{https://github.com/cloudfoundry/gosigar}.")
     (license license:asl2.0)))
 
+(define-public go-github-com-eliben-go-sentencepiece
+  (package
+    (name "go-github-com-eliben-go-sentencepiece")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/eliben/go-sentencepiece")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n5mjnhm1lhalx67j6il3kp2ylzyaxdbgmwww1wahmp78khia5l9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;ExampleEncode refers to unknown identifier: Encode
+      #:import-path "github.com/eliben/go-sentencepiece"))
+    (propagated-inputs (list go-google-golang-org-protobuf))
+    (home-page "https://github.com/eliben/go-sentencepiece")
+    (synopsis "Go implementation of the SentencePiece tokenizer")
+    (description
+     "This is a pure Go implementation of encoding and decoding text with the
+@url{https://github.com/google/sentencepiece,@code{SentencePiece} tokenizer}.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-elliotchance-orderedmap
   (package
     (name "go-github-com-elliotchance-orderedmap")
