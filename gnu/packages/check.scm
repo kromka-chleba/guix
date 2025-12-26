@@ -1547,13 +1547,15 @@ available via the @code{unittest.mock} module.")
         (sha256
           (base32
             "164a43k7k2wsqqk1s6vavcdamvss4mz0vd6pwzv2h9n8rgwzxgzi"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #f
        #:phases (modify-phases %standard-phases
                   (add-after 'unpack 'invoke-2to3
                     (lambda _
                       (invoke "2to3" "-w" "."))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://readthedocs.org/docs/nose/")
     (synopsis "Python testing library")
     (description
