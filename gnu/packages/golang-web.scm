@@ -13906,6 +13906,31 @@ and is designed to be accessible to both humans and machines.")
 implementation as closely while remaining idiomatic and easy to use.")
     (license license:expat)))
 
+(define-public go-github-com-vincent-petithory-dataurl
+  (package
+    (name "go-github-com-vincent-petithory-dataurl")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/vincent-petithory/dataurl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05vdlrqpshrcvcs2z5jga17nxglba4nv8y1z7a2w1nc4rj76i3k7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/vincent-petithory/dataurl"))
+    (home-page "https://github.com/vincent-petithory/dataurl")
+    (synopsis "Data URL Schemes for Go")
+    (description
+     "Package dataurl parses Data URL Schemes according to
+@url{https://rfc-editor.org/rfc/rfc2397.html,RFC 2397}
+(@url{http://tools.ietf.org/html/rfc2397,http://tools.ietf.org/html/rfc2397}).")
+    (license license:expat)))
+
 (define-public go-github-com-vishvananda-netlink
   (package
     (name "go-github-com-vishvananda-netlink")
