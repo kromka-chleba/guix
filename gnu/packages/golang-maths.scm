@@ -28,7 +28,9 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
-  #:use-module (gnu packages golang-compression))
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-xyz))
 
 ;;; Commentary:
 ;;;
@@ -561,6 +563,33 @@ scientific algorithms productive, performant, and scalable.  It provides
 libraries for matrices and linear algebra; statistics, probability
 distributions, and sampling; tools for function differentiation,integration,
 and optimization; network creation and analysis")
+    (license license:expat)))
+
+(define-public go-gorgonia-org-vecf32
+  (package
+    (name "go-gorgonia-org-vecf32")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/vecf32")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jggbf98fbbip7znx5m4n2lqqsnw5kqycj3gcbs62ypirr1pp0m9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gorgonia.org/vecf32"))
+    (propagated-inputs (list go-github-com-chewxy-math32
+                             go-github-com-davecgh-go-spew
+                             go-github-com-pmezard-go-difflib
+                             go-github-com-stretchr-testify))
+    (home-page "https://gorgonia.org/vecf32/")
+    (synopsis "Methods for slices of float32")
+    (description
+     "This package provides common functions and methods for slices of float32.")
     (license license:expat)))
 
 (define-public go-lukechampine-com-uint128
