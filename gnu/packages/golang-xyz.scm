@@ -2484,6 +2484,32 @@ strategies, such as fixed delay, backoff delay, and random delay.")
          (package-arguments go-github-com-avast-retry-go)
        ((#:import-path _) "github.com/avast/retry-go/v4")))))
 
+(define-public go-github-com-awalterschulze-gographviz
+  (package
+    (name "go-github-com-awalterschulze-gographviz")
+    (version "2.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/awalterschulze/gographviz")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01zd948i674706jkcm5z5zskmqnhdk3j1dsa34bccwkzdsi2vd1l"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/awalterschulze/gographviz"))
+    (propagated-inputs (list go-golang-org-x-lint))
+    (home-page "https://github.com/awalterschulze/gographviz")
+    (synopsis "Parse the Graphviz DOT language in golang")
+    (description
+     "This package parses the Graphviz DOT language and creates an interface, in
+golang, with which to easily create new and manipulate existing graphs which
+can be written back to the DOT format.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-awesome-gocui-gocui
   (package
     (name "go-github-com-awesome-gocui-gocui")
