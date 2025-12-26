@@ -41,6 +41,7 @@
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Hennadii Stepanov <hebasto@gmail.com>
 ;;; Copyright © 2025 James Smith <jsubuntuxp@disroot.org>
+;;; Copyright © 2025 Laura Kirsch <laurakirsch240406@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -745,6 +746,79 @@ require Coincurve.")
 protocol.  It supports Simple Payment Verification (SPV) and deterministic key
 generation from a seed.  Your secret keys are encrypted and are never sent to
 other machines/servers.  Electrum does not download the Bitcoin blockchain.")
+    (license license:expat)))
+
+(define-public electrum-ltc
+  (package
+    (name "electrum-ltc")
+    (version "4.2.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://electrum-ltc.org/download/Electrum-LTC-4.2.2.1.tar.gz")
+       (sha256
+        (base32 "1m1k1xnfc2b41qz7ipy04x66zwqg0vwq2qmf1i4kw75yyxrbqpgc"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   ;; Delete the bundled dependencies.
+                   (delete-file-recursively "packages")))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Has no tests.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'sanity-check)
+          (add-after 'unpack 'relax-deps
+            (lambda _
+              (substitute* "contrib/requirements/requirements.txt"
+                ;; These packages have tight version requirements because
+                ;; the developer does not want to introduce Hatchling in
+                ;; the build environment.  They do work at runtime.
+                (("attrs.*")
+                 "attrs")
+                (("dnspython.*")
+                 "dnspython")
+                (("aiorpcx.*")
+                 "aiorpcx\n"))
+              (substitute* "electrum_ltc/electrum-ltc"
+                ;; Skip broken import checks by patching them out.
+                (("    check_imports.*")
+                 "    pass"))))
+          (add-after 'install 'wrap
+            (lambda _
+              (wrap-program (string-append #$output "/bin/electrum-ltc")
+                `(LD_LIBRARY_PATH suffix
+                                  ,(list (string-append #$libsecp256k1-bitcoin-cash
+                                                        "/lib")))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list bash-minimal
+                  python-bitstring
+                  python-aiorpcx
+                  libsecp256k1-bitcoin-cash
+                  python-scrypt
+                  electrum-aionostr
+                  python-aiohttp
+                  python-aiohttp-socks
+                  python-aiorpcx
+                  python-attrs
+                  python-certifi
+                  python-cryptography
+                  python-dnspython
+                  python-electrum-ecc
+                  python-hidapi
+                  python-jsonpatch
+                  python-protobuf
+                  python-pyaes
+                  python-pyqt
+                  python-qdarkstyle
+                  python-qrcode
+                  zbar))
+    (home-page "https://electrum-ltc.org/")
+    (synopsis "Litecoin wallet")
+    (description
+     "Lightweight Litecoin client based on the Electrum Bitcoin client.")
     (license license:expat)))
 
 (define-public electron-cash
