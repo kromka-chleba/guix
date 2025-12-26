@@ -13507,6 +13507,31 @@ word-splitting rules.")
       (home-page "https://github.com/kballard/go-shellquote")
       (license license:expat))))
 
+(define-public go-github-com-kelseyhightower-envconfig
+  (package
+    (name "go-github-com-kelseyhightower-envconfig")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kelseyhightower/envconfig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a7b35njpqz94gbd7wvsl3wjzpd5y1fj1lrg2sdh00yq0nax1qj9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kelseyhightower/envconfig"))
+    (home-page "https://github.com/kelseyhightower/envconfig")
+    (synopsis "Manage configuration data from environment variables")
+    (description
+     "Package envconfig implements decoding of environment variables based on a user
+defined specification.  A typical use is using environment variables for
+configuration settings.")
+    (license license:expat)))
+
 (define-public go-github-com-kevinburke-ssh-config
   (package
     (name "go-github-com-kevinburke-ssh-config")
