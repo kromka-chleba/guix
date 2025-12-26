@@ -12860,6 +12860,42 @@ kinds of referrer URLs (search, social, ...).")
 for signing and verification operations.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-sigstore
+  (package
+    (name "go-github-com-sigstore-sigstore")
+    (version "1.10.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/sigstore")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cjrv21miwwik9sx5pjik57bbrwz8f74b2pypyg7106sclqnn7lc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ; Tests require network and additional dependencies
+      #:import-path "github.com/sigstore/sigstore"))
+    (propagated-inputs
+     (list go-github-com-coreos-go-oidc-v3
+           go-github-com-go-jose-go-jose-v4
+           go-github-com-google-go-containerregistry
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-sigstore-protobuf-specs
+           go-github-com-theupdateframework-go-tuf
+           go-golang-org-x-crypto
+           go-golang-org-x-oauth2
+           go-golang-org-x-term))
+    (home-page "https://github.com/sigstore/sigstore")
+    (synopsis "Common Sigstore signing and verification code")
+    (description
+     "This package provides common code for the Sigstore project, including
+signing, verification, and OIDC functionality.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-shurcool-githubv4
   (package
     (name "go-github-com-shurcool-githubv4")
