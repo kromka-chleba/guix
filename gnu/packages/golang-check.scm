@@ -54,6 +54,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-maths)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages version-control))
 
@@ -3224,6 +3225,30 @@ the source code, it only prints out style mistakes.")
         (base32 "1h4amgykpa0djwi619llr3g55p75ia0mi184h9s5zdl8l4rhn9pm"))))
     (arguments
      (list #:import-path "gopkg.in/go-playground/assert.v1"))))
+
+(define-public go-gorgonia-org-dawson
+  (package
+    (name "go-gorgonia-org-dawson")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/dawson")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s1fzib23bm59v6lzn2cj8l08d8hlyvcgi08k22iz9hywk4kznk5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gorgonia.org/dawson"))
+    (propagated-inputs (list go-github-com-chewxy-math32))
+    (home-page "https://gorgonia.org/dawson/")
+    (synopsis "Utilities for testing with floats")
+    (description
+     "This package provides utilities for testing involving floats.")
+    (license license:expat)))
 
 (define-public go-gotest-tools-v3
   (package
