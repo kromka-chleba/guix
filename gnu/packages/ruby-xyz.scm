@@ -7890,7 +7890,7 @@ lock with a counter.")
 (define-public ruby-oj
   (package
     (name "ruby-oj")
-    (version "3.16.9")
+    (version "3.16.13")
     (source
      (origin
        (method git-fetch)
@@ -7902,7 +7902,7 @@ lock with a counter.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "01zsvzgpn336lk93v8fr4lpjdl28hiq9iddxr7rcra3d28780fzi"))))
+         "1bnxd0nfma6ar4yasp97bvqx4v87p7xl1g9pl2w4cf5lv9bg4dpf"))))
     (build-system ruby-build-system)
     (arguments
      '(#:test-target "test_all"
