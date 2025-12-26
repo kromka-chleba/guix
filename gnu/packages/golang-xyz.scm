@@ -10242,6 +10242,32 @@ underneath and returns only matching files or directories, depending on the
 configuration.")
     (license license:expat)))
 
+(define-public go-github-com-gorgonia-bindgen
+  (package
+    (name "go-github-com-gorgonia-bindgen")
+    (version "0.0.0-20210223094355-432cd89e7765")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/bindgen")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hgh61fkfnc42y6s20jq0fk4n55136llhmxp213ky0xizpxnnmay"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests fail
+      #:import-path "github.com/gorgonia/bindgen"))
+    (propagated-inputs (list go-modernc-org-cc go-modernc-org-xc))
+    (home-page "https://github.com/gorgonia/bindgen")
+    (synopsis "Generate bindings and Go interfaces to C libraries")
+    (description
+     "This package that aids in the generation of bindings and idiomatic Go
+interfaces to C libraries.")
+    (license license:expat)))
+
 (define-public go-github-com-gorhill-cronexpr
   (package
     (name "go-github-com-gorhill-cronexpr")
