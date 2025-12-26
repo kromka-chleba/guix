@@ -27756,6 +27756,30 @@ replacement for mattn/go-sqlite3.")
 @code{strings} package.")
     (license license:bsd-3)))
 
+(define-public go-modernc-org-xc
+  (package
+    (name "go-modernc-org-xc")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/xc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qxph3pxih1mkhlbmsdgphqan3v7jxfr80hzsphbf5y7bya8n7g2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "modernc.org/xc"))
+    (propagated-inputs (list go-modernc-org-golex go-modernc-org-mathutil
+                             go-modernc-org-strutil))
+    (home-page "https://modernc.org/xc")
+    (synopsis "Cross-language compiler support")
+    (description
+     "This package provides cross language compiler support and other utility stuff.")
+    (license license:bsd-3)))
 (define-public go-modernc-org-y
   (package
     (name "go-modernc-org-y")
