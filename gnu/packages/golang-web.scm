@@ -12860,6 +12860,53 @@ kinds of referrer URLs (search, social, ...).")
 for signing and verification operations.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-rekor
+  (package
+    (name "go-github-com-sigstore-rekor")
+    (version "1.4.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/rekor")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g2xma0fzy7a4nv7bj04pj9vqg4hbbz3j3jxkir0sxql5ragj36d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/sigstore/rekor"
+      ;; Most tests require complex dependencies (gRPC servers, databases).
+      ;; Only test packages that work with available dependencies.
+      #:test-subdirs
+      #~(list "pkg/events/newentry"
+              "pkg/pki/ssh"
+              "pkg/pki/x509"
+              "pkg/util")))
+    (native-inputs
+     (list go-github-com-asaskevich-govalidator))
+    (propagated-inputs
+     (list go-github-com-blang-semver
+           go-github-com-go-viper-mapstructure-v2
+           go-github-com-google-trillian
+           go-github-com-in-toto-in-toto-golang
+           go-github-com-prometheus-client-golang
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-sigstore-sigstore
+           go-github-com-spf13-cobra
+           go-github-com-spf13-viper
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/sigstore/rekor")
+    (synopsis "Sigstore transparency log")
+    (description
+     "Rekor provides an immutable tamper-resistant ledger of metadata generated
+within a software project's supply chain.  It enables software maintainers
+and consumers to transparently record signed metadata to a ledger.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-sigstore-sigstore
   (package
     (name "go-github-com-sigstore-sigstore")
