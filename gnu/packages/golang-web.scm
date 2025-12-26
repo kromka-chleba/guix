@@ -10712,6 +10712,49 @@ mainly for managing the configuration of Open vSwitch and OVN, but it could
 also be used to manage your stamp collection.")
     (license license:asl2.0)))
 
+(define-public go-github-com-owulveryck-onnx-go
+  (package
+    (name "go-github-com-owulveryck-onnx-go")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oramasearch/onnx-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "036k4wdbs2ny466yhw8hpczglnsj0s59xcwfyakdlrmcz4vgnmb0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/owulveryck/onnx-go"))
+    (propagated-inputs (list go-github-com-chewxy-hm
+                             go-github-com-davecgh-go-spew
+                             go-github-com-disintegration-imaging
+                             go-github-com-gogo-protobuf
+                             go-github-com-golang-protobuf
+                             go-github-com-kelseyhightower-envconfig
+                             go-github-com-kr-pretty
+                             go-github-com-nfnt-resize
+                             go-github-com-pkg-errors
+                             go-github-com-sanity-io-litter
+                             go-github-com-stretchr-testify
+                             go-github-com-vincent-petithory-dataurl
+                             go-golang-org-x-image
+                             go-golang-org-x-tools
+                             go-golang-org-x-tools-godoc
+                             go-gonum-org-v1-gonum
+                             go-gorgonia-org-gorgonia
+                             go-gorgonia-org-tensor))
+    (home-page "https://github.com/owulveryck/onnx-go")
+    (synopsis "Import pre-trained neural network within Go")
+    (description
+     "This package provides a Go interface to @url{https://onnx.ai/,Open Neural
+Network Exchange (ONNX)}.  This gives the ability to import pre-trained neural
+networks from ONNX directly into Go.")
+    (license license:expat)))
+
 (define-public go-github-com-pascaldekloe-goe
   (package
     (name "go-github-com-pascaldekloe-goe")
