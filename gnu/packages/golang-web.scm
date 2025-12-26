@@ -12982,6 +12982,41 @@ within a software project's supply chain.  It enables software maintainers
 and consumers to transparently record signed metadata to a ledger.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-rekor-tiles-v2
+  (package
+    (name "go-github-com-sigstore-rekor-tiles-v2")
+    (version "2.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/rekor-tiles")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z9is3mf31abzwappwp05z1pzci6f25z1ax27qgghmdisxmd3c6k"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/sigstore/rekor-tiles/v2"
+      ;; Tests require Google Cloud Spanner and other cloud dependencies
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-cyberphone-json-canonicalization
+           go-github-com-grpc-ecosystem-grpc-gateway-v2
+           go-github-com-sigstore-protobuf-specs
+           go-github-com-transparency-dev-formats
+           go-github-com-transparency-dev-merkle
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/sigstore/rekor-tiles")
+    (synopsis "Tile-based transparency log for Sigstore")
+    (description
+     "This package provides a tile-based implementation of a transparency log
+for the Sigstore ecosystem, supporting efficient verification of log entries.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-sigstore-sigstore
   (package
     (name "go-github-com-sigstore-sigstore")
