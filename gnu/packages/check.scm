@@ -3203,16 +3203,29 @@ JSON APIs with Behave.")
 (define-public python-nose-timer
   (package
     (name "python-nose-timer")
-    (version "0.7.5")
+    (version "1.0.1")
     (source
       (origin
-        (method url-fetch)
-        (uri (pypi-uri "nose-timer" version))
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/mahmoudimus/nose-timer")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
         (sha256
-          (base32 "05wzkc88vbzw62pqkvhl33211b90kns0lny70b7qw62rcg4flzk4"))))
-    (build-system python-build-system)
+          (base32 "0xsai2l5i1av62y9y0q63wy2zk27klmf2jizgghhxg2y8nfa8x3x"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; Disable color tests, as they do not work in the test environment.
+     (list #:test-flags
+           #~(list "-k" "not test_format_report_line_")))
+    (native-inputs
+     (list python-mock
+           python-parameterized
+           python-pytest
+           python-setuptools))
     (propagated-inputs
-     (list python-nose python-termcolor))
+     (list python-nose
+           python-termcolor))
     (home-page "https://github.com/mahmoudimus/nose-timer")
     (synopsis "Timer plugin for nosetests")
     (description "Shows how much time was needed to run individual tests.")
