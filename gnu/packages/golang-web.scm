@@ -321,6 +321,43 @@ automatic token management.")
 cloud.google.com/go/auth and golang.org/x/oauth2.")
     (license license:asl2.0)))
 
+(define-public go-cloud-google-com-go-civil
+  (package
+    (name "go-cloud-google-com-go-civil")
+    (version "0.123.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googleapis/google-cloud-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00hp2c41zmh533ii43y20mrh1jsgqk8k49hw96rxz1kras7xy9vy"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    (delete-all-but "." "civil")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "cloud.google.com/go/civil"
+      #:unpack-path "cloud.google.com/go"))
+    (native-inputs (list go-github-com-google-go-cmp))
+    (home-page "https://pkg.go.dev/cloud.google.com/go/compute/metadata")
+    (synopsis "Go wrapper for Google Compute Engine metadata service")
+    (description
+     "This package provides access to Google Compute Engine (GCE) metadata and
+API service accounts for Go.")
+    (license license:asl2.0)))
+
 (define-public go-cloud-google-com-go-compute-metadata
   (package
     (name "go-cloud-google-com-go-compute-metadata")
