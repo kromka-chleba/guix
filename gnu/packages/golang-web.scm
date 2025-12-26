@@ -12943,6 +12943,50 @@ and consumers to transparently record signed metadata to a ledger.")
 signing, verification, and OIDC functionality.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-sigstore-go
+  (package
+    (name "go-github-com-sigstore-sigstore-go")
+    (version "1.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/sigstore-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jr8jj4wibzxawn3dzv1j4cxmbh2b5g356mh2bqq9d0p78idf7k3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ; Tests require network and additional dependencies
+      #:embed-files #~(list "repository/.*\\.json")
+      #:import-path "github.com/sigstore/sigstore-go"))
+    (propagated-inputs
+     (list go-github-com-cyberphone-json-canonicalization
+           go-github-com-go-openapi-runtime
+           go-github-com-go-openapi-swag-conv
+           go-github-com-google-certificate-transparency-go
+           go-github-com-in-toto-attestation
+           go-github-com-in-toto-in-toto-golang
+           go-github-com-secure-systems-lab-go-securesystemslib
+           go-github-com-sigstore-protobuf-specs
+           go-github-com-sigstore-rekor
+           go-github-com-sigstore-rekor-tiles-v2
+           go-github-com-sigstore-sigstore
+           go-github-com-sigstore-timestamp-authority-v2
+           go-github-com-theupdateframework-go-tuf-v2
+           go-golang-org-x-crypto
+           go-golang-org-x-mod
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/sigstore/sigstore-go")
+    (synopsis "Go client library for Sigstore")
+    (description
+     "This package provides a Go client library for Sigstore, enabling
+verification of signatures and attestations produced by Sigstore tools.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-shurcool-githubv4
   (package
     (name "go-github-com-shurcool-githubv4")
