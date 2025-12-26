@@ -30,7 +30,9 @@
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
-  #:use-module (gnu packages golang-xyz))
+  #:use-module (gnu packages golang-web)
+  #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages serialization))
 
 ;;; Commentary:
 ;;;
@@ -564,6 +566,42 @@ libraries for matrices and linear algebra; statistics, probability
 distributions, and sampling; tools for function differentiation,integration,
 and optimization; network creation and analysis")
     (license license:expat)))
+
+(define-public go-gorgonia-org-tensor
+  (package
+    (name "go-gorgonia-org-tensor")
+    (version "0.9.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/tensor")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18pkkypb9g15rmr7c2nb164hdnf7q15s79zfwlffbnkdx72q2mhf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Example_TransposeExtension has malformed example suffix
+      #:import-path "gorgonia.org/tensor"))
+    (propagated-inputs (list go-github-com-chewxy-hm
+                             go-github-com-chewxy-math32
+                             go-github-com-gogo-protobuf
+                             go-github-com-golang-protobuf
+                             go-github-com-google-flatbuffers
+                             go-github-com-pkg-errors
+                             go-github-com-stretchr-testify
+                             go-gonum-org-v1-gonum
+                             go-gorgonia-org-vecf32
+                             go-gorgonia-org-vecf64))
+    (home-page "https://gorgonia.org/tensor")
+    (synopsis "N-dimensional arrays in Go")
+    (description
+     "This package provides efficient, generic n-dimensional arrays in Go.  Also in
+this package are functions and methods that are used commonly in arithmetic,
+comparison and linear algebra operations.")
+    (license license:asl2.0)))
 
 (define-public go-gorgonia-org-vecf32
   (package
