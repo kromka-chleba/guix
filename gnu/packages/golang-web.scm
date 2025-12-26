@@ -16652,6 +16652,30 @@ the code or routes.")
 @code{k8s.io/kube-openapi}.")
     (license license:asl2.0)))
 
+(define-public go-layeh-com-gopher-json
+  (package
+    (name "go-layeh-com-gopher-json")
+    (version "0.0.0-20201124131017-552bb3c4c3bf")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/layeh/gopher-json")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ldajsidx4asp57v7hpq47qm9gmbdkwq0yw9zkf4k6r1533isks2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "layeh.com/gopher-json"))
+    (propagated-inputs (list go-github-com-yuin-gopher-lua))
+    (home-page "https://layeh.com/gopher-json")
+    (synopsis "Simple JSON encoder/decoder")
+    (description
+     "This package implements a simple JSON encoder/decoder for gopher-lua.")
+    (license license:unlicense)))
+
 (define-public go-maunium-net-go-mautrix
   (package
     (name "go-maunium-net-go-mautrix")
