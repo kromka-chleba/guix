@@ -2752,6 +2752,33 @@ API.  See the full Circonus API Documentation at
 @url{https://login.circonus.com/resources/api} for more information.")
     (license license:bsd-3)))
 
+(define-public go-github-com-cjoudrey-gluahttp
+  (package
+    (name "go-github-com-cjoudrey-gluahttp")
+    (version "0.0.0-20201111170219-25003d9adfa9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cjoudrey/gluahttp")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dwv6ic5njmy3jqm7jfs4c7d1d3b36cld0sfqidh0rpgc6k404hy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "TestRequestBatch") ;Unsupported protocol scheme
+      #:import-path "github.com/cjoudrey/gluahttp"))
+    (propagated-inputs (list go-github-com-yuin-gopher-lua))
+    (home-page "https://github.com/cjoudrey/gluahttp")
+    (synopsis "HTTP module for gopher-lua")
+    (description
+     "gluahttp provides an easy way to make HTTP requests from within
+@url{https://github.com/yuin/gopher-lua,@code{GopherLua}}.")
+    (license license:expat)))
+
 (define-public go-github-com-cli-browser
   (package
     (name "go-github-com-cli-browser")
