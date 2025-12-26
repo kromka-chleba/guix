@@ -27462,6 +27462,34 @@ line argument.  If no non-opt args are given, golex reads stdin.")
     (description "Things that cannot be imported by 3rd party packages.")
     (license license:bsd-3)))
 
+(define-public go-modernc-org-ir
+  (package
+    (name "go-modernc-org-ir")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/ir")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n2jql990xwgjfhyjqnq6cmras0darzn9cyvnz3cv974vc1p818i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to fmt.Fprintf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:import-path "modernc.org/ir"))
+    (propagated-inputs (list go-modernc-org-internal go-modernc-org-mathutil
+                             go-modernc-org-strutil go-modernc-org-xc))
+    (home-page "https://modernc.org/ir")
+    (synopsis "Intermediate representations of compiled programs")
+    (description
+     "This package implements an intermediate representation of compiled programs.")
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-lex
   (package
     (name "go-modernc-org-lex")
