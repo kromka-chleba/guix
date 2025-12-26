@@ -5770,6 +5770,42 @@ replacement for memcached in many cases.  It provides a data loading mechanism
 with caching and de-duplication that works across a set of peer processes.")
     (license license:asl2.0)))
 
+(define-public go-github-com-google-certificate-transparency-go
+  (package
+    (name "go-github-com-google-certificate-transparency-go")
+    (version "1.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/certificate-transparency-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c2ngmjjmnhcnfwjy0pqnx1hvxygsdc4lscqvnyqrms0zbc51c0m"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ; Tests require database setup
+      #:import-path "github.com/google/certificate-transparency-go"))
+    (propagated-inputs
+     (list go-github-com-google-trillian
+           go-github-com-gorilla-mux
+           go-github-com-prometheus-client-golang
+           go-github-com-spf13-cobra
+           go-github-com-transparency-dev-merkle
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/google/certificate-transparency-go")
+    (synopsis "Go client for Certificate Transparency logs")
+    (description
+     "This package provides Go implementations of components for working
+with Certificate Transparency (CT) logs.  CT is a method for publicly
+logging TLS certificates to help detect mis-issued or malicious
+certificates.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-google-go-containerregistry
   (package
     (name "go-github-com-google-go-containerregistry")
