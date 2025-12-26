@@ -27437,6 +27437,31 @@ to Go source code.  The @code{.l} data can come from a file named in a command
 line argument.  If no non-opt args are given, golex reads stdin.")
     (license license:bsd-3)))
 
+(define-public go-modernc-org-internal
+  (package
+    (name "go-modernc-org-internal")
+    (version "1.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/internal")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13gsi37pnzcdylrzlrvnkiihzbxbd8p07mksm4y56c52h19diwdh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "modernc.org/internal"))
+    (propagated-inputs (list go-modernc-org-mathutil go-modernc-org-fileutil
+                             go-github-com-edsrzf-mmap-go))
+    (home-page "https://modernc.org/internal")
+    (synopsis "Internal utilities to the modernc project")
+    (description "Things that cannot be imported by 3rd party packages.")
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-lex
   (package
     (name "go-modernc-org-lex")
