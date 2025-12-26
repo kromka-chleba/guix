@@ -2796,7 +2796,7 @@ a Ruby object.")
 (define-public ruby-fakefs
   (package
     (name "ruby-fakefs")
-    (version "2.8.0")
+    (version "3.0.4")
     (home-page "https://github.com/fakefs/fakefs")
     (source (origin
               ;; The Rubygems release does not contain tests.
@@ -2807,7 +2807,7 @@ a Ruby object.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0a3vq6cllml279j77hxipmbln31pjw6di3zdgpzqvhqgazv55v10"))))
+                "12xqwl9znmnazrza6nvcl87jw62n0g6715hwp1b0zwcqm2kr7v3x"))))
     (build-system ruby-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
