@@ -27073,6 +27073,39 @@ follows the GNU
 Program Argument Syntax Conventions}.")
     (license license:gpl3)))
 
+(define-public go-modernc-org-cc
+  (package
+    (name "go-modernc-org-cc")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/cznic/cc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09vv400zpb6cbqjz74lvawin16v9mp97gkk2plbpbfmzjda0n4lz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to fmt.Fprintf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:import-path "modernc.org/cc"))
+    (propagated-inputs (list go-github-com-dustin-go-humanize
+                             go-github-com-google-go-cmp
+                             go-modernc-org-golex
+                             go-modernc-org-ir
+                             go-modernc-org-mathutil
+                             go-modernc-org-strutil
+                             go-modernc-org-token
+                             go-modernc-org-xc))
+    (home-page "https://modernc.org/cc")
+    (synopsis "C99 compiler front end for Golang")
+    (description "This package provides a C99 compiler front end.")
+    (license license:bsd-3)))
+
 (define-public go-modernc-org-cc-v3
   ;; XXX: Project distributes v2, v3, v4 and v5 as the same source without Golang
   ;; subdir tags.
