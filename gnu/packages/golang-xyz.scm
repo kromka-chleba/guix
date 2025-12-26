@@ -7142,6 +7142,34 @@ help message which may simplify crating CLI applications, it's Golang
 implementation of http://docopt.org/.")
       (license license:expat))))
 
+(define-public go-github-com-domino14-word-golib
+  (package
+    (name "go-github-com-domino14-word-golib")
+    (version "0.2.18")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/domino14/word-golib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zfhficbsfnz67vdfb5rp8qzzj7c7arrhzw249dq391vx69dy1xy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;Could not find data-path in the configuration
+      #:import-path "github.com/domino14/word-golib"))
+    (propagated-inputs (list go-github-com-matryer-is go-github-com-rs-zerolog
+                             go-github-com-stretchr-testify
+                             go-lukechampine-com-frand))
+    (home-page "https://github.com/domino14/word-golib")
+    (synopsis "Go libraries for dealing with word game structures")
+    (description
+     "This package contains common libraries used by several word game projects.")
+    (license license:gpl3)))
+
 (define-public go-github-com-dop251-scsu
   (package
     (name "go-github-com-dop251-scsu")
