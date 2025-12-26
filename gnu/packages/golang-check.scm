@@ -2400,6 +2400,33 @@ depending on environment variables.  It is very much inspired by git's
 GIT_TRACE mechanism.")
     (license license:expat)))
 
+(define-public go-github-com-sanity-io-litter
+  (package
+    (name "go-github-com-sanity-io-litter")
+    (version "1.5.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sanity-io/litter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dd1n60yfcsyy0x5z3p70dd0vnqhc202q624kljxr2h3v2vj43h5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sanity-io/litter"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/sanity-io/litter")
+    (synopsis "Pretty printer for Go data structures")
+    (description
+     "This package is a pretty printer library for Go data structures to aid in
+debugging and testing.  The package is named for the fact that it outputs
+literals, which you litter your output with.  As a side benefit, all Litter
+output is syntactically correct Go.")
+    (license license:expat)))
+
 (define-public go-github-com-sasha-s-go-deadlock
   (package
     (name "go-github-com-sasha-s-go-deadlock")
