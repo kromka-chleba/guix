@@ -179,6 +179,30 @@ checks for divisors known only at runtime based on paper:
 Applications to Compilers and Software Libraries}.")
     (license license:expat)))
 
+(define-public go-github-com-chewxy-math32
+  (package
+    (name "go-github-com-chewxy-math32")
+    (version "1.11.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chewxy/math32")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0i7jssi872mv7h4rc4y0xa88a0hsr03mydqyrd6mrm8n7q8rfml9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/chewxy/math32"))
+    (home-page "https://github.com/chewxy/math32")
+    (synopsis "Float32 version of Go's math package")
+    (description
+     "Package math32 provides basic constants and mathematical functions for float32
+types.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-cockroachdb-apd
   (package
     (name "go-github-com-cockroachdb-apd")
