@@ -10272,6 +10272,37 @@ JSON tools. @code{OjG} is optimized to processing huge data sets where data
 does not necessarily conform to a fixed structure.")
     (license license:expat)))
 
+(define-public go-github-com-openai-openai-go-v2
+  (package
+    (name "go-github-com-openai-openai-go")
+    (version "2.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/openai/openai-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zd889n7f69fkln563i7fgjhn6dsy8srnvvzwya3kl9kfgnkkbss"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests fail
+      #:import-path "github.com/openai/openai-go/v2"))
+    (propagated-inputs (list
+                        go-github-com-azure-azure-sdk-for-go-sdk-azidentity
+                        go-github-com-azure-azure-sdk-for-go-sdk-azcore
+                        go-github-com-tidwall-gjson
+                        go-github-com-tidwall-sjson))
+    (home-page "https://github.com/openai/openai-go")
+    (synopsis "OpenAI Go API Library")
+    (description
+     "The @code{OpenAI} Go library provides convenient access to the
+@url{https://platform.openai.com/docs,@code{OpenAI} REST API} from applications
+written in Go.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-openfga-go-sdk
   (package
     (name "go-github-com-openfga-go-sdk")
