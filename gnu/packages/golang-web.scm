@@ -12825,6 +12825,41 @@ support.")
 kinds of referrer URLs (search, social, ...).")
     (license license:expat)))
 
+(define-public go-github-com-sigstore-protobuf-specs
+  (package
+    (name "go-github-com-sigstore-protobuf-specs")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/protobuf-specs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pvyy74kysnj3f0448aws25v6c9375kipi8q950z1bwwa8cdj9zj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/sigstore/protobuf-specs"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'delete-non-go-files
+            (lambda _
+              ;; Contains Dockerfile.go which is not a real Go file.
+              (delete-file-recursively
+               "src/github.com/sigstore/protobuf-specs/protoc-builder"))))))
+    (propagated-inputs
+     (list go-google-golang-org-genproto-googleapis-api
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/sigstore/protobuf-specs")
+    (synopsis "Protocol buffer definitions for Sigstore")
+    (description
+     "This package provides the protocol buffer definitions used by Sigstore
+for signing and verification operations.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-shurcool-githubv4
   (package
     (name "go-github-com-shurcool-githubv4")
