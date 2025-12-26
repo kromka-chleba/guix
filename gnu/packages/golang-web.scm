@@ -5770,6 +5770,63 @@ replacement for memcached in many cases.  It provides a data loading mechanism
 with caching and de-duplication that works across a set of peer processes.")
     (license license:asl2.0)))
 
+(define-public go-github-com-google-go-containerregistry
+  (package
+    (name "go-github-com-google-go-containerregistry")
+    (version "0.20.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-containerregistry")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03m3gpj5z5q9zffns4kwxb2g8qil3213gvia63wifdrnwiswlcjh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/google/go-containerregistry"
+      ;; Skip tests that require the gcloud command.
+      #:test-flags #~(list "-skip" "TestGcloud|TestKeychainGCRandAR")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'delete-unsupported-tests
+            (lambda _
+              ;; These directories require
+              ;; github.com/awslabs/amazon-ecr-credential-helper and
+              ;; github.com/chrismellard/docker-credential-acr-env.
+              (let ((base "src/github.com/google/go-containerregistry"))
+                (for-each
+                 delete-file-recursively
+                 (list (string-append base "/cmd/krane")
+                       (string-append base "/pkg/authn/k8schain")
+                       (string-append base "/pkg/authn/kubernetes")))))))))
+    (native-inputs
+     (list go-github-com-google-go-cmp))
+    (propagated-inputs
+     (list go-github-com-containerd-stargz-snapshotter-estargz
+           go-github-com-docker-cli
+           go-github-com-docker-distribution
+           go-github-com-docker-docker
+           go-github-com-klauspost-compress
+           go-github-com-mitchellh-go-homedir
+           go-github-com-moby-docker-image-spec
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec
+           go-github-com-spf13-cobra
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync
+           go-golang-org-x-tools))
+    (home-page "https://github.com/google/go-containerregistry")
+    (synopsis "Go library for working with container registries")
+    (description
+     "This package provides a Go library and CLI tools for interacting with
+container registries.  It supports pushing, pulling, and managing container
+images across various registry implementations.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-google-go-dap
   (package
     (name "go-github-com-google-go-dap")
