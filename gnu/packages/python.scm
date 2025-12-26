@@ -768,6 +768,10 @@ def contents() -> str:
                             " test_threading"
                             " test_asyncio"
                             " test_shutdown"
+                            ,@(if (target-loongarch64?)
+                                  '(" test_os"
+                                    " test_subprocess")
+                                  '())
                             ,@(if (system-hurd?)
                                   '(" test_posix" ;multiple errors
                                     " test_time"
