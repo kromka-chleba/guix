@@ -26276,6 +26276,42 @@ distributions of benchmark measurements
      "Package appengine provides basic functionality for Google App Engine.")
     (license license:asl2.0)))
 
+(define-public go-google-golang-org-genai
+  (package
+    (name "go-google-golang-org-genai")
+    (version "1.40.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googleapis/go-genai")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13bcq5mqkffpn1vw0h35j8ayp5yh96rbaqwym4v6j3zknanxi8as"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; TODO: Tests require mcp-toolbox-sdk-go, which requires the entire Firebase API
+      #:tests? #f
+      #:test-flags
+      #~(list "-skip" "TestTable") ;File not found
+      #:import-path "google.golang.org/genai"))
+    (propagated-inputs (list go-cloud-google-com-go-auth
+                             go-cloud-google-com-go-civil
+                             go-github-com-eliben-go-sentencepiece
+                             go-github-com-google-go-cmp
+                             go-github-com-gorilla-websocket))
+    (home-page "https://google.golang.org/genai")
+    (synopsis "Google Gen AI Go SDK")
+    (description
+     "The Google Gen AI Go SDK provides an interface for developers to integrate
+Google's generative models into their Go applications.  It supports the
+@url{https://ai.google.dev/gemini-api/docs,Gemini Developer API} and
+@url{https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview,Vertex
+AI} APIs.")
+    (license license:asl2.0)))
+
 (define-public go-gopkg-in-alecthomas-kingpin-v2
   (package
     (inherit go-github-com-alecthomas-kingpin-v2)
