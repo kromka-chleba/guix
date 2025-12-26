@@ -6075,6 +6075,40 @@ values that are guaranteed to be safe, by construction or by escaping or
 sanitization, to use in various HTML contexts and with various DOM APIs.")
     (license license:bsd-3)))
 
+(define-public go-github-com-google-trillian
+  (package
+    (name "go-github-com-google-trillian")
+    (version "1.7.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/trillian")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05cphh5jv9g3j46cqxxw8h7amfmlxp85n9gljv9nr90cngmqcm0c"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ; Tests require database setup
+      #:import-path "github.com/google/trillian"))
+    (propagated-inputs
+     (list go-github-com-google-btree
+           go-github-com-prometheus-client-golang
+           go-github-com-transparency-dev-merkle
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/google/trillian")
+    (synopsis "Transparent log infrastructure for certificate transparency")
+    (description
+     "Trillian is an implementation of the concepts described in the
+Verifiable Data Structures white paper.  It provides a transparent,
+append-only log of records that can be used for applications such as
+certificate transparency and key transparency.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-gopacket-gopacket
   (package
     (name "go-github-com-gopacket-gopacket")
