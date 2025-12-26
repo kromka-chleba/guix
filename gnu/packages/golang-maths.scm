@@ -592,6 +592,33 @@ and optimization; network creation and analysis")
      "This package provides common functions and methods for slices of float32.")
     (license license:expat)))
 
+(define-public go-gorgonia-org-vecf64
+  (package
+    (name "go-gorgonia-org-vecf64")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/vecf64")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a8v65cy6gyh7ww2g8q4p6dmjhcd6k7lm7z8ly4vmi4k0vq1w187"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Misplaced +build comment
+      #:import-path "gorgonia.org/vecf64"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-pmezard-go-difflib
+                             go-github-com-davecgh-go-spew))
+    (home-page "https://gorgonia.org/vecf64/")
+    (synopsis "Methods for slices of float64")
+    (description
+     "This package provides common functions and methods for slices of float64.")
+    (license license:expat)))
+
 (define-public go-lukechampine-com-uint128
   (package
     (name "go-lukechampine-com-uint128")
