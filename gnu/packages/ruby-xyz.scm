@@ -4272,7 +4272,7 @@ help tests uncover more bugs.")
 (define-public ruby-ipaddr
   (package
     (name "ruby-ipaddr")
-    (version "1.2.6")
+    (version "1.2.8")
     (source (origin
               (method git-fetch)  ;for tests
               (uri (git-reference
@@ -4281,9 +4281,10 @@ help tests uncover more bugs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0h3z8i1fa8s4gx48322fflhpkzghd4bmd9109hglsgdkic7b0dyp"))))
+                "0mqa7yzdgigxsj93nfn175b6lvlk058fxwv6lsydnigpvljzmjmn"))))
     (build-system ruby-build-system)
-    (native-inputs (list ruby-test-unit-ruby-core))
+    (native-inputs (list bundler ruby-rake ruby-test-unit
+                         ruby-test-unit-ruby-core))
     (synopsis "Manipulate IP addresses")
     (description "This package provides a set of methods to manipulate an IP
 address.  Both IPv4 and IPv6 are supported.")
