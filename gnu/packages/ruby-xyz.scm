@@ -4526,13 +4526,13 @@ sysv init, and runit.")
 (define-public ruby-power-assert
   (package
     (name "ruby-power-assert")
-    (version "1.1.5")
+    (version "3.0.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "power_assert" version))
               (sha256
                (base32
-                "1dii0wkfa0jm8sk9b20zl1z4980dmrjh0zqnii058485pp3ws10s"))))
+                "00s1sfjak8w3f12g66ldb61xjavr5p2wvkflziiyhx6c2rkqgscc"))))
     (build-system ruby-build-system)
     (arguments
      '(#:tests? #f))                    ; No included tests
