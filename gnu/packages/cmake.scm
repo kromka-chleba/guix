@@ -163,6 +163,11 @@ using the CMake build system.")
     ;; Fixed in v4.0.0
     "RunCMake.RuntimePath"))
 
+(define %common-disabled-tests/loongarch64
+  '("RunCMake.GetPrerequisites"
+    "RunCMake.LinkWhatYouUse"
+    "CMake.GetPrerequisites"))
+
 (define %preserved-third-party-files
   '(;; 'Source/cm_getdate.c' includes archive_getdate.c wholesale, so it must
     ;; be available along with the required headers.
@@ -224,6 +229,9 @@ using the CMake build system.")
                      "CTestCoverageCollectGCOV"
                      #$@(if (target-hurd?)
                             %common-disabled-tests/hurd
+                            #~())
+                     #$@(if (target-loongarch64?)
+                            %common-disabled-tests/loongarch64
                             #~()))))
           (list
            (string-append
@@ -348,6 +356,9 @@ and workspaces that can be used in the compiler environment of your choice.")
                                          "BootstrapTest"
                                          #$@(if (system-hurd?)
                                                 %common-disabled-tests/hurd
+                                                #~())
+                                         #$@(if (target-loongarch64?)
+                                                %common-disabled-tests/loongarch64
                                                 #~()))))
                 (if tests?
                     (begin
