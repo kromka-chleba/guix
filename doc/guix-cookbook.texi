@@ -180,12 +180,14 @@ System Configuration
 * Session lock::                       Locking your Xorg Session.
 
 Reproducible environments
-* Guix Containers::
-* Guix System Containers::
+* Profiles and Shells::
+* Containers
+* System Containers::
 * Virtualization::
 
-Profiles
-* Guix Profiles in Practice::   Strategies for multiple profiles and manifests.
+Profiles and Shells
+* Environment via direnv::  Setup Guix environment with direnv
+* Profiles in Practice::   Strategies for multiple profiles and manifests.
 
 Profiles in Practice
 
@@ -195,14 +197,10 @@ Profiles in Practice
 * The benefits of manifests::
 * Reproducible profiles::
 
-Profiles, Environments, Shells
-
-* Environment via direnv::  Setup Guix environment with direnv
-
 Containers
 
-* Guix Containers::             Perfectly isolated environments
-* Guix System Containers::      A system inside your system
+* Containers::             Perfectly isolated environments
+* System Containers::      A system inside your system
 
 System Containers
 
@@ -4568,6 +4566,7 @@ This chapter aims to provide hands-on, practical examples that relates
 to the usage and configuration of virtual machines on a Guix System.
 
 @menu
+Profiles and Shells:
 * Environment via direnv:: Enjoy environments hands-free.
 * Profiles in Practice::   Strategies for multiple profiles and manifests.
 
@@ -4583,8 +4582,11 @@ Virtualization:
 
 @end menu
 
+@node Profiles and Shells
+@section Profiles and Shells
+
 @node Environment via direnv
-@section Environment via direnv
+@subsection Environment via direnv
 
 Guix provides a @samp{direnv} package, which could extend shell after
 directory change.  This tool could be used to prepare a pure Guix
@@ -4698,9 +4700,8 @@ will have predefined environment variables and procedures.
 Run @command{direnv allow} to setup the environment for the first time.
 
 
-
-@node Guix Containers
-@section Guix Containers
+@node Containers
+@section Containers
 
 The easiest way to get started is to use @command{guix shell} with the
 @option{--container} option.  @xref{Invoking guix shell,,, guix, GNU
@@ -4850,8 +4851,8 @@ section shows you how to launch a complete Guix System inside of a
 container.
 
 
-@node Guix System Containers
-@section Guix System Containers
+@node System Containers
+@section System Containers
 
 The Guix System provides a wide array of interconnected system services
 that are configured declaratively to form a dependable stateless GNU
@@ -5443,11 +5444,11 @@ advanced package management concepts.
 reference.
 
 @menu
-* Guix Profiles in Practice::   Strategies for multiple profiles and manifests.
+* Profiles in Practice::   Strategies for multiple profiles and manifests.
 @end menu
 
-@node Guix Profiles in Practice
-@section Guix Profiles in Practice
+@node Profiles in Practice
+@section Profiles in Practice
 
 Guix provides a very useful feature that may be quite foreign to newcomers:
 @dfn{profiles}.  They are a way to group package installations together and all users
