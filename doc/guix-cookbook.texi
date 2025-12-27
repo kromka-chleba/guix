@@ -5428,27 +5428,9 @@ March 2025, it was last updated in 2015).  Nevertheless, the authors of
 this chapter have found it to be a valuable source of information.
 @end itemize
 
-@c *********************************************************************
-@node Software Development
-@chapter Software Development
-
-A chapter on Profiles, Environments, Reproducibility and other tool sets
-provided by GNU Guix.
-
-Guix offers many features beyond what more traditional package managers
-can do.  To the uninitiated, those features might not have obvious use
-cases at first.  The purpose of this chapter is to demonstrate some
-advanced package management concepts.
-
-@pxref{Package Management,,, guix, GNU Guix Reference Manual} for a complete
-reference.
-
-@menu
-* Profiles in Practice::   Strategies for multiple profiles and manifests.
-@end menu
 
 @node Profiles in Practice
-@section Profiles in Practice
+@subsection Profiles in Practice
 
 Guix provides a very useful feature that may be quite foreign to
 newcomers: @dfn{profiles}.  They are a way to group package
@@ -5546,7 +5528,7 @@ Let's dive in the set up!
 @end menu
 
 @node Basic setup with manifests
-@subsection Basic setup with manifests
+@subsubsection Basic setup with manifests
 
 A Guix profile can be set up @i{via} a @dfn{manifest}.  A manifest is a
 snippet of Scheme code that specifies the set of packages you want to
@@ -5687,7 +5669,7 @@ env -i $(which bash) --login --noprofile --norc
 @end example
 
 @node Required packages
-@subsection Required packages
+@subsubsection Required packages
 
 Activating a profile essentially boils down to exporting a bunch of
 environmental variables.  This is the role of the @samp{etc/profile}
@@ -5716,7 +5698,7 @@ The same is true for @samp{INFOPATH} (you can install @samp{info-reader}),
 @samp{PKG_CONFIG_PATH} (install @samp{pkg-config}), etc.
 
 @node Default profile
-@subsection Default profile
+@subsubsection Default profile
 
 What about the default profile that Guix keeps in @file{~/.guix-profile}?
 
@@ -5735,7 +5717,7 @@ guix upgrade package-bar
 without having to specify the path to a profile.
 
 @node The benefits of manifests
-@subsection The benefits of manifests
+@subsubsection The benefits of manifests
 
 Manifests let you @dfn{declare} the set of packages you'd like to have
 in a profile (@pxref{Writing Manifests,,, guix, GNU Guix Reference
@@ -5816,7 +5798,7 @@ convenient, keep in mind that outdated packages may not have received
 the latest security fixes.
 
 @node Reproducible profiles
-@subsection Reproducible profiles
+@subsubsection Reproducible profiles
 
 To reproduce a profile bit-for-bit, we need two pieces of information:
 
@@ -5856,6 +5838,8 @@ mkdir -p "$GUIX_EXTRA_PROFILES/my-project"
 It's safe to delete the Guix channel profile you've just installed with
 the channel specification, the project profile does not depend on it.
 
+
+@c *********************************************************************
 @node Software Development Tutorial
 @chapter Software Development Tutorial
 
