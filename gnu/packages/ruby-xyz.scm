@@ -4354,18 +4354,21 @@ take advantage of Ruby's style and strengths.")
 (define-public ruby-net-http-persistent
   (package
     (name "ruby-net-http-persistent")
-    (version "4.0.2")
+    (version "4.0.6")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "net-http-persistent" version))
               (sha256
                (base32
-                "0i1as2lgnw7b4jid0gw5glv5hnxz36nmfsbr9rmxbcap72ijgy03"))))
+                "0pfxhhn1lqnxx8dj3ig3lgnhkxq5jsb0brg7w2wnrpwf8c23mfra"))))
     (build-system ruby-build-system)
     (native-inputs
-     (list ruby-connection-pool
-           ruby-hoe
-           ruby-rake-manifest))
+     (list ruby-minitest
+           ;ruby-net-http-pipeline ; currently not availible in guix
+           ruby-rake
+           ruby-rake-manifest
+           ruby-rdoc))
+    (propagated-inputs (list ruby-connection-pool))
     (synopsis "Persistent HTTP connection manager")
     (description "Net::HTTP::Persistent manages persistent HTTP connections
 using Net::HTTP, supporting reconnection and retry according to RFC 2616.")
