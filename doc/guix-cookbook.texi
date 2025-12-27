@@ -4568,12 +4568,12 @@ This chapter aims to provide hands-on, practical examples that relates
 to the usage and configuration of virtual machines on a Guix System.
 
 @menu
-Profiles:
-* Environment via direnv::      Automatically enter shells.
+* Environment via direnv:: Enjoy environments hands-free.
+* Profiles in Practice::   Strategies for multiple profiles and manifests.
 
 Containers:
-* Guix Containers::             Perfectly isolated environments
-* Guix System Containers::      A system inside your system
+* Containers::             Perfectly isolated environments
+* System Containers::      A system inside your system
 
 Virtualization:
 * Network bridge for QEMU::
