@@ -2429,17 +2429,6 @@ The @uref{https://guix.gnu.org/manual/en/html_node/Defining-Packages.html, packa
 @uref{https://guix.gnu.org/guix-ghm-andreas-20130823.pdf, ``GNU Guix: Package without a scheme!''}, by Andreas Enge
 @end itemize
 
-@node Packaging Workflows
-@section Packaging Workflows
-
-The following sections provide real-life examples on working with specific build
-systems, serving as extensions to the concise packaging guidelines
-(@pxref{Packaging Guidelines,,, guix, GNU Guix Reference Manual}).
-
-@menu
-* Packaging Rust Crates::
-@end menu
-
 @node Packaging Rust Crates
 @subsection Packaging Rust Crates
 
