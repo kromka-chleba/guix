@@ -164,6 +164,8 @@ System Configuration
 * Getting substitutes from Tor::  Configuring Guix daemon to get substitutes through Tor.
 * Setting up NGINX with Lua::   Configuring NGINX web-server to load Lua modules.
 * Music Server with Bluetooth Audio::  Headless music player with Bluetooth output.
+* Customizing StumpWM::                Customizing the Window Manager.
+* Session lock::                       Locking your Xorg Session.
 
 Customizing a Window Manager
 
@@ -2812,8 +2814,6 @@ Bluetooth output.
 Customization:
 * Customizing the Kernel::       Creating and using a custom Linux
 kernel on Guix System.
-* Customizing a Window Manager:: Handle customization of a Window
-manager on Guix System.
 * Getting substitutes from Tor:: Configuring Guix daemon to get
 substitutes through Tor.
 
@@ -3819,17 +3819,9 @@ guix system image --image-type=hurd-qcow2 my-hurd-os.scm
 will instead produce a Hurd QEMU image.
 
 
-@node Customizing a Window Manager
-@subsection Customizing a Window Manager
-@cindex wm
-
-@menu
-* StumpWM::
-* Session lock::
-@end menu
-
-@node StumpWM
-@subsection StumpWM
+@node Customizing StumpWM
+@subsection Customizing StumpWM
+@cindex customizing stumpwm
 @cindex stumpwm
 
 You could install StumpWM with a Guix system by adding
