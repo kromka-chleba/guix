@@ -117,7 +117,6 @@ Packaging
 Packaging Tutorial
 
 * A ``Hello World'' package::
-* Setup::
 * Extended example::
 * Other build systems::
 * Programmable and automated package definition::
@@ -125,11 +124,11 @@ Packaging Tutorial
 * Conclusion::
 * References::
 
-Setup
+Hacking (with) Guix
 
-* Local file::
-* Channels::
-* Direct checkout hacking::
+* Local `guix.scm' file::
+* Custom Channels::
+* Official Guix repository::
 
 Programmable and automated package definition
 
@@ -1219,6 +1218,254 @@ You can run @command{make} automatically as you work using
 to build again each time you update a package file, run
 @samp{watchexec -w gnu/packages -- make -j4}.
 
+@c *********************************************************************
+@node Hacking (with) Guix
+@section Hacking (with) Guix
+
+To use GNU Guix for daily software hacking needs, we explore here three @c TODO janky
+different setups to do so.  You can define the package definition as a
+@ref{Local `guix.scm' file} called ``guix.scm'', can set up your own
+channel to extend Guix or the use a clone of the official Guix
+repository.
+
+While a local ``guix.scm'' file can assist you and peers while working
+on some specific piece of software, where you need to check whether it
+still builds and runs after changing some of its code, @ref{Custom
+Channels} can be a great way to prepare your software packages for CI/CD
+(using cuirass).  A channel can also be a great way to publish software
+(definitions) to a restricted audience (like your company's intranet).
+If you intend to publish your free software, it would be great if you
+packaged for the main Guix repository, so people already get to use your
+software without extra effort.
+
+Let's detail the different setups for working on software.
+
+@menu
+* Local `guix.scm' file::     Build your software with this simple trick!
+* Custom Channels::           Craft channels to provide package and service definitions.
+* Official Guix repository::  Improve (or fork) the official repository.
+@end menu
+
+@node Local `guix.scm' file
+@subsection Local `guix.scm' file
+
+This is what we previously did with @samp{my-hello}.  With the Scheme basics we've
+covered, we are now able to explain the leading chunks.  As stated in @code{guix
+package --help}:
+
+@example
+  -f, --install-from-file=FILE
+                         install the package that the code within FILE
+                         evaluates to
+@end example
+
+Thus the last expression @emph{must} return a package, which is the case in our
+earlier example.
+
+The @code{use-modules} expression tells which of the modules we need in the file.
+Modules are a collection of values and procedures.  They are commonly called
+``libraries'' or ``packages'' in other programming languages.
+
+@node Custom Channels
+@subsection Custom Channels
+@cindex channel
+
+Guix and its package collection can be extended through @dfn{channels}.
+A channel is a Git repository, public or not, containing @file{.scm}
+files that provide packages (@pxref{Defining Packages,,, guix, GNU Guix
+Reference Manual}) or services (@pxref{Defining Services,,, guix, GNU
+Guix Reference Manual}).
+
+How would you go about creating a channel?  First, create a directory
+that will contain your @file{.scm} files, say @file{~/my-channel}:
+
+@example
+mkdir ~/my-channel
+@end example
+
+Suppose you want to add the @samp{my-hello} package we saw previously;
+it first needs some adjustments:
+
+@lisp
+(define-module (my-hello)
+  #:use-module (guix licenses)
+  #:use-module (guix packages)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix download))
+
+(define-public my-hello
+  (package
+    (name "my-hello")
+    (version "2.10")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/hello/hello-" version
+                                  ".tar.gz"))
+              (sha256
+               (base32
+                "0ssi1wpaf7plaswqqjwigppsg5fyh99vdlb9kzl7c9lng89ndq1i"))))
+    (build-system gnu-build-system)
+    (synopsis "Hello, Guix world: An example custom Guix package")
+    (description
+     "GNU Hello prints the message \"Hello, world!\" and then exits.  It
+serves as an example of standard GNU coding practices.  As such, it supports
+command-line arguments, multiple languages, and so on.")
+    (home-page "https://www.gnu.org/software/hello/")
+    (license gpl3+)))
+@end lisp
+
+Note that we have assigned the package value to an exported variable name with
+@code{define-public}.  This is effectively assigning the package to the @code{my-hello}
+variable so that it can be referenced, among other as dependency of other
+packages.
+
+If you use @code{guix package --install-from-file=my-hello.scm} on the above file, it
+will fail because the last expression, @code{define-public}, does not return a
+package.  If you want to use @code{define-public} in this use-case nonetheless, make
+sure the file ends with an evaluation of @code{my-hello}:
+
+@lisp
+;; ...
+(define-public my-hello
+  ;; ...
+  )
+
+my-hello
+@end lisp
+
+This last example is not very typical.
+
+Now how do you make that package visible to @command{guix} commands so
+you can test your packages?  You need to add the directory to the search
+path using the @option{-L} command-line option, as in these examples:
+
+@example
+guix show -L ~/my-channel my-hello
+guix build -L ~/my-channel my-hello
+@end example
+
+The final step is to turn @file{~/my-channel} into an actual channel,
+making your package collection seamlessly available @i{via} any
+@command{guix} command.  To do that, you first need to make it a Git
+repository:
+
+@example
+cd ~/my-channel
+git init
+git add my-hello.scm
+git commit -m "First commit of my channel."
+@end example
+
+And that's it, you have a channel!  From there on, you can add this
+channel to your channel configuration in
+@file{~/.config/guix/channels.scm} (@pxref{Specifying Additional
+Channels,,, guix, GNU Guix Reference Manual}); assuming you keep your
+channel local for now, the @file{channels.scm} would look something like
+this:
+
+@lisp
+(append (list (channel
+                (name 'my-channel)
+                (url (string-append "file://" (getenv "HOME")
+                                    "/my-channel"))))
+        %default-channels)
+@end lisp
+
+Next time you run @command{guix pull}, your channel will be picked up
+and the packages it defines will be readily available to all the
+@command{guix} commands, even if you do not pass @option{-L}.  The
+@command{guix describe} command will show that Guix is, indeed, using
+both the @code{my-channel} and the @code{guix} channels.
+
+@xref{Creating a Channel,,, guix, GNU Guix Reference Manual}, for
+details.
+
+@node Official Guix repository
+@subsection Official Guix repository
+
+Working directly on the Guix project is recommended: it reduces the
+friction when the time comes to submit your changes upstream to let the
+community benefit from your hard work!
+
+Unlike most software distributions, the Guix repository holds in one
+place both the tooling (including the package manager) and the package
+definitions.  This choice was made so that it would give developers the
+flexibility to modify the API without breakage by updating all packages
+at the same time.  This reduces development inertia.
+
+Check out the official @uref{https://git-scm.com/, Git} repository:
+
+@example
+$ git clone https://git.guix.gnu.org/guix.git
+@end example
+
+In the rest of this article, we use @samp{$GUIX_CHECKOUT} to refer to
+the location of the checkout.
+
+
+Follow the instructions in the manual (@pxref{Contributing,,, guix, GNU
+Guix Reference Manual}) to set up the repository environment.
+
+Once ready, you should be able to use the package definitions from the
+repository environment.
+
+Feel free to edit package definitions found in @samp{$GUIX_CHECKOUT/gnu/packages}.
+
+The @samp{$GUIX_CHECKOUT/pre-inst-env} script lets you use @samp{guix}
+over the package collection of the repository (@pxref{Running Guix
+Before It Is Installed,,, guix, GNU Guix Reference Manual}).
+
+@itemize
+@item
+Search packages, such as Ruby:
+
+@example
+  $ cd $GUIX_CHECKOUT
+  $ ./pre-inst-env guix package --list-available=ruby
+      ruby    1.8.7-p374      out     gnu/packages/ruby.scm:119:2
+      ruby    2.1.6   out     gnu/packages/ruby.scm:91:2
+      ruby    2.2.2   out     gnu/packages/ruby.scm:39:2
+@end example
+
+@item
+Build a package, here Ruby version 2.1:
+
+@example
+  $ ./pre-inst-env guix build --keep-failed ruby@@2.1
+  /gnu/store/c13v73jxmj2nir2xjqaz5259zywsa9zi-ruby-2.1.6
+@end example
+
+@item
+Install it to your user profile:
+
+@example
+  $ ./pre-inst-env guix package --install ruby@@2.1
+@end example
+
+@item
+Check for common mistakes:
+
+@example
+  $ ./pre-inst-env guix lint ruby@@2.1
+@end example
+@end itemize
+
+Guix strives at maintaining a high packaging standard; when contributing to the
+Guix project, remember to
+
+@itemize
+@item
+follow the coding style (@pxref{Coding Style,,, guix, GNU Guix Reference Manual}),
+@item
+and review the check list from the manual (@pxref{Submitting Patches,,, guix, GNU Guix Reference Manual}).
+@end itemize
+
+Once you are happy with the result, you are welcome to send your contribution to
+make it part of Guix.  This process is also detailed in the manual.  (@pxref{Contributing,,, guix, GNU Guix Reference Manual})
+
+
+It's a community effort so the more join in, the better Guix becomes!
+
 
 @c *********************************************************************
 @node Packaging software
@@ -1382,7 +1629,6 @@ basic programming knowledge.
 
 @menu
 * A ``Hello World'' package::
-* Setup::
 * Extended example::
 * Other build systems::
 * Programmable and automated package definition::
@@ -1581,246 +1827,6 @@ my-hello	2.10	out
 We've gone as far as we could without any knowledge of Scheme.  Before moving
 on to more complex packages, now is the right time to brush up on your Scheme
 knowledge.  @xref{A Scheme Crash Course} to get up to speed.
-
-@node Setup
-@subsection Setup
-
-In the rest of this chapter we will rely on some basic Scheme
-programming knowledge.  Now let's detail the different possible setups
-for working on Guix packages.
-
-There are several ways to set up a Guix packaging environment.
-
-We recommend you work directly on the Guix source checkout since it makes it
-easier for everyone to contribute to the project.
-
-But first, let's look at other possibilities.
-
-@menu
-* Local file::
-* Channels::
-* Direct checkout hacking::
-@end menu
-
-@node Local file
-@subsubsection Local file
-
-This is what we previously did with @samp{my-hello}.  With the Scheme basics we've
-covered, we are now able to explain the leading chunks.  As stated in @code{guix
-package --help}:
-
-@example
-  -f, --install-from-file=FILE
-                         install the package that the code within FILE
-                         evaluates to
-@end example
-
-Thus the last expression @emph{must} return a package, which is the case in our
-earlier example.
-
-The @code{use-modules} expression tells which of the modules we need in the file.
-Modules are a collection of values and procedures.  They are commonly called
-``libraries'' or ``packages'' in other programming languages.
-
-@node Channels
-@subsubsection Channels
-
-@cindex channel
-Guix and its package collection can be extended through @dfn{channels}.
-A channel is a Git repository, public or not, containing @file{.scm}
-files that provide packages (@pxref{Defining Packages,,, guix, GNU Guix
-Reference Manual}) or services (@pxref{Defining Services,,, guix, GNU
-Guix Reference Manual}).
-
-How would you go about creating a channel?  First, create a directory
-that will contain your @file{.scm} files, say @file{~/my-channel}:
-
-@example
-mkdir ~/my-channel
-@end example
-
-Suppose you want to add the @samp{my-hello} package we saw previously;
-it first needs some adjustments:
-
-@lisp
-(define-module (my-hello)
-  #:use-module (guix licenses)
-  #:use-module (guix packages)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix download))
-
-(define-public my-hello
-  (package
-    (name "my-hello")
-    (version "2.10")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnu/hello/hello-" version
-                                  ".tar.gz"))
-              (sha256
-               (base32
-                "0ssi1wpaf7plaswqqjwigppsg5fyh99vdlb9kzl7c9lng89ndq1i"))))
-    (build-system gnu-build-system)
-    (synopsis "Hello, Guix world: An example custom Guix package")
-    (description
-     "GNU Hello prints the message \"Hello, world!\" and then exits.  It
-serves as an example of standard GNU coding practices.  As such, it supports
-command-line arguments, multiple languages, and so on.")
-    (home-page "https://www.gnu.org/software/hello/")
-    (license gpl3+)))
-@end lisp
-
-Note that we have assigned the package value to an exported variable name with
-@code{define-public}.  This is effectively assigning the package to the @code{my-hello}
-variable so that it can be referenced, among other as dependency of other
-packages.
-
-If you use @code{guix package --install-from-file=my-hello.scm} on the above file, it
-will fail because the last expression, @code{define-public}, does not return a
-package.  If you want to use @code{define-public} in this use-case nonetheless, make
-sure the file ends with an evaluation of @code{my-hello}:
-
-@lisp
-;; ...
-(define-public my-hello
-  ;; ...
-  )
-
-my-hello
-@end lisp
-
-This last example is not very typical.
-
-Now how do you make that package visible to @command{guix} commands so
-you can test your packages?  You need to add the directory to the search
-path using the @option{-L} command-line option, as in these examples:
-
-@example
-guix show -L ~/my-channel my-hello
-guix build -L ~/my-channel my-hello
-@end example
-
-The final step is to turn @file{~/my-channel} into an actual channel,
-making your package collection seamlessly available @i{via} any
-@command{guix} command.  To do that, you first need to make it a Git
-repository:
-
-@example
-cd ~/my-channel
-git init
-git add my-hello.scm
-git commit -m "First commit of my channel."
-@end example
-
-And that's it, you have a channel!  From there on, you can add this
-channel to your channel configuration in
-@file{~/.config/guix/channels.scm} (@pxref{Specifying Additional
-Channels,,, guix, GNU Guix Reference Manual}); assuming you keep your
-channel local for now, the @file{channels.scm} would look something like
-this:
-
-@lisp
-(append (list (channel
-                (name 'my-channel)
-                (url (string-append "file://" (getenv "HOME")
-                                    "/my-channel"))))
-        %default-channels)
-@end lisp
-
-Next time you run @command{guix pull}, your channel will be picked up
-and the packages it defines will be readily available to all the
-@command{guix} commands, even if you do not pass @option{-L}.  The
-@command{guix describe} command will show that Guix is, indeed, using
-both the @code{my-channel} and the @code{guix} channels.
-
-@xref{Creating a Channel,,, guix, GNU Guix Reference Manual}, for
-details.
-
-@node Direct checkout hacking
-@subsubsection Direct checkout hacking
-
-Working directly on the Guix project is recommended: it reduces the friction
-when the time comes to submit your changes upstream to let the community benefit
-from your hard work!
-
-Unlike most software distributions, the Guix repository holds in one place both
-the tooling (including the package manager) and the package definitions.  This
-choice was made so that it would give developers the flexibility to modify the
-API without breakage by updating all packages at the same time.  This reduces
-development inertia.
-
-Check out the official @uref{https://git-scm.com/, Git} repository:
-
-@example
-$ git clone https://git.guix.gnu.org/guix.git
-@end example
-
-In the rest of this article, we use @samp{$GUIX_CHECKOUT} to refer to the location of
-the checkout.
-
-
-Follow the instructions in the manual (@pxref{Contributing,,, guix, GNU Guix
-Reference Manual}) to set up the repository environment.
-
-Once ready, you should be able to use the package definitions from the
-repository environment.
-
-Feel free to edit package definitions found in @samp{$GUIX_CHECKOUT/gnu/packages}.
-
-The @samp{$GUIX_CHECKOUT/pre-inst-env} script lets you use @samp{guix} over the package
-collection of the repository (@pxref{Running Guix Before It Is
-Installed,,, guix, GNU Guix Reference Manual}).
-
-@itemize
-@item
-Search packages, such as Ruby:
-
-@example
-  $ cd $GUIX_CHECKOUT
-  $ ./pre-inst-env guix package --list-available=ruby
-      ruby    1.8.7-p374      out     gnu/packages/ruby.scm:119:2
-      ruby    2.1.6   out     gnu/packages/ruby.scm:91:2
-      ruby    2.2.2   out     gnu/packages/ruby.scm:39:2
-@end example
-
-@item
-Build a package, here Ruby version 2.1:
-
-@example
-  $ ./pre-inst-env guix build --keep-failed ruby@@2.1
-  /gnu/store/c13v73jxmj2nir2xjqaz5259zywsa9zi-ruby-2.1.6
-@end example
-
-@item
-Install it to your user profile:
-
-@example
-  $ ./pre-inst-env guix package --install ruby@@2.1
-@end example
-
-@item
-Check for common mistakes:
-
-@example
-  $ ./pre-inst-env guix lint ruby@@2.1
-@end example
-@end itemize
-
-Guix strives at maintaining a high packaging standard; when contributing to the
-Guix project, remember to
-
-@itemize
-@item
-follow the coding style (@pxref{Coding Style,,, guix, GNU Guix Reference Manual}),
-@item
-and review the check list from the manual (@pxref{Submitting Patches,,, guix, GNU Guix Reference Manual}).
-@end itemize
-
-Once you are happy with the result, you are welcome to send your contribution to
-make it part of Guix.  This process is also detailed in the manual.  (@pxref{Contributing,,, guix, GNU Guix Reference Manual})
-
-
-It's a community effort so the more join in, the better Guix becomes!
 
 @node Extended example
 @subsection Extended example
