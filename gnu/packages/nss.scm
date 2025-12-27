@@ -37,6 +37,7 @@
   #:use-module (guix build-system trivial)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages certs)
@@ -66,7 +67,10 @@
      (list perl                         ;for 'compile-et.pl'
            bash-minimal))               ;for 'nspr-config'
     (native-inputs
-     (list perl))
+     (append (if (target-loongarch64?)
+                 (list config)
+                 (list))
+             (list perl)))
     (arguments
      (list
       ;; Prevent the 'native' perl from sneaking into the closure.
@@ -91,7 +95,17 @@
                        "SH_NOW=100000")
       #:phases #~(modify-phases %standard-phases
                    (add-before 'configure 'chdir
-                     (lambda _ (chdir "nspr") #t)))))
+                     (lambda _ (chdir "nspr") #t))
+                   #$@(if (target-loongarch64?)
+                          #~((add-after 'unpack 'update-config
+                               (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                                 (for-each (lambda (file)
+                                             (install-file
+                                              (search-input-file
+                                               (or native-inputs inputs)
+                                               (string-append "/bin/" file)) "./build/autoconf/"))
+                                           '("config.guess" "config.sub")))))
+                          #~()))))
     (home-page
      "https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSPR")
     (synopsis "Netscape API for system level and libc-like functions")
