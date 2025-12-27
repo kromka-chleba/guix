@@ -91,30 +91,52 @@ Manual}).
 * Coding::                      Building, running, patching, testing
 * System Management::           Configuration, customization,
 deployment and administrative tasks
-* Containers and Emulation::    Clean and efficient work
-* Software Development::        Working with code
-* Environment management::      Control environment
-* Reproducible Research::       A foundation for reproducible research.
-* Installing Guix on a Cluster::  High-performance computing.
-* Guix System Management::      System Management specifics.
+* Reproducible environments::        Shells, containers, emulation
+* Guix System Management::           System Management specifics.
 
-* Acknowledgments::             Thanks!
-* GNU Free Documentation License::  The license of this document.
-* Concept Index::               Concepts.
+* Acknowledgments::                  Thanks!
+* GNU Free Documentation License::   The license of this document.
+* Concept Index::                    Concepts.
 
 @detailmenu
  --- The Detailed Node Listing ---
 
-Scheme tutorials
+Tooling
 
-* A Scheme Crash Course::
+* A Scheme Crash Course:: Basics for working GNU Guix
+* Emacs setup::           The most widely used in our community.
+* Guile Studio setup::
+* Vim and NeoVim setup::
 
-Packaging
+Coding
 
-* General Packaging Tutorial::  A tutorial on how to add packages to Guix.
-* Packaging Workflows::         Real life examples on working with specific build systems.
+* Building GNU Guix::                The prerequisite for hacking it.
+* Hacking (with) Guix::              Set up to work software with guix.
+* Packaging software::               Various hands-on guides on how-to work on packages in Guix.
 
-Packaging Tutorial
+Building GNU Guix
+
+* Build requirements::                   Software you need to build GNU Guix.
+* Building from Git::                    Building it.
+* Running the Test Suite::               Testing the build.
+* Running Guix Before It Is Installed::  Running guix from a local build.
+
+Hacking (with) Guix
+
+* Local `guix.scm' file::                Build your software with this simple trick!
+* Custom Channels::                      Craft channels to provide package and service definitions.
+* Official Guix repository::             Improve (or fork) the official repository.
+
+Packaging software
+
+* Update a package::                     A simple use case.
+* Fix Broken Packages::                  General approach, tips and tricks.
+* General Packaging Tutorial::           A tutorial on how to add packages to Guix.
+* Packaging Rust Crates::                Package software written in Rust.
+
+* Hacking (with) Guix::
+
+General Packaging Tutorial
 
 * A ``Hello World'' package::
 * Extended packaging example::
@@ -123,12 +145,6 @@ Packaging Tutorial
 * Getting help::
 * Conclusion::
 * References::
-
-Hacking (with) Guix
-
-* Local `guix.scm' file::
-* Custom Channels::
-* Official Guix repository::
 
 Programmable and automated package definition
 
@@ -148,37 +164,43 @@ Packaging Rust Crates
 
 System Configuration
 
-* Auto-Login to a Specific TTY::  Automatically Login a User to a Specific TTY
-* Customizing the Kernel::      Creating and using a custom Linux kernel on Guix System.
-* Guix System Image API::       Customizing images to target specific platforms.
-* Using security keys::         How to use security keys with Guix System.
-* Dynamic DNS mcron job::       Job to update the IP address behind a DuckDNS host name.
-* Connecting to Wireguard VPN::  Connecting to a Wireguard VPN.
-* Customizing a Window Manager::  Handle customization of a Window manager on Guix System.
-* Running Guix on a Linode Server::  Running Guix on a Linode Server.
-* Running Guix on a Kimsufi Server::  Running Guix on a Kimsufi Server.
-* Setting up a bind mount::     Setting up a bind mount in the file-systems definition.
-* Getting substitutes from Tor::  Configuring Guix daemon to get substitutes through Tor.
-* Setting up NGINX with Lua::   Configuring NGINX web-server to load Lua modules.
+* Auto-Login to a Specific TTY::       Automatically Login a User to a Specific TTY
+* Customizing the Kernel::             Creating and using a custom Linux kernel on Guix System.
+* Guix System Image API::              Customizing images to target specific platforms.
+* Using security keys::                How to use security keys with Guix System.
+* Dynamic DNS mcron job::              Job to update the IP address behind a DuckDNS host name.
+* Connecting to Wireguard VPN::        Connecting to a Wireguard VPN.
+* Running Guix on a Linode Server::    Running Guix on a Linode Server.
+* Running Guix on a Kimsufi Server::   Running Guix on a Kimsufi Server.
+* Setting up a bind mount::            Setting up a bind mount in the file-systems definition.
+* Getting substitutes from Tor::       Configuring Guix daemon to get substitutes through Tor.
+* Setting up NGINX with Lua::          Configuring NGINX web-server to load Lua modules.
 * Music Server with Bluetooth Audio::  Headless music player with Bluetooth output.
 * Customizing StumpWM::                Customizing the Window Manager.
 * Session lock::                       Locking your Xorg Session.
 
-Customizing a Window Manager
+Reproducible environments
+* Guix Containers::
+* Guix System Containers::
+* Virtualization::
 
-* StumpWM::
-* Session lock::
+Profiles
+* Guix Profiles in Practice::   Strategies for multiple profiles and manifests.
 
-Session lock
+Profiles in Practice
 
-* Xorg::
+* Basic setup with manifests::
+* Required packages::
+* Default profile::
+* The benefits of manifests::
+* Reproducible profiles::
 
 Containers
 
 * Guix Containers::             Perfectly isolated environments
 * Guix System Containers::      A system inside your system
 
-Guix System Containers
+System Containers
 
 * A Database Container::
 * Container Networking::
@@ -189,18 +211,6 @@ Virtual Machines
 * Routed network for libvirt::
 * Custom NAT-based network for libvirt::
 * References: VM References.    Further reading on virtual machines.
-
-Advanced package management
-
-* Guix Profiles in Practice::   Strategies for multiple profiles and manifests.
-
-Guix Profiles in Practice
-
-* Basic setup with manifests::
-* Required packages::
-* Default profile::
-* The benefits of manifests::
-* Reproducible profiles::
 
 Software Development
 
@@ -703,16 +713,10 @@ our source tree requires you to be able to build and test the projects
 source tree as a whole.
 
 @menu
-* Build requirements::                   Software you need to build GNU Guix.
-* Building from Git::                    Building it.
-* Running the Test Suite::               Testing the build.
-* Running Guix Before It Is Installed::  Running guix from a local build.
-
-* Update a package::            A simple use case.
-* Fix Broken Packages::         General approach, tips and tricks.
-* General Packaging Tutorial::  A tutorial on how to add packages to Guix.
-* Packaging Workflows::         Real life examples on working with specific build systems.
-
+* Building GNU Guix::           The prerequisite for hacking it.
+* Hacking (with) Guix::         Set up to work software with guix.
+* Packaging software::          Various hands-on guides on how-to work on packages in Guix.
+* Extended packaging example::  An extended, in-depth example on packaging.
 @end menu
 
 @node Building GNU Guix
@@ -721,7 +725,7 @@ source tree as a whole.
 @menu
 Building and testing GNU Guix:
 * Build requirements::                   Software you need to build GNU Guix.
-* Building from Git::               Building it.
+* Building from Git::                    Building it.
 * Running the Test Suite::               Testing the build.
 * Running Guix Before It Is Installed::  Running guix from a local build.
 
@@ -1481,7 +1485,7 @@ and building them.
 * Update a package::            A simple use case.
 * Fix Broken Packages::         General approach, tips and tricks.
 * General Packaging Tutorial::  A tutorial on how to add packages to Guix.
-* Packaging Workflows::         Real life examples on working with specific build systems.
+* Packaging Rust Crates::       Package software written in Rust.
 @end menu
 
 @node Update a package
@@ -4539,8 +4543,8 @@ system, using something like:
 
 
 @c *********************************************************************
-@node Containers and Emulation
-@chapter Containers and Emulation
+@node Reproducible environments
+@chapter Reproducible environments
 
 The kernel Linux provides a number of shared facilities that are
 available to processes in the system.  These facilities include a shared
