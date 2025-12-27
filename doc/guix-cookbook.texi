@@ -818,7 +818,7 @@ C++11 standard.
 @end itemize
 
 @node Building from Git
-@section Building from Git
+@subsection Building from Git
 
 If you want to hack Guix itself, it is recommended to use the latest
 version from the Git repository@footnote{
@@ -1015,7 +1015,7 @@ updating, you need to repeat the steps outlined in this section,
 commencing with @command{./bootstrap}.
 
 @node Running the Test Suite
-@section Running the Test Suite
+@subsection Running the Test Suite
 
 @cindex test suite
 After a successful @command{configure} and @code{make} run, it is a good
@@ -1127,7 +1127,7 @@ Again in case of test failures, please send @email{bug-guix@@gnu.org}
 all the details.
 
 @node Running Guix Before It Is Installed
-@section Running Guix Before It Is Installed
+@subsection Running Guix Before It Is Installed
 
 In order to keep a sane working environment, you will find it useful to
 test the changes made in your local source tree checkout without
@@ -1530,7 +1530,7 @@ build procedure(s) for the package, which can mean anything from adding
 inputs over fixing issues in the code with additional build phases.
 
 @node Fix Broken Packages
-@section Fix Broken Packages
+@subsection Fix Broken Packages
 @cindex Fix Broken Packages
 @cindex fix packages
 
@@ -1587,7 +1587,7 @@ their luck.
 
 
 @node General Packaging Tutorial
-@section General Packaging Tutorial
+@subsection General Packaging Tutorial
 @cindex General Packaging Tutorial
 @cindex packaging
 
@@ -1638,7 +1638,7 @@ basic programming knowledge.
 @end menu
 
 @node A ``Hello World'' package
-@subsection A ``Hello World'' package
+@subsubsection A ``Hello World'' package
 
 The ``Defining Packages'' section of the manual introduces the basics of Guix
 packaging (@pxref{Defining Packages,,, guix, GNU Guix Reference Manual}).  In
@@ -1913,7 +1913,7 @@ See below.)
 
 Let's discuss those fields in depth.
 
-@subsubsection @code{git-fetch} method
+@subsection @code{git-fetch} method
 
 Unlike the @code{url-fetch} method, @code{git-fetch} expects a @code{git-reference} which takes
 a Git repository and a commit.  The commit can be any Git reference such as
@@ -1948,7 +1948,7 @@ guix, GNU Guix Reference Manual}).
 In the future, @command{guix download} will hopefully be able to do
 these steps for you, just like it does for regular downloads.
 
-@subsubsection Snippets
+@subsection Snippets
 
 Snippets are quoted (i.e. non-evaluated) Scheme code that are a means of patching
 the source.  They are a Guix-y alternative to the traditional @file{.patch} files.
@@ -1958,7 +1958,7 @@ for building.  There can be as many snippets as needed.
 Snippets might need additional Guile modules which can be imported from the
 @code{modules} field.
 
-@subsubsection Inputs
+@subsection Inputs
 
 There are 3 different input types.  In short:
 
@@ -2011,7 +2011,7 @@ the style above instead.  @xref{package Reference,,, guix, GNU Guix
 Reference Manual}, for more info.
 @end quotation
 
-@subsubsection Outputs
+@subsection Outputs
 
 Just like how a package can have multiple inputs, it can also produce multiple
 outputs.
@@ -2030,7 +2030,7 @@ It's advised to separate outputs only when you've shown it's worth it: if the
 output size is significant (compare with @code{guix size}) or in case the package is
 modular.
 
-@subsubsection Build system arguments
+@subsection Build system arguments
 
 The @code{arguments} is a keyword-value list used to configure the build process.
 
@@ -2181,14 +2181,14 @@ this:
 
 Its return value is ignored.
 
-@subsubsection Code staging
+@subsection Code staging
 
 The astute reader may have noticed the quasi-quote and comma syntax in the
 argument field.  Indeed, the build code in the package declaration should not be
 evaluated on the client side, but only when passed to the Guix daemon.  This
 mechanism of passing code around two running processes is called @uref{https://arxiv.org/abs/1709.00833, code staging}.
 
-@subsubsection Utility functions
+@subsection Utility functions
 
 When customizing @code{phases}, we often need to write code that mimics the
 equivalent system invocations (@code{make}, @code{mkdir}, @code{cp}, etc.)@: commonly used during
@@ -2231,7 +2231,7 @@ A ``@command{sed}-like'' function.
 @xref{Build Utilities,,, guix, GNU Guix Reference Manual}, for more
 information on these utilities.
 
-@subsubsection Module prefix
+@subsection Module prefix
 
 The license in our last example needs a prefix: this is because of how the
 @code{license} module was imported in the package, as @code{#:use-module ((guix licenses)
@@ -2378,7 +2378,7 @@ convenient to create alternative packages, for instance with different source,
 version or compilation options.
 
 @node Getting help
-@subsection Getting help
+@subsubsection Getting help
 
 Sadly, some applications can be tough to package.  Sometimes they need a patch to
 work with the non-standard file system hierarchy enforced by the store.
@@ -2391,7 +2391,7 @@ issue, don't hesitate to ask the community for help.
 See the @uref{https://guix.gnu.org/contact/, Guix homepage} for information on the mailing lists, IRC, etc.
 
 @node Conclusion
-@subsection Conclusion
+@subsubsection Conclusion
 
 This tutorial was a showcase of the sophisticated package management that Guix
 boasts.  At this point we have mostly restricted this introduction to the
@@ -2412,7 +2412,7 @@ well armed to package lots of programs.  You can get started right away and
 hopefully we will see your contributions soon!
 
 @node References
-@subsection References
+@subsubsection References
 
 @itemize
 @item
