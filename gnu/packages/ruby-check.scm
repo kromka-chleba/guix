@@ -759,6 +759,25 @@ MiniTest @code{Object#stub} with a global @code{stub} method.")
     (home-page "https://github.com/dockyard/minitest-moar")
     (license license:expat)))
 
+(define-public ruby-minitest-stub-any-instance
+  (package
+    (name "ruby-minitest-stub-any-instance")
+    (version "1.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "minitest-stub_any_instance" version))
+       (sha256
+        (base32 "1s30fsg6s0mfr5ipmskf2r90fjia7jnl9b49hy17z0bks6as4g6m"))))
+    (build-system ruby-build-system)
+    (arguments (list #:tests? #f)) ;no rakefile
+    (native-inputs (list bundler ruby-minitest ruby-rake))
+    (synopsis "MiniTest method to add a stub to any class instance")
+    (description "Adds a method to MiniTest that creates a method stub on any
+instance of a class for the duration of a block.")
+    (home-page "https://github.com/codeodor/minitest-stub_any_instance")
+    (license license:expat)))
+
 (define-public ruby-multi-test
   (package
     (name "ruby-multi-test")
