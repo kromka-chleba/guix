@@ -19,11 +19,14 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages fribidi)
+  #:use-module (guix utils)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (guix licenses)
-  #:use-module (gnu packages))
+  #:use-module (gnu packages)
+  #:use-module (gnu packages autotools))
 
 (define-public fribidi
   (package
@@ -39,6 +42,23 @@
         (sha256
          (base32 "159l56c48rfcqa8mnxhnynngzlzmvr089ki7mjrppin8gzwk7lhc"))))
     (build-system gnu-build-system)
+    (native-inputs
+     (if (target-loongarch64?)
+         (list config)
+         '()))
+    (arguments
+     (if (target-loongarch64?)
+         (list #:phases
+               #~(modify-phases %standard-phases
+                   (add-after 'unpack 'update-config
+                     (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                       (for-each (lambda (file)
+                                   (install-file
+                                    (search-input-file
+                                     (or native-inputs inputs)
+                                     (string-append "/bin/" file)) "."))
+                                 '("config.guess" "config.sub"))))))
+         '()))
     (synopsis "Implementation of the Unicode bidirectional algorithm")
     (description
      "GNU FriBidi is an implementation of the Unicode Bidirectional
