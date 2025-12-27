@@ -117,7 +117,7 @@ Packaging
 Packaging Tutorial
 
 * A ``Hello World'' package::
-* Extended example::
+* Extended packaging example::
 * Other build systems::
 * Programmable and automated package definition::
 * Getting help::
@@ -1629,7 +1629,7 @@ basic programming knowledge.
 
 @menu
 * A ``Hello World'' package::
-* Extended example::
+* Extended packaging example::
 * Other build systems::
 * Programmable and automated package definition::
 * Getting help::
@@ -1828,8 +1828,8 @@ We've gone as far as we could without any knowledge of Scheme.  Before moving
 on to more complex packages, now is the right time to brush up on your Scheme
 knowledge.  @xref{A Scheme Crash Course} to get up to speed.
 
-@node Extended example
-@subsection Extended example
+@node Extended packaging example
+@subsection Extended packaging example
 
 The above ``Hello World'' example is as simple as it goes.  Packages can be more
 complex than that and Guix can handle more advanced scenarios.  Let's look at
