@@ -1175,6 +1175,14 @@ the store.")
                                "-i" "C" "-f" "UTF-8"
                                (string-append locale "/C.UTF-8")))))
 
+                 ,@(if (target-loongarch64?)
+                       '((add-after 'unpack 'fix-loongarch64-ldd
+                           (lambda* (#:key inputs #:allow-other-keys)
+                             (let ((patch (assoc-ref inputs
+                                                     "glibc-2.41-ldd-loongarch64")))
+                               (invoke "patch" "--force" "-p1"
+                                       "-i" patch)))))
+                       '())
                  ,@(if (target-hurd?)
                        `((add-after 'install 'augment-libc.so
                            (lambda* (#:key outputs #:allow-other-keys)
@@ -1207,7 +1215,11 @@ the store.")
                     ("bison" ,bison)
                     ("gettext" ,gettext-minimal)
                     ("python" ,python-minimal)
-
+                    ,@(if (target-loongarch64?)
+                          `(("glibc-2.41-ldd-loongarch64"
+                             ,(search-patch
+                               "glibc-2.41-ldd-loongarch64.patch")))
+                          '())
                     ,@(if (target-hurd?)
                           `(("mig" ,mig)
                             ("perl" ,perl))

@@ -1456,6 +1456,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/glibc-2.40-dl-cache.patch		\
   %D%/packages/patches/glibc-2.41-bootstrap-system.patch	\
   %D%/packages/patches/glibc-2.41-hurd-local-clock_gettime_MONOTONIC.patch	\
+  %D%/packages/patches/glibc-2.41-ldd-loongarch64.patch		\
   %D%/packages/patches/glibc-2.41-ldd-x86_64.patch		\
   %D%/packages/patches/glibc-allow-kernel-2.6.32.patch		\
   %D%/packages/patches/glibc-boot-2.2.5.patch			\

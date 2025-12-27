@@ -3045,6 +3045,11 @@ memoized as a function of '%current-system'."
        `(("bison" ,bison-boot0)
          ("texinfo" ,texinfo-boot0)
          ("perl" ,perl-boot0)
+         ,@(if (target-loongarch64?)
+               `(("glibc-2.41-ldd-loongarch64"
+                  ,(search-patch
+                    "glibc-2.41-ldd-loongarch64.patch")))
+               '())
          ("python" ,python-boot0)))
       (inputs
        `( ;; The boot inputs.  That includes the bootstrap libc.  We don't want
@@ -3190,6 +3195,11 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
 
       ;; This time we need 'msgfmt' to install all the libc.mo files.
       (native-inputs `(,@(package-native-inputs glibc-final-with-bootstrap-bash)
+                       ,@(if (target-loongarch64?)
+                             `(("glibc-2.41-ldd-loongarch64"
+                                ,(search-patch
+                                  "glibc-2.41-ldd-loongarch64.patch")))
+                             '())
                        ("gettext" ,gettext-boot0)))
 
       (propagated-inputs

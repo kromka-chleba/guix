@@ -1,0 +1,8 @@
+By default, 'RTDLLIST' in 'ldd' refers to 'lib64/ld-linux-loongarch-lp64d.so.1', whereas
+it's in 'lib/' for us.  This patch fixes that.
+
+--- glibc-2.41/sysdeps/unix/sysv/linux/loongarch/ldd-rewrite.sed
++++ glibc-2.41/sysdeps/unix/sysv/linux/loongarch/ldd-rewrite.sed
+@@ -1,1 +1,1 @@
+-s_^\(RTLDLIST=\)\(.*lib\)\(\|64\|32\)\(/ld-linux-loongarch-\)\(lp\|ilp\)\(64\|32\)\(d\|s\)\(\.so\.[0-9.]*\)[[:blank:]]*$_\1"\264\4lp64d\8 \264\4lp64s\8"_
++s_^\(RTLDLIST=\)\(.*lib\)\(\|64\|32\)\(/ld-linux-loongarch-\)\(lp\|ilp\)\(64\|32\)\(d\|s\)\(\.so\.[0-9.]*\)[[:blank:]]*$_\1"\2\4lp64d\8 \264\4lp64s\8"_
