@@ -25,6 +25,7 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (gnu packages)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages python)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -43,20 +44,35 @@
                 "07ysqgdm0h566a8lwnpdgycp93vz7zskzihsgah3bla0ycj2pp69"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:tests? (not (or (%current-target-system)
+     (append (list #:tests? (not (or (%current-target-system)
                              ;; run_tests.py hangs
-                             (system-hurd?)))
-           #:phases
-           (if (target-arm32?)
-               #~(modify-phases %standard-phases
-                   (add-after 'unpack 'patch-sources
-                     (lambda _
-                       (invoke "patch" "-p1" "--force" "--input"
-                               #$(local-file (search-patch
-                                              "re2c-Use-maximum-alignment.patch"))))))
-               #~%standard-phases)))
+                                     (system-hurd?))))
+             (cond ((target-arm32?)
+                    (list #:phases
+                          #~(modify-phases %standard-phases
+                              (add-after 'unpack 'patch-sources
+                                (lambda _
+                                  (invoke "patch" "-p1" "--force" "--input"
+                                          #$(local-file
+                                             (search-patch
+                                              "re2c-Use-maximum-alignment.patch"))))))))
+                   ((target-loongarch64?)
+                    (list #:phases
+                          #~(modify-phases %standard-phases
+                              (add-after 'unpack 'update-config
+                                (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                                  (for-each (lambda (file)
+                                              (install-file
+                                               (search-input-file
+                                                (or native-inputs inputs)
+                                                (string-append "/bin/" file)) "build-aux"))
+                                            '("config.guess" "config.sub")))))))
+                   (else (list)))))
     (native-inputs
-     (list python))             ; for the test driver
+     (append (if (target-loongarch64?)
+                 (list config)
+                 (list))
+             (list python)))             ; for the test driver
     (home-page "https://re2c.org/")
     (synopsis "Lexer generator for C/C++")
     (description
