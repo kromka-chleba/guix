@@ -498,29 +498,18 @@ network/disk rates.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "182phj3z3mxpbla6m2f0pahyvqfn0jdblprvk6xwx39nc939nw0a"))))
+        (base32 "0i0wwf72ccxiwgmxjnmkkc773gnmaak121fzkdqm5iy48fw4yns3"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'remove-python-six-dependency
-            (lambda _
-              (substitute* (find-files "." "\\.py$")
-                (("'six'") "")          ; dependency in setup.py
-                (("six\\.moves") "io")
-                (("from six import assertRegex") "")
-                (("assertRegex") ""))))))) ; effectively disable test
-    (native-inputs (list python-pytest python-setuptools))
+    (native-inputs (list python-pytest python-setuptools python-six))
     (home-page "https://graphiteapp.org/")
     (synopsis "Fixed size round-robin style database for Graphite")
-    (description "Whisper is one of three components within the Graphite
-project.  Whisper is a fixed-size database, similar in design and purpose to
-RRD (round-robin-database).  It provides fast, reliable storage of numeric
-data over time.  Whisper allows for higher resolution (seconds per point) of
-recent data to degrade into lower resolutions for long-term retention of
-historical data.")
+    (description
+     "Whisper is one of three components within the Graphite project.  Whisper
+is a fixed-size database, similar in design and purpose to RRD
+(round-robin-database).  It provides fast, reliable storage of numeric data
+over time.  Whisper allows for higher resolution (seconds per point) of recent
+data to degrade into lower resolutions for long-term retention of historical
+data.")
     (license license:asl2.0)))
 
 (define-public python-carbon
