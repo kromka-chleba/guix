@@ -195,6 +195,10 @@ Profiles in Practice
 * The benefits of manifests::
 * Reproducible profiles::
 
+Profiles, Environments, Shells
+
+* Environment via direnv::  Setup Guix environment with direnv
+
 Containers
 
 * Guix Containers::             Perfectly isolated environments
@@ -221,10 +225,6 @@ Software Development
 * Setting Up Continuous Integration::  Step 3: continuous integration.
 * Build Manifest::              Bonus: Manifest.
 * Wrapping Up::                 Recap.
-
-Environment management
-
-* Guix environment via direnv::  Setup Guix environment with direnv
 
 Using Guix for Reproducible Research
 
@@ -4577,7 +4577,7 @@ to the usage and configuration of virtual machines on a Guix System.
 
 @menu
 Profiles:
-
+* Environment via direnv::      Automatically enter shells.
 
 Containers:
 * Guix Containers::             Perfectly isolated environments
@@ -4590,6 +4590,122 @@ Virtualization:
 * References: VM References.    Further reading on virtual machines.
 
 @end menu
+
+@node Environment via direnv
+@section Environment via direnv
+
+Guix provides a @samp{direnv} package, which could extend shell after
+directory change.  This tool could be used to prepare a pure Guix
+environment.
+
+The following example provides a shell function for @file{~/.direnvrc}
+file, which could be used from Guix Git repository in
+@file{~/src/guix/.envrc} file to setup a build environment similar to
+described in @pxref{Building from Git,,, guix, GNU Guix Reference
+Manual}.
+
+Create a @file{~/.direnvrc} with a Bash code:
+
+@example
+# Thanks <https://github.com/direnv/direnv/issues/73#issuecomment-152284914>
+export_function()
+@{
+  local name=$1
+  local alias_dir=$PWD/.direnv/aliases
+  mkdir -p "$alias_dir"
+  PATH_add "$alias_dir"
+  local target="$alias_dir/$name"
+  if declare -f "$name" >/dev/null; then
+    echo "#!$SHELL" > "$target"
+    declare -f "$name" >> "$target" 2>/dev/null
+    # Notice that we add shell variables to the function trigger.
+    echo "$name \$*" >> "$target"
+    chmod +x "$target"
+  fi
+@}
+
+use_guix()
+@{
+    # Set GitHub token.
+    export GUIX_GITHUB_TOKEN="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+    # Unset 'GUIX_PACKAGE_PATH'.
+    export GUIX_PACKAGE_PATH=""
+
+    # Recreate a garbage collector root.
+    gcroots="$HOME/.config/guix/gcroots"
+    mkdir -p "$gcroots"
+    gcroot="$gcroots/guix"
+    if [ -L "$gcroot" ]
+    then
+        rm -v "$gcroot"
+    fi
+
+    # Miscellaneous packages.
+    PACKAGES_MAINTENANCE=(
+        direnv
+        git
+        git:send-email
+        git-cal
+        gnupg
+        guile-colorized
+        guile-readline
+        less
+        ncurses
+        openssh
+        xdot
+    )
+
+    # Environment packages.
+    PACKAGES=(help2man guile-sqlite3 guile-gcrypt)
+
+    # Thanks <https://lists.gnu.org/archive/html/guix-devel/2016-09/msg00859.html>
+    eval "$(guix shell --search-paths --root="$gcroot" --pure \
+     --development guix $@{PACKAGES[@@]@} $@{PACKAGES_MAINTENANCE[@@]@} "$@@")"
+
+    # Predefine configure flags.
+    configure()
+    @{
+        ./configure
+    @}
+    export_function configure
+
+    # Run make and optionally build something.
+    build()
+    @{
+        make -j 2
+        if [ $# -gt 0 ]
+        then
+            ./pre-inst-env guix build "$@@"
+        fi
+    @}
+    export_function build
+
+    # Predefine push Git command.
+    push()
+    @{
+        git push --set-upstream origin
+    @}
+    export_function push
+
+    clear                        # Clean up the screen.
+    git-cal --author='Your Name' # Show contributions calendar.
+
+    # Show commands help.
+    echo "
+build          build a package or just a project if no argument provided
+configure      run ./configure with predefined parameters
+push           push to upstream Git repository
+"
+@}
+@end example
+
+Every project containing @file{.envrc} with a string @code{use guix}
+will have predefined environment variables and procedures.
+
+Run @command{direnv allow} to setup the environment for the first time.
+
+
 
 @node Guix Containers
 @section Guix Containers
@@ -4614,6 +4730,8 @@ even the GNU coreutils are available here, so to explore this deserted
 wasteland you need to use built-in shell commands.  Even the usually
 gigantic @file{/gnu/store} directory is reduced to a faint shadow of
 itself.
+Every project containing @file{.envrc} with a string @code{use guix}
+will have predefined environment variables and procedures.
 
 @example sh
 $ echo /gnu/store/*
@@ -6374,132 +6492,6 @@ Deb/RPM packages (@command{guix pack}).
 This a nice (in our view!) unified tool set for reproducible software
 deployment, and an illustration of how you as a developer can benefit
 from it!
-
-
-@c *********************************************************************
-@node Environment management
-@chapter Environment management
-
-Guix provides multiple tools to manage environment.  This chapter
-demonstrate such utilities.
-
-@menu
-* Guix environment via direnv::  Setup Guix environment with direnv
-@end menu
-
-@node Guix environment via direnv
-@section Guix environment via direnv
-
-Guix provides a @samp{direnv} package, which could extend shell after
-directory change.  This tool could be used to prepare a pure Guix
-environment.
-
-The following example provides a shell function for @file{~/.direnvrc}
-file, which could be used from Guix Git repository in
-@file{~/src/guix/.envrc} file to setup a build environment similar to
-described in @pxref{Building from Git,,, guix, GNU Guix Reference
-Manual}.
-
-Create a @file{~/.direnvrc} with a Bash code:
-
-@example
-# Thanks <https://github.com/direnv/direnv/issues/73#issuecomment-152284914>
-export_function()
-@{
-  local name=$1
-  local alias_dir=$PWD/.direnv/aliases
-  mkdir -p "$alias_dir"
-  PATH_add "$alias_dir"
-  local target="$alias_dir/$name"
-  if declare -f "$name" >/dev/null; then
-    echo "#!$SHELL" > "$target"
-    declare -f "$name" >> "$target" 2>/dev/null
-    # Notice that we add shell variables to the function trigger.
-    echo "$name \$*" >> "$target"
-    chmod +x "$target"
-  fi
-@}
-
-use_guix()
-@{
-    # Set GitHub token.
-    export GUIX_GITHUB_TOKEN="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-    # Unset 'GUIX_PACKAGE_PATH'.
-    export GUIX_PACKAGE_PATH=""
-
-    # Recreate a garbage collector root.
-    gcroots="$HOME/.config/guix/gcroots"
-    mkdir -p "$gcroots"
-    gcroot="$gcroots/guix"
-    if [ -L "$gcroot" ]
-    then
-        rm -v "$gcroot"
-    fi
-
-    # Miscellaneous packages.
-    PACKAGES_MAINTENANCE=(
-        direnv
-        git
-        git:send-email
-        git-cal
-        gnupg
-        guile-colorized
-        guile-readline
-        less
-        ncurses
-        openssh
-        xdot
-    )
-
-    # Environment packages.
-    PACKAGES=(help2man guile-sqlite3 guile-gcrypt)
-
-    # Thanks <https://lists.gnu.org/archive/html/guix-devel/2016-09/msg00859.html>
-    eval "$(guix shell --search-paths --root="$gcroot" --pure \
-     --development guix $@{PACKAGES[@@]@} $@{PACKAGES_MAINTENANCE[@@]@} "$@@")"
-
-    # Predefine configure flags.
-    configure()
-    @{
-        ./configure
-    @}
-    export_function configure
-
-    # Run make and optionally build something.
-    build()
-    @{
-        make -j 2
-        if [ $# -gt 0 ]
-        then
-            ./pre-inst-env guix build "$@@"
-        fi
-    @}
-    export_function build
-
-    # Predefine push Git command.
-    push()
-    @{
-        git push --set-upstream origin
-    @}
-    export_function push
-
-    clear                        # Clean up the screen.
-    git-cal --author='Your Name' # Show contributions calendar.
-
-    # Show commands help.
-    echo "
-build          build a package or just a project if no argument provided
-configure      run ./configure with predefined parameters
-push           push to upstream Git repository
-"
-@}
-@end example
-
-Every project containing @file{.envrc} with a string @code{use guix}
-will have predefined environment variables and procedures.
-
-Run @command{direnv allow} to setup the environment for the first time.
 
 
 @c *********************************************************************
