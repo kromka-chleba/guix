@@ -4545,6 +4545,9 @@ system, using something like:
 @c *********************************************************************
 @node Reproducible environments
 @chapter Reproducible environments
+@cindex reproducible environments
+@cindex environments
+@cindex envs
 
 The kernel Linux provides a number of shared facilities that are
 available to processes in the system.  These facilities include a shared
