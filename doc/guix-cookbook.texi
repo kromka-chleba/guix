@@ -2245,15 +2245,15 @@ from @samp{compression.scm} (a @emph{package} value).
 @node Other build systems
 @subsection Other build systems
 
-What we've seen so far covers the majority of packages using a build system
-other than the @code{trivial-build-system}.  The latter does not automate anything
-and leaves you to build everything manually.  This can be more demanding and we
-won't cover it here for now, but thankfully it is rarely necessary to fall back
-on this system.
+What we've seen so far covers the majority of packages using a build
+system other than the @code{trivial-build-system}.  The latter does not
+automate anything and leaves you to build everything manually.  This can
+be more demanding and we won't cover it here for now, but thankfully it
+is rarely necessary to fall back on this system.
 
-For the other build systems, such as ASDF, Emacs, Perl, Ruby and many more, the
-process is very similar to the GNU build system except for a few specialized
-arguments.
+For the other build systems, such as ASDF, Emacs, Perl, Ruby and many
+more, the process is very similar to the GNU build system except for a
+few specialized arguments.
 
 @xref{Build Systems,,, guix, GNU Guix Reference Manual}, for more
 information on build systems, or check the source code in the
