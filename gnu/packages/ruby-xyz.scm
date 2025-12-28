@@ -3035,7 +3035,7 @@ generating XPath expressions.")
 (define-public ruby-thor
   (package
     (name "ruby-thor")
-    (version "1.2.2")
+    (version "1.4.0")
     (source (origin
               ;; Pull from git because the gem has no tests.
               (method git-fetch)
@@ -3045,7 +3045,7 @@ generating XPath expressions.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1k3z2mlhaig5ycapjxwybb19z7ca0q1876i6csfmv2j0hf1hnc0z"))))
+                "0plh59ylrhn7kw2qm5m7kdjd9pwhdcsykymg19yzb1vr07j385ni"))))
     (build-system ruby-build-system)
     (arguments
      (list
