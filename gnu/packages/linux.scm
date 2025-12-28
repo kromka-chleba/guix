@@ -1169,7 +1169,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      linux-libre-6.17-gnu-revision
                      linux-libre-6.17-source
                      '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux" "loongarch64-linux")
                      #:configuration-file kernel-config))
 
 (define-public linux-libre-version         linux-libre-6.17-version)
@@ -1183,7 +1183,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      linux-libre-6.12-gnu-revision
                      linux-libre-6.12-source
                      '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux" "loongarch64-linux")
                      #:configuration-file kernel-config))
 
 (define-public linux-libre-6.6
@@ -1191,7 +1191,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      linux-libre-6.6-gnu-revision
                      linux-libre-6.6-source
                      '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux" "loongarch64-linux")
                      #:configuration-file kernel-config))
 
 (define-public linux-libre-6.1
@@ -1199,7 +1199,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      linux-libre-6.1-gnu-revision
                      linux-libre-6.1-source
                      '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux" "loongarch64-linux")
                      #:configuration-file kernel-config))
 
 (define-public linux-libre-5.15
