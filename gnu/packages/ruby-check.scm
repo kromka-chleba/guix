@@ -57,7 +57,8 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages ruby))
+  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-xyz))
 
 ;;; Commentary:
 ;;;
