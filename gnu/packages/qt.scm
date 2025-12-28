@@ -3875,9 +3875,9 @@ web-vitals"                             ;ASL2.0
                     "third_party/libsrtp"
                     "third_party/libsync"
                     "third_party/liburlpattern"
-                    "third_party/libva_protected_content"
+                    "third_party/libva_protected_content" ;Expat
                     "third_party/libvpx"
-                    "third_party/libvpx/source/libvpx/third_party/x86inc"
+                    "third_party/libvpx/source/libvpx/third_party/x86inc" ;Expat
                     "third_party/libwebm"
                     "third_party/libwebp"
                     "third_party/libx11"
@@ -4058,9 +4058,9 @@ linux/libcurl_wrapper.h"
               ;; done by ffmpeg.
               "-DQT_FEATURE_webengine_proprietary_codecs=ON"
 
-              #$@(if (string-prefix? "x86_64" (or (%current-target-system)
-                                                  (%current-system)))
-                     '("-DQT_FEATURE_webengine_vaapi=ON"))
+              #$@(if (target-x86-64?)
+                     #~("-DQT_FEATURE_webengine_vaapi=ON")
+                     #~())
 
               ;; Use system libraries where possible (see src/core/CMakeLists.txt).
               "-DQT_FEATURE_webengine_system_alsa=ON"
@@ -4172,6 +4172,7 @@ linux/libcurl_wrapper.h"
            libevent
            libgcrypt
            libjpeg-turbo
+           libva
            libvpx
            libwebp
            libx11
@@ -4202,7 +4203,6 @@ linux/libcurl_wrapper.h"
            snappy
            valgrind/pinned
            vulkan-headers
-           libva
            xcb-util
            xkeyboard-config))
     (propagated-inputs
