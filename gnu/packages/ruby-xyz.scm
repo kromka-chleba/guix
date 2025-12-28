@@ -10432,6 +10432,36 @@ engine.")
      "https://github.com/sparklemotion/sqlite3-ruby")
     (license license:bsd-3)))
 
+(define-public ruby-sqlite3-1
+  (package/inherit ruby-sqlite3
+    (name "ruby-sqlite3")
+    (version "1.7.3")
+    (source
+     (origin
+       (method git-fetch)        ;for tests
+       (uri (git-reference
+             (url "https://github.com/sparklemotion/sqlite3-ruby")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1iy5lsxf6w4qrksk1rncv9nfkf4sifvzsv68x1bm9dl5a7r68iaa"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments ruby-sqlite3)
+       ((#:tests? #t #t) #f)
+       ((#:gem-flags _ #f)
+        ''("--"
+           "--enable-system-libraries"
+           "--with-cflags=-Wno-error=incompatible-pointer-types -Wno-error=int-conversion"))
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (delete 'relax-requirements)
+            (add-after 'unpack 'fix-version
+              (lambda _
+                (substitute* "sqlite3.gemspec"
+                  (("s\\.version = .*")
+                   (format #f "s.version = ~s~%" #$version)))))))))))
+
 (define-public ruby-sqlite3-1.4
   (package/inherit ruby-sqlite3
     (name "ruby-sqlite3")
