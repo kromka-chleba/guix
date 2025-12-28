@@ -8,6 +8,7 @@
 ;;; Copyright © 2022 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Jelle Licht <jlicht@fsfe.org>
 ;;; Copyright © 2024 Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
+;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -574,6 +575,42 @@ allows you to easily use colored output and formatting in IRC bots.
 It contains functions for colours as well as more complex formatting
 such as rainbows.")
     (license license:expat)))
+
+(define-public node-jsfxr
+  (package
+    (name "node-jsfxr")
+    (home-page "https://github.com/chr15m/jsfxr")
+    (properties '((commit . "60030c1ecb65a0c55f7cc6495202416f172a1088")
+                  (revision . "0")))
+    (version (git-version "1.3.0"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (assoc-ref properties 'commit))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wcnkic4zb28d65q4qvp7mgqfcma28pbri8bzz98d2b0mj3ldr3p"))))
+    (build-system node-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'patch-dependencies 'delete-dev-dependencies
+            (lambda _
+              (modify-json (delete-dependencies '("@playwright/test"
+                                                  "live-server" "tape"))))))))
+    (synopsis "Game sound effects generator")
+    (description
+     "The jsfxr library can be used to generate game sound effects using a preset
+algorithm or to recreate them from existing sound definitions.  This package
+also provides a command line utility for creating wav files from sound
+definitions and a web interface.")
+    (license license:unlicense)))
 
 (define-public node-long-stack-traces
   (package
