@@ -5907,6 +5907,25 @@ core tasks.")
     (home-page "https://github.com/collectiveidea/delayed_job")
     (license license:expat)))
 
+(define-public ruby-descendants-tracker
+  (package
+    (name "ruby-descendants-tracker")
+    (version "0.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "descendants_tracker" version))
+       (sha256
+        (base32 "15q8g3fcqyb41qixn6cky0k3p86291y7xsh1jfd851dvrza1vi79"))))
+    (build-system ruby-build-system)
+    (arguments (list #:tests? #f))  ;requires convoluted ruby-devtools.
+    (native-inputs (list bundler ruby-rake ruby-rspec ruby-rspec-core ruby-yard))
+    (propagated-inputs (list ruby-thread-safe))
+    (synopsis "Track descendants of a class")
+    (description "Small module to track descendants in an unobtrusive way.")
+    (home-page "https://github.com/dkubb/descendants_tracker")
+    (license license:expat)))
+
 (define-public ruby-git
   (package
     (name "ruby-git")
