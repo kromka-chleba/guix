@@ -5141,7 +5141,7 @@ pkg_search_module(game-music-emu REQUIRED libgme)")
                  "find_package(FluidSynth REQUIRED)")))
             (substitute* (find-files "source" "\\.(h|cpp)")
               (("include \".+fluidsynth.h\"")
-               "include \"fluidsynth.h\""))))))
+               "include <fluidsynth.h>"))))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))
     (inputs (list fluidsynth glib libgme))
@@ -5151,6 +5151,65 @@ pkg_search_module(game-music-emu REQUIRED libgme)")
     (description "ZMusic is a standalone library implementing the music
 system for UZDoom and other Doom-related projects.")
     (license license:gpl3)))
+
+(define-public uzdoom
+  (package
+    (name "uzdoom")
+    (version "4.14.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/UZDoom/UZDoom")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1czk3w3n27085gr783b76jipz7vr1p34kfi6ilxnjwrixfiagk5w"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (for-each delete-file-recursively
+                      '("bin" "unused"  ;Self-explanatory.
+                        "libraries/bzip2" "libraries/miniz" ;De-vendored.
+                        "wadsrc_widepix")) ;Non-commercial license.
+            (substitute* "CMakeLists.txt"
+              (("add_subdirectory\\( libraries/miniz \\)")
+               "find_package(miniz REQUIRED)")
+              (("add_subdirectory\\( wadsrc_widepix \\)") ""))
+            (substitute* (find-files "." ".*\\.(c(pp)?|h)")
+              (("miniz.h") "miniz/miniz.h"))
+            ;; Guix doesn't use these paths, swap for more useful ones.
+            ;; This lets UZDoom find its resources without embedding its store
+            ;; path into the user's config file.
+            (substitute* "src/gameconfigfile.cpp"
+              (("/usr/local/share") "$GUIX_ENVIRONMENT/share")
+              (("/usr/share") "$HOME/.guix-profile/share"))
+            ;; Embed correct version.
+            (substitute* "tools/updaterevision/gitinfo.h.in"
+              (("@Tag@") (string-append #$version "-guix")))))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f                       ;No tests.
+           #:configure-flags
+           #~(list "-DDYN_OPENAL=OFF"
+                   "-DFORCE_CROSSCOMPILE=OFF"
+                   ;; This doesn't do anything yet, see CMakeLists.txt:230.
+                   ;; asmjit is tailored.
+                   "-DFORCE_INTERNAL_ASMJIT=OFF")))
+    (inputs (list bzip2 libomp libvpx miniz openal sdl2 zmusic))
+    (native-inputs (list pkg-config python))
+    (home-page "https://zdoom.org/")
+    (synopsis "Doom source port with advanced rendering and scripting")
+    (description "UZDoom is a ``modder-friendly'' Doom source port with
+advanced rendering and scripting features, derived from GZDoom and ZDoom.")
+    (license (list license:apsl2       ;zvulkan/vulkan
+                   license:bsd-0       ;zvulkan/src/{vk_mem_alloc,volk},
+                                       ;discordrpc
+                   license:bsd-3       ;zvulkan{,/src/glslang}, zwidget, sfmt,
+                                       ;utf8proc, zscript
+                   license:cc-by-sa4.0 ;branding
+                   license:expat       ;utf8proc_data.c
+                   license:gpl3+))))   ;base license
 
 (define-public gnujump
   (package
