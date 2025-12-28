@@ -226,6 +226,7 @@
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages haskell)
   #:use-module (gnu packages haskell-apps)
+  #:use-module (gnu packages hunspell)
   #:use-module (gnu packages ibus)
   #:use-module (gnu packages idris)
   #:use-module (gnu packages java)
@@ -249,6 +250,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
   #:use-module (gnu packages image-viewers)
+  #:use-module (gnu packages libreoffice)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages libevent)
@@ -20641,6 +20643,171 @@ passive voice.")
        "This library publishes Org mode files as posts to any instance of the
 federated blogging platform WriteFreely.")
       (license license:gpl3+))))
+
+(define-public emacs-writing-studio
+  ;; There are no tags or releases.
+  (let ((commit "6d3887cf9ec9093b871c07483bf579e873b2c443")
+        (revision "0"))
+    (package
+      (name "emacs-writing-studio")
+      (version (git-version "1.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/pprevos/emacs-writing-studio")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1fmhkg1a8myqzhxbax1g5hh0xdky3aibsjyiavrrkpk00g0ff0rh"))))
+      (build-system emacs-build-system)
+      (outputs '("out" "doc"))
+      (arguments
+       (list
+        #:emacs emacs                   ;for libxml
+        #:include #~(cons* "emacs-writing-studio.png" %default-include)
+        #:tests? #false ;no tests
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-init
+              (lambda _
+                (emacs-batch-edit-file "init.el"
+                  '(progn
+                    (dolist
+                     (l (list "use-package package"
+                              "use-package use-package"))
+                     (re-search-forward l)
+                     (beginning-of-line)
+                     (kill-sexp))
+                    (basic-save-buffer)))))
+            (add-after 'unpack 'set-dict
+              (lambda _
+                (substitute* "ews.el"
+                  (("en_AU") "en_GB-ise"))))
+            (add-after 'unpack 'disable-citeproc
+              (lambda _
+                (substitute* "documents/00-emacs-writing-studio.org"
+                  ((".*cite_export.*") ""))))
+            (add-after 'install 'build-doc
+              (lambda* (#:key inputs #:allow-other-keys)
+                (invoke (%emacs) "--batch"
+                        "--init-directory=."
+                        "--load=init.el"
+                        "--visit=documents/00-emacs-writing-studio.org"
+                        "--eval=(setq org-confirm-babel-evaluate nil)"
+                        "--eval=(org-latex-export-to-pdf)")))
+            (add-before 'build-doc 'set-envs
+              (lambda _
+                (setenv "HOME" (getenv  "TMPDIR"))))
+            (add-after 'build-doc 'install-doc
+              (lambda _
+                (with-directory-excursion "documents"
+                  (rename-file "00-emacs-writing-studio.pdf"
+                               "emacs-writing-studio.pdf")
+                  (for-each
+                   (lambda (f)
+                     (install-file
+                      f (string-append #$output:doc "/share/doc/"
+                                       #$(package-name this-package) "-"
+                                       #$(package-version this-package))))
+                   (list "emacs-writing-studio.pdf"
+                         "emacs-writing-studio.bib"
+                         "org-demo.org"
+                         "template.odt"))))))))
+      (propagated-inputs
+       (list emacs-balanced-windows
+             emacs-biblio
+             emacs-citar
+             emacs-citar-denote
+             emacs-citeproc
+             emacs-consult
+             emacs-consult-notes
+             emacs-denote-explore
+             emacs-denote-journal
+             emacs-denote-org
+             emacs-denote-sequence
+             emacs-ef-themes
+             emacs-elfeed-org
+             emacs-emms
+             emacs-fountain-mode
+             emacs-helpful
+             emacs-lorem-ipsum
+             emacs-marginalia
+             emacs-markdown-mode
+             emacs-mixed-pitch
+             emacs-modus-themes
+             emacs-nov-el
+             emacs-olivetti
+             emacs-openwith
+             emacs-orderless
+             emacs-org-appear
+             emacs-org-fragtog
+             emacs-org-modern
+             emacs-org-web-tools
+             emacs-ox-epub
+             emacs-spacious-padding
+             emacs-titlecase
+             emacs-vertico
+             emacs-vundo
+             emacs-writegood-mode
+             ;; Executables
+             coreutils
+             curl
+             djvulibre
+             ghostscript
+             git
+             graphviz
+             grep
+             hunspell
+             hunspell-dict-en-gb
+             imagemagick
+             libreoffice
+             mpg321
+             mplayer
+             mpv
+             poppler
+             ripgrep
+             texlive-dvipng-bin
+             texlive-latex-bin
+             vlc
+             which
+             (@ (gnu packages compression) zip)))
+      (native-inputs
+       (list (texlive-local-tree
+              (list
+               texlive-baskervaldx
+               texlive-bibtex
+               texlive-capt-of
+               texlive-caption
+               texlive-catchfile
+               texlive-ccicons
+               texlive-cite
+               texlive-collection-fontsrecommended
+               texlive-collection-latex
+               texlive-collection-latexrecommended
+               texlive-ebgaramond
+               texlive-etex
+               texlive-fontaxes
+               texlive-memoir
+               texlive-scheme-basic
+               texlive-scripts
+               texlive-soul
+               texlive-svg
+               texlive-svg-inkscape
+               texlive-transparent
+               texlive-ulem
+               texlive-wrapfig))))
+      (home-page "https://lucidmanager.org/tags/emacs/")
+      (synopsis "Emacs configuration toolkit for writers")
+      (description "@acronym{EWS, Emacs Writing Studio} is an Emacs
+configuration kit and a comprehensive manual for writers seeking an integrated
+research, writing, and publication tool.  The manual discusses everything from
+researching and organising ideas and writing without distractions to
+publishing in multiple formats.")
+      (license license:gpl3+)
+      (properties
+       `((output-synopsis "out" "Emacs environment toolkit")
+         (output-synopsis "doc" "Documentation manual"))))))
 
 (define-public emacs-neotree
   (package
