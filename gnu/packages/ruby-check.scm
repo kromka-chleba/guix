@@ -831,13 +831,13 @@ packaging native C and Java extensions in Ruby.")
 (define-public ruby-rake-compiler-dock
   (package
     (name "ruby-rake-compiler-dock")
-    (version "1.3.0")
+    (version "1.11.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "rake-compiler-dock" version))
               (sha256
                (base32
-                "0yr5f72irvhmnk12q7bbr4qw0xwy7diqkbcvb4lygjbg7rvk3k8k"))))
+                "02lfhapm29bf2ni9dj1k9lxhfg5318zq7wkpvfk4n7riqgbdwd4j"))))
     (build-system ruby-build-system)
     (arguments (list #:tests? #f))      ;test suite requires docker
     (synopsis "Cross compiler environment for building Ruby gems")
