@@ -15519,6 +15519,54 @@ and social networks to better index and display your site's content.")
     "https://github.com/jekyll/jekyll-seo-tag")
    (license license:expat)))
 
+(define-public ruby-jeweler
+  (package
+    (name "ruby-jeweler")
+    (version "2.3.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "jeweler" version))
+       (sha256
+        (base32 "0jbivh9vf9wm91kwjnlcvswqyk2g24bnxj9gavinx9jh4bphagi5"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:tests? #f ;tests require gems not in guix
+      #:test-target "spec"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'extract-gemspec 'relax-dependencies
+            (lambda _
+              (substitute* "Gemfile" (("~>") ">="))
+              (substitute* "jeweler.gemspec" (("~>") ">="))))
+          (add-after 'relax-dependencies 'remove-Gemfile.lock
+            (lambda _
+              (copy-file "Gemfile" "Gemfile.lock"))))))
+    (native-inputs (list ruby-bluecloth
+                         ruby-cucumber
+                         ruby-simplecov
+                         ruby-yard))
+    (propagated-inputs (list bundler
+                             ruby-builder
+                             ruby-git
+                             ruby-github-api
+                             ruby-highline
+                             ruby-nokogiri
+                             ruby-psych
+                             ruby-rake
+                             ruby-rdoc
+                             ruby-semver2))
+    (synopsis "Opinionated tool for creating and managing Rubygem projects")
+    (description
+     "Jeweler provides the noble ruby developer with two primary features:
+@itemize @bullet
+@item a library for managing and releasing RubyGem projects
+@item a scaffold generator for starting new RubyGem projects
+@end itemize")
+    (home-page "https://github.com/technicalpickles/jeweler")
+    (license license:expat)))
+
 (define-public ruby-taskjuggler
   (package
     (name "ruby-taskjuggler")
