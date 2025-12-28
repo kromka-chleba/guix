@@ -10370,7 +10370,7 @@ methods for copying, moving, removing, etc.")
 (define-public ruby-sqlite3
   (package
     (name "ruby-sqlite3")
-    (version "2.5.0")
+    (version "2.9.0")
     (source
      (origin
        (method git-fetch)        ;for tests
@@ -10380,7 +10380,7 @@ methods for copying, moving, removing, etc.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1fanv7bv5lszd5g752yy8nmpjhrl9gqwbbkbis2xbh83y96f2zfm"))))
+         "0j09zlhp264yqyablz7jjrd428rcl1xxk48b34kv804qacwhf8dd"))))
     (build-system ruby-build-system)
     (arguments
      (list
