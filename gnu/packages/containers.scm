@@ -580,12 +580,13 @@ Its main purpose is to support the key usage by @code{docker-init}:
        (lint-hidden-cve . ("CVE-2022-2989"))))
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/containers/podman/archive/refs/tags/v"
-                           version
-                           ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containers/podman")
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "0vycay1f16k537mzrdfx3cvakml8y77k0ynjqk611x0v1pwi4k60"))))
+        (base32 "16lb58r8vkngics6fn1b3six8bl3nrl9awrnq6ivdv1grfgy9z61"))
+       (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
      (list
