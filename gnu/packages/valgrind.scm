@@ -87,7 +87,7 @@ management and threading bugs, and profile your programs in detail.  You can
 also use Valgrind to build new tools.")
     ;; https://valgrind.org/info/platforms.html
     (supported-systems (fold delete %supported-systems
-                             '("i586-gnu" "x86_64-gnu" "armhf-linux")))
+                             '("i586-gnu" "x86_64-gnu" "armhf-linux" "loongarch64-linux")))
     (license gpl2+)
 
     ;; Hide this variant so end users get the "interactive" Valgrind below.
