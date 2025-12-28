@@ -27,6 +27,7 @@
 
 (define-module (gnu packages pcre)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages)
@@ -53,6 +54,9 @@
                "bin"          ;depends on Readline (adds 20MiB to the closure)
                "doc"          ;1.8 MiB of HTML
                "static"))     ;1.8 MiB static libraries
+    (native-inputs (if (target-loongarch64?)
+                       (list config)
+                       (list)))
     (inputs (list bzip2 readline zlib))
     (arguments
      (list
@@ -64,12 +68,23 @@
                             "--enable-unicode-properties"
                             "--enable-pcre16"
                             "--enable-pcre32"
-                            ;; riscv64-linux is an unsupported architecture.
-                            #$@(if (target-riscv64?)
+                            ;; riscv64-linux/loongarch64-linux is an unsupported architecture.
+                            #$@(if (or (target-riscv64?)
+                                       (target-loongarch64?))
                                    #~()
                                    #~("--enable-jit")))
       #:phases
       #~(modify-phases %standard-phases
+          #$@(if (target-loongarch64?)
+                 #~((add-after 'unpack 'update-config
+                      (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                        (for-each (lambda (file)
+                                    (install-file
+                                     (search-input-file
+                                      (or native-inputs inputs)
+                                      (string-append "/bin/" file)) "."))
+                                  '("config.guess" "config.sub")))))
+                 #~())
           (add-after 'install 'move-static-libs
             (lambda _
               (let ((source (string-append #$output "/lib"))
