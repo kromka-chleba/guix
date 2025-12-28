@@ -1958,14 +1958,17 @@ is hereby granted."))))
                 "0arl61ici38ann5xjidwdzkhmjdp1r95x4x4zinnh4qs2fhjdvfk"))))
     (build-system cmake-build-system)
     (native-inputs
-     (list nasm))
+     (if (target-loongarch64?)
+         (list)
+         (list nasm)))
     (arguments
      (list #:configure-flags
            #~'("-DCMAKE_INSTALL_LIBDIR:PATH=lib"
                "-DENABLE_STATIC=0"
                ;; djpeg-shared-3x2-float-prog-cmp fails on some systems.
                #$@(if (or (target-ppc32?)
-                          (target-riscv64?))
+                          (target-riscv64?)
+                          (target-loongarch64?))
                       '("-DFLOATTEST=NO")
                       '())
                ;; The build system probes for the current CPU, but
