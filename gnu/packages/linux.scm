@@ -5432,6 +5432,16 @@ to use Linux' inotify mechanism, which allows file accesses to be monitored.")
                                      "--disable-test-modules")
            #:phases
            #~(modify-phases %standard-phases
+               #$@(if (target-loongarch64?)
+                      #~((add-after 'unpack 'update-config
+                           (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                             (for-each (lambda (file)
+                                         (install-file
+                                          (search-input-file
+                                           (or native-inputs inputs)
+                                           (string-append "/bin/" file)) "build-aux"))
+                                       '("config.guess" "config.sub")))))
+                      #~())
                (add-after 'unpack 'disable-tests
                  (lambda _
                    ;; XXX: These tests need '--sysconfdir=/etc' to pass.
@@ -5446,7 +5456,10 @@ to use Linux' inotify mechanism, which allows file accesses to be monitored.")
                                         (string-append #$output "/bin/" tool)))
                              '("insmod" "rmmod" "lsmod" "modprobe"
                                "modinfo" "depmod")))))))
-    (native-inputs (list pkg-config zstd)) ;zstd needed for tests
+    (native-inputs (append (if (target-loongarch64?)
+                               (list config)
+                               (list))
+                           (list pkg-config zstd))) ;zstd needed for tests
     (inputs (list xz zlib `(,zstd "lib")))
     (supported-systems (remove target-hurd? %supported-systems))
     (home-page "https://www.kernel.org/")
