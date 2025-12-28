@@ -812,16 +812,16 @@ in standard Ruby syntax.")
 (define-public ruby-rake-compiler
   (package
     (name "ruby-rake-compiler")
-    (version "1.2.9")
+    (version "1.3.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "rake-compiler" version))
               (sha256
                (base32
-                "01rnl94p1sr84xkbnh66db42qsndykbfx2z2fggxyxx9vnji6cjs"))))
+                "02k77mbi3g84hmsvcg9n0mp1g1c6nndpkvk3apfkvmz2nq91cdbb"))))
     (build-system ruby-build-system)
     (arguments
-     '(#:tests? #f)) ; needs cucumber
+     '(#:tests? #f)) ; cyclic dependency with cucumber
     (synopsis "Building and packaging helper for Ruby native extensions")
     (description "Rake-compiler provides a framework for building and
 packaging native C and Java extensions in Ruby.")
