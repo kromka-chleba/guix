@@ -36,6 +36,7 @@
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2024 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
+;;; Copyright © 2025 Laura Kirsch <laurakirsch240406@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5271,6 +5272,38 @@ different kinds of sliders, and much more.")
     (license:non-copyleft "http://qwt.sourceforge.net/qwtlicense.html")
     ;; textengines/mathml/qwt_mml_document.{cpp,h} is dual LGPL2.1/GPL3 (either).
     license:lgpl2.1 license:gpl3))))
+
+(define-public jkqtplotter
+  (package
+    (name "jkqtplotter")
+    (version "5.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jkriege2/JKQtPlotter")
+             (commit "v5.0.0-beta1")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wz3n3y18hrg9iwfqjbzfnjn91p82hbwdwb8firvyqhbbqd1kfbw"))))
+    (build-system cmake-build-system)
+    (inputs (list qtbase qtsvg))
+    (arguments
+     (list
+      #:tests? #f ;has no working tests
+      #:build-type "Release"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'delete-broken-binaries
+            (lambda _
+              (delete-file-recursively (string-append #$output "/bin")))))))
+    (home-page "https://jkriege2.github.io/JKQtPlotter/index.html")
+    (synopsis "Qt Plotting Library")
+    (description
+     "An extensive Qt Plotter framework (including a feature-rich plotter widget,
+a speed-optimized, but limited variant and a LaTeX equation renderer),
+written fully in C/C++ and without external dependencies.")
+    (license license:lgpl2.1+)))
 
 (define-public dotherside
   (package
