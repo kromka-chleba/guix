@@ -262,13 +262,13 @@ hosts by wrapping the @file{rsync} binary.")
 (define-public ruby-i18n
   (package
     (name "ruby-i18n")
-    (version "1.13.0")
+    (version "1.14.8")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "i18n" version))
               (sha256
                (base32
-                "1yk33slipi3i1kydzrrchbi7cgisaxym6pgwlzx7ir8vjk6wl90x"))))
+                "1994i044vdmzzkyr76g8rpl1fq1532wf0sb21xg5r1ilj5iphmr8"))))
     (build-system ruby-build-system)
     (arguments
      '(#:tests? #f)) ; no tests
