@@ -16080,6 +16080,33 @@ provides the Ruby bindings of Selenium.")
     (home-page "https://www.selenium.dev/")
     (license license:asl2.0)))
 
+(define-public ruby-semver2
+  (package
+    (name "ruby-semver2")
+    (version "3.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "semver2" version))
+       (sha256
+        (base32 "1g7w95kckdz00pi3yrvl6ymbnl5dvxcmfb4kkkp888jcq4fawdvg"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "rspec" "spec")))))))
+    (native-inputs (list ruby-rake ruby-rspec ruby-rubocop))
+    (home-page "https://github.com/haf/semver")
+    (synopsis "Command line util & ruby module for managing semantic versions")
+    (description
+     "Simple command line utility & ruby module for managing versions
+according to @url{http://semver.org}.")
+    (license license:expat)))
+
 (define-public ruby-sentry-core
   (package
     (name "ruby-sentry-core")
