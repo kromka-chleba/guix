@@ -5960,6 +5960,39 @@ and manipulate Git repositories by wrapping system calls to the git binary.")
     (home-page "https://github.com/schacon/ruby-git")
     (license license:expat)))
 
+(define-public ruby-github-api
+  (package
+    (name "ruby-github-api")
+    (version "0.19.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "github_api" version))
+       (sha256
+        (base32 "1kvwf76hkz07s7iw7hlbhwh83zpknf4mcrb6y0pjdrllqb042h70"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "rspec" "spec")))))))
+    (native-inputs (list bundler
+                         ruby-cucumber
+                         ruby-rake
+                         ruby-rspec
+                         ruby-rspec-its
+                         ruby-vcr-expat
+                         ruby-webmock))
+    (propagated-inputs (list ruby-addressable ruby-descendants-tracker
+                             ruby-faraday ruby-hashie ruby-oauth2))
+    (synopsis "Ruby interface to GitHub API")
+    (description "Ruby client for the official GitHub API.")
+    (home-page "https://piotrmurach.github.io/github/")
+    (license license:expat)))
+
 (define-public ruby-hocon
   (package
     (name "ruby-hocon")
