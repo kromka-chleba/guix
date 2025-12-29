@@ -152,6 +152,7 @@
   #:use-module (gnu packages m4)
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
@@ -3875,6 +3876,48 @@ rofi's drun mode.  It has Emacs key bindings and remembers frequently launched
 applications.  The font and colors can be configured.")
     (license (list license:expat ;fuzzel
                    license:zlib)))) ;; bundled nanosvg
+
+(define-public hyprlauncher
+  (package
+    (name "hyprlauncher")
+    (version "0.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hyprwm/hyprlauncher")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02l27klbfmswjxs4l3d8p2qb2c8n62wi46b9prasnjjdvfcaalxj"))))
+    (build-system cmake-build-system)
+    (arguments
+     ;; No tests.
+     (list
+      #:tests? #f))
+    (native-inputs (list gcc-15 pkg-config))
+    (inputs (list hyprutils
+                  hyprtoolkit
+                  pixman
+                  libdrm
+                  hyprwire
+                  hyprlang
+                  icu4c-73
+                  fontconfig
+                  libdrm
+                  libnotify
+                  libqalculate
+                  aquamarine
+                  hyprgraphics
+                  cairo
+                  libxkbcommon
+                  gmp
+                  mpfr))
+    (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprlauncher/")
+    (synopsis "Multipurpose launcher/picker for Hyprland")
+    (description "@code{hyprlauncher} is the launcher application of the
+Hyprland ecosystem.")
+    (license license:bsd-3)))
 
 (define-public fyi
   (package
