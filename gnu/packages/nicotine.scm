@@ -83,8 +83,7 @@
                   gtk
                   python-pycairo
                   python-pygobject
-                  libappindicator
-                  python-pytaglib))
+                  libappindicator))
     (native-inputs (list gettext-minimal python-setuptools xvfb-run))
     (home-page "https://nicotine-plus.org/")
     (synopsis "Graphical client for Soulseek")
