@@ -16072,13 +16072,13 @@ file (e.g. @file{PKG-INFO}).")
 (define-public python-meson-python
   (package
     (name "python-meson-python")
-    (version "0.15.0")
+    (version "0.18.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "meson_python" version))
        (sha256
-        (base32 "0vyjhjabvm41hqijifk33idbdl62i76kfyf884f9rs29rpp77nzx"))))
+        (base32 "13c44f765h89hwidn53c20a4nvmg441rcipyc83a8sgnkpn9jsn5"))))
     (build-system meson-build-system)
     (propagated-inputs (list python-pyproject-metadata python-tomli))
     (home-page "https://github.com/mesonbuild/meson-python")
