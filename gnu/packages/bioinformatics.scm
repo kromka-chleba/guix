@@ -17391,13 +17391,18 @@ transcriptomic changes.")
     (version "3.2.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "mygene" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/biothings/mygene.py")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1snszwdgfygchxshcbry3b5pbcw3g1isp8dw46razxccqaxwlag7"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-biothings-client))
+        (base32 "0f6mpbbcs72w20zxsnzdqbhn2ldxlafaq3qd0iwk6rfvwk66bb7w"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))                ; All tests require network access.
+    (native-inputs (list python-setuptools))
+    (propagated-inputs (list python-biothings-client))
     (home-page "https://github.com/biothings/mygene.py")
     (synopsis "Python Client for MyGene.Info services")
     (description "MyGene.Info provides simple-to-use REST web services
