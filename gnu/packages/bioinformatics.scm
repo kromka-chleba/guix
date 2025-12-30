@@ -19846,34 +19846,46 @@ altering the counts or PCA space.")
     (license license:expat)))
 
 (define-public python-drep
-  (package
-    (name "python-drep")
-    (version "3.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "drep" version))
-       (sha256
-        (base32
-         "08vk0x6v5c5n7afgd5pcjhsvb424absypxy22hw1cm1n9kirbi77"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-biopython
-           python-matplotlib
-           python-numpy
-           python-pandas
-           python-pytest
-           python-scikit-learn
-           python-seaborn
-           python-tqdm))
-    (home-page "https://github.com/MrOlm/drep")
-    (synopsis "De-replication of microbial genomes assembled from multiple samples")
-    (description
-     "dRep is a Python program for rapidly comparing large numbers of genomes.
+  ;; XXX: The repository is not properly tagged.
+  (let ((commit "72520544327b8074c572e306b6ea3a50c5084535")
+        (revision "0"))
+    (package
+      (name "python-drep")
+      (version (git-version "3.6.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/MrOlm/drep")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1nh41mv76dbhbpk01cb75pjfk9hcsgsgrfvbkq0cgb06fkcqyn2m"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        ;; XXX: There are too many failing tests, because of both missing tools
+        ;; (goANI, fastANI, skani, nsimscan...) and missing test files.
+        #:tests? #f))
+      (native-inputs (list python-setuptools))
+      (propagated-inputs
+       (list python-biopython
+             python-matplotlib
+             python-networkx
+             python-numpy
+             python-pandas
+             python-pytest
+             python-scikit-learn
+             python-seaborn
+             python-tqdm))
+      (home-page "https://github.com/MrOlm/drep")
+      (synopsis "De-replication of microbial genomes assembled from multiple samples")
+      (description
+       "dRep is a Python program for rapidly comparing large numbers of genomes.
 dRep can also \"de-replicate\" a genome set by identifying groups of highly
 similar genomes and choosing the best representative genome for each genome
 set.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public instrain
   (package
