@@ -750,7 +750,7 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
 (define-public electron-cash
   (package
     (name "electron-cash")
-    (version "4.4.1")
+    (version "4.4.2")
     (source
      (origin
        (method git-fetch)
@@ -759,15 +759,21 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11xhlssr7bvdv3p256k87y35vjzyfd93p72w8f2xy7j5jh6abhp1"))))
-    (build-system python-build-system)
+        (base32 "07gg6hv3y728sd1sgfd7v6jqahax4zd8qk2lps6r7s2jxg2qz9l6"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:tests? #f                       ; no tests
-      #:modules '((guix build python-build-system)
+      ;; Deselect tests that require docker to be running.
+      #:test-flags
+      #~(list
+         "--deselect=electroncash/tests/regtest/test_rpc_misc.py::test_getunusedaddress"
+         "--deselect=electroncash/tests/regtest/test_rpc_misc.py::test_getservers"
+         "--deselect=electroncash/tests/regtest/test_rpc_misc.py"
+         "--deselect=electroncash/tests/regtest/test_rpc_payment_request.py::test_addrequest")
+      #:modules '((guix build pyproject-build-system)
                   (guix build qt-utils)
                   (guix build utils))
-      #:imported-modules `(,@%python-build-system-modules
+      #:imported-modules `(,@%pyproject-build-system-modules
                            (guix build qt-utils))
       #:phases
       #~(modify-phases %standard-phases
@@ -780,6 +786,11 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
               (substitute* "electroncash/secp256k1.py"
                 (("libsecp256k1.so.0")
                  (search-input-file inputs "lib/libsecp256k1.so.0")))))
+          (add-after 'unpack 'use-zbar-input
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "electroncash/qrreaders/zbar.py"
+                (("libzbar.so.0")
+                 (search-input-file inputs "lib/libzbar.so.0")))))
           (add-after 'unpack 'relax-requirements
             (lambda _
               (substitute* "contrib/requirements/requirements.txt"
@@ -790,38 +801,53 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
               (let ((out (assoc-ref outputs "out")))
                 (wrap-qt-program "electron-cash"
                                  #:output out #:inputs inputs)))))))
+    (native-inputs
+     (list python-jsonpath-ng
+           python-jsonrpcclient
+           python-pytest
+           python-pycryptodomex
+           python-pytest-docker
+           python-setuptools))
     (inputs
      (list bash-minimal
            libevent
            libsecp256k1-bitcoin-cash
            openssl
-           python-cython
+           python-bitcoinrpc
            python-dateutil
            python-dnspython
            python-ecdsa
            python-hidapi
+           python-jsonrpcclient
            python-jsonrpclib-pelix
            python-keepkey
            python-pathvalidate
-           python-protobuf
+           ;; protobuf-6 will lead to this warning:
+           ;; /gnu/store/[..]python-protobuf-6.31.1/lib/python3.11/
+           ;; site-packages/google/protobuf/runtime_version.py:98: UserWarning:
+           ;; Protobuf gencode version 5.27.3 is exactly one major version older
+           ;; than the runtime version 6.31.1 at paymentrequest.proto. Please
+           ;; update the gencode to avoid compatibility violations in the next
+           ;; runtime release.
+           python-protobuf-5
            python-pyaes
            python-pyqt
-           python-pysocks
            python-qdarkstyle
            python-qrcode
            python-requests
            python-stem
            python-trezor
            qtsvg-5
+           zbar
            zlib))
     (home-page "https://electroncash.org/")
     (synopsis "Bitcoin Cash wallet")
     (description
-     "Electroncash is a lightweight Bitcoin Cash client, based on a client-server
-protocol.  It supports Simple Payment Verification (SPV) and deterministic key
-generation from a seed.  Your secret keys are encrypted and are never sent to
-other machines/servers.  Electroncash does not download the Bitcoin Cash
-blockchain.")
+     "Electroncash is a lightweight Bitcoin Cash client, based on a
+client-server protocol.  It supports Simple Payment Verification (SPV) and
+deterministic key generation from a seed.  Your secret keys are encrypted and
+are never sent to other machines/servers.  Electroncash does not download the
+Bitcoin Cash blockchain.")
     (license license:expat)))
 
 (define-public monero
