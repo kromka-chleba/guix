@@ -2662,6 +2662,47 @@ to mark some tests as dependent from other tests.  These tests will then be
 skipped if any of the dependencies did fail or has been skipped.")
     (license license:asl2.0)))
 
+(define-public python-pytest-docker
+  (package
+    (name "python-pytest-docker")
+    (version "3.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/avast/pytest-docker")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b18mr4yxyhw66f1m6brhi85gpmg2ydgzni7pmmhcsbn5dy4ni82"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Disable tests that require docker.
+      ;; 24 passed, 2 deselected
+      #:test-flags
+      #~(list "--deselect=tests/test_integration.py::test_containers_and_volumes_get_cleaned_up"
+              "--deselect=tests/test_integration.py::test_main_fixtures_work")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            ;; Ignore parameters like --mypy --pycodestyle --pylint
+            (lambda _
+              (substitute* "setup.cfg"
+                (("tool:pytest") "tool:gytest")))))))
+    (native-inputs
+     (list python-attrs
+           python-requests
+           python-setuptools))
+    (propagated-inputs
+     (list python-pytest))
+    (home-page "https://github.com/avast/pytest-docker")
+    (synopsis "Docker-based integration tests")
+    (description
+     "This package provides simple pytest fixtures that help you write
+integration tests with Docker and Docker Compose.")
+    (license license:expat)))
+
 (define-public python-pytest-docker-tools
   (package
     (name "python-pytest-docker-tools")
