@@ -12555,6 +12555,29 @@ standard library and supported by default in Quart.")
 by asyncio.")
     (license license:expat)))
 
+(define-public python-jsonrpcclient
+  (package
+    (name "python-jsonrpcclient")
+    (version "4.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/explodinglabs/jsonrpcclient")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "077jwxgwkskgf3p9ygr9d0y4z5rs6nbassc2ffrx2sjps6l31966"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (home-page "https://explodinglabs.com/jsonrpcclient/")
+    (synopsis "Create JSON-RPC requests and parse responses in Python")
+    (description "This package lets you create JSON-RPC requests and parse
+responses in Python.")
+    (license license:expat)))
+
 (define-public python-protego
   (package
     (name "python-protego")
