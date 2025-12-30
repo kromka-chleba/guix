@@ -1942,31 +1942,33 @@ conversion and pretty-printing.")
         (base32 "0xrbgjj3nys4158nskd0npqf825xlrqa2x3fqcfz0nnxai2jzbck"))))
     (build-system perl-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-generated-file-shebangs 'patch-more-shebangs
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((perl (string-append
-                          (assoc-ref inputs "perl")
-                          "/bin/perl"))
-                   (site-perl
-                    (lambda (input)
-                      (format #false "~a/lib/perl5/site_perl/~a"
-                              input
-                              ,(package-version perl)))))
-               (substitute* "t/ack-type.t"
-                 (("/usr/bin/perl") perl)
-                 (("/usr/bin/env perl") perl))
-               (substitute* "ack"
-                 (("/bin/perl") ;; add @INC include directories to perl calls
-                  (string-append "/bin/perl -I "
-                                 (site-perl
-                                  (assoc-ref inputs "perl-file-next"))
-                                 " -I "
-                                 (site-perl
-                                  (assoc-ref outputs "out")))))))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'patch-generated-file-shebangs 'patch-more-shebangs
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((perl (string-append
+                           #$(this-package-input "perl")
+                           "/bin/perl"))
+                    (site-perl
+                     (lambda (input)
+                       (format #false "~a/lib/perl5/site_perl/~a"
+                               input
+                               #$(package-version perl)))))
+                (substitute* "t/ack-type.t"
+                  (("/usr/bin/perl") perl)
+                  (("/usr/bin/env perl") perl))
+                ;; Add @INC include directories to perl calls
+                (substitute* "ack"
+                  (("/bin/perl")
+                   (string-append "/bin/perl"
+                                  " -I "
+                                  (site-perl #$(this-package-input perl-file-next))
+                                  " -I "
+                                  (site-perl #$output))))))))))
     (inputs
-     (list perl-file-next))
+     (list perl
+           perl-file-next))
     (home-page "https://beyondgrep.com/")
     (synopsis "Code-searching tool for programmers with large source trees")
     (description "ack is a tool for finding text inside files.  It is designed for
