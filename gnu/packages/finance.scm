@@ -1394,19 +1394,28 @@ TREZOR Hardware Wallet.")
      (origin
        (method git-fetch)
        (uri (git-reference
-              (url "https://github.com/keepkey/python-keepkey")
-              (commit (string-append "v" version))))
+              (url "https://github.com/keepkey/keepkey-client")
+              (commit (string-append "v" version))
+              (recursive? #t)           ;for .proto files
+              ))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00hqppdj3s9y25x4ad59y8axq94dd4chhw9zixq32sdrd9v8z55a"))))
+        (base32 "0df78k4dqq50y5v3wypx3izals8yjs83dafdjmc6gy57m8irk49y"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       ;; There is only one test that does not require a keepkey device.
       #:test-backend #~'custom
-      #:test-flags #~(list "tests/unit/test_ckd_public.py")))
+      #:test-flags #~(list "tests/unit/test_ckd_public.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'generate-pbs
+            (lambda _
+              (invoke "bash" "./build_pb.sh"))))
+      ))
     (native-inputs
-     (list python-pytest
+     (list protobuf
+           python-pytest
            python-setuptools
            python-semver))
     (propagated-inputs
@@ -1414,7 +1423,7 @@ TREZOR Hardware Wallet.")
            python-hidapi
            python-libusb1
            python-mnemonic
-           python-protobuf
+           python-protobuf-6
            python-requests))
     (home-page "https://github.com/keepkey/python-keepkey")
     (synopsis "Python library for communicating with KeepKey Hardware Wallet")
