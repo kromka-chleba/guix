@@ -1376,7 +1376,7 @@ Ledger Blue/Nano S.")
            protobuf
            python-pytest
            python-pillow
-           python-protobuf
+           python-protobuf-6
            python-pyqt
            python-pytest
            python-simple-rlp))
