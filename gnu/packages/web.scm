@@ -1261,10 +1261,7 @@ servers that may need it).")
       (license license:expat))))
 
 (define-public sogogi
-  ;; Using the latest version that is compatible with our packaged version
-  ;; of go-github-com-emersion-go-webdav.  We can update to the latest release
-  ;; once go-github-com-emersion-go-webdav is upgraded.
-  (let ((commit "afabb59eb615853a271c2af8cca03b60a6ca850e")
+  (let ((commit "e6fd81c8d861bfa538372a6ff10b0cf8dfcb33f9")
         (revision "0"))
     (package
       (name "sogogi")
@@ -1277,13 +1274,7 @@ servers that may need it).")
                 (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "09pi493xz1nkjd1n05nh09whv1shy0mxxy9p56fjh6r87l5b8dnj"))
-         (modules '((guix build utils)))
-         ;; Update import path of go-scfg, see:
-         ;; <https://codeberg.org/emersion/sogogi/commit/e6fd81c>.
-         (snippet '(substitute* "config.go"
-                    (("git.sr.ht/~emersion/go-scfg")
-                     "codeberg.org/emersion/go-scfg")))))
+          (base32 "01vw91b2r2y0q21hkhpagbiq4l04n0z56m98psk5ycds2v13v951"))))
       (build-system go-build-system)
       (arguments
        (list
