@@ -1,0 +1,105 @@
+commit 29190a0c2b633d3c8efe6a8874807b49565c3923
+Author: Nguyễn Gia Phong <cnx@loang.net>
+Date:   2026-01-12 17:59:18 +0900
+
+    tests: Avoid PytestAssertRewriteWarning
+    
+    Some tests need to be run in a Pytester subprocess
+    so pytest-asyncio is not imported again at which instance
+    assertions are not rewriten and the warning is raised.
+    
+    Similarly, when pytest-asyncio is imported by pytest_plugins,
+    assertion rewriting is triggered again while the plugin
+    is already imported through plugin discovery.
+
+diff --git a/tests/markers/test_class_scope.py b/tests/markers/test_class_scope.py
+index 15a8fdc40362..cb49e690175e 100644
+--- a/tests/markers/test_class_scope.py
++++ b/tests/markers/test_class_scope.py
+@@ -308,5 +308,5 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=strict")
++    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+     result.assert_outcomes(warnings=0, passed=1)
+diff --git a/tests/markers/test_function_scope.py b/tests/markers/test_function_scope.py
+index 97ea08e6e15c..e35880ecf9d7 100644
+--- a/tests/markers/test_function_scope.py
++++ b/tests/markers/test_function_scope.py
+@@ -88,7 +88,7 @@ def test_warns_when_scope_argument_is_present(pytester: Pytester):
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
++    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+     result.assert_outcomes(passed=1, warnings=1)
+     result.stdout.fnmatch_lines("*DeprecationWarning*")
+ 
+@@ -289,5 +289,5 @@ def test_asyncio_mark_does_not_duplicate_other_marks_in_auto_mode(
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=auto", "--assert=plain")
++    result = pytester.runpytest_subprocess("--asyncio-mode=auto", "--assert=plain")
+     result.assert_outcomes(warnings=0, passed=1)
+diff --git a/tests/markers/test_module_scope.py b/tests/markers/test_module_scope.py
+index 633e612185d8..a5419e1616aa 100644
+--- a/tests/markers/test_module_scope.py
++++ b/tests/markers/test_module_scope.py
+@@ -313,5 +313,5 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=strict")
++    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+     result.assert_outcomes(warnings=0, passed=1)
+diff --git a/tests/markers/test_session_scope.py b/tests/markers/test_session_scope.py
+index 88eec6c3d2aa..64d6567342af 100644
+--- a/tests/markers/test_session_scope.py
++++ b/tests/markers/test_session_scope.py
+@@ -438,5 +438,5 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=strict")
++    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+     result.assert_outcomes(warnings=0, passed=1)
+diff --git a/tests/test_event_loop_fixture.py b/tests/test_event_loop_fixture.py
+index 5a03341f71c1..024dc3f4ceca 100644
+--- a/tests/test_event_loop_fixture.py
++++ b/tests/test_event_loop_fixture.py
+@@ -15,8 +15,6 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
+             import asyncio
+             import pytest
+ 
+-            pytest_plugins = 'pytest_asyncio'
+-
+             @pytest.mark.asyncio
+             async def test_something():
+                 async def generator_fn():
+@@ -28,7 +26,7 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
++    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+     result.assert_outcomes(passed=1, warnings=0)
+ 
+ 
+@@ -77,8 +75,6 @@ def test_event_loop_fixture_asyncgen_error(
+             import asyncio
+             import pytest
+ 
+-            pytest_plugins = 'pytest_asyncio'
+-
+             @pytest.mark.asyncio
+             async def test_something():
+                 # mock shutdown_asyncgen failure
+@@ -89,5 +85,5 @@ def test_event_loop_fixture_asyncgen_error(
+             """
+         )
+     )
+-    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
++    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+     result.assert_outcomes(passed=1, warnings=1)

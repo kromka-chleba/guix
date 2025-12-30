@@ -2468,28 +2468,21 @@ executed.")
 (define-public python-pytest-asyncio
   (package
     (name "python-pytest-asyncio")
-    (version "1.0.0")
+    (version "1.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest_asyncio" version))
        (sha256
-        (base32 "0gwbqikldfy5yvyzhi71h7vicni2dchj0iarsbmf2mj47z8n6m6i"))))
+        (base32 "1rg97r6s655hqq9m028hzila36in37xny8fd4khhxf1is8v2zxfp"))
+       (patches
+        ;; https://github.com/pytest-dev/pytest-asyncio/issues/1334
+        (search-patches "python-pytest-asyncio-fix-rewrite-warnings.patch"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; 4 failed, 163 passed
-      #~(list "-k" (string-join
-                    (list "not test_strict_mode_ignores_unmarked_coroutine"
-                          "test_strict_mode_ignores_unmarked_fixture"
-                          "test_strict_mode_marked_test_unmarked_fixture_warning"
-                          "test_strict_mode_marked_test_unmarked_autouse_fixture_warning")
-                    " and not "))))
     (native-inputs
-     (list python-setuptools
-           python-setuptools-scm
-           python-wheel))
+     (list python-hypothesis
+           python-setuptools
+           python-setuptools-scm))
     (propagated-inputs
      (list python-pytest
            python-typing-extensions))
