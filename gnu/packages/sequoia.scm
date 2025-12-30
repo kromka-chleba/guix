@@ -168,7 +168,7 @@ This Guix package is built to use the nettle cryptographic library.")
                     '(("target/assets/man-pages" "share/man/man1"
                        #:include-regexp ("\\.1$"))
                       ("target/assets/shell-completions/sq.bash"
-                       "etc/bash_completion.d/sq")
+                       "share/bash-completion/completions/sq")
                       ("target/assets/shell-completions/_sq"
                        "share/zsh/site-functions/")
                       ("target/assets/shell-completions/sq.fish"
