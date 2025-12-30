@@ -1930,15 +1930,16 @@ conversion and pretty-printing.")
   (package
     (name "ack")
     (version "3.7.0")
-    (source (origin
-              (method git-fetch)
-              (uri
-               (git-reference
-                (url "https://github.com/beyondgrep/ack3")
-                (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32 "0xrbgjj3nys4158nskd0npqf825xlrqa2x3fqcfz0nnxai2jzbck"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://github.com/beyondgrep/ack3")
+          (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xrbgjj3nys4158nskd0npqf825xlrqa2x3fqcfz0nnxai2jzbck"))))
     (build-system perl-build-system)
     (arguments
      `(#:phases
@@ -1964,7 +1965,8 @@ conversion and pretty-printing.")
                                  " -I "
                                  (site-perl
                                   (assoc-ref outputs "out")))))))))))
-    (inputs (list perl-file-next))
+    (inputs
+     (list perl-file-next))
     (home-page "https://beyondgrep.com/")
     (synopsis "Code-searching tool for programmers with large source trees")
     (description "ack is a tool for finding text inside files.  It is designed for
