@@ -1080,6 +1080,33 @@ the Monero GUI client.")
 Bech32 and segwit addresses.")
       (license license:expat))))
 
+(define-public python-bitcoinrpc
+  (package
+    (name "python-bitcoinrpc")
+    (version "1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jgarzik/python-bitcoinrpc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+         (sha256
+          (base32 "0b51dydj2pndv101fzngnfax8yxbpnrbza4abq6nggyi968las2b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (native-inputs
+     (list python-setuptools))
+    ;; (propagated-inputs
+    ;;  (list python-httpx
+    ;;        python-orjson))
+    (home-page "https://github.com/jgarzik/python-bitcoinrpc")
+    (synopsis "An improved version of python-jsonrpc.")
+    (description "AuthServiceProxy is an improved version of python-jsonrpc.")
+    (license license:lgpl2.1+)))
+
 (define-public python-trezor-agent
   ;; It is called 'libagent' in pypi; i.e. this is the library as opposed to
   ;; the toplevel app called trezor-agent.
