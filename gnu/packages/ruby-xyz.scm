@@ -16432,7 +16432,7 @@ interface for the Sentry error logger.")
 (define-public ruby-webrick
   (package
     (name "ruby-webrick")
-    (version "1.8.1")
+    (version "1.9.2")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -16441,17 +16441,9 @@ interface for the Sentry error logger.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1xb0mk3cghdir65nmj0mblprbf21blli7267b6yyvxclh307yp6s"))))
+                "1f9k5y4qbr3qbvcs8hz49nmlisaj9921sb9p48nr2r65jb71ydbk"))))
     (build-system ruby-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'extract-gemspec 'delete-problematic-tests
-                 (lambda _
-                   ;; The httresponse tests fail for
-                   ;; unknown reasons (see:
-                   ;; https://github.com/ruby/webrick/issues/112).
-                   (delete-file "test/webrick/test_httpresponse.rb"))))))
+    (native-inputs (list ruby-test-unit-ruby-core))
     (home-page "https://github.com/ruby/webrick")
     (synopsis "HTTP server toolkit")
     (description "WEBrick is an HTTP server toolkit that can be configured as an
