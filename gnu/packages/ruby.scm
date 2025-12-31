@@ -280,7 +280,7 @@ a focus on simplicity and productivity.")
 
 (define-public ruby ruby-3.3)
 
-(define-public mruby
+(define-public mruby-3.3
   (package
     (name "mruby")
     (version "3.3.0")
@@ -334,6 +334,8 @@ a focus on simplicity and productivity.")
 language.  Its syntax is Ruby 3.x compatible except for pattern
 matching.  mruby can be linked and embedded within your application.")
     (license license:expat)))
+
+(define-public mruby mruby-3.3)
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
