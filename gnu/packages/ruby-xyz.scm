@@ -1447,6 +1447,49 @@ loader for the file type associated with a filename extension, and it augments
     (home-page "https://github.com/cjheath/polyglot")
     (license license:expat)))
 
+(define-public ruby-travis-lint
+  (package
+    (name "ruby-travis-lint")
+    (version "1.8.0") ;v2.0.0 moves functionality to 'travis'
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/travis-ci/travis-lint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x7kz9s2yw0bhqzgkza680n53ffj8dwl4s7kc8057ar62bicl0b1"))))
+    (build-system ruby-build-system)
+    (native-inputs (list bundler ruby-rspec))
+    (propagated-inputs (list ruby-base64 ruby-hashr-1 ruby-safe-yaml))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-ruby-deprecations
+            (lambda _
+              (substitute* (find-files "lib" "\\.rb$")
+                (("exists\\?") "exist?"))
+              (substitute* (find-files "spec" "\\.rb$")
+                (("be\\_true") "be_truthy")
+                (("be\\_false") "be_falsey"))))
+          (add-after 'extract-gemspec 'relax-dependencies
+            (lambda _
+              (substitute* "travis-lint.gemspec"
+                (("\"hashr\".*") "'hashr', '< 2'\n") ; v2+ not compatible
+                (("~>") ">="))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests? (invoke "bundle" "exec" "rspec" "spec")))))))
+    (synopsis "Checks your .travis.yml files for possible problems")
+    (description
+     "@code{travis-lint} is a tool that checks your
+@code{.travis.yml} for possible issues, deprecations and so on.  Recommended for
+all travis-ci.org users.")
+    (home-page "https://github.com/travis-ci/travis-lint")
+    (license license:expat)))
+
 (define-public ruby-treetop
   (package
     (name "ruby-treetop")
