@@ -89,7 +89,7 @@
 (define-public ruby-3.4
   (package
     (name "ruby")
-    (version "3.4.7")
+    (version "3.4.8")
     (source
      (origin
        (method url-fetch)
@@ -98,7 +98,7 @@
                            "/ruby-" version ".tar.xz"))
        (sha256
         (base32
-         "1irh0l7g75p0arnah58ismzixa80qxn99x3qfnalcxg0ys35lhnv"))))
+         "0s2x4pa091n4a4876dl64bnnvylkqhkqsk928aywnj8l25qyra2k"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
