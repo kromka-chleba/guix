@@ -14621,6 +14621,35 @@ can be used to build formatters, linters, language servers, and more.")
     (home-page "https://github.com/ruby-syntax-tree/syntax_tree")
     (license license:expat)))
 
+(define-public ruby-stringex
+  (package
+    (name "ruby-stringex")
+    (version "2.8.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "stringex" version))
+       (sha256
+        (base32 "1i19x7snfbw0fsfjifvg57b8gm283hhdympj8qb1wym4nb985cy7"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-activerecord
+                         ruby-i18n
+                         ruby-jeweler
+                         ruby-redcloth
+                         ruby-sqlite3
+                         ruby-test-unit
+                         ruby-travis-lint))
+    (synopsis "Extensions to Ruby's String class")
+    (description
+     "Extensions to Ruby's String class.  It is made up of three libraries:
+@itemize @bullet
+@item ActsAsUrl [permalink solution with better character translation]
+@item Unidecoder [Unicode to Ascii transliteration]
+@item StringExtensions [miscellaneous helper methods for the String class]
+@end itemize")
+    (home-page "https://github.com/rsl/stringex")
+    (license license:expat)))
+
 (define-public ruby-stringio
   (package
     (name "ruby-stringio")
