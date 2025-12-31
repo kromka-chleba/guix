@@ -13684,6 +13684,26 @@ It supports the following features:
 @end itemize")
     (license license:expat)))
 
+(define-public ruby-hashr-1
+  (package
+    (inherit ruby-hashr-2)
+    (name "ruby-hashr")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "hashr" version))
+       (sha256
+        (base32 "121zmmg1gppnmzhvyhj7yzzqp42zlsjlgy8qz1i5d42i1pg4gj1c"))))
+    (native-inputs (list ruby-minitest ruby-mutex-m ruby-rake
+                         ruby-test-declarative))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'extract-gemspec 'remove-version-constraints
+            (lambda _ (substitute* "Gemfile.lock" (("(.*)") "")))))))))
+
 (define-public ruby-heredoc-unindent
   (package
     (name "ruby-heredoc-unindent")
