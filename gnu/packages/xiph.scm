@@ -368,14 +368,14 @@ ogginfo, to obtain information (tags, bitrate, length, etc.) about
 (define-public opus
   (package
     (name "opus")
-    (version "1.5.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://downloads.xiph.org/releases/opus/opus-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1qbwk9zyhbk185ly8xjq6hwmibair53vx363h80b4bwzigvx5hb5"))))
+    (version "1.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://downloads.xiph.org/releases/opus/opus-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "188i4ibr80az4217q04z22cyrfv4xmk29cqmvy22bsbv429vbz3g"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--disable-static")))
@@ -387,10 +387,8 @@ but is also intended for storage and streaming applications.  It is
 standardized by the Internet Engineering Task Force (IETF) as RFC 6716 which
 incorporated technology from Skype's SILK codec and Xiph.Org's CELT codec.")
     ;; This package shows a sizable speed increase when tuned.
-    (properties `((tunable? . #t)
-                  (lint-hidden-cpe-vendors . ("discordjs"))
-                  (release-monitoring-url
-                   . "https://archive.mozilla.org/pub/opus/")))
+    (properties '((tunable? . #t) (lint-hidden-cpe-vendors "discordjs")
+                  (release-monitoring-url . "https://archive.mozilla.org/pub/opus/")))
     (license license:bsd-3)
     (home-page "https://www.opus-codec.org")))
 
@@ -398,31 +396,37 @@ incorporated technology from Skype's SILK codec and Xiph.Org's CELT codec.")
   (package
     (name "opus-tools")
     (version "0.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://downloads.xiph.org/releases/opus/opus-tools-"
-                    version ".tar.gz"))
-              (sha256
-               (base32
-                "11pzl27s4vcz4m18ch72nivbhww2zmzn56wspb7rll1y1nq6rrdl"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.xiph.org/xiph/opus-tools.git")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1g1lrhi0jqk9i9pxmay8jhmy4zhaffbqh2rjhxkacildzl6xrvyz"))))
     (build-system gnu-build-system)
     (arguments
-     ;; The package developers misuse pkg-config such that it doesn't work
-     ;; when cross compiling.  Therefore we avoid it completly and set the
-     ;; necessary flags ourselves.
-     `(#:configure-flags (list (string-append "CFLAGS=-I"
-                                              (assoc-ref %build-inputs "libogg")
-                                              "/include -I"
-                                              (assoc-ref %build-inputs "opus")
-                                              "/include/opus"))))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libopusenc opusfile flac))
+     (list
+      #:configure-flags
+      ;; The mechanism for detecting pkg-config does not work while cross
+      ;; compiling.  Therefore we skip the test by overriding it.
+      #~(list "HAVE_PKG_CONFIG=yes")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'bootstrap 'write-package_version-file
+            (lambda _
+              (with-output-to-file "package_version"
+                (lambda _
+                  (display "AUTO_UPDATE=no")
+                  (newline)
+                  (display (string-append "PACKAGE_VERSION=\""
+                                          #$version "\"")))))))))
+    (native-inputs (list autoconf automake libtool pkg-config))
+    (inputs (list flac libopusenc opusfile))
     (synopsis
      "Command line utilities to encode, inspect, and decode .opus files")
-    (description "Opus is a royalty-free, highly versatile audio codec.
+    (description
+     "Opus is a royalty-free, highly versatile audio codec.
 Opus-tools provide command line utilities for creating, inspecting and
 decoding .opus files.")
     (license license:bsd-3)
@@ -469,19 +473,32 @@ windows systems.")
 (define-public libopusenc
   (package
     (name "libopusenc")
-    (version "0.2.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://archive.mozilla.org/pub/opus/"
-                                  "libopusenc-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1ffb0vhlymlsq70pxsjj0ksz77yfm2x0a1x8q50kxmnkm1hxp642"))))
+    (version "0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.xiph.org/xiph/libopusenc.git")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "147cpqgfyfz6nr85hi4prvcbs3d72zzad48w3rhgld429hhjd34z"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (propagated-inputs
-     (list opus))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "--disable-static")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'bootstrap 'write-package_version-file
+            (lambda _
+              (with-output-to-file "package_version"
+                (lambda _
+                  (display "AUTO_UPDATE=no")
+                  (newline)
+                  (display (string-append "PACKAGE_VERSION=\""
+                                          #$version "\"")))))))))
+    (native-inputs (list autoconf automake libtool pkg-config))
+    (propagated-inputs (list opus))
     (synopsis "Library for encoding Opus audio files and streams")
     (description "The libopusenc libraries provide a high-level API for
 encoding Opus files and streams.")
