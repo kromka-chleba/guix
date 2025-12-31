@@ -1304,6 +1304,40 @@ defaults for 80% of the use cases.")
 repositories.")
     (license (list license:expat license:asl2.0))))
 
+(define-public gitu
+  (package
+    (name "gitu")
+    (version "0.40.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "gitu" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1k4p3nlwz8ssfbf19nayf5gxc24svx49snphafbh62w6wb71d3l9"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:rust rust-1.88
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-git-bin
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (wrap-program (string-append #$output "/bin/gitu")
+                `("PATH" ":" prefix
+                  (,(string-append #$git-minimal "/bin")))))))
+      ;; Tests use some unsupported feature.
+      #:tests? #f))
+    (inputs (cons bash-minimal (cargo-inputs
+                                'gitu)))
+    (native-inputs (list git-minimal zlib))
+    (home-page "https://github.com/altsem/gitu")
+    (synopsis "git client inspired by Magit")
+    (description "@code{gitu} is a git Terminal User Interface inspired
+by @code{emacs-magit}.")
+    (license license:expat)))
+
 (define-public gitui
   (package
     (name "gitui")
