@@ -280,10 +280,10 @@ a focus on simplicity and productivity.")
 
 (define-public ruby ruby-3.3)
 
-(define-public mruby-3.3
+(define-public mruby-3.4
   (package
     (name "mruby")
-    (version "3.3.0")
+    (version "3.4.0")
     (source
      (origin
        (method git-fetch)
@@ -293,7 +293,7 @@ a focus on simplicity and productivity.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0zynr6dk0zxdip53il0qr0rhyzmjicpkxs63l77acpx8b05h8amc"))))
+         "1j103ghxwgjwl6yb6q1b5qq3k0kl6wp7d6sk8i5pk7mrkrr8xy1x"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
@@ -334,6 +334,22 @@ a focus on simplicity and productivity.")
 language.  Its syntax is Ruby 3.x compatible except for pattern
 matching.  mruby can be linked and embedded within your application.")
     (license license:expat)))
+
+(define-public mruby-3.3
+  (let ((parent mruby-3.4))
+  (package
+    (inherit parent)
+    (version "3.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mruby/mruby")
+             (commit version)))
+       (file-name (git-file-name (package-name parent) version))
+       (sha256
+        (base32
+         "0zynr6dk0zxdip53il0qr0rhyzmjicpkxs63l77acpx8b05h8amc")))))))
 
 (define-public mruby mruby-3.3)
 
