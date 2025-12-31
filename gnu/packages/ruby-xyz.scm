@@ -4773,7 +4773,7 @@ temporary files and directories during tests.")
 (define-public ruby-test-unit
   (package
     (name "ruby-test-unit")
-    (version "3.6.0")
+    (version "3.7.6")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -4782,12 +4782,10 @@ temporary files and directories during tests.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0w1m432q3y5v9lkak8yyxadak3z17bsp6afni97i4zjdgfz7niz2"))))
+                "0n8k4psm0x96gvpksrs61pwzirhahfd8mw243faxpnpbkwcmpjrv"))))
     (build-system ruby-build-system)
-    (propagated-inputs
-     (list ruby-power-assert))
-    (native-inputs
-     (list bundler ruby-packnga ruby-yard))
+    (propagated-inputs (list ruby-power-assert))
+    (native-inputs (list ruby-packnga ruby-yard))
     (synopsis "Unit testing framework for Ruby")
     (description "@code{Test::Unit} is unit testing framework for Ruby, based
 on xUnit principles.  These were originally designed by Kent Beck, creator of
