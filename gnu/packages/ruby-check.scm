@@ -880,13 +880,13 @@ the community-driven Ruby Style Guide.")
 (define-public ruby-rspec
   (package
     (name "ruby-rspec")
-    (version "3.13.1")
+    (version "3.13.2")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "rspec" version))
               (sha256
                (base32
-                "0h11wynaki22a40rfq3ahcs4r36jdpz9acbb3m5dkf0mm67sbydr"))))
+                "11q5hagj6vr694innqj4r45jrm8qcwvkxjnphqgyd66piah88qi0"))))
     (build-system ruby-build-system)
     (arguments
      '(#:tests? #f)) ; avoid dependency cycles
