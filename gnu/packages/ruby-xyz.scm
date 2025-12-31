@@ -4690,6 +4690,43 @@ temporary files and directories during tests.")
       (home-page "https://github.com/bhb/test_construct")
       (license license:expat))))
 
+(define-public ruby-test-declarative
+  (package
+    (name "ruby-test-declarative")
+    (version "0.0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/svenfuchs/test_declarative")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ck61q7ak810j20vgpa4si5a98hs88k8hpniahw8njfxcb4qd1sm"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'replace-git-ls-files
+            (lambda _
+              (substitute* "test_declarative.gemspec"
+                (("git ls-files .*`") "find lib/* test/* -type f |sort`"))))
+          (add-after 'unpack 'patch-minitest
+            (lambda _
+              (substitute* (find-files "test" "\\.rb$")
+                (("Minitest::Unit") "Minitest::Test"))))
+          (add-after 'extract-gemspec 'relax-dependencies
+            (lambda _ (substitute* "Gemfile" (("~>") ">="))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests? (invoke "bundle" "exec" "rake")))))))
+    (native-inputs (list ruby-minitest ruby-rake))
+    (synopsis "Adds a declarative test method syntax")
+    (description "Simply adds a declarative test method syntax to test/unit.")
+    (home-page "https://github.com/svenfuchs/test_declarative")
+    (license license:expat)))
+
 (define-public ruby-test-unit
   (package
     (name "ruby-test-unit")
