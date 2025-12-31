@@ -13649,6 +13649,41 @@ is compatible with stylesheets designed for pygments.")
 hashes more powerful.")
       (license license:expat))))
 
+(define-public ruby-hashr-2
+  (package
+    (name "ruby-hashr")
+    (version "2.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "hashr" version))
+       (sha256
+        (base32 "1ywvs8xfddh900gfg7wrsg602dz7smcml3iip2knnqwg3jqi5bzr"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "rspec" "spec" "--require" "spec_helper")))))))
+    (native-inputs (list ruby-rspec))
+    (home-page "https://github.com/svenfuchs/hashr")
+    (synopsis "Makes working with nested hashes easier and less error-prone")
+    (description
+     "Hashr is a very simple and tiny class which makes using nested
+hashes for configuration (and other purposes) easier.
+
+It supports the following features:
+@itemize @bullet
+@item method read and write access
+@item automatic predicate (boolean, i.e. @code{?}) methods
+@item easy defaults
+@item indifferent (strings vs symbols) keys
+@end itemize")
+    (license license:expat)))
+
 (define-public ruby-heredoc-unindent
   (package
     (name "ruby-heredoc-unindent")
