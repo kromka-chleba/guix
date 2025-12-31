@@ -8259,29 +8259,22 @@ differences (added or removed nodes) between two XML/HTML documents.")
 (define-public ruby-racc
   (package
     (name "ruby-racc")
-    (version "1.5.2")
+    (version "1.8.1")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "racc" version))
        (sha256
         (base32
-         "178k7r0xn689spviqzhvazzvxfq6fyjldxb3ywjbgipbfi4s8j1g"))))
+         "0byn0c9nkahsl93y9ln5bysq4j31q8xkf2ws42swighxd4lnjzsa"))))
     (build-system ruby-build-system)
-    (arguments
-     `(#:tests? #f))            ; Fails while parsing test instructions.
-    (native-inputs
-     (list ruby-hoe ruby-rake-compiler))
+    (arguments (list #:tests? #f)) ; no Rakefile
     (synopsis "LALR(1) parser generator for Ruby")
     (description
      "Racc is a LALR(1) parser generator.  It is written in Ruby itself, and
 generates Ruby program.")
     (home-page "https://i.loveruby.net/en/projects/racc/")
-    (license (list
-              ;; Generally licensed under the LGPL2.1, and some files also
-              ;; available under the same license as Ruby.
-              license:lgpl2.1
-              license:ruby))))
+    (license (list license:bsd-2 license:ruby))))
 
 (define-public ruby-rack
   (package
