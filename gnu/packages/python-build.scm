@@ -680,8 +680,9 @@ information.")
         (base32 "156l685r9mg7i4xyrk9ql3sxk088irxlg8x7md5i0d05hdw1z8rs"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest
-           python-setuptools))
+     (list python-packaging-bootstrap
+           python-pytest-bootstrap
+           python-setuptools-bootstrap))
     (home-page "https://github.com/alex/pretend")
     (synopsis "Library for stubbing in Python")
     (description
