@@ -9581,8 +9581,13 @@ data files in the CSV, XLS or XLSX formats.")
            "180npmvzqync25b2scs878gv8q4y17dsinxyjcc10bw22msfap6b"))))
       (build-system python-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-tests
+              (lambda _
+                (substitute* "tests/acceptance/smoke.robot"
+                  (("optional arguments") "positional arguments"))))
            (replace 'check
              (lambda _
                (invoke "python" "-m" "robot" "-A"
