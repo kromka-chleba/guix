@@ -2109,7 +2109,7 @@ PDF library.  It has features such as:
 (define-public ruby-ast
   (package
     (name "ruby-ast")
-    (version "2.4.2")
+    (version "2.4.3")
     (source
      (origin
        (method git-fetch)               ;no test included in gem from v2.4.1
@@ -2119,33 +2119,25 @@ PDF library.  It has features such as:
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0vm94yml8rknr7z034vg6s3fpx6lml2prz9fn3hr67cx0143bb4h"))))
+         "1gj7ldaknjss0nfpdd12fqpnpfxz5l0ddqxvxvgpkprkv0ja80pz"))))
     (build-system ruby-build-system)
     (arguments
-     '(#:phases
+     '(#:test-target "spec"
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'remove-coveralls-requirement
            (lambda _
-             (substitute* "test/helper.rb"
+             (substitute* "spec/helper.rb"
                (("require 'coveralls'") "")
                (("Coveralls::SimpleCov::Formatter") ""))))
          (add-after 'extract-gemspec 'remove-unnecessary-requirements
            (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "ast.gemspec"
-               ((".*coveralls.*") "\n")
-               (("%q<rest-client>.*") "%q<rest-client>.freeze, [\">= 0\"])\n")
-               (("%q<mime-types>.*") "%q<mime-types>.freeze, [\">= 0\"])\n")
-               (("%q<rake>.*") "%q<rake>.freeze, [\">= 0\"])\n")
-               (("12\\.3") "13.0")))))))
+             (substitute* "ast.gemspec" ((".*coveralls.*") "\n")))))))
     (native-inputs
      (list bundler
-           ruby-bacon
-           ruby-bacon-colored-output
-           ruby-json-pure
            ruby-kramdown
-           ruby-mime-types
-           ruby-racc
-           ruby-rest-client
+           ruby-rake
+           ruby-rspec
            ruby-simplecov
            ruby-yard))
     (synopsis "Library for working with Abstract Syntax Trees")
