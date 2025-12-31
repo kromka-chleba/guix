@@ -198,6 +198,16 @@ translated messages from the catalogs.  Nearly all GNU packages use Gettext.")
     (native-inputs (list emacs-minimal))          ;for Emacs tools
     (synopsis "Tools and documentation for translation")))
 
+(define-public gnu-gettext-0.26
+  (package/inherit gnu-gettext
+    (version "0.26")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/gettext/gettext-" version
+                                  ".tar.gz"))
+              (sha256 (base32
+                       "0zqxpdc6xxf7rz69xfxiv7z32djvrsm64m80c05i36qy6yqg9b1r"))))))
+
 (define-public libtextstyle
   (package
     (name "libtextstyle")
