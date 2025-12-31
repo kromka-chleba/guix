@@ -8280,7 +8280,7 @@ generates Ruby program.")
   (package
     (name "ruby-rack")
     ;; Do not upgrade to version 3, as Rails doesn't support it yet.
-    (version "2.2.7")
+    (version "2.2.21")
     (source
      (origin
        (method git-fetch)               ;for tests
@@ -8290,7 +8290,7 @@ generates Ruby program.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "02r41fr61x0jfhraizc6bsgs40p8mlpvnzix71zwmcvibg384ify"))))
+         "0b42agr69gn528yb8cg1wq9wxgh19w6p2fcnxdz763zgmlvh4s42"))))
     (build-system ruby-build-system)
     (arguments
      (list
