@@ -13489,17 +13489,16 @@ various Prawn projects.")
 (define-public ruby-kramdown
   (package
     (name "ruby-kramdown")
-    (version "2.3.1")
+    (version "2.5.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "kramdown" version))
               (sha256
                (base32
-                "0jdbcjv4v7sj888bv3vc6d1dg4ackkh7ywlmn9ln2g9alk7kisar"))))
+                "131nwypz8b4pq1hxs6gsz3k00i9b75y3cgpkq57vxknkv6mvdfw7"))))
     (build-system ruby-build-system)
-    (arguments `(#:tests? #f)); FIXME: some test failures
-    (native-inputs
-     (list ruby-prawn ruby-prawn-table))
+    (arguments (list #:tests? #f)) ; Circular dependency
+    (propagated-inputs (list ruby-rexml))
     (home-page "https://kramdown.gettalong.org/")
     (synopsis "Markdown parsing and converting library")
     (description "Kramdown is a library for parsing and converting a superset
