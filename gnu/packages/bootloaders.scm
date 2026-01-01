@@ -1041,7 +1041,9 @@ CONFIG_TOOLS_KWBIMAGE=n")
                            "tools/proftool"
                            "tools/fdtgrep"
                            "tools/env/fw_printenv"
-                           "tools/sunxi-spl-image-builder")))))
+                           "tools/sunxi-spl-image-builder"))
+               (symlink (string-append bin "/fw_printenv")
+                        (string-append bin "/fw_setenv")))))
          (delete 'check)
          (add-after 'install 'check
            (lambda* (#:key make-flags test-target tests? #:allow-other-keys)
