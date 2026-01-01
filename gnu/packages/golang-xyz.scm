@@ -4248,6 +4248,48 @@ in Go applications.")
 in Go applications.")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-x-xpty
+  (package
+    (name "go-github-com-charmbracelet-x-xpty")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch/lfs)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version #:subdir "xpty"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nppkr1fci209m69rz1v690vv4y28z6ghfvwxbaxgyfqq1yq2ds7"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "xpty")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/xpty"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs
+     (list go-github-com-charmbracelet-x-conpty
+           go-github-com-charmbracelet-x-term
+           go-github-com-charmbracelet-x-termios
+           go-github-com-creack-pty))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Cross-platform pseudo-terminal interface for Go")
+    (description
+     "This package provides a cross-platform pseudo-terminal (PTY) interface
+for Go, supporting both Unix-like systems and Windows ConPTY.")
+    (license license:expat)))
+
 (define-public go-github-com-checkpoint-restore-go-criu-v6
   (package
     (name "go-github-com-checkpoint-restore-go-criu-v6")
