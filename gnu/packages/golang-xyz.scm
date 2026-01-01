@@ -3553,7 +3553,7 @@ tools.")
 (define-public go-github-com-charmbracelet-bubbletea
   (package
     (name "go-github-com-charmbracelet-bubbletea")
-    (version "1.2.4")
+    (version "1.3.6")
     (source
      (origin
        (method git-fetch)
@@ -3562,8 +3562,7 @@ tools.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0g5pj40lsdkh2gwixlpg53ji7fajncj512xj0v1x3mk5grgbc2zr"))))
+        (base32 "09bdwp1qsfjkvv7lgwjcvmww88mrz6bb9bani17rs96ag0l4bpaw"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -3592,6 +3591,7 @@ tools.")
            go-github-com-charmbracelet-x-ansi
            go-github-com-charmbracelet-x-term
            go-github-com-erikgeiser-coninput
+           go-github-com-mattn-go-localereader
            go-github-com-muesli-ansi
            go-github-com-muesli-cancelreader
            go-golang-org-x-sync
