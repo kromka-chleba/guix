@@ -900,18 +900,36 @@ using a Base64 representation.")
 (define-public ruby-bump
   (package
     (name "ruby-bump")
-    (version "0.7.0")
+    (version "0.10.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (rubygems-uri "bump" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gregorym/bump")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1xinbr9rzh6cj75x24niwgqcnbhdxc68a8bc41lk8xv6fd906fym"))))
+        (base32 "0q4698r3sv04yh56w493bx3sxzj360yi1wwzn4amfsnvrsi4z8q3"))))
     (build-system ruby-build-system)
+    (native-inputs (list bundler ruby-debug ruby-rake ruby-rspec))
     (arguments
-     '(;; No included tests
-       #:tests? #f))
+     (list
+      #:tests? #f ; tests require a git checkout
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'replace-git-ls-files
+            (lambda _
+              (substitute* "bump.gemspec"
+                (("`git ls-files lib README.md`")
+                 "`find bin lib spec README.md LICENSE -type f | sort`"))))
+          ; ruby-bump and ruby-rubocop cause a cyclic dependency
+          (add-after 'unpack 'remove-rubocop
+            (lambda _
+              (substitute* "Gemfile" ((".*rubocop.*") "\n"))
+              (substitute* "Rakefile"
+                (("require 'rubocop/rake_task'") "\n")
+                (("RuboCop::RakeTask.new") "")
+                ((", :rubocop") "")))))))
     (synopsis "Tool for working with Rubygems")
     (description
      "Bump provides commands to manage Rubygem versioning, updating to the
