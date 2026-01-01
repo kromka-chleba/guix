@@ -1357,13 +1357,13 @@ written in C.")
 (define-public ruby-prawn-svg
   (package
     (name "ruby-prawn-svg")
-    (version "0.37.0")
+    (version "0.38.1")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "prawn-svg" version))
        (sha256
-        (base32 "0c18drdsms06h5c5hmhdi7sbck72f2sp3sbgwyr7frq65h1xs6r7"))))
+        (base32 "1am9gvpkm246y4gr5q9gyb1idrc9fllx3lv3q0x66q4nliqgwcni"))))
     (build-system ruby-build-system)
     (arguments
      (list #:test-target "spec"
