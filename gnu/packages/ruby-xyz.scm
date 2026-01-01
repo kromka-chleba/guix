@@ -15908,6 +15908,33 @@ encoding.")
 Supports Flickr, Bitcoin, and Ripple alphabets.")
     (license license:expat)))
 
+(define-public ruby-dbm
+  (package
+    (name "ruby-dbm")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ruby/dbm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1x673bdc6harbn6da21vkjybc32a2fp7lx599dlii3p7njrvym8p"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-rake ruby-rake-compiler))
+    (inputs (list gdbm))
+    (home-page "https://github.com/ruby/dbm")
+    (synopsis "Provides a wrapper for the UNIX-style Database Manager Library")
+    (description
+     "The DBM class provides a wrapper to a Unix-style
+@url{dbm, http://en.wikipedia.org/wiki/Dbm} or Database Manager library.
+
+Dbm databases do not have tables or columns; they are simple key-value data
+stores, like a Ruby Hash except not resident in RAM. Keys and values must be
+strings.")
+    (license (list license:bsd-2 license:ruby))))
+
 (define-public ruby-dhall
   (package
     (name "ruby-dhall")
