@@ -72,7 +72,7 @@
 ;;; Copyright © 2024 nathan <nathan_mail@nborghese.com>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
-;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024-2026 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 nik gaffney <nik@fo.am>
@@ -1341,7 +1341,7 @@ hostname.")
 (define-public shadow
   (package
     (name "shadow")
-    (version "4.13")
+    (version "4.19.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1349,7 +1349,7 @@ hostname.")
                     "download/" version "/shadow-" version ".tar.xz"))
               (sha256
                (base32
-                "0b6xz415b4y3y5nk3pw9xibv05kln4cjbmhybyncmrx2g5fj9zls"))))
+                "0crbcfdp7ayyii33srinwd0yr27dkx9mbzglx1d0mvhr1z28xclw"))))
     (build-system gnu-build-system)
     (arguments
      `(;; Assume System V `setpgrp (void)', which is the default on GNU
@@ -1358,7 +1358,9 @@ hostname.")
        '(,@(if (target-hurd?)
              '()
              '("--with-libpam"))
-          "shadow_cv_logdir=/var/log"
+         "--disable-logind" ;; no systemd
+         "--without-libbsd" ;; no libbsd
+         "shadow_cv_logdir=/var/log"
           "ac_cv_func_setpgrp_void=yes")
        #:phases
        (modify-phases %standard-phases
@@ -1394,15 +1396,8 @@ hostname.")
              ;; The top-level Makefile.am wrongfully has "SUBDIRS += man"
              ;; under "if ENABLE_REGENERATE_MAN", even though prebuilt man
              ;; pages are available.  Thus, install them manually.
-             (invoke "make" "-C" "man" "install")))
-         (add-after 'install-man-pages 'remove-groups
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Remove `groups', which is already provided by Coreutils.
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (man (string-append out "/share/man")))
-               (delete-file (string-append bin "/groups"))
-               (for-each delete-file (find-files man "^groups\\."))))))))
+             (invoke "make" "-C" "man" "install"))))))
+    (native-inputs (list pkg-config))
     (inputs
      (append (if (target-hurd?)
                  '()
