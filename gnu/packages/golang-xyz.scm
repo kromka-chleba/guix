@@ -4208,6 +4208,46 @@ package provides an API for comparing Golden files.")
 in Go applications.")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-x-conpty
+  (package
+    (name "go-github-com-charmbracelet-x-conpty")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch/lfs)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version #:subdir "conpty"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pk7hcsnb36awgr4h4s0mb3sg2p0y7zxb3k2akvxk667n8xpm3mj"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "conpty")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/conpty"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs
+     (list go-golang-org-x-sys
+           go-github-com-charmbracelet-x-errors))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Windows ConPTY support for Go")
+    (description
+     "This package provides support for Windows Console Pseudo-Terminal (ConPTY)
+in Go applications.")
+    (license license:expat)))
+
 (define-public go-github-com-checkpoint-restore-go-criu-v6
   (package
     (name "go-github-com-checkpoint-restore-go-criu-v6")
