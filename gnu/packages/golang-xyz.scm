@@ -3394,6 +3394,30 @@ exit).")
     (license (list license:bsd-3
                    license:expat))))
 
+(define-public go-github-com-catppuccin-go
+  (package
+    (name "go-github-com-catppuccin-go")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/catppuccin/go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gqbgsap69abq1jdc4dhxvsrfb9yqc9423x6za6d7slfky1f736d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/catppuccin/go"))
+    (home-page "https://github.com/catppuccin/go")
+    (synopsis "Catppuccin color palette for Go")
+    (description
+     "This package provides the Catppuccin color palette for Go applications.
+Catppuccin is a soothing pastel theme for developers and tinkerers.")
+    (license license:expat)))
+
 (define-public go-github-com-cention-sany-utf7
   (package
     (name "go-github-com-cention-sany-utf7")
