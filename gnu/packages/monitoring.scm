@@ -822,10 +822,12 @@ devices.")
               (sha256
                (base32
                 "1mh97afgq6qgmpvpr84zngh58m0sl1b4wimqgvvk376188q09bjv"))
-              (patches (search-patches "collectd-5.11.0-noinstallvar.patch"))))
+              (patches (search-patches "collectd-5.11.0-noinstallvar.patch"
+                                       "collectd-5.11.0-python-3.11.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--localstatedir=/var" "--sysconfdir=/etc"
+                               "--enable-python"
                                "CFLAGS=-Wno-error=deprecated-declarations")
        #:phases (modify-phases %standard-phases
                   (add-before 'configure 'autoreconf
@@ -835,7 +837,7 @@ devices.")
     (inputs
      (list rrdtool curl yajl zlib))
     (native-inputs
-     (list autoconf automake libtool pkg-config))
+     (list autoconf automake libtool pkg-config python-3))
     (home-page "https://collectd.org/")
     (synopsis "Collect system and application performance metrics periodically")
     (description
