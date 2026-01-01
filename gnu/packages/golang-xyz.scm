@@ -3925,6 +3925,42 @@ ECMA-48} specs.")
      "Package cellbuf provides terminal cell buffer functionality.")
     (license license:expat)))
 
+(define-public go-github-com-charmbracelet-x-exp-strings
+  (package
+    (name "go-github-com-charmbracelet-x-exp-strings")
+    (version "0.0.0-20251028133951-21a390f3cede")
+    (source
+     (origin
+       (method git-fetch/lfs)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version #:subdir "exp/strings"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "088786ak8jsgvssbb5y16z066vfq9f6078sjc7iv766knfr2i0x2"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "exp")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/exp/strings"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "String manipulation utilities for Go")
+    (description
+     "This package provides string manipulation utilities for Go applications.")
+    (license license:expat)))
+
 (define-public go-github-com-charmbracelet-x-exp-golden
   (package
     (name "go-github-com-charmbracelet-x-exp-golden")
