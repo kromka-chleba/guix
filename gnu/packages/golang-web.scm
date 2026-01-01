@@ -878,7 +878,7 @@ example @code{GOPPROF=http,block}.")
 (define-public go-github-com-anthropics-anthropic-sdk-go
   (package
     (name "go-github-com-anthropics-anthropic-sdk-go")
-    (version "1.14.0")
+    (version "1.19.0")
     (source
      (origin
        (method git-fetch)
@@ -887,7 +887,7 @@ example @code{GOPPROF=http,block}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12a9f7ddp8nx0x35yvsdjzmv2qjx9p7d7qwkl4qhqnv6l5bsifxb"))))
+        (base32 "11hy4hdvah2klrs802lfzr7h1f8gy6z9xjqzkqir8xv67fasw9k8"))))
     (build-system go-build-system)
     (arguments
      (list
