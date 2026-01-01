@@ -7917,6 +7917,37 @@ acceptable elements, attributes, and CSS properties, Sanitize will remove all
 unacceptable HTML and/or CSS from a string.")
     (license license:expat)))
 
+(define-public ruby-syck
+  (package
+    (name "ruby-syck")
+    (version "1.5.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ruby/syck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14bsd15jdddx6vlw5h4svv83i4mzx39ndy0nkjnd3qz2j53piig4"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'compile
+            (lambda _
+              (invoke "rake" "compile"))))))
+    (native-inputs (list bundler ruby-rake-compiler ruby-test-unit))
+    (synopsis "Syck from stdlib turned in to a gem")
+    (description
+     "A gemified version of
+@acronym{Syck, Scripters’ YAML Cobble-Yourself-a-Parser Kit} from Ruby's stdlib.
+Syck has been removed from Ruby's stdlib, and this gem is meant to bridge the
+gap for people that haven't updated their YAML yet.")
+    (home-page "https://github.com/ruby/syck")
+    (license license:expat)))
+
 (define-public ruby-sync
   (package
     (name "ruby-sync")
