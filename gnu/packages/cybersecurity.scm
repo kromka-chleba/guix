@@ -6,6 +6,7 @@
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Florian Marrero Liestmann <f.m.liestmann@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -31,9 +32,12 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
-  #:use-module (gnu packages databases)
+  #:use-module (guix build-system trivial)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages databases)
+  #:use-module (gnu packages emulators)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
@@ -44,7 +48,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages time)
-  #:use-module (gnu packages emulators))
+  #:use-module (gnu packages tls))
 
 (define-public blacksmith
   (package
@@ -249,3 +253,42 @@ chains of gadgets to execute system calls.")
 Written in Python, it is designed for rapid prototyping and development, and
 intended to make exploit writing as simple as possible.")
     (license license:expat)))
+
+(define-public sqlmap
+  (package
+    (name "sqlmap")
+    (version "1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/sqlmapproject/sqlmap")
+              (commit "fee62ae14c15e555662b1d1099304add3eff3b1c")))
+       (sha256
+        (base32 "1kci95aavjqcprzg5dw2sjcd7cd93ljn4sxvnqnf5hrh6rh8h2ig"))))
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((src (assoc-ref %build-inputs "source"))
+                 (bin (string-append #$output "/bin"))
+                 (bash (string-append (assoc-ref %build-inputs "bash-minimal") "/bin/bash"))
+                 (py (string-append (assoc-ref %build-inputs "python") "/bin/python3")))
+            (mkdir-p bin)
+            (copy-recursively src
+                              #$output)
+            (with-directory-excursion bin
+              (call-with-output-file "sqlmap"
+                (lambda (p)
+                  (format p "#!~a\nexec ~a ~a/sqlmap.py \"$@\"" bash py
+                          #$output)))
+              (chmod "sqlmap" #o555) #t)))))
+    (inputs (list python bash-minimal openssl))
+    (synopsis "Automatic SQL injection and database takeover tool")
+    (description
+     "sqlmap is an open source penetration testing tool that automates the process of detecting and exploiting SQL injection flaws and taking over of database servers.")
+    (home-page "https://sqlmap.org")
+    (license license:gpl2)))
