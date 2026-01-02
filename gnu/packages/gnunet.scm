@@ -229,8 +229,6 @@ authentication and support for SSL3 and TLS.")
            openssl
            pkg-config
            python
-           python-sphinx
-           python-sphinx-rtd-theme
            xxd
            which))
     (arguments
