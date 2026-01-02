@@ -1019,7 +1019,6 @@ used by RDS Spy, and audio files containing @dfn{multiplex} signals (MPX).")
            python-mako
            python-pyzmq
            python-scipy
-           python-sphinx
            (texlive-local-tree (list texlive-newunicodechar))
            xorg-server-for-tests))
     (inputs
