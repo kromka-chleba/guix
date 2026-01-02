@@ -2897,6 +2897,37 @@ tablets.
 function with browser support.")
     (license license:expat)))
 
+(define-public node-utf-8-validate
+  (package
+    (name "node-utf-8-validate")
+    (version "6.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/websockets/utf-8-validate")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nca4zynp7rpjlxcwyv7fhz5zhdhhdhwwl7lqxkv2rz00rc86i22"))))
+    (build-system node-build-system)
+    (arguments
+     '(#:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'patch-dependencies 'delete-dev-dependencies
+           (lambda _
+             (modify-json (delete-dev-dependencies)))))))
+    (inputs
+     (list node-gyp-build node-addon-api))
+    (native-inputs
+     (list python))
+    (home-page "https://github.com/websockets/utf-8-validate")
+    (synopsis "UTF-8 validation for Node.js")
+    (description "This package provides efficient UTF-8 data validation for
+use with WebSocket implementations.")
+    (license license:expat)))
+
 (define-public node-wrappy
   (package
     (name "node-wrappy")
