@@ -64,7 +64,7 @@
 ;;; Copyright © 2019, 2020 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2019, 2020, 2021, 2022, 2023 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2019 Jacob MacDonald <jaccarmac@gmail.com>
-;;; Copyright © 2019-2021, 2023, 2024 Giacomo Leidi <therewasa@fishinthecalculator.me>
+;;; Copyright © 2019-2021, 2023, 2024, 2026 Giacomo Leidi <therewasa@fishinthecalculator.me>
 ;;; Copyright © 2019 Wiktor Żelazny <wzelazny@vurv.cz>
 ;;; Copyright © 2019, 2020, 2021, 2022 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2019, 2021-2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
@@ -1593,6 +1593,34 @@ standardized codes for human languages.  It stores the more bulky and
 hard-to-index data about languages, particularly what they are named in
 various languages.")
     (license license:expat)))
+
+(define-public python-linux-procfs
+  (package
+    (name "python-linux-procfs")
+    (version "0.7.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url (string-append "https://git.kernel.org/pub/scm/libs/python/"
+                                  "python-linux-procfs/python-linux-procfs"))
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09409sjncz7n9m2ia5nfzy10q7c23dvpgjdkc3j9bjs4f5hvc9aq"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm))
+    (home-page (string-append "https://git.kernel.org/pub/scm/libs/python/"
+                              "python-linux-procfs/python-linux-procfs.git/"))
+    (synopsis "Python abstractions to extract information from @code{/proc}
+files")
+    (description
+     "The proc filesystem is a pseudo-filesystem which provides an interface to
+kernel data structures.  This package provides a means to query that system from
+a Python module.")
+    (license license:gpl2)))
 
 (define-public python-log-symbols
   (package
