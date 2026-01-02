@@ -181,6 +181,7 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages ocr)
   #:use-module (gnu packages openldap)
@@ -2549,7 +2550,7 @@ GNOME Desktop.")
 (define-public gnome-keyring
   (package
     (name "gnome-keyring")
-    (version "46.2")
+    (version "48.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -2557,23 +2558,19 @@ GNOME Desktop.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "098ryv7xsnf5r58w8kdr6nahzhmrczjb72ycbqlg7dx8p1kcj9mz"))))
-    (build-system gnu-build-system)
+                "17gbzfj2rgbp1yb28mnxs3ngxmyqa26bwi4bkff3zsp9434ih1gj"))))
+    (build-system meson-build-system)
     (arguments
      (list
-      #:configure-flags
-      #~(list
-         (string-append "--with-pkcs11-config="
-                        #$output "/share/p11-kit/modules/")
-         (string-append "--with-pkcs11-modules="
-                        #$output "/share/p11-kit/modules/"))
+      #:configure-flags #~(list
+                           "-Dsystemd=disabled"
+                           (string-append "-Dpkcs11-modules="
+                                          #$output "/lib/pkcs11")
+                           (string-append "-Dpkcs11-config="
+                                          #$output "/share/p11-kit/modules"))
       #:parallel-tests? #f              ; XXX: concurrency in dbus tests
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-/bin/sh-reference
-            (lambda _
-              (substitute* "po/Makefile.in.in"
-                (("/bin/sh") (which "sh")))))
           (delete 'check)
           (add-after 'install 'check
             (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
@@ -2581,7 +2578,7 @@ GNOME Desktop.")
                 (setenv "HOME" "/tmp")  ;some tests require a writable HOME
                 (setenv "XDG_DATA_DIRS" (string-append (getenv "XDG_DATA_DIRS")
                                                        ":" #$output "/share"))
-                (invoke "dbus-run-session" "make" "check" "-j"
+                (invoke "dbus-run-session" "meson" "test" "-j"
                         (if parallel-tests?
                             (number->string (parallel-job-count))
                             "1"))))))))
@@ -2590,7 +2587,8 @@ GNOME Desktop.")
            gcr-3
            libgcrypt
            linux-pam
-           openssh))
+           openssh
+           ninja))
     (native-inputs
      (list dbus                         ;for tests
            docbook-xml-4.3
