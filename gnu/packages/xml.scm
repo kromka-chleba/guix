@@ -1216,6 +1216,9 @@ XSL-T processor.  It also performs any necessary post-processing.")
                (base32
                 "0bxnz4y097gbx1hx945h7j5pdycwbba3bfgmp6nyd1kbgb6whcd6"))))
     (build-system gnu-build-system)
+    (arguments
+      (list #:configure-flags
+            #~(list "--disable-crypto-dl"))) ; Bind to the input crypto library
     (propagated-inputs                  ; according to xmlsec1.pc
      (list libxml2 libxslt))
     (inputs
@@ -1243,8 +1246,11 @@ Libxml2).")
     (inputs
      (list nss libltdl))
     (arguments
-     ;; NSS no longer supports MD5 since 3.59, don't attempt to use it.
-     '(#:configure-flags '("--disable-md5")))
+     (list #:configure-flags #~(list
+           ;; NSS no longer supports MD5 since 3.59, don't attempt to use it.
+           "--disable-md5"
+           ;; Bind to the input crypto library
+           "--disable-crypto-dl")))
     (synopsis "XML Security Library (using NSS instead of GnuTLS)")))
 
 (define-public xmlsec-openssl
@@ -1252,6 +1258,8 @@ Libxml2).")
     (name "xmlsec-openssl")
     (inputs
      (list openssl libltdl))
+    ;; Bind to the input crypto library
+    (arguments (list #:configure-flags #~(list "--disable-crypto-dl")))
     (synopsis "XML Security Library (using OpenSSL instead of GnuTLS)")))
 
 (define-public minixml
