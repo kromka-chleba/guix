@@ -2395,6 +2395,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/transmission-4.0.6-fix-build.patch	\
   %D%/packages/patches/trytond-add-guix_trytond_path.patch	\
   %D%/packages/patches/ttf2eot-cstddef.patch			\
+  %D%/packages/patches/tuned-minimal-remove-tty-tests.patch	\
   %D%/packages/patches/turbovnc-custom-paths.patch		\
   %D%/packages/patches/turbovnc-find-system-packages.patch	\
   %D%/packages/patches/tuxpaint-stamps-path.patch		\
