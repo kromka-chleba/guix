@@ -260,6 +260,36 @@ HTTP.Agent instances from a function.")
     (synopsis "Match balanced string pairs in JavaScript")
     (description "This package provides a way to match balanced string pairs.")
     (license license:expat)))
+
+(define-public node-brace-expansion
+  (package
+    (name "node-brace-expansion")
+    (version "1.1.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/juliangruber/brace-expansion")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "117k5p167k4sz739rr83cjhf7bsq0iidvm8ylvnybbj86varv9q1"))))
+    (build-system node-build-system)
+    (arguments
+     '(#:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'patch-dependencies 'delete-dev-dependencies
+           (lambda _
+             (modify-json (delete-dev-dependencies)))))))
+    (inputs
+     (list node-balanced-match node-concat-map))
+    (home-page "https://github.com/juliangruber/brace-expansion")
+    (synopsis "Brace expansion for JavaScript")
+    (description "This package provides brace expansion as known from
+sh/bash, for JavaScript.")
+    (license license:expat)))
+
 (define-public node-buffer-crc32
   (package
     (name "node-buffer-crc32")
