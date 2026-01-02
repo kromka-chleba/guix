@@ -2104,6 +2104,17 @@ for @acronym{VHDL, Very high speed integrated circuit Hardware Description Langu
 SystemVerilog, and SystemC, with conversion between languages and to JSON.")
     (license license:expat)))
 
+;; Yosys source pinned to hdlConvertor v2.3 submodule commit for parsing tests.
+(define yosys-src-for-hdlconvertor-tests
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/YosysHQ/yosys")
+           (commit "a299e606f864942c7edf90c4ad3998f4f4a346cf")))
+    (file-name "yosys-src-for-hdlconvertor-tests")
+    (sha256
+     (base32 "106bzlljn6843740r8rbaqf5ivkyfcgp25dgzds97j48ypmv6fih"))))
+
 (define-public python-hdlconvertor
   (package
     (name "python-hdlconvertor")
@@ -2120,6 +2131,9 @@ SystemVerilog, and SystemC, with conversion between languages and to JSON.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; Ignore tests inside yosys source tree (they're unrelated yosys tests).
+      #~(list "--ignore=tests/yosys")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'setup-antlr
@@ -2181,7 +2195,11 @@ SystemVerilog, and SystemC, with conversion between languages and to JSON.")
                                   "vector<MacroDefVerilog::param_info_t>*"
                                   ">(visitDefine_args(da));"))))))
           (add-before 'check 'prepare-tests
-            (lambda _
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; Symlink yosys source for yosys testsuite.
+              (delete-file-recursively "tests/yosys")
+              (symlink (assoc-ref inputs "yosys-src-for-hdlconvertor-tests")
+                       "tests/yosys")
               ;; Remove source hdlConvertor/ which shadows the installed package.
               (delete-file-recursively "hdlConvertor")
               ;; Replace tests/__init__.py which imports all.py that requires
@@ -2196,8 +2214,6 @@ SystemVerilog, and SystemC, with conversion between languages and to JSON.")
                         (find-files "tests" "test_icarus"))
               (for-each delete-file
                         (find-files "tests" "test_verilator"))
-              (for-each delete-file
-                        (find-files "tests" "test_yosys"))
               (for-each delete-file
                         (find-files "tests" "test_uvvm"))
               (for-each delete-file
@@ -2217,10 +2233,11 @@ SystemVerilog, and SystemC, with conversion between languages and to JSON.")
            python-cython           ; compiles .pyx extension files to C++
            python-scikit-build     ; CMake-based Python build system
            python-setuptools
-           ;python-wheel
            python-wrapper          ; Python interpreter for build scripts
            python                  ; Python headers for C extension building
-           python-pytest))
+           python-pytest
+           ;; Yosys source for parsing tests.
+           yosys-src-for-hdlconvertor-tests))
     (inputs
      (list java-antlr4-runtime-cpp))
     (propagated-inputs
