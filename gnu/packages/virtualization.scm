@@ -38,7 +38,7 @@
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
-;;; Copyright © 2024, 2025 Giacomo Leidi <therewasa@fishinthecalculator.me>
+;;; Copyright © 2024-2026 Giacomo Leidi <therewasa@fishinthecalculator.me>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Douglas Deslauriers <Douglas.Deslauriers@vector.com>
@@ -3860,3 +3860,53 @@ create_header"))))))))))
                 libxcrypt
                 numactl
                 yajl)))))
+
+(define-public virt-what
+  (package
+    (name "virt-what")
+    (version "1.27")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://people.redhat.com/~rjones/virt-what/"
+                                  "files/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1wcvqs5g6b86bym75f1h8gmwf5ak95iwdyj3ficrb4759afvvnfl"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'wrap-binaries
+                 (lambda _
+                   (let ((libexec (string-append #$output "/libexec"))
+                         (sbin (string-append #$output "/sbin")))
+                     (for-each
+                      (lambda (bindir)
+                        (for-each
+                         (lambda (binary)
+                           (use-modules (srfi srfi-1))
+                           (wrap-program binary
+                             `("PATH" ":" prefix
+                               ,(search-path-as-list
+                                 '("bin" "sbin" "libexec")
+                                 (map second
+                                      '#$(package-inputs this-package))))))
+                         (find-files bindir)))
+                      (list sbin libexec))))))))
+    (native-inputs
+     (list perl))
+    (inputs
+     (list coreutils
+           bash-minimal
+           dmidecode
+           util-linux
+           which))
+    (home-page "https://people.redhat.com/~rjones/virt-what/")
+    (synopsis "Detect if running in a virtual machine")
+    (description
+     "@code{virt-what} is a program which can be used to detect if the program
+is running in a virtual machine.
+
+The program prints out a list of \"facts\" about the virtual machine,
+derived from heuristics.  One fact is printed per line.")
+    (license license:gpl2+)))
