@@ -164,6 +164,7 @@
 ;;; Copyright @ 2025 Nik Gaffney <nik@fo.am>
 ;;; Copyright © 2025 Untrusem <mysticmoksh@riseup.net>
 ;;; Copyright © 2025 case_lambda <case_lambda@disroot.org>
+;;; Copyright © 2026 Luis Henrique Gomes Higino <luishenriquegh2701@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2562,10 +2563,17 @@ Forgejo-based (e.g. Codeberg) repositories.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'build-info-manual
             (lambda _
+              (use-modules (ice-9 regex))
               (invoke "make" "-C" ".." "info")
               ;; Copy info files to the lisp directory, which acts as
               ;; the root of the project for the emacs-build-system.
-              (rename-file "../docs/magit.info" "../lisp/magit.info")))
+              (for-each (lambda (file)
+                          (rename-file
+                           file
+                           (regexp-substitute #f
+                                              (string-match "docs" file)
+                                              'pre "lisp" 'post)))
+                        (find-files "../docs" "\\.info$"))))
           (add-after 'unpack 'patch-version-executables
             (lambda* (#:key inputs #:allow-other-keys)
               (emacs-substitute-variables "magit.el"
