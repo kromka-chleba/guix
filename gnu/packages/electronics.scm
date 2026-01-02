@@ -1420,18 +1420,9 @@ coverage.")
                 ;; no longer have their original upstream.
                 (recursive? #t)))
          (file-name (git-file-name name version))
+         (modules '((guix build utils)))
          (snippet
           #~(begin
-              (use-modules (guix build utils)
-                           (ice-9 ftw)
-                           (srfi srfi-26))
-              ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-              (define (delete-all-but directory . preserve)
-                (with-directory-excursion directory
-                  (let* ((pred (negate (cut member <>
-                                            (cons* "." ".." preserve))))
-                         (items (scandir "." pred)))
-                    (for-each (cut delete-file-recursively <>) items))))
               (delete-all-but "3rdparty"
                               ;; The following sources have all been patched, so
                               ;; cannot easily be unbundled.

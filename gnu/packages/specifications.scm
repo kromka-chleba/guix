@@ -46,19 +46,11 @@
        (file-name (git-file-name name version))
        (sha256
         (base32 "0iwd2q4v7qi4fc2b2dhxxkp6bpbhgdd4s5q3jx0vq52p1fh9y0ni"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         ;; XXX: Keep just some portion with valulable data and no license
         ;; issues.
         #~(begin
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "."
                             "allsky"
                             "coordinates"

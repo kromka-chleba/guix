@@ -230,16 +230,8 @@ devices.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0i18wkz04w9wpckw021nawr82dh92krmcsn471rpjx1jrmgsbi5v"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-file-recursively "auth/oauth2adapt")
                     (delete-all-but "." "auth")))))
     (build-system go-build-system)
@@ -294,16 +286,8 @@ automatic token management.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "109szg097fn42qpsmrmd29iwsdh2yrjh9krq8mjm02fnm7l18lc4"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-all-but "auth" "oauth2adapt")
                     (delete-all-but "." "auth")))))
     (build-system go-build-system)
@@ -1576,20 +1560,9 @@ parameter types for AWS Secrets Manager.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "07g7vgpkq8cqirc2s64d9yswnpzdb7jzqr5kwrpblya2nq27inml"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "service" "sqs")
             (delete-all-but "." "service")))))
     (build-system go-build-system)
@@ -1871,16 +1844,8 @@ the OTEL Go SDK.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1qbcm8mqg2qvikv129s832qqvpydipv71825s4dkyjmzar5g04vf"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-all-but "sdk" "azcore")
                     (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -1914,16 +1879,8 @@ Azure SDK clients.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "18s9h2fcbcw39idfyjglm7vyyp04bgl0x0wj4vcd8q6a46b8rbh6"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-all-but "sdk" "azidentity")
                     (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -1964,16 +1921,8 @@ clients supporting token authentication.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "08a8kx4n31pa4krrxs1hrcwygryh86nz98fyr9hvw67202zr3adw"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-all-but "sdk/storage" "azblob")
                     (delete-all-but "sdk" "storage")
                     (delete-all-but "." "sdk")))))
@@ -2014,16 +1963,8 @@ to Azure Blob Storage}.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "08a8kx4n31pa4krrxs1hrcwygryh86nz98fyr9hvw67202zr3adw"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-all-but "sdk/storage" "azfile")
                     (delete-all-but "sdk" "storage")
                     (delete-all-but "." "sdk")))))
@@ -2067,16 +2008,8 @@ used.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0q0cbmh4vn2x1bi7bax2q6wpqndcyw7649w8lzl384k3rbn1q8yn"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet #~(begin
-                    (define (delete-all-but directory . preserve)
-                      (with-directory-excursion directory
-                        (let* ((pred (negate (cut member <>
-                                                  (cons* "." ".." preserve))))
-                               (items (scandir "." pred)))
-                          (for-each (cut delete-file-recursively <>) items))))
                     (delete-all-but "sdk" "internal")
                     (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -9843,18 +9776,9 @@ control the daemon.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1624z57hqqw1b473arfa5m936rsrhc8h3hs2jg4645b3dykfyawn"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
-        #~(begin
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
-            (delete-all-but "." "client")))))
+        #~(begin (delete-all-but "." "client")))))
     (build-system go-build-system)
     (arguments
      (list
@@ -15010,20 +14934,9 @@ Handler) and routes @code{WithRouteTag}.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "15k2xps4qv37pw3ml6pj98kihl6a04bbr005px5hhckl23s40w2c"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "propagators" "autoprop")
             (delete-all-but "." "propagators")))))
     (build-system go-build-system)
@@ -15291,20 +15204,9 @@ go.opentelemetry.io/otel/trace.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters/otlp" "otlptrace")
             (delete-all-but "." "exporters")
             ;; Submodules with their own go.mod files and packed as separated
@@ -15346,20 +15248,12 @@ go.opentelemetry.io/otel/trace.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
             ;; XXX: 'delete-all-but' is copied from the turbovnc package.
             ;; Consider to implement it as re-usable procedure in
             ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters/otlp/otlptrace" "otlptracegrpc")
             (delete-all-but "." "exporters")))))
     (build-system go-build-system)
@@ -15402,20 +15296,9 @@ By default the telemetry is sent to @@url{https://localhost:4317}.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters/otlp/otlptrace" "otlptracehttp")
             (delete-all-but "." "exporters")))))
     (build-system go-build-system)
@@ -15489,20 +15372,9 @@ telemetry to be written to an output destination as JSON.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1kvfbqc56p1h9rh9cvgn37ya6k10613r0f2rhjiwrrkgs2mszk30"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "exporters" "zipkin")
             (delete-all-but "." "exporters")))))
     (build-system go-build-system)
@@ -15537,20 +15409,9 @@ telemetry to be written to an output destination as JSON.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "." "log")))))
     (build-system go-build-system)
     (arguments
@@ -15596,20 +15457,9 @@ OpenTelemetry API.")))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "." "sdk")
             (delete-file-recursively "sdk/log")
             (delete-file-recursively "sdk/metric")))))
@@ -15646,20 +15496,9 @@ OpenTelemetry API.")))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "sdk" "log")
             (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -15694,20 +15533,9 @@ OpenTelemetry API.")))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sb36qyq389fif9qp5iiqp6w41dfcwi95gb0bsbvznvijhd8c1cc"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "sdk" "metric")
             (delete-all-but "." "sdk")))))
     (build-system go-build-system)
@@ -15796,18 +15624,9 @@ maturity level}.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "155qcbl84bwy7m9k221w75yakfv71fbxpfn9g3d7nnq6cl30fbfw"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
-        #~(begin
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
-            (delete-all-but "." "sdk")))))
+        #~(begin (delete-all-but "." "sdk")))))
     (build-system go-build-system)
     (arguments
      (list
@@ -16056,20 +15875,9 @@ the standard @code{context} package to store request-scoped values.")
        (uri (git-reference
               (url "https://github.com/googleapis/go-genproto")
               (commit (go-version->git-ref version #:subdir "googleapis/api"))))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
             ;; Submodules with their own go.mod files and packaged separately:
             ;;
             ;; - google.golang.org/genproto/googleapis/api/apikeys
@@ -16185,18 +15993,9 @@ the standard @code{context} package to store request-scoped values.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0yn1ir5y0wc91q95ngr3dlz2cyhp0wlb9l30hkw2cr34r38hq19w"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
-        #~(begin
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
-            (delete-all-but "." "cmd")))))
+        #~(begin (delete-all-but "." "cmd")))))
     (build-system go-build-system)
     (arguments
      (list
@@ -16460,18 +16259,9 @@ the code or routes.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1appaqgllddcl6kxkz3azix0xhlzy093vvxi6y3im1mkf5zblwl7"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
+       (modules '((guix build utils)))
        (snippet
-        #~(begin
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
-            (delete-all-but "." "test")))))
+        #~(begin (delete-all-but "." "test")))))
     (build-system go-build-system)
     (arguments
      (list

@@ -453,13 +453,6 @@ It aims to support Nintendo DSi and 3DS as well.")
                     (srfi srfi-26)))
          (snippet
           #~(begin
-              (define (delete-all-but directory . preserve)
-                (with-directory-excursion directory
-                  (let* ((pred (negate (cut member <>
-                                            (cons* "." ".." preserve))))
-                         (items (scandir "." pred)))
-                    (for-each (cut delete-file-recursively <>) items))))
-
               ;; Clean up the source from bundled libraries we don't need.
               (delete-all-but "Externals"
                               ;; XXX: The build system is currently hard-coded
@@ -649,14 +642,6 @@ turbo speed, networked multiplayer, and graphical enhancements.")
                     (srfi srfi-26)))
          (snippet
           #~(begin
-              ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-              (define (delete-all-but directory . preserve)
-                (with-directory-excursion directory
-                  (let* ((pred (negate (cut member <>
-                                            (cons* "." ".." preserve))))
-                         (items (scandir "." pred)))
-                    (for-each (cut delete-file-recursively <>) items))))
-
               ;; Clean up the source from bundled libraries we don't need.
               (delete-all-but "Externals"
                               ;; XXX: The build system is currently hard-coded
@@ -1072,17 +1057,9 @@ The following systems are supported:
          (sha256
           (base32
            "0dfsz4dsh49dc9xx9rjhfzfkg4h91i2ksgp2inlr9yhgldw9q8h3"))
-         (modules '((guix build utils)
-                    (ice-9 ftw)
-                    (srfi srfi-26)))
+         (modules '((guix build utils)))
          (snippet
           #~(begin
-              (define (delete-all-but directory . preserve)
-                (with-directory-excursion directory
-                  (let* ((pred (negate (cut member <> (cons* "." ".." preserve))))
-                         (items (scandir "." pred)))
-                    (for-each (cut delete-file-recursively <>) items))))
-
               (delete-all-but "src/third-party"
                               "blip_buf"
                               "inih")))))
@@ -2835,16 +2812,7 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
              (commit (string-append "v" version))))
        (snippet
         #~(begin
-            (use-modules (guix build utils)
-                         (ice-9 ftw)
-                         (srfi srfi-26))
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            (define (delete-all-but directory . preserve)
-              (with-directory-excursion directory
-                (let* ((pred (negate (cut member <>
-                                          (cons* "." ".." preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (cut delete-file-recursively <>) items))))
+            (use-modules (guix build utils))
             ;; Remove as much bundled sources as possible, shaving off about
             ;; 65 MiB.
             (delete-all-but "deps"
