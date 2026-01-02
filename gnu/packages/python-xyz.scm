@@ -41029,29 +41029,14 @@ similar XML files, in the same way the @command{diff} utility does it.")
 (define-public python-xmlsec
   (package
     (name "python-xmlsec")
-    (version "1.3.16")
+    (version "1.3.17")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "xmlsec" version))
        (sha256
-        (base32 "178zg6jl3v7j4cdxxzqzr16m3wqfisai98xa0sh4q7bd9ia70v1b"))))
+        (base32 "00cwbg0aq67f3mbijxhm0cfnrqwshgvca06c4mcmhrlzcypckypk"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; See https://github.com/xmlsec/python-xmlsec/issues/210
-      #:test-flags '(list "-n" "1"
-                          ;; This causes other tests to segfault.
-                          "-k" "not test_reinitialize_module")
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; FIXME: This is very unfortunate.  I can't seem to find a way to
-          ;; hardcode the location of this library, so users will also need to
-          ;; set LD_LIBRARY_PATH.
-          (add-before 'check 'pre-check
-            (lambda* (#:key inputs #:allow-other-keys)
-              (setenv "LD_LIBRARY_PATH"
-                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1"))))))))
     (inputs (list openssl libltdl libxslt libxml2))
     (propagated-inputs (list python-lxml xmlsec-openssl))
     (native-inputs (list pkg-config
