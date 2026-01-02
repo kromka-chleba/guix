@@ -128,7 +128,6 @@
             flex
             pkg-config
             python-3
-            python-sphinx
             swig
             xmltoman)
       (list autoconf
