@@ -573,9 +573,7 @@ stored with user-specified precision.")
      (list doxygen
            graphviz
            pkg-config
-           python
-           python-pygments
-           python-sphinx))
+           python))
     (inputs
      (list fftwf
            `(,hwloc-2 "lib")
