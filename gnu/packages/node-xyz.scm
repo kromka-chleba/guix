@@ -589,6 +589,33 @@ a more fine-grained manner by binding the @env{DEBUG} variable.")
 text differences, similar to Unix diff.")
     (license license:bsd-3)))
 
+(define-public node-define-lazy-prop
+  (package
+    (name "node-define-lazy-prop")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sindresorhus/define-lazy-prop")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lbd1m9n77bpzjrp2m7670hiyd73qd8w9gnc2w5lxjf6gglwz0ay"))))
+    (build-system node-build-system)
+    (arguments
+     '(#:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'patch-dependencies 'delete-dev-dependencies
+           (lambda _
+             (modify-json (delete-dev-dependencies)))))))
+    (home-page "https://github.com/sindresorhus/define-lazy-prop")
+    (synopsis "Define a lazily evaluated property on an object")
+    (description "This package provides a way to lazily evaluate properties
+on an object.")
+    (license license:expat)))
+
 (define-public node-env-variable
   (package
     (name "node-env-variable")
