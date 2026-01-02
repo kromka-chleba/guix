@@ -234,6 +234,32 @@ addons in a wide array of potential locations.")
     (description "This package provides a base class for creating Node.js
 HTTP.Agent instances from a function.")
     (license license:expat)))
+
+(define-public node-balanced-match
+  (package
+    (name "node-balanced-match")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/juliangruber/balanced-match")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0977r6hv9fyv6f8wvn31vcncxwhffnn05y0h4hmpkg8p2vs9ip0b"))))
+    (build-system node-build-system)
+    (arguments
+     '(#:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'patch-dependencies 'delete-dev-dependencies
+           (lambda _
+             (modify-json (delete-dev-dependencies)))))))
+    (home-page "https://github.com/juliangruber/balanced-match")
+    (synopsis "Match balanced string pairs in JavaScript")
+    (description "This package provides a way to match balanced string pairs.")
+    (license license:expat)))
 (define-public node-buffer-crc32
   (package
     (name "node-buffer-crc32")
