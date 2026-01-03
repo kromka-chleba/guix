@@ -1102,6 +1102,30 @@ the locations of well known user directories.")
 strings, based on the Levenshtein measure.")
     (license license:asl2.0)))
 
+(define-public go-github-com-aleksi-pointer
+  (package
+    (name "go-github-com-aleksi-pointer")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AlekSi/pointer")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rncmanv62wwy7ihvjhvb695mkvy4kdzhgnn90zygs9yrfzzk0wk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AlekSi/pointer"))
+    (home-page "https://github.com/AlekSi/pointer")
+    (synopsis "Go helpers to get pointers to values of built-in types")
+    (description
+     "Package pointer provides helper functions to get pointers to values of
+built-in types, useful when setting optional fields in struct literals.")
+    (license license:expat)))
+
 (define-public go-github-com-agnivade-levenshtein
   (package
     (name "go-github-com-agnivade-levenshtein")
