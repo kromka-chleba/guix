@@ -898,7 +898,7 @@ displayed in a terminal.")
 (define-public imv
   (package
     (name "imv")
-    (version "4.5.0")
+    (version "5.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -906,19 +906,17 @@ displayed in a terminal.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "0988rpgzyhb27sbhrh5f2zqccqirmq7xb0naqh9nbl8j1dg897b8"))
+                "0fy8kaxi6071j983kb709xsmps8nqg1aa55ach2drdzs33zfr56q"))
               (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
-               (add-after 'install 'record-absolute-file-names
+               (add-after 'install 'use-absolute-file-name
                  (lambda _
-                   ;; 'imv' is a script that execs 'imv-x11' or 'imv-wayland'.
-                   ;; 'imv-dir' execs 'imv'. Record their absolute file names.
+                   ;; Patch 'imv-dir' to use the absolute path for
+                   ;; 'imv'.
                    (let ((bin (string-append #$output "/bin")))
-                     (substitute* (string-append bin "/imv")
-                       (("imv-") (string-append bin "/imv-")))
                      (substitute* (string-append bin "/imv-dir")
                        (("imv") (string-append bin "/imv")))))))))
     (native-inputs
@@ -937,7 +935,8 @@ displayed in a terminal.")
            libtiff
            libxkbcommon
            pango
-           wayland))
+           wayland
+           wayland-protocols))
     (synopsis "Image viewer for tiling window managers")
     (description "@code{imv} is a command line image viewer intended for use
 with tiling window managers.  Features include:
