@@ -18145,6 +18145,37 @@ millisecond)
      (list
       #:import-path "github.com/oklog/ulid/v2"))))
 
+(define-public go-github-com-olebedev-when
+  (package
+    (name "go-github-com-olebedev-when")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/olebedev/when")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11jpz8w12pip6qy5ylyd7jx5r2imd35q1xkay296gj4w2k2g1yh6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/olebedev/when"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-aleksi-pointer
+           go-github-com-pkg-errors))
+    (home-page "https://github.com/olebedev/when")
+    (synopsis "Natural language date/time parser for Go")
+    (description
+     "Package when is a natural language date/time parser with pluggable rules.
+It can extract dates and times from conversational text like \"next wednesday
+at 2:25 p.m\" using configurable parsing rules.  It supports multiple languages
+including English, Russian, Brazilian Portuguese, Chinese, and Dutch.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-olekukonko-errors
   (package
     (name "go-github-com-olekukonko-errors")
