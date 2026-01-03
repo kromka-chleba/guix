@@ -117,7 +117,6 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix build-system trivial)
   #:use-module (guix git-download)
   #:use-module (guix svn-download)
   #:use-module (guix gexp)
@@ -2883,7 +2882,7 @@ join or leave multiplayer games at any time.")
     (synopsis "Customizable Minecraft launcher (AppImage)")
     (description "PrismLauncher is a fork of MultiMC with additional features and customization options.")
     (home-page "https://prismlauncher.org")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public pipewalker
   (package
