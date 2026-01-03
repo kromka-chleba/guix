@@ -174,7 +174,7 @@
 ;;; Copyright © 2025 Matthias Riße <matrss@0px.xyz>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
 ;;; Copyright © 2025 Allan Adair <allan@adair.no>
-;;; Copyright © 2025 Hennadii Stepanov <hebasto@gmail.com>
+;;; Copyright © 2025-2026 Hennadii Stepanov <hebasto@gmail.com>
 ;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
@@ -35903,7 +35903,7 @@ platform using the ActivityPub protocol.")
 (define-public python-lief
   (package
     (name "python-lief")
-    (version "0.17.1")
+    (version "0.17.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -35912,7 +35912,7 @@ platform using the ActivityPub protocol.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0cxryrxyirx64v6v0rglklqicrkrmwxipb6v430h2shlh25ryl1s"))))
+                "0djl879vw0a21h4ww8waqa3mgs835rhqbsda85274n4s6z5vi905"))))
     (build-system pyproject-build-system)
     (native-inputs (list cmake-minimal
                          ninja
