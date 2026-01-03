@@ -10296,6 +10296,61 @@ with the ncruces/go-sqlite3 Go package.  It includes the core SQLite library
 and various extensions.")
     (license license:public-domain))))
 
+(define-public go-github-com-ncruces-go-sqlite3
+  (package
+    (name "go-github-com-ncruces-go-sqlite3")
+    (version (package-version sqlite-for-ncruces-go-sqlite3))
+    (source
+     (origin
+       (inherit (package-source sqlite-for-ncruces-go-sqlite3))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Remove pre-built WASM blob - we use sqlite-for-ncruces-go-sqlite3
+        '(delete-file "embed/sqlite3.wasm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ncruces/go-sqlite3"
+      ;; Test extensions and utilities comprehensively.
+      #:test-subdirs #~'(;; VFS and driver
+                         "vfs/memdb" "driver"
+                         ;; Extensions (SIMPLE - no driver dependency)
+                         "ext/bloom" "ext/closure" "ext/csv" "ext/pivot"
+                         "ext/serdes" "ext/stats" "ext/unicode"
+                         ;; Extensions (COMPLEX - depend on driver)
+                         "ext/array" "ext/fileio" "ext/hash" "ext/ipaddr"
+                         "ext/lines" "ext/regexp" "ext/uuid" "ext/zorder"
+                         ;; Utilities
+                         "util/ioutil" "util/osutil" "util/fsutil" "util/sql3util")
+      ;; Skip tests that need network access, writable testdata, or filesystem access.
+      #:test-flags #~'("-skip" "Test_wal|Test_northwind|Test_fsdir")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'install-wasm
+            (lambda* (#:key inputs import-path #:allow-other-keys)
+              ;; Copy the pre-built WASM file to the embed directory
+              (let ((wasm-src (search-input-file inputs "share/sqlite3/sqlite3.opt.wasm"))
+                    (wasm-dst (string-append "src/" import-path "/embed/sqlite3.wasm")))
+                (copy-file wasm-src wasm-dst)))))))
+    (inputs (list sqlite-for-ncruces-go-sqlite3))
+    (native-inputs (list go-github-com-dchest-siphash  ;for ext/bloom tests
+                         go-github-com-google-uuid     ;for ext/uuid tests
+                         go-golang-org-x-crypto        ;for ext/hash tests
+                         go-golang-org-x-text))
+    (propagated-inputs (list go-github-com-ncruces-julianday
+                             go-github-com-ncruces-sort
+                             go-github-com-tetratelabs-wazero
+                             go-golang-org-x-sys))
+    (home-page "https://github.com/ncruces/go-sqlite3")
+    (synopsis "Pure Go SQLite driver using WebAssembly")
+    (description
+     "This package provides a Go SQLite driver that uses a WebAssembly
+build of SQLite.  It offers the familiarity of database/sql with the
+performance and security of @code{wazero}, a CGO-free WebAssembly
+runtime.  The driver is compatible with @code{modernc.org/sqlite} while
+providing better performance and CGo-free builds.")
+    (license license:expat)))
+
 (define-public go-github-com-ncw-swift-v2
   (package
     (name "go-github-com-ncw-swift-v2")
