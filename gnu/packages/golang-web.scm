@@ -13062,6 +13062,37 @@ signing, verification, and OIDC functionality.")
 verification of signatures and attestations produced by Sigstore tools.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sigstore-timestamp-authority-v2
+  (package
+    (name "go-github-com-sigstore-timestamp-authority-v2")
+    (version "2.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sigstore/timestamp-authority")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pgdxwkyrl10ayhw02n72r02q362gxg7110l9h9isiyqwbrmw2lp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/sigstore/timestamp-authority/v2"
+      ;; Tests need go.step.sm/crypto and other cloud dependencies
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-digitorus-pkcs7
+           go-github-com-digitorus-timestamp
+           go-github-com-pkg-errors))
+    (home-page "https://github.com/sigstore/timestamp-authority")
+    (synopsis "RFC 3161 timestamp verification for Sigstore")
+    (description
+     "This package provides timestamp verification functionality for the
+Sigstore ecosystem, implementing RFC 3161 timestamp response validation.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-shurcool-githubv4
   (package
     (name "go-github-com-shurcool-githubv4")
