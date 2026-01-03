@@ -1,0 +1,67 @@
+The bootstrap premake wants to use bundled lua sources.
+Use a dynamically linked lua instead.
+
+Also drop the rebuilding of the final premake.
+We do this ourselves as it might be cross compiled.
+
+Upstream Issue: https://github.com/premake/premake-core/issues/2538
+
+diff --git a/Bootstrap.mak b/Bootstrap.mak
+index 4d45ea98..3bc4ed52 100644
+--- a/Bootstrap.mak
++++ b/Bootstrap.mak
+@@ -5,40 +5,8 @@ LUA_DIR     = contrib/lua/src
+ LUASHIM_DIR = contrib/luashim
+ PREMAKE_OPTS =
+ 
+-SRC		= src/host/*.c			\
+-		$(LUA_DIR)/lapi.c		\
+-		$(LUA_DIR)/lauxlib.c	\
+-		$(LUA_DIR)/lbaselib.c	\
+-		$(LUA_DIR)/lbitlib.c	\
+-		$(LUA_DIR)/lcode.c		\
+-		$(LUA_DIR)/lcorolib.c	\
+-		$(LUA_DIR)/lctype.c		\
+-		$(LUA_DIR)/ldblib.c		\
+-		$(LUA_DIR)/ldebug.c		\
+-		$(LUA_DIR)/ldo.c		\
+-		$(LUA_DIR)/ldump.c		\
+-		$(LUA_DIR)/lfunc.c		\
+-		$(LUA_DIR)/lgc.c		\
+-		$(LUA_DIR)/linit.c		\
+-		$(LUA_DIR)/liolib.c		\
+-		$(LUA_DIR)/llex.c		\
+-		$(LUA_DIR)/lmathlib.c	\
+-		$(LUA_DIR)/lmem.c		\
+-		$(LUA_DIR)/loadlib.c	\
+-		$(LUA_DIR)/lobject.c	\
+-		$(LUA_DIR)/lopcodes.c	\
+-		$(LUA_DIR)/loslib.c		\
+-		$(LUA_DIR)/lparser.c	\
+-		$(LUA_DIR)/lstate.c		\
+-		$(LUA_DIR)/lstring.c	\
+-		$(LUA_DIR)/lstrlib.c	\
+-		$(LUA_DIR)/ltable.c		\
+-		$(LUA_DIR)/ltablib.c	\
+-		$(LUA_DIR)/ltm.c		\
+-		$(LUA_DIR)/lundump.c	\
+-		$(LUA_DIR)/lutf8lib.c	\
+-		$(LUA_DIR)/lvm.c		\
+-		$(LUA_DIR)/lzio.c		\
++SRC		= src/host/*.c
++
+ 
+ HOST_PLATFORM= none
+ 
+@@ -109,10 +77,7 @@ linux-clean: nix-clean
+ 
+ linux: linux-clean
+ 	mkdir -p build/bootstrap
+-	$(CC) -o build/bootstrap/premake_bootstrap -DPREMAKE_NO_BUILTIN_SCRIPTS -DLUA_STATICLIB -DLUA_USE_POSIX -DLUA_USE_DLOPEN -I"$(LUA_DIR)" -I"$(LUASHIM_DIR)" $(SRC) -lm -ldl -lrt -luuid
+-	./build/bootstrap/premake_bootstrap embed
+-	./build/bootstrap/premake_bootstrap --to=build/bootstrap $(PREMAKE_OPTS) gmake
+-	$(MAKE) -C build/bootstrap -j`getconf _NPROCESSORS_ONLN` config=$(CONFIG)
++	$(CC) -o build/bootstrap/premake_bootstrap -DPREMAKE_NO_BUILTIN_SCRIPTS $(SRC) -lm -ldl -lrt -luuid -llua
+ 
+ bsd-clean: nix-clean
+ 

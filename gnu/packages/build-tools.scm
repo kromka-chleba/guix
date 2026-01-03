@@ -71,6 +71,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages cppi)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages guile)
@@ -544,14 +545,22 @@ other lower-level build files.")
                 "0q287af75d6w3c7dbfq7rmbh9isqzs9v30fjpm37lcafs2p7966k"))
               (patches
                (search-patches
-                "premake5-determinism.patch"))
+                "premake5-determinism.patch"
+                "premake5-unbundle-lua.patch"))
               (modules '((guix build utils)))
               (snippet '(begin
                           (delete-file "src/scripts.c")
-                          (delete-file-recursively "build")))))
+                          (delete-file-recursively "build")
+                          (for-each
+                           (lambda (dir)
+                             (delete-file-recursively (string-append "contrib/" dir)))
+                           '("curl" "libzip"
+                             ;; "lua" host/debug_prompt.c includes lua.c
+                             "luashim" "mbedtls" "zlib"))))))
     (arguments
      (list
       #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+      #:configure-flags #~'("--lib-src=system")
       #:tests? #f ; No test suite
       #:phases
       #~(modify-phases %standard-phases
@@ -566,6 +575,19 @@ other lower-level build files.")
                  ""))
               (substitute* "premake5.lua"
                 (("\"uuid\"") ""))))
+          (add-after 'unpack 'patch-lua-headers
+            (lambda _
+              ;; <lua5.3/lua.h> -> <lua.h>
+              (substitute* '("src/host/premake.h"
+                             "src/host/curl_utils.h")
+                (("lua5\\.3/") ""))
+              (substitute* "premake5.lua"
+                (("lua5\\.3") "lua"))))
+          (add-after 'unpack 'patch-libzip-headers
+            (lambda _
+              ;; "zip.h" ->  <zip.h>
+              (substitute* '"src/host/zip_extract.c"
+                (("\"zip.h\"") "<zip.h>"))))
           (replace 'bootstrap
             (lambda* (#:key configure-flags #:allow-other-keys)
               (invoke "make" "-f" "Bootstrap.mak" "linux"
@@ -588,7 +610,9 @@ other lower-level build files.")
               (install-file "../../bin/release/premake5"
                             (string-append (assoc-ref outputs "out") "/bin"))
               #t)))))
-    (native-inputs '())
+    (native-inputs (list lua)) ;; for bootstrap premake
+    (inputs
+     (list curl lua libzip zlib))
     (description "@code{premake5} is a command line utility that reads a
 scripted definition of a software project and outputs @file{Makefile}s or
 other lower-level build files.")))
