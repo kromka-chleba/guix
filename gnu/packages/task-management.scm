@@ -80,7 +80,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.17.7")
+    (version "0.47.0")
     (source
      (origin
        (method git-fetch)
@@ -89,28 +89,46 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0adg00mqgl70fxynciswkzka5hyia86h92b1pnqd8achk6c5szbr"))))
+        (base32 "0q4kmw0428986la0xp5rr4xm042sia0wm3a70lmg9wmyav17ifd7"))))
     (build-system go-build-system)
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/steveyegge/beads/cmd/bd"
       #:unpack-path "github.com/steveyegge/beads"
+      ;; Handle WASM files and chroma embedded files that may be symlinks in
+      ;; Guix build environment.
+      #:embed-files #~(list ".*\\.wasm" ".*\\.xml" "lexers/embedded/.*")
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'build 'set-home
+          (add-before 'check 'set-ci-environment
             (lambda _
-              (setenv "HOME" "/tmp"))))))
+              ;; Skip permission tests that don't work in build environment.
+              (setenv "CI" "true")))
+          (add-before 'check 'init-git-in-source
+            (lambda _
+              ;; Tests expect to run from a git checkout.
+              ;; Initialize git in the source directory.
+              (with-directory-excursion "src/github.com/steveyegge/beads"
+                (invoke "git" "init")
+                (invoke "git" "config" "user.email" "guix@localhost")
+                (invoke "git" "config" "user.name" "Guix Build")
+                (invoke "git" "add" ".")
+                (invoke "git" "commit" "-m" "Initial commit")))))))
     (native-inputs
-     (list git))
-    (propagated-inputs
-     (list go-github-com-anthropics-anthropic-sdk-go
-           go-github-com-fatih-color
+     (list git
+           go-github-com-anthropics-anthropic-sdk-go
+           go-github-com-charmbracelet-glamour
+           go-github-com-charmbracelet-huh
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-fsnotify-fsnotify
+           go-github-com-gofrs-flock
+           go-github-com-ncruces-go-sqlite3
+           go-github-com-olebedev-when
            go-github-com-spf13-cobra
            go-github-com-spf13-viper
            go-gopkg-in-natefinch-lumberjack-v2
-           go-modernc-org-sqlite
+           go-gopkg-in-yaml-v3
            go-rsc-io-script))
     (home-page "https://github.com/steveyegge/beads")
     (synopsis "Graph-based issue tracker for AI coding agents")
