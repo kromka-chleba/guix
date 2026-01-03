@@ -26476,14 +26476,51 @@ interpreter. bpython's main features are
               (sha256
                (base32
                 "1x3i9wmzw33fpkis203alygfnrkcmq9w1aydcm887jh6frfqm6cw"))))
-    (build-system python-build-system)
-    (arguments `(#:tests? #f))          ;no tests
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f          ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'drop-shebang
+            (lambda _
+              ;; Dropping this shebang prevents the build system from adding
+              ;; python-wrapper as an input, reducing package closure size from
+              ;; ~200 MiB to ~0.2 MiB.
+              (substitute* "python3/pyinotify.py"
+                (("#!/usr/bin/env python") "")))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/seb-m/pyinotify")
     (synopsis "Python library for monitoring inotify events")
     (description
      "@code{pyinotify} provides a Python interface for monitoring
 file system events on Linux.")
     (license license:expat)))
+
+(define-public python-pyinotify-cli
+  (package
+    (inherit python-pyinotify)
+    (name "python-pyinotify-cli")
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-pyinotify)
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (delete 'drop-shebang)
+            (add-after 'install 'install-entrypoint
+              (lambda _
+                (let ((entrypoint
+                       (string-append #$output "/lib/python"
+                                      (python-version (which "python"))
+                                      "/site-packages/pyinotify.py"))
+                      (bin (string-append #$output "/bin")))
+                  (mkdir-p bin)
+                  (invoke "chmod" "+x" entrypoint)
+                  (symlink
+                   entrypoint (string-append #$output "/bin/pyinotify")))))))))
+    (description
+     "This package provides, in addition to the @code{pyinotify} Python library,
+a command line application exposing the same functionality.")))
 
 (define-public python-more-itertools
   (package
