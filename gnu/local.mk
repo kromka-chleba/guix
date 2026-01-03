@@ -2018,6 +2018,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/orpheus-cast-errors-and-includes.patch	\
   %D%/packages/patches/ots-no-include-missing-file.patch	\
   %D%/packages/patches/owncloud-disable-updatecheck.patch	\
+  %D%/packages/patches/premake5-determinism.patch		\
   %D%/packages/patches/pnet-fix-line-number-info.patch		\
   %D%/packages/patches/pnet-fix-off-by-one.patch		\
   %D%/packages/patches/pnet-newer-libgc-fix.patch		\

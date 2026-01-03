@@ -1,0 +1,27 @@
+Upstream Status: https://github.com/premake/premake-core/pull/2597
+
+From d6d332cabbc8f76acb3aa4d11d655197149a7083 Mon Sep 17 00:00:00 2001
+From: Dariqq <77271900+Dariqq@users.noreply.github.com>
+Date: Thu, 8 Jan 2026 20:37:39 +0000
+Subject: [PATCH] Ensure deterministic embed order.
+
+Sort table of embedded scripts by their name.
+---
+ scripts/embed.lua | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/scripts/embed.lua b/scripts/embed.lua
+index 0d650c4268..98e621bde1 100644
+--- a/scripts/embed.lua
++++ b/scripts/embed.lua
+@@ -155,6 +155,10 @@
+ 
+ 	addScript(contentTable, "_modules.lua", "src/_modules.lua", "return {" .. table.implode(modules, '"', '"', ', ') .. "}")
+ 
++-- Sort scripts to ensure deterministic order
++
++	table.sort(contentTable, function(a, b) return a.name < b.name end)
++
+ -- Embed the actual script contents
+ 
+ 	print("Embedding...")

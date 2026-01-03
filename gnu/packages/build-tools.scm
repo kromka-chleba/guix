@@ -25,6 +25,7 @@
 ;;; Copyright © 2025 Aiden Isik <aidenisik+git@member.fsf.org>
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2026 Dariqq <dariqq@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -540,28 +541,53 @@ other lower-level build files.")
                                   "/premake-" version "-src.zip"))
               (sha256
                (base32
-                "0q287af75d6w3c7dbfq7rmbh9isqzs9v30fjpm37lcafs2p7966k"))))
+                "0q287af75d6w3c7dbfq7rmbh9isqzs9v30fjpm37lcafs2p7966k"))
+              (patches
+               (search-patches
+                "premake5-determinism.patch"))
+              (modules '((guix build utils)))
+              (snippet '(begin
+                          (delete-file "src/scripts.c")
+                          (delete-file-recursively "build")))))
     (arguments
-     (substitute-keyword-arguments (package-arguments premake4)
-      ((#:phases phases)
-       `(modify-phases ,phases
-           (add-after 'unpack 'patch-builtin-uuidgen
-             ;; Use built-in UUID generation
-             (lambda _
-               (substitute* "src/host/os_uuid.c"
-                 (("#elif PLATFORM_LINUX")
-                  "#elif 0"))
-               (substitute* "build/gmake.unix/Premake5.make"
-                 (("-luuid")
-                  ""))
-               (substitute* "premake5.lua"
-                 (("filter \"system:linux or macosx\"")
-                  "filter \"system:macosx\""))))
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (install-file "../../bin/release/premake5"
-                             (string-append (assoc-ref outputs "out") "/bin"))
-               #t))))))
+     (list
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+      #:tests? #f ; No test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-builtin-uuidgen
+            ;; Use built-in UUID generation
+            (lambda _
+              (substitute* "src/host/os_uuid.c"
+                (("#elif PLATFORM_LINUX")
+                 "#elif 0"))
+              (substitute* "Bootstrap.mak"
+                (("-luuid")
+                 ""))
+              (substitute* "premake5.lua"
+                (("\"uuid\"") ""))))
+          (replace 'bootstrap
+            (lambda* (#:key configure-flags #:allow-other-keys)
+              (invoke "make" "-f" "Bootstrap.mak" "linux"
+                      ;; Use native CC for bootstrapping.
+                      "CC=gcc")
+              ;; regenerate embedded sources
+              (apply invoke "./build/bootstrap/premake_bootstrap"
+                     "embed" ;; "--bytecode"
+                     configure-flags)))
+          (replace 'configure
+            (lambda* (#:key configure-flags #:allow-other-keys)
+              (apply invoke "./build/bootstrap/premake_bootstrap"
+                     "--to=build/gmake.unix" "gmake"
+                     configure-flags)))
+          (add-before 'build 'enter-source
+            (lambda _
+              (chdir "build/gmake.unix")))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (install-file "../../bin/release/premake5"
+                            (string-append (assoc-ref outputs "out") "/bin"))
+              #t)))))
     (native-inputs '())
     (description "@code{premake5} is a command line utility that reads a
 scripted definition of a software project and outputs @file{Makefile}s or
