@@ -534,7 +534,7 @@ other lower-level build files.")
     (inherit premake4)
     (version "5.0.0-beta7")
     (source (origin
-              (method url-fetch)
+              (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/premake/premake-core/"
                                   "releases/download/v" version
                                   "/premake-" version "-src.zip"))
@@ -545,13 +545,7 @@ other lower-level build files.")
      (substitute-keyword-arguments (package-arguments premake4)
       ((#:phases phases)
        `(modify-phases ,phases
-           (replace 'enter-source
-             ;; For some reason we end up in the .github subdir of the source,
-             ;; which is why we first go back a dir unlike in premake4.
-             (lambda _ (chdir "..") #t))
-           (add-after 'enter-source 'enter-build-dir
-             (lambda _ (chdir "build/gmake.unix") #t))
-           (add-after 'enter-source 'patch-builtin-uuidgen
+           (add-after 'unpack 'patch-builtin-uuidgen
              ;; Use built-in UUID generation
              (lambda _
                (substitute* "src/host/os_uuid.c"
@@ -568,6 +562,7 @@ other lower-level build files.")
                (install-file "../../bin/release/premake5"
                              (string-append (assoc-ref outputs "out") "/bin"))
                #t))))))
+    (native-inputs '())
     (description "@code{premake5} is a command line utility that reads a
 scripted definition of a software project and outputs @file{Makefile}s or
 other lower-level build files.")))
