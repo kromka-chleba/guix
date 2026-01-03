@@ -66,11 +66,14 @@
 (define-module (gnu packages golang-web)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
+  #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (gnu packages)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages golang)
@@ -81,6 +84,7 @@
   #:use-module (gnu packages golang-maths)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages prometheus)
   #:use-module (gnu packages specifications)
   #:use-module (gnu packages tls)
@@ -10118,6 +10122,179 @@ databases for date/time storage.")
      "This package provides additional sorting algorithms for Go, including
 a stable natural sort and other utilities.")
     (license license:expat)))
+
+(define-public sqlite-for-ncruces-go-sqlite3
+  (let (;; Major version of clang used for WASM compilation.
+        (clang-major-version "21")
+        ;; SQLite version used for WASM compilation.
+        (sqlite-version "3.51.0")
+        (sqlite-autoconf-version "3510100"))
+    (package
+      (name "sqlite-for-ncruces-go-sqlite3")
+      (version "0.30.4")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ncruces/go-sqlite3")
+               (commit (string-append "v" version))))
+         (file-name (git-file-name "go-sqlite3" version))
+         (sha256
+          (base32 "0dk67ybq5i4jfg107n6zpy6jg3apd3674y09syis9ppp6kslszrf"))))
+      (build-system gnu-build-system)
+      (outputs '("out"))
+      (arguments
+       (list
+        #:tests? #f                       ;no test suite
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'build
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let* ((clang (assoc-ref inputs "clang"))
+                       (llvm (assoc-ref inputs "llvm"))
+                       (wasi-libc (assoc-ref inputs "wasi-libc"))
+                       (wasi-compiler-rt (assoc-ref inputs "wasi-compiler-rt"))
+                       (binaryen (assoc-ref inputs "binaryen"))
+                       (sqlite-dir (string-append
+                                    "sqlite-autoconf-" #$sqlite-autoconf-version))
+                     (extensions '("anycollseq" "base64" "decimal" "ieee754"
+                                   "regexp" "series" "spellfix" "uint")))
+                ;; Extract SQLite amalgamation tarball and copy needed files
+                (let ((sqlite-tarball (assoc-ref inputs "sqlite-source")))
+                  (invoke "tar" "-xzf" sqlite-tarball)
+                  (copy-file (string-append sqlite-dir "/sqlite3.c")
+                             "sqlite3/sqlite3.c")
+                  (copy-file (string-append sqlite-dir "/sqlite3.h")
+                             "sqlite3/sqlite3.h")
+                  (copy-file (string-append sqlite-dir "/sqlite3ext.h")
+                             "sqlite3/sqlite3ext.h"))
+                ;; Create ext/ directory and copy extensions from SQLite git
+                (mkdir-p "sqlite3/ext")
+                (let ((sqlite-git (assoc-ref inputs "sqlite-git")))
+                  (for-each
+                   (lambda (ext)
+                     (let* ((src (string-append sqlite-git "/ext/misc/" ext ".c"))
+                            (dst (string-append "sqlite3/ext/" ext ".c")))
+                       (when (file-exists? src)
+                         (copy-file src dst))))
+                   extensions))
+                ;; Apply patches to sqlite3.c for Go compatibility
+                (with-directory-excursion "sqlite3"
+                  (for-each
+                   (lambda (patch)
+                     (invoke "patch" "-p0" "--no-backup-if-mismatch"
+                             "-i" patch))
+                   (find-files "." "\\.patch$")))
+                ;; Read exports from exports.txt
+                (use-modules (ice-9 rdelim))
+                (define exports
+                  (call-with-input-file "embed/exports.txt"
+                    (lambda (port)
+                      (let loop ((lines '()))
+                        (let ((line (read-line port)))
+                          (if (eof-object? line)
+                              (reverse lines)
+                              (loop (cons line lines))))))))
+                ;; Compile SQLite to WASM using main.c which includes all
+                ;; bindings (bind.c, column.c, func.c, hooks.c, pointer.c,
+                ;; result.c, time.c, vfs.c, vtab.c) plus extensions.
+                (let* ((cc (string-append clang "/bin/clang"))
+                       (sysroot (string-append wasi-libc "/share/wasi-sysroot"))
+                       (wasi-includes
+                        (string-append sysroot "/include/wasm32-wasi"))
+                       (clang-builtins
+                        (string-append clang "/lib/clang/"
+                                       #$clang-major-version
+                                       "/include"))
+                       ;; Path to wasi-compiler-rt builtins library.
+                       (rtlib-path (string-append wasi-compiler-rt
+                                                  "/lib/wasm32-unknown-wasi"))
+                       (export-flags
+                        (map (lambda (sym) (string-append "-Wl,--export=" sym))
+                             exports)))
+                  (apply invoke cc
+                         "--target=wasm32-wasi"
+                         "-std=c23" "-g0" "-O2"
+                         "-Wall" "-Wextra"
+                         "-Wno-unused-parameter" "-Wno-unused-function"
+                         (string-append "--sysroot=" sysroot)
+                         "-nostdinc"
+                         "-isystem" clang-builtins
+                         "-isystem" wasi-includes
+                         "-I" "sqlite3/libc"
+                         "-I" "sqlite3"
+                         "-mexec-model=reactor"
+                         "-mmutable-globals" "-mnontrapping-fptoint"
+                         "-msimd128" "-mbulk-memory" "-msign-ext"
+                         "-mreference-types" "-mmultivalue"
+                         "-mno-extended-const"
+                         "-fno-stack-protector"
+                         ;; Don't automatically link clang's runtime library.
+                         ;; We provide wasi-compiler-rt explicitly instead.
+                         "--rtlib=compiler-rt"
+                         (string-append "-resource-dir=" wasi-compiler-rt)
+                         "-Wl,--stack-first"
+                         "-Wl,--import-undefined"
+                         "-Wl,--initial-memory=327680"
+                         "-D_HAVE_SQLITE_CONFIG_H"
+                         "-DSQLITE_EXPERIMENTAL_PRAGMA_20251114"
+                         "-DSQLITE_CUSTOM_INCLUDE=sqlite_opt.h"
+                         "-o" "sqlite3.wasm"
+                         "sqlite3/main.c"
+                         export-flags)
+                  ;; Run wasm-ctor-eval to initialize constructors.
+                  (invoke (string-append binaryen "/bin/wasm-ctor-eval")
+                          "-g" "-c" "_initialize"
+                          "sqlite3.wasm" "-o" "sqlite3.tmp")
+                  ;; Optimize with Binaryen wasm-opt (matching upstream).
+                  (invoke (string-append binaryen "/bin/wasm-opt")
+                          "-g" "sqlite3.tmp" "-o" "sqlite3.opt.wasm"
+                          "--low-memory-unused" "--gufa"
+                          "--generate-global-effects" "--converge" "-O3"
+                          "--enable-mutable-globals"
+                          "--enable-nontrapping-float-to-int"
+                          "--enable-simd" "--enable-bulk-memory"
+                          "--enable-sign-ext" "--enable-reference-types"
+                          "--enable-multivalue"
+                          "--strip" "--strip-producers")))))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (install-file "sqlite3.opt.wasm"
+                              (string-append out "/share/sqlite3"))))))))
+    (inputs (list wasi-libc wasi-compiler-rt))
+    (native-inputs
+     `(("clang" ,clang-21)
+       ("llvm" ,llvm-21)
+       ("lld" ,lld-21)
+       ("binaryen" ,binaryen)
+       ("patch" ,patch)
+       ("sqlite-source"
+        ,(origin
+           (method url-fetch)
+           (uri (string-append "https://sqlite.org/2025/sqlite-autoconf-"
+                               sqlite-autoconf-version ".tar.gz"))
+           (sha256
+            (base32
+             "1q5p8bmjphw0pjzx8fq161hnzfvzsdzyq5fh5b9j95s7f36la92g"))))
+       ("sqlite-git"
+        ,(origin
+           (method git-fetch)
+           (uri (git-reference
+                 (url "https://github.com/sqlite/sqlite")
+                 (commit (string-append "version-" sqlite-version))))
+           (file-name (string-append "sqlite-" sqlite-version "-checkout"))
+           (sha256
+            (base32
+             "0nlz76g5hf7md8j8b3k6lzrr2qhh5f5j2ycijl56z06miaxvd9vj"))))))
+    (home-page "https://github.com/ncruces/go-sqlite3")
+    (synopsis "SQLite compiled to WebAssembly for go-sqlite3")
+    (description
+     "This package provides SQLite compiled to WebAssembly (WASM) for use
+with the ncruces/go-sqlite3 Go package.  It includes the core SQLite library
+and various extensions.")
+    (license license:public-domain))))
 
 (define-public go-github-com-ncw-swift-v2
   (package
