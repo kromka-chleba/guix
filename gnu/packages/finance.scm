@@ -39,7 +39,7 @@
 ;;; Copyright © 2023 Attila Lendvai <attila@lendvai.name>
 ;;; Copyright © 2024 Saku Laesvuori <saku@laesvuori.fi>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
-;;; Copyright © 2025 Hennadii Stepanov <hebasto@gmail.com>
+;;; Copyright © 2025-2026 Hennadii Stepanov <hebasto@gmail.com>
 ;;; Copyright © 2025 James Smith <jsubuntuxp@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -158,7 +158,7 @@
   ;; <https://bitcoincore.org/en/lifecycle/#schedule>.
   (package
     (name "bitcoin-core")
-    (version "30.0")
+    (version "30.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -166,10 +166,11 @@
                               version "/bitcoin-" version ".tar.gz"))
               (sha256
                (base32
-                "0x39bqd9ql7b6s7sj8ws8gw6g4nbgf6cplnys2lrmvfza56jliwv"))))
+                "0hrzkivl68lq7kl9wwnr03ws22g6wy8l46zc2x3zc01h5iw1hmax"))))
     (build-system qt-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:qtbase qtbase
+           #:configure-flags
            #~(list
               "-DBUILD_GUI=ON"
               "-DBUILD_BENCH=ON"
@@ -199,7 +200,6 @@
            capnproto
            libevent
            qrencode
-           qtbase
            sqlite
            zeromq))
     (home-page "https://bitcoincore.org/")
