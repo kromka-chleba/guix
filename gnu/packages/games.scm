@@ -117,6 +117,7 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix build-system trivial)
   #:use-module (guix git-download)
   #:use-module (guix svn-download)
   #:use-module (guix gexp)
@@ -2854,6 +2855,35 @@ on quick tactical action and unit management in real-time.  Battles progress
 constantly as destroyed players respawn with a set of new units.  Players can
 join or leave multiplayer games at any time.")
     (license license:gpl2+)))
+
+(define-public prismlauncher-appimage
+  (package
+    (name "prismlauncher")
+    (version "9.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/PrismLauncher/PrismLauncher/releases/download/"
+                           version "/PrismLauncher-Linux-x86_64.AppImage"))
+       (sha256
+        (base32 "0g42zsrinw546k20fdw5s0846b0cpa1padyys9cww0r28rbagq6y"))))
+    (build-system trivial-build-system)
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder
+       (begin
+         (use-modules (guix build utils))
+         (let* ((out (assoc-ref %outputs "out"))
+                (bin (string-append out "/bin"))
+                (appimage (assoc-ref %build-inputs "source")))
+           (mkdir-p bin)
+           (copy-file appimage (string-append bin "/prismlauncher"))
+           (chmod (string-append bin "/prismlauncher") #o755)
+           #t))))
+    (synopsis "Customizable Minecraft launcher (AppImage)")
+    (description "PrismLauncher is a fork of MultiMC with additional features and customization options.")
+    (home-page "https://prismlauncher.org")
+    (license gpl3+)))
 
 (define-public pipewalker
   (package
