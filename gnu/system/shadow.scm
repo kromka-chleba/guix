@@ -191,8 +191,8 @@ eval \"$(guix package --search-paths \\
 # Set up Guix Home profile
 if [ -f ~/.profile ]; then . ~/.profile; fi
 
-# Prepend setuid programs.
-export PATH=/run/setuid-programs:$PATH
+# Prepend privileged programs.
+export PATH=/run/privileged/bin:$PATH
 "))
 
 (define %default-zprofile
