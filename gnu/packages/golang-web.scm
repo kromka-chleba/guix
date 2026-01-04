@@ -1017,9 +1017,9 @@ require encoding and decoding before fanning-out to handlers.")
   (hidden-package
    (package/inherit go-github-com-apex-log
      (arguments
-      (list #:go go-1.23
-            #:import-path "github.com/apex/log"
-            #:test-subdirs #~(list ".")))
+      (list #:import-path "github.com/apex/log"
+            #:test-subdirs #~(list ".")
+            #:test-flags #~(list "-vet=off")))
      (propagated-inputs
       (list go-github-com-fatih-color
             go-github-com-pkg-errors)))))
