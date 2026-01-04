@@ -16314,6 +16314,56 @@ the standard @code{context} package to store request-scoped values.")
 generate Go code.")
     (license license:asl2.0)))
 
+(define-public go-google-golang-org-grpc-examples
+  (package
+    (name "go-google-golang-org-grpc-examples")
+    (version "0.0.0-20251230081507-88ac70352f5b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/grpc/grpc-go")
+             (commit (go-version->git-ref version
+                                          #:subdir "examples"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sb2pg0pbj4k7r11n6mbcavi8kfv50ajfnsd24rr0xp7kc5g8axj"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    (delete-all-but "." "examples")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;Tests require circular dependencies
+      #:import-path "google.golang.org/grpc/examples"
+      #:unpack-path "google.golang.org/grpc"))
+    (propagated-inputs (list go-github-com-cncf-xds-go
+                        go-github-com-prometheus-client-golang
+                        go-go-opentelemetry-io-otel
+                        go-go-opentelemetry-io-otel-exporters-prometheus
+                        go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
+                        go-go-opentelemetry-io-otel-sdk
+                        go-go-opentelemetry-io-otel-sdk-metric
+                        go-golang-org-x-oauth2
+                        go-google-golang-org-genproto-googleapis-rpc
+                        go-google-golang-org-grpc-security-advancedtls
+                        go-google-golang-org-protobuf))
+    (home-page "https://google.golang.org/grpc")
+    (synopsis "Examples")
+    (description
+     "The following examples are provided to help users get started with
+@code{gRPC-Go}.  They are arranged as follows:.")
+    (license license:asl2.0)))
+
 (define-public go-google-golang-org-grpc-security-advancedtls
   (package
     (name "go-google-golang-org-grpc-security-advancedtls")
