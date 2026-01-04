@@ -2833,6 +2833,32 @@ functions for writing tests in an @code{xUnit} style.")
 test coverage and has a web user interface that will refresh automatically.")
     (license license:expat)))
 
+(define-public go-github-com-sonatard-noctx
+  (package
+    (name "go-github-com-sonatard-noctx")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sonatard/noctx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xwiqk27fdrj5r680napdrhsnri4zb9vvwwanjapzrp46dlawaks"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sonatard/noctx"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-gostaticanalysis-analysisutil))
+    (home-page "https://github.com/sonatard/noctx")
+    (synopsis "Find function calls with context.Context")
+    (description
+     "This package provides a Go linter that finds function calls without
+@code{context.Context}.")
+    (license license:expat)))
+
 (define-public go-github-com-sourcegraph-go-diff
   (package
     (name "go-github-com-sourcegraph-go-diff")
