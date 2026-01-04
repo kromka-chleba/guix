@@ -27680,6 +27680,30 @@ also provides V-style logging controlled by the @code{-v} and
 @code{https://github.com/golang/glog}.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-kms
+  (package
+    (name "go-k8s-io-kms")
+    (version "0.35.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/kms")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03xq8scdg4qjhc4gjnl3z3b1f4lv75i07jx7klpcmzr6cdws3kk8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "k8s.io/kms"))
+    (propagated-inputs (list go-google-golang-org-grpc
+                             go-google-golang-org-protobuf))
+    (home-page "https://k8s.io/kms")
+    (synopsis "KMS")
+    (description "This package contains the proto definitions for the kms API.")
+    (license license:asl2.0)))
+
 (define-public go-k8s-io-utils
   (package
     (name "go-k8s-io-utils")
