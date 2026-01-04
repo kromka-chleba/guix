@@ -2600,26 +2600,39 @@ from JSON payloads using the @code{databind.core} framework.")
   (package
     (name "python-dlmanager")
     (version "0.1.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/parkouss/dlmanager")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0f2j7d396z50yd5r86jx8m5bxyv2i0cw967j68xcwpcg3b216zmr"))
-              (modules '((guix build utils)))
-              (snippet
-               #~(begin
-                   (substitute* "setup.py"
-                     (("pytest.main.self.pytest_args.")
-                      "pytest.main(self.pytest_args.split(' '))"))))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/parkouss/dlmanager")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f2j7d396z50yd5r86jx8m5bxyv2i0cw967j68xcwpcg3b216zmr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-six
+            (lambda _
+              (substitute* (find-files "." "\\.py$")
+                (("six\\.moves\\.") "")
+                (("import six") "")
+                (("six\\.reraise\\(\\*([^)]*))" _ e)
+                 (string-append "_, exc_value, tb = " e
+                                "; raise exc_value.with_traceback(tb)"))
+                (("six\\.itervalues\\((.*))" _ d) (string-append d ".values()"))
+                (("six.b\\('a' \\* size)") "b'a' * size")
+                (("six\\.b\\(data)") "bytes(data, encoding='utf-8')"))
+              (substitute* "requirements.txt"
+                (("six") "")))))))
     (native-inputs
-     (list python-pytest python-mock))
+     (list python-mock
+           python-pytest
+           python-setuptools))
     (propagated-inputs
-     (list python-requests python-six))
+     (list python-requests))
     (home-page "https://github.com/parkouss/dlmanager")
     (synopsis "Download manager library")
     (description
