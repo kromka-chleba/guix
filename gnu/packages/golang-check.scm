@@ -2833,6 +2833,31 @@ functions for writing tests in an @code{xUnit} style.")
 test coverage and has a web user interface that will refresh automatically.")
     (license license:expat)))
 
+(define-public go-github-com-sourcegraph-go-diff
+  (package
+    (name "go-github-com-sourcegraph-go-diff")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sourcegraph/go-diff")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18kypvvc751mz98s1wxxgvyrzg59wriwnqmvr3xd3pnp53gzpkz0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/sourcegraph/go-diff"))
+    (propagated-inputs (list go-github-com-google-go-cmp))
+    (home-page "https://github.com/sourcegraph/go-diff")
+    (synopsis "Diff parser and printer for Go")
+    (description
+     "This package provides a unified diff parser and printer for Go.")
+    (license license:expat)))
+
 (define-public go-github-com-ssgreg-nlreturn-v2
   (package
     (name "go-github-com-ssgreg-nlreturn")
