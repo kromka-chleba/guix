@@ -606,8 +606,8 @@ Gemini clients and servers.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "git.sr.ht/~rockorager/go-jmap"))
+      #:import-path "git.sr.ht/~rockorager/go-jmap"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list
       go-github-com-stretchr-testify))
