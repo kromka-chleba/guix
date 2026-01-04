@@ -478,7 +478,6 @@ is corrupted you'll lose the affected file(s) but not the whole back-up.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/google/fscrypt"
       #:install-source? #f
       #:test-flags
@@ -489,7 +488,9 @@ is corrupted you'll lose the affected file(s) but not the whole back-up.")
                             "TestLoadReadOnlyMount"
                             "TestReadWriteMountIsPreferredOverReadOnlyMount"
                             "TestLoadAmbiguousMounts"
-                            "TestRootSubtreeIsPreferred") "|"))
+                            "TestRootSubtreeIsPreferred") "|")
+              ;; Disable go vet in go 1.24+
+              "-vet=off")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'fix-version-detection
