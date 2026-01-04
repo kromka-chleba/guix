@@ -779,6 +779,53 @@ metrics to Prometheus metrics via configured mapping rules.  This package
 provides a Golang module and @code{statsd_exporter} executable command.")
     (license license:asl2.0)))
 
+(define-public go-go-opentelemetry-io-otel-exporters-prometheus
+  (package
+    (name "go-go-opentelemetry-io-otel-exporters-prometheus")
+    (version "0.59.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-telemetry/opentelemetry-go")
+             (commit (go-version->git-ref version
+                                          #:subdir "exporters/prometheus"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a0hrsln80i4x8x3mq2w79ivc3j446wwm0486ag7mpzzzya7bzh4"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    (delete-all-but "." "exporters")
+                    (delete-all-but "exporters" "prometheus")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.opentelemetry.io/otel/exporters/prometheus"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (propagated-inputs (list go-github-com-prometheus-client-golang
+                             go-github-com-prometheus-client-model
+                             go-github-com-prometheus-otlptranslator
+                             go-github-com-stretchr-testify
+                             go-go-opentelemetry-io-otel
+                             go-go-opentelemetry-io-otel-sdk
+                             go-go-opentelemetry-io-otel-sdk-metric
+                             go-google-golang-org-protobuf))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "Prometheus Exporter")
+    (description
+     "Package prometheus provides a Prometheus Exporter that converts OTLP metrics
+into the Prometheus exposition format and implements prometheus.Collector to
+provide a handler for these metrics.")
+    (license license:asl2.0)))
+
 ;;;
 ;;; Executables:
 ;;;
