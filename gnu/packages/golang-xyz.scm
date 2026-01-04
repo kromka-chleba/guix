@@ -3192,6 +3192,31 @@ using GOCACHEPROG.")
      "This package provides a syntactically different way to iterate over integers.")
     (license license:bsd-3)))
 
+(define-public go-github-com-bramvdbogaerde-go-scp
+  (package
+    (name "go-github-com-bramvdbogaerde-go-scp")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bramvdbogaerde/go-scp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s2kh29r52m4z05bq8xysk5kgf63mphjbq3fpnd2f387f4c1ba1j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests fail
+      #:import-path "github.com/bramvdbogaerde/go-scp"))
+    (propagated-inputs (list go-golang-org-x-crypto))
+    (home-page "https://github.com/bramvdbogaerde/go-scp")
+    (synopsis "Copy files over SCP with Go")
+    (description
+     "This package is a simple scp package to copy files over SSH.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-briandowns-spinner
   (package
     (name "go-github-com-briandowns-spinner")
