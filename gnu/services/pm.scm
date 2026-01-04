@@ -3,6 +3,7 @@
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+;;; Copyright © 2026 Giacomo Leidi <therewasa@fishinthecalculator.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,17 +23,23 @@
 (define-module (gnu services pm)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
+  #:use-module (guix diagnostics)
   #:use-module (guix gexp)
+  #:use-module (guix i18n)
   #:use-module (guix packages)
   #:use-module (guix records)
   #:use-module (gnu packages admin)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages power)
   #:use-module (gnu services)
   #:use-module (gnu services base)
   #:use-module (gnu services configuration)
   #:use-module (gnu services dbus)
+  #:use-module (gnu services linux)
   #:use-module (gnu services shepherd)
+  #:use-module (gnu system file-systems)
   #:use-module (gnu system shadow)
   #:export (power-profiles-daemon-service-type
             power-profiles-daemon-configuration
@@ -44,7 +51,47 @@
             thermald-service-type
 
             powertop-configuration
-            powertop-service-type))
+            powertop-service-type
+
+            tuned-configuration
+            tuned-configuration?
+            tuned-configuration-fields
+            tuned-configuration-tuned
+            tuned-configuration-auto-start?
+            tuned-configuration-power-profiles-daemon-support?
+            tuned-configuration-profiles
+            tuned-configuration-settings
+            tuned-configuration-ppd-settings
+            tuned-configuration-recommend.conf
+
+            tuned-settings
+            tuned-settings?
+            tuned-settings-fields
+            tuned-settings-daemon?
+            tuned-settings-dynamic-tuning?
+            tuned-settings-default-instance-priority
+            tuned-settings-recommend-command?
+            tuned-settings-sleep-interval
+            tuned-settings-update-interval
+            tuned-settings-profile-dirs
+            tuned-settings-extra-content
+
+            tuned-ppd-settings
+            tuned-ppd-settings?
+            tuned-ppd-settings-fields
+            tuned-ppd-settings-default
+            tuned-ppd-settings-battery-detection?
+            tuned-ppd-settings-sysfs-acpi-monitor?
+            tuned-ppd-settings-profiles
+            tuned-ppd-settings-battery
+            tuned-ppd-settings-extra-content
+
+            tuned-file-systems
+            tuned-activation
+            tuned-shepherd-services
+            tuned-kernel-modules
+
+            tuned-service-type))
 
 ;;;
 ;;; power-profiles-daemon
@@ -579,3 +626,341 @@ prevent overheating.")))
    (default-value (powertop-configuration))
    (description "Tune power-related kernel parameters to reduce energy
  consumption.")))
+
+;;;
+;;; TuneD
+;;;
+
+(define (sanitize-ini-pair pair)
+  (define (valid? member)
+    (or (string? member)
+        (gexp? member)
+        (file-like? member)))
+  (match pair
+    (((? valid? key) . (? valid? value))
+     #~(string-append #$key "=" #$value))
+    (_
+     (raise
+      (formatted-message
+       (G_ "pair members must contain only strings, gexps or file-like objects
+but ~a was found")
+       pair)))))
+
+(define (sanitize-ini-mixed-list name value)
+  (map
+   (lambda (el)
+     (cond ((string? el) el)
+           ((pair? el) (sanitize-ini-pair el))
+           (else
+            (raise
+             (formatted-message
+              (G_ "~a members must be either a string or a pair but ~a was
+found!")
+              name el)))))
+   value))
+
+(define* (sanitize-ini-boolean value #:key (true "1") (false "0"))
+  (if value true false))
+
+(define (sanitize-ini-number value)
+  (number->string value))
+
+(define (tuned-ppd-settings-sanitize-battery value)
+  ;; Expected spec format:
+  ;; '(("name" . "value") "name=value")
+  (sanitize-ini-mixed-list "tuned-ppd-settings battery" value))
+
+(define (tuned-ppd-settings-battery? value)
+  (list? (tuned-ppd-settings-sanitize-battery value)))
+
+(define (tuned-ppd-settings-sanitize-profiles value)
+  ;; Expected spec format:
+  ;; '(("name" . "value") "name=value")
+  (sanitize-ini-mixed-list "tuned-ppd-settings profiles" value))
+
+(define (tuned-ppd-settings-profiles? value)
+  (list? (tuned-ppd-settings-sanitize-profiles value)))
+
+(define-configuration/no-serialization tuned-ppd-settings
+  (default
+    (string "balanced")
+    "Default PPD profile.")
+  (battery-detection?
+    (boolean #t)
+    "Whether to enable battery detection.")
+  (sysfs-acpi-monitor?
+    (boolean #t)
+    "Whether to react to changes of ACPI platform profile done via function keys
+(e.g., Fn-L) on newer Thinkpad machines.  This is marked upstream as an
+experimental feature.")
+  (profiles
+   (tuned-ppd-settings-profiles
+    '(("power-saver" . "powersave")
+      ("balanced" . "balanced")
+      ("performance" . "throughput-performance")))
+   "Map of PPD battery states to TuneD profiles."
+   (sanitizer tuned-ppd-settings-sanitize-profiles))
+  (battery
+   (tuned-ppd-settings-battery '(("balanced" . "balanced-battery")))
+   "Map of PPD battery states to TuneD profiles."
+   (sanitizer tuned-ppd-settings-sanitize-battery))
+  (extra-content
+   (text-config
+    (list (plain-file "tuned-ppd-settings-extra-content" "")))
+   "A list of file-like objects that are appended to the configuration file."))
+
+(define (serialize-tuned-ppd-settings config)
+  (match-record config <tuned-ppd-settings>
+                (default battery-detection? sysfs-acpi-monitor? profiles battery
+                 extra-content)
+    (mixed-text-file "ppd.conf"
+     "[main]\n"
+     (string-append "default=" default "\n")
+     (string-append "battery_detection="
+                    (sanitize-ini-boolean battery-detection?
+                                          #:true "true"
+                                          #:false "false")
+                    "\n")
+     (string-append "sysfs_acpi_monitor="
+                    (sanitize-ini-boolean sysfs-acpi-monitor?
+                                          #:true "true"
+                                          #:false "false")
+                    "\n")
+     "\n"
+     (if (zero? (length profiles))
+         ""
+         #~(string-append "\n[profiles]\n"
+                          (string-join (list #$@profiles) "\n")
+                          "\n"))
+     (if (zero? (length battery))
+         ""
+         #~(string-append "\n[battery]\n"
+                          (string-join (list #$@battery) "\n")
+                          "\n"))
+     (serialize-text-config "extra-content" extra-content)
+     "\n")))
+
+(define (sanitize-list-of-profile-dirs value)
+  (map
+   (lambda (el)
+     (if (or (string? el) (file-like? el))
+         el
+         (raise
+          (formatted-message
+           (G_ "tuned-settings profile-dirs members must be either a string or a
+file-like object but ~a was found!")
+           el))))
+   value))
+
+(define (list-of-profile-dirs? value)
+  (list? (sanitize-list-of-profile-dirs value)))
+
+(define-configuration/no-serialization tuned-settings
+  (daemon?
+   (boolean #t)
+   "Whether to use daemon.  Without daemon TuneD just applies tuning."
+   (sanitizer sanitize-ini-boolean))
+  (dynamic-tuning?
+   (boolean #f)
+   "Dynamically tune devices, if disabled only static tuning will be used."
+   (sanitizer sanitize-ini-boolean))
+  (default-instance-priority
+   (integer 0)
+   "Default priority assigned to instances."
+   (sanitizer sanitize-ini-number))
+  (recommend-command?
+   (boolean #t)
+   "Recommend functionality, if disabled @code{recommend} command will be not
+available in CLI, daemon will not parse @file{recommend.conf} but will return
+one hardcoded profile (by default @code{balanced})."
+   (sanitizer sanitize-ini-boolean))
+  (sleep-interval
+   (integer 1)
+   "How long to sleep before checking for events (in seconds),
+higher number means lower overhead but longer response time."
+   (sanitizer sanitize-ini-number))
+  (update-interval
+   (integer 10)
+   "Update interval for dynamic tunings (in seconds).  It must be multiply of
+the @code{sleep-interval}."
+   (sanitizer sanitize-ini-number))
+  (profile-dirs
+   (list-of-profile-dirs
+    (list (file-append tuned "/lib/tuned/profiles") "/etc/tuned/profiles"))
+   "List of strings or gexps representing directories to search for
+profiles.  In case of conflicts in profile names, the later directory takes
+precedence."
+   (sanitizer sanitize-list-of-profile-dirs))
+  (extra-content
+   (text-config
+    (list (plain-file "tuned-settings-extra-content" "")))
+   "A list of file-like objects that are appended to the configuration file."))
+
+(define (serialize-tuned-settings config)
+  (match-record config <tuned-settings>
+                (daemon? dynamic-tuning? default-instance-priority
+                 recommend-command? sleep-interval update-interval profile-dirs
+                 extra-content)
+    (mixed-text-file "tuned-main.conf"
+     (string-append "daemon = " daemon? "\n\n")
+     (string-append "dynamic_tuning = " dynamic-tuning? "\n\n")
+     (string-append "default_instance_priority = " default-instance-priority
+                    "\n\n")
+     (string-append "recommend_command = " recommend-command? "\n\n")
+     (string-append "sleep_interval = " sleep-interval "\n\n")
+     (string-append "update_interval = " update-interval "\n\n")
+     (string-append "dynamic_tuning = " dynamic-tuning? "\n\n")
+     (if (zero? (length profile-dirs))
+         ""
+         #~(string-append "profile_dirs = "
+                          (string-join (list #$@profile-dirs) ",")
+                          "\n\n"))
+     (serialize-text-config "extra-content" extra-content)
+     "\n")))
+
+(define (tuned-plugin? value)
+  (if (and (= 2 (length value))
+           (string? (first value))
+           (file-like? (second value)))
+      #t
+      (raise
+       (formatted-message
+        (G_ "tuned-configuration profiles members must be lists with two
+elements, the first being a string and the second a file-like object, but ~a was
+found!")
+        value))))
+
+(define (list-of-tuned-plugins? value)
+  (list-of tuned-plugin?))
+
+(define-configuration/no-serialization tuned-configuration
+  (tuned
+   (package tuned)
+   "The TuneD package.")
+  (auto-start?
+   (boolean #t)
+   "Whether this service should be started automatically by the Shepherd.  If it
+is @code{#f} the service has to be started manually with @command{herd start}.")
+  (power-profiles-daemon-support?
+   (boolean #f)
+   "Whether the TuneD power-profiles-daemon emulation layer should be
+enabled.")
+  (profiles
+   (list-of-tuned-plugins '())
+   "User provided profiles for TuneD.  Each element of the list is supposed to be
+a list where the first element is the name of the directory where plugin files
+will be placed under @file{/etc/tuned/profiles} and the second a file like
+object containing the plugin files:
+
+@lisp
+(list
+  (list \"plugin-name\"
+        (plain-file \"plugin.conf\" \"content\"))
+  (list \"other-plugin\"
+        (file-union \"plugin-data\"
+                    (list (list \"other-plugin.conf\"
+                                (plain-file \"other-plugin.conf\" \"content\"))
+                          (list \"other-plugin.scm\"
+                                (program-file \"other-plugin.scm\"
+                                               #~(display \"content\")))))))
+@end lisp")
+  (settings
+   (tuned-settings (tuned-settings))
+   "Configuration for TuneD.")
+  (ppd-settings
+   (tuned-ppd-settings (tuned-ppd-settings))
+   "Configuration for TuneD.")
+  (recommend.conf
+   (file-like (file-append tuned "/lib/tuned/recommend.d/50-tuned.conf"))
+   "File like object containing the recommended profile configuration."))
+
+(define (tuned-file-systems config)
+  (list
+   (file-system
+     (device "none")
+     (mount-point "/run/tuned")
+     (type "ramfs")
+     (check? #f))))
+
+(define (tuned-activation config)
+  (match-record config <tuned-configuration>
+                 (profiles settings ppd-settings recommend.conf)
+    #~(begin
+        (use-modules (guix build utils))
+        (let ((data-directory "/var/lib/tuned")
+              (config-directory "/etc/tuned")
+              (tuned-plugins-kernel-modules-directory "/etc/tuned/modprobe.d"))
+          ;; Setup TuneD directories.
+          (for-each
+           (lambda (dir)
+             (mkdir-p dir)
+             (chmod dir #o755))
+           (list data-directory config-directory
+                 tuned-plugins-kernel-modules-directory))
+          ;; Create plugins kernel modules configuration.
+          (invoke #$(file-append coreutils-minimal "/bin/touch")
+                  "/etc/tuned/modprobe.d/tuned.conf")
+          ;; Generate and activate TuneD configuration files.
+          (activate-special-files
+           '(("/etc/tuned/recommend.conf" #$recommend.conf)
+             ("/etc/tuned/profiles"
+              #$(file-union "tuned-profiles" profiles))
+             ("/etc/tuned/tuned-main.conf"
+              #$(serialize-tuned-settings settings))
+             ("/etc/tuned/ppd.conf"
+              #$(serialize-tuned-ppd-settings ppd-settings))))))))
+
+(define (tuned-shepherd-services config)
+  (match-record config <tuned-configuration>
+                (tuned auto-start? power-profiles-daemon-support?)
+    (append
+     (list
+      (shepherd-service
+         (documentation "TuneD daemon")
+         (provision '(tuned))
+         (requirement '(dbus-system user-processes udev kernel-module-loader))
+         (start #~(make-forkexec-constructor
+                   '(#$(file-append tuned "/sbin/tuned"))
+                   #:log-file "/var/log/tuned/tuned.log"))
+         (stop #~(make-kill-destructor))
+         (auto-start? auto-start?)))
+     (if power-profiles-daemon-support?
+         (list (shepherd-service
+                 (documentation "TuneD power-profiles-daemon emulation daemon")
+                 (provision '(tuned-ppd power-profiles-daemon))
+                 (requirement '(dbus-system user-processes udev tuned))
+                 (start
+                  #~(make-forkexec-constructor
+                     '(#$(file-append tuned "/sbin/tuned-ppd"))
+                     #:log-file "/var/log/tuned/tuned-ppd.log"))
+                 (stop #~(make-kill-destructor))
+                 (auto-start? auto-start?)))
+         '()))))
+
+(define (tuned-kernel-modules config)
+  ;; TODO: Allow for tuned plugins to override this list.
+  ;; FIXME: Find out which package provides this kernel module.
+  (list "cpufreq_conservative"))
+
+(define tuned-service-type
+  (let ((config->package
+         (compose list tuned-configuration-tuned)))
+    (service-type
+     (name 'tuned)
+     (extensions (list
+                  (service-extension shepherd-root-service-type
+                                     tuned-shepherd-services)
+                  (service-extension kernel-module-loader-service-type
+                                     tuned-kernel-modules)
+                  (service-extension dbus-root-service-type
+                                     config->package)
+                  (service-extension polkit-service-type
+                                     config->package)
+                  (service-extension profile-service-type
+                                     config->package)
+                  (service-extension file-system-service-type
+                                     tuned-file-systems)
+                  (service-extension activation-service-type
+                                     tuned-activation)))
+     (default-value (tuned-configuration))
+     (description "Run the TuneD daemon"))))
