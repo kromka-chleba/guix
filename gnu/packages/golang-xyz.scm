@@ -1593,6 +1593,31 @@ strings for a safe use as command line arguments in the most common POSIX
 shells.")
     (license license:expat)))
 
+(define-public go-github-com-alexbrainman-sspi
+  (package
+    (name "go-github-com-alexbrainman-sspi")
+    (version "0.0.0-20250919150558-7d374ff0d59e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alexbrainman/sspi")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nahd0l0h42gbn3i0xgy6pv8c9z8gqp7i7n722jq1sl90wa5jd65"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;FIXME: undefined: verifySelectiveFlags
+      #:import-path "github.com/alexbrainman/sspi"))
+    (home-page "https://github.com/alexbrainman/sspi")
+    (synopsis "SSPI for Windows")
+    (description
+     "This repository holds Go packages for accessing Security Support Provider
+Interface on Windows.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-alexflint-go-filemutex
   (package
     (name "go-github-com-alexflint-go-filemutex")
