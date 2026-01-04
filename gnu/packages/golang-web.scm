@@ -6412,6 +6412,37 @@ protocol.")
     (description "Generates slug from Unicode string for use in URLs.")
     (license license:mpl2.0)))
 
+(define-public go-github-com-grpc-ecosystem-go-grpc-middleware-v2
+  (package
+    (name "go-github-com-grpc-ecosystem-go-grpc-middleware")
+    (version "2.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/grpc-ecosystem/go-grpc-middleware")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qbh34r44sfw9s05kdipmz49fcgvlpnns20d0lbwvw9g3qwa095r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require circular dependencies
+      #:import-path "github.com/grpc-ecosystem/go-grpc-middleware/v2"))
+    (propagated-inputs (list
+                        ;; go-buf-build-gen-go-bufbuild-protovalidate-protocolbuffers-go
+                        ;; go-buf-build-go-protovalidate
+                        go-github-com-stretchr-testify
+                        go-golang-org-x-net
+                        go-golang-org-x-oauth2
+                        go-google-golang-org-grpc
+                        go-google-golang-org-protobuf))
+    (home-page "https://github.com/grpc-ecosystem/go-grpc-middleware")
+    (synopsis "Go gRPC Middleware")
+    (description "Package middleware.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-gregjones-httpcache
   (package
     (name "go-github-com-gregjones-httpcache")
