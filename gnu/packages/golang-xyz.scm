@@ -15513,6 +15513,48 @@ semantic versions.  Specifically it provides the ability to:
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-masterminds-sprig
+  (package
+    (name "go-github-com-masterminds-sprig")
+    (version "2.22.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Masterminds/sprig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09dzwhj4zh3p6f1jhyic16n4qdnvpamz7hyk9fycpm4b1jfq63gd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip"
+              (string-join (list "TestCamelCase" "TestShuffle"
+                                 "TestGetHostByName") "|"))
+      #:import-path "github.com/Masterminds/sprig"))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (propagated-inputs (list go-github-com-google-uuid
+                             go-github-com-huandu-xstrings
+                             go-github-com-imdario-mergo
+                             go-github-com-masterminds-goutils
+                             go-github-com-masterminds-semver
+                             go-github-com-mitchellh-copystructure
+                             go-github-com-shopspring-decimal
+                             go-github-com-spf13-cast
+                             go-golang-org-x-crypto))
+    (home-page "https://github.com/Masterminds/sprig/")
+    (synopsis "Useful template functions for Go templates")
+    (description
+     "The Go language comes with a built-in template language, but not very many
+template functions.  Sprig is a library that provides more than 100 commonly
+used template functions.
+
+It is inspired by the template functions found in Twig and in various
+JavaScript libraries, such as underscore.js.")
+    (license license:expat)))
+
 (define-public go-github-com-masterminds-sprig-v3
   (package
     (name "go-github-com-masterminds-sprig-v3")
