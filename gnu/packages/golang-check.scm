@@ -3103,6 +3103,36 @@ such as readers and writers that fail after N consecutive reads/writes.")
 execution when a test fails.")
     (license license:expat)))
 
+(define-public go-github-com-tomarrell-wrapcheck-v2
+  (package
+    (name "go-github-com-tomarrell-wrapcheck")
+    (version "2.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tomarrell/wrapcheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g4s58sawxig3anv5mjh98nw80zj2gjcylkfxihbaxz0n35ba6cx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/tomarrell/wrapcheck/v2"))
+    (propagated-inputs (list go-gopkg-in-yaml-v3 go-golang-org-x-tools
+                             go-github-com-stretchr-testify
+                             go-github-com-spf13-viper
+                             go-github-com-gobwas-glob))
+    (home-page "https://github.com/tomarrell/wrapcheck")
+    (synopsis "Go linter to check errors are properly wrapped")
+    (description
+     "This package provides a simple Go linter to check that errors from external
+packages are wrapped during return to help identify the error source during
+debugging.")
+    (license license:expat)))
+
 (define-public go-github-com-tommy-muehle-go-mnd-v2
   (package
     (name "go-github-com-tommy-muehle-go-mnd")
