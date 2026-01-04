@@ -27519,6 +27519,88 @@ without direct type dependencies. Its first consumers are
 @code{k8s.io/apiserver}.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-apiserver
+  (package
+    (name "go-k8s-io-apiserver")
+    (version "0.34.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/apiserver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06bcbdnlhg1mwky6i1519n1nhlh8rxc9qv7jwqjhc03m2ql3bb8q"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require unpackaged dependencies
+      #:embed-files
+      #~(list "authoring\\.tmpl" "api__v1_openapi\\.json")
+      #:import-path "k8s.io/apiserver"))
+    (propagated-inputs
+     (list go-sigs-k8s-io-yaml
+           go-sigs-k8s-io-structured-merge-diff-v6
+           go-sigs-k8s-io-randfill
+           go-sigs-k8s-io-json
+           go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client
+           go-k8s-io-utils
+           go-k8s-io-kube-openapi
+           go-k8s-io-kms
+           go-k8s-io-klog-v2
+           go-k8s-io-component-base
+           go-k8s-io-client-go
+           go-k8s-io-apimachinery
+           go-k8s-io-api
+           go-gopkg-in-natefinch-lumberjack-v2
+           go-gopkg-in-go-jose-go-jose-v2
+           go-gopkg-in-evanphx-json-patch-v4
+           go-google-golang-org-protobuf
+           go-google-golang-org-grpc
+           go-google-golang-org-genproto-googleapis-api
+           go-golang-org-x-time
+           go-golang-org-x-sys
+           go-golang-org-x-sync
+           go-golang-org-x-net
+           go-golang-org-x-crypto
+           go-go-uber-org-zap
+           go-go-opentelemetry-io-otel-trace
+           go-go-opentelemetry-io-otel-sdk
+           go-go-opentelemetry-io-otel-metric
+           go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracegrpc
+           go-go-opentelemetry-io-otel
+           go-go-opentelemetry-io-contrib-instrumentation-net-http-otelhttp
+           go-go-opentelemetry-io-contrib-instrumentation-google-golang-org-grpc-otelgrpc
+           go-go-etcd-io-etcd-server-v3
+           go-go-etcd-io-etcd-client-v3
+           go-go-etcd-io-etcd-client-pkg-v3
+           go-go-etcd-io-etcd-api-v3
+           go-github-com-stretchr-testify
+           go-github-com-spf13-pflag
+           go-github-com-mxk-go-flowrate
+           go-github-com-munnerz-goautoneg
+           go-github-com-grpc-ecosystem-go-grpc-prometheus
+           go-github-com-gorilla-websocket
+           go-github-com-google-uuid
+           go-github-com-google-go-cmp
+           go-github-com-google-gnostic-models
+           go-github-com-google-cel-go
+           go-github-com-google-btree
+           go-github-com-gogo-protobuf
+           go-github-com-go-logr-logr
+           go-github-com-fsnotify-fsnotify
+           go-github-com-emicklei-go-restful-v3
+           go-github-com-coreos-go-systemd-v22
+           go-github-com-coreos-go-oidc
+           go-github-com-blang-semver-v4))
+    (home-page "https://k8s.io/apiserver")
+    (synopsis "Library for building a Kubernetes aggregated API server")
+    (description
+     "This package provides a generic library for building a Kubernetes aggregated
+API server.")
+    (license license:asl2.0)))
+
 (define-public go-k8s-io-client-go
   (package
     (name "go-k8s-io-client-go")
