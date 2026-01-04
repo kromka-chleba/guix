@@ -28422,6 +28422,35 @@ prints the Go version used to build that executable.")
 scripting language.")
     (license license:bsd-3)))
 
+(define-public go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client
+  (package
+    (name "go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client")
+    (version "0.34.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes-sigs/apiserver-network-proxy")
+             (commit (go-version->git-ref version
+                                          #:subdir "konnectivity-client"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kh92blfpmrmklxqg5j0p07yz534gjzhm44xj8bh5pad3y5zw5m0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "sigs.k8s.io/apiserver-network-proxy/konnectivity-client"
+      #:unpack-path "sigs.k8s.io/apiserver-network-proxy"))
+    (propagated-inputs (list go-github-com-prometheus-client-golang
+                             go-go-uber-org-goleak go-google-golang-org-grpc
+                             go-google-golang-org-protobuf go-k8s-io-klog-v2))
+    (home-page "https://sigs.k8s.io/apiserver-network-proxy")
+    (synopsis "Network proxy for Kubernetes API server")
+    (description
+     "This package provides a network proxy for the Kubernetes API server.")
+    (license license:asl2.0)))
+
 (define-public go-sigs-k8s-io-json
   (package
     (name "go-sigs-k8s-io-json")
