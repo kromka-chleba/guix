@@ -3226,6 +3226,39 @@ gracefully enhance standard library testing package and behaviors of the
 @command{go test} command.")
     (license license:expat)))
 
+(define-public go-github-com-ykadowak-zerologlint
+  (package
+    (name "go-github-com-ykadowak-zerologlint")
+    (version "0.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ykadowak/zerologlint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l5qy8g9sz79z4vbf2f02b9mcfppyrd4h550x4vgh2vm7lnrvhy6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;modules disabled by GO111MODULE=OFF
+      #:import-path "github.com/ykadowak/zerologlint"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-gostaticanalysis-testutil
+                             go-github-com-gostaticanalysis-comment))
+    (home-page "https://github.com/ykadowak/zerologlint")
+    (synopsis "Detect incorrect usage of zerolog")
+    (description
+     "@code{zerologlint} is a linter for @url{https://github.com/rs/zerolog,zerolog}
+that can be run with @code{go vet} or through
+@url{https://golangci-lint.run/,golangci-lint} since @code{v1.53.0}.  It
+detects the wrong usage of @code{zerolog} that a user forgets to dispatch
+@code{zerolog.Event} with @code{Send} or @code{Msg} like functions, in which
+case nothing will be logged.  For more detailed explanations of the cases it
+detects, see @url{#readme-Example,Examples}.")
+    (license license:expat)))
+
 (define-public go-github-com-zeebo-assert
   (package
     (name "go-github-com-zeebo-assert")
