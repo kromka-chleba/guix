@@ -623,7 +623,6 @@ significantly increases the risk of irreversible data loss!")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/rfjakob/gocryptfs"
       #:build-flags
@@ -638,7 +637,9 @@ significantly increases the risk of irreversible data loss!")
                        (list "TestPrepareAtSyscall"
                              "TestPrepareAtSyscallPlaintextnames"
                              "TestGetdents")
-                       "|"))
+                       "|")
+              ;; disable go vet for go 1.24+
+              "-vet=off")
       ;; XXX: Test suit requires a root access to mount, limit to some unit
       ;; tests, figure out how to enable most of the them.
       #:test-subdirs #~(list "internal/...")
