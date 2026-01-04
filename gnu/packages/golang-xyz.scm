@@ -9684,6 +9684,32 @@ native Go structure.")
     (description "Package yaml implements YAML support for the Go language.")
     (license license:asl2.0)))
 
+(define-public go-github-com-gobuffalo-flect
+  (package
+    (name "go-github-com-gobuffalo-flect")
+    (version "1.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gobuffalo/flect")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lyb1876byv9q52y6dlq17aahwl108mhp67cmxykckjpxxykb442"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gobuffalo/flect"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/gobuffalo/flect")
+    (synopsis "Inflection engine for golang")
+    (description
+     "This package is a new inflection engine to replace
+@url{https://github.com/markbates/inflect} designed to be more modular, more
+readable, and easier to fix issues on than the original.")
+    (license license:expat)))
+
 (define-public go-github-com-gobwas-glob
   (package
     (name "go-github-com-gobwas-glob")
