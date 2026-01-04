@@ -25685,6 +25685,51 @@ for projects that don't require a full database server such as Postgres or
 MySQL.")
     (license license:expat)))
 
+(define-public go-go-etcd-io-etcd-client-pkg-v3
+  (package
+    (name "go-go-etcd-io-etcd-client-pkg")
+    (version "3.6.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/etcd-io/etcd")
+             (commit (go-version->git-ref version
+                                          #:subdir "client/pkg"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d9rjyl5h0xm9isgr8b2fz8528wk3pds71rjl8g08fgsmsa5kicb"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    (delete-all-but "." "client")
+                    (delete-all-but "client" "pkg")
+                    (rename-file "client/pkg" "client/pkg.tmp")
+                    (mkdir-p "client/pkg/v3")
+                    (rename-file "client/pkg.tmp" "client/pkg/v3")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "go.etcd.io/etcd/client/pkg/v3"
+      #:unpack-path "go.etcd.io/etcd"))
+    (propagated-inputs (list go-github-com-coreos-go-systemd-v22
+                             go-github-com-stretchr-testify go-go-uber-org-zap
+                             go-golang-org-x-sys))
+    (home-page "https://go.etcd.io/etcd")
+    (synopsis "Client package for ETCD")
+    (description
+     "This package provides a client package for the ETCD distributed key-value
+storage system.")
+    (license license:asl2.0)))
+
 (define-public go-go-lsp-dev-jsonrpc2
   (package
     (name "go-go-lsp-dev-jsonrpc2")
