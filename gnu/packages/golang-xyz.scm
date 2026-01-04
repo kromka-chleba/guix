@@ -9334,6 +9334,34 @@ while callers can implement logging with whatever backend is appropriate.")
 standard log package.")
     (license license:asl2.0)))
 
+(define-public go-github-com-go-logr-zapr
+  (package
+    (name "go-github-com-go-logr-zapr")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-logr/zapr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07kg9h853jijfc86zm07856sisac6jwvn06gbk694fg00mj1806f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "TestSlogHandler")
+      #:import-path "github.com/go-logr/zapr"))
+    (propagated-inputs (list go-go-uber-org-zap go-github-com-stretchr-testify
+                             go-github-com-go-logr-logr))
+    (home-page "https://github.com/go-logr/zapr")
+    (synopsis "Go interfaces built on top of Zap")
+    (description
+     "This package defines an implementation of the github.com/go-logr/logr
+interfaces built on top of Zap (go.uber.org/zap).")
+    (license license:asl2.0)))
+
 (define-deprecated-package go-github-com-go-md2man
   go-github-com-cpuguy83-go-md2man-v2)
 
