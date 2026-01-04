@@ -112,6 +112,7 @@
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages specifications)
   #:use-module (gnu packages xdisorg)
@@ -3103,6 +3104,37 @@ Supported Barcode Types:
 @item QR Code
 @end itemize")
     (license license:expat)))
+
+(define-public go-github-com-bradfitz-go-tool-cache
+  (package
+    (name "go-github-com-bradfitz-go-tool-cache")
+    (version "0.0.0-20251201194838-fef72b933348")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bradfitz/go-tool-cache")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mfy2g4p1iyi41hki2w6fqg2zvx2gzprgm1d0q3lcmlnw3hyqf3c"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/bradfitz/go-tool-cache"))
+    (propagated-inputs (list go-github-com-go-jose-go-jose-v4
+                             go-github-com-golang-jwt-jwt-v5
+                             go-github-com-google-go-cmp
+                             go-github-com-prometheus-client-golang
+                             go-github-com-prometheus-client-model
+                             go-modernc-org-sqlite))
+    (home-page "https://github.com/bradfitz/go-tool-cache")
+    (synopsis "Share Go test caching across network")
+    (description
+     "This package allows a user to share their Go build cache across the network,
+using GOCACHEPROG.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-bradfitz-gomemcache
   (package
