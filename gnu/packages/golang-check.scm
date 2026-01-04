@@ -3076,6 +3076,32 @@ such as readers and writers that fail after N consecutive reads/writes.")
     (description "This package provides text transformation utilities in Go.")
     (license license:expat)))
 
+(define-public go-github-com-timonwong-loggercheck
+  (package
+    (name "go-github-com-timonwong-loggercheck")
+    (version "0.11.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/timonwong/loggercheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05m425zvdq2crgi47nzb9sjanm4dlv61zj89ap7y8ky6draydl89"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;invalid package name: ""
+      #:import-path "github.com/timonwong/loggercheck"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/timonwong/loggercheck")
+    (synopsis "Go linter for common logger libraries")
+    (description
+     "This package provides a Go linter for common logger libraries.")
+    (license license:expat)))
+
 (define-public go-github-com-tj-assert
   (package
     (name "go-github-com-tj-assert")
