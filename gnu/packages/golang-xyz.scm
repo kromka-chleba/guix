@@ -5825,6 +5825,33 @@ Utilities:
 @end itemize")
     (license license:bsd-3)))
 
+(define-public go-github-com-creachadair-msync
+  (package
+    (name "go-github-com-creachadair-msync")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/creachadair/msync")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lg2d2875cjkhsg94qbn3p2l9js1s87ybww6qxf28hx530yficgh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.25
+      ;; synctest.Run not supported in this configuration
+      #:tests? #f
+      #:import-path "github.com/creachadair/msync"))
+    (propagated-inputs (list go-github-com-creachadair-mds))
+    (home-page "https://github.com/creachadair/msync")
+    (synopsis "Synchronization management types in Go")
+    (description
+     "This package defines some helpful types for managing concurrency.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-creack-pty
   (package
     (name "go-github-com-creack-pty")
