@@ -7723,6 +7723,42 @@ program's running, don't expect consistent results between platforms
 @code{image.Decode} to handle orientation stored in EXIF data.")
     (license license:expat)))
 
+(define-public go-github-com-elastic-crd-ref-docs
+  (package
+    (name "go-github-com-elastic-crd-ref-docs")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/elastic/crd-ref-docs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bfh2h55fjln5qhblh0s212p45k39bb96g226i1n2883jj3sk9i4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require unpackaged deps
+      #:import-path "github.com/elastic/crd-ref-docs"))
+    (propagated-inputs (list go-github-com-goccy-go-yaml
+                             go-github-com-masterminds-sprig
+                             go-github-com-spf13-cobra
+                             go-github-com-stretchr-testify
+                             go-golang-org-x-tools
+                             go-go-uber-org-zap
+                             go-k8s-io-apimachinery
+                             go-sigs-k8s-io-controller-runtime
+                             go-sigs-k8s-io-controller-tools
+                             ;; go-sigs-k8s-io-gateway-api
+                             ))
+    (home-page "https://github.com/elastic/crd-ref-docs")
+    (synopsis "Kubernetes CRD reference documentation generator")
+    (description
+     "This package generates API reference documentation by scanning a source tree
+for exported CRD types.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-elastic-gosigar
   (package
     (name "go-github-com-elastic-gosigar")
