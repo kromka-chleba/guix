@@ -6464,11 +6464,10 @@ interval trees with associated meta-data.  It is primarily used by the
                 (("version='plotCoverage")
                  "version='%(prog)s")))))))
     (native-inputs
-     (list python-mock python-pytest python-setuptools python-wheel))
+     (list python-mock python-numpydoc python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-matplotlib
            python-numpy
-           python-numpydoc
            python-py2bit
            python-pybigwig
            python-pysam
