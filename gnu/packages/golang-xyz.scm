@@ -25685,6 +25685,56 @@ for projects that don't require a full database server such as Postgres or
 MySQL.")
     (license license:expat)))
 
+(define-public go-go-etcd-io-etcd-api-v3
+  (package
+    (name "go-go-etcd-io-etcd-api")
+    (version "3.6.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/etcd-io/etcd")
+             (commit (go-version->git-ref version
+                                          #:subdir "api"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d9rjyl5h0xm9isgr8b2fz8528wk3pds71rjl8g08fgsmsa5kicb"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    (delete-all-but "." "api")
+                    (rename-file "api" "api.tmp")
+                    (mkdir-p "api/v3")
+                    (rename-file "api.tmp" "api/v3")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;Tests require circular imports
+      #:import-path "go.etcd.io/etcd/api/v3"
+      #:unpack-path "go.etcd.io/etcd"))
+    (propagated-inputs (list go-github-com-coreos-go-semver
+                             go-github-com-gogo-protobuf
+                             go-github-com-golang-protobuf
+                             go-github-com-grpc-ecosystem-grpc-gateway-v2
+                             go-github-com-stretchr-testify
+                             go-google-golang-org-genproto-googleapis-api
+                             go-google-golang-org-grpc
+                             go-google-golang-org-protobuf))
+    (home-page "https://go.etcd.io/etcd")
+    (synopsis "API package for ETCD")
+    (description
+     "This package provides an API for the ETCD distributed key-value storage
+system.")
+    (license license:asl2.0)))
+
 (define-public go-go-etcd-io-etcd-client-pkg-v3
   (package
     (name "go-go-etcd-io-etcd-client-pkg")
