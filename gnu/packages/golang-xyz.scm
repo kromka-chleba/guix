@@ -25895,6 +25895,34 @@ specific to etcd itself.  A package belongs here only if it could possibly be
 moved out into its own repository in the future.")
     (license license:asl2.0)))
 
+(define-public go-go-etcd-io-raft-v3
+  (package
+    (name "go-go-etcd-io-raft")
+    (version "3.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/etcd-io/raft")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18d9l8739irzgl0860qrrmdn3aqhc92lhc9brv8lkq7n59gxqd6i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.etcd.io/raft/v3"))
+    (propagated-inputs (list go-github-com-cockroachdb-datadriven
+                             go-github-com-gogo-protobuf
+                             go-github-com-golang-protobuf
+                             go-github-com-stretchr-testify))
+    (home-page "https://go.etcd.io/raft")
+    (synopsis "Raft library")
+    (description
+     "This package sends and receives messages in the Protocol Buffer format defined
+in the raftpb package.")
+    (license license:asl2.0)))
+
 (define-public go-go-lsp-dev-jsonrpc2
   (package
     (name "go-go-lsp-dev-jsonrpc2")
