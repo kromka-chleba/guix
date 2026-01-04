@@ -25735,6 +25735,65 @@ MySQL.")
 system.")
     (license license:asl2.0)))
 
+(define-public go-go-etcd-io-etcd-client-v3
+  (package
+    (name "go-go-etcd-io-etcd-client")
+    (version "3.6.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/etcd-io/etcd")
+             (commit (go-version->git-ref version
+                                          #:subdir "client"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d9rjyl5h0xm9isgr8b2fz8528wk3pds71rjl8g08fgsmsa5kicb"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    ;; Replace symlinks to tests with file contents
+                    (for-each (lambda (f)
+                                (delete-file (string-append "client/v3/"
+                                                            (basename f)))
+                                (copy-file f
+                                           (string-append "client/v3/"
+                                                          (basename f))))
+                              (find-files
+                               "tests/integration/clientv3/examples"))
+                    (delete-all-but "." "client")
+                    (delete-file-recursively "client/pkg")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require circular imports
+      #:import-path "go.etcd.io/etcd/client/v3"
+      #:unpack-path "go.etcd.io/etcd"))
+    (propagated-inputs
+     (list go-github-com-coreos-go-semver
+           go-github-com-dustin-go-humanize
+           go-github-com-grpc-ecosystem-go-grpc-middleware-providers-prometheus
+           go-github-com-grpc-ecosystem-go-grpc-middleware-v2
+           go-github-com-prometheus-client-golang
+           go-github-com-stretchr-testify
+           go-go-etcd-io-etcd-api-v3
+           go-go-etcd-io-etcd-client-pkg-v3
+           go-go-uber-org-zap
+           go-google-golang-org-grpc
+           go-sigs-k8s-io-yaml))
+    (home-page "https://go.etcd.io/etcd")
+    (synopsis "Client package for ETCD")
+    (description
+     "Package clientv3 implements the official Go etcd client for v3.")
+    (license license:asl2.0)))
+
 (define-public go-go-etcd-io-etcd-client-pkg-v3
   (package
     (name "go-go-etcd-io-etcd-client-pkg")
