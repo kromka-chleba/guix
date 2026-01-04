@@ -2739,6 +2739,32 @@ GIT_TRACE mechanism.")
 @code{go test -coverprofile} runs and merges them into one profile.")
     (license license:bsd-2)))
 
+(define-public go-github-com-sivchari-tenv
+  (package
+    (name "go-github-com-sivchari-tenv")
+    (version "1.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sivchari/tenv")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p0zs96c5cscv22a3mx2clsi48mlcj0sws4x6qygcl3vvcdpwlhx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;modules disabled by GO111MODULE=OFF
+      #:import-path "github.com/sivchari/tenv"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-gostaticanalysis-testutil))
+    (home-page "https://github.com/sivchari/tenv")
+    (synopsis "Analyzer to detect use of os.Setenv")
+    (description
+     "tenv is analyzer that detects using os.Setenv instead of t.Setenv since Go1.17.")
+    (license license:expat)))
+
 (define-public go-github-com-smarty-assertions
   (package
     (name "go-github-com-smarty-assertions")
