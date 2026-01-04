@@ -2833,6 +2833,33 @@ functions for writing tests in an @code{xUnit} style.")
 test coverage and has a web user interface that will refresh automatically.")
     (license license:expat)))
 
+(define-public go-github-com-ssgreg-nlreturn-v2
+  (package
+    (name "go-github-com-ssgreg-nlreturn")
+    (version "2.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ssgreg/nlreturn")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fp505fxczcwzdnsij324q2jq9293qi53dr4i115sgc1r6zjgbh0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/ssgreg/nlreturn/v2"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/ssgreg/nlreturn")
+    (synopsis "Linter requiring new line before return statements")
+    (description
+     "This package implements a linter that requires a new line before return and
+branch statements except when the return is alone inside a statement
+group (such as an if statement) to increase code clarity.")
+    (license license:expat)))
+
 (define-public go-github-com-stbenjam-no-sprintf-host-port
   (package
     (name "go-github-com-stbenjam-no-sprintf-host-port")
