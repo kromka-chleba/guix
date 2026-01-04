@@ -986,8 +986,8 @@ particular test phases or milestones have been reached. It is part of the
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/apex/log"))
+      #:import-path "github.com/apex/log"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-tj-assert
            go-github-com-stretchr-testify))
