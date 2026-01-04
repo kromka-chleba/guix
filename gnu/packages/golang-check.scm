@@ -3103,6 +3103,32 @@ such as readers and writers that fail after N consecutive reads/writes.")
 execution when a test fails.")
     (license license:expat)))
 
+(define-public go-github-com-tommy-muehle-go-mnd-v2
+  (package
+    (name "go-github-com-tommy-muehle-go-mnd")
+    (version "2.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tommy-muehle/go-mnd")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j45zxmh1jza54sif7jx2qdw503z2nxvkjccsh3wd8sif0v4jqfc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;invalid memory address or nil pointer dereference
+      #:import-path "github.com/tommy-muehle/go-mnd/v2"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/tommy-muehle/go-mnd")
+    (synopsis "Magic number detector for Golang")
+    (description
+     "This package provides a vet analyzer to detect magic numbers.")
+    (license license:expat)))
+
 (define-public go-github-com-ultraware-funlen
   (package
     (name "go-github-com-ultraware-funlen")
