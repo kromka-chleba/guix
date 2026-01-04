@@ -2808,6 +2808,15 @@ procedure in its @code{device} field.
 @item
 If there are encrypted or RAID partitions, make sure to add a
 @code{mapped-devices} field to describe them (@pxref{Mapped Devices}).
+
+@item
+On AArch64 or embedded platforms, check if you need additional modules
+in @code{initrd-modules} field.  The boot will fail trying to discover
+the target device if initrd doesn't have all the modules.  To discover
+what modules are necessary, the installation system bundles a command
+@command{find-initrd-modules} that you supply the partition devices to,
+such as @command{find-initrd-modules /dev/mmcblk1p2}. It will tell you
+what modules to add, if any.
 @end itemize
 
 Once you are done preparing the configuration file, the new system must

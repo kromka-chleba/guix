@@ -436,6 +436,54 @@ or by starting the installer, using `guix-system-installer` command.
     (description "Provides the Guix System installer as run-guix-installer command.")
     (license license:gpl3+)))
 
+(define find-initrd-modules-program
+  (program-file
+   "find-initrd-modules"
+   (with-imported-modules (source-module-closure
+                           '((gnu build linux-modules)))
+     #~(begin
+
+         (use-modules ((gnu build linux-modules) #:select (missing-modules))
+                      (srfi srfi-1)
+                      (ice-9 format))
+
+         (when (< (length (command-line)) 2)
+           (format #t "warn: No devices specified.~%"))
+
+         (let ((all-missing-modules
+                (append-map
+                 (lambda (device)
+                   (missing-modules device #$%base-initrd-modules))
+                 (cdr (command-line)))))
+           (if (> (length all-missing-modules) 0)
+               (format #t "Missing modules found: ~a.
+Append them to %base-initrd-modules in initrd-modules field.~%"
+                       (string-join all-missing-modules " "))
+               (format #t "No missing modules, %base-initrd-modules is enough.~%")))))))
+
+(define find-initrd-modules-package
+  (package
+    (name "find-initrd-modules")
+    (version "0")
+    (source #f)
+    (build-system trivial-build-system)
+    (arguments (list #:builder (with-imported-modules '((guix build utils))
+                                 #~(begin
+                                     (use-modules (guix build utils))
+                                     (mkdir-p (string-append #$output "/bin"))
+                                     (symlink
+                                      #$find-initrd-modules-program
+                                      (string-append #$output "/bin/" #$name))))))
+    (home-page #f)
+    (synopsis "Find what initrd-modules your system is missing to boot from given partitions.")
+    (description "Provides @command{find-initrd-modules} command to find the
+missing modules for boot. It takes the desired partitions as arguments.
+
+@example
+find-initrd-modules /dev/sda1 /dev/mmcblk1p1
+@end example")
+    (license license:gpl3+)))
+
 (define* (%installation-services
           #:key
           (system (or (and=>
@@ -755,6 +803,7 @@ or by starting the installer, using `guix-system-installer` command.
                (list glibc             ; for 'tzselect' & co.
                      fontconfig
                      font-dejavu font-gnu-unifont
+                     find-initrd-modules-package
 
                      ;; Mostly so xrefs to its manual work.
                      (bootloader-package
