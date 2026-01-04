@@ -9401,6 +9401,30 @@ interfaces built on top of Zap (go.uber.org/zap).")
 (define-deprecated-package go-github-com-go-md2man
   go-github-com-cpuguy83-go-md2man-v2)
 
+(define-public go-github-com-go-ole-go-ole
+  (package
+    (name "go-github-com-go-ole-go-ole")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-ole/go-ole")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vr62wwjp206sxah2l79l007s7n187fjzkrnwb85ivqmazfjspxl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-ole/go-ole"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/go-ole/go-ole")
+    (synopsis "Go OLE")
+    (description
+     "Go bindings for Windows COM using shared libraries instead of cgo.")
+    (license license:expat)))
+
 (define-public go-github-com-go-openapi-inflect
   (package
     (name "go-github-com-go-openapi-inflect")
