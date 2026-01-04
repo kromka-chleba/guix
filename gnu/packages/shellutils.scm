@@ -1069,7 +1069,7 @@ the box.
 You might want to add these lines you your @code{~/.bashrc}:
 @example
 GRC_ALIASES=true
-source ${GUIX_ENVIRONMENT:-$HOME/.guix-profile}/etc/profile.d/grc.sh
+source ${GUIX_ENVIRONMENT:-$HOME/.config/guix/profile}/etc/profile.d/grc.sh
 @end example
 ")
     (license license:gpl2)))

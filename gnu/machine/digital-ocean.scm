@@ -277,7 +277,7 @@ done
 guix archive --authorize < ~~root/.config/guix/current/share/guix/ci.guix.gnu.org.pub
 # guix pull
 guix package -i glibc-utf8-locales
-export GUIX_LOCPATH=\"$HOME/.guix-profile/lib/locale\"
+export GUIX_LOCPATH=\"$HOME/.config/guix/profile/lib/locale\"
 guix package -i openssl
 cat > /etc/bootstrap-config.scm << EOF
 (use-modules (gnu))

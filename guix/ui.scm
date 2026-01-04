@@ -532,7 +532,7 @@ and defining @code{GUIX_LOCPATH}, along these lines:
 
 @example
 guix install glibc-locales
-export GUIX_LOCPATH=\"$HOME/.guix-profile/lib/locale\"
+export GUIX_LOCPATH=\"$HOME/.config/guix/profile/lib/locale\"
 @end example
 
 See the \"Application Setup\" section in the manual, for more info.\n"))

@@ -268,11 +268,11 @@ mkdir -p "$HOME"
 HOME="`cd $HOME; pwd -P`"
 
 guix package --bootstrap -i guile-bootstrap
-test -L "$HOME/.guix-profile"
-test -f "$HOME/.guix-profile/bin/guile"
+test -L "$HOME/.config/guix/profile"
+test -f "$HOME/.config/guix/profile/bin/guile"
 
 # Move to the empty profile.
-default_profile="`readlink "$HOME/.guix-profile"`"
+default_profile="`readlink "$HOME/.config/guix/profile"`"
 for i in `seq 1 3`
 do
     # Make sure the current generation is a GC root.
@@ -280,19 +280,19 @@ do
     guix gc --list-live | grep "`readlink "$profile_link"`"
 
     guix package --bootstrap --roll-back
-    test ! -f "$HOME/.guix-profile/bin"
-    test ! -f "$HOME/.guix-profile/lib"
+    test ! -f "$HOME/.config/guix/profile/bin"
+    test ! -f "$HOME/.config/guix/profile/lib"
     test "`readlink "$default_profile"`" = "`basename $default_profile-0-link`"
 done
 
-# Check whether '-p ~/.guix-profile' makes any difference.
+# Check whether '-p ~/.config/guix/profile' makes any difference.
 # See <http://bugs.gnu.org/17939>.
-test ! -e "$HOME/.guix-profile-0-link"
-test ! -e "$HOME/.guix-profile-1-link"
-guix package --bootstrap -p "$HOME/.guix-profile" -i guile-bootstrap
-test ! -e "$HOME/.guix-profile-1-link"
-guix package --bootstrap --roll-back -p "$HOME/.guix-profile"
-test ! -e "$HOME/.guix-profile-0-link"
+test ! -e "$HOME/.config/guix/profile-0-link"
+test ! -e "$HOME/.config/guix/profile-1-link"
+guix package --bootstrap -p "$HOME/.config/guix/profile" -i guile-bootstrap
+test ! -e "$HOME/.config/guix/profile-1-link"
+guix package --bootstrap --roll-back -p "$HOME/.config/guix/profile"
+test ! -e "$HOME/.config/guix/profile-0-link"
 
 # Extraneous argument.
 guix package install foo-bar && false

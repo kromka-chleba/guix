@@ -5036,7 +5036,7 @@ guix shell -CP
 @end example
 
 That gives a shell in an isolated container, and all the dependencies
-show up in @code{$HOME/.guix-profile}, which plays well with caches such
+show up in @code{$HOME/.config/guix/profile}, which plays well with caches such
 as @file{config.cache} (@pxref{Cache Files,,, autoconf, Autoconf}) and
 absolute file names recorded in generated @code{Makefile}s and the
 likes. The fact that the shell runs in a container brings peace of mind:
@@ -6104,7 +6104,7 @@ pull} does that under @file{~/.config/guix/current}.  Thus it's a good
 idea to source both from @code{/etc/profile}:
 
 @example
-for GUIX_PROFILE in "$HOME/.config/guix/current" "$HOME/.guix-profile"
+for GUIX_PROFILE in "$HOME/.config/guix/current" "$HOME/.config/guix/profile"
 do
   if [ -f "$GUIX_PROFILE/etc/profile" ]; then
     . "$GUIX_PROFILE/etc/profile"

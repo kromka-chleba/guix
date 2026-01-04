@@ -1907,7 +1907,7 @@ variable:
 
 @example
 $ guix install glibc-locales
-$ export GUIX_LOCPATH=$HOME/.guix-profile/lib/locale
+$ export GUIX_LOCPATH=$HOME/.config/guix/profile/lib/locale
 @end example
 
 Note that the @code{glibc-locales} package contains data for all the
@@ -2015,7 +2015,7 @@ more information.
 @cindex fonts
 The majority of graphical applications use Fontconfig to locate and load
 fonts and perform X11-client-side rendering.  The @code{fontconfig}
-package in Guix looks for fonts in @file{$HOME/.guix-profile} by
+package in Guix looks for fonts in @file{$HOME/.config/guix/profile} by
 default.  Thus, to allow graphical applications installed with Guix to
 display fonts, you have to install fonts with Guix as well.  Essential
 font packages include @code{font-ghostscript}, @code{font-dejavu}, and
@@ -2967,7 +2967,7 @@ guix install emacs
 
 @cindex profile
 You've installed your first package, congrats!  The package is now
-visible in your default @dfn{profile}, @file{$HOME/.guix-profile}---a
+visible in your default @dfn{profile}, @file{$HOME/.config/guix/profile}---a
 profile is a directory containing installed packages.
 In the process, you've
 probably noticed that Guix downloaded pre-built binaries; or, if you
@@ -2980,16 +2980,16 @@ have printed this hint:
 @example
 hint: Consider setting the necessary environment variables by running:
 
-     GUIX_PROFILE="$HOME/.guix-profile"
+     GUIX_PROFILE="$HOME/.config/guix/profile"
      . "$GUIX_PROFILE/etc/profile"
 
-Alternately, see `guix package --search-paths -p "$HOME/.guix-profile"'.
+Alternately, see `guix package --search-paths -p "$HOME/.config/guix/profile"'.
 @end example
 
 Indeed, you must now tell your shell where @command{emacs} and other
 programs installed with Guix are to be found.  Pasting the two lines
 above will do just that: it will add
-@code{$HOME/.guix-profile/bin}---which is where the installed package
+@code{$HOME/.config/guix/profile/bin}---which is where the installed package
 is---to the @code{PATH} environment variable.  You can paste these two
 lines in your shell so they take effect right away, but more importantly
 you should add them to @file{~/.bash_profile} (or equivalent file if you
@@ -3186,7 +3186,7 @@ own directory---something that resembles
 Instead of referring to these directories, users have their own
 @dfn{profile}, which points to the packages that they actually want to
 use.  These profiles are stored within each user's home directory, at
-@code{$HOME/.guix-profile}.
+@code{$HOME/.config/guix/profile}.
 
 For example, @code{alice} installs GCC 4.7.2.  As a result,
 @file{/home/alice/.guix-profile/bin/gcc} points to
@@ -3275,7 +3275,9 @@ The @command{guix package} command is the tool that allows users to
 install, upgrade, and remove packages, as well as rolling back to
 previous configurations.  These operations work on a user
 @dfn{profile}---a directory of installed packages.  Each user has a
-default profile in @file{$HOME/.guix-profile}.
+default profile in @file{$HOME/.config/guix/profile}@footnote{If the
+old-style @file{$HOME/.config/guix/profile} symlink exists will be used
+instead.}.
 The command operates only on the user's own profile,
 and works with normal user privileges (@pxref{Features}).  Its syntax
 is:
@@ -3324,9 +3326,9 @@ passes it @i{via} the @option{--manifest} option
 
 @cindex profile
 For each user, a symlink to the user's default profile is automatically
-created in @file{$HOME/.guix-profile}.  This symlink always points to the
+created in @file{$HOME/.config/guix/profile}.  This symlink always points to the
 current generation of the user's default profile.  Thus, users can add
-@file{$HOME/.guix-profile/bin} to their @env{PATH} environment
+@file{$HOME/.config/guix/profile/bin} to their @env{PATH} environment
 variable, and so on.
 @cindex search paths
 If you are not using Guix System, consider adding the
@@ -3335,12 +3337,12 @@ Files,,, bash, The GNU Bash Reference Manual}) so that newly-spawned
 shells get all the right environment variable definitions:
 
 @example
-GUIX_PROFILE="$HOME/.guix-profile" ; \
+GUIX_PROFILE="$HOME/.config/guix/profile" ; \
 source "$GUIX_PROFILE/etc/profile"
 @end example
 
 In a multi-user setup, user profiles are stored in a place registered as
-a @dfn{garbage-collector root}, which @file{$HOME/.guix-profile} points
+a @dfn{garbage-collector root}, which @file{$HOME/.config/guix/profile} points
 to (@pxref{Invoking guix gc}).  That directory is normally
 @code{@var{localstatedir}/guix/profiles/per-user/@var{user}}, where
 @var{localstatedir} is the value passed to @code{configure} as
@@ -46647,8 +46649,8 @@ would typically run something like:
 
 @example
 guix install nss-certs
-export SSL_CERT_DIR="$HOME/.guix-profile/etc/ssl/certs"
-export SSL_CERT_FILE="$HOME/.guix-profile/etc/ssl/certs/ca-certificates.crt"
+export SSL_CERT_DIR="$HOME/.config/guix/profile/etc/ssl/certs"
+export SSL_CERT_FILE="$HOME/.config/guix/profile/etc/ssl/certs/ca-certificates.crt"
 export GIT_SSL_CAINFO="$SSL_CERT_FILE"
 @end example
 
@@ -46658,7 +46660,7 @@ something like this:
 
 @example
 guix install nss-certs
-export CURL_CA_BUNDLE="$HOME/.guix-profile/etc/ssl/certs/ca-certificates.crt"
+export CURL_CA_BUNDLE="$HOME/.config/guix/profile/etc/ssl/certs/ca-certificates.crt"
 @end example
 
 For other applications you may want to look up the required environment

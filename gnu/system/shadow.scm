@@ -189,6 +189,7 @@ if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 eval \"$(guix package --search-paths \\
 -p $HOME/.config/guix/current \\
 -p $HOME/.guix-home/profile \\
+-p $HOME/.config/guix/profile \\
 -p $HOME/.guix-profile \\
 -p /run/current-system/profile)\"
 

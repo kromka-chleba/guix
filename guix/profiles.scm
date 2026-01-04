@@ -2361,8 +2361,10 @@ because the NUMBER is zero.)"
            (delete-and-return)))))
 
 (define %user-profile-directory
-  (and=> (getenv "HOME")
-         (cut string-append <> "/.guix-profile")))
+  (let ((profile (and=> (getenv "HOME")
+                        (cut string-append <> "/.guix-profile"))))
+    (if (file-exists? profile) profile
+        (string-append (config-directory) "/profile"))))
 
 (define %profile-directory
   (string-append %state-directory "/profiles/"

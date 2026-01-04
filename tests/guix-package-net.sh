@@ -231,7 +231,7 @@ mkdir -p "$HOME"
 HOME="`cd $HOME; pwd -P`"
 
 guix package --bootstrap -e "$boot_make"
-test -f "$HOME/.guix-profile/bin/make"
+test -f "$HOME/.config/guix/profile/bin/make"
 
 guix package --bootstrap --roll-back
-test ! -f "$HOME/.guix-profile/bin/make"
+test ! -f "$HOME/.config/guix/profile/bin/make"

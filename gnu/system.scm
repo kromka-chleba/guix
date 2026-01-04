@@ -1069,13 +1069,13 @@ the /etc directory."
 # Crucial variables that could be missing in the profiles' 'etc/profile'
 # because they would require combining both profiles.
 # FIXME: See <http://bugs.gnu.org/20255>.
-export MANPATH=$HOME/.guix-profile/share/man:/run/current-system/profile/share/man
-export INFOPATH=$HOME/.guix-profile/share/info:/run/current-system/profile/share/info
-export XDG_DATA_DIRS=$HOME/.guix-profile/share:/run/current-system/profile/share
-export XDG_CONFIG_DIRS=$HOME/.guix-profile/etc/xdg:/run/current-system/profile/etc/xdg
+export MANPATH=${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/share/man:$HOME/.guix-profile/share/man:/run/current-system/profile/share/man
+export INFOPATH=${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/share/info:$HOME/.guix-profile/share/info:/run/current-system/profile/share/info
+export XDG_DATA_DIRS=${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/share:$HOME/.guix-profile/share:/run/current-system/profile/share
+export XDG_CONFIG_DIRS=${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/etc/xdg:$HOME/.guix-profile/etc/xdg:/run/current-system/profile/etc/xdg
 
 # Make sure libXcursor finds cursors installed into user or system profiles.  See <http://bugs.gnu.org/24445>
-export XCURSOR_PATH=$HOME/.icons:$HOME/.guix-profile/share/icons:/run/current-system/profile/share/icons
+export XCURSOR_PATH=$HOME/.icons:${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/share/icons:$HOME/.guix-profile/share/icons:/run/current-system/profile/share/icons
 
 # Ignore the default value of 'PATH'.
 unset PATH
@@ -1098,6 +1098,7 @@ fi
 # Arrange so that ~/.config/guix/current comes first,
 # and guix-home comes before guix-profile.
 for profile in \"$HOME/.guix-profile\"        \\
+               \"${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile\" \\
                \"$HOME/.guix-home/profile\"   \\
                \"$HOME/.config/guix/current\"
 do
@@ -1128,10 +1129,10 @@ umask 022
 
 # Allow Hunspell-based applications (IceCat, LibreOffice, etc.) to
 # find dictionaries.
-export DICPATH=\"$HOME/.guix-profile/share/hunspell:/run/current-system/profile/share/hunspell\"
+export DICPATH=\"$HOME/.config/guix/profile/share/hunspell:$HOME/.guix-profile/share/hunspell:/run/current-system/profile/share/hunspell\"
 
 # Allow GStreamer-based applications to find plugins.
-export GST_PLUGIN_PATH=\"$HOME/.guix-profile/lib/gstreamer-1.0\"
+export GST_PLUGIN_PATH=\"$HOME/.config/guix/profile/lib/gstreamer-1.0:$HOME/.guix-profile/lib/gstreamer-1.0\"
 
 for i in /etc/profile.d/*.sh; do
     if [ -r \"$i\" ]; then

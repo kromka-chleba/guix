@@ -797,7 +797,11 @@ export INFOPATH="$GUIX_PROFILE/share/info:$INFOPATH"
 export MANPATH="$GUIX_PROFILE/share/man:$MANPATH"
 
 # User's default profile, if it exists
-GUIX_PROFILE="$HOME/.guix-profile"
+if [ -L "$XDG_CONFIG_HOME/guix/profile" ]; then
+  GUIX_PROFILE="$XDG_CONFIG_HOME/guix/profile"
+else
+  GUIX_PROFILE="$HOME/.guix-profile"
+fi
 if [ -L "$GUIX_PROFILE" ]; then
   . "$GUIX_PROFILE/etc/profile"
 
