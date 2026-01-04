@@ -6399,6 +6399,31 @@ console APIs are used.  Otherwise, ANSI texts are output.")
 more complicated parallel cases.")
     (license license:expat)))
 
+(define-public go-github-com-dblohm7-wingoes
+  (package
+    (name "go-github-com-dblohm7-wingoes")
+    (version "0.0.0-20250822163801-6d8e6105c62d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dblohm7/wingoes")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pqcjd3wzxp92144x4cxayz7qycqq7b2fb8lfk6l7cfraj5k0yhv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dblohm7/wingoes"))
+    (propagated-inputs (list go-github-com-tc-hib-winres go-golang-org-x-exp
+                             go-golang-org-x-sys go-golang-org-x-tools))
+    (home-page "https://github.com/dblohm7/wingoes")
+    (synopsis "Library for writing Win32 programs in Go")
+    (description
+     "This package is an opinionated library for writing Win32 programs in Go.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-dchest-stemmer
   (package
     (name "go-github-com-dchest-stemmer")
