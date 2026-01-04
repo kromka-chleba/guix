@@ -63,6 +63,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
+  #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
@@ -75,6 +76,7 @@
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
@@ -507,3 +509,53 @@ clients.  The key features are:
 tools and libraries for writing high performance,scalable, user-mode storage
 applications.")
     (license license:bsd-3)))
+
+(define-public garage
+  (package
+    (name "garage")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.deuxfleurs.fr/Deuxfleurs/garage.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fsl0rmjzyn3sxb0l1sh6898kavfkqyld5gfph7v69s88pm0av0q"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      ;; Disable default features and explicitly set them instead.
+      #:cargo-build-flags `(list "--no-default-features")
+      #:cargo-test-flags `(list "--release")
+      #:features '(list "bundled-libs"
+                        "k2v"
+                        "kubernetes-discovery"
+                        "lmdb"
+                        "metrics"
+                        "sqlite"
+                        "syslog"
+                        "telemetry-otlp")
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'install
+            (lambda _
+              (let ((bin (string-append #$output "/bin")))
+                (install-file "target/release/garage" bin)))))))
+    (native-inputs (list nss-certs-for-test
+                         pkg-config
+                         protobuf))
+    (inputs
+     (cons* libsodium
+            openssl
+            sqlite
+            `(,zstd "lib")
+            (cargo-inputs 'garage)))
+    (home-page "https://garagehq.deuxfleurs.fr/")
+    (synopsis "S3-compatible, distributed object storage designed for self-hosting")
+    (description "Garage is a lightweight, geo-distributed data store that
+implements the @url{https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html,
+ Amazon S3} object storage protocol, with a focus on simplicity and resiliency.")
+    (license license:agpl3)))
