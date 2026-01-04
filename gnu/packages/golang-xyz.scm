@@ -22277,6 +22277,33 @@ storage system.")
 @url{https://en.wikipedia.org/wiki/Bloom_filter, bloom filter}.")
     (license license:bsd-2)))
 
+(define-public go-github-com-tc-hib-winres
+  (package
+    (name "go-github-com-tc-hib-winres")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tc-hib/winres")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sr4x8391jv96xv6b2ak2dlfl7p7fka5njz1p3y26bigw2420pxx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Testdata folder is no longer included in git
+      #:import-path "github.com/tc-hib/winres"))
+    (propagated-inputs (list go-github-com-nfnt-resize go-golang-org-x-image))
+    (home-page "https://github.com/tc-hib/winres")
+    (synopsis "Create a resource section for Windows executables")
+    (description
+     "Package winres provides functions to create a resource section for Windows
+executables.  This is where the application's icon, manifest, and version
+information are stored.")
+    (license license:bsd-0)))
+
 (define-public go-github-com-tchap-go-patricia-v2
   (package
     (name "go-github-com-tchap-go-patricia-v2")
