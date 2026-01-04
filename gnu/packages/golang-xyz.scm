@@ -27617,6 +27617,61 @@ without direct type dependencies. Its first consumers are
 Kubernetes-style API types}.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-component-base
+  (package
+    (name "go-k8s-io-component-base")
+    (version "0.34.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/component-base")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0giam6f57rx4cy2bslr350jvisdqlw0qa320f93h0k0qad0mdn3a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require unpackaged dependencies
+      #:import-path "k8s.io/component-base"))
+    (propagated-inputs (list go-go-etcd-io-etcd-client-v3
+                        go-go-etcd-io-etcd-api-v3
+                        go-sigs-k8s-io-apiserver-network-proxy-konnectivity-client
+                        go-sigs-k8s-io-json
+                        go-k8s-io-utils
+                        go-k8s-io-klog-v2
+                        go-k8s-io-kms
+                        go-k8s-io-client-go
+                        go-k8s-io-apimachinery
+                        go-golang-org-x-sys
+                        go-go-yaml-in-yaml-v2
+                        go-go-uber-org-zap
+                        go-go-opentelemetry-io-otel-trace
+                        go-go-opentelemetry-io-otel-sdk
+                        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace
+                        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracegrpc
+                        go-go-opentelemetry-io-otel
+                        go-go-opentelemetry-io-contrib-instrumentation-net-http-otelhttp
+                        go-github-com-stretchr-testify
+                        go-github-com-spf13-pflag
+                        go-github-com-spf13-cobra
+                        go-github-com-prometheus-procfs
+                        go-github-com-prometheus-common
+                        go-github-com-prometheus-client-model
+                        go-github-com-prometheus-client-golang
+                        go-github-com-munnerz-goautoneg
+                        go-github-com-moby-term
+                        go-github-com-google-go-cmp
+                        go-github-com-go-logr-zapr
+                        go-github-com-go-logr-logr
+                        go-github-com-blang-semver-v4))
+    (home-page "https://k8s.io/component-base")
+    (synopsis "Shared code for kubernetes core components")
+    (description
+     "This package provides shared code for kubernetes core components.")
+    (license license:asl2.0)))
+
 (define-public go-k8s-io-gengo-v2
   (package
     (name "go-k8s-io-gengo-v2")
