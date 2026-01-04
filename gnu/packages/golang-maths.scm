@@ -386,14 +386,16 @@ penalization.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/montanaflynn/stats"
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-examples
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
-                (delete-file-recursively "examples")))))))
+                (delete-file-recursively "examples")))))
+      #:test-flags
+      ;; disable go vet in go 1.24+
+      #~(list "-vet=off")))
     (home-page "https://github.com/montanaflynn/stats")
     (synopsis "Statistics library for Golang")
     (description
