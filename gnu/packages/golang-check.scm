@@ -2833,6 +2833,32 @@ functions for writing tests in an @code{xUnit} style.")
 test coverage and has a web user interface that will refresh automatically.")
     (license license:expat)))
 
+(define-public go-github-com-stbenjam-no-sprintf-host-port
+  (package
+    (name "go-github-com-stbenjam-no-sprintf-host-port")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/stbenjam/no-sprintf-host-port")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05pldq9j08nykxsb6nagks5pd54g9hsqwpmnj6pgr2a5dhkdhiy0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/stbenjam/no-sprintf-host-port"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/stbenjam/no-sprintf-host-port")
+    (synopsis "Linter to check for abuse of sprintf")
+    (description
+     "This linter checks that @code{sprintf} is not used to construct
+a @code{host:port} combination in a URL.")
+    (license license:expat)))
+
 (define-public go-github-com-stretchr-testify
   (package
     (name "go-github-com-stretchr-testify")
