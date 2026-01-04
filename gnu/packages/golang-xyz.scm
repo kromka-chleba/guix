@@ -29139,6 +29139,55 @@ controllers that manipulate both Kubernetes CRDs and aggregated/built-in
 Kubernetes APIs.")
     (license license:asl2.0)))
 
+(define-public go-sigs-k8s-io-controller-tools
+  (package
+    (name "go-sigs-k8s-io-controller-tools")
+    (version "0.19.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes-sigs/controller-tools")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n6vc681bhhk972l1ijg7m01xy3zvi5i17y6fhac1m7bs7rrgz1l"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:test-flags
+      #~(list "-skip" "TestLoader|TestVersioning")
+      #:import-path "sigs.k8s.io/controller-tools"
+      #:embed-files
+      #~(list "authoring.tmpl")))
+    (propagated-inputs (list go-github-com-fatih-color
+                             go-github-com-gobuffalo-flect
+                             go-github-com-google-go-cmp
+                             go-github-com-onsi-ginkgo
+                             go-github-com-onsi-gomega
+                             go-github-com-spf13-cobra
+                             go-github-com-spf13-pflag
+                             go-golang-org-x-tools
+                             go-golang-org-x-tools-go-packages-packagestest
+                             go-gopkg-in-yaml-v2
+                             go-gopkg-in-yaml-v3
+                             go-k8s-io-api
+                             go-k8s-io-apiextensions-apiserver
+                             go-k8s-io-apimachinery
+                             go-k8s-io-apiserver
+                             go-k8s-io-code-generator
+                             go-k8s-io-gengo-v2
+                             go-k8s-io-utils
+                             go-sigs-k8s-io-yaml))
+    (home-page "https://sigs.k8s.io/controller-tools")
+    (synopsis "Kubernetes controller-tools Project")
+    (description
+     "The Kubernetes controller-tools Project is a set of go libraries for building
+Controllers.")
+    (license license:asl2.0)))
+
 (define-public go-sigs-k8s-io-json
   (package
     (name "go-sigs-k8s-io-json")
