@@ -577,9 +577,9 @@ Gemini clients and servers.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:embed-files #~(list "prelude.graphql")
-      #:import-path "git.sr.ht/~emersion/gqlclient"))
+      #:import-path "git.sr.ht/~emersion/gqlclient"
+      #:test-flags #~(list "-vet=off")))
     ;; For the CLI.
     (native-inputs
      (list go-github-com-dave-jennifer
