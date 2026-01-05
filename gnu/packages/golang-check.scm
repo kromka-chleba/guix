@@ -1994,6 +1994,32 @@ the shell.  It can help you quickly create an independent workspace for unit
 testing and improve the efficiency of unit test writing.")
     (license license:gpl3+)))
 
+(define-public go-github-com-jjti-go-spancheck
+  (package
+    (name "go-github-com-jjti-go-spancheck")
+    (version "0.6.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jjti/go-spancheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "010f9pwks03maw44knq6s5dlks9a71if3f1y6pc56lj7i5rybwf8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;"invalid package name"
+      #:import-path "github.com/jjti/go-spancheck"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/jjti/go-spancheck")
+    (synopsis "Go linter for OTEL trace spans")
+    (description
+     "This package defines a linter that checks for mistakes with OTEL trace
+spans.")
+    (license license:expat)))
+
 (define-public go-github-com-jmhodges-clock
   (package
     (name "go-github-com-jmhodges-clock")
