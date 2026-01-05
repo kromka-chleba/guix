@@ -9206,6 +9206,28 @@ operations.")
 expression, statement and declaration parsing from string.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-typep
+  (package
+    (name "go-github-com-go-toolsmith-typep")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/typep")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "084qh4d7fbk9f73kmbx6kgfmyhx1cm6gckvd494gn6460s9xy7y3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-toolsmith/typep"))
+    (home-page "https://github.com/go-toolsmith/typep")
+    (synopsis "Type predicates in Go")
+    (description "This package provides type predicates in Go.")
+    (license license:expat)))
+
 (define-public go-github-com-git-lfs-go-netrc
   (package
     (name "go-github-com-git-lfs-go-netrc")
