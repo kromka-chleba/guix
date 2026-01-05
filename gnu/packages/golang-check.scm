@@ -502,6 +502,31 @@ to be free of third-party dependencies.")
 test (using testing.TB's @code{TempDir}) and with a few helper methods.")
     (license license:expat)))
 
+(define-public go-github-com-catenacyber-perfsprint
+  (package
+    (name "go-github-com-catenacyber-perfsprint")
+    (version "0.10.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/catenacyber/perfsprint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02hb7bcmwdx3r8dnsnx6silf39bjp3vi70648sxlg3a0yw3ly7p9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/catenacyber/perfsprint"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/catenacyber/perfsprint")
+    (synopsis "Golang linter for uses of Sprintf")
+    (description
+     "Golang linter for performance that replaces uses of @code{fmt.Sprintf} and
+@code{fmt.Errorf} with better (both in CPU and memory) alternatives.")
+    (license license:expat)))
+
 (define-public go-github-com-charithe-durationcheck
   (package
     (name "go-github-com-charithe-durationcheck")
