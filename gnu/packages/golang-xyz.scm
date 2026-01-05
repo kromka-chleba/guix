@@ -9056,6 +9056,31 @@ it effectively reuses the JSON struct tags as well as the custom JSON methods
 to worry about nil pointer results anymore.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-astequal
+  (package
+    (name "go-github-com-go-toolsmith-astequal")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/astequal")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1am5lfiw05jyzibm6hm6im2daphdznnxw97vry0sj7lpk5pxvq29"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-toolsmith/astequal"))
+    (propagated-inputs (list go-github-com-google-go-cmp
+                             go-github-com-go-toolsmith-strparse))
+    (home-page "https://github.com/go-toolsmith/astequal")
+    (synopsis "AST (deep) equality check operations")
+    (description
+     "This package provides AST (deep) equality check operations.")
+    (license license:expat)))
+
 (define-public go-github-com-go-toolsmith-strparse
   (package
     (name "go-github-com-go-toolsmith-strparse")
