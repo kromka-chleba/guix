@@ -54,6 +54,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages version-control))
 
@@ -2711,6 +2712,44 @@ GIT_TRACE mechanism.")
     (synopsis "Deadlock detection in go")
     (description
      "This package provides tools for detecting deadlocks at run-time in Go.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-securego-gosec-v2
+  (package
+    (name "go-github-com-securego-gosec")
+    (version "2.22.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/securego/gosec")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gbm05j04nxnfjhvb17xk3fkw8ndzq4qkqv7g9vyv77b23lx01r9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO: Tests require unpackaged dependency
+      #:import-path "github.com/securego/gosec/v2"))
+    (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                             go-github-com-ccojocar-zxcvbn-go
+                             go-github-com-google-uuid
+                             go-github-com-gookit-color
+                             go-github-com-lib-pq
+                             ;; go-github-com-mozilla-tls-observatory
+                             go-github-com-onsi-ginkgo-v2
+                             go-github-com-onsi-gomega
+                             go-github-com-stretchr-testify
+                             go-golang-org-x-crypto
+                             go-golang-org-x-text
+                             go-golang-org-x-tools
+                             go-google-golang-org-genai
+                             go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/securego/gosec")
+    (synopsis "Go security checker")
+    (description
+     "This package holds the central scanning logic used by gosec security scanner.")
     (license license:asl2.0)))
 
 (define-public go-github-com-shabbyrobe-gocovmerge
