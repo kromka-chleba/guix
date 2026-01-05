@@ -2098,6 +2098,31 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-karamaru-alpha-copyloopvar
+  (package
+    (name "go-github-com-karamaru-alpha-copyloopvar")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/karamaru-alpha/copyloopvar")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jsikik3f4s18xcbv35n0hvq7mzkp1m11l2qkcl4wjz87sgji2vm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/karamaru-alpha/copyloopvar"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/karamaru-alpha/copyloopvar")
+    (synopsis "Go linter for copied loop variable")
+    (description
+     "This package provides a linter that detects places where loop variables are
+copied.")
+    (license license:expat)))
+
 (define-public go-github-com-kisielk-errcheck
   (package
     (name "go-github-com-kisielk-errcheck")
