@@ -13054,7 +13054,6 @@ StatHat} account.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/swaggo/swag"
       #:unpack-path "github.com/swaggo/swag"
       #:embed-files
@@ -13068,7 +13067,8 @@ StatHat} account.")
          "schema\\.json")
       #:test-flags
       #~(list "-skip" (string-append "TestParseGoList/enableGOMODULE"
-                                     "|TestParseDescriptionMarkdown"))
+                                     "|TestParseDescriptionMarkdown")
+              "-vet=off")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-examples
