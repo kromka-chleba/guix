@@ -2322,6 +2322,32 @@ output.")
 single file ready for https://coveralls.io/.")
     (license license:asl2.0)))
 
+(define-public go-github-com-moricho-tparallel
+  (package
+    (name "go-github-com-moricho-tparallel")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moricho/tparallel")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1008j7bdfbzjk2v7ld51xc59sa6822391x0na6289n5r06yhyjbx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moricho/tparallel"))
+    (propagated-inputs (list go-github-com-gostaticanalysis-analysisutil
+                             go-golang-org-x-tools))
+    (home-page "https://github.com/moricho/tparallel")
+    (synopsis "Find inappropriate usage of t.Parallel")
+    (description
+     "This package find inappropriate usage of @code{t.Parallel()} method in your Go
+test codes.")
+    (license license:expat)))
+
 (define-public go-github-com-nakabonne-nestif
   (package
     (name "go-github-com-nakabonne-nestif")
