@@ -5913,13 +5913,13 @@ URIs using the normal URI.parse method.")
 (define-public ruby-debug
   (package
     (name "ruby-debug")
-    (version "1.7.2")
+    (version "1.11.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "debug" version))
               (sha256
                (base32
-                "0x59508j69w9p275gabysv521n210pd3n060gqfgsiqjms1h0ldf"))))
+                "1djjx5332d1hdh9s782dyr0f9d4fr9rllzdcz2k0f8lz2730l2rf"))))
     (build-system ruby-build-system)
     (arguments (list #:test-target "test_all"))
     (propagated-inputs (list ruby-irb ruby-reline))
@@ -5929,7 +5929,7 @@ rewritten debug.rb which was contained by the ancient Ruby versions.  It is
 included with Ruby itself, but this package is made available so that the
 latest version can be made available independently from Ruby.")
     (home-page "https://github.com/ruby/debug")
-    (license license:bsd-2)))
+    (license (list license:bsd-2 license:ruby))))
 
 (define-public ruby-deep-merge
   (package
