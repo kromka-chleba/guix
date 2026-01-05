@@ -2714,6 +2714,34 @@ GIT_TRACE mechanism.")
      "This package provides tools for detecting deadlocks at run-time in Go.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sanposhiho-wastedassign-v2
+  (package
+    (name "go-github-com-sanposhiho-wastedassign")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sanposhiho/wastedassign")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hba9qih1n5062al3z43g8mj1pp0ls4sxyg1la4hii8yf7ymz5fy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to
+      ;; (*golang.org/x/tools/go/analysis.Pass).Reportf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:import-path "github.com/sanposhiho/wastedassign/v2"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/sanposhiho/wastedassign")
+    (synopsis "Linter for wasted assignment statements")
+    (description
+     "This package provides a linter for wasted assignment statements.")
+    (license license:expat)))
+
 (define-public go-github-com-sashamelentyev-interfacebloat
   (package
     (name "go-github-com-sashamelentyev-interfacebloat")
