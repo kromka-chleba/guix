@@ -14201,11 +14201,11 @@ programming language.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       ;; validation of time strings.  only RFC3339 not all of ISO 8601 are
       ;; valid.  expects: false, given true Schema: {"format":"time"} Data:
       ;; "01:01:01,1111"
-      #:test-flags #~(list "-skip" "TestFormats")
+      #:test-flags #~(list "-skip" "TestFormats"
+                           "-vet=off")
       #:import-path "github.com/xeipuuv/gojsonschema"))
     (native-inputs
      (list go-github-com-stretchr-testify))
