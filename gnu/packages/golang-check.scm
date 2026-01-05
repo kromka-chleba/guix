@@ -566,6 +566,33 @@ test (using testing.TB's @code{TempDir}) and with a few helper methods.")
      "A testing library for Go programs.")
     (license license:expat)))
 
+(define-public go-github-com-ckaznocha-intrange
+  (package
+    (name "go-github-com-ckaznocha-intrange")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ckaznocha/intrange")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m7wfdq0j88mdrr1v4ycr7d3smy63zppnkix5x072qsl4visjbsc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Test tries to vendor
+      #:import-path "github.com/ckaznocha/intrange"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-gostaticanalysis-testutil))
+    (home-page "https://github.com/ckaznocha/intrange")
+    (synopsis "Go linter for loops")
+    (description
+     "This package is a program for checking for loops that could use the
+@url{https://go.dev/ref/spec#Go_1.22,Go 1.22} integer range feature.")
+    (license license:expat)))
+
 (define-public go-github-com-cockroachdb-datadriven
   (package
     (name "go-github-com-cockroachdb-datadriven")
