@@ -99,6 +99,7 @@
   #:use-module (gnu packages ragel)
   #:use-module (gnu packages rsync)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages terminals)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -15902,6 +15903,35 @@ completes.")
     (description "ValueSemantics generates modules that provide conventional
 value semantics for a given set of attributes.  The behaviour is similar to an
 immutable Struct class, plus extensible, lightweight validation and coercion.")
+    (license license:expat)))
+
+(define-public ruby-vterm
+  (package
+    (name "ruby-vterm")
+    (version "0.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aycabta/vterm-gem")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06aqg4yr7cjj2hxf4qg683hy7x1qmdhfq4nfajlq5kaj3vjxbsa4"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'compile
+            (lambda args
+              (invoke "rake" "compile"))))))
+    (native-inputs (list bundler pkg-config ruby-rake ruby-rake-compiler
+                         ruby-test-unit))
+    (inputs (list libvterm))
+    (home-page "https://github.com/aycabta/vterm-gem")
+    (synopsis "Ruby wrapper of libvterm")
+    (description "Ruby wrapper library for libvterm.")
     (license license:expat)))
 
 (define-public ruby-promise
