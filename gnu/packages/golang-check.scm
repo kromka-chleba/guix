@@ -2098,6 +2098,33 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-ldez-gomoddirectives
+  (package
+    (name "go-github-com-ldez-gomoddirectives")
+    (version "0.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ldez/gomoddirectives")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ldn8hv94gdsr9y8034sywql9j5gp0q8923iklsxc96ph8njblmf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;"read .: is a directory"
+      #:import-path "github.com/ldez/gomoddirectives"))
+    (propagated-inputs (list go-github-com-ldez-grignotin
+                             go-github-com-stretchr-testify
+                             go-golang-org-x-tools go-golang-org-x-mod))
+    (home-page "https://github.com/ldez/gomoddirectives")
+    (synopsis "Linter for directives into go.mod")
+    (description
+     "This package provides a linter that handle directives into `go.mod`.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-ldez-grignotin
   (package
     (name "go-github-com-ldez-grignotin")
