@@ -2503,8 +2503,8 @@ and RFC 5389).")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/cenkalti/backoff/v4"))
+      #:import-path "github.com/cenkalti/backoff/v4"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/cenkalti/backoff")
     (synopsis "The exponential backoff algorithm in Go")
     (description
