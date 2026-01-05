@@ -7625,7 +7625,6 @@ controlled.  It is based on netlink messages.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/json-iterator/go"
       #:test-flags
       #~(list "-skip" (string-join
@@ -7633,7 +7632,8 @@ controlled.  It is based on netlink messages.")
                              "Test_marshal/.57._/string"
                              "Test_string_encode_with_std_without_html_escape"
                              "Test_symmetric/map.test.stringKeyType.string")
-                       "|"))))
+                       "|")
+              "-vet=off")))
     (native-inputs
      (list go-github-com-davecgh-go-spew
            go-github-com-google-gofuzz
