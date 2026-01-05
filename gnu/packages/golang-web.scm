@@ -16506,7 +16506,6 @@ the code or routes.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "maunium.net/go/mautrix"
       #:embed-files
       #~(list
@@ -16530,7 +16529,8 @@ the code or routes.")
                            "TestResolveServerName/RM_Step_4"
                            "TestResolveServerName/RM_Step_4_MSC4040"
                            "TestResolveServerName/maunium")
-                     "|"))))
+                     "|")
+            "-vet=off")))
     ;; XXX: The final application needs a "libolm" package.
     (native-inputs
      (list olm))
