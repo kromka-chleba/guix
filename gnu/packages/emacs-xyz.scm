@@ -24695,9 +24695,9 @@ formatting, and utility methods for jsonnet files.")
     (license license:gpl3+)))
 
 (define-public emacs-restclient
-  (let ((commit "1fb570643b08ba66eb70831b6f874f52546917f1")
+  (let ((commit "1800a4e367c250051617d0b8c16a7cbd7f47da69")
         (version "0")
-        (revision "4"))               ;Guix package revision,
+        (revision "5"))               ;Guix package revision,
                                         ;upstream doesn't have official releases
     (package
       (name "emacs-restclient")
@@ -24709,7 +24709,7 @@ formatting, and utility methods for jsonnet files.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0npij1p1yw4p1f1yrx6bl8q18nav5p2xvbp7qhzhn7lb2fdn5jqv"))
+                  "02yphcli11j0p6144rwh7l5whx4ahxm3y15nz0b7r3y04fm25w6g"))
                 (file-name (git-file-name name version))))
       (build-system emacs-build-system)
       (propagated-inputs
