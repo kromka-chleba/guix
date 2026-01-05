@@ -9131,6 +9131,29 @@ to worry about nil pointer results anymore.")
      "This package implements `ast.Node` formatting with a fmt-like API.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-astp
+  (package
+    (name "go-github-com-go-toolsmith-astp")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/astp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pacqy3whmfp2z4xn17k24wbxc2vlyaqjd68dgn3m5mfmjzwpzhj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-toolsmith/astp"))
+    (propagated-inputs (list go-github-com-go-toolsmith-strparse))
+    (home-page "https://github.com/go-toolsmith/astp")
+    (synopsis "AST predicates for Go")
+    (description "This package provides AST predicates in Go.")
+    (license license:expat)))
+
 (define-public go-github-com-go-toolsmith-strparse
   (package
     (name "go-github-com-go-toolsmith-strparse")
