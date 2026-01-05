@@ -2126,6 +2126,31 @@ per-goroutine.")
 rules you define and fixing them according to the defined rules.")
     (license license:asl2.0)))
 
+(define-public go-github-com-macabu-inamedparam
+  (package
+    (name "go-github-com-macabu-inamedparam")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/macabu/inamedparam")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19b5zmnpvw8wg5r0jpvp4ghwqcnnmwji7qm1mcxw0m5za1wv1isq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/macabu/inamedparam"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/macabu/inamedparam")
+    (synopsis "Linter for Go interfaces")
+    (description
+     "This package provides a linter that reports interfaces with unnamed method
+parameters.")
+    (license license:expat)))
+
 (define-public go-github-com-maruel-panicparse
   (package
     (name "go-github-com-maruel-panicparse")
