@@ -2098,6 +2098,35 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-ldez-grignotin
+  (package
+    (name "go-github-com-ldez-grignotin")
+    (version "0.10.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ldez/grignotin")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yr0wv1lamy1r3gx6i09b219dswcn7hmd6ijxp5pg4hi7cw9hbdk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;Tests require network
+      #:import-path "github.com/ldez/grignotin"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-golang-org-x-mod))
+    (home-page "https://github.com/ldez/grignotin")
+    (synopsis
+     "Collection of small helpers around Go proxies and Go meta information")
+    (description
+     "This package provides a collection of small helpers around Go proxy, Go meta
+information, etc.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-ldez-tagliatelle
   (package
     (name "go-github-com-ldez-tagliatelle")
