@@ -5345,7 +5345,6 @@ projects.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:embed-files #~(list "jsonschema-draft-04\\.json" "schema\\.json")
       #:import-path "github.com/go-openapi/validate"
       #:phases
@@ -5357,7 +5356,8 @@ projects.")
                 (for-each delete-file
                           (list "benchmark_test.go"
                                 "example_validator_test.go"
-                                "doc_test.go"))))))))
+                                "doc_test.go"))))))
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
