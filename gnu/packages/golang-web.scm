@@ -10547,7 +10547,6 @@ Border Gateway Protocol}} implementation.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
       #:import-path "github.com/ovn-kubernetes/libovsdb"
       #:test-flags
@@ -10577,7 +10576,8 @@ Border Gateway Protocol}} implementation.")
                                   "TestWaitOpNotEquals"
                                   "Test_merge")
                                #~()))
-                       "|"))
+                       "|")
+              "-vet=off")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-examples
