@@ -2406,6 +2406,33 @@ error messages, preserving the order of @code{have} (actual result) before
      "This package provides mocking utilities for unit tests in Go.")
     (license license:expat)))
 
+(define-public go-github-com-nishanths-predeclared
+  (package
+    (name "go-github-com-nishanths-predeclared")
+    (version "0.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nishanths/predeclared")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hk0i43yh2bf1qll3k88xkfgm43v63q4qz0qnrkziaj3pg886q3j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nishanths/predeclared"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/nishanths/predeclared")
+    (synopsis
+     "Find declarations in Go source code that shadow predeclared identifiers")
+    (description
+     "This package prints the names and locations of declarations in the given
+packages that have the same name as one of Go's predeclared identifiers (eg.,
+int, string, delete, copy, append).")
+    (license license:bsd-3)))
+
 (define-public go-github-com-nunnatsa-ginkgolinter
   (package
     (name "go-github-com-nunnatsa-ginkgolinter")
