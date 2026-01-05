@@ -649,6 +649,39 @@ time functions.")
 strings which may be used in mock tests.")
     (license license:unlicense)))
 
+(define-public go-github-com-daixiang0-gci
+  (package
+    (name "go-github-com-daixiang0-gci")
+    (version "0.13.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/daixiang0/gci")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vhnqisf6d706qvswccb0d7bkbl53lyi84f5sl3zyaf6yk8ml9dx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/daixiang0/gci"))
+    (propagated-inputs (list go-gopkg-in-yaml-v3
+                             go-golang-org-x-tools
+                             go-golang-org-x-sync
+                             go-golang-org-x-mod
+                             go-go-uber-org-zap
+                             go-github-com-stretchr-testify
+                             go-github-com-spf13-cobra
+                             go-github-com-pmezard-go-difflib
+                             go-github-com-hexops-gotextdiff))
+    (home-page "https://github.com/daixiang0/gci")
+    (synopsis "Tool to make Go import order deterministic")
+    (description
+     "This package provides a tool that controls Go package import order and makes
+it always deterministic.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-data-dog-go-sqlmock
   (package
     (name "go-github-com-data-dog-go-sqlmock")
