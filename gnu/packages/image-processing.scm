@@ -1168,8 +1168,7 @@ recalculates.")
            ;; For the documentation
            doxygen
            graphviz
-           perl
-           python-sphinx))
+           perl))
     (inputs
      (list boost
            cgns
