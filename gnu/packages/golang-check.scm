@@ -1928,6 +1928,29 @@ Many times certain facilities are not available, or tests must run
 differently.")
     (license license:expat)))
 
+(define-public go-github-com-jgautheron-goconst
+  (package
+    (name "go-github-com-jgautheron-goconst")
+    (version "1.8.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jgautheron/goconst")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05kig2g9w167qsvcnzp25ww8ahhh16lfpkkz52lwmf72cylm9c5j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jgautheron/goconst"))
+    (home-page "https://github.com/jgautheron/goconst")
+    (synopsis "Go linter for repeated strings")
+    (description
+     "This package finds repeated strings that could be replaced by a constant.")
+    (license license:expat)))
+
 (define-public go-github-com-jingyugao-rowserrcheck
   (package
     (name "go-github-com-jingyugao-rowserrcheck")
