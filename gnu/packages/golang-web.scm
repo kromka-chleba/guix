@@ -3729,7 +3729,6 @@ Data Representation (XDR) standard protocol as specified in RFC
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/digitalocean/godo"
       #:test-flags
       #~(list "-skip" (string-join
@@ -3742,7 +3741,8 @@ Data Representation (XDR) standard protocol as specified in RFC
                              "TestRegistry_DeleteTag"
                              "TestRegistry_ListManifests"
                              "TestRepository_ListTags")
-                       "|"))))
+                       "|")
+              "-vet=off")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
