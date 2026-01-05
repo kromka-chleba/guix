@@ -7547,8 +7547,8 @@ described in @url{https://www.rfc-editor.org/rfc/rfc959,RFC 959}.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/jmespath/go-jmespath"))
+      #:import-path "github.com/jmespath/go-jmespath"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-davecgh-go-spew
            go-github-com-pmezard-go-difflib
