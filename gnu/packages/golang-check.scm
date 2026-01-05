@@ -2739,6 +2739,36 @@ GIT_TRACE mechanism.")
 @code{go test -coverprofile} runs and merges them into one profile.")
     (license license:bsd-2)))
 
+(define-public go-github-com-sivchari-containedctx
+  (package
+    (name "go-github-com-sivchari-containedctx")
+    (version "1.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sivchari/containedctx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06gd9sqvv9sm2vdf5bs15j5dh71hkid814c4i6xryx8cb07syzds"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;modules disabled by GO111MODULE=off
+      #:import-path "github.com/sivchari/containedctx"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-gostaticanalysis-testutil))
+    (home-page "https://github.com/sivchari/containedctx")
+    (synopsis "Linter that detects struct contained context.Context field")
+    (description
+     "This package is a linter that detects struct contained context.Context field.
+This is discouraged technique in favour of passing context as first argument of
+method or function.  For rationale please read
+@url{https://go.dev/blog/context-and-structs,Contexts and structs} the Go blog
+post.")
+    (license license:expat)))
+
 (define-public go-github-com-sivchari-tenv
   (package
     (name "go-github-com-sivchari-tenv")
