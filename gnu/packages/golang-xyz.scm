@@ -3530,6 +3530,36 @@ exit).")
     (license (list license:bsd-3
                    license:expat))))
 
+(define-public go-github-com-ccojocar-zxcvbn-go
+  (package
+    (name "go-github-com-ccojocar-zxcvbn-go")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ccojocar/zxcvbn-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dlrd6afpfwnpj6cbbvjhwbf33ldr0nzffl8p43jrmn62mwf7cn7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ccojocar/zxcvbn-go"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/ccojocar/zxcvbn-go")
+    (synopsis "Password-strength generator in Go")
+    (description
+     "This is a @code{goLang} port of python-zxcvbn and
+@url{https://github.com/dropbox/zxcvbn,zxcvbn}, which are python and
+@code{JavaScript} password strength generators.  zxcvbn attempts to give sound
+password advice through pattern matching and conservative entropy calculations.
+It finds 10k common passwords, common American names and surnames, common
+English words, and common patterns like dates, repeats (aaa), sequences (abcd),
+and QWERTY patterns.")
+    (license license:expat)))
+
 (define-public go-github-com-cention-sany-utf7
   (package
     (name "go-github-com-cention-sany-utf7")
