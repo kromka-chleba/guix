@@ -649,6 +649,31 @@ time functions.")
 strings which may be used in mock tests.")
     (license license:unlicense)))
 
+(define-public go-github-com-curioswitch-go-reassign
+  (package
+    (name "go-github-com-curioswitch-go-reassign")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/curioswitch/go-reassign")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04kpa5wqnwcbn11k61629jdp7f3fp00abwi49i4cy02pgd2zj5sp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/curioswitch/go-reassign"))
+    (propagated-inputs (list go-golang-org-x-tools go-github-com-magefile-mage))
+    (home-page "https://github.com/curioswitch/go-reassign")
+    (synopsis "Go linter to detect reassigning top-level variables")
+    (description
+     "This package provides a linter that detects when reassigning a top-level
+variable in another package.")
+    (license license:expat)))
+
 (define-public go-github-com-daixiang0-gci
   (package
     (name "go-github-com-daixiang0-gci")
