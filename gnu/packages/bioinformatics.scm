@@ -2292,8 +2292,7 @@ version = ~s
                          python-pytest-cov
                          python-pytest-datadir
                          python-pytest-doctestplus
-                         python-recommonmark
-                         python-sphinx))
+                         python-recommonmark))
     (inputs (cons python-wrapper (cargo-inputs 'python-bed-reader)))
     (propagated-inputs (list python-numpy python-pandas python-scipy))
     (home-page "https://fastlmm.github.io/")
