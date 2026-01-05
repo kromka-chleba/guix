@@ -2215,6 +2215,31 @@ integrates with the default test runner, so you can use it with the standard
 output capturing, mocking, and much more.")
     (license license:expat)))
 
+(define-public go-github-com-matoous-godox
+  (package
+    (name "go-github-com-matoous-godox")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matoous/godox")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18q6c3g5vms8bdrp3mrk9wcvdjcbg9zk9rnpbza8ph5y3fvxzm34"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/matoous/godox"))
+    (home-page "https://github.com/matoous/godox")
+    (synopsis "Linter for TODO-like keywords in Go")
+    (description
+     "This package provides a linter that scans Go code for comments containing
+certain keywords (like TODO, BUG, FIXME) which typically indicate areas that
+require attention.")
+    (license license:expat)))
+
 (define-public go-github-com-matryer-is
   (package
     (name "go-github-com-matryer-is")
