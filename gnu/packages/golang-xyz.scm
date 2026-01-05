@@ -9154,6 +9154,32 @@ to worry about nil pointer results anymore.")
     (description "This package provides AST predicates in Go.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-pkgload
+  (package
+    (name "go-github-com-go-toolsmith-pkgload")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/pkgload")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dbgza1yzavmyzi7gi0i4nycglcjikm0zw5vk3iikm6kfb7smgz2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Unmatched package path
+      #:import-path "github.com/go-toolsmith/pkgload"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/go-toolsmith/pkgload")
+    (synopsis "Utilities for go/packages load-related operations")
+    (description
+     "This package provides a set of utilities for @code{go/packages} load-related
+operations.")
+    (license license:expat)))
+
 (define-public go-github-com-go-toolsmith-strparse
   (package
     (name "go-github-com-go-toolsmith-strparse")
