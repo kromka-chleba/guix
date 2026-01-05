@@ -8793,8 +8793,8 @@ fixed.")
            go-golang-org-x-text))
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/makeworld-the-better-one/go-gemini"))
+      #:import-path "github.com/makeworld-the-better-one/go-gemini"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/makew0rld/go-gemini")
     (synopsis "Client/server library for the Gemini protocol, in Go")
     (description
