@@ -502,6 +502,31 @@ to be free of third-party dependencies.")
 test (using testing.TB's @code{TempDir}) and with a few helper methods.")
     (license license:expat)))
 
+(define-public go-github-com-charithe-durationcheck
+  (package
+    (name "go-github-com-charithe-durationcheck")
+    (version "0.0.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charithe/durationcheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kr6l6iklc3d8y5bhx8531lh8k7n6qd8dq7ps3c1r7lanyqshf5a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charithe/durationcheck"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/charithe/durationcheck")
+    (synopsis "Go linter to detect erroneous duration multiplication")
+    (description
+     "This package provides a Go linter to detect cases where two
+@code{time.Duration} values are being multiplied in possibly erroneous ways.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-cheekybits-is
   (let ((commit "68e9c0620927fb5427fda3708222d0edee89eae9")
         (revision "0"))
