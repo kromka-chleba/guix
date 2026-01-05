@@ -11279,8 +11279,8 @@ Protocol,SCTP} as specified in
         (base32 "0zli55ls5izpr6cw0wj0gy44872xn9rk20i8ay9cfk7j2rb60y60"))))
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/pion/stun/v2"))
+      #:import-path "github.com/pion/stun/v2"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-pion-dtls-v2
            go-github-com-pion-logging
