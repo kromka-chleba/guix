@@ -2714,6 +2714,32 @@ GIT_TRACE mechanism.")
      "This package provides tools for detecting deadlocks at run-time in Go.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sashamelentyev-interfacebloat
+  (package
+    (name "go-github-com-sashamelentyev-interfacebloat")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sashamelentyev/interfacebloat")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03s0vrcavx8q5s9b26zl7bqs13i0c7ngd6rap1xl2fb74m9d5bhq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sashamelentyev/interfacebloat"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/sashamelentyev/interfacebloat")
+    (synopsis "Linter to detect interface bloat")
+    (description
+     "This package provides a linter to detect interface bloat.  Interface
+bloat (anti-pattern, also called fat interface) is when an interface
+incorporates too many operations on some data.")
+    (license license:expat)))
+
 (define-public go-github-com-sashamelentyev-usestdlibvars
   (package
     (name "go-github-com-sashamelentyev-usestdlibvars")
