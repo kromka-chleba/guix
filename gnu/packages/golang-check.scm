@@ -2215,6 +2215,31 @@ integrates with the default test runner, so you can use it with the standard
 output capturing, mocking, and much more.")
     (license license:expat)))
 
+(define-public go-github-com-maratori-testpackage
+  (package
+    (name "go-github-com-maratori-testpackage")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/maratori/testpackage")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yl39kp07js2bmi17c13vi88786xvd0g4fjz95n09i7nwfjjbkmf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/maratori/testpackage"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/maratori/testpackage")
+    (synopsis "Golang linter for _test package")
+    (description
+     "This package provides a golang linter that makes you use a separate `_test`
+package.")
+    (license license:expat)))
+
 (define-public go-github-com-matoous-godox
   (package
     (name "go-github-com-matoous-godox")
