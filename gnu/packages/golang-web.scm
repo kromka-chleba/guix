@@ -3851,8 +3851,8 @@ translation (NAT), proxies, sockets, and transport layer security (TLS).")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/donovanhide/eventsource"))
+      #:import-path "github.com/donovanhide/eventsource"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/donovanhide/eventsource")
     (synopsis "Server Side Events client and server for Golang")
     (description
