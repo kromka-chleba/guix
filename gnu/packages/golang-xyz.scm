@@ -19301,9 +19301,9 @@ https://en.wikipedia.org/wiki/Extended_file_attributes}.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/pmezard/go-difflib/difflib"
-      #:unpack-path "github.com/pmezard/go-difflib/"))
+      #:unpack-path "github.com/pmezard/go-difflib/"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/pmezard/go-difflib")
     (synopsis "Go diff implementation")
     (description
