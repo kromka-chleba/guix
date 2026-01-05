@@ -1361,6 +1361,31 @@ package).")
               license:isc    ; for d3-selection
               ))))
 
+(define-public go-github-com-gordonklaus-ineffassign
+  (package
+    (name "go-github-com-gordonklaus-ineffassign")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gordonklaus/ineffassign")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1y17p7h9962kmpmvas9afp23z0hmn0v3j9imxikvdkq2lkfzbffx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gordonklaus/ineffassign"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/gordonklaus/ineffassign")
+    (synopsis "Go linter for ineffectual assignments")
+    (description
+     "Detect ineffectual assignments in Go code.  An assignment is ineffectual if the
+variable assigned is not thereafter used.")
+    (license license:expat)))
+
 (define-public go-github-com-gostaticanalysis-analysisutil
   (package
     (name "go-github-com-gostaticanalysis-analysisutil")
