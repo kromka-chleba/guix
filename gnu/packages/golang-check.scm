@@ -2406,6 +2406,34 @@ error messages, preserving the order of @code{have} (actual result) before
      "This package provides mocking utilities for unit tests in Go.")
     (license license:expat)))
 
+(define-public go-github-com-nishanths-exhaustive
+  (package
+    (name "go-github-com-nishanths-exhaustive")
+    (version "0.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nishanths/exhaustive")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z59p87kxmljxqw13b7kblr5whwljigj44nmrmj71an2mjs1vciq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nishanths/exhaustive"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/nishanths/exhaustive")
+    (synopsis
+     "Check exhaustiveness of switch statements of enum-like constants in Go")
+    (description
+     "This package defines an analyzer that checks exhaustiveness of switch
+statements of enum-like constants in Go source code.  The analyzer can
+optionally also check exhaustiveness of keys in map literals whose key type is
+enum-like.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-nishanths-predeclared
   (package
     (name "go-github-com-nishanths-predeclared")
