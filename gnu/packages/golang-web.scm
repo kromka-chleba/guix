@@ -4538,8 +4538,8 @@ Files.com from applications written in Go.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/flosch/pongo2/v6"))
+      #:import-path "github.com/flosch/pongo2/v6"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-gopkg-in-check-v1))
     (home-page "https://github.com/flosch/pongo2")
