@@ -219,14 +219,14 @@ Rails.")
 (define-public ruby-debug-inspector
   (package
     (name "ruby-debug-inspector")
-    (version "1.1.0")
+    (version "1.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "debug_inspector" version))
        (sha256
         (base32
-         "01l678ng12rby6660pmwagmyg8nccvjfgs3487xna7ay378a59ga"))))
+         "18k8x9viqlkh7dbmjzh8crbjy8w480arpa766cw1dnn3xcpa1pwv"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -240,7 +240,7 @@ Rails.")
                        "require 'debug_inspector'; RubyVM::DebugInspector."
                        "open{|dc| p dc.backtrace_locations}")))))))
     (native-inputs
-     (list ruby-rake-compiler))
+     (list ruby-rake ruby-rake-compiler ruby-minitest))
     (synopsis "Ruby wrapper for the MRI 2.0 debug_inspector API")
     (description
      "This package provides a Ruby wrapper for the MRI 2.0 debug_inspector
