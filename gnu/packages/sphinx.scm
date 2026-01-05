@@ -1156,7 +1156,6 @@ several other projects.")
            python-linkify-it-py
            python-mdit-py-plugins
            python-pyyaml
-           python-sphinx
            python-typing-extensions))
     (home-page "https://myst-parser.readthedocs.io/en/latest/")
     (synopsis "Sphinx and Docutils extension to parse MyST")
