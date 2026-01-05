@@ -5966,13 +5966,13 @@ you to merge elements inside a hash together recursively.")
 (define-public ruby-delayed-job
   (package
     (name "ruby-delayed-job")
-    (version "4.1.11")
+    (version "4.2.0")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "delayed_job" version))
               (sha256
                (base32
-                "0s2xg72ljg4cwmr05zi67vcyz8zib46gvvf7rmrdhsyq387m2qcq"))))
+                "1vqkfxflcxa7zyj8m3dlgqxc2f5xvrw22k482y1kk14hpdl1zp2i"))))
     (build-system ruby-build-system)
     (arguments
      (list #:phases
@@ -5990,19 +5990,22 @@ you to merge elements inside a hash together recursively.")
                (add-after 'extract-gemspec 'remove-dependency-on-actionmailer
                  (lambda _
                    (substitute* "spec/helper.rb"
-                     (("require 'action_mailer'") ""))
+                     (("require 'action_mailer'") "")
+                     )
                    (substitute* "delayed_job.gemspec"
                      (("\"spec/performable_mailer_spec.rb\".freeze, ") ""))
-                   (delete-file "spec/performable_mailer_spec.rb"))))))
+                   (delete-file "spec/performable_mailer_spec.rb")))
+                            )))
     (native-inputs
      (list ruby-activerecord
+           ruby-concurrent-ruby
+           ruby-net-smtp
            ruby-rspec
            ruby-simplecov
            ruby-simplecov-lcov
-           ruby-zeitwerk
-           ruby-mini-portile-2))
+           ruby-zeitwerk))
     (propagated-inputs
-     (list ruby-activesupport))
+     (list ruby-activesupport ruby-benchmark ruby-logger))
     (synopsis "Asynchronous background tasks execution library")
     (description "Delayed_job (or DJ) encapsulates the common pattern of
 asynchronously executing longer tasks in the background.  It is a direct
