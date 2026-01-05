@@ -478,6 +478,33 @@ to be free of third-party dependencies.")
 to be free of third-party dependencies.")
     (license license:expat)))
 
+(define-public go-github-com-butuzov-ireturn
+  (package
+    (name "go-github-com-butuzov-ireturn")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/butuzov/ireturn")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qwffgcl3s9vi44al1mz1cij0cz4ysip6asmgsy1br7yhvj6q678"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/butuzov/ireturn"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/butuzov/ireturn")
+    (synopsis "Accept interfaces, return concrete types")
+    (description
+     "Go linter to ensure functions and methods accept interfaces and return
+concrete types.")
+    (license license:expat)))
+
 (define-public go-github-com-butuzov-mirror
   (package
     (name "go-github-com-butuzov-mirror")
