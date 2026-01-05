@@ -2712,6 +2712,37 @@ depending on environment variables.  It is very much inspired by git's
 GIT_TRACE mechanism.")
     (license license:expat)))
 
+(define-public go-github-com-ryancurrah-gomodguard
+  (package
+    (name "go-github-com-ryancurrah-gomodguard")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ryancurrah/gomodguard")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1k84gh66r8qldc1486pyihdxv16jhqckbrmm28a4zaidvy6hymsi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ryancurrah/gomodguard"))
+    (propagated-inputs (list go-gopkg-in-yaml-v3
+                             go-golang-org-x-mod
+                             go-github-com-stretchr-testify
+                             go-github-com-phayes-checkstyle
+                             go-github-com-mitchellh-go-homedir
+                             go-github-com-masterminds-semver-v3))
+    (home-page "https://github.com/ryancurrah/gomodguard")
+    (synopsis "Allow and block list linter for direct Go module dependencies")
+    (description
+     "This package provides an allow and block list linter for direct Go module
+dependencies.  This is useful for organizations where they want to standardize
+on the modules used and be able to recommend alternative modules.")
+    (license license:expat)))
+
 (define-public go-github-com-sasha-s-go-deadlock
   (package
     (name "go-github-com-sasha-s-go-deadlock")
