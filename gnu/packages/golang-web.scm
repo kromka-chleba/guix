@@ -4944,8 +4944,8 @@ Signature headers are to be set (but not both).")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/go-jose/go-jose/v3"))
+      #:import-path "github.com/go-jose/go-jose/v3"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-google-go-cmp
            go-github-com-stretchr-testify))
