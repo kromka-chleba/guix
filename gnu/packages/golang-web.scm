@@ -5679,7 +5679,6 @@ APIs.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
       #:import-path "github.com/gogo/protobuf"
       ;; protoc: exec: "protoc-min-version": executable file not found in $PATH
@@ -5695,7 +5694,8 @@ APIs.")
                      "TestRepeatedEmbed"
                      "TestStdTypesGoString"
                      "TestTakesTooLongToDebug")
-               "|"))))
+               "|")
+              "-vet=off")))
     (home-page "https://github.com/gogo/protobuf")
     (synopsis "Protocol Buffers for Go with Gadgets")
     (description "Gogoprotobuf is a fork of golang/protobuf with extra code
