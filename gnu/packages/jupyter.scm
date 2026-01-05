@@ -1209,8 +1209,7 @@ for authoring custom addons.")
     (build-system pyproject-build-system)
     (arguments (list #:tests? #false))  ;there are none
     (propagated-inputs (list python-docutils python-jupyter-server
-                             python-jupyterlab-server python-jupyterlite-core
-                             python-sphinx))
+                             python-jupyterlab-server python-jupyterlite-core))
     (native-inputs (list python-hatchling))
     (home-page "https://github.com/jupyterlite/jupyterlite")
     (synopsis "Sphinx extension for deploying JupyterLite")
