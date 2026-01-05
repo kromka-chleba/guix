@@ -2322,6 +2322,31 @@ output.")
 single file ready for https://coveralls.io/.")
     (license license:asl2.0)))
 
+(define-public go-github-com-nakabonne-nestif
+  (package
+    (name "go-github-com-nakabonne-nestif")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nakabonne/nestif")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mz93v3l1jrk2h49144iiql5iv476llmj2mfs4b66cbmnsywlky1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nakabonne/nestif"))
+    (propagated-inputs (list go-github-com-spf13-pflag
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/nakabonne/nestif")
+    (synopsis "Detect complex nested if statements")
+    (description
+     "This package provides an API to detect complex nested if statements.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-nbio-st
   (package
     (name "go-github-com-nbio-st")
