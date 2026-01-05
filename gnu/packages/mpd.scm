@@ -266,7 +266,7 @@ protocol.")
                                   (string-append completion "/mpc"))))))))
     (inputs (list libmpdclient))
     (native-inputs
-     (list pkg-config python-sphinx))
+     (list pkg-config))
     (synopsis "Music Player Daemon client")
     (description "MPC is a minimalist command line interface to MPD, the music
 player daemon.")
