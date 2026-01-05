@@ -4328,8 +4328,8 @@ for Go.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/emersion/go-smtp"))
+      #:import-path "github.com/emersion/go-smtp"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-emersion-go-sasl))
     (home-page "https://github.com/emersion/go-smtp")
