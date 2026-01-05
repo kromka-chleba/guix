@@ -2098,6 +2098,36 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-kulti-thelper
+  (package
+    (name "go-github-com-kulti-thelper")
+    (version "0.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kulti/thelper")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xhkrpm3y4fvfics8l1rir6xyj8y340k606r7bq6slay5mayxbcj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Package import fails
+      #:test-flags
+      #~(list "-skip" "TestAllChecks")
+      #:skip-build? #t
+      #:import-path "github.com/kulti/thelper"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/kulti/thelper")
+    (synopsis "Linter for Go test helpers")
+    (description
+     "This package detects Golang test helpers without @code{t.Helper()} call.
+Also, it checks the consistency of test helpers and has similar checks for
+benchmarks and TB interface.  Read further to learn more.")
+    (license license:expat)))
+
 (define-public go-github-com-kunwardeep-paralleltest
   (package
     (name "go-github-com-kunwardeep-paralleltest")
