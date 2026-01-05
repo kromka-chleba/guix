@@ -2215,6 +2215,31 @@ integrates with the default test runner, so you can use it with the standard
 output capturing, mocking, and much more.")
     (license license:expat)))
 
+(define-public go-github-com-maratori-testableexamples
+  (package
+    (name "go-github-com-maratori-testableexamples")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/maratori/testableexamples")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vf34s3pbj89963aswjwifwzlpz42pybv8452jjdipyh2d37fjvd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/maratori/testableexamples"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/maratori/testableexamples")
+    (synopsis "Linter to check if examples are testable")
+    (description
+     "This package provides a linter that checks if examples are testable (i.e, that
+they have an expected output).")
+    (license license:expat)))
+
 (define-public go-github-com-maratori-testpackage
   (package
     (name "go-github-com-maratori-testpackage")
