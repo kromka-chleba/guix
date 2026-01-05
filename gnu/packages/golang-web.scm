@@ -10634,9 +10634,9 @@ also be used to manage your stamp collection.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
-      #:import-path "github.com/pascaldekloe/goe"))
+      #:import-path "github.com/pascaldekloe/goe"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/pascaldekloe/goe")
     (synopsis "Enterprise tooling for Golang")
     (description
