@@ -9031,6 +9031,32 @@ it effectively reuses the JSON struct tags as well as the custom JSON methods
 @code{MarshalJSON} and @code{UnmarshalJSON} unlike go-yaml.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-strparse
+  (package
+    (name "go-github-com-go-toolsmith-strparse")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/strparse")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vfr4djsi3k0zckisl3x0yg163gq3fkwkmr6dj8n2mijlvfac9cn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require circular import of go-github-com-go-toolsmith-astequal
+      #:tests? #f
+      #:import-path "github.com/go-toolsmith/strparse"))
+    (home-page "https://github.com/go-toolsmith/strparse")
+    (synopsis "Convenience wrappers around go/parser")
+    (description
+     "This package provides convenience wrappers around `go/parser` for simple
+expression, statement and declaration parsing from string.")
+    (license license:expat)))
+
 (define-public go-github-com-git-lfs-go-netrc
   (package
     (name "go-github-com-git-lfs-go-netrc")
