@@ -1182,6 +1182,29 @@ reflect.DeepEqual but returns a list of differences.  This is helpful
 when comparing complex types like structures and maps.")
     (license license:expat)))
 
+(define-public go-github-com-go-xmlfmt-xmlfmt
+  (package
+    (name "go-github-com-go-xmlfmt-xmlfmt")
+    (version "1.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-xmlfmt/xmlfmt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cglrwmpg0lb7cnyvdz8js52h07rcvka7y9abksk9p5ajxj5rp1s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-xmlfmt/xmlfmt"))
+    (home-page "https://github.com/go-xmlfmt/xmlfmt")
+    (synopsis "Go XML Formatter")
+    (description
+     "The Go XML Formatter, xmlfmt, will format the XML string in a readable way.")
+    (license license:expat)))
+
 (define-public go-github-com-golang-mock
   (package
     (name "go-github-com-golang-mock")
