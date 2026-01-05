@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2018, 2020-2025 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2018, 2020-2026 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2023, 2024 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
@@ -622,6 +622,23 @@ in installation scripts of Debian packages.  The programs included are
                    (license:fsf-free "file://debian/copyright"
                                      "The SMAIL General Public License, see
 debian/copyright for more information.")))))
+
+;; This package removes the translated manpages.
+(define-public debianutils-minimal
+  (hidden-package
+    (package/inherit debianutils
+      (arguments
+       (list
+         #:phases
+         #~(modify-phases %standard-phases
+             (add-before 'bootstrap 'remove-po4a
+               (lambda _
+                 (substitute* "Makefile.am"
+                   (("SUBDIRS = po4a") "")))))))
+      (native-inputs
+       (modify-inputs (package-native-inputs debianutils)
+                      (delete "gettext-minimal")
+                      (delete "po4a"))))))
 
 (define-public apt-cacher-ng
   (package
