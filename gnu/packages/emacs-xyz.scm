@@ -24705,7 +24705,7 @@ formatting, and utility methods for jsonnet files.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/pashky/restclient.el")
+                      (url "https://github.com/emacsorphanage/restclient.el")
                       (commit commit)))
                 (sha256
                  (base32
@@ -24714,7 +24714,7 @@ formatting, and utility methods for jsonnet files.")
       (build-system emacs-build-system)
       (propagated-inputs
        (list emacs-helm emacs-jq-mode))
-      (home-page "https://github.com/pashky/restclient.el")
+      (home-page "https://github.com/emacsorphanage/restclient.el")
       (synopsis "Explore and test HTTP REST webservices")
       (description
        "This tool allows for testing and exploration of HTTP REST Web services
