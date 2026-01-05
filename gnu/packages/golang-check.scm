@@ -2098,6 +2098,39 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-julz-importas
+  (package
+    (name "go-github-com-julz-importas")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/julz/importas")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vfidyl740pl9s1v4sdsrrswnqc8ng0958zajxmdm8z2pwdi1lvs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests fail by GO111MODULE=off
+      #:test-flags
+      #~(list "-skip"
+              (string-join (list "TestAnalyzer/conflicting_aliases"
+                            "TestAnalyzer/external_libs" "TestAnalyzer/regexp"
+                            "TestAnalyzer/regexp_with_non_capturing_groups"
+                            "TestAnalyzer/dot_imports_should_be_handled_correctly")
+                           "|"))
+      #:import-path "github.com/julz/importas"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/julz/importas")
+    (synopsis "Go linter for consistent imports")
+    (description
+     "This package provides a linter to enforce importing certain packages
+consistently.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-karamaru-alpha-copyloopvar
   (package
     (name "go-github-com-karamaru-alpha-copyloopvar")
