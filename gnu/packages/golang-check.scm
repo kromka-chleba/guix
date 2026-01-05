@@ -2406,6 +2406,39 @@ error messages, preserving the order of @code{have} (actual result) before
      "This package provides mocking utilities for unit tests in Go.")
     (license license:expat)))
 
+(define-public go-github-com-nunnatsa-ginkgolinter
+  (package
+    (name "go-github-com-nunnatsa-ginkgolinter")
+    (version "0.21.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nunnatsa/ginkgolinter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cm19x7wb2g3f5xzrm0qj7wr4ikw8xy6n4g9xs6zinkaqn91yay6"))
+       (snippet #~(begin
+                    ;; XXX: This test fails to compile: `undefined: testscript.Main'
+                    (delete-file "tests/cli_test.go")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nunnatsa/ginkgolinter"))
+    (propagated-inputs (list go-github-com-go-toolsmith-astcopy
+                             go-github-com-rogpeppe-go-internal
+                             go-golang-org-x-tools))
+    (home-page "https://github.com/nunnatsa/ginkgolinter")
+    (synopsis "Golang linter for ginkgo and gomega")
+    (description
+     "@url{https://onsi.github.io/ginkgo/,ginkgo} is a popular testing framework and
+@url{https://onsi.github.io/gomega/,gomega} is its assertion package.
+
+This is a golang linter to enforce some standards while using the ginkgo and
+gomega packages.")
+    (license license:expat)))
+
 (define-public go-github-com-onsi-ginkgo
   (package
     (name "go-github-com-onsi-ginkgo")
