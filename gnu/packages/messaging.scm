@@ -449,12 +449,11 @@ TCP sessions from existing clients.")
                 (("'CC', 'cc'")
                  "'CC', 'gcc'")))))))
     (native-inputs
-     (list pkg-config python-setuptools python-sphinx))
+     (list pkg-config python-setuptools))
     (inputs
      (list python-mpd2
            python-pyasn1
            python-pyasn1-modules
-           python-pygments
            python-pyinotify
            python-qrcode
            python-slixmpp
