@@ -19,6 +19,7 @@
 ;;; Copyright © 2025 Rutherther <rutherther@ditigal.xyz>
 ;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2026 bdunahu <bdunahu@operationnull.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2161,6 +2162,64 @@ by planes.")
 from devices on the 433 MHz, 868 MHz, 315 MHz, 345 MHz and 915 MHz ISM bands.")
     (home-page "https://github.com/merbanan/rtl_433")
     (license license:gpl2+)))
+
+(define-public meshtastic-python
+  (package
+    (name "meshtastic-python")
+    (version "2.7.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/meshtastic/python")
+              (commit version)
+              (recursive? #t))) ;for protobufs subproject
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ky5bc1qh4zjx8wp6liysd211j4hbz2d8r80dppffcn7k2w4rz64"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 191 passed, 4 skipped, 75 deselected
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'compile-bytecode 'patch-tests
+            (lambda _
+              (substitute* "meshtastic/tests/test_main.py"
+                (("^def test_tunnel_tunnel_arg\\(" all)
+                 (string-append
+                  "@pytest.mark.skip(\"Requires pytap2, which is not in Guix.\")\n"
+                  all))))))))
+    ;; TODO: missing (optional) inputs: python-print-color, python-dash
+    ;; python-pytap2, python-dash-bootstrap-components
+    (inputs
+     (list python-argcomplete
+           python-bleak
+           python-dotmap
+           python-packaging
+           python-pandas
+           python-pandas-stubs
+           python-protobuf
+           python-pypubsub
+           python-pyqrcode
+           python-pyserial
+           python-pyyaml
+           python-requests
+           python-tabulate
+           python-wcwidth))
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-pytest-cov))
+    (home-page "https://github.com/meshtastic/python")
+    (synopsis "Python CLI for talking to Meshtastic devices")
+    (description "@url{https://meshtastic.org/,Meshtastic} Python is a small
+library which provides an easy API for sending and receiving messages over mesh
+radios.  It also provides access to any of the operations/data available in the
+device user interface or the Android applications.  Events are delivered using a
+publish-subscribe model, and you can subscribe to only the message types you
+are interested in.")
+    (license license:gpl3+)))
 
 (define-public multimon-ng
   (package
