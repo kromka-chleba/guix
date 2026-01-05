@@ -5296,7 +5296,7 @@ conversion to (X)HTML.")
 (define-public ruby-reline
   (package
     (name "ruby-reline")
-    (version "0.3.3")
+    (version "0.6.3")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -5305,8 +5305,12 @@ conversion to (X)HTML.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1papa4f4prjml9qk6yydi4k5a4zgbzmxmbhd8fz9kfg1i34s35cw"))))
+                "03746w6mpvh4zdrq5nwn01g7n8ip1fnwcg22m42nxdmyy0mj1w8i"))))
     (build-system ruby-build-system)
+    (arguments
+     (list
+      ;; Non-utf8 tests require unavailible gems vterm and yamatanooroti
+      #:test-target "test_utf_8"))
     (propagated-inputs (list ruby-io-console))
     (synopsis "GNU Readline or Editline implementation in Ruby")
     (description "Reline is a pure Ruby alternative GNU Readline or Editline
