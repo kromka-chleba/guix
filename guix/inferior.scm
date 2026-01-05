@@ -918,7 +918,9 @@ X.509 host certificate; otherwise, warn about the problem and keep going."
   (define (key commits)
     (bytevector->base32-string
      (sha256
-      (string->utf8 (string-concatenate commits)))))
+      (string->utf8 (string-append
+                     (if authenticate? "" "unauthenticated:")
+                     (string-concatenate commits))))))
 
   (define (cached commits)
     (string-append cache-directory "/" (key commits)))
@@ -990,15 +992,10 @@ X.509 host certificate; otherwise, warn about the problem and keep going."
                   ;; what's going to be built.
                   (built-derivations (list profile))
 
-                  ;; Cache if and only if AUTHENTICATE? is true.
-                  (if authenticate?
-                      (mbegin %store-monad
-                        (symlink* (derivation->output-path profile) (cached commits))
-                        (add-indirect-root* (cached commits))
-                        (return (cached commits)))
-                      (mbegin %store-monad
-                        (add-temp-root* (derivation->output-path profile))
-                        (return (derivation->output-path profile)))))))))))
+                  (mbegin %store-monad
+                    (symlink* (derivation->output-path profile) (cached commits))
+                    (add-indirect-root* (cached commits))
+                    (return (cached commits))))))))))
 
 (define* (inferior-for-channels channels
                                 #:key
