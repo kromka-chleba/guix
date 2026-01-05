@@ -1040,6 +1040,45 @@ ci-info} in Go.")
       (description "go-snaps is a Go implementation of Jest snapshot testing.")
       (license license:expat))))
 
+(define-public go-github-com-go-critic-go-critic
+  (package
+    (name "go-github-com-go-critic-go-critic")
+    (version "0.14.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-critic/go-critic")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kaf19mn62hq9wrfknx5x06hjhagx9vj46bs9pd43ppa31j0ixpq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Fails to import DSL properly
+      #:test-flags
+      #~(list "-skip" "TestIntegration")
+      #:import-path "github.com/go-critic/go-critic"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-quasilyte-regex-syntax
+                             go-github-com-quasilyte-go-ruleguard-dsl
+                             go-github-com-quasilyte-go-ruleguard
+                             go-github-com-google-go-cmp
+                             go-github-com-go-toolsmith-typep
+                             go-github-com-go-toolsmith-strparse
+                             go-github-com-go-toolsmith-pkgload
+                             go-github-com-go-toolsmith-astp
+                             go-github-com-go-toolsmith-astfmt
+                             go-github-com-go-toolsmith-astequal
+                             go-github-com-go-toolsmith-astcopy
+                             go-github-com-go-toolsmith-astcast
+                             go-github-com-cristalhq-acmd))
+    (home-page "https://github.com/go-critic/go-critic")
+    (synopsis "Opinionated Go linter")
+    (description "This package provides an opinionated Go source code linter.")
+    (license license:expat)))
+
 (define-public go-github-com-go-playground-assert-v2
   (package
     (name "go-github-com-go-playground-assert-v2")
