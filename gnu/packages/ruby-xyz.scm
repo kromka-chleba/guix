@@ -11758,7 +11758,7 @@ part of the Prawn PDF generator.")
 (define-public ruby-puma
   (package
     (name "ruby-puma")
-    (version "7.0.3")
+    (version "7.1.0")
     (source
      (origin
        (method git-fetch)               ;for tests
@@ -11768,7 +11768,7 @@ part of the Prawn PDF generator.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "07mnlf40yvr515f12vd091s46ljfhlcmpxykggim2162yjdwd402"))))
+         "01p1gwab2yc24mf4ncb8ri2ck92dl8yy26ab2by9qsifvypafc85"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -11782,24 +11782,21 @@ part of the Prawn PDF generator.")
           (add-after 'unpack 'disable-rubocop
             (lambda _
               (setenv "PUMA_NO_RUBOCOP" "1")))
-          (add-after 'unpack 'use-rack-2
-            (lambda _
-              (setenv "PUMA_CI_RACK" "rack2")
-              (setenv "PUMA_CI_RACK_2" "1")))
-          (add-before 'build 'increase-resource-limits
+          (add-before 'check 'increase-resource-limits
             (lambda _
               ;; The test suite requires a higher number of open files.  Try
-              ;; increasing the soft resource limit of max open files to 2048,
+-             ;; increasing the soft resource limit of max open files to 4096
               ;; or equal to the hard limit, whichever is lower.
+              ;; See: https://github.com/puma/puma/blob/a59afabe782ec8869bb709ca991b32c0b2cc95fd/CONTRIBUTING.md#file-limits
               (call-with-values (lambda () (getrlimit 'nofile))
                 (lambda (soft hard)
-                  (when (and soft (< soft 2048))
+                  (when (and soft (< soft 4096))
                     (if hard
-                        (setrlimit 'nofile (min hard 2048) hard)
-                        (setrlimit 'nofile 2048 #f))
+                        (setrlimit 'nofile (min hard 4096) hard)
+                        (setrlimit 'nofile 4096 #f))
                     (format
                      #t "increased maximum number of open files from ~d to ~d~%"
-                     soft (if hard (min hard 2048) 2048)))))))
+                     soft (if hard (min hard 4096) 4096)))))))
           (add-before 'build 'fix-gemspec
             (lambda _
               (substitute* "puma.gemspec"
@@ -11825,44 +11822,13 @@ part of the Prawn PDF generator.")
                                  (((string-append "def " test ".*") all)
                                   (string-append
                                    all "    skip('fails on guix')\n")) ...)))))
-                ;; The test failures were reported at:
-                ;; https://github.com/puma/puma/issues/3093, but appear to be
-                ;; caused by the Guix build container, perhaps the lack of
-                ;; zombie process reaping (see:
-                ;; https://issues.guix.gnu.org/30948).
-                ;;  All the tests in the 'test_worker_gem_independence.rb'
-                ;;  module fail with "Expected false to be truthy.".
-                (delete-file "test/test_worker_gem_independence.rb")
-                (skip-tests "test/test_integration_ssl_session.rb"
-                            ;; The TLS 1.2 test fails for unknown reasons.
-                            "test_off_tls1_2")
-                (skip-tests "test/test_integration_cluster.rb"
-                            "test_fork_worker_on_refork"
-                            "test_hot_restart_does_not_drop_connections"
-                            "test_culling_strategy_oldest_fork_worker"
-                            "test_usr1_fork_worker")
-                (skip-tests "test/test_integration_pumactl.rb"
-                            "test_refork_cluster")
-                ;; The Openssl certificate has expired, causing these tests to fail.
-                (skip-tests "test/test_puma_server_ssl.rb"
-                            "test_verify_fail_if_client_expired_cert"
-                            "test_verify_client_cert"
-                            "test_server_ssl_with_cert_pem_and_key_pem")
-                (skip-tests "test/test_integration_ssl.rb"
-                            "test_ssl_run_with_curl_client")
-                (skip-tests "test/test_web_concurrency_auto.rb" "\
-test_web_concurrency_with_concurrent_ruby_unavailable")
-                (skip-tests "test/helpers/integration.rb"
-                            "test_puma_started_log_writing"
-                            "test_require_dependencies")
-                ;; Errno::EMFILE: Too many open files - socket(2) for
-                ;; "127.0.0.1" port 40785
-                ;; Timeout waiting for server to log /PID: (\d+)\) booted in
-                ;; [.0-9]+s, phase: 1/
-                (skip-tests "test/test_integration_cluster.rb"
-                            "test_fork_worker_after_refork"
-                            "test_fork_worker_before_refork"
-                            "test_refork_phased_restart_with_fork_worker_and_high_worker_count"))))
+                ;; module fails with "Expected false to be truthy.".
+                ;; tests try changing different module versions, but guix
+                ;; doesn't expose alternate module versions to be tested with
+                (delete-file "test/test_worker_gem_independence.rb"))))
+          (add-before 'check 'increase-test-verbosity
+            (lambda _
+              (setenv "PUMA_TEST_DEBUG" "1")))
           (add-before 'check 'relax-test-case-timeout
             (lambda _
               ;; The default value is 45 s and easily causes timeouts.
@@ -11882,21 +11848,21 @@ test_web_concurrency_with_concurrent_ruby_unavailable")
     (native-inputs
      (list bundler
            curl
+           ruby-concurrent-ruby
            ruby-json
            ruby-localhost
            ruby-m
            ruby-minitest-proveit
            ruby-minitest-retry
            ruby-minitest-stub-const
-           ruby-rack
-           ruby-rackup-1
+           ruby-rack-next
+           ruby-rackup
            ruby-rake-compiler
            ruby-webrick))
     (inputs
-     (list openssl
-           ruby-nio4r))
+     (list openssl))
     (propagated-inputs
-     (list ruby-concurrent-ruby))
+     (list ruby-nio4r))
     (synopsis "Simple, concurrent HTTP server for Ruby/Rack")
     (description
      "Puma is a simple, fast, threaded, and highly concurrent HTTP 1.1 server
