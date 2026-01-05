@@ -305,7 +305,7 @@ an extensible architecture with a swappable backend.")
 (define-public ruby-io-console
   (package
     (name "ruby-io-console")
-    (version "0.6.0")
+    (version "0.8.2")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -314,7 +314,7 @@ an extensible architecture with a swappable backend.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gwxrp29b6awkid1sf85sbh529mnq6hb86m8c2443cm6nc4vr8qb"))))
+                "0ssj15kbwrqi3llp05jkpbkjn9hrg78v94qdlazair9zrz59zmxz"))))
     (build-system ruby-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -323,7 +323,7 @@ an extensible architecture with a swappable backend.")
                             ;; These depend on git and other extraneous
                             ;; dependencies, and are loaded by rake.
                             (delete-file-recursively "rakelib"))))))
-    (native-inputs (list ruby-rake-compiler))
+    (native-inputs (list ruby-rake-compiler ruby-test-unit-ruby-core))
     (synopsis "Console capabilities library for IO instances")
     (description "IO.console adds console capabilities to Ruby IO instances.")
     (home-page "https://github.com/ruby/io-console")
