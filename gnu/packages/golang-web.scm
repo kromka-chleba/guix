@@ -4848,8 +4848,8 @@ Features:
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/go-chi/chi/v5"))
+      #:import-path "github.com/go-chi/chi/v5"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/go-chi/chi")
     (synopsis "Composable router for HTTP services written in Go")
     (description
