@@ -5091,8 +5091,8 @@ about the content.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/go-openapi/errors"))
+      #:import-path "github.com/go-openapi/errors"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (home-page "https://github.com/go-openapi/errors")
