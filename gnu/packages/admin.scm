@@ -9,7 +9,7 @@
 ;;; Copyright © 2016, 2017, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016, 2017, 2023 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016-2025 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2026 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Peter Feigl <peter.feigl@nexoid.at>
 ;;; Copyright © 2016 John J. Foerch <jjfoerch@earthlink.net>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -1942,7 +1942,7 @@ connection alive.")
 
                 ;; dhclient-script provides hooks to users and uses run-parts in
                 ;; order to list users defined hooks.
-                ("debianutils" ,debianutils)
+                ("debianutils" ,debianutils-minimal)
 
                 ;; isc-dhcp bundles a copy of BIND, which has proved vulnerable
                 ;; in the past.  Use a BIND-VERSION of our choosing instead.
