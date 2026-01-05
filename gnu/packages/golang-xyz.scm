@@ -9056,6 +9056,32 @@ it effectively reuses the JSON struct tags as well as the custom JSON methods
 to worry about nil pointer results anymore.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-astcopy
+  (package
+    (name "go-github-com-go-toolsmith-astcopy")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/astcopy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19dir68jfli1c6s5ggvy3i7qz5xykbwsgxdqj59jrq691h2dnm6n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-toolsmith/astcopy"))
+    (propagated-inputs (list go-golang-org-x-exp-typeparams
+                             go-github-com-go-toolsmith-strparse
+                             go-github-com-go-toolsmith-astequal))
+    (home-page "https://github.com/go-toolsmith/astcopy")
+    (synopsis "Go AST deep copy operations")
+    (description
+     "This package implements Go AST reflection-free deep copy operations.")
+    (license license:expat)))
+
 (define-public go-github-com-go-toolsmith-astequal
   (package
     (name "go-github-com-go-toolsmith-astequal")
