@@ -1928,6 +1928,31 @@ Many times certain facilities are not available, or tests must run
 differently.")
     (license license:expat)))
 
+(define-public go-github-com-jingyugao-rowserrcheck
+  (package
+    (name "go-github-com-jingyugao-rowserrcheck")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jingyugao/rowserrcheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p42mpl1h62chnlm2yjqb73d45gncabpj8ihz265fs8v7pqpnham"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jingyugao/rowserrcheck"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/jingyugao/rowserrcheck")
+    (synopsis "Static analysis tool for sql.Rows.Err")
+    (description
+     "This package provides a static analysis tool which checks whether
+@code{sql.Rows.Err} is correctly checked.")
+    (license license:expat)))
+
 (define-public go-github-com-jiu2015-gotestspace
   (package
     (name "go-github-com-jiu2015-gotestspace")
