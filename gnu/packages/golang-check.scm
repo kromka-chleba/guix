@@ -2268,6 +2268,35 @@ testing capabilities.")
 Perl's @url{https://metacpan.org/pod/Test::Deep, Test::Deep perl}.")
     (license license:bsd-2)))
 
+(define-public go-github-com-mgechev-dots
+  (package
+    (name "go-github-com-mgechev-dots")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mgechev/dots")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10ic3x36r136q3qi9x93vslz7mvjpdvnl45n910pamjdrpi10c16"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "TestPackageWildcard|TestResolvePackages")
+      #:import-path "github.com/mgechev/dots"))
+    (home-page "https://github.com/mgechev/dots")
+    (synopsis
+     "Implements the wildcard file matching in Go used by golint and go test")
+    (description
+     "This package provides advanced wildcard file and package matching, similar to
+the behavior used by tools like @code{go test} and @code{golint}.  It allows
+you to easily resolve file paths and packages using patterns with @code{...}
+wildcards, and supports flexible exclusion rules.")
+    (license license:expat)))
+
 (define-public go-github-com-mndrix-tap-go
   (package
     (name "go-github-com-mndrix-tap-go")
