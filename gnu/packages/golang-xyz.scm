@@ -9031,6 +9031,31 @@ it effectively reuses the JSON struct tags as well as the custom JSON methods
 @code{MarshalJSON} and @code{UnmarshalJSON} unlike go-yaml.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-astcast
+  (package
+    (name "go-github-com-go-toolsmith-astcast")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/astcast")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1z6dqgzcn2bavrd588cpmmsc81arffb0g4b9365cf91djc0fvza6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-toolsmith/astcast"))
+    (propagated-inputs (list go-github-com-go-toolsmith-strparse))
+    (home-page "https://github.com/go-toolsmith/astcast")
+    (synopsis "Wrap type assertion operations")
+    (description
+     "This package wraps type assertion operations in such a way that you don't have
+to worry about nil pointer results anymore.")
+    (license license:expat)))
+
 (define-public go-github-com-go-toolsmith-strparse
   (package
     (name "go-github-com-go-toolsmith-strparse")
