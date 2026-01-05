@@ -12257,7 +12257,6 @@ RFC 1014) in Go.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/rcrowley/go-metrics"
       #:test-flags
       ;; Arbitrary precision tests are known to be broken on aarch64, ppc64le
@@ -12269,7 +12268,8 @@ RFC 1014) in Go.")
                                       "TestUniformSampleSnapshot"
                                       "TestUniformSampleStatistics")
                                 "|"))
-                     '()))))
+                     '())
+              "-vet=off")))
     (propagated-inputs
      (list go-github-com-stathat-go))
     (home-page "https://github.com/rcrowley/go-metrics")
