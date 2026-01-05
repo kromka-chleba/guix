@@ -8006,16 +8006,16 @@ alternative to Marshal for Object serialization.")
 (define-public ruby-redcloth
   (package
     (name "ruby-redcloth")
-    (version "4.3.2")
+    (version "4.3.4")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "RedCloth" version))
               (sha256
                (base32
-                "0m9dv7ya9q93r8x1pg2gi15rxlbck8m178j1fz7r5v6wr1avrrqy"))))
+                "15r2h7rfp4bi9i0bfmvgnmvmw0kl3byyac53rcakk4qsv7yv4caj"))))
     (build-system ruby-build-system)
     (arguments
-     `(#:tests? #f ; no tests
+     `(#:tests? #f ; spec and tests require new and updated gems
        #:phases
        (modify-phases %standard-phases
          ;; Redcloth has complicated rake tasks to build various versions for
@@ -8024,14 +8024,11 @@ alternative to Marshal for Object serialization.")
          (replace 'build
           (lambda _
             (invoke "gem" "build" "redcloth.gemspec"))))))
-    (native-inputs
-     `(("bundler" ,bundler)
-       ("ruby-diff-lcs" ,ruby-diff-lcs)
-       ("ruby-rspec-2" ,ruby-rspec-2)))
+    (native-inputs (list bundler ruby-diff-lcs ruby-rake ruby-rake-compiler ruby-rspec))
     (synopsis "Textile markup language parser for Ruby")
     (description
      "RedCloth is a Ruby parser for the Textile markup language.")
-    (home-page "http://redcloth.org")
+    (home-page "https://github.com/jgarber/redcloth")
     (license license:expat)))
 
 (define-public ruby-pg
