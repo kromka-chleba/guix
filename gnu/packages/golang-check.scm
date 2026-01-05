@@ -2297,6 +2297,42 @@ you to easily resolve file paths and packages using patterns with @code{...}
 wildcards, and supports flexible exclusion rules.")
     (license license:expat)))
 
+(define-public go-github-com-mgechev-revive
+  (package
+    (name "go-github-com-mgechev-revive")
+    (version "1.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mgechev/revive")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q0fmhx2v6x9faipli9qm2bxjwh9dvd2kkwi21vbaf0ylzjc9jg3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require dependency cycle
+      #:import-path "github.com/mgechev/revive"))
+    (propagated-inputs (list go-codeberg-org-chavacava-garif
+                             go-golang-org-x-tools
+                             go-golang-org-x-sync
+                             go-golang-org-x-mod
+                             go-github-com-spf13-afero
+                             go-github-com-mgechev-dots
+                             go-github-com-hashicorp-go-version
+                             go-github-com-fatih-structtag
+                             go-github-com-fatih-color
+                             go-github-com-burntsushi-toml))
+    (home-page "https://github.com/mgechev/revive")
+    (synopsis "Drop-in replacement for golint")
+    (description
+     "This package provides a drop-in replacement for @code{golint}.  It provides a
+framework for development of custom rules, and lets you define a strict preset
+for enhancing your development & code review processes.")
+    (license license:expat)))
+
 (define-public go-github-com-mndrix-tap-go
   (package
     (name "go-github-com-mndrix-tap-go")
