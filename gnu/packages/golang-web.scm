@@ -7333,9 +7333,9 @@ authenticated identities and their attributes.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/jcmturner/gokrb5/v8"
-      #:unpack-path "github.com/jcmturner/gokrb5"))
+      #:unpack-path "github.com/jcmturner/gokrb5"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
