@@ -1263,6 +1263,27 @@ configurable levels.")
     (license license:expat)
     (home-page "https://github.com/owenh000/asciidoctor-multipage")))
 
+(define-public ruby-pp
+  (package
+    (name "ruby-pp")
+    (version "0.6.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ruby/pp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h054fqsyzjfjmfl43n9ncz0c29l0vsmxgi8jab95n2cbf9g57bh"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-rake ruby-test-unit ruby-ruby2-keywords))
+    (propagated-inputs (list ruby-prettyprint))
+    (synopsis "Pretty-printer for Ruby objects")
+    (description "Provides a PrettyPrinter for Ruby objects.")
+    (home-page "https://github.com/ruby/pp")
+    (license (list license:bsd-2 license:ruby))))
+
 (define-public ruby-prawn-icon
   (package
     (name "ruby-prawn-icon")
