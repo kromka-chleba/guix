@@ -2637,6 +2637,32 @@ current goroutine's ID.")
 Go application.")
     (license license:bsd-2)))
 
+(define-public go-github-com-polyfloyd-go-errorlint
+  (package
+    (name "go-github-com-polyfloyd-go-errorlint")
+    (version "1.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/polyfloyd/go-errorlint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fd2z7drzcapmaiv6325v4gbb0ksd2zsbw2a5bv4gxq2j20yrk4d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/polyfloyd/go-errorlint"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/polyfloyd/go-errorlint")
+    (synopsis "Error-wrapping linter for Go")
+    (description
+     "This package provides is a source code linter for Go software that can be used
+to find code that will cause problems with the error wrapping scheme
+introduced in Go 1.13.")
+    (license license:expat)))
+
 (define-public go-github-com-poy-onpar
   (package
     (name "go-github-com-poy-onpar")
