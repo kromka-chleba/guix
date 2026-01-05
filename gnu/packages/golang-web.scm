@@ -7466,8 +7466,8 @@ about missing required fields, or when pattern validation does not match.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/jhillyerd/enmime"))
+      #:import-path "github.com/jhillyerd/enmime"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-go-test-deep
            go-github-com-stretchr-testify))
