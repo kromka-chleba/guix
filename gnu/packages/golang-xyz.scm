@@ -9107,6 +9107,30 @@ to worry about nil pointer results anymore.")
      "This package provides AST (deep) equality check operations.")
     (license license:expat)))
 
+(define-public go-github-com-go-toolsmith-astfmt
+  (package
+    (name "go-github-com-go-toolsmith-astfmt")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-toolsmith/astfmt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0abimzwk06v5lg5gswbkidbm6kfzcwd1kicdi93xf7a8rs8yfs52"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-toolsmith/astfmt"))
+    (propagated-inputs (list go-github-com-go-toolsmith-strparse))
+    (home-page "https://github.com/go-toolsmith/astfmt")
+    (synopsis "Formatting for ast.Node")
+    (description
+     "This package implements `ast.Node` formatting with a fmt-like API.")
+    (license license:expat)))
+
 (define-public go-github-com-go-toolsmith-strparse
   (package
     (name "go-github-com-go-toolsmith-strparse")
