@@ -5934,7 +5934,7 @@ latest version can be made available independently from Ruby.")
 (define-public ruby-deep-merge
   (package
     (name "ruby-deep-merge")
-    (version "1.2.1")
+    (version "1.2.2")
     (home-page "https://github.com/danielsdeleo/deep_merge")
     ;; The Rubygem source does not contain the gemspec required for tests.
     (source (origin
@@ -5943,10 +5943,10 @@ latest version can be made available independently from Ruby.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0c9rk23ilhc0n4489y6lda2wzphpzh6ish6fahlbpjhxn82wb931"))))
+                "0z3hsfqzb1nid1qscql6spaav4vyvyzxf6327wg6p4g9jb86419b"))))
     (build-system ruby-build-system)
     (native-inputs
-     (list ruby-minitest))
+     (list ruby-minitest ruby-rake))
     (synopsis "Recursively merge hashes")
     (description
      "Deep Merge is a set of utility functions for @code{Hash}.  It permits
