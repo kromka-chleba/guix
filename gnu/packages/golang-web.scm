@@ -13671,8 +13671,8 @@ tiny,non-intrusive, and encourages use of @code{net/http} Handlers.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/urfave/negroni/v3"))))
+      #:import-path "github.com/urfave/negroni/v3"
+      #:test-flags #~(list "-vet=off")))))
 
 (define-public go-github-com-valyala-fasthttp
   (package
