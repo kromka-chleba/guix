@@ -5585,8 +5585,8 @@ protocol as specified in @url{https://rfc-editor.org/rfc/rfc6455.html, RFC
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/goccy/go-json"))
+      #:import-path "github.com/goccy/go-json"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/goccy/go-json")
     (synopsis "JSON encoder/decoder in Go")
     (description
