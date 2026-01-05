@@ -14817,6 +14817,30 @@ characteristics.")
     (home-page "https://github.com/ruby-syntax-tree/prettier_print")
     (license license:expat)))
 
+(define-public ruby-prettyprint
+  (let ((commit "c2ed83ca24f67a7ca6896d3e14c68e18a9f24f6a")
+        (revision "0"))
+    (package
+      (name "ruby-prettyprint")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ruby/prettyprint")
+               (commit (string-append commit))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1nsq5bljyd3j4zib3yq8cn2jn5n5697sn73lgkfa2sd9xhakgnmi"))))
+      (build-system ruby-build-system)
+      (native-inputs (list ruby-rake ruby-test-unit))
+      (synopsis "Implements a pretty printing algorithm")
+      (description
+       "This class implements a pretty printing algorithm.  It finds
+line breaks and nice indentations for grouped structure.")
+      (home-page "https://github.com/ruby/prettyprint")
+      (license (list license:bsd-2 license:ruby)))))
+
 (define-public ruby-html-proofer
   (package
     (name "ruby-html-proofer")
