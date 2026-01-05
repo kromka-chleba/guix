@@ -13645,8 +13645,8 @@ files to XML generation (for example, @code{gin.Context} or
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/urfave/negroni"))
+      #:import-path "github.com/urfave/negroni"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/urfave/negroni")
     (synopsis "Idiomatic HTTP Middleware for Golang")
     (description
