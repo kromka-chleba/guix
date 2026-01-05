@@ -2098,6 +2098,31 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-kunwardeep-paralleltest
+  (package
+    (name "go-github-com-kunwardeep-paralleltest")
+    (version "1.0.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kunwardeep/paralleltest")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p3g90fj434nvcaa1dziih4x0mwqi7ybv071lkv9yvba14kr064y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kunwardeep/paralleltest"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/kunwardeep/paralleltest")
+    (synopsis "Linter to check t.Parallel is called correctly")
+    (description
+     "This package provides a linter that checks that the t.Parallel gets called for
+the test method and for the range of test cases within the test.")
+    (license license:expat)))
+
 (define-public go-github-com-ldez-gomoddirectives
   (package
     (name "go-github-com-ldez-gomoddirectives")
