@@ -2098,6 +2098,32 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-kkhaike-contextcheck
+  (package
+    (name "go-github-com-kkhaike-contextcheck")
+    (version "1.1.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kkHAIKE/contextcheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d17a1lyavqv90yq48i1llcknb8pp1q60xpxdny6921g8kk9j1rz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kkHAIKE/contextcheck"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-gostaticanalysis-analysisutil))
+    (home-page "https://github.com/kkHAIKE/contextcheck")
+    (synopsis "Golang linter for function context")
+    (description
+     "This package is a static analysis tool used to check whether a function
+uses a non-inherited context that could result in a broken call link.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-kulti-thelper
   (package
     (name "go-github-com-kulti-thelper")
