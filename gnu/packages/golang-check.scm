@@ -478,6 +478,32 @@ to be free of third-party dependencies.")
 to be free of third-party dependencies.")
     (license license:expat)))
 
+(define-public go-github-com-butuzov-mirror
+  (package
+    (name "go-github-com-butuzov-mirror")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/butuzov/mirror")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16dkw4s98vr1zg9l8alzfyvmpbfw995qrwmrpkx6vxykv673bngx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/butuzov/mirror"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/butuzov/mirror")
+    (synopsis "Linter to avoid byte/string conversions")
+    (description
+     "This package provides a linter that suggests use of alternative
+functions/methods in order to gain performance boosts by avoiding unnecessary
+@code{[]byte/string} conversion calls.")
+    (license license:expat)))
+
 (define-public go-github-com-caarlos0-testfs
   (package
     (name "go-github-com-caarlos0-testfs")
