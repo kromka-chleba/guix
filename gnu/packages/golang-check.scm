@@ -2126,6 +2126,30 @@ per-goroutine.")
 rules you define and fixing them according to the defined rules.")
     (license license:asl2.0)))
 
+(define-public go-github-com-leonklingele-grouper
+  (package
+    (name "go-github-com-leonklingele-grouper")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/leonklingele/grouper")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10lhsjvdb9rcfdlyyjnib9nlpzv0gmgivp8bkpnycdi1m3y4y5ia"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/leonklingele/grouper"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/leonklingele/grouper")
+    (synopsis "Go linter to analyze expression groups")
+    (description
+     "This package provides a Go linter to analyze expression groups.")
+    (license license:gpl3)))
+
 (define-public go-github-com-macabu-inamedparam
   (package
     (name "go-github-com-macabu-inamedparam")
