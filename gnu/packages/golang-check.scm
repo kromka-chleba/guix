@@ -966,6 +966,43 @@ tests.")
 tests.")
     (license license:expat)))
 
+(define-public go-github-com-ghostiam-protogetter
+  (package
+    (name "go-github-com-ghostiam-protogetter")
+    (version "0.3.17")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ghostiam/protogetter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kxays9w2bkrk5va8pldhz4vxragkwm7z1fkqys8rz42cw6842fc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;"module lookup disabled by GOPROXY=off"
+      #:import-path "github.com/ghostiam/protogetter"))
+    (propagated-inputs (list go-golang-org-x-tools go-github-com-gobwas-glob))
+    (home-page "https://github.com/ghostiam/protogetter")
+    (synopsis "Protobuf golang linter")
+    (description
+     "This package is a linter developed specifically for Go programmers working
+with nested @code{protobuf} types.  It's designed to aid developers in preventing
+invalid memory address or nil pointer dereference errors arising from direct
+access of nested protobuf fields.
+
+When working with protobuf, it's quite common to have complex structures where
+a message field is contained within another message, which itself can be part
+of another message, and so on. If these fields are accessed directly and some
+field in the call chain will not be initialized, it can result in application
+panic.
+
+Protogetter addresses this issue by suggesting use of getter methods for field
+access.")
+    (license license:expat)))
+
 (define-public go-github-com-gkampitakis-ciinfo
   (package
     (name "go-github-com-gkampitakis-ciinfo")
