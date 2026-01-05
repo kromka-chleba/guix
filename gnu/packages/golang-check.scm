@@ -2098,6 +2098,30 @@ testing/fstest package.")
 per-goroutine.")
     (license license:expat)))
 
+(define-public go-github-com-kisielk-errcheck
+  (package
+    (name "go-github-com-kisielk-errcheck")
+    (version "1.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kisielk/errcheck")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gzqzk6nyl352w5lxr62rbxbx9pkfhasx249w3jr3708pqjah4qf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kisielk/errcheck"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/kisielk/errcheck")
+    (synopsis "Linter for unchecked errors in Go")
+    (description
+     "This package provides a program for checking for unchecked errors in Go code.")
+    (license license:expat)))
+
 (define-public go-github-com-kkhaike-contextcheck
   (package
     (name "go-github-com-kkhaike-contextcheck")
