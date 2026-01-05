@@ -2576,6 +2576,29 @@ testing type to omit repeated @code{t}.")
 current goroutine's ID.")
       (license license:asl2.0))))
 
+(define-public go-github-com-phayes-checkstyle
+  (package
+    (name "go-github-com-phayes-checkstyle")
+    (version "0.0.0-20170904204023-bfd46e6a821d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/phayes/checkstyle")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bdfvgvm8gnrxdndnbvwcfjijxyn4c9xcmd11w5bbaz05c40dshx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/phayes/checkstyle"))
+    (home-page "https://github.com/phayes/checkstyle")
+    (synopsis "Read and write checksyle_report.xml files with golang")
+    (description
+     "This package allows the parsing and generation of checkstyle XML files in Go.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-pkg-profile
   (package
     (name "go-github-com-pkg-profile")
