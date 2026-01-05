@@ -7942,9 +7942,9 @@ protocol in Go language.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
-      #:import-path "github.com/labbsr0x/goh"))
+      #:import-path "github.com/labbsr0x/goh"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-go-cmd-cmd
            go-github-com-go-errors-errors
