@@ -2714,6 +2714,31 @@ GIT_TRACE mechanism.")
      "This package provides tools for detecting deadlocks at run-time in Go.")
     (license license:asl2.0)))
 
+(define-public go-github-com-sashamelentyev-usestdlibvars
+  (package
+    (name "go-github-com-sashamelentyev-usestdlibvars")
+    (version "1.29.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sashamelentyev/usestdlibvars")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0aw3762zfx0q9a8jj2jqh0qjlcj1ydhq37smzhv8kms4brzal5xp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sashamelentyev/usestdlibvars"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/sashamelentyev/usestdlibvars")
+    (synopsis "Linter for opportunities to use Go stdlib")
+    (description
+     "This package provides a linter that detect the possibility to use
+variables/constants from the Go standard library.")
+    (license license:expat)))
+
 (define-public go-github-com-securego-gosec-v2
   (package
     (name "go-github-com-securego-gosec")
