@@ -6006,8 +6006,8 @@ iptables successor).  It does not rely on libnftnl wrappers.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/google/safehtml"))
+      #:import-path "github.com/google/safehtml"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-golang-org-x-text))
     (home-page "https://github.com/google/safehtml")
