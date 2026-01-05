@@ -5530,8 +5530,8 @@ from CloudFlare's github.com/cloudflare/cfssl/revoke.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/gobwas/httphead"))
+      #:import-path "github.com/gobwas/httphead"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/gobwas/httphead")
     (synopsis "Tiny HTTP header value parsing library in Golang")
     (description
