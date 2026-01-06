@@ -4522,6 +4522,43 @@ profile data.")
     (description "This package provides info for go standard packages.")
     (license license:expat)))
 
+(define-public go-github-com-quasilyte-go-ruleguard-dsl
+  (package
+    (name "go-github-com-quasilyte-go-ruleguard-dsl")
+    (version "0.3.23")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quasilyte/go-ruleguard")
+             (commit (go-version->git-ref version
+                                          #:subdir "dsl"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a7wbc8ihy59g3zly9x1hnsawbzn1f8avyfm7njx17idmy9waz64"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet #~(begin
+                    (define (delete-all-but directory . preserve)
+                      (with-directory-excursion directory
+                        (let* ((pred (negate (cut member <>
+                                                  (cons* "." ".." preserve))))
+                               (items (scandir "." pred)))
+                          (for-each (cut delete-file-recursively <>) items))))
+                    (delete-all-but "." "dsl")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/quasilyte/go-ruleguard/dsl"
+      #:unpack-path "github.com/quasilyte/go-ruleguard"))
+    (home-page "https://github.com/quasilyte/go-ruleguard")
+    (synopsis "Define and run pattern-based custom linting rules")
+    (description
+     "This package provides an analysis-based Go linter that runs dynamically loaded
+rules.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-rubyist-tracerx
   (package
     (name "go-github-com-rubyist-tracerx")
