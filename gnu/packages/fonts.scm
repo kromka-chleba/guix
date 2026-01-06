@@ -70,6 +70,7 @@
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;; Copyright © 2025 Alexandre Hannud Abdo <abdo@member.fsf.org>
+;;; Copyright © 2026 zenmaya <maya@zenmaya.xyz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -412,6 +413,24 @@ variants.")
     (description "A monospace font, designed for code listings and the like,
 in print.  With attention to detail for high resolution rendering.")
     (license license:silofl1.1)))
+
+(define-public font-fairfax-hd
+  (package
+   (name "font-fairfax-hd")
+   (version "1")
+   (source
+    (origin
+     (method url-fetch)
+     (uri "https://www.kreativekorp.com/swdownload/fonts/core/fairfaxhd.zip")
+     (sha256
+      (base32 "0k1adxgmz5vx1hzbah842cqbmzfjwvwwkb4wc6z7qd62s9xgzsw5"))))
+   (build-system font-build-system)
+   (synopsis "Monospace font")
+   (description "This package provides the Fairfax HD font family of fonts, halfwidth
+scalable monospace font with support for many scripts, unicode blocks,
+pseudographics and even fictional scripts.")
+   (license license:silofl1.1)
+   (home-page "https://www.kreativekorp.com/software/fonts/fairfaxhd/")))
 
 (define-public font-intel-one-mono
   (package
