@@ -297,6 +297,19 @@
             pagekite-configuration-kites
             pagekite-configuration-extra-file
 
+            tailscale-configuration
+            tailscale-configuration?
+            tailscale-configuration-tailscaled
+            tailscale-configuration-port
+            tailscale-configuration-socket
+            tailscale-configuration-log-file
+            tailscale-configuration-state-directory
+            tailscale-configuration-verbosity
+            tailscale-configuration-upload-logs?
+            tailscale-configuration-extra-options
+            tailscale-shepherd-service
+            tailscale-service-type
+
             yggdrasil-service-type
             yggdrasil-configuration
             yggdrasil-configuration?
@@ -2773,6 +2786,75 @@ connections from the loopback interface are allowed."))
     "Run @url{https://pagekite.net/,PageKite}, a tunneling solution to make
 local servers publicly accessible on the web, even behind NATs and firewalls.")))
 
+
+;;;
+;;; Tailscale
+;;;
+
+(define-configuration tailscale-configuration
+  (tailscaled
+   (file-like tailscaled)
+   "The tailscale daemon package to use.")
+  (port
+   (integer 41641)
+   "The port to run tailscaled on.")
+  (socket
+   (string "/var/run/tailscale/tailscaled.sock")
+   "Path to the service's UNIX socket.")
+  (log-file
+   (string "/var/log/tailscaled.log")
+   "Path to tailscale's log file.")
+  (state-directory
+   (string "/var/lib/tailscale")
+   "Path to directory for storage of config state, TLS certs, temporary incoming
+Taildrop files, etc.")
+  (verbosity
+   (integer 0)
+   "Log verbosity level.")
+  (upload-logs?
+   (boolean #f)
+   "Whether or not to upload logs to Tailscale. When set to #f, technical support
+is also disabled.")
+  (extra-options
+   (list-of-strings '())
+   "List of extra options.")
+  (no-serialization))
+
+(define tailscale-shepherd-service
+  (match-record-lambda <tailscale-configuration>
+      (tailscaled log-file socket state-directory
+                 upload-logs? verbosity extra-options)
+    (list (shepherd-service
+            (documentation "Run the tailscale daemon")
+            (provision '(tailscaled))
+            (requirement '(user-processes))
+            (start
+             #~(make-forkexec-constructor
+                (list
+                 #$(file-append tailscaled "/bin/tailscaled")
+                 "-port" #$port
+                 "-socket" #$socket
+                 "-statedir" #$state-directory
+                 "-verbose" #$(number->string verbosity)
+                 #$@(if upload-logs?
+                        '()
+                        '("-no-logs-no-support"))
+                 #$@extra-options)
+                #:log-file #$log-file))
+            (stop #~(make-kill-destructor))))))
+
+(define tailscale-service-type
+  (service-type
+    (name 'tailscaled)
+    (extensions
+     (list (service-extension shepherd-root-service-type
+                              tailscale-shepherd-service)
+           (service-extension profile-service-type
+                              (compose list tailscale-configuration-tailscaled))
+           (service-extension log-rotation-service-type
+                              (compose list tailscale-configuration-log-file))))
+    (default-value (tailscale-configuration))
+    (description "Run the tailscale daemon.")))
 
 ;;;
 ;;; Yggdrasil
