@@ -2816,8 +2816,8 @@ customization
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/warpfork/go-testmark"))
+      #:import-path "github.com/warpfork/go-testmark"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-warpfork-go-fsx))
     (home-page "https://github.com/warpfork/go-testmark")
