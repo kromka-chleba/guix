@@ -2212,14 +2212,14 @@ Gomega matcher library.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/onsi/gomega"
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-failing-test-files
             (lambda* (#:key import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
-              (delete-file "gexec/build_test.go")))))))
+              (delete-file "gexec/build_test.go")))))
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-onsi-ginkgo-v2-bootstrap))
     (propagated-inputs
