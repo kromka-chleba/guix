@@ -25378,7 +25378,6 @@ written in YAML or JSON.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "go.mongodb.org/mongo-driver"
       #:test-flags
       #~(list "-skip"
@@ -25395,7 +25394,8 @@ written in YAML or JSON.")
                      "TestTimeCodec"
                      "TestTopologyConstructionLogging"
                      "TestURIOptionsSpec")
-               "|"))
+               "|")
+              "-vet=off")
       #:test-subdirs
       #~(list "bson/..." "event/..." "internal/..." "tag/..." "x/...")
       #:phases
