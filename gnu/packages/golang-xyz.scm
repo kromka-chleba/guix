@@ -12335,9 +12335,9 @@ Golang.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
-      #:import-path "github.com/jedib0t/go-pretty/v6"))
+      #:import-path "github.com/jedib0t/go-pretty/v6"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-pkg-profile ; for the CLI
            go-github-com-stretchr-testify))
