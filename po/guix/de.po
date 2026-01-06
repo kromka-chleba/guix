@@ -10678,12 +10678,12 @@ msgstr ""
 #, scheme-format
 msgid ""
 "\n"
-"  -P, --link-profile     link environment profile to ~/.guix-profile within\n"
+"  -P, --link-profile     link environment profile to ~/.config/guix/profile within\n"
 "                         an isolated container"
 msgstr ""
 "\n"
 "  -P, --link-profile     in einem isoliertem Container das Umgebungsprofil als\n"
-"                           ~/.guix-profile verknüpfen"
+"                           ~/.config/guix/profile verknüpfen"
 
 #: guix/scripts/environment.scm:116
 msgid ""

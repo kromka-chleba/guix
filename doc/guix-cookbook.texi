@@ -3304,7 +3304,7 @@ Then run the following to create directories needed for the chroot:
 
 @example
 cd /mnt && \
-mkdir -p bin etc gnu/store root/.guix-profile/ root/.config/guix/current \
+mkdir -p bin etc gnu/store root/.config/guix/profile/ root/.config/guix/current \
   var/guix proc sys dev
 @end example
 
@@ -3323,8 +3323,8 @@ mount --rbind /dev /mnt/dev
 mount --rbind /var/guix/ var/guix/
 mount --rbind /gnu/store gnu/store/
 mount --rbind /root/.config/ root/.config/
-mount --rbind /root/.guix-profile/bin/ bin
-mount --rbind /root/.guix-profile root/.guix-profile/
+mount --rbind /root/.config/guix/profile/bin/ bin
+mount --rbind /root/.config/guix/profile root/.config/guix/profile/
 @end example
 
 Chroot in /mnt and install the system:
@@ -4653,7 +4653,7 @@ done
 @end example
 
 Note to Guix System users: the above reflects how your default profile
-@file{~/.guix-profile} is activated from @file{/etc/profile}, that latter being loaded by
+@file{~/.config/guix/profile} is activated from @file{/etc/profile}, that latter being loaded by
 @file{~/.bashrc} by default.
 
 You can obviously choose to only enable a subset of them:
@@ -4759,7 +4759,7 @@ The same is true for @samp{INFOPATH} (you can install @samp{info-reader}),
 @node Default profile
 @subsection Default profile
 
-What about the default profile that Guix keeps in @file{~/.guix-profile}?
+What about the default profile that Guix keeps in @file{~/.config/guix/profile}?
 
 You can assign it the role you want.  Typically you would install the manifest
 of the packages you want to use all the time.
@@ -6015,7 +6015,7 @@ package}; thus, to allow users to install packages with @code{guix
 package}, this must be read-write.
 
 Users can create as many profiles as they like in addition to the
-default profile, @file{~/.guix-profile}.  For instance, @code{guix
+default profile, @file{~/.config/guix/profile}.  For instance, @code{guix
 package -p ~/dev/python-dev -i python} installs Python in a profile
 reachable from the @code{~/dev/python-dev} symlink.  To make sure that
 this profile is protected from garbage collection---i.e., that Python
@@ -6097,7 +6097,7 @@ export LC_ALL
 @end example
 
 For convenience, @code{guix package} automatically generates
-@file{~/.guix-profile/etc/profile}, which defines all the environment
+@file{~/.config/guix/profile/etc/profile}, which defines all the environment
 variables necessary to use the packages---@code{PATH},
 @code{C_INCLUDE_PATH}, @code{PYTHONPATH}, etc.  Likewise, @command{guix
 pull} does that under @file{~/.config/guix/current}.  Thus it's a good
@@ -6130,8 +6130,8 @@ guix install hello
 
 The daemon on the head node should download pre-built binaries on your
 behalf and unpack them in @file{/gnu/store}, and @command{guix install}
-should create @file{~/.guix-profile} containing the
-@file{~/.guix-profile/bin/hello} command.
+should create @file{~/.config/guix/profile} containing the
+@file{~/.config/guix/profile/bin/hello} command.
 
 @node Cluster Network Access
 @section Network Access

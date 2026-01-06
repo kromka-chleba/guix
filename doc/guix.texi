@@ -2058,7 +2058,7 @@ your Guix profile, you need to extend the font path of the X server:
 @c Note: 'xset' does not accept symlinks so the trick below arranges to
 @c get at the real directory.  See <https://bugs.gnu.org/30655>.
 @example
-xset +fp $(dirname $(readlink -f ~/.guix-profile/share/fonts/truetype/fonts.dir))
+xset +fp $(dirname $(readlink -f ~/.config/guix/profile/share/fonts/truetype/fonts.dir))
 @end example
 
 @cindex @code{xlsfonts}
@@ -3189,7 +3189,7 @@ use.  These profiles are stored within each user's home directory, at
 @code{$HOME/.config/guix/profile}.
 
 For example, @code{alice} installs GCC 4.7.2.  As a result,
-@file{/home/alice/.guix-profile/bin/gcc} points to
+@file{/home/alice/.config/guix/profile/bin/gcc} points to
 @file{/gnu/store/@dots{}-gcc-4.7.2/bin/gcc}.  Now, on the same machine,
 @code{bob} had already installed GCC 4.8.0.  The profile of @code{bob}
 simply continues to point to
@@ -3626,7 +3626,7 @@ List all the user's profiles:
 
 @example
 $ guix package --list-profiles
-/home/charlie/.guix-profile
+/home/charlie/.config/guix/profile
 /home/charlie/code/my-profile
 /home/charlie/code/devel-profile
 /home/charlie/tmp/test
@@ -5321,7 +5321,7 @@ Similarly, a complete user profile may be transferred from one machine
 to another like this:
 
 @example
-guix archive --export -r $(readlink -f ~/.guix-profile) | \
+guix archive --export -r $(readlink -f ~/.config/guix/profile) | \
   ssh the-machine guix archive --import
 @end example
 
@@ -6544,17 +6544,17 @@ device.
 
 @item --link-profile
 @itemx -P
-For containers, link the environment profile to @file{~/.guix-profile}
+For containers, link the environment profile to @file{~/.config/guix/profile}
 within the container and set @code{GUIX_ENVIRONMENT} to that.
-This is equivalent to making @file{~/.guix-profile} a symlink to the
+This is equivalent to making @file{~/.config/guix/profile} a symlink to the
 actual profile within the container.
 Linking will fail and abort the environment if the directory already
 exists, which will certainly be the case if @command{guix shell}
 was invoked in the user's home directory.
 
-Certain packages are configured to look in @file{~/.guix-profile} for
+Certain packages are configured to look in @file{~/.config/guix/profile} for
 configuration files and data;@footnote{For example, the
-@code{fontconfig} package inspects @file{~/.guix-profile/share/fonts}
+@code{fontconfig} package inspects @file{~/.config/guix/profile/share/fonts}
 for additional fonts.}  @option{--link-profile} allows these programs to
 behave as expected within the environment.
 
@@ -7045,17 +7045,17 @@ device.
 
 @item --link-profile
 @itemx -P
-For containers, link the environment profile to @file{~/.guix-profile}
+For containers, link the environment profile to @file{~/.config/guix/profile}
 within the container and set @code{GUIX_ENVIRONMENT} to that.
-This is equivalent to making @file{~/.guix-profile} a symlink to the
+This is equivalent to making @file{~/.config/guix/profile} a symlink to the
 actual profile within the container.
 Linking will fail and abort the environment if the directory already
 exists, which will certainly be the case if @command{guix environment}
 was invoked in the user's home directory.
 
-Certain packages are configured to look in @file{~/.guix-profile} for
+Certain packages are configured to look in @file{~/.config/guix/profile} for
 configuration files and data;@footnote{For example, the
-@code{fontconfig} package inspects @file{~/.guix-profile/share/fonts}
+@code{fontconfig} package inspects @file{~/.config/guix/profile/share/fonts}
 for additional fonts.}  @option{--link-profile} allows these programs to
 behave as expected within the environment.
 
@@ -7645,7 +7645,7 @@ collector root.
 Include the ``local state directory'', @file{/var/guix}, in the resulting
 pack, and notably the @file{/var/guix/profiles/per-user/root/@var{name}}
 profile---by default @var{name} is @code{guix-profile}, which corresponds to
-@file{~root/.guix-profile}.
+@file{~root/.config/guix/profile}.
 
 @file{/var/guix} contains the store database (@pxref{The Store}) as well
 as garbage-collector roots (@pxref{Invoking guix gc}).  Providing it in
@@ -9082,7 +9082,7 @@ package --export-manifest}}):
 
 @example
 # Write to 'manifest.scm' a manifest corresponding to the
-# default profile, ~/.guix-profile.
+# default profile, ~/.config/guix/profile.
 guix package --export-manifest > manifest.scm
 @end example
 
@@ -11495,7 +11495,7 @@ that you need to get right or things ``won't be found''.
 You may have noticed from the command line that Guix ``knows'' which
 search path environment variables should be defined, and how.  When you
 install packages in your default profile, the file
-@file{~/.guix-profile/etc/profile} is created, which you can ``source''
+@file{~/.config/guix/profile/etc/profile} is created, which you can ``source''
 from the shell to set those variables.  Likewise, if you ask
 @command{guix shell} to create an environment containing Python and
 NumPy, a Python library, and if you pass it the @option{--search-paths}
@@ -16532,7 +16532,7 @@ example, the command below produces the reference graph of your profile
 (which can be big!):
 
 @example
-guix graph -t references $(readlink -f ~/.guix-profile)
+guix graph -t references $(readlink -f ~/.config/guix/profile)
 @end example
 
 @item referrers
@@ -16917,7 +16917,7 @@ instructions:
 If your host distro uses the systemd init system:
 
 @example
-# ln -s ~root/.guix-profile/lib/systemd/system/guix-publish.service \
+# ln -s ~root/.config/guix/profile/lib/systemd/system/guix-publish.service \
         /etc/systemd/system/
 # systemctl start guix-publish && systemctl enable guix-publish
 @end example
@@ -16926,7 +16926,7 @@ If your host distro uses the systemd init system:
 If your host distro uses the Upstart init system:
 
 @example
-# ln -s ~root/.guix-profile/lib/upstart/system/guix-publish.conf /etc/init/
+# ln -s ~root/.config/guix/profile/lib/upstart/system/guix-publish.conf /etc/init/
 # start guix-publish
 @end example
 
@@ -17140,7 +17140,7 @@ their dependencies over to @var{host}, logged in as @var{user}:
 
 @example
 guix copy --to=@var{user}@@@var{host} \
-          coreutils $(readlink -f ~/.guix-profile)
+          coreutils $(readlink -f ~/.config/guix/profile)
 @end example
 
 If some of the items to be copied are already present on @var{host},
@@ -25015,7 +25015,7 @@ If true, this must be the name of the executable to start as the default
 session---e.g., @code{(file-append windowmaker "/bin/windowmaker")}.
 
 If false, a session described by one of the available @file{.desktop}
-files in @code{/run/current-system/profile} and @code{~/.guix-profile}
+files in @code{/run/current-system/profile} and @code{~/.config/guix/profile}
 will be used.
 
 @quotation Note
@@ -27745,7 +27745,7 @@ it with the @file{~/.asoundrc} file:
 @example
 # In guix, we have to specify the absolute path for plugins.
 pcm_type.jack @{
-  lib "/home/alice/.guix-profile/lib/alsa-lib/libasound_module_pcm_jack.so"
+  lib "/home/alice/.config/guix/profile/lib/alsa-lib/libasound_module_pcm_jack.so"
 @}
 
 # Routing ALSA to jack:
@@ -50090,7 +50090,7 @@ System you are attempting to repair:
 
 @example sh
 source /var/guix/profiles/system/profile/etc/profile
-source /home/@var{user}/.guix-profile/etc/profile
+source /home/@var{user}/.config/guix/profile/etc/profile
 @end example
 
 To ensure you are working with the Guix revision you normally would as
@@ -50193,7 +50193,7 @@ guix home import ~/src/guix-config
 The @command{guix home import} command reads some of the ``dot files''
 such as @file{~/.bashrc} found in your home directory and copies them to
 the given directory, @file{~/src/guix-config} in this case; it also
-reads the contents of your profile, @file{~/.guix-profile}, and, based
+reads the contents of your profile, @file{~/.config/guix/profile}, and, based
 on that, it populates @file{~/src/guix-config/home-configuration.scm}
 with a Home configuration that resembles your current configuration.
 
@@ -54967,11 +54967,11 @@ from the @file{~/.gdbinit} file, @pxref{Startup,,, gdb, Debugging with
 GDB}):
 
 @example
-(gdb) set debug-file-directory ~/.guix-profile/lib/debug
+(gdb) set debug-file-directory ~/.config/guix/profile/lib/debug
 @end example
 
 From there on, GDB will pick up debugging information from the
-@file{.debug} files under @file{~/.guix-profile/lib/debug}.
+@file{.debug} files under @file{~/.config/guix/profile/lib/debug}.
 
 Below is an alternative GDB script which is useful when working with
 other profiles.  It takes advantage of the optional Guile integration in
@@ -54983,7 +54983,7 @@ guile
 (use-modules (gdb))
 (execute (string-append "set debug-file-directory "
                         (or (getenv "GDB_DEBUG_FILE_DIRECTORY")
-                            "~/.guix-profile/lib/debug")))
+                            "~/.config/guix/profile/lib/debug")))
 end
 @end example
 
@@ -55282,7 +55282,7 @@ To verify which Bash your whole profile refers to, you can run
 (@pxref{Invoking guix gc}):
 
 @example
-guix gc -R $(readlink -f ~/.guix-profile) | grep bash
+guix gc -R $(readlink -f ~/.config/guix/profile) | grep bash
 @end example
 
 @noindent

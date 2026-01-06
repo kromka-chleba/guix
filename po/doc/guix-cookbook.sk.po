@@ -4312,8 +4312,8 @@ msgstr ""
 "  unset profile\n"
 "done\n"
 
-msgid "Note to Guix System users: the above reflects how your default profile @file{~/.guix-profile} is activated from @file{/etc/profile}, that latter being loaded by @file{~/.bashrc} by default."
-msgstr "Poznámka pre používateľov systému Guix: horeuvedené odráža to, ako sa váš predvolený profil @file{~/.guix-profile} nastavuje z @file{/etc/profile}, ktorý je predvolene načítaný vrámci @file{~/.bashrc}."
+msgid "Note to Guix System users: the above reflects how your default profile @file{~/.config/guix/profile} is activated from @file{/etc/profile}, that latter being loaded by @file{~/.bashrc} by default."
+msgstr "Poznámka pre používateľov systému Guix: horeuvedené odráža to, ako sa váš predvolený profil @file{~/.config/guix/profile} nastavuje z @file{/etc/profile}, ktorý je predvolene načítaný vrámci @file{~/.bashrc}."
 
 msgid "You can obviously choose to only enable a subset of them:"
 msgstr "Môžete sa samozrejme rozhodnúť, že z nich načítate len niektoré:"
@@ -4419,8 +4419,8 @@ msgstr "Alebo pridajte @samp{man-db} do balíkospisu profilu."
 msgid "The same is true for @samp{INFOPATH} (you can install @samp{info-reader}), @samp{PKG_CONFIG_PATH} (install @samp{pkg-config}), etc."
 msgstr "To isté platí aj pre @samp{INFOPATH} (môžete nainštalovať @samp{info-reader}), @samp{PKG_CONFIG_PATH} (nainštalujte @samp{pkg-config}), atď."
 
-msgid "What about the default profile that Guix keeps in @file{~/.guix-profile}?"
-msgstr "A čo s predvoleným profilom, ktorý Guix uchováva v @file{~/.guix-profile}?"
+msgid "What about the default profile that Guix keeps in @file{~/.config/guix/profile}?"
+msgstr "A čo s predvoleným profilom, ktorý Guix uchováva v @file{~/.config/guix/profile}?"
 
 msgid "You can assign it the role you want.  Typically you would install the manifest of the packages you want to use all the time."
 msgstr "Môžete mu prideliť ľubovoľnú úlohu.  Mohli by ste doň nainštalovať balíkospis balíkov, ktoré chcete mať stále poruke."
@@ -4815,8 +4815,8 @@ msgstr ""
 msgid "The @file{/gnu/store} directory can be exported read-only since only @command{guix-daemon} on the master node will ever modify it.  @file{/var/guix} contains @emph{user profiles} as managed by @code{guix package}; thus, to allow users to install packages with @code{guix package}, this must be read-write."
 msgstr "Priečinok @file{/gnu/store} môže byť sprístupnený len na čítanie, keďže @command{guix-daemon} na hlavnom uzle ho nikdy nebude upravovať.  @file{/var/guix} obsahuje @emph{profily používateľov}, ktoré spravuje @code{guix package}. Aby mohli používatelia inštalovať s @code{guix package}, toto umiestnenie musí zostať prístupné aj na čítanie, aj na zápis."
 
-msgid "Users can create as many profiles as they like in addition to the default profile, @file{~/.guix-profile}.  For instance, @code{guix package -p ~/dev/python-dev -i python} installs Python in a profile reachable from the @code{~/dev/python-dev} symlink.  To make sure that this profile is protected from garbage collection---i.e., that Python will not be removed from @file{/gnu/store} while this profile exists---, @emph{home directories should be mounted on the head node} as well so that @code{guix-daemon} knows about these non-standard profiles and avoids collecting software they refer to."
-msgstr "Používatelia si môžu okrem predvoleného profilu @file{~/.guix-profile} vytvoriť toľko profilov, koľko len chcú.  Napríklad, @code{guix package -p ~/dev/python-dev -i python} nainštaluje Python do profilu prístupného cez symbolický odkaz @code{~/dev/python-dev}.  Aby sme sa uistili, že sa zberač odpadkov tomuto profilu vyhne---t.j., že Python nebude z @file{/gnu/store} odstránený pokiaľ sa profil používa---@emph{domovské priečinky by tiež mali byť pripojené k rovnakému uzlu}. @code{guix-daemon} tak bude vedieť o týchto neobvyklých profiloch a zabráni vyčisteniu programového vybavenia, na ktoré odkazujú."
+msgid "Users can create as many profiles as they like in addition to the default profile, @file{~/.config/guix/profile}.  For instance, @code{guix package -p ~/dev/python-dev -i python} installs Python in a profile reachable from the @code{~/dev/python-dev} symlink.  To make sure that this profile is protected from garbage collection---i.e., that Python will not be removed from @file{/gnu/store} while this profile exists---, @emph{home directories should be mounted on the head node} as well so that @code{guix-daemon} knows about these non-standard profiles and avoids collecting software they refer to."
+msgstr "Používatelia si môžu okrem predvoleného profilu @file{~/.config/guix/profile} vytvoriť toľko profilov, koľko len chcú.  Napríklad, @code{guix package -p ~/dev/python-dev -i python} nainštaluje Python do profilu prístupného cez symbolický odkaz @code{~/dev/python-dev}.  Aby sme sa uistili, že sa zberač odpadkov tomuto profilu vyhne---t.j., že Python nebude z @file{/gnu/store} odstránený pokiaľ sa profil používa---@emph{domovské priečinky by tiež mali byť pripojené k rovnakému uzlu}. @code{guix-daemon} tak bude vedieť o týchto neobvyklých profiloch a zabráni vyčisteniu programového vybavenia, na ktoré odkazujú."
 
 msgid "It may be a good idea to periodically remove unused bits from @file{/gnu/store} by running @command{guix gc} (@pxref{Invoking guix gc,,, guix, GNU Guix Reference Manual}).  This can be done by adding a crontab entry on the head node:"
 msgstr "Môže byť užitočné pravidelne odstraňovať nepoužívané súbory z @file{/gnu/store} pomocou @command{guix gc} (@pxref{Invoking guix gc,,, guix, GNU Guix Reference Manual}). Nastavíte to pridaním vstupu contrab na hlavný uzol:"
@@ -4914,8 +4914,8 @@ msgstr "Prihláste sa na jeden z výpočtových uzlov a overte či všetko pracu
 msgid "guix install hello\n"
 msgstr "guix install hello\n"
 
-msgid "The daemon on the head node should download pre-built binaries on your behalf and unpack them in @file{/gnu/store}, and @command{guix install} should create @file{~/.guix-profile} containing the @file{~/.guix-profile/bin/hello} command."
-msgstr "Démon na hlavnom uzle by mal vašim menom stiahnuť pred-zostavené binárne súbory a rozbaliť ich v @file{/gnu/store}. @command{guix install} by mal vytvoriť @file{~/.guix-profile} obsahujúci príkaz @file{~/.guix-profile/bin/hello}."
+msgid "The daemon on the head node should download pre-built binaries on your behalf and unpack them in @file{/gnu/store}, and @command{guix install} should create @file{~/.config/guix/profile} containing the @file{~/.config/guix/profile/bin/hello} command."
+msgstr "Démon na hlavnom uzle by mal vašim menom stiahnuť pred-zostavené binárne súbory a rozbaliť ich v @file{/gnu/store}. @command{guix install} by mal vytvoriť @file{~/.config/guix/profile} obsahujúci príkaz @file{~/.config/guix/profile/bin/hello}."
 
 msgid "Network Access"
 msgstr "Prístup do siete"

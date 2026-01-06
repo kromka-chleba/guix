@@ -9367,7 +9367,7 @@ msgstr ""
 #, scheme-format
 msgid ""
 "\n"
-"  -P, --link-profile     link environment profile to ~/.guix-profile within\n"
+"  -P, --link-profile     link environment profile to ~/.config/guix/profile within\n"
 "                         an isolated container"
 msgstr ""
 

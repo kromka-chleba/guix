@@ -10813,11 +10813,11 @@ msgstr ""
 #, scheme-format
 msgid ""
 "\n"
-"  -P, --link-profile     link environment profile to ~/.guix-profile within\n"
+"  -P, --link-profile     link environment profile to ~/.config/guix/profile within\n"
 "                         an isolated container"
 msgstr ""
 "\n"
-"  -P, --link-profile     prepojiť profil prostredia s ~/.guix-profile vrámci\n"
+"  -P, --link-profile     prepojiť profil prostredia s ~/.config/guix/profile vrámci\n"
 "                         izolovaného kontajnera"
 
 #: guix/scripts/environment.scm:116

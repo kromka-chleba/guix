@@ -10392,11 +10392,11 @@ msgstr ""
 #, scheme-format
 msgid ""
 "\n"
-"  -P, --link-profile     link environment profile to ~/.guix-profile within\n"
+"  -P, --link-profile     link environment profile to ~/.config/guix/profile within\n"
 "                         an isolated container"
 msgstr ""
 "\n"
-"  -P, --link-profile     在隔离容器中将环境配置文件链接到 ~/.guix-profile"
+"  -P, --link-profile     在隔离容器中将环境配置文件链接到 ~/.config/guix/profile"
 
 #: guix/scripts/environment.scm:116
 #, fuzzy
