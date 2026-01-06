@@ -244,6 +244,33 @@ go-fuzz-headers.")
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-alecthomas-go-check-sumtype
+  (package
+    (name "go-github-com-alecthomas-go-check-sumtype")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/go-check-sumtype")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k85g809lraj89a2zqrl9gsvn2b36d43q345p30snbd4z1fgqhlm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/alecthomas/go-check-sumtype"))
+    (propagated-inputs (list go-github-com-alecthomas-assert-v2
+                             go-golang-org-x-tools))
+    (home-page "https://github.com/alecthomas/go-check-sumtype")
+    (synopsis "Utility for exhaustiveness checks on Go sum types")
+    (description
+     "This package provides a simple utility for running exhaustiveness checks on
+type switch statements. Exhaustiveness checks are only run on interfaces that
+are declared to be sum types.")
+    (license (list license:unlicense license:expat))))
+
 (define-public go-github-com-alexkohler-nakedret-v2
   (package
     (name "go-github-com-alexkohler-nakedret")
