@@ -16270,14 +16270,14 @@ https://github.com/syndtr/gocapability.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/moby/sys/mountinfo"
       #:unpack-path "github.com/moby/sys"
       #:test-flags
       #~(list "-skip" (string-join
                        (list "TestMountedBy/not_mounted_socket"
                              "TestMountedBy/socket_bind-mounted_to_itself")
-                       "|"))))
+                       "|")
+              "-vet=off")))
     (propagated-inputs (list go-golang-org-x-sys))
     (home-page "https://github.com/moby/sys")
     (synopsis "Retrieve information about OS mounts")
