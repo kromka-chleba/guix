@@ -1166,6 +1166,30 @@ style).
      "Simple go source code linter providing checks for copyright headers.")
     (license license:gpl3)))
 
+(define-public go-github-com-djarvur-go-err113
+  (package
+    (name "go-github-com-djarvur-go-err113")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Djarvur/go-err113")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g8qs77hnz2chh29pz35cll334z2nfxpg3s7gvdfgvbyzscz5qkj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Djarvur/go-err113"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/Djarvur/go-err113")
+    (synopsis "Golang linter for error handling")
+    (description
+     "This package is a Golang linter to check the errors handling expressions.")
+    (license license:expat)))
+
 (define-public go-github-com-dgryski-go-ddmin
   (package
     (name "go-github-com-dgryski-go-ddmin")
