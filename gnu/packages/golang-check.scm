@@ -4389,6 +4389,31 @@ introduced in Go 1.13.")
 original value once the test has been run.")
     (license license:expat)))
 
+(define-public go-github-com-quasilyte-regex-syntax
+  (package
+    (name "go-github-com-quasilyte-regex-syntax")
+    (version "0.0.0-20210819130434-b3f0c404a727")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quasilyte/regex")
+             (commit (go-version->git-ref version
+                                          #:subdir "regex/syntax"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04bp94j9yfqxczz67n7kxy57nanyjjwdngr9wpcgsp8l6zljazaf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/quasilyte/regex/syntax"
+      #:unpack-path "github.com/quasilyte/regex"))
+    (home-page "https://github.com/quasilyte/regex")
+    (synopsis "Regular expression parser for Go")
+    (description
+     "This package provides regular expressions parser as well as AST definitions.")
+    (license license:expat)))
+
 (define-public go-github-com-rubyist-tracerx
   (package
     (name "go-github-com-rubyist-tracerx")
