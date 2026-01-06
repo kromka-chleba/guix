@@ -3891,6 +3891,34 @@ Gomega matcher library.")
 framework.")
     (license license:expat)))
 
+(define-public go-github-com-openpeedeep-depguard-v2
+  (package
+    (name "go-github-com-openpeedeep-depguard")
+    (version "2.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/OpenPeeDeeP/depguard")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09vd7rbkjgjyndrdhgqy5adk3sp2hpkfhc9h9h4hiz3qj368bs21"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/OpenPeeDeeP/depguard/v2"))
+    (propagated-inputs (list go-gopkg-in-yaml-v3 go-github-com-google-go-cmp
+                             go-github-com-burntsushi-toml
+                             go-golang-org-x-tools go-github-com-gobwas-glob))
+    (home-page "https://github.com/OpenPeeDeeP/depguard")
+    (synopsis "Go linter for package imports")
+    (description
+     "This package provides a Go linter that checks package imports are in a list of
+acceptable packages.  This allows you to allow imports from a whole organization
+or only allow specific packages within a repository.")
+    (license license:gpl3)))
+
 (define-public go-github-com-otiai10-mint
   (package
     (name "go-github-com-otiai10-mint")
