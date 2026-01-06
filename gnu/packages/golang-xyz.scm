@@ -10706,6 +10706,35 @@ It also contains some convenience functions for colors, SSH to and from
 termios translations, readCh, reading passwords, etc.")
     (license license:bsd-3)))
 
+(define-public go-github-com-google-rpmpack
+  (package
+    (name "go-github-com-google-rpmpack")
+    (version "0.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/rpmpack")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17h2s1g191cvbs16fnclkpb42d9mx6mdmhd04kxzv8bss7m59pr4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/google/rpmpack"))
+    (propagated-inputs (list go-github-com-cavaliergopher-cpio
+                             go-github-com-google-go-cmp
+                             go-github-com-klauspost-compress
+                             go-github-com-klauspost-pgzip
+                             go-github-com-ulikunitz-xz))
+    (home-page "https://github.com/google/rpmpack")
+    (synopsis "Pack files to rpm files")
+    (description
+     "Package rpmpack packs files to rpm files.  It is designed to be simple to use
+and deploy, not requiring any filesystem access to create rpm files.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-google-s2a-go
   (package
     (name "go-github-com-google-s2a-go")
@@ -10724,13 +10753,12 @@ termios translations, readCh, reading passwords, etc.")
      (list
       #:tests? #f
       #:import-path "github.com/google/s2a-go"))
-    (propagated-inputs
-     (list go-google-golang-org-protobuf
-           go-google-golang-org-grpc
-           go-google-golang-org-appengine
-           go-golang-org-x-sync
-           go-golang-org-x-crypto
-           go-github-com-google-go-cmp))
+    (propagated-inputs (list go-google-golang-org-protobuf
+                             go-google-golang-org-grpc
+                             go-google-golang-org-appengine
+                             go-golang-org-x-sync
+                             go-golang-org-x-crypto
+                             go-github-com-google-go-cmp))
     (home-page "https://github.com/google/s2a-go")
     (synopsis "Secure Session Agent Client Libraries")
     (description
