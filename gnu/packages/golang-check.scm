@@ -1434,6 +1434,37 @@ tests.")
 in Go source code.")
     (license license:bsd-3)))
 
+(define-public go-github-com-gaijinentertainment-go-exhaustruct-v3
+  (package
+    (name "go-github-com-gaijinentertainment-go-exhaustruct")
+    (version "3.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/GaijinEntertainment/go-exhaustruct")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f5af703ndyn8vgmg50a84f9i8dvd2khg76kqb8r0bmr5dvs0yam"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to
+      ;; (*golang.org/x/tools/go/analysis.Pass).Reportf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:skip-build? #t
+      #:import-path "github.com/GaijinEntertainment/go-exhaustruct/v3"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/GaijinEntertainment/go-exhaustruct")
+    (synopsis "Golang analyzer for uninitialized fields")
+    (description
+     "This package provides a golang analyzer that finds structures with
+uninitialized fields.")
+    (license license:expat)))
+
 (define-public go-github-com-gdey-tbltest
   (package
     (name "go-github-com-gdey-tbltest")
