@@ -16467,6 +16467,33 @@ the standard @code{context} package to store request-scoped values.")
  spec in Go.")
     (license license:bsd-3)))
 
+(define-public go-golang-zx2c4-com-wintun
+  (package
+    (name "go-golang-zx2c4-com-wintun")
+    (version "0.0.0-20230126152724-0fa3db229ce2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.zx2c4.com/wintun-go")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16ha3dpwq1bpbxrqfyb2pw09wn25iq27i9p58iaym7m768v0ncvj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;No tests
+      #:import-path "golang.zx2c4.com/wintun"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://golang.zx2c4.com/wintun")
+    (synopsis "Bindings to Wintun from Go")
+    (description
+     "This package contains bindings to use @url{https://www.wintun.net,Wintun} from
+Go.")
+    (license license:expat)))
+
 (define-public go-golang-zx2c4-com-wireguard
   (package
     (name "go-golang-zx2c4-com-wireguard")
