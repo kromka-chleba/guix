@@ -563,8 +563,8 @@ writing and reading these tests.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/coder/quartz"))
+      #:import-path "github.com/coder/quartz"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/coder/quartz")
     (synopsis "Golang time testing library for writing deterministic unit tests")
     (description
