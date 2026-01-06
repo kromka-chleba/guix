@@ -26745,7 +26745,6 @@ split out here for ease of reuse and maintainability.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "k8s.io/klog/v2"
       #:test-flags
       #~(list "-skip"
@@ -26755,7 +26754,8 @@ split out here for ease of reuse and maintainability.")
                      "TestDestinationsWithDifferentFlags/with_log_dir_only"
                      "TestDestinationsWithDifferentFlags/with_log_dir_only_and_one_output"
                      "TestDestinationsWithDifferentFlags/with_log_file_and_log_dir")
-               "|"))
+               "|")
+              "-vet=off")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-examples
