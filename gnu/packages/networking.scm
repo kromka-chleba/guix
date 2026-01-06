@@ -120,6 +120,7 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages c)
+  #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages code)
@@ -145,6 +146,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
@@ -1490,6 +1492,165 @@ network services.  It includes a library which may be used by daemons to
 transparently check connection attempts against an access control list.")
     (license (license:non-copyleft "file://DISCLAIMER"
                                    "See the file DISCLAIMER in the distribution."))))
+
+(define-public tailscale
+  (package
+    (name "tailscale")
+    (version "1.92.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/tailscale")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12fx08i4p0af296hqsl9pjmh0znxk5smmih8minha1000s93glg9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; FIXME: Tailscale also requests a longStamp that includes the git
+      ;; hash, but I don't know of a good way to embed the git hash in there.
+      ;; NixOS also seems to just set longStamp to the version, so maybe it's
+      ;; fine?
+      #:go go-1.25
+      #:build-flags
+      #~(list (string-append "-ldflags="
+                             " -X tailscale.com/version.shortStamp="
+                             #$version " -X tailscale.com/version.longStamp="
+                             #$version))
+      #:import-path "tailscale.com/cmd/tailscale"
+      #:unpack-path "tailscale.com"
+      ;; cannot embed directory build: contains no embeddable files
+      #:embed-files
+      #~(list ".*\\.html" ".*\\.js\\.gz" ".*\\.css\\.gz" ".*\\.woff2")))
+    (native-inputs (list bash-minimal))
+    (inputs (list esbuild
+                  mkcert
+                  go-fyne-io-systray
+                  go-github-com-kodeworks-golang-image-ico
+                  go-github-com-akutz-memconn
+                  go-github-com-alexbrainman-sspi
+                  go-github-com-andybalholm-brotli
+                  go-github-com-anmitsu-go-shlex
+                  go-github-com-atotto-clipboard
+                  go-github-com-aws-aws-sdk-go-v2
+                  go-github-com-aws-aws-sdk-go-v2-config
+                  go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
+                  go-github-com-aws-aws-sdk-go-v2-service-s3
+                  go-github-com-aws-aws-sdk-go-v2-service-ssm
+                  go-github-com-axiomhq-hyperloglog
+                  go-github-com-bradfitz-go-tool-cache
+                  go-github-com-bramvdbogaerde-go-scp
+                  go-github-com-cilium-ebpf
+                  go-github-com-coder-websocket
+                  go-github-com-coreos-go-iptables
+                  go-github-com-coreos-go-systemd-v22
+                  go-github-com-creachadair-msync
+                  go-github-com-creachadair-taskgroup
+                  go-github-com-creack-pty
+                  go-github-com-dblohm7-wingoes
+                  go-github-com-digitalocean-go-smbios
+                  go-github-com-distribution-reference
+                  go-github-com-djherbis-times
+                  go-github-com-dsnet-try
+                  go-github-com-elastic-crd-ref-docs
+                  go-github-com-fogleman-gg
+                  go-github-com-frankban-quicktest
+                  go-github-com-fxamacker-cbor-v2
+                  go-github-com-gaissmai-bart
+                  go-github-com-go-json-experiment-json
+                  go-github-com-go-logr-zapr
+                  go-github-com-go-ole-go-ole
+                  go-github-com-godbus-dbus-v5
+                  go-github-com-golang-groupcache
+                  go-github-com-golang-snappy
+                  go-github-com-golangci-golangci-lint
+                  go-github-com-google-go-cmp
+                  go-github-com-google-go-containerregistry
+                  go-github-com-google-go-tpm
+                  go-github-com-google-gopacket
+                  go-github-com-google-nftables
+                  go-github-com-google-uuid
+                  go-github-com-goreleaser-nfpm-v2
+                  go-github-com-hashicorp-go-hclog
+                  go-github-com-hashicorp-raft
+                  go-github-com-hdevalence-ed25519consensus
+                  go-github-com-illarion-gonotify-v3
+                  go-github-com-inetaf-tcpproxy
+                  go-github-com-insomniacslk-dhcp
+                  go-github-com-jellydator-ttlcache-v3
+                  go-github-com-jsimonetti-rtnetlink
+                  go-github-com-kballard-go-shellquote
+                  go-github-com-klauspost-compress
+                  go-github-com-kortschak-wol
+                  go-github-com-mattn-go-colorable
+                  go-github-com-mattn-go-isatty
+                  go-github-com-mdlayher-genetlink
+                  go-github-com-mdlayher-netlink
+                  go-github-com-mdlayher-sdnotify
+                  go-github-com-miekg-dns
+                  go-github-com-mitchellh-go-ps
+                  go-github-com-peterbourgon-ff-v3
+                  go-github-com-pires-go-proxyproto
+                  go-github-com-pkg-errors
+                  go-github-com-pkg-sftp
+                  go-github-com-prometheus-community-pro-bing
+                  go-github-com-prometheus-client-golang
+                  go-github-com-prometheus-common
+                  go-github-com-prometheus-prometheus
+                  go-github-com-puzpuzpuz-xsync
+                  go-github-com-safchain-ethtool
+                  go-github-com-skip2-go-qrcode
+                  go-github-com-studio-b12-gowebdav
+                  go-github-com-tailscale-depaware
+                  go-github-com-tailscale-goexpect
+                  go-github-com-tailscale-golang-x-crypto
+                  go-github-com-tailscale-goupnp
+                  go-github-com-tailscale-hujson
+                  go-github-com-tailscale-mkctr
+                  go-github-com-tailscale-netlink
+                  go-github-com-tailscale-peercred
+                  go-github-com-tailscale-setec
+                  go-github-com-tailscale-web-client-prebuilt
+                  go-github-com-tailscale-wf
+                  go-github-com-tailscale-wireguard-go
+                  go-github-com-tailscale-xnet
+                  go-github-com-tc-hib-winres
+                  go-github-com-tcnksm-go-httpstat
+                  go-github-com-toqueteos-webbrowser
+                  go-github-com-u-root-u-root
+                  go-github-com-vishvananda-netns
+                  go-go-uber-org-zap
+                  go-go4-org-mem
+                  go-go4-org-netipx
+                  go-golang-org-x-crypto
+                  go-golang-org-x-exp
+                  go-golang-org-x-mod
+                  go-golang-org-x-net
+                  go-golang-org-x-oauth2
+                  go-golang-org-x-sync
+                  go-golang-org-x-sys
+                  go-golang-org-x-term
+                  go-golang-org-x-time
+                  go-golang-org-x-tools
+                  go-golang-zx2c4-com-wintun
+                  go-gvisor-dev-gvisor
+                  go-honnef-co-go-tools
+                  go-k8s-io-api
+                  go-k8s-io-apimachinery
+                  go-k8s-io-apiserver
+                  go-k8s-io-client-go
+                  go-sigs-k8s-io-controller-runtime
+                  go-sigs-k8s-io-controller-tools
+                  go-sigs-k8s-io-yaml
+                  go-software-sslmate-com-src-go-pkcs12))
+    (home-page "https://tailscale.com/")
+    (synopsis "Private WireGuard networks made easy")
+    (description
+     "This package is a private WireGuard software-defined mesh VPN usable with
+minimal configuration.")
+    (license license:bsd-3)))
 
 (define-public zeromq
   (package
