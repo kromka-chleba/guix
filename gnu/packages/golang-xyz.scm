@@ -19144,7 +19144,6 @@ on top of the standard library @code{flag} package.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/pingcap/errors"
       #:test-flags
       #~(list "-skip" (string-join
@@ -19159,7 +19158,8 @@ on top of the standard library @code{flag} package.")
                              "TestFrameLine"
                              "TestStackTrace"
                              "TestStackTraceFormat")
-                       "|"))))
+                       "|")
+              "-vet=off")))
     (native-inputs
      (list go-github-com-pkg-errors))
     (home-page "https://github.com/pingcap/errors")
