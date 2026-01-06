@@ -10571,6 +10571,53 @@ for working with API description formats supported by
 lightweight distribution of these models with minimal dependencies.")
     (license license:asl2.0)))
 
+(define-public go-github-com-google-go-containerregistry
+  (package
+    (name "go-github-com-google-go-containerregistry")
+    (version "0.20.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-containerregistry")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03m3gpj5z5q9zffns4kwxb2g8qil3213gvia63wifdrnwiswlcjh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;Tests require unpackaged dependencies
+      #:import-path "github.com/google/go-containerregistry"))
+    (propagated-inputs (list
+                        ;; go-github-com-awslabs-amazon-ecr-credential-helper
+                        ;; go-github-com-chrismellard-docker-credential-acr-env
+                        go-github-com-containerd-stargz-snapshotter-estargz
+                        go-github-com-docker-cli
+                        go-github-com-docker-distribution
+                        go-github-com-docker-docker
+                        go-github-com-google-go-cmp
+                        go-github-com-klauspost-compress
+                        go-github-com-mitchellh-go-homedir
+                        go-github-com-moby-docker-image-spec
+                        go-github-com-opencontainers-go-digest
+                        go-github-com-opencontainers-image-spec
+                        go-github-com-spf13-cobra
+                        go-golang-org-x-oauth2
+                        go-golang-org-x-sync
+                        go-golang-org-x-tools
+                        go-k8s-io-api
+                        go-k8s-io-apimachinery
+                        go-k8s-io-client-go))
+    (home-page "https://github.com/google/go-containerregistry")
+    (synopsis "Go library for working with container registries")
+    (description
+     "This is a golang library for working with container registries.  It's largely
+based on the @url{https://github.com/google/containerregistry,Python library of
+the same name}.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-google-gops
   (package
     (name "go-github-com-google-gops")
