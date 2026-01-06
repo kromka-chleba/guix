@@ -1249,10 +1249,10 @@ package, but can be used in other contexts too.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/google/gofuzz"
       ;; Tests fail on 32bit
-      #:tests? (target-64bit?)))
+      #:tests? (target-64bit?)
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/google/gofuzz")
     (synopsis "Fuzz testing library for Go")
     (description
