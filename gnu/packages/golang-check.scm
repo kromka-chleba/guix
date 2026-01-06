@@ -72,6 +72,32 @@
 ;;; Libraries:
 ;;;
 
+(define-public go-4d63-com-gocheckcompilerdirectives
+  (package
+    (name "go-4d63-com-gocheckcompilerdirectives")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url
+              "https://github.com/leighmcculloch/gocheckcompilerdirectives")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lpy6qqwsfqyyds8y2y1b27ximq5s7j4668xflnbcp6fy29i1m48"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "4d63.com/gocheckcompilerdirectives"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://4d63.com/gocheckcompilerdirectives")
+    (synopsis "Check go compiler directives are valid")
+    (description
+     "This package provides a linter that checks that go compiler
+directives (@code{//go:} comments) are valid and catches easy mistakes.")
+    (license license:expat)))
+
 (define-public go-4d63-com-gochecknoglobals
   (package
     (name "go-4d63-com-gochecknoglobals")
