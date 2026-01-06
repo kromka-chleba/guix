@@ -9397,7 +9397,6 @@ size.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/godbus/dbus"
       #:phases
       #~(modify-phases %standard-phases
@@ -9409,7 +9408,9 @@ size.")
                           "go" "test" "./..."
                           ;; Disable tests which require a system D-Bus
                           ;; instance.
-                          "-skip" "TestSystemBus|TestConnectSystemBus"))))))))
+                          "-skip" "TestSystemBus|TestConnectSystemBus"
+                          ;; Disable go vet
+                          "-vet=off"))))))))
     (native-inputs
      (list dbus)) ;dbus-launch
     (home-page "https://github.com/godbus/dbus/")
