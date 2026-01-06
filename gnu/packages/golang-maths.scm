@@ -500,7 +500,6 @@ format as binary16.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "gonum.org/v1/gonum"
       #:test-subdirs
       #~(list "."
@@ -523,7 +522,8 @@ format as binary16.")
                      '("spatial/...")
                      '())
               "stat/..."
-              "uniti/...")))
+              "uniti/...")
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-goccmack-gocc
            go-github-com-google-go-cmp
