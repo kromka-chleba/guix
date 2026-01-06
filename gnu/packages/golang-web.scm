@@ -13396,6 +13396,34 @@ Features:
      "This package is an implementation of a client for various U@code{PnP} services.")
     (license license:bsd-2)))
 
+(define-public go-github-com-tailscale-hujson
+  (package
+    (name "go-github-com-tailscale-hujson")
+    (version "0.0.0-20250605163823-992244df8c5a")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/hujson")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14adnvmdfm2i8nnan3bidgsqshq55z0rys5h55lfwlxi41d2ylg6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "Fuzz") ;Test fails
+      #:import-path "github.com/tailscale/hujson"))
+    (propagated-inputs (list go-github-com-google-go-cmp
+                             go-github-com-hexops-gotextdiff))
+    (home-page "https://github.com/tailscale/hujson")
+    (synopsis "Parser for JWCC format")
+    (description
+     "This package contains a parser and packer for the JWCC format: JSON With
+Commas and Comments (or \"human JSON\").")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
