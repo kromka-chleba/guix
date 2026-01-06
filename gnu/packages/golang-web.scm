@@ -13486,6 +13486,32 @@ contained in the nl subpackage.  This package attempts to provide a high-level
 interface that is loosly modeled on the iproute2 cli.")
     (license license:asl2.0)))
 
+(define-public go-github-com-tailscale-peercred
+  (package
+    (name "go-github-com-tailscale-peercred")
+    (version "0.0.0-20250107143737-35a0c7bd7edc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/peercred")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lcks6xxf1d6860h0x5bagjmbsbkycwhgg7y95qnzl2qvrv2zh4v"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require additional perms
+      #:import-path "github.com/tailscale/peercred"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/tailscale/peercred")
+    (synopsis "Get information out of a net.Conn")
+    (description
+     "This package maps from a net.Conn to information about the other side of the
+connection, using various OS-specific facilities.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
