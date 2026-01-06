@@ -370,6 +370,32 @@ could potentially be preallocated.")
 github.com/sergi/go-diff, mainly for diffing strings in tests.")
     (license license:expat)))
 
+(define-public go-github-com-antonboom-errname
+  (package
+    (name "go-github-com-antonboom-errname")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Antonboom/errname")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "000p4jnjf9fxv49jfdmlnph8lb88i0jw8kl7k7ar5cxid8qbas4g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Antonboom/errname"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/Antonboom/errname")
+    (synopsis "Go linter for sentinel errors")
+    (description
+     "This package provides a linter that checks that sentinel errors are prefixed
+with the @code{Err} and error types are suffixed with the @code{Error} or
+@code{Errors}.")
+    (license license:expat)))
+
 (define-public go-github-com-antonboom-nilnil
   (package
     (name "go-github-com-antonboom-nilnil")
