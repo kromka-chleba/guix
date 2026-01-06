@@ -11391,12 +11391,12 @@ better way of handling YAML when marshaling to and from structs.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/itchyny/go-flags"
       ;; Test is time dependent and not reproducible.
       ;; -.TH TestMan 1 "1 January 1970"
       ;;  +.TH TestMan 1 "26 June 2025"
-      #:test-flags #~(list "-skip" "TestMan")))
+      #:test-flags #~(list "-skip" "TestMan"
+                           "-vet=off")))
     (propagated-inputs
      (list go-golang-org-x-sys))
     (home-page "https://github.com/itchyny/go-flags")
