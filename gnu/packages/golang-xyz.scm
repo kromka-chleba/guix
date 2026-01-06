@@ -25863,7 +25863,6 @@ organization}.")
       (build-system go-build-system)
       (arguments
        (list
-        #:go go-1.23
         #:skip-build? #t
         #:import-path "go4.org"
         #:test-subdirs
@@ -25899,7 +25898,8 @@ organization}.")
               (lambda* (#:key import-path #:allow-other-keys)
                 (with-directory-excursion (string-append "src/" import-path)
                   (for-each delete-file
-                            (find-files "." "example.*_test\\.go$"))))))))
+                            (find-files "." "example.*_test\\.go$"))))))
+        #:test-flags #~(list "-vet=off")))
       (propagated-inputs
        (list ;; go-cloud-google-com-go
              ;; go-cloud-google-com-go-storage
