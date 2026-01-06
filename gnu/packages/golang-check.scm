@@ -159,6 +159,31 @@ only some sub-packages of correct.")
 battle.  This little tool cares for mock implementations of interface types.")
     (license license:mpl2.0)))
 
+(define-public go-github-com-4meepo-tagalign
+  (package
+    (name "go-github-com-4meepo-tagalign")
+    (version "1.4.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/4meepo/tagalign")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03a9gqdsivsv4f290d47pz2wg9kmflfakl5x1rk0c2yljih2d5ql"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/4meepo/tagalign"))
+    (propagated-inputs (list go-github-com-alfatraining-structtag
+                             go-github-com-stretchr-testify
+                             go-golang-org-x-tools))
+    (home-page "https://github.com/4meepo/tagalign")
+    (synopsis "Tag aligner and sorter for Go")
+    (description "This package is used to align and sort tags in Go structs.")
+    (license license:expat)))
+
 (define-public go-github-com-abirdcfly-dupword
   (package
     (name "go-github-com-abirdcfly-dupword")
