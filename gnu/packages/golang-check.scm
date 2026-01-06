@@ -56,6 +56,7 @@
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages version-control))
 
 ;;; Commentary:
@@ -2125,6 +2126,163 @@ same provided it exceeds the minimal token sequence size).")
     (description
      "This package is a hard fork of @code{gofmt}, the default Go linter.")
     (license license:bsd-3)))
+
+(define-public go-github-com-golangci-golangci-lint
+  (package
+    (name "go-github-com-golangci-golangci-lint")
+    (version "1.64.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/golangci/golangci-lint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jjs53qfm9n1c6ncrb5hd0kcsl01mll23qjv1ig35jsy15f1vchz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;Tests require unpackaged dependencies
+      #:import-path "github.com/golangci/golangci-lint"))
+    (propagated-inputs
+     (list go-4d63-com-gocheckcompilerdirectives
+           go-4d63-com-gochecknoglobals
+           go-github-com-4meepo-tagalign
+           go-github-com-abirdcfly-dupword
+           go-github-com-alecthomas-go-check-sumtype
+           go-github-com-alexkohler-nakedret-v2
+           go-github-com-alexkohler-prealloc
+           go-github-com-alingse-asasalint
+           ;; go-github-com-alingse-nilnesserr
+           go-github-com-antonboom-errname
+           go-github-com-antonboom-nilnil
+           go-github-com-antonboom-testifylint
+           go-github-com-ashanbrown-forbidigo
+           go-github-com-ashanbrown-makezero
+           go-github-com-bkielbasa-cyclop
+           go-github-com-blizzy78-varnamelen
+           go-github-com-bombsimon-wsl-v4
+           go-github-com-breml-bidichk
+           go-github-com-breml-errchkjson
+           go-github-com-burntsushi-toml
+           go-github-com-butuzov-ireturn
+           go-github-com-butuzov-mirror
+           go-github-com-catenacyber-perfsprint
+           go-github-com-charithe-durationcheck
+           go-github-com-ckaznocha-intrange
+           ;; go-github-com-crocmagnon-fatcontext
+           go-github-com-curioswitch-go-reassign
+           go-github-com-daixiang0-gci
+           go-github-com-denis-tingaikin-go-header
+           go-github-com-djarvur-go-err113
+           go-github-com-fatih-color
+           go-github-com-firefart-nonamedreturns
+           go-github-com-fzipp-gocyclo
+           go-github-com-gaijinentertainment-go-exhaustruct-v3
+           go-github-com-ghostiam-protogetter
+           go-github-com-go-critic-go-critic
+           go-github-com-gofrs-flock
+           go-github-com-golangci-dupl
+           go-github-com-golangci-gofmt
+           ;; go-github-com-golangci-go-printf-func-name
+           go-github-com-golangci-misspell
+           go-github-com-golangci-plugin-module-register
+           go-github-com-golangci-revgrep
+           go-github-com-golangci-unconvert
+           go-github-com-gordonklaus-ineffassign
+           go-github-com-gostaticanalysis-forcetypeassert
+           go-github-com-gostaticanalysis-nilerr
+           go-github-com-go-viper-mapstructure-v2
+           go-github-com-go-xmlfmt-xmlfmt
+           go-github-com-hashicorp-go-version
+           go-github-com-jgautheron-goconst
+           go-github-com-jingyugao-rowserrcheck
+           go-github-com-jjti-go-spancheck
+           go-github-com-julz-importas
+           go-github-com-karamaru-alpha-copyloopvar
+           go-github-com-kisielk-errcheck
+           go-github-com-kkhaike-contextcheck
+           go-github-com-kulti-thelper
+           go-github-com-kunwardeep-paralleltest
+           ;; go-github-com-lasiar-canonicalheader
+           ;; go-github-com-ldez-exptostd
+           go-github-com-ldez-gomoddirectives
+           go-github-com-ldez-grignotin
+           go-github-com-ldez-tagliatelle
+           ;; go-github-com-ldez-usetesting
+           go-github-com-leonklingele-grouper
+           go-github-com-macabu-inamedparam
+           go-github-com-maratori-testableexamples
+           go-github-com-maratori-testpackage
+           go-github-com-matoous-godox
+           go-github-com-mattn-go-colorable
+           go-github-com-mgechev-revive
+           go-github-com-mitchellh-go-homedir
+           go-github-com-moricho-tparallel
+           go-github-com-nakabonne-nestif
+           go-github-com-nishanths-exhaustive
+           go-github-com-nishanths-predeclared
+           go-github-com-nunnatsa-ginkgolinter
+           go-github-com-openpeedeep-depguard-v2
+           go-github-com-pelletier-go-toml-v2
+           go-github-com-polyfloyd-go-errorlint
+           ;; go-github-com-quasilyte-go-ruleguard-dsl
+           ;; go-github-com-raeperd-recvcheck
+           go-github-com-rogpeppe-go-internal
+           go-github-com-ryancurrah-gomodguard
+           ;; go-github-com-ryanrolds-sqlclosecheck
+           go-github-com-sanposhiho-wastedassign-v2
+           go-github-com-santhosh-tekuri-jsonschema-v6
+           go-github-com-sashamelentyev-interfacebloat
+           go-github-com-sashamelentyev-usestdlibvars
+           go-github-com-securego-gosec-v2
+           go-github-com-shirou-gopsutil-v4
+           go-github-com-sirupsen-logrus
+           go-github-com-sivchari-containedctx
+           go-github-com-sivchari-tenv
+           go-github-com-sonatard-noctx
+           go-github-com-sourcegraph-go-diff
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-spf13-viper
+           go-github-com-ssgreg-nlreturn-v2
+           go-github-com-stbenjam-no-sprintf-host-port
+           go-github-com-stretchr-testify
+           ;; go-github-com-tdakkota-asciicheck
+           go-github-com-tetafro-godot
+           go-github-com-timakin-bodyclose
+           go-github-com-timonwong-loggercheck
+           go-github-com-tomarrell-wrapcheck-v2
+           go-github-com-tommy-muehle-go-mnd-v2
+           go-github-com-ultraware-funlen
+           go-github-com-ultraware-whitespace
+           go-github-com-uudashr-gocognit
+           go-github-com-uudashr-iface
+           ;; go-github-com-valyala-quicktemplate
+           go-github-com-xen0n-gosmopolitan
+           go-github-com-yagipy-maintidx
+           go-github-com-yeya24-promlinter
+           go-github-com-ykadowak-zerologlint
+           go-gitlab-com-bosi-decorder
+           go-golang-org-x-mod
+           go-golang-org-x-sys
+           go-golang-org-x-tools
+           go-gopkg-in-yaml-v3
+           go-go-simpler-org-musttag
+           go-go-simpler-org-sloglint
+           go-go-uber-org-automaxprocs
+           go-honnef-co-go-tools
+           go-mvdan-cc-gofumpt
+           go-mvdan-cc-unparam))
+    (home-page "https://github.com/golangci/golangci-lint")
+    (synopsis "Fast linters runner for Go")
+    (description
+     "This package is a fast Go linters runner.  It runs linters in parallel, uses
+caching, supports YAML configuration, integrates with all major IDEs, and
+includes over a hundred linters.")
+    (license license:gpl3)))
 
 (define-public go-github-com-golangci-misspell
   (package
