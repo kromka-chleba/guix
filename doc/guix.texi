@@ -111,7 +111,7 @@ Copyright @copyright{} 2022 (@*
 Copyright @copyright{} 2022 John Kehayias@*
 Copyright @copyright{} 2022⁠–⁠2023 Bruno Victal@*
 Copyright @copyright{} 2022 Ivan Vilata-i-Balaguer@*
-Copyright @copyright{} 2023-2025 Giacomo Leidi@*
+Copyright @copyright{} 2023-2026 Giacomo Leidi@*
 Copyright @copyright{} 2022 Antero Mejr@*
 Copyright @copyright{} 2023 Karl Hallsby@*
 Copyright @copyright{} 2023 Nathaniel Nicandro@*
@@ -44584,6 +44584,26 @@ This is the priority of the swap device created from the zram device.
 @xref{Swap Space} for a description of swap priorities.  You might want
 to set a specific priority for the zram device, otherwise it could end
 up not being used much for the reasons described there.
+@end table
+
+@end deftp
+@end defvar
+
+@cindex fwupd
+@cindex firmware update
+@subsubheading fwupd Service
+
+@defvar fwupd-service-type
+This service allows users of supported hardware to update their firmware.  The
+service's value is a @code{fwupd-configuration} record.
+
+@deftp {Data Type} fwupd-configuration
+This is the data type representing the configuration for the fwupd
+service.
+
+@table @asis
+@item @code{fwupd} (default @code{fwupd})
+The fwupd package that will be installed in the system profile.
 @end table
 
 @end deftp
