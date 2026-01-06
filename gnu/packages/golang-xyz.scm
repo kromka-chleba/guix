@@ -5786,7 +5786,6 @@ structs in the Go programming language.")
     (arguments
      (list
       ;; See <https://github.com/d5/tengo/issues/466>.
-      #:go go-1.23
       #:import-path "github.com/d5/tengo/v2"
       #:phases
       #~(modify-phases %standard-phases
@@ -5795,7 +5794,8 @@ structs in the Go programming language.")
               (with-directory-excursion (string-append "src/" import-path)
                 (let* ((data (string-append #$output:doc "/share"))
                        (doc (string-append data "/doc/" #$name "-" #$version)))
-                  (copy-recursively "docs/" doc))))))))
+                  (copy-recursively "docs/" doc))))))
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/d5/tengo")
     (synopsis "Script language for Go")
     (description
