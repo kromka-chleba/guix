@@ -13369,6 +13369,33 @@ Features:
     (description "This package holds supplementary Go cryptography libraries.")
     (license license:bsd-3)))
 
+(define-public go-github-com-tailscale-goupnp
+  (package
+    (name "go-github-com-tailscale-goupnp")
+    (version "1.0.1-0.20210804011211-c64d0f06ea05")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/goupnp")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10nkgf29jwg8qp2lkxgnh3cf2jiwjc2pbga03rdkmhiyhrqhj4rx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-vet=off") ;Malformed example suffix
+      #:import-path "github.com/tailscale/goupnp"))
+    (propagated-inputs (list go-github-com-huin-goupnp
+                             go-github-com-huin-goutil go-golang-org-x-net))
+    (home-page "https://github.com/tailscale/goupnp")
+    (synopsis "UPnP client in Go")
+    (description
+     "This package is an implementation of a client for various U@code{PnP} services.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
