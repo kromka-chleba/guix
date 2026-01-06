@@ -13446,6 +13446,32 @@ hierarchies of @code{map[string]interface{}} objects provided by the
 @code{encoding/json} package.")
     (license license:expat)))
 
+(define-public go-github-com-jellydator-ttlcache-v3
+  (package
+    (name "go-github-com-jellydator-ttlcache")
+    (version "3.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jellydator/ttlcache")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c7k99d0km5vplfikb58j2wbriy3mzzrrfrc0d85x50km0y4g4ln"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Cannot find httpcache/internal/server
+      #:import-path "github.com/jellydator/ttlcache/v3"))
+    (propagated-inputs (list go-golang-org-x-sync go-go-uber-org-goleak
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/jellydator/ttlcache")
+    (synopsis "In-memory cache with item expiration and generics")
+    (description
+     "This package provides an in-memory cache with item expiration and generics.")
+    (license license:expat)))
+
 (define-public go-github-com-jessevdk-go-flags
   (package
     (name "go-github-com-jessevdk-go-flags")
