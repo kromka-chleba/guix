@@ -546,8 +546,8 @@ described at @url{https://xxhash.com/}.")
       (build-system go-build-system)
       (arguments
        (list
-        #:go go-1.23
-        #:import-path "github.com/chmduquesne/rollinghash/"))
+        #:import-path "github.com/chmduquesne/rollinghash/"
+        #:test-flags #~(list "-vet=off")))
       (propagated-inputs
        (list go-code-cloudfoundry-org-bytefmt))
       (home-page "https://github.com/chmduquesne/rollinghash")
