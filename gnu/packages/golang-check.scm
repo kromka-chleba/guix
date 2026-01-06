@@ -2150,6 +2150,30 @@ same provided it exceeds the minimal token sequence size).")
      "Package misspell corrects commonly misspelled English words in source files.")
     (license license:expat)))
 
+(define-public go-github-com-golangci-plugin-module-register
+  (package
+    (name "go-github-com-golangci-plugin-module-register")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/golangci/plugin-module-register")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zcp62afx3rf1qr148yjm9msy681z9fwcwn695nkdcnz5h3wyafp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/golangci/plugin-module-register"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/golangci/plugin-module-register")
+    (synopsis "Plugin module register in Go")
+    (description "This package provides a plugin module register in Go.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-golangci-revgrep
   (package
     (name "go-github-com-golangci-revgrep")
