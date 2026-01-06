@@ -13583,6 +13583,33 @@ for access control.")
 known as the Windows firewall.")
     (license license:bsd-3)))
 
+(define-public go-github-com-tailscale-wireguard-go
+  (package
+    (name "go-github-com-tailscale-wireguard-go")
+    (version "0.0.0-20251121194102-c6fd943bb437")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/wireguard-go")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02w9hc6vd7ynlgnwmfxbiqfbrw4zzddajz111fkr879d4ssrr8gy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.25
+      #:tests? #f ;Build fails
+      #:import-path "github.com/tailscale/wireguard-go"))
+    (propagated-inputs (list go-gvisor-dev-gvisor go-golang-zx2c4-com-wintun
+                             go-golang-org-x-sys go-golang-org-x-net
+                             go-golang-org-x-crypto))
+    (home-page "https://github.com/tailscale/wireguard-go")
+    (synopsis "Go implementation of WireGuard")
+    (description "This is an implementation of @code{WireGuard} in Go.")
+    (license license:gpl2)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
