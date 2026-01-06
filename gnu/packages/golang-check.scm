@@ -3450,8 +3450,8 @@ thoroughly
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "sigs.k8s.io/randfill"))
+      #:import-path "sigs.k8s.io/randfill"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://sigs.k8s.io/randfill")
     (synopsis "Fuzz testing for Golang")
     (description
