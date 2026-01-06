@@ -10996,6 +10996,52 @@ underneath and returns only matching files or directories, depending on the
 configuration.")
     (license license:expat)))
 
+(define-public go-github-com-goreleaser-nfpm-v2
+  (package
+    (name "go-github-com-goreleaser-nfpm")
+    (version "2.44.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/goreleaser/nfpm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17dmzkvy3ihjjaxi10l9xc1mcg9vmlr2v1xc4a361fa22aqigz0v"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.25
+      #:tests? #f ;TODO: Tests require unpackaged deps
+      #:import-path "github.com/goreleaser/nfpm/v2"))
+    (propagated-inputs (list go-dario-cat-mergo
+                             go-github-com-aleksi-pointer
+                             go-github-com-blakesmith-ar
+                             ;; go-github-com-caarlos0-go-version
+                             go-github-com-google-rpmpack
+                             go-github-com-goreleaser-chglog
+                             go-github-com-goreleaser-fileglob
+                             ;; go-github-com-invopop-jsonschema
+                             go-github-com-klauspost-compress
+                             go-github-com-klauspost-pgzip
+                             go-github-com-masterminds-semver-v3
+                             ;; go-github-com-muesli-mango-cobra
+                             ;; go-github-com-muesli-roff
+                             go-github-com-protonmail-go-crypto
+                             go-github-com-protonmail-gopenpgp-v2
+                             ;; go-github-com-sassoftware-go-rpmutils
+                             go-github-com-spf13-cobra
+                             go-github-com-stretchr-testify
+                             go-github-com-ulikunitz-xz
+                             go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/goreleaser/nfpm")
+    (synopsis "Package programs in various Linux formats")
+    (description
+     "This package provides ways to package programs in some linux packaging
+formats.")
+    (license license:expat)))
+
 (define-public go-github-com-gorhill-cronexpr
   (package
     (name "go-github-com-gorhill-cronexpr")
