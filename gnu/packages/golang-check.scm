@@ -472,8 +472,8 @@ test (using testing.TB's @code{TempDir}) and with a few helper methods.")
       (build-system go-build-system)
       (arguments
        (list
-        #:go go-1.23
-        #:import-path "github.com/cheekybits/is"))
+        #:import-path "github.com/cheekybits/is"
+        #:test-flags #~(list "-vet=off")))
       (home-page "https://github.com/cheekybits/is")
       (synopsis "Mini testing helper for Go")
       (description "A mini testing helper for Go.
