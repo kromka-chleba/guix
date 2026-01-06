@@ -13453,6 +13453,39 @@ This is inspired by @code{ko} which is awesome but doesn't support multiple
 binaries in a single container.")
     (license license:bsd-3)))
 
+;; Does not build on latest proper release
+(define-public go-github-com-tailscale-netlink
+  (package
+    (name "go-github-com-tailscale-netlink")
+    (version "1.1.1-0.20240822203006-4d49adab4de7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/netlink")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zf45fnkmw89wf7r2pakxanwk4khqzivrnc170v4dwn5lh5wvlwm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require root privileges
+      #:import-path "github.com/tailscale/netlink"))
+    (propagated-inputs (list go-golang-org-x-sys
+                             go-github-com-vishvananda-netns))
+    (home-page "https://github.com/tailscale/netlink")
+    (synopsis "Netlink library for go")
+    (description
+     "This package provides a simple library for netlink.  Netlink is the interface
+a user-space program in linux uses to communicate with the kernel.  It can be
+used to add and remove interfaces, set up ip addresses and routes, and confiugre
+ipsec.  Netlink communication requires elevated privileges, so in most cases
+this code needs to be run as root.  The low level primitives for netlink are
+contained in the nl subpackage.  This package attempts to provide a high-level
+interface that is loosly modeled on the iproute2 cli.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
