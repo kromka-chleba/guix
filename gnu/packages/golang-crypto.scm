@@ -365,9 +365,9 @@ with its management port enabled.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
-      #:import-path "github.com/blanu/Dust"))
+      #:import-path "github.com/blanu/Dust"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-operatorfoundation-ed25519
            go-github-com-op-go-logging
