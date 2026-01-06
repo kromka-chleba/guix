@@ -159,6 +159,31 @@ only some sub-packages of correct.")
 battle.  This little tool cares for mock implementations of interface types.")
     (license license:mpl2.0)))
 
+(define-public go-github-com-abirdcfly-dupword
+  (package
+    (name "go-github-com-abirdcfly-dupword")
+    (version "0.1.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Abirdcfly/dupword")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16gjiqgqcsd058xdpkf8vmyc091njprf041kcfx3fsca9s3viabw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Abirdcfly/dupword"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/Abirdcfly/dupword")
+    (synopsis "Analyzer for duplicate words in source code")
+    (description
+     "This package defines an analyzer that checks for duplicate words in the source
+code.")
+    (license license:expat)))
+
 (define-public go-github-com-adalogics-go-fuzz-headers
   (package
     (name "go-github-com-adalogics-go-fuzz-headers")
