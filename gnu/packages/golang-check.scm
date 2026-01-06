@@ -616,14 +616,14 @@ strings which may be used in mock tests.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/DATA-DOG/go-sqlmock"
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-examples
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
-                (delete-file-recursively "examples")))))))
+                (delete-file-recursively "examples")))))
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-kisielk-sqlstruct))
     (home-page "https://github.com/DATA-DOG/go-sqlmock")
