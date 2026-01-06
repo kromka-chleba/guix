@@ -4389,6 +4389,30 @@ introduced in Go 1.13.")
 original value once the test has been run.")
     (license license:expat)))
 
+(define-public go-github-com-quasilyte-pprofutil
+  (package
+    (name "go-github-com-quasilyte-pprofutil")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/quasilyte/pprofutil")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1aaqla2785m5p21im9i9w7il2s53li2bcxl26lb188z09wfaj9f0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/quasilyte/pprofutil"))
+    (propagated-inputs (list go-github-com-google-pprof))
+    (home-page "https://github.com/quasilyte/pprofutil")
+    (synopsis "Helper functions for working with profile.proto objects")
+    (description
+     "This package provides helper functions for working with profile.proto objects.")
+    (license license:expat)))
+
 (define-public go-github-com-quasilyte-regex-syntax
   (package
     (name "go-github-com-quasilyte-regex-syntax")
