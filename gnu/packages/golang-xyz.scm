@@ -2926,6 +2926,31 @@ space usage.")
 based on murmurhash.")
     (license license:bsd-2)))
 
+(define-public go-github-com-blakesmith-ar
+  (package
+    (name "go-github-com-blakesmith-ar")
+    (version "0.0.0-20190502131153-809d4375e1fb")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/blakesmith/ar")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00fxkc04b9cb53xxzw5gdqqpwlqv9n5kk0yn2lb5w4rgj5gm8ph1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; "non-constant format string in call to (*testing.common).Errorf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:import-path "github.com/blakesmith/ar"))
+    (home-page "https://github.com/blakesmith/ar")
+    (synopsis "Golang ar (archive) file reader")
+    (description "This package provides a Golang ar (archive) file reader.")
+    (license license:expat)))
+
 (define-public go-github-com-blang-semver
   (package
     (name "go-github-com-blang-semver")
