@@ -13553,6 +13553,36 @@ connection, using various OS-specific facilities.")
 for access control.")
     (license license:bsd-3)))
 
+(define-public go-github-com-tailscale-wf
+  (package
+    (name "go-github-com-tailscale-wf")
+    (version "0.0.0-20240214030419-6fbb0a674ee6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/wf")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07brxgalcg0kqwmywb9953a50zxmsg32zpx3d1sy7zb5dz020kv3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;No tests
+      #:import-path "github.com/tailscale/wf"))
+    (propagated-inputs (list go-honnef-co-go-tools go-golang-org-x-sys
+                             go-go4-org-netipx
+                             go-github-com-peterbourgon-ff-v3
+                             go-github-com-google-go-cmp))
+    (home-page "https://github.com/tailscale/wf")
+    (synopsis "Control Windows Filtering Platform in Go")
+    (description
+     "This is a package for controlling the Windows Filtering Platform (WFP), also
+known as the Windows firewall.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
