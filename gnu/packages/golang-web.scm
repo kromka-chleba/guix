@@ -13637,6 +13637,37 @@ known as the Windows firewall.")
     (description "This is an implementation of @code{WireGuard} in Go.")
     (license license:gpl2)))
 
+(define-public go-github-com-tailscale-xnet
+  (package
+    (name "go-github-com-tailscale-xnet")
+    (version "0.0.0-20240729143630-8497ac4dab2e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/xnet")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rca6xkmkf8ax50dgb165xm0kd20r39vp3xklfc15pfwachj9hw5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      ;; "non-constant format string in call to fmt.Sprintf"
+      #:test-flags
+      #~(list "-vet=off")
+      #:tests? #f ;FIXME: Spurious failures
+      #:import-path "github.com/tailscale/xnet"))
+    (propagated-inputs (list go-golang-org-x-crypto go-golang-org-x-sys
+                             go-golang-org-x-term go-golang-org-x-text))
+    (home-page "https://github.com/tailscale/xnet")
+    (synopsis "Temporary dev fork of golang.org/x/net")
+    (description
+     "This package is a temporary dev fork of @code{golang.org/x/net} for use in
+Tailscale.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
