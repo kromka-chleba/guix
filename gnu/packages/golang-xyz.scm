@@ -11628,6 +11628,37 @@ the functions @code{As}, @code{Is}, and @code{Unwrap}.  This provides a
 standardized approach for introspecting on error values.")
     (license license:mpl2.0)))
 
+(define-public go-github-com-hashicorp-raft
+  (package
+    (name "go-github-com-hashicorp-raft")
+    (version "1.7.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hashicorp/raft")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yynmxqqc98vz3gfckky9wz0r9a4rw0mpdhw8w5nzj272wl6rjxl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require previous version of raft
+      #:import-path "github.com/hashicorp/raft"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-hashicorp-go-msgpack-v2
+                             go-github-com-hashicorp-go-metrics
+                             go-github-com-hashicorp-go-hclog))
+    (home-page "https://github.com/hashicorp/raft")
+    (synopsis "Go library to manage replicated logs")
+    (description
+     "raft is a @url{http://www.golang.org,Go} library that manages a replicated log
+and can be used with an FSM to manage replicated state machines.  It is a
+library for providing
+@url{http://en.wikipedia.org/wiki/Consensus_(computer_science),consensus}.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-hashicorp-go-syslog
   (package
     (name "go-github-com-hashicorp-go-syslog")
