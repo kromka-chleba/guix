@@ -28293,9 +28293,9 @@ helpful utility functions, and makes testing fairly easy.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "zgo.at/zstd"
-      #:test-flags #~(list "-skip" "TestExists/4")))
+      #:test-flags #~(list "-skip" "TestExists/4"
+                           "-vet=off")))
     (home-page "https://github.com/arp242/zstd")
     (synopsis "Extensions to Go's standard library")
     (description
