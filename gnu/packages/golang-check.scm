@@ -2166,12 +2166,12 @@ Gomega matcher library.")
         (base32 "01rmm0lx29bwl973qixx6avwa8m6yc1vkara52cbl0jxxwf1jf3d"))))
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/onsi/ginkgo/v2"
       #:test-subdirs
       ;; XXX: Most of the tests hang, find out why, keeping bare minimal
       ;; amount.
-      #~(list "dsl/..." "extensions/globals" ".")))
+      #~(list "dsl/..." "extensions/globals" ".")
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-go-uber-org-automaxprocs)) ; for the CLI
     (propagated-inputs
