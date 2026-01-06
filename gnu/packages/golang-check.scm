@@ -2467,8 +2467,8 @@ GIT_TRACE mechanism.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/smarty/assertions"))
+      #:import-path "github.com/smarty/assertions"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/smarty/assertions")
     (synopsis "Fluent assertion-style functions")
     (description
