@@ -15315,7 +15315,6 @@ string.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/mattn/go-shellwords"
       #:phases
       #~(modify-phases %standard-phases
@@ -15323,7 +15322,8 @@ string.")
             (lambda* (#:key import-path #:allow-other-keys)
               (substitute* (string-append
                             "src/" import-path "/util_posix.go")
-                (("/bin/sh") (which "sh"))))))))
+                (("/bin/sh") (which "sh"))))))
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/mattn/go-shellwords")
     (synopsis "Parse lines into shell words")
     (description "This package parses text into shell arguments.  Based on
