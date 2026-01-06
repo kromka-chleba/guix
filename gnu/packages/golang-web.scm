@@ -13963,6 +13963,30 @@ websockets.")
      "Package linkheader provides functions for parsing HTTP Link headers.")
     (license license:expat)))
 
+(define-public go-github-com-toqueteos-webbrowser
+  (package
+    (name "go-github-com-toqueteos-webbrowser")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/toqueteos/webbrowser")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bnn02zcfc9xkxc2qvv4q6wy5sipcwc0hwmx7hdhvv3lsw177flw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/toqueteos/webbrowser"))
+    (home-page "https://github.com/toqueteos/webbrowser")
+    (synopsis "Simple API for opening web pages")
+    (description
+     "This package provides a simple API for opening web pages on your default
+browser.")
+    (license license:expat)))
+
 (define-public go-github-com-tv42-httpunix
   (let ((commit "2ba4b9c3382c77e7b9ea89d00746e6111d142a22")
         (revision "0"))
