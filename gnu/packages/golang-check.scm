@@ -2252,8 +2252,8 @@ framework.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/otiai10/mint"))
+      #:import-path "github.com/otiai10/mint"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/otiai10/mint")
     (synopsis "Minimal assertion for Golang testing framework")
     (description
