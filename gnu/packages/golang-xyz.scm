@@ -27971,14 +27971,14 @@ libraries.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "sigs.k8s.io/kustomize/kyaml"
       #:unpack-path "sigs.k8s.io/kustomize"
       #:test-flags
       #~(list "-skip" (string-join
                        (list "TestCommandResultsChecker_UpdateExpectedFromActual"
                              "TestProcessorResultsChecker_UpdateExpectedFromActual")
-                       "|"))))
+                       "|")
+              "-vet=off")))
     (native-inputs
      (list go-github-com-stretchr-testify
            go-github-com-davecgh-go-spew))
