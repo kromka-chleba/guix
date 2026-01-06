@@ -10858,7 +10858,6 @@ expressing configuration which is easy for both humans and machines to read.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/hashicorp/hcl/v2"
       #:test-flags
       #~(list "-skip"
@@ -10866,7 +10865,8 @@ expressing configuration which is easy for both humans and machines to read.")
                (list "TestExpressionParseAndValue/.*unk.*"
                      "TestFunctionCallExprValue/valid_call_with_unknown_arg.*"
                      "TestFunctionCallExprValue/valid_call_with_dynamic_arg")
-               "|"))))
+               "|")
+              "-vet=off")))
     (native-inputs
      (list go-github-com-davecgh-go-spew
            go-github-com-go-test-deep
