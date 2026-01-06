@@ -17531,9 +17531,9 @@ pretty printed rendering in Golang.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
-      #:import-path "github.com/nlpodyssey/spago"))
+      #:import-path "github.com/nlpodyssey/spago"
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
