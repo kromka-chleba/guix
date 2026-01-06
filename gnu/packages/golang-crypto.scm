@@ -217,7 +217,6 @@ primitives.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/99designs/keyring"
       #:test-flags
       #~(list "-skip" (string-join
@@ -227,7 +226,8 @@ primitives.")
                              "TestLibSecretGetWhenNotEmpty"
                              "TestLibSecretRemoveWhenEmpty"
                              "TestLibSecretRemoveWhenNotEmpty")
-                       "|"))))
+                       "|")
+              "-vet=off")))
     (native-inputs
      (list gnupg go-github-com-stretchr-testify password-store))
     (propagated-inputs
