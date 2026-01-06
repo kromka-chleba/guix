@@ -346,7 +346,22 @@ according to time of day.")))
    "The @code{unclutter} package to use.")
   (idle-timeout
    (integer 5)
-   "Timeout in seconds after which to hide the cursor."))
+   "Timeout in seconds after which to hide the cursor.")
+  (jitter
+   (integer 0)
+   "The amount of movement of the pointer that is to be ignored and considered
+as random noise")
+  (reset
+   (boolean #f)
+   "Reset the timeout for idleness after the cursor is restored for some reason
+(such as a window being pushed or popped) even though position of the cursor has
+not changed.  Normally, the cursor would immediately be removed again")
+  (keystroke
+   (boolean #f)
+   "Wait for keystroke before idling")
+  (no-events
+   (boolean #f)
+   "Don't send pseudo events"))
 
 (define (home-unclutter-shepherd-service config)
   (list
@@ -360,13 +375,30 @@ according to time of day.")))
                (srfi srfi-26)))
     (start #~(lambda _
                (fork+exec-command
-                (list
-                 #$(file-append
-                    (home-unclutter-configuration-unclutter config)
-                    "/bin/unclutter")
-                 "-idle"
-                 (number->string
-                  #$(home-unclutter-configuration-idle-timeout config)))
+                (append
+                  (list
+                   #$(file-append
+                      (home-unclutter-configuration-unclutter config)
+                      "/bin/unclutter")
+                   "-idle"
+                   (number->string
+                    #$(home-unclutter-configuration-idle-timeout config))
+
+                   "-jitter"
+                   (number->string
+                    #$(home-unclutter-configuration-jitter config)))
+
+                  (if #$(home-unclutter-configuration-reset config)
+                    '("-reset")
+                    '())
+
+                  (if #$(home-unclutter-configuration-keystroke config)
+                    '("-keystroke")
+                    '())
+
+                  (if #$(home-unclutter-configuration-no-events config)
+                    '("-noevents")
+                    '()))
                 ;; Inherit the 'DISPLAY' variable set by 'x11-display'.
                 #:environment-variables
                 (cons (string-append "DISPLAY=" (getenv "DISPLAY"))
