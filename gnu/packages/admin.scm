@@ -72,7 +72,7 @@
 ;;; Copyright © 2024 nathan <nathan_mail@nborghese.com>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
-;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024-2026 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 nik gaffney <nik@fo.am>
@@ -6199,7 +6199,7 @@ doesn't need a Wayland compositor to be used.")
 (define-public libseat
   (package
     (name "libseat")
-    (version "0.9.1")
+    (version "0.9.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6208,7 +6208,7 @@ doesn't need a Wayland compositor to be used.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1q1ih1f9v5240nlas1gz44giwq4k88p3yikfq7w0a4sw58yr6pz8"))))
+                "1rmi2f38g5zx50zzy5qicy314a5jmzjwdx3giy4yzb7rfwz0hlq7"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags #~(list "-Dlibseat-logind=elogind"
