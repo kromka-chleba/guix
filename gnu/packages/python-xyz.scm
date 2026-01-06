@@ -20626,8 +20626,15 @@ Python 2.4 and 2.5, and will draw its fixes/improvements from python-trunk.")
       #~(list "--ignore=t/unit/backends/test_mongodb.py"
               ;; XXX: Requires google-cloud-firestore
               "--ignore=t/unit/backends/test_gcs.py"
-              ;; AssertionError.
-              "-k" "not test_check_privileges_no_fchown")
+              "-k" (string-join
+                    (list ;; AssertionError.
+                          "not test_check_privileges_no_fchown"
+                          ;; These 3 tests error out on ci.guix.gnu.org with
+                          ;; OSError: [Errno 24] Too many open files
+                          "test_register_with_event_loop__no_on_tick_dupes"
+                          "test_with_autoscaler_file_descriptor_safety"
+                          "test_with_file_descriptor_safety")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
