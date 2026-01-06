@@ -12395,9 +12395,9 @@ hierarchies of @code{map[string]interface{}} objects provided by the
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/jessevdk/go-flags"
-      #:test-flags #~(list "-skip" "TestCompletion|TestParserCompletion")))
+      #:test-flags #~(list "-skip" "TestCompletion|TestParserCompletion"
+                           "-vet=off")))
     (propagated-inputs
      (list go-golang-org-x-sys))
     (home-page "https://github.com/jessevdk/go-flags")
