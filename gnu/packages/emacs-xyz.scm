@@ -13153,6 +13153,36 @@ adds support for interacting with a running Common Lisp process
 for compilation, debugging, documentation lookup, and so on.")
     (license (list license:gpl2+ license:public-domain))))
 
+(define-public emacs-sliver
+  ;; No tagged releases.
+  (let ((commit "ec9096607f09e26cb2ad3de7a8cb8aef21c64a92")
+        (revision "0"))
+    (package
+      (name "emacs-sliver")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/CSJ7701/Sliver")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "08kg5naiv2z5006ycgwl24zpbwzcjnc03vqsqx2cpzvmaksv3zf7"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f))                   ; No tests.
+      (home-page "https://github.com/CSJ7701/Sliver")
+      (synopsis "Modular configuration management for Emacs")
+      (description
+       "Sliver is a small Emacs package for structuring Emacs configurations into
+explicit, modular load units called slivers.  It provides declarative module
+loading, explicit dependency and conflict management, conditional loading and
+a light visualization user interface.  At its core, sliver is a wrapper around
+@code{load-file} with added quality-of-life functionalities.")
+      (license license:gpl3))))
+
 (define-public emacs-popup
   (package
     (name "emacs-popup")
