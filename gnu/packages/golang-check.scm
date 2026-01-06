@@ -4469,6 +4469,28 @@ profile data.")
      "This package provides regular expressions parser as well as AST definitions.")
     (license license:expat)))
 
+(define-public go-github-com-quasilyte-stdinfo
+  (package
+    (name "go-github-com-quasilyte-stdinfo")
+    (version "0.0.0-20220114132959-f7386bf02567")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quasilyte/stdinfo")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jq2wv5gckc5n6070aia01gqk66vwhklh8ppib1s29xb0j1jryf3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/quasilyte/stdinfo"))
+    (home-page "https://github.com/quasilyte/stdinfo")
+    (synopsis "Info for std packages")
+    (description "This package provides info for go standard packages.")
+    (license license:expat)))
+
 (define-public go-github-com-rubyist-tracerx
   (package
     (name "go-github-com-rubyist-tracerx")
