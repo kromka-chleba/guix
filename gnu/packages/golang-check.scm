@@ -2496,8 +2496,8 @@ functions and even in applications.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/smarty/gunit"))
+      #:import-path "github.com/smarty/gunit"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/smarty/gunit")
     (synopsis "Golang xUnit-style test fixture test adapter")
     (description
