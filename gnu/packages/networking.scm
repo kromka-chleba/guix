@@ -1652,6 +1652,14 @@ transparently check connection attempts against an access control list.")
 minimal configuration.")
     (license license:bsd-3)))
 
+(define-public tailscaled
+  (package
+    (inherit tailscale)
+    (name "tailscaled")
+    (arguments
+     (substitute-keyword-arguments (package-arguments tailscale)
+       ((#:import-path path) "tailscale.com/cmd/tailscaled")))))
+
 (define-public zeromq
   (package
     (name "zeromq")
