@@ -1990,8 +1990,8 @@ output capturing, mocking, and much more.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/matryer/is"))
+      #:import-path "github.com/matryer/is"
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/matryer/is")
     (synopsis "Lightweight testing mini-framework for Golang")
     (description
