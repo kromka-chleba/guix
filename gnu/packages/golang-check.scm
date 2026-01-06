@@ -4389,6 +4389,37 @@ introduced in Go 1.13.")
 original value once the test has been run.")
     (license license:expat)))
 
+;; Slightly older version because gogrep doesn't compile with newer versions
+(define-public go-github-com-quasilyte-perf-heatmap
+  (package
+    (name "go-github-com-quasilyte-perf-heatmap")
+    (version "0.0.0-20211220153856-7361377975b8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quasilyte/perf-heatmap")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1r9p3r5jl8j63l1527xn3dyv7ciz14pk6y2svq52yfby6rnnxj7n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/quasilyte/perf-heatmap"))
+    (propagated-inputs (list go-github-com-cespare-subcmd
+                             go-github-com-google-go-cmp
+                             go-github-com-google-pprof
+                             go-github-com-quasilyte-pprofutil))
+    (home-page "https://github.com/quasilyte/perf-heatmap")
+    (synopsis "Heatmap creator in Go")
+    (description
+     "This package allows you to create a heatmap index based on the
+@url{https://github.com/google/pprof/raw/master/proto/profile.proto,profile.proto}
+profile data.")
+    (license license:expat)))
+
 (define-public go-github-com-quasilyte-pprofutil
   (package
     (name "go-github-com-quasilyte-pprofutil")
