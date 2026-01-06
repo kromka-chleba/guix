@@ -13512,6 +13512,47 @@ interface that is loosly modeled on the iproute2 cli.")
 connection, using various OS-specific facilities.")
     (license license:bsd-3)))
 
+(define-public go-github-com-tailscale-setec
+  (package
+    (name "go-github-com-tailscale-setec")
+    (version "0.0.0-20251124064409-db98deb54537")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/setec")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sxx63zk5ghy7c8v0wh0lar0z64wv9s9aij83shcpb4wg9985a33"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ;TODO: Tests require unpackaged deps
+      #:import-path "github.com/tailscale/setec"))
+    (propagated-inputs (list go-github-com-aws-aws-sdk-go-v2
+                             go-github-com-aws-aws-sdk-go-v2-config
+                             go-github-com-aws-aws-sdk-go-v2-credentials
+                             go-github-com-aws-aws-sdk-go-v2-service-s3
+                             go-github-com-aws-aws-sdk-go-v2-service-sts
+                             go-github-com-creachadair-command
+                             go-github-com-creachadair-flax
+                             go-github-com-creachadair-mds
+                             go-github-com-creachadair-msync
+                             go-github-com-google-go-cmp
+                             ;; go-github-com-tink-crypto-tink-go-awskms-v2
+                             ;; go-github-com-tink-crypto-tink-go-v2
+                             go-golang-org-x-term
+                             go-honnef-co-go-tools))
+    (home-page "https://github.com/tailscale/setec")
+    (synopsis
+     "Secrets management service that uses Tailscale for access control")
+    (description
+     "This package is a lightweight secrets management service that uses Tailscale
+for access control.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tdewolff-minify-v2
   (package
     (name "go-github-com-tdewolff-minify-v2")
