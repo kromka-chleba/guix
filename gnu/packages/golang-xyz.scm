@@ -108,6 +108,7 @@
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-maths)
+  #:use-module (gnu packages golang-vcs)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages linux)
@@ -10829,6 +10830,39 @@ color (24-bit, RGB)
 @code{FORCE_COLOR} for force open color render
 @item support RGB, 256, 16 color conversion
 @end itemize")
+    (license license:expat)))
+
+(define-public go-github-com-goreleaser-chglog
+  (package
+    (name "go-github-com-goreleaser-chglog")
+    (version "0.7.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/goreleaser/chglog")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xrqfz66hxf0w7jf0dcvwh73ambhfn3vq832qr6c7mymxqsx0hix"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/goreleaser/chglog"))
+    (propagated-inputs (list go-github-com-go-git-go-billy-v5
+                             go-github-com-go-git-go-git-v5
+                             go-github-com-google-go-cmp
+                             go-github-com-masterminds-semver-v3
+                             go-github-com-masterminds-sprig-v3
+                             go-github-com-smartystreets-goconvey
+                             go-github-com-spf13-cobra
+                             go-github-com-spf13-viper
+                             go-gitlab-com-digitalxero-go-conventional-commit
+                             go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/goreleaser/chglog")
+    (synopsis "Go API for changlog.yml files")
+    (description
+     "Package chglog contains the public API for working with a changlog.yml file.")
     (license license:expat)))
 
 (define-public go-github-com-goreleaser-fileglob
