@@ -13196,6 +13196,31 @@ file into a Go http.CookieJar.")
 StatHat} account.")
     (license license:expat)))
 
+(define-public go-github-com-studio-b12-gowebdav
+  (package
+    (name "go-github-com-studio-b12-gowebdav")
+    (version "0.11.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/studio-b12/gowebdav")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11vqamvnpklpnb5ynk4n624l1x3ddgp2d9mxs1qx5mc1lg5kz1fn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/studio-b12/gowebdav"))
+    (propagated-inputs (list go-golang-org-x-net))
+    (home-page "https://github.com/studio-b12/gowebdav")
+    (synopsis "WebDAV client library in Go")
+    (description
+     "This package is a @code{WebDAV} client library with a command line tool
+included.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-swaggo-swag
   (package
     (name "go-github-com-swaggo-swag")
