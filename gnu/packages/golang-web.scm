@@ -1677,6 +1677,33 @@ parameter types for AWS Secrets Manager.")
 Amazon Simple Queue Service.")
     (license license:asl2.0)))
 
+(define-public go-github-com-aws-aws-sdk-go-v2-service-ssm
+  (package
+    (name "go-github-com-aws-aws-sdk-go-v2-service-ssm")
+    (version "1.67.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aws/aws-sdk-go-v2")
+             (commit (go-version->git-ref version
+                                          #:subdir "service/ssm"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "055i6c41zppxhf5kgxky7a8nc1wzsaxd6vbdyv0wqqbg8zbw5fjb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aws/aws-sdk-go-v2/service/ssm"
+      #:unpack-path "github.com/aws/aws-sdk-go-v2"))
+    (propagated-inputs (list go-github-com-aws-smithy-go))
+    (home-page "https://github.com/aws/aws-sdk-go-v2")
+    (synopsis "API client for Amazon SSM")
+    (description
+     "This package provides the API client, operations, and parameter types for
+Amazon Simple Systems Manager (SSM).")
+    (license license:asl2.0)))
+
 (define-public go-github-com-aws-aws-sdk-go-v2-service-sso
   (package
     (inherit go-github-com-aws-aws-sdk-go-v2)
