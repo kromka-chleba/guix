@@ -4389,6 +4389,37 @@ introduced in Go 1.13.")
 original value once the test has been run.")
     (license license:expat)))
 
+(define-public go-github-com-quasilyte-gogrep
+  (package
+    (name "go-github-com-quasilyte-gogrep")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quasilyte/gogrep")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "178m6i5qd6ipx8f5k951aj3zsh7biqhx5ahab8zcvm1hcczls88i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/quasilyte/gogrep"))
+    (propagated-inputs (list go-golang-org-x-exp-typeparams
+                             go-github-com-quasilyte-perf-heatmap
+                             go-github-com-google-go-cmp
+                             go-github-com-google-pprof
+                             go-github-com-go-toolsmith-astequal))
+    (home-page "https://github.com/quasilyte/gogrep")
+    (synopsis "Modified gogrep")
+    (description
+     "This is an attempt to move a modified
+@url{https://github.com/mvdan/gogrep,gogrep} from the
+@url{https://github.com/quasilyte/go-ruleguard,go-ruleguard} project, so it can
+be used independently.")
+    (license license:bsd-3)))
+
 ;; Slightly older version because gogrep doesn't compile with newer versions
 (define-public go-github-com-quasilyte-perf-heatmap
   (package
