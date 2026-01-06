@@ -4522,6 +4522,44 @@ profile data.")
     (description "This package provides info for go standard packages.")
     (license license:expat)))
 
+(define-public go-github-com-quasilyte-go-ruleguard
+  (package
+    (name "go-github-com-quasilyte-go-ruleguard")
+    (version "0.4.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quasilyte/go-ruleguard")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a7wbc8ihy59g3zly9x1hnsawbzn1f8avyfm7njx17idmy9waz64"))
+       (modules '((guix build utils)))
+       (snippet #~(begin
+                    (delete-file-recursively "dsl")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip" "TestEvalFile")
+      #:import-path "github.com/quasilyte/go-ruleguard"))
+    (propagated-inputs (list go-golang-org-x-tools
+                             go-golang-org-x-exp-typeparams
+                             go-github-com-quasilyte-stdinfo
+                             go-github-com-quasilyte-gogrep
+                             ;; go-github-com-quasilyte-go-ruleguard-rules
+                             go-github-com-quasilyte-go-ruleguard-dsl
+                             go-github-com-google-go-cmp
+                             go-github-com-go-toolsmith-astcopy))
+    (home-page "https://github.com/quasilyte/go-ruleguard")
+    (synopsis "Analysis-based Go linter")
+    (description
+     "This package provides an
+@url{https://pkg.go.dev/golang.org/x/tools/go/analysis,analysis}-based Go
+linter that runs dynamically loaded rules.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-quasilyte-go-ruleguard-dsl
   (package
     (name "go-github-com-quasilyte-go-ruleguard-dsl")
