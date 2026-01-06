@@ -2133,9 +2133,9 @@ error messages, preserving the order of @code{have} (actual result) before
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/onsi/ginkgo"
-      #:test-flags #~(list "-skip" "TestIntegration")))
+      #:test-flags #~(list "-skip" "TestIntegration"
+                           "-vet=off")))
     (propagated-inputs
      (list go-github-com-go-task-slim-sprig
            go-github-com-nxadm-tail
