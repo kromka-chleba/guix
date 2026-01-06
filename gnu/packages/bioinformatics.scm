@@ -23959,13 +23959,26 @@ e.g. from GenBank or Gff files, or Biopython SeqRecords.")
     (version "0.3.8")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "coolbox" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/GangCaoLab/CoolBox")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0gqp76285w9klswr47y6kxbzwhv033b26jfa179kccfhiaq5p2xa"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #false)) ; there are none
+        (base32 "1v2kjwnk1k5srda6h5qilb7m3mgwraj9sxdjjbcbz64fdhji28am"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; XXX: Wrong arguments.
+      #~(list "--deselect=tests/test_coverage.py::test_highlights"
+              "--deselect=tests/test_track.py::test_bedpe"
+              "--deselect=tests/test_track.py::test_pairs")))
+    (native-inputs
+     (list python-pypairix
+           python-pytest
+           python-setuptools
+           samtools))
     (inputs
      (list pybind11))
     (propagated-inputs
