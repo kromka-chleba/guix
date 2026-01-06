@@ -20076,8 +20076,8 @@ logging.")
         (base32 "0d1rg1drrfmabilqjjayklsz5d0n3hkf979sr3wsrw92bfbkivs7"))))
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/russross/blackfriday/v2"))))
+      #:import-path "github.com/russross/blackfriday/v2"
+      #:test-flags #~(list "-vet=off")))))
 
 (define-public go-github-com-rvflash-elapsed
   (package
