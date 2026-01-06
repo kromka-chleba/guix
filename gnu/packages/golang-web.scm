@@ -13580,6 +13580,30 @@ connection, using various OS-specific facilities.")
 for access control.")
     (license license:bsd-3)))
 
+;; TODO: Figure out a way to build this ourselves
+(define-public go-github-com-tailscale-web-client-prebuilt
+  (package
+    (name "go-github-com-tailscale-web-client-prebuilt")
+    (version "0.0.0-20251127225136-f19339b67368")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/web-client-prebuilt")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q597ndz7m8sip3bxqxfjd7lm6h9wcrb3yl7lv9prrj2qlj79i01"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tailscale/web-client-prebuilt"))
+    (home-page "https://github.com/tailscale/web-client-prebuilt")
+    (synopsis "Pre-built web artifacts for Tailscale")
+    (description
+     "This package provides the pre-built artifacts for the Tailscale web client.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tailscale-wf
   (package
     (name "go-github-com-tailscale-wf")
