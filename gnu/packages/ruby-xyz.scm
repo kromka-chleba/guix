@@ -11826,9 +11826,18 @@ part of the Prawn PDF generator.")
                 ;; tests try changing different module versions, but guix
                 ;; doesn't expose alternate module versions to be tested with
                 (delete-file "test/test_worker_gem_independence.rb"))))
+          (add-before 'check 'enable-puma-concurrency
+            (lambda _
+              (setenv "WEB_CONCURRENCY" "auto")))
+          (add-before 'check 'enable-jit
+            (lambda _
+              ;; We can boost test performance (and reduce the odds of related
+              ;; failures) by running with the JIT enabled
+              (setenv "RUBYOPT" "--rjit"))) ; current ruby lacking "--yjit"
           (add-before 'check 'increase-test-verbosity
             (lambda _
-              (setenv "PUMA_TEST_DEBUG" "1")))
+              (setenv "PUMA_TEST_DEBUG" "1")
+              (setenv "TESTOPTS" "-v")))
           (add-before 'check 'relax-test-case-timeout
             (lambda _
               ;; The default value is 45 s and easily causes timeouts.
