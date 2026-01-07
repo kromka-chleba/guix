@@ -4437,10 +4437,7 @@ files.")
                            python-pytest
                            python-pysam
                            python-setuptools
-                           python-setuptools-scm
-                           python-sphinx
-                           python-sphinx-issues
-                           python-wheel))
+                           python-setuptools-scm))
       (home-page "https://whatshap.readthedocs.io/")
       (synopsis "Read-based phasing of genomic variants")
       (description
