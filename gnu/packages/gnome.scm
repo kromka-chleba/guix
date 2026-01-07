@@ -12237,7 +12237,7 @@ advanced image management tool")
                            name "-" version ".tar.gz"))
        (sha256
         (base32 "00qfbmbnqwwyxdn6y4729y39wpym8n8n2l6qfd8mvd1xppc9q8gh"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (native-inputs
      `(("gettext" ,gettext-minimal)
        ("glib:bin" ,glib "bin")         ; for glib-compile-resources
@@ -12266,8 +12266,8 @@ advanced image management tool")
      ;; tests.
      `(#:tests? #f
        #:imported-modules ((guix build glib-or-gtk-build-system)
-                           ,@%python-build-system-modules)
-       #:modules ((guix build python-build-system)
+                           ,@%pyproject-build-system-modules)
+       #:modules ((guix build pyproject-build-system)
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build utils))
        #:phases
