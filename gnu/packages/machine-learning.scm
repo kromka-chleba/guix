@@ -4065,8 +4065,8 @@ These include a barrier, broadcast, and allreduce.")
          ;; nor is examples/plot_quantum.py
          " and not test_file_is_generated"))))
     (propagated-inputs (list python-jsmin python-numpy python-scipy))
-    (native-inputs (list python-pytest python-pytest-cov python-sphinx
-                         python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-pytest-cov
+                         python-setuptools python-setuptools-scm))
     (home-page "https://github.com/tensorly/tensorly")
     (synopsis "Tensor learning in Python")
     (description
