@@ -42,6 +42,7 @@
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Ghislain Vaillant <ghislain.vaillant@inria.fr>
+;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1682,6 +1683,37 @@ and XMP metadata of images in various formats.")
        ((#:phases phases)
         #~(modify-phases #$phases
             (delete 'delete-static-libraries)))))))
+
+(define-public jhead
+  (package
+    (name "jhead")
+    (version "3.08")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Matthias-Wandel/jhead")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q9zc47ngnj4zfdpy43jcp2cbnmrlgg38aa7spv8zh94i75jwmvp"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f             ;no tests.
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))
+    (home-page "https://github.com/Matthias-Wandel/jhead")
+    (synopsis "Displays and manipulates EXIF header of JPEG files")
+    (description
+     "@command{jhead} is a simple command line tool for display and manipulate
+@acronym{EXIF, Exchangeable Image File Format} header data embedded in JPEG
+images.")
+    (license license:public-domain)))
 
 (define-public devil
   (package
