@@ -1220,9 +1220,9 @@ XSL-T processor.  It also performs any necessary post-processing.")
       (list #:configure-flags
             #~(list "--disable-crypto-dl"))) ; Bind to the input crypto library
     (propagated-inputs                  ; according to xmlsec1.pc
-     (list libxml2 libxslt))
+     (list gnutls libgcrypt libxml2 libxslt))
     (inputs
-     (list gnutls libgcrypt libltdl))
+     (list libltdl))
     (native-inputs
      (list pkg-config))
     (home-page "https://www.aleksey.com/xmlsec/")
