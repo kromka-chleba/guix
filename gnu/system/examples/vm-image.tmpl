@@ -114,8 +114,7 @@ root ALL=(ALL) ALL
            (remove (lambda (service)
                      (let ((type (service-kind service)))
                        (or (memq type
-                                 (list gdm-service-type
-                                       sddm-service-type
+                                 (list (login-manager-service-type-for-system)
                                        wpa-supplicant-service-type
                                        cups-pk-helper-service-type
                                        network-manager-service-type

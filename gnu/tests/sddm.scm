@@ -40,7 +40,7 @@
     (services
      (cons* (service sddm-service-type)
             (modify-services %desktop-services
-              (delete gdm-service-type))))))
+              (delete (login-manager-service-type-for-system)))))))
 
 (define (run-sddm-test)
   "Run tests in %SDDM-OS."

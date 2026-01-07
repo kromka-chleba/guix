@@ -57,11 +57,11 @@
                       (sddm-configuration
                        (theme "breeze")))
 
-             ;; Remove GDM if it's among %DESKTOP-SERVICES; on other
-             ;; architectures, %DESKTOP-SERVICES contains SDDM instead.
+             ;; Remove login manager from the %desktop-services,
+             ;; so that we can use sddm instead.
              (remove (lambda (service)
                        (memq (service-kind service)
-                             (list gdm-service-type sddm-service-type)))
+                             (list (login-manager-service-type-for-system))))
                      %desktop-services)))
   ;; Allow resolution of '.local' host names with mDNS.
   (name-service-switch %mdns-host-lookup-nss))

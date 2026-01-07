@@ -216,6 +216,7 @@
             seatd-configuration
             seatd-service-type
 
+            login-manager-service-type-for-system
             %desktop-services))
 
 ;;; Commentary:
@@ -2510,6 +2511,18 @@ applications needing access to be root.")
      (service-extension shepherd-root-service-type seatd-shepherd-service)))
    (default-value (seatd-configuration))))
 
+(define* (login-manager-service-type-for-system
+          #:optional
+          (system (or (%current-target-system)
+                      (%current-system))))
+  "Return a workable login-manager service type that is part of %desktop-services
+on the given SYSTEM."
+  ;; FIXME: Since GDM depends on QT packages and those do not build at other
+  ;; platforms than x86_64 and aarch64 at the moment, use SLiM as a fallback.
+  (if (or (target-x86-64? system) (target-aarch64? system))
+      gdm-service-type
+      slim-service-type))
+
 
 ;;;
 ;;; The default set of desktop services.
@@ -2520,13 +2533,7 @@ applications needing access to be root.")
                                                   (%current-system))))
   ;; List of services typically useful for a "desktop" use case.
 
-  ;; Since GDM depends on Rust and Rust is not available on all platforms,
-  ;; use SDDM as the fall-back display manager.
-  ;; TODO: Switch the condition to use (supported-package? "rust") and make
-  ;; a news entry about the change.
-  (cons* (if (string-prefix? "x86_64" system)
-             (service gdm-service-type)
-             (service sddm-service-type))
+  (cons* (service (login-manager-service-type-for-system))
 
          ;; Screen lockers are a pretty useful thing and these are small.
          (service screen-locker-service-type
