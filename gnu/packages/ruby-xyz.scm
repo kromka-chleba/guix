@@ -11807,6 +11807,7 @@ part of the Prawn PDF generator.")
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (invoke "bundle" "exec" "rake" "test"))))
+                ;(invoke "bundle" "exec" "rake" "-m" "test"))))
           (add-after 'install 'delete-mkmf.log
             (lambda _
               ;; Rubygems installs build log files that embed volatile file
@@ -11826,14 +11827,14 @@ part of the Prawn PDF generator.")
                 ;; tests try changing different module versions, but guix
                 ;; doesn't expose alternate module versions to be tested with
                 (delete-file "test/test_worker_gem_independence.rb"))))
-          (add-before 'check 'enable-puma-concurrency
-            (lambda _
-              (setenv "WEB_CONCURRENCY" "auto")))
-          (add-before 'check 'enable-jit
-            (lambda _
-              ;; We can boost test performance (and reduce the odds of related
-              ;; failures) by running with the JIT enabled
-              (setenv "RUBYOPT" "--rjit"))) ; current ruby lacking "--yjit"
+          ;(add-before 'check 'enable-puma-concurrency
+          ;  (lambda _
+          ;    (setenv "WEB_CONCURRENCY" "auto")))
+          ;(add-before 'check 'enable-jit
+          ;  (lambda _
+          ;    ;; We can boost test performance (and reduce the odds of related
+          ;    ;; failures) by running with the JIT enabled
+          ;    (setenv "RUBYOPT" "--rjit"))) ; current ruby lacking "--yjit"
           (add-before 'check 'increase-test-verbosity
             (lambda _
               (setenv "PUMA_TEST_DEBUG" "1")
