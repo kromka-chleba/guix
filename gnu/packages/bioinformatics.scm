@@ -3909,9 +3909,7 @@ raw/ed14e050b2b75e7f4ddb73d512fbe928bbdb2b85")
            python-pytest-datadir
            python-pytest-doctestplus
            python-setuptools
-           python-sphinx
-           python-sphinx-rtd-theme
-           python-wheel))
+           python-setuptools-scm))
     (home-page "http://microsoftgenomics.github.io/PySnpTools/")
     (synopsis "Library for reading and manipulating genetic data")
     (description
