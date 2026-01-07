@@ -26970,9 +26970,7 @@ tool).")
            python-pytest
            python-pytest-cov
            python-setuptools
-           python-setuptools-scm ;for correct version
-           python-sphinx
-           python-sphinx-issues
+         python-setuptools-scm ;for correct version
            python-wheel))
     (home-page "https://github.com/zarr-developers/numcodecs")
     (synopsis "Buffer compression and transformation codecs")
