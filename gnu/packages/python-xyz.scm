@@ -35721,8 +35721,7 @@ stdin/stdout/stderr.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-flit-core
-           python-pytest
-           python-sphinx))
+           python-pytest))
     (home-page "https://github.com/jackmaney/python-stdlib-list")
     (synopsis "Python Standard Libraries")
     (description
