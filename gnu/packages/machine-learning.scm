@@ -6247,8 +6247,6 @@ and Numpy.")
      (list python-ipython
            python-pytest
            python-setuptools
-           python-sphinx
-           python-sphinx-rtd-theme
            python-wheel))
     (home-page "https://github.com/pyro-ppl/pyro-api")
     (synopsis "Generic API for dispatch to Pyro backends")
