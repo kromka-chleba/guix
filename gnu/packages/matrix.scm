@@ -10,6 +10,7 @@
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Arjan Adriaanse <arjan@adriaan.se>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -32,6 +33,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages databases)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
@@ -176,6 +178,55 @@ on @url{https://github.com/tulir/whatsmeow, whatsmeow}.")
     (description
      "This package contains code used by Synapse, Sydent, and Sygnal.")
     (license license:asl2.0)))
+
+(define-public python-matrix-commander
+  (package
+    (name "python-matrix-commander")
+    (version "8.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/8go/matrix-commander")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0150l6qzy55qlm7639p82vdhsapq6x48ixhgr2yrm2yg9a62gn3q"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-requirements
+            (lambda _args
+              (invoke "sed" "-E" "-i"
+                      (string-append "/"
+                                     ;; provided by Python standard library
+                                     (string-join '("argparse" "asyncio"
+                                                    "datetime" "uuid") "|")
+                                     "/d") "setup.cfg")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; the other tests expect a Matrix server to connect to,
+                ;; see .github/workflows/run-tests.yml
+                (invoke "./tests/test-version.sh")))))))
+    (native-inputs (list python-pytest python-setuptools))
+    (propagated-inputs (list python-aiofiles
+                             python-aiohttp
+                             python-emoji
+                             python-magic
+                             python-markdown
+                             python-matrix-nio
+                             python-notify2
+                             python-pillow
+                             python-pyxdg))
+    (home-page "https://github.com/8go/matrix-commander")
+    (synopsis "Simple but convenient CLI-based Matrix client")
+    (description
+     "This package provides a simple but convenient CLI-based Matrix client
+app for sending and receiving.")
+    (license license:gpl3)))
 
 (define-public python-matrix-synapse-ldap3
   (package
