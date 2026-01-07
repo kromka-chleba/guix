@@ -1589,7 +1589,7 @@ inference for statistical models.")
            dvisvgm
            flex
            python-numpydoc
-           python-sphinx
+           ;; python-sphinx ;; Not needed if we do not construct the doc
            ;; python-sphinx-gallery ;; Currently broken
            swig))
     (inputs
