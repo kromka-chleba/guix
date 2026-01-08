@@ -57,7 +57,8 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages ruby))
+  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-xyz))
 
 ;;; Commentary:
 ;;;
@@ -521,14 +522,14 @@ announcement.")
 (define-public ruby-json
   (package
     (name "ruby-json")
-    (version "2.1.0")
+    (version "2.18.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "json" version))
        (sha256
         (base32
-         "01v6jjpvh3gnq6sgllpfqahlgxzj50ailwhj9b3cd20hi2dx0vxp"))))
+         "01fmiz052cvnxgdnhb3qwcy88xbv7l3liz0fkvs5qgqqwjp0c1di"))))
     (build-system ruby-build-system)
     (arguments '(#:tests? #f)) ; dependency cycle with sdoc
     (synopsis "JSON library for Ruby")
