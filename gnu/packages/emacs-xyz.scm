@@ -164,6 +164,7 @@
 ;;; Copyright @ 2025 Nik Gaffney <nik@fo.am>
 ;;; Copyright © 2025 Untrusem <mysticmoksh@riseup.net>
 ;;; Copyright © 2025 case_lambda <case_lambda@disroot.org>
+;;; Copyright © 2026 Kenny Ballou <kb@devnulllabs.io>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45423,6 +45424,24 @@ for detecting and improve non-idiomatic Clojure source code.")
     (home-page "https://github.com/creatorrr/emacs-mint-mode")
     (synopsis "Major mode for Mint language")
     (description "Mint mode provides syntax highlighting for Mint language.")
+    (license license:gpl3+)))
+
+(define-public emacs-nftables-mode
+  (package
+    (name "emacs-nftables-mode")
+    (version "1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/nftables-mode-"
+                           version ".tar"))
+       (sha256
+        (base32 "1wjw6n60kj84j8gj62mr6s97xd0aqvr4v7npyxwmhckw9z13xcqv"))))
+    (build-system emacs-build-system)
+    (home-page "https://elpa.gnu.org/packages/nftables-mode.html")
+    (synopsis "Major mode for editing netfilter (nft) rules")
+    (description "This major mode offers basic highlighting and primitive
+indentation for netfilter rule files (nft).")
     (license license:gpl3+)))
 
 (define-public emacs-seeing-is-believing
