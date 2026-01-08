@@ -461,8 +461,7 @@ using a mouse.  It is customizable and extensible with plugins and scripts.")
      `(("gettext" ,gettext-minimal)
        ("glib:bin" ,glib "bin")
        ("pkg-config" ,pkg-config)
-       ("python" ,python-wrapper)
-       ("python-sphinx" ,python-sphinx)))
+       ("python" ,python-wrapper)))
     (inputs
      (list glib-networking
            gsettings-desktop-schemas
