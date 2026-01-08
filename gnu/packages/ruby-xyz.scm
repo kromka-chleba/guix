@@ -14359,7 +14359,7 @@ common interface over different adapters.")
 (define-public ruby-nio4r
   (package
    (name "ruby-nio4r")
-   (version "2.7.4")
+   (version "2.7.5")
    (source
     (origin
      (method git-fetch)
@@ -14369,7 +14369,7 @@ common interface over different adapters.")
      (file-name (git-file-name name version))
      (sha256
       (base32
-       "1planm0yrzgkjqvxbfrcp477k030f1cyplpf8g1p7dppgzk2iqqm"))))
+       "0g6im8fkv4a5z6rik4yz6sw6aw3vs2jx6caz1ipdx6l9hyrzk371"))))
    (build-system ruby-build-system)
    (arguments
     '(#:test-target "spec"
