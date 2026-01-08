@@ -502,7 +502,6 @@ package for the Game Boy and Game Boy Color.  It consists of:
                (base32
                 "1h6apmhaks4772s2cja34ck488p8yhb3nscbxjw5061ml2046zqq"))))
     (build-system cmake-build-system)
-    (native-inputs (list python-sphinx)) ; to generate man pages
     (arguments
      (list
       #:phases
