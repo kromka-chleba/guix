@@ -561,7 +561,7 @@ other lower-level build files.")
      (list
       #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
       #:configure-flags #~'("--lib-src=system")
-      #:tests? #f ; No test suite
+      #:tests? #f ;; XXX: Tests fail with FHS assumptions
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-builtin-uuidgen
@@ -605,6 +605,12 @@ other lower-level build files.")
           (add-before 'build 'enter-source
             (lambda _
               (chdir "build/gmake.unix")))
+          (replace 'check
+            (lambda* (#:key tests? configure-flags #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "../.."
+                  (apply invoke "bin/release/premake5" "test"
+                         configure-flags)))))
           (replace 'install
             (lambda* (#:key outputs #:allow-other-keys)
               (install-file "../../bin/release/premake5"
