@@ -1481,7 +1481,7 @@ from Lisp and S-expressions, building pixel perfect badges.")
                   python-wrapper
                   python-numpy
                   zlib))
-    (native-inputs (list doxygen python-sphinx))
+    (native-inputs (list doxygen))
     (synopsis "Computer vision library")
     (description
      "VIGRA stands for Vision with Generic Algorithms.  It is an image
