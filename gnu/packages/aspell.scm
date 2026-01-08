@@ -102,9 +102,9 @@ dictionaries, including personal ones.")
 ;;;
 ;;; Dictionaries.
 ;;;
-;;; Use 'export ASPELL_CONF="dict-dir $HOME/.guix-profile/lib/aspell"' to use
-;;; them, or set the Guix-specific 'ASPELL_DICT_DIR', or just do nothing (as
-;;; long as 'HOME' is set, that's fine!).
+;;; Use 'export ASPELL_CONF="dict-dir $HOME/.config/guix/profile/lib/aspell"'
+;;; to use them, or set the Guix-specific 'ASPELL_DICT_DIR', or just do
+;;; nothing (as long as 'HOME' is set, that's fine!).
 ;;;
 
 (define* (aspell-dictionary dict-name full-name

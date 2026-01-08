@@ -189,7 +189,7 @@ if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 eval \"$(guix package --search-paths \\
 -p $HOME/.config/guix/current \\
 -p $HOME/.guix-home/profile \\
--p $HOME/.config/guix/profile \\
+-p ${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile \\
 -p $HOME/.guix-profile \\
 -p /run/current-system/profile)\"
 
@@ -223,6 +223,7 @@ guile
                                       (list (getenv \"GDB_DEBUG_FILE_DIRECTORY\"))
                                       '())
                                     (list \"~/.guix-home/profile/lib/debug\"
+                                          \"~/.config/guix/profile/lib/debug\"
                                           \"~/.guix-profile/lib/debug\"
                                           \"/run/current-system/profile/lib/debug\")))
                           \":\")))

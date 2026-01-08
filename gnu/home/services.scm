@@ -291,7 +291,7 @@ exported."
    %store-monad
    (return
     `(("setup-environment"
-       ;; TODO: It's necessary to source ~/.guix-profile too
+       ;; TODO: It's necessary to source ~/.config/guix/profile too
        ;; on foreign distros
        ,(computed-file "setup-environment"
                        #~(call-with-output-file #$output

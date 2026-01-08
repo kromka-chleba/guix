@@ -264,7 +264,7 @@ To use it, you must tell @command{glirc} exactly where to find
 
 @example
 extensions:
-  * path: \"../../.guix-profile/lib/glirc-lua.so\"
+  * path: \"../../.config/guix/profile/lib/glirc-lua.so\"
     args: [\"example.lua\", @dots{}]
 @end example
 

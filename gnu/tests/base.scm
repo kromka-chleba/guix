@@ -1209,7 +1209,7 @@ to supplementary group ~a...~%" other)
 
       (test-equal "guix install hello"
         0
-        ;; Check that ~/.guix-profile & co. are properly created.
+        ;; Check that ~/.config/guix/profile & co. are properly created.
         (marionette-eval '(let ((pw (getpwuid (getuid))))
                             (setenv "USER" (passwd:name pw))
                             (setenv "HOME" (pk 'home (passwd:dir pw)))
@@ -1219,18 +1219,18 @@ to supplementary group ~a...~%" other)
 
       (test-equal "user profile created"
         0
-        (marionette-eval '(system "ls -lad ~/.guix-profile")
+        (marionette-eval '(system "ls -lad ~/.config/guix/profile")
                          #$marionette))
 
       (test-equal "hello"
         0
-        (marionette-eval '(system "~/.guix-profile/bin/hello")
+        (marionette-eval '(system "~/.config/guix/profile/bin/hello")
                          #$marionette))
 
       (test-equal "guix install hello, unprivileged user"
         0
         ;; Check that 'guix' is in $PATH for new users and that
-        ;; ~user/.guix-profile also gets created, assuming that 'user' exists
+        ;; ~user/.config/guix/profile also gets created, assuming that 'user' exists
         ;; as an unprivileged user account.
         (marionette-eval '(system "su - user -c \
 'guix install hello --no-grafts --bootstrap'")
@@ -1238,12 +1238,12 @@ to supplementary group ~a...~%" other)
 
       (test-equal "user hello"
         0
-        (marionette-eval '(system "~user/.guix-profile/bin/hello")
+        (marionette-eval '(system "~user/.config/guix/profile/bin/hello")
                          #$marionette))
 
       (test-equal "unprivileged user profile created"
         0
-        (marionette-eval '(system "ls -lad ~user/.guix-profile")
+        (marionette-eval '(system "ls -lad ~user/.config/guix/profile")
                          #$marionette))
 
       (test-equal "store is read-only"

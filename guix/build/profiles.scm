@@ -40,7 +40,7 @@
 (define (abstract-profile profile)
   "Return a procedure that replaces PROFILE in VALUE with a reference to the
 'GUIX_PROFILE' environment variable.  This allows users to specify what the
-user-friendly name of the profile is, for instance ~/.guix-profile rather than
+user-friendly name of the profile is, for instance ~/.config/guix/profile rather than
 /gnu/store/...-profile."
   (let ((replacement (string-append "${GUIX_PROFILE:-" profile "}"))
         (crop        (cute string-drop <> (string-length profile))))
@@ -81,7 +81,7 @@ definitions for all the SEARCH-PATHS."
       ;; The use of $GUIX_PROFILE described below is not great.  Another
       ;; option would have been to use "$1" and have users run:
       ;;
-      ;;   source ~/.guix-profile/etc/profile ~/.guix-profile
+      ;;   source ~/.config/guix/profile/etc/profile ~/.config/guix/profile
       ;;
       ;; However, when 'source' is used with no arguments, $1 refers to the
       ;; first positional parameter of the calling script, so we cannot rely

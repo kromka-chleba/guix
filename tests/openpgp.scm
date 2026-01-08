@@ -69,7 +69,7 @@ then, within the container:
   gpg --batch --passphrase '' --quick-gen-key '<example@example.com>' ed25519
   gpg --armor --export example@example.com
   gpg --armor --export-secret-key example@example.com
-  # echo pinentry-program ~/.guix-profile/bin/pinentry-curses > ~/.gnupg/gpg-agent.conf
+  # echo pinentry-program ~/.config/guix/profile/bin/pinentry-curses > ~/.gnupg/gpg-agent.conf
 or similar.
 |#
 (define %rsa-key-id      #xAE25DA2A70DEED59)      ;rsa.pub

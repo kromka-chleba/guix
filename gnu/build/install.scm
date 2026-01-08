@@ -240,11 +240,14 @@ This is used to create the self-contained tarballs with 'guix pack'."
     (install-database-and-gc-roots directory database profile
                                    #:profile-name profile-name))
 
+  ;; We assume the path of XDG_CONFIG_HOME for root.
+  ;; Is it possible to determine it at this point in
+  ;; a more reliable way?
   (match profile-name
     ("guix-profile"
      (mkdir-p* "/root")
      (symlink* (string-append %root-profile "/guix-profile")
-               "/root/.guix-profile"))
+               "/root/.config/guix/profile"))
     ("current-guix"
      (mkdir-p* "/root/.config/guix")
      (symlink* (string-append %root-profile "/current-guix")

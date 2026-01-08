@@ -180,6 +180,7 @@
                      (format
                       #f "(tramp-default-remote-path ~s ~s ~s ~s ~s ~s ~s "
                       "/run/privileged/bin"
+                      "~/.config/guix/profile/bin" "~/.config/guix/profile/sbin"
                       "~/.guix-profile/bin" "~/.guix-profile/sbin"
                       "~/.guix-home/bin" "~/.guix-home/sbin"
                       "/run/current-system/profile/bin"
@@ -191,6 +192,7 @@
                     (("\"/usr/local/include\"" line)
                      (string-join
                       (list line
+                            "\"~/.config/guix/profile/include\""
                             "\"~/.guix-profile/include\""
                             "\"~/.guix-home/include\""
                             "\"/run/current-system/profile/include\"")

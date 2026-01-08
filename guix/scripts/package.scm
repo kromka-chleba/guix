@@ -88,7 +88,7 @@
   "Ensure the default profile symlink and directory exist and are writable."
   (ensure-profile-directory)
 
-  ;; Try to create ~/.guix-profile if it doesn't exist yet.
+  ;; Try to create ~/.config/guix/profile if it doesn't exist yet.
   (when (and %user-profile-directory
              %current-profile
              (not (false-if-exception

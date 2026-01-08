@@ -6350,7 +6350,7 @@ in a digital read-out.")
 
              ;; This file hard-codes file system layouts for specific distros
              ;; but not for ours; address that.  With this change, one can run
-             ;; "perf report --symfs=$HOME/.guix-profile" (without
+             ;; "perf report --symfs=$HOME/.config/guix/profile" (without
              ;; "/lib/debug") and 'perf' should be able to find separate debug
              ;; info files.
              (substitute* "util/dso.c"

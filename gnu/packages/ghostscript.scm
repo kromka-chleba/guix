@@ -252,7 +252,7 @@ printing, and psresize, for adjusting page sizes.")
               ;; 'gs --help', so this change is fine.
               (substitute* "base/gscdef.c"
                 (("GS_DOCDIR")
-                 "\"~/.guix-profile/share/doc/ghostscript\""))))
+                 "\"~/.config/guix/profile/share/doc/ghostscript\""))))
           (add-after 'configure 'patch-config-files
             (lambda _
               (substitute* "base/unixhead.mak"

@@ -719,7 +719,7 @@ the following aspects of Bash:
 To enable it, run:
 
 @example
-enable -f ~/.guix-profile/lib/bash/libguile-bash.so scm
+enable -f ~/.config/guix/profile/lib/bash/libguile-bash.so scm
 @end example
 
 and then run @command{scm example.scm}.")

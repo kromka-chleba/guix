@@ -577,7 +577,7 @@ complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environmen
 complete -r -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s r -l root=         -d "make FILE a symlink to the result, and register it as a garbage collector root"
 complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s C -l container     -d "run command within an isolated container"
 complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s N -l network       -d "allow containers to access the network"
-complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s P -l link-profile  -d "link environment profile to ~/.guix-profile within an isolated container"
+complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s P -l link-profile  -d "link environment profile to ~/.config/guix/profile within an isolated container"
 complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s W -l nesting       -d "make Guix available within the container"
 complete -x -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options" -s u -l user=         -d "instead of copying the name and home of the current user into an isolated container, use the name USER with home directory /home/USER" -a "(__fish_complete_users)"
 complete -f -c guix -n "__fish_guix_using_command $guix_commands_with_environment_options"      -l no-cwd        -d "do not share current working directory with an isolated container"

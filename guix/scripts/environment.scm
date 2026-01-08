@@ -111,7 +111,7 @@ shell'."
   (display (G_ "
   -N, --network          allow containers to access the network"))
   (display (G_ "
-  -P, --link-profile     link environment profile to ~/.guix-profile within
+  -P, --link-profile     link environment profile to ~/.config/guix/profile within
                          an isolated container"))
   (display (G_ "
   -W, --nesting          make Guix available within the container"))
@@ -764,7 +764,7 @@ with the EMULATE-FHS? option.
 When NESTING? is true, share all the store with the container and add Guix to
 its profile, allowing its use from within the container.
 
-LINK-PROFILE? creates a symbolic link from ~/.guix-profile to the
+LINK-PROFILE? creates a symbolic link from ~/.config/guix/profile to the
 environment profile.
 
 SYMLINKS must be a list of (SOURCE -> TARGET) tuples denoting symlinks to be
@@ -960,7 +960,7 @@ WHILE-LIST."
              ;; request it be purified again.
              (launch-environment command
                                  (if link-profile?
-                                     (string-append home-dir "/.guix-profile")
+                                     (string-append (config-directory) "/profile")
                                      profile)
                                  manifest #:pure? #f
                                  #:emulate-fhs? emulate-fhs?)))
@@ -985,7 +985,7 @@ WHILE-LIST."
               (for-each (cut evaluate-populate-directive <> ".")
                         (append-map symlink->directives symlinks)))
 
-            ;; If requested, link $GUIX_ENVIRONMENT to $HOME/.guix-profile;
+            ;; If requested, link $GUIX_ENVIRONMENT to $HOME/.config/guix/profile;
             ;; this allows programs expecting that path to continue working as
             ;; expected within a container.
             (when link-profile? (link-environment profile home-dir))
@@ -1040,9 +1040,9 @@ directory determined by 'user-override-home'; otherwise, return DIR."
                      (substring dir (string-length home)))
       dir))
 
-(define (link-environment profile home-dir)
-  "Create a symbolic link from HOME-DIR/.guix-profile to PROFILE."
-  (let ((profile-dir (string-append home-dir "/.guix-profile")))
+(define (link-environment profile)
+  "Create a symbolic link from ~/.config/guix/profile to PROFILE."
+  (let ((profile-dir (string-append (config-directory) "/profile")))
     (catch 'system-error
       (lambda ()
         (symlink profile profile-dir))

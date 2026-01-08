@@ -47,8 +47,8 @@
   (fold (lambda (s p) (or (string-ci=? s directory) p))
         #f directories-list))
 
-;; We do not include $HOME/.guix-profile/gtk-v.0 (v=2 or 3) because we do not
-;; want to mix gtk+-2 and gtk+-3 modules.  See
+;; We do not include $HOME/.config/guix/profile/gtk-v.0 (v=2 or 3) because we
+;; do not want to mix gtk+-2 and gtk+-3 modules.  See
 ;; https://developer.gnome.org/gtk3/stable/gtk-running.html
 (define (gtk-module-directories inputs)
   "Check for the existence of \"libdir/gtk-v.0\" in INPUTS.  Return a list
@@ -95,7 +95,7 @@ with all found directories."
 ;; in $HOME/.themes (for backward compatibility) and in XDG_DATA_HOME (which
 ;; defaults to $HOME/.local/share).  One way to handle these applications
 ;; appears to be by making $HOME/.themes a symlink to
-;; $HOME/.guix-profile/share/themes.
+;; $HOME/.config/guix/profile/share/themes.
 (define (data-directories inputs)
   "Check for the existence of \"$datadir/glib-2.0/schemas\" or XDG themes data
 in INPUTS.  Return a list with all found directories."

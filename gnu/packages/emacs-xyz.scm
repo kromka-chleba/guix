@@ -34863,7 +34863,8 @@ scratch buffer.
              (chmod "gtk-look.el" #o644)
              (emacs-substitute-variables "gtk-look.el"
                ("gtk-lookup-devhelp-indices"
-                '(list (expand-file-name "~/.guix-profile/share/gtk-doc/html/*/*.devhelp*"))))
+                '(list (expand-file-name "~/.config/guix/profile/share/gtk-doc/html/*/*.devhelp*")
+                       (expand-file-name "~/.guix-profile/share/gtk-doc/html/*/*.devhelp*"))))
              #t)))))
     (home-page "https://user42.tuxfamily.org/gtk-look/index.html")
     (synopsis "Find and display HTML documentation for GTK, GNOME and Glib")

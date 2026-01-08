@@ -1129,10 +1129,10 @@ umask 022
 
 # Allow Hunspell-based applications (IceCat, LibreOffice, etc.) to
 # find dictionaries.
-export DICPATH=\"$HOME/.config/guix/profile/share/hunspell:$HOME/.guix-profile/share/hunspell:/run/current-system/profile/share/hunspell\"
+export DICPATH=\"${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/share/hunspell:$HOME/.guix-profile/share/hunspell:/run/current-system/profile/share/hunspell\"
 
 # Allow GStreamer-based applications to find plugins.
-export GST_PLUGIN_PATH=\"$HOME/.config/guix/profile/lib/gstreamer-1.0:$HOME/.guix-profile/lib/gstreamer-1.0\"
+export GST_PLUGIN_PATH=\"${XDG_CONFIG_HOME:-$HOME/.config}/guix/profile/lib/gstreamer-1.0:$HOME/.guix-profile/lib/gstreamer-1.0\"
 
 for i in /etc/profile.d/*.sh; do
     if [ -r \"$i\" ]; then

@@ -212,9 +212,9 @@ root with an empty password."
                    (channel-request-exec
                     channel
                     (string-append
-                     "mkdir -p /root/.guix-profile/bin && "
-                     "touch /root/.guix-profile/bin/path-witness && "
-                     "chmod 755 /root/.guix-profile/bin/path-witness"))
+                     "mkdir -p /root/.config/guix/profile/bin && "
+                     "touch /root/.config/guix/profile/bin/path-witness && "
+                     "chmod 755 /root/.config/guix/profile/bin/path-witness"))
                    (zero? (channel-get-exit-status channel))))))
 
             ;; Connect to the guest over SSH.  Make sure we can run commands

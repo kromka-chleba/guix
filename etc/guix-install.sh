@@ -985,9 +985,9 @@ sys_delete_init_profile()
 
 sys_delete_user_profiles()
 {
-    _msg_info "removing ~root/.guix-profile"
+    _msg_info "removing ~root/.config/guix/profile"
     rm -f ~root/.guix-profile
-    rm -rf ~root/.cache/guix
+    rm -rf ~root/.cache/guix ~root/.config/guix
 
     _msg_info "removing .guix-profile, .cache/guix and .config/guix of all /home users"
     rm -rf /home/*/{.guix-profile,{.cache,.config}/guix}

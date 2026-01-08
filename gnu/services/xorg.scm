@@ -619,9 +619,12 @@ desktop session from the system or user profile will be used."
           "/run/current-system/profile")
 
         (define user-profile
-          (and=> (getpw (getuid))
-                 (lambda (pw)
-                   (string-append (passwd:dir pw) "/.guix-profile"))))
+          (let ((profile (and=> (getpw (getuid))
+                                (lambda (pw)
+                                  (string-append (passwd:dir pw) "/.guix-profile")))))
+            (if (file-exists? profile) profile
+                     (string-append (config-directory) "/profile"))))
+
 
         (define (xsession-command desktop-file)
           ;; Read from DESKTOP-FILE its X session command and return it as a
@@ -1144,9 +1147,11 @@ argument.")))
          "/run/current-system/profile")
 
        (define user-profile
-         (and=> (getpw (getuid))
-                (lambda (pw)
-                  (string-append (passwd:dir pw) "/.guix-profile"))))
+         (let ((profile (and=> (getpw (getuid))
+                               (lambda (pw)
+                                 (string-append (passwd:dir pw) "/.guix-profile")))))
+           (if (file-exists? profile) profile
+               (string-append (config-directory) "/profile"))))
 
        (define home-profile
          (and=> (getpw (getuid))

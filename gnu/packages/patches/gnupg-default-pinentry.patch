@@ -55,11 +55,12 @@ index 4b6e46e88..f7ae68ba5 100644
  
  /* Return whether the home dir is the default one.  */
  int
-@@ -971,6 +995,7 @@ get_default_pinentry_name (int reset)
+@@ -971,6 +995,8 @@ get_default_pinentry_name (int reset)
    } names[] = {
      /* The first entry is what we return in case we found no
         other pinentry.  */
 +    { user_homedir, "/.guix-profile/bin/pinentry" },
++    { user_homedir, "/.config/guix/profile/bin/pinentry" },
      { gnupg_bindir, DIRSEP_S "pinentry" EXEEXT_S },
  #ifdef HAVE_W32_SYSTEM
      /* Try Gpg4win directory (with bin and without.) */

@@ -569,7 +569,7 @@ MyPaint.")
 (define-public gimp-resynthesizer
   ;; GIMP does not respect any plugin search path environment variable, so after
   ;; installation users have to edit their GIMP settings to include
-  ;; "$HOME/.guix-profile/lib/gimp/2.0/plug-ins/" in
+  ;; "$HOME/.config/guix/profile/lib/gimp/2.0/plug-ins/" in
   ;; “Edit->Preferences->Folders->Plug Ins”.
   (package
     (name "gimp-resynthesizer")

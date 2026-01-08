@@ -5769,6 +5769,7 @@ Wayland.")
               (string-append "--with-cursorpath="
                              (string-join
                               '("~/.local/share/icons" "~/.icons"
+                                "~/.config/guix/profile/share/icons"
                                 "~/.guix-profile/share/icons"
                                 "/run/current-system/profile/share/icons"
                                 "/usr/share/icons")

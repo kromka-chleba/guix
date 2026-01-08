@@ -164,7 +164,7 @@ _guix_list_installed_packages()
         {-r,--root=}'[make FILE a symlink to the result, and register it as a GC root]:FILE:_files' \
         {-C,--container}'[run command within an isolated container]' \
         {-N,--network}'[allow containers to access the network]' \
-        {-P,--link-profile}'[link environment profile to ~/.guix-profile within an isolated container]' \
+        {-P,--link-profile}'[link environment profile to ~/.config/guix/profile within an isolated container]' \
         {-u,--user=}'[instead of copying the name and home of the current user into an isolated container, use the name USER with home directory /home/USER]:USER:_users' \
         '--no-cwd[do not share current working directory with an isolated container]' \
         '--share=[for containers, share writable host file system according to SPEC]:SPEC' \

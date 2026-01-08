@@ -117,7 +117,7 @@ file for use with USB_ModeSwitch.")
                  ;; by running e.g.:
                  ;;
                  ;;   sudo usb_modeswitch -c \
-                 ;;   ~/.guix-profile/share/usb_modeswitch.d/12d1\:14fe \
+                 ;;   ~/.config/guix/profile/share/usb_modeswitch.d/12d1\:14fe \
                  ;;   -v 0x12d1 -p 0x14fe
                  ;;
                  ;; But it is simpler to use the usb-modeswitch-service-type

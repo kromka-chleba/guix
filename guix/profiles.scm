@@ -2422,7 +2422,7 @@ to user ~s.")
 
 (define (canonicalize-profile profile)
   "If PROFILE points to a profile in %PROFILE-DIRECTORY, return that.
-Otherwise return PROFILE unchanged.  The goal is to treat '-p ~/.guix-profile'
+Otherwise return PROFILE unchanged.  The goal is to treat '-p ~/.config/guix/profile'
 as if '-p' was omitted."  ; see <http://bugs.gnu.org/17939>
   ;; Trim trailing slashes so 'readlink' can do its job.
   (let ((profile (string-trim-right profile #\/)))
@@ -2440,7 +2440,7 @@ as if '-p' was omitted."  ; see <http://bugs.gnu.org/17939>
         %user-profile-directory))
 
 (define (user-friendly-profile profile)
-  "Return either ~/.guix-profile or ~/.config/guix/current if that's what
+  "Return either ~/.config/guix/profile or ~/.config/guix/current if that's what
 PROFILE refers to, directly or indirectly, or PROFILE."
   (or (find (lambda (shorthand)
               (and shorthand
