@@ -61,8 +61,7 @@
                   )))
              #t)))))
     (native-inputs
-     `(("cmake" ,cmake-minimal)
-       ("python-sphinx" ,python-sphinx)))
+     `(("cmake" ,cmake-minimal)))
     (home-page "https://squirrel-lang.org/")
     (synopsis "High level imperative, object-oriented programming language")
     (description
