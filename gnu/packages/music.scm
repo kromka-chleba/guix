@@ -7217,8 +7217,6 @@ and as an LV2 plugin.")
            help2man
            `(,glib "bin")               ;for 'glib-compile-resources'
            pkg-config
-           python-sphinx
-           python-sphinx-intl
            sassc))
     (synopsis "Digital audio workstation focusing on usability")
     (description "Zrythm is a digital audio workstation designed to be
