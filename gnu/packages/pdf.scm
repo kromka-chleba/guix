@@ -785,9 +785,6 @@ by using the poppler rendering engine.")
            gettext-minimal
            (list glib "bin")
 
-           ;; For building documentation.
-           python-sphinx
-
            ;; For building icons.
            (librsvg-for-system)
 
