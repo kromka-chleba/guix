@@ -2144,8 +2144,21 @@ Chip toolkit.")
        (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:tests? #f))
-    (native-inputs (list curl expat libpng python-setuptools python-tomli))
+         (list
+          #:phases
+          #~(modify-phases %standard-phases
+              (replace 'check
+                (lambda* (#:key tests? #:allow-other-keys)
+                  (when tests?
+                    (invoke "python" "testdata/pymod/import_db.py")
+                    (invoke "python" "testdata/pymod/import_db.py")
+                    (invoke "python" "testdata/pymod/import_rdb.py")
+                    (invoke "python" "testdata/pymod/import_tl.py")
+                    (invoke "python" "testdata/pymod/import_lib.py")
+                    (invoke "python" "testdata/pymod/import_lay.py")
+                    (setenv "TESTSRC" "./")
+                    (invoke "python" "testdata/pymod/pya_tests.py")))))))
+    (native-inputs (list curl expat libpng python python-setuptools python-tomli))
     (home-page "https://klayout.de")
     (synopsis "Mask layout library for Python")
     (description
