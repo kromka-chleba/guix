@@ -11981,6 +11981,27 @@ generation.")
     (home-page "https://github.com/jbarnette/hoe-git")
     (license license:expat)))
 
+(define-public ruby-hoe-highline
+  (package
+    (name "ruby-hoe-highline")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "hoe-highline" version))
+       (sha256
+        (base32 "1j48z7x1ysw61hxj83ifn6ydydncr839cvgjzgbrak5cqvgvyiz1"))))
+    (build-system ruby-build-system)
+    (propagated-inputs (list ruby-highline ruby-hoe-3))
+    (synopsis "Add Highline to a Rake environment for interactive workflows")
+    (description "A Hoe plugin for building interactive Rake tasks.
+Hoe-highline adds prompting and display functions from the
+@url{Highline, https://rubygems.org/gems/highline} gem to your Rake environment.
+This allows for interactive Rake tasks that prompt you to answer questions,
+provide passwords, build menus, etc.")
+    (home-page "https://github.com/ged/hoe-highline")
+    (license license:bsd-3)))
+
 (define-public ruby-hoe-markdown
   (package
     (name "ruby-hoe-markdown")
@@ -12015,6 +12036,25 @@ generation.")
     (description
      "This package provides a Hoe plugin with various Markdown helpers, which
 can be used to e.g. hyperlink Markdown documentation between project files.")
+    (license license:expat)))
+
+(define-public ruby-hoe-mercurial
+  (package
+    (name "ruby-hoe-mercurial")
+    (version "1.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "hoe-mercurial" version))
+       (sha256
+        (base32 "0w2113p7ga4x2yl6zb95qmzwpx4a4r5pjg469sx9fbkb8fbpg2n7"))))
+    (build-system ruby-build-system)
+    (propagated-inputs (list ruby-hoe-3))
+    (native-inputs (list ruby-hoe-highline ruby-rdoc))
+    (synopsis "Ruby Hoe Mercurial integration for automating tasks")
+    (description "Ruby Hoe Mercurial integration that provides tasks to automate
+release tagging, pushing, changelog generation, etc.")
+    (home-page "https://github.com/ged/hoe-mercurial")
     (license license:expat)))
 
 (define-public ruby-timecop
@@ -14738,6 +14778,35 @@ entities.")
 minimal effort.")
     (home-page "https://sinatrarb.com/")
     (license license:expat)))
+
+(define-public ruby-tidy-ext
+  (package
+    (name "ruby-tidy-ext")
+    (version "0.1.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "tidy-ext" version))
+       (sha256
+        (base32 "0i4k228336vpkc8v4v886jn06vqhkyw44ix3b72g5agynis45llv"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:gem-flags
+      #~(list "--" "--with-cflags=-Wno-error=incompatible-pointer-types")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'build-docs
+            (lambda _
+              (invoke "rake" "rdoc")))
+          (replace 'check
+            (lambda _
+              (invoke "rake" "spec"))))))
+    (native-inputs (list ruby-rake-compiler ruby-rdoc))
+    (synopsis "HTML Tidy library built as a Ruby extension")
+    (description "Native Ruby extension providing the W3C HTML Tidy library.")
+    (home-page "https://github.com/ged/hoe-mercurial")
+    (license (license:x11-style "file://LICENSE"))))
 
 (define-public ruby-timeout
   (package
