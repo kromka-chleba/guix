@@ -11488,17 +11488,22 @@ variable-width (i.e., proportional, or variable pitch) fonts.")
 (define-public emacs-elisp-demos
   (package
     (name "emacs-elisp-demos")
-    (version "2024.01.16")
+    ;; no proper release since January 2024
+    (properties '((commit . "1a108d1c5011f9ced58be2ca98bea1fbd4130a2f")
+                  (revision . "0")))
+    (version (git-version "2024.01.16"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/xuchunyang/elisp-demos")
-             (commit version)))
+              (url "https://github.com/xuchunyang/elisp-demos")
+              (commit (assoc-ref properties 'commit))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1pgg5z3z2pf0vps86lrkxfr36v4c24mpgvj551gixdlrm2s55p0l"))))
+         "1rw7v8xks6rpjk10kw0lkb3f158jsqk6167f3dpmxm3q4000k8nz"))))
     (build-system emacs-build-system)
     (arguments
      (list
