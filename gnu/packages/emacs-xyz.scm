@@ -20215,16 +20215,21 @@ extensions.")
 (define-public emacs-evil-collection
   (package
     (name "emacs-evil-collection")
-    (version "0.0.10")
+    ;; no proper release since March 2024
+    (properties '((commit . "d052ad2ec1f6a4b101f873f01517b295cd7dc4a9")
+                  (revision . "0")))
+    (version (git-version "0.0.10"
+                          (assoc-ref properties 'revision)
+                          (assoc-ref properties 'commit)))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/emacs-evil/evil-collection")
-             (commit version)))
+              (url "https://github.com/emacs-evil/evil-collection")
+              (commit (assoc-ref properties 'commit))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09hnxb8nh3g0hi93fz9f1y164gv9iyh5994wfn6fsq2v1xdz8phm"))))
+        (base32 "1q9w1wwlfcvw9xhpcv56qx9y6g2wrfrl1mcs2gzbds9qb2nszf7y"))))
     (build-system emacs-build-system)
     (arguments
      (list
