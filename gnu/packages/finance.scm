@@ -174,6 +174,7 @@
               "-DBUILD_GUI=ON"
               "-DBUILD_BENCH=ON"
               "-DWITH_ZMQ=ON")
+           #:qtbase qtbase
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'build 'set-no-git-flag
@@ -200,6 +201,7 @@
            libevent
            qrencode
            qtbase
+           qtwayland
            sqlite
            zeromq))
     (home-page "https://bitcoincore.org/")
