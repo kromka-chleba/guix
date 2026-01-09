@@ -74,6 +74,7 @@
 # Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
 # Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 # Copyright © 2025 bdunahu <bdunahu@operationnull.com>
+# Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
 #
 # This file is part of GNU Guix.
 #
@@ -173,6 +174,9 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/bash.scm				\
   %D%/packages/batik.scm			\
   %D%/packages/bdw-gc.scm			\
+  %D%/packages/beam-apps.scm			\
+  %D%/packages/beam-packages.scm		\
+  %D%/packages/beam-sources.scm			\
   %D%/packages/benchmark.scm			\
   %D%/packages/bioconductor.scm			\
   %D%/packages/bioinformatics.scm		\
