@@ -101,6 +101,7 @@
             check-inputs-should-use-a-minimal-variant
             check-input-labels
             check-wrapper-inputs
+            check-qt-wayland-support
             check-patch-file-names
             check-patch-headers
             check-synopsis-style
@@ -730,6 +731,65 @@ or \"bash-minimal\" is not in its inputs. 'wrap-script' is not supported."
       ;; "bash" is not in 'inputs'.  Verify 'wrap-program' and friends
       ;; are unused
       (find-phase-deltas package check-deltas)))
+
+(define (package-input-version package input-name)
+  "Return the version of the input named INPUT-NAME in PACKAGE, or #f if none."
+  (any (lambda (input)
+         (match input
+           ((_ (? package? pkg) . _)
+            (and (string=? (package-name pkg) input-name)
+                 (package-version pkg)))
+           (_ #f)))
+       (package-inputs package)))
+
+  (define uses-qt-build-system?
+    (eq? (build-system-name (package-build-system package)) 'qt))
+
+  (cond
+   ((and has-qtbase? (not has-qtwayland?) uses-qt-build-system?)
+    (list (make-warning package
+                        (G_ "Qt application is missing 'qtwayland' input")
+                        #:field 'inputs)))
+   ((and has-qtbase? (not has-qtwayland?))
+    (list (make-warning package
+                        (G_ "Qt application is missing 'qtwayland' input and \
+(define (check-qt-wayland-support package)
+  "Emit a warning if PACKAGE has qtbase as an input but is missing qtwayland.
+Also suggest using 'wrap-qt-program' from (guix build qt-utils) when not
+using qt-build-system."
+  (define qtbase-version (package-input-version package "qtbase"))
+  (define qtwayland-version (package-input-version package "qtwayland"))
+  (define uses-qt-build-system?
+    (eq? (build-system-name (package-build-system package)) 'qt))
+
+  (cond
+   ((not qtbase-version)
+    '())
+   ((and (string=? (version-major qtbase-version) "6")
+         (not qtwayland-version)
+         uses-qt-build-system?)
+    (list (make-warning package
+                        (G_ "Qt6 application is missing 'qtwayland' input")
+                        #:field 'inputs)))
+   ((and (string=? (version-major qtbase-version) "6")
+         (not qtwayland-version))
+    (list (make-warning package
+                        (G_ "Qt6 application is missing 'qtwayland' input and \
+may need 'wrap-qt-program' from (guix build qt-utils)")
+                        #:field 'inputs)))
+   ((and (string=? (version-major qtbase-version) "5")
+         (not qtwayland-version)
+         uses-qt-build-system?)
+    (list (make-warning package
+                        (G_ "Qt5 application is missing 'qtwayland-5' input")
+                        #:field 'inputs)))
+   ((and (string=? (version-major qtbase-version) "5")
+         (not qtwayland-version))
+    (list (make-warning package
+                        (G_ "Qt5 application is missing 'qtwayland-5' input and \
+may need 'wrap-qt-program' from (guix build qt-utils)")
+                        #:field 'inputs)))
+   (else '())))
 
 (define (package-name-regexp package)
   "Return a regexp that matches PACKAGE's name as a word at the beginning of a
@@ -2128,6 +2188,10 @@ them for PACKAGE."
      (name        'wrapper-inputs)
      (description "Make sure 'wrap-program' can find its interpreter.")
      (check       check-wrapper-inputs))
+   (lint-checker
+     (name        'qt-wayland-support)
+     (description "Check that Qt program packages have qtwayland")
+     (check       check-qt-wayland-support))
    (lint-checker
      (name        'license)
      ;; TRANSLATORS: <license> is the name of a data type and must not be
