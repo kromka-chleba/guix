@@ -72,3 +72,18 @@ guix show python@2 && false
 output="`guix show sed grep | grep ^name:`"
 test "$output" = "name: sed
 name: grep"
+
+module_dir="t-guix-package-$$"
+mkdir "$module_dir"
+cat > "$module_dir/manifest.scm"<<EOF
+(use-package-modules bootstrap)
+
+(packages->manifest (list %bootstrap-guile))
+EOF
+cat > "$module_dir/manifest2.scm"<<EOF
+(use-modules (gnu packages bootstrap) (guix))
+(define p (package (inherit %bootstrap-guile) (name "eliug")))
+(packages->manifest (list p))
+EOF
+
+guix show -m "$module_dir/manifest.scm" -m "$module_dir/manifest2.scm" hello

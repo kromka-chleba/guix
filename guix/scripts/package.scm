@@ -8,7 +8,7 @@
 ;;; Copyright © 2016 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2020 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2020, 2026 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2018 Steve Sprang <scs@stevesprang.com>
 ;;; Copyright © 2022 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2022 Arun Isaac <arunisaac@systemreboot.net>
@@ -488,7 +488,9 @@ Install, remove, or upgrade packages in a single transaction.\n"))
   -A, --list-available[=REGEXP]
                          list available packages matching REGEXP"))
   (display (G_ "
-      --show=PACKAGE     show details about PACKAGE"))
+      --show=PACKAGE-OR-FILE
+                         show details about PACKAGE or about the manifest
+                         from FILE"))
   (newline)
   (show-build-options-help)
   (newline)
@@ -655,9 +657,11 @@ kind of search path~%")
                            #f)))
          (option '("show") #t #t
                  (lambda (opt name arg result arg-handler)
-                   (values (cons `(query show ,arg)
-                                 result)
-                           #f)))
+                   (let ((query (if (file-exists? arg)
+                                    `(query show (manifest . ,arg))
+                                    `(query show ,arg))))
+                     (values (cons query result)
+                             #f))))
 
          (append %transformation-options
                  %standard-build-options)))
@@ -908,19 +912,35 @@ processed, #f otherwise."
                             (('query 'show requested-name) requested-name)
                             (_                            #f))
                           opts)))
-         (for-each
-          (lambda (requested-name)
-            (let-values (((name version)
-                          (package-name->name+version requested-name)))
-              (match (remove package-superseded
-                             (find-packages-by-name name version))
-                (()
-                 (leave (G_ "~a~@[@~a~]: package not found~%") name version))
-                (packages
-                 (leave-on-EPIPE
-                  (for-each (cute package->recutils <> (current-output-port))
-                            packages))))))
-          requested-names))
+         (let-values (((files requested-names) (partition (match-lambda
+                                                            (('manifest . file) #t)
+                                                            (_                  #f))
+                                                          requested-names)))
+           (let* ((packages-from-command-line
+                   (append-map (lambda (requested-name)
+                                 (let-values (((name version)
+                                               (package-name->name+version requested-name)))
+                                   (match (remove package-superseded
+                                                  (find-packages-by-name name version))
+                                     (()
+                                      (leave (G_ "~a~@[@~a~]: package not found~%") name version))
+                                     (packages packages))))
+                               requested-names))
+                  (files (map (match-lambda (('manifest . file) file)) files))
+                  (packages-from-manifests
+                   (filter-map (lambda (entry)
+                                 (match (manifest-entry-item
+                                         (manifest-entry-with-provenance entry))
+                                   ((? package? package) package)
+                                   (_ #f)))
+                               (manifest-entries
+                                (concatenate-manifests
+                                 (map load-manifest files))))))
+             (for-each (cute package->recutils <> (current-output-port))
+                       (delete-duplicates
+                        (append packages-from-command-line
+                                packages-from-manifests)
+                        eq?)))))
        #t)
 
       (('search-paths kind)

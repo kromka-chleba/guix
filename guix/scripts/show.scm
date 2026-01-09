@@ -32,6 +32,9 @@ Show details about PACKAGE."))
   (display (G_"
 This is an alias for 'guix package --show='.\n"))
   (display (G_ "
+  -m, --manifest=FILE    build the packages that the manifest given in FILE
+                         evaluates to"))
+  (display (G_ "
   -L, --load-path=DIR    prepend DIR to the package module search path"))
   (newline)
   (display (G_ "
@@ -51,6 +54,11 @@ This is an alias for 'guix package --show='.\n"))
                 (lambda args
                   (show-version-and-exit "guix show")))
 
+        (option '(#\m "manifest") #t #f
+                 (lambda (opt name arg result)
+                   (if (file-exists? arg)
+                       (cons `(query show (manifest . ,arg)) result)
+                       (leave (G_ "~a: file not found~%") arg))))
         (find (lambda (option)
                 (member "load-path" (option-names option)))
               %standard-build-options)))

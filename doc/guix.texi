@@ -71,7 +71,7 @@ Copyright @copyright{} 2019 Kyle Andrews@*
 Copyright @copyright{} 2019 Alex Griffin@*
 Copyright @copyright{} 2019, 2020, 2021, 2022 Guillaume Le Vaillant@*
 Copyright @copyright{} 2020 Liliana Marie Prikler@*
-Copyright @copyright{} 2019, 2020, 2021, 2022, 2023 Simon Tournier@*
+Copyright @copyright{} 2019-2023, 2026 Simon Tournier@*
 Copyright @copyright{} 2020 Wiktor Żelazny@*
 Copyright @copyright{} 2020 Damien Cassou@*
 Copyright @copyright{} 2020 Jakub Kądziołka@*
@@ -3505,6 +3505,7 @@ so on.
 of packages:
 
 @findex packages->manifest
+@anchor{example-manifest}
 @lisp
 (use-package-modules guile emacs)
 
@@ -3722,10 +3723,10 @@ $ guix search crypto library | \
 @xref{Selection Expressions,,, recutils, GNU recutils manual}, for more
 information on @dfn{selection expressions} for @code{recsel -e}.
 
-@item --show=@var{package}
-Show details about @var{package}, taken from the list of available packages, in
-@code{recutils} format (@pxref{Top, GNU recutils databases,, recutils, GNU
-recutils manual}).
+@item --show=@var{package-or-file}
+Show details about @var{package-or-file}, taken from the list of
+available packages, in @code{recutils} format (@pxref{Top, GNU recutils
+databases,, recutils, GNU recutils manual}).
 
 @example
 $ guix package --show=guile | recsel -p name,version
@@ -3747,6 +3748,24 @@ $ guix show guile@@3.0.5 | recsel -p name,version
 name: guile
 version: 3.0.5
 @end example
+
+You may also specificy a file that returns a @dfn{manifest} object
+(@xref{Writing Manifests}).  Here using the file defined above
+(@pxref{example-manifest,,manifest file}):
+@example
+$ guix package --show=manifest.scm | recsel -CP name
+emacs
+guile
+@end example
+
+or in combination (this time using the @command{guix show} alias):
+@example
+$ guix show hello -m manifest.scm | recsel -Cp name
+name: hello
+name: emacs
+name: guile
+@end example
+
 
 @item --list-installed[=@var{regexp}]
 @itemx -I [@var{regexp}]
