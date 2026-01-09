@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2019, 2021 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2019, 2021, 2026 Simon Tournier <zimon.toutoune@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -31,14 +31,13 @@
 Show details about PACKAGE."))
   (display (G_"
 This is an alias for 'guix package --show='.\n"))
+  (display (G_ "
+  -L, --load-path=DIR    prepend DIR to the package module search path"))
   (newline)
   (display (G_ "
   -h, --help             display this help and exit"))
   (display (G_ "
   -V, --version          display version information and exit"))
-  (newline)
-  (display (G_ "
-  -L, --load-path=DIR    prepend DIR to the package module search path"))
   (newline)
   (show-bug-report-information))
 
