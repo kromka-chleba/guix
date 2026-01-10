@@ -3463,7 +3463,7 @@ standard output stream.")
 (define-public ruby-fuubar
   (package
     (name "ruby-fuubar")
-    (version "2.3.2")
+    (version "2.5.1")
     (source
      (origin
        ;; Fetch from the git repository, as the gem package doesn't include
@@ -3475,26 +3475,29 @@ standard output stream.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0jm1x2xp13csbnadixaikj7mlkp5yk4byx51npm56zi13izp7259"))))
+         "1mlcs3z9jwa3mqp0xicr24gb0plg31h94gqg38fmv3svr3wxnrhf"))))
     (build-system ruby-build-system)
     (arguments
-     '(;; TODO: Some tests fail, unsure why.
-       ;; 21 examples, 7 failures
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'delete-certificate
-           (lambda _
-             ;; Remove 's.cert_chain' as we do not build with a private key
-             (substitute* "fuubar.gemspec"
-               ((".*cert_chain.*") "")
-               ((".*signing_key.*") ""))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "rspec")))))))
+      (list #:phases
+            #~(modify-phases %standard-phases
+              (add-before 'build 'delete-certificate
+                (lambda _
+                  ;; Remove 's.cert_chain' as we do not build with a private key
+                  (substitute* "fuubar.gemspec"
+                    ((".*cert_chain.*") "")
+                    ((".*signing_key.*") ""))))
+                (add-before 'check 'set-HOME
+                  (lambda _
+                    ;; Many tests invoke Bundler, and fails when Bundler
+                    ;; warns that /homeless-shelter does not exist.
+                    (setenv "HOME" "/tmp")))
+                (replace 'check
+                  (lambda* (#:key tests? #:allow-other-keys)
+                    (when tests?
+                      (invoke "rspec")))))))
     (native-inputs
-     (list bundler))
+     (list ruby-rspec ruby-rubocop ruby-rubocop-performance ruby-rubocop-rspec))
+    (inputs (list ruby-awesome-print))
     (propagated-inputs
      (list ruby-rspec-core ruby-ruby-progressbar))
     (synopsis "Fuubar is an RSpec formatter that uses a progress bar")
