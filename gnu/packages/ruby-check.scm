@@ -623,16 +623,16 @@ to reproduce user environments.")
                (base32
                 "0z7f38iq37h376n9xbl4gajdrnwzq284c9v1py4imw3gri2d5cj6"))))))
 
-(define-public ruby-minitest
+(define-public ruby-minitest-5
   (package
     (name "ruby-minitest")
-    (version "5.19.0")
+    (version "5.27.0")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "minitest" version))
               (sha256
                (base32
-                "0jnpsbb2dbcs95p4is4431l2pw1l5pn7dfg3vkgb4ga464j0c5l6"))))
+                "1mbpz92ml19rcxxfjrj91gmkif9khb1xpzyw38f81rvglgw1ffrd"))))
     (build-system ruby-build-system)
     (native-inputs (list ruby-hoe))
     (home-page "https://github.com/minitest/minitest")
@@ -640,6 +640,8 @@ to reproduce user environments.")
     (description "Minitest provides a complete suite of Ruby testing
 facilities supporting TDD, BDD, mocking, and benchmarking.")
     (license license:expat)))
+
+(define-deprecated-package ruby-minitest ruby-minitest-5)
 
 (define-public ruby-minitest-bonus-assertions
   (package
@@ -689,7 +691,7 @@ instance, it provides @code{assert_true}, @code{assert_false} and
          "13kd2dkd9akfb99ziqndz9mir5iynyfyj2l45mcibab6mq5k8g67"))))
     (build-system ruby-build-system)
     (propagated-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (native-inputs
      (list ruby-hoe))
     (synopsis "Allows a few specific tests to be focused on")
@@ -752,7 +754,7 @@ for specs that share expensive database setup code.")
              (substitute* "test/test_helper.rb"
                (("require 'byebug'") "")))))))
     (native-inputs
-     (list bundler ruby-minitest))
+     (list bundler ruby-minitest-5))
     (synopsis "Extra features and changes to MiniTest")
     (description "@code{MiniTest Moar} add some additional features and
 changes some default behaviours in MiniTest.  For instance, Moar replaces the
@@ -1205,7 +1207,7 @@ in already-indented code.")
 	  ;    (invoke "rake" "autotest")
 	  ;    ))
 	  )))
-    (native-inputs (list ruby-hoe ruby-minitest ruby-rake ruby-rdoc))
+    (native-inputs (list ruby-hoe ruby-minitest-5 ruby-rake ruby-rdoc))
     (synopsis "Ruby test automation and tooling")
     (description
      "ZenTest provides 4 different tools:

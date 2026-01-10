@@ -522,7 +522,7 @@ ascending order")
              (delete-file "spec/lib/given/natural_assertion_spec.rb")
              (delete-file "examples/integration/failing_messages_spec.rb"))))))
     (native-inputs
-     (list ruby-rspec ruby-minitest))
+     (list ruby-rspec ruby-minitest-5))
     (propagated-inputs
      (list ruby-given-core ruby-rspec))
     (synopsis "Given/When/Then for RSpec and Minitest")
@@ -1216,7 +1216,7 @@ syntax to the minimum while remaining clear.")
            ruby-cucumber
            ruby-erubis
            ruby-haml
-           ruby-minitest
+           ruby-minitest-5
            ruby-nokogiri
            ruby-open-uri-cached
            ruby-rouge
@@ -2594,7 +2594,7 @@ building block for authentication strategies.")
          (lambda _
            ;; This is used in the rakefile when running the tests
            (setenv "LIB" "open4"))))))
-  (native-inputs (list ruby-minitest))
+  (native-inputs (list ruby-minitest-5))
   (synopsis "Open child processes from Ruby and manage them easily")
   (description
     "@code{Open4} is a Ruby library to run child processes and manage their
@@ -2652,7 +2652,7 @@ functions.")
     (build-system ruby-build-system)
     (arguments
      (list #:test-target "spec"))
-    (native-inputs (list ruby-minitest
+    (native-inputs (list ruby-minitest-5
                          ruby-minitest-global-expectations))
     (synopsis "ERB template engine for Ruby")
     (description
@@ -2839,7 +2839,7 @@ extensions.")
        (sha256
         (base32 "16jfgrgb3ys7lk4b7m6s5kg3jdd5w976k6hmf1fmbpw254ahgg7i"))))
     (build-system ruby-build-system)
-    (native-inputs (list ruby-minitest ruby-rake-compiler))
+    (native-inputs (list ruby-minitest-5 ruby-rake-compiler))
     (arguments
      (list
       #:gem-flags
@@ -5318,7 +5318,7 @@ Ruby, but can be used for all programs.")
            ruby-rspec
            ruby-wwtd))
     (propagated-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (synopsis "Minitest with extra features")
     (description
      "Maxitest is a wrapper around Minitest with extra functionality such
@@ -5508,7 +5508,7 @@ default (and first) theme.  It's what you get when you run @code{jekyll new}.")
              (substitute* "minitest-around.gemspec"
                (("%q<cucumber>.*") "%q<cucumber>, [\">= 0\"])\n")))))))
     (propagated-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (native-inputs
      (list bundler ruby-cucumber ruby-bump ruby-test-construct))
     (synopsis "Run code around tests in Minitest")
@@ -5529,7 +5529,7 @@ written using either the unit test or spec style.")
                (base32
                 "1c1zq0b1a9y0hbqphq4ybijnjldlis1g6kyhx92q2ynnqfmzhfga"))))
     (build-system ruby-build-system)
-    (propagated-inputs (list ruby-minitest))
+    (propagated-inputs (list ruby-minitest-5))
     (synopsis "Minitest extension to re-run failing tests")
     (description "This package provides the @code{Minitest::Retry} class,
 which extends Minitest to allow retrying tests when they fail.")
@@ -5548,7 +5548,7 @@ which extends Minitest to allow retrying tests when they fail.")
                 "179d6pj56l9xzm46fqsqj10mzjkr1f9fv4cxa8wvchs97hqz33w1"))))
     (build-system ruby-build-system)
     (native-inputs
-     (list ruby-hoe ruby-minitest))
+     (list ruby-hoe ruby-minitest-5))
     (synopsis "Fast test suite runner for minitest")
     (description "Minitest-sprint is a test runner for minitest that makes it
 easier to re-run individual failing tests.")
@@ -5593,7 +5593,7 @@ duration of a block in MiniTest.")
     (native-inputs
      (list ruby-hoe))
     (inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (synopsis "Bacon compatibility library for minitest")
     (description "Minitest-bacon extends minitest with bacon-like
 functionality, making it easier to migrate test suites from bacon to minitest.")
@@ -5611,7 +5611,7 @@ functionality, making it easier to migrate test suites from bacon to minitest.")
                (base32
                 "1dazl6nbxjvvmi5jamrsygkz396s29b7cd841ni6qy4izk8jd9b7"))))
     (build-system ruby-build-system)
-    (propagated-inputs (list ruby-minitest ruby-power-assert))
+    (propagated-inputs (list ruby-minitest-5 ruby-power-assert))
     (synopsis "Power Assert implementation for Minitest")
     (description "This gem provides a Power Assert implementation for
 Minitest.  It is inspired by the @code{test-unit-power_assert} gem.")
@@ -5647,7 +5647,7 @@ slowest tests in a minitest suite.")
                 "0k1hpr8lgkgygfivgcsnnib7xjlf9ribgpn7yidvb4q0l0q2yfmr"))))
     (build-system ruby-build-system)
     (native-inputs (list ruby-hoe))
-    (propagated-inputs (list ruby-minitest))
+    (propagated-inputs (list ruby-minitest-5))
     (synopsis "Assertion-based tests extension for MiniTest")
     (description "The @code{minitest-proveit} MiniTest extension ensures all
 tests to prove success (via at least one assertion) rather than rely on the
@@ -5682,7 +5682,7 @@ absence of failure.")
              (substitute* "minitest-reporters.gemspec"
                ((".*%q<rubocop>.*") "\n")))))))
     (propagated-inputs
-     (list ruby-ansi ruby-builder ruby-minitest ruby-progressbar))
+     (list ruby-ansi ruby-builder ruby-minitest-5 ruby-progressbar))
     (native-inputs
      (list bundler ruby-maruku))
     (synopsis "Enhanced reporting for Minitest tests")
@@ -5712,7 +5712,7 @@ reporter.")
      ;; https://github.com/blowmage/minitest-rg/pull/13
      `(#:tests? #f))
     (propagated-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (synopsis "Coloured output for Minitest")
     (description
      "@code{minitest-rg} changes the colour of the output from Minitest.")
@@ -5733,7 +5733,7 @@ reporter.")
          "1pp3k2608spj4kvqy2y16hs18an917g6vwgvphrfhjviac83090x"))))
     (build-system ruby-build-system)
     (propagated-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (synopsis "Adjust minitest behaviour for calling expectation methods")
     (description
      "Minitest-global_expectations allows continued use of expectation methods
@@ -5852,7 +5852,7 @@ latest version can be made available independently from Ruby.")
                 "0c9rk23ilhc0n4489y6lda2wzphpzh6ish6fahlbpjhxn82wb931"))))
     (build-system ruby-build-system)
     (native-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (synopsis "Recursively merge hashes")
     (description
      "Deep Merge is a set of utility functions for @code{Hash}.  It permits
@@ -6411,7 +6411,7 @@ failure_logger_spec.rb")                      ))
      (list ruby-bump
            ruby-cucumber
            ruby-cuke-modeler
-           ruby-minitest
+           ruby-minitest-5
            ruby-rake
            ruby-rspec
            ruby-spinach))
@@ -6479,7 +6479,7 @@ unique values")
     (build-system ruby-build-system)
     (native-inputs
      (list ruby-hoe
-           ruby-minitest
+           ruby-minitest-5
            ruby-minitest-proveit))
     (synopsis "ParseTree fork which includes generic S-exp processing tools")
     (description "The sexp_processor package is derived from ParseTree, but
@@ -6517,7 +6517,7 @@ Amongst the included tools are @code{Sexp}, @code{SexpProcessor} and
            ruby-racc
            unifdef
            bison
-           ruby-minitest))
+           ruby-minitest-5))
     (propagated-inputs
      (list ruby-sexp-processor))
     (home-page "https://github.com/seattlerb/ruby_parser/")
@@ -6750,7 +6750,7 @@ classes implemented in C.")
                          "xit \"complains when coverage is bad\"")
                         (("it \"does not duplicate coverage\"")
                          "xit \"does not duplicate coverage\"")))))))
-    (native-inputs (list ruby-minitest ruby-mutex-m ruby-rspec ruby-simplecov))
+    (native-inputs (list ruby-minitest-5 ruby-mutex-m ruby-rspec ruby-simplecov))
     (synopsis "Code coverage reporting tool")
     (description
      "This package provides actionable code coverage reports for Ruby
@@ -6772,7 +6772,7 @@ development tools to catch coverage problems early.")
     (build-system ruby-build-system)
     (native-inputs
      (list ruby-hoe
-           ruby-minitest))
+           ruby-minitest-5))
     (synopsis "Ruby lexer")
     (description
      "Oedipus Lex is a lexer generator in the same family as Rexical and Rex.
@@ -7158,7 +7158,7 @@ current line in an external editor.")
     (propagated-inputs
      (list ruby-json))
     (native-inputs
-     (list bundler ruby-minitest ruby-hoe))
+     (list bundler ruby-minitest-5 ruby-hoe))
     (synopsis "Generate searchable RDoc documentation")
     (description
      "SDoc is an RDoc documentation generator to build searchable HTML
@@ -7782,7 +7782,7 @@ It helps you keep your functionality clean and isolated where possible.")
               (substitute* "Rakefile"
                 (("require \"standard/rake\"") "")))))))
     (propagated-inputs (list ruby-crass ruby-nokogiri))
-    (native-inputs (list ruby-minitest))
+    (native-inputs (list ruby-minitest-5))
     (home-page "https://github.com/rgrove/sanitize")
     (synopsis "Whitelist-based HTML and CSS sanitizer")
     (description
@@ -7970,7 +7970,7 @@ with PostgreSQL 9.3 and later.")
            ;; Remove wrappers that try to setup a bundle environment.
            (with-directory-excursion "bin"
              (for-each delete-file '("rake" "rubocop"))
-             ;; ruby-minitest doesn't come with a launcher, so fix the one
+             ;; ruby-minitest-5 doesn't come with a launcher, so fix the one
              ;; provided.
              (substitute* "minitest"
                (("load File\\.expand_path\\(\"bundle\".*") "")
@@ -8006,7 +8006,7 @@ with PostgreSQL 9.3 and later.")
               (setenv "HOME" (getcwd)))))))
     (native-inputs
      (list bundler
-           ruby-minitest
+           ruby-minitest-5
            ruby-pry
            ruby-rake-compiler
            ruby-rubocop
@@ -8046,7 +8046,7 @@ other things and it comes with a command line interface.")
              (substitute* "test/test_netrc.rb"
                (("Dir.pwd, '.netrc'") "Netrc.home_path, '.netrc'")))))))
     (native-inputs
-     (list ruby-minitest))
+     (list ruby-minitest-5))
     (synopsis "Library to read and update netrc files")
     (description
      "This library can read and update netrc files, preserving formatting
@@ -8207,7 +8207,7 @@ generates Ruby program.")
                                   "-"
                                   (number->string (+ 33 size-diff)))))))))))
     (native-inputs
-     (list ruby-minitest
+     (list ruby-minitest-5
            ruby-minitest-global-expectations
            ruby-webrick))
     (synopsis "Unified web application interface for Ruby")
@@ -9137,7 +9137,7 @@ provides shared classes and tests for @code{fog} providers and services.")
                (base32
                 "0f4hbmhy22b1gbkzd3pnj5xvljp6bl7inc2y4fxh29nrmcn4pgb0"))))
     (build-system ruby-build-system)
-    (native-inputs (list ruby-minitest))
+    (native-inputs (list ruby-minitest-5))
     (propagated-inputs (list ruby-fog-core ruby-multi-json))
     (synopsis "JSON parsing tools used by @code{fog} providers")
     (description "This package containse the JSON parsing tools shared between
@@ -9176,7 +9176,7 @@ services library.")
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
                (invoke "bundle" "exec" "rake")))))))
-    (native-inputs (list ruby-minitest ruby-pry ruby-coveralls))
+    (native-inputs (list ruby-minitest-5 ruby-pry ruby-coveralls))
     (propagated-inputs (list ruby-fog-core ruby-nokogiri))
     (synopsis "XML parsing tools used by @code{fog} providers")
     (description "This package containse the XML parsing tools shared between
@@ -9287,7 +9287,7 @@ navigation capabilities to @code{pry}, using @code{byebug}.")
                 (when tests?
                   (invoke "bundle" "exec" "rake" "default")))))))
       (native-inputs
-       (list bundler ruby-minitest ruby-rake-compiler))
+       (list bundler ruby-minitest-5 ruby-rake-compiler))
       (synopsis "Sampling profiler for Ruby code")
       (description
        "@code{stackprof} is a fast sampling profiler for Ruby code, with cpu,
@@ -9481,7 +9481,7 @@ project later switched to the Hippocratic license, which is non-free.
          (add-before 'check 'compile
           (lambda _
             (invoke "rake" "compile"))))))
-    (native-inputs (list bundler ruby-minitest ruby-rake-compiler ruby-rdoc))
+    (native-inputs (list bundler ruby-minitest-5 ruby-rake-compiler ruby-rdoc))
     (propagated-inputs (list ruby-base64))
     (synopsis "Fast code profiler for Ruby")
     (description "RubyProf is a fast code profiler for Ruby.  Its features
@@ -11269,7 +11269,7 @@ secure hash algorithm for hashing passwords.")
                         (add-before 'build 'compile
                           (lambda _
                             (invoke "rake" "compile"))))))
-    (native-inputs (list ruby-minitest ruby-rake-compiler
+    (native-inputs (list ruby-minitest-5 ruby-rake-compiler
                          ruby-rake-compiler-dock ruby-rdoc))
     (synopsis "Reading password encrypted Ed25519 keys in Ruby")
     (description
@@ -12140,7 +12140,7 @@ libraries for compiling Ruby native extensions.")
     (build-system ruby-build-system)
     (native-inputs
      (list ruby-hoe
-           ruby-minitest))
+           ruby-minitest-5))
     (synopsis "RFC 2617 HTTP digest authentication library")
     (description
      "This library implements HTTP's digest authentication scheme based on
@@ -14237,7 +14237,7 @@ for scalable network clients and servers.")
      (list ruby-activesupport
            ruby-benchmark-ips
            ruby-m
-           ruby-minitest
+           ruby-minitest-5
            ruby-minitest-power-assert))
     (synopsis "Language Server Protocol (LSP) development kit for Ruby")
     (description "This package provides a Language Server Protocol (LSP)
@@ -14295,7 +14295,7 @@ method with the wrong arity.")
     ;; Do not run the test suite, as there its test dependency ruby-sord would
     ;; introduce a cycle with ruby-sorbet-runtime.
     (arguments (list #:tests? #f))
-    (native-inputs (list ruby-minitest ruby-pry))
+    (native-inputs (list ruby-minitest-5 ruby-pry))
     (synopsis "Ruby library to control and communicate with spawned processes")
     (description "This Ruby library is controlling and communicating with
 spawned processes.  It is designed after Python's @code{subprocess} module.")
@@ -14472,7 +14472,7 @@ can be used to build formatters, linters, language servers, and more.")
     ;; https://github.com/sorbet/sorbet/issues/6650).
     (arguments (list #:tests? #f))
     (native-inputs
-     (list ruby-minitest
+     (list ruby-minitest-5
            ruby-mocha
            ruby-rubocop
            ruby-rubocop-performance
@@ -15091,7 +15091,7 @@ which snapshots to consider and what files to include.")
           "19qmcdpbh4bl878zd1w19064yjkpb8sxaydcasqfa7p8cfg3hnsr"))))
     (build-system ruby-build-system)
     (native-inputs
-     (list ruby-minitest
+     (list ruby-minitest-5
            ruby-minitest-focus
            ruby-minitest-proveit
            ruby-minitest-reporters
@@ -15848,7 +15848,7 @@ into Money objects.")
     (build-system ruby-build-system)
     (native-inputs
      (list
-      ruby-minitest
+      ruby-minitest-5
       ruby-mocha
       ruby-monetize
       ruby-rake
@@ -16407,7 +16407,7 @@ corresponding HTML @code{link} elements.")
         (base32 "11yc0d84hsnlvx8cpk4cbj6a4dz9pk0r1k29p0n1fz9acddq831c"))))
     (build-system ruby-build-system)
     (arguments '(#:tests? #f))  ;Circular dependency on ruby-standard.
-    (native-inputs (list ruby-minitest))
+    (native-inputs (list ruby-minitest-5))
     (synopsis "Specification for linter and formatter rulesets")
     (description
      "This package provides a plugin specification for Ruby linter and
@@ -16495,7 +16495,7 @@ markdown syntax document and passes the Markdown 1.0 test suite.")
     (build-system ruby-build-system)
     (propagated-inputs (list ruby-latex-decode ruby-racc ruby-rdf
                              ruby-rdf-vocab))
-    (native-inputs (list ruby-cucumber ruby-minitest ruby-yard))
+    (native-inputs (list ruby-cucumber ruby-minitest-5 ruby-yard))
     (arguments
      (list
       #:phases
@@ -16694,7 +16694,7 @@ class.")
               (file-name (git-file-name name version))))
     (build-system ruby-build-system)
     (native-inputs
-     (list ruby-minitest
+     (list ruby-minitest-5
            ruby-rainbow
            ruby-rdoc
            ruby-sdoc))

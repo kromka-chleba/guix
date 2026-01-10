@@ -120,7 +120,7 @@
            ruby-concurrent-ruby
            ruby-connection-pool
            ruby-i18n
-           ruby-minitest
+           ruby-minitest-5
            ruby-msgpack
            ruby-securerandom
            ruby-tzinfo
