@@ -1259,6 +1259,11 @@ cuirass-jobs: $(GOBJECTS)
 .PHONY: update-guix-package update-NEWS cuirass-jobs release
 
 # Git auto-configuration.
+.PHONY: git-hooks  git-hooks
+
+git-config: .git/config git-hooks
+git-hooks: $(addprefix .git/hooks/,$(notdir $(shell find etc/git -type f -executable)))
+
 .git/hooks/:
 	$(AM_V_at)if test -d .git; then \
 	mkdir "$@"; \
