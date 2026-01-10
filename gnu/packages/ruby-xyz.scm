@@ -6589,21 +6589,19 @@ accessories")
 (define-public ruby-progress_bar
   (package
     (name "ruby-progress_bar")
-    (version "1.1.0")
+    (version "1.3.4")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "progress_bar" version))
        (sha256
         (base32
-         "1qc40mr6p1z9a3vlpnsg1zfgk1qswviql2a31y63wpv3vr6b5f48"))))
+         "130w0yf9x5minkf2yscfbv8izc74hjap81g4zfnqxq3m0820xcdd"))))
     (build-system ruby-build-system)
     (arguments
      '(#:test-target "spec"))
-    (propagated-inputs
-     (list ruby-highline ruby-options))
-    (native-inputs
-     (list bundler ruby-rspec ruby-timecop))
+    (propagated-inputs (list ruby-highline ruby-options))
+    (native-inputs (list ruby-rspec ruby-timecop))
     (synopsis
      "Ruby library for displaying progress bars")
     (description
