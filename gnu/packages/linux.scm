@@ -2236,10 +2236,6 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-pocket-reform.dtb")))))))))))
                              "rk3588-mnt-reform2/0072-drm-rockchip-dw_hdmi_qp-Provide-ref-clock-rate-in-dw.patch"
                              "rk3588-mnt-reform2/0073-arm64-defconfig-Enable-DW-HDMI-QP-CEC-support.patch"
                              "rk3588-mnt-reform2/0075-phy-hdmi-Add-HDMI-2.1-FRL-configuration-options.patch"
-                             ;; Already applied upstream:
-                             ;; "rk3588-mnt-reform2/0076-phy-rockchip-samsung-hdptx-Fix-reported-clock-rate-i.patch"
-                             ;; "rk3588-mnt-reform2/0077-phy-rockchip-samsung-hdptx-Reduce-ROPLL-loop-bandwid.patch"
-                             ;; "rk3588-mnt-reform2/0078-phy-rockchip-samsung-hdptx-Prevent-Inter-Pair-Skew-f.patch"
                              "rk3588-mnt-reform2/0079-phy-rockchip-samsung-hdptx-Use-usleep_range-instead-.patch"
                              "rk3588-mnt-reform2/0080-phy-rockchip-samsung-hdptx-Fix-coding-style-alignmen.patch"
                              "rk3588-mnt-reform2/0081-phy-rockchip-samsung-hdptx-Consistently-use-rk_-hdpt.patch"
