@@ -623,8 +623,28 @@ to reproduce user environments.")
                (base32
                 "0z7f38iq37h376n9xbl4gajdrnwzq284c9v1py4imw3gri2d5cj6"))))))
 
+(define-public ruby-minitest-6
+  (package
+    (name "ruby-minitest")
+    (version "6.0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (rubygems-uri "minitest" version))
+              (sha256
+               (base32
+                "1fslin1vyh60snwygx8jnaj4kwhk83f3m0v2j2b7bsg2917wfm3q"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-hoe))
+    (propagated-inputs (list ruby-prism))
+    (home-page "https://github.com/minitest/minitest")
+    (synopsis "Small test suite library for Ruby")
+    (description "Minitest provides a complete suite of Ruby testing
+facilities supporting TDD, BDD, mocking, and benchmarking.")
+    (license license:expat)))
+
 (define-public ruby-minitest-5
   (package
+    (inherit ruby-minitest-6)
     (name "ruby-minitest")
     (version "5.27.0")
     (source (origin
@@ -633,13 +653,8 @@ to reproduce user environments.")
               (sha256
                (base32
                 "1mbpz92ml19rcxxfjrj91gmkif9khb1xpzyw38f81rvglgw1ffrd"))))
-    (build-system ruby-build-system)
     (native-inputs (list ruby-hoe))
-    (home-page "https://github.com/minitest/minitest")
-    (synopsis "Small test suite library for Ruby")
-    (description "Minitest provides a complete suite of Ruby testing
-facilities supporting TDD, BDD, mocking, and benchmarking.")
-    (license license:expat)))
+    (propagated-inputs (list )))) ;; Clear out inherited list
 
 (define-deprecated-package ruby-minitest ruby-minitest-5)
 
