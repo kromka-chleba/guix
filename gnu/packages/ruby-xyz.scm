@@ -12686,6 +12686,25 @@ documentation from the command-line.")
 about the changes.")
     (license license:expat)))
 
+(define-public ruby-sshkey
+  (package
+    (name "ruby-sshkey")
+    (version "3.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "sshkey" version))
+       (sha256
+        (base32 "1k8i5pzjhcnyf0bhcyn5iixpfp4pz0556rcxwpglh6p0sr8s6nv5"))))
+    (build-system ruby-build-system)
+    (propagated-inputs (list ruby-base64))
+    (native-inputs (list ruby-rake ruby-test-unit))
+    (home-page "https://github.com/bensie/sshkey")
+    (synopsis "Generate private/public SSH keypairs using pure Ruby")
+    (description "Generate private and public SSH keys (RSA, DSA, and ECDSA
+supported) using pure Ruby.")
+    (license license:expat)))
+
 (define-public ruby-terminfo
   (let ((commit "f4a597d92dcc465e7b343f9afb8cd45607c8e969")
         (revision "0"))
