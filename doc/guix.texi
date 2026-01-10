@@ -46456,6 +46456,34 @@ The bcachefs-tools package to use, used for resizing the bcachefs file system.
 
 @end table
 
+@cindex unattended-reboot-service-type
+@subsubheading Unattended Reboot Service
+
+@defvar unattended-reboot-service-type
+
+This service type lets you reboot a computer on a given schedule.  Additionally,
+it allows specifying a list of services that must be explicitly stopped before
+rebooting the OS.  It is provided by the @code{(gnu services admin)} module.
+
+@end defvar
+
+@deftp {Data Type} unattended-reboot-configuration
+Available @code{unattended-reboot-configuration} fields are:
+
+@table @asis
+@item @code{schedule} (type: gexp-or-string)
+A string or a gexp representing the frequency of the reboot.  Gexp must
+evaluate to @code{calendar-event} records or to strings.  Strings must contain
+Vixie cron date lines.
+
+@item @code{stop} (default: @code{'()}) (type: list-of-symbols)
+The list of Shepherd services that will be explicitly stopped before running
+the @command{reboot} command.
+
+@end table
+
+@end deftp
+
 @cindex Backup
 @subsubheading Backup Services
 

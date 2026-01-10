@@ -2,7 +2,7 @@
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
-;;; Copyright © 2023 Giacomo Leidi <therewasa@fishinthecalculator.me>
+;;; Copyright © 2023, 2026 Giacomo Leidi <therewasa@fishinthecalculator.me>
 ;;; Copyright © 2024 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2024 Richard Sent <richard@freakingpenguin.com>
 ;;;
@@ -100,7 +100,17 @@
             resize-file-system-configuration-cloud-utils
             resize-file-system-configuration-e2fsprogs
             resize-file-system-configuration-btrfs-progs
-            resize-file-system-configuration-bcachefs-tools))
+            resize-file-system-configuration-bcachefs-tools
+
+            unattended-reboot-configuration
+            unattended-reboot-configuration?
+            unattended-reboot-configuration-fields
+            unattended-reboot-configuration-schedule
+            unattended-reboot-configuration-stop
+
+            unattended-reboot-configuration->shepherd-service
+
+            unattended-reboot-service-type))
 
 ;;; Commentary:
 ;;;
@@ -673,5 +683,77 @@ are booted from a system image flashed onto a larger medium.")
     (list
      (service-extension shepherd-root-service-type
                         (compose list resize-file-system-shepherd-service))))))
+
+
+;;;
+;;; Unattended reboot.
+;;;
+
+(define (gexp-or-string? value)
+  (or (gexp? value)
+      (string? value)))
+
+(define-configuration/no-serialization unattended-reboot-configuration
+  (schedule
+   (gexp-or-string)
+   "A string or a gexp representing the frequency of the reboot.  Gexp must
+evaluate to @code{calendar-event} records or to strings.  Strings must contain
+Vixie cron date lines.")
+  (stop
+   (list-of-symbols '())
+   "The list of Shepherd services that will be explicitly stopped before running
+the @command{reboot} command."))
+
+(define (reboot-program config)
+ (with-imported-modules (source-module-closure '((gnu services herd)))
+   (program-file "unattended-reboot"
+    #~(begin
+        (use-modules (gnu services herd)
+                     (ice-9 format))
+        (let ((services '#$(unattended-reboot-configuration-stop config)))
+          (define reboot
+            #$(file-append shepherd "/sbin/reboot"))
+          (for-each
+           (lambda (service)
+             (format #t "Stopping ~a~%" service)
+             (stop-service service))
+           services)
+          (format #t "Guix System is rebooting...~%")
+          (flush-all-ports)
+          (sleep 1)
+          (execlp reboot reboot))))))
+
+(define (unattended-reboot-configuration->shepherd-service config)
+  (let ((schedule (unattended-reboot-configuration-schedule config))
+        (log-file "/var/log/unattended-reboot.log"))
+    (shepherd-service (provision '(unattended-reboot))
+                      (requirement '(user-processes file-systems))
+                      (modules
+                       '((shepherd service timer)))
+                      (documentation
+                       "Reboot the system on a given schedule.")
+                      (start
+                       #~(make-timer-constructor
+                          (if (string? #$schedule)
+                              (cron-string->calendar-event #$schedule)
+                              #$schedule)
+                          (command
+                           (list #$(reboot-program config)))
+                          #:log-file #$log-file
+                          #:wait-for-termination? #t))
+                      (stop #~(make-timer-destructor))
+                      (actions (list (shepherd-action
+                                      (inherit shepherd-trigger-action)
+                                      (documentation "Manually trigger a reboot,
+without waiting for the scheduled time.")))))))
+
+(define unattended-reboot-service-type
+  (service-type (name 'unattended-reboot)
+                (extensions
+                 (list
+                  (service-extension
+                   shepherd-root-service-type
+                   (compose list unattended-reboot-configuration->shepherd-service))))
+                (description "Reboot the system on a given schedule.")))
 
 ;;; admin.scm ends here
