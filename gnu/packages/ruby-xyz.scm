@@ -12520,6 +12520,28 @@ is part of Ruby's standard library.  It more closely conforms to RFC 3986,
 RFC 3987, and RFC 6570 (level 4), providing support for IRIs and URI templates.")
     (license license:asl2.0)))
 
+(define-public ruby-colored2
+  (package
+    (name "ruby-colored2")
+    (version "4.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "colored2" version))
+       (sha256
+        (base32 "0drbrv5m3l3qpal7s87gvss81cbzl76gad1hqkpqfqlphf0h7qb3"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-rake
+                         ruby-rspec
+                         ruby-rubocop
+                         ruby-rubocop-rake
+                         ruby-rubocop-rspec
+                         ruby-simplecov))
+    (synopsis "ANSI colors in your terminal")
+    (description "Add easy support for printing ANSI colors.")
+    (home-page "https://github.com/kigster/colored2")
+    (license license:expat)))
+
 (define-public ruby-colorize
   (package
     (name "ruby-colorize")
