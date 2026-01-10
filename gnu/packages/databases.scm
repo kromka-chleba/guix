@@ -1557,7 +1557,7 @@ pictures, sounds, or video.")
                (base32
                 "0misc5yiklflz96n7wxcdzzg0lcc4ahd0flzqsg6mcjs955krajr"))))))
 
-(define-public postgresql-13
+(define-deprecated/public postgresql-13 #f
   (package
     (inherit postgresql-14)
     (version "13.23")
