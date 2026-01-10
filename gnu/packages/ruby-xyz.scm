@@ -6617,13 +6617,13 @@ rate.")
 (define-public ruby-progressbar
   (package
     (name "ruby-progressbar")
-    (version "1.10.1")
+    (version "1.13.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "ruby-progressbar" version))
        (sha256
-        (base32 "1k77i0d4wsn23ggdd2msrcwfy0i376cglfqypkk2q77r2l3408zf"))))
+        (base32 "0cwvyb7j47m7wihpfaq7rc47zwwx9k4v7iqd9s1xch5nm53rrz40"))))
     (build-system ruby-build-system)
     (arguments
      '(;; TODO: There looks to be a circular dependency with ruby-fuubar.
