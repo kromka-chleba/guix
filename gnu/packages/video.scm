@@ -1764,7 +1764,7 @@ operate properly.")
       (list dav1d
             fontconfig
             freetype
-            frei0r-plugins
+            frei0r-plugins-api
             gnutls
             opus
             ladspa
@@ -5913,25 +5913,74 @@ these formats and provides some elementary operations (copying, scaling,
 alpha blending etc).")
     (license license:gpl3)))
 
-(define-public frei0r-plugins
+(define-public frei0r-plugins-api
   (package
-    (name "frei0r-plugins")
-    (version "2.5.0")
+    (name "frei0r-plugins-api")
+    (version "1.2")
     (source
      (origin
        (method git-fetch)
        (file-name (git-file-name name version))
        (uri (git-reference
              (url "https://github.com/dyne/frei0r")
+             (commit "v2.5.1")))
+       (sha256
+        (base32 "13ba6cvgjzmw7pp8k8ra4gxfxdw89p871w75nz4ymk32xsy1c1fy"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan '(("include/frei0r.h" "include/")
+                        ("include/frei0r.hpp" "include/")
+                        ("frei0r.pc" "lib/pkgconfig/"))
+       #:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'write-pkg-config-file
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let* ((out (assoc-ref outputs "out"))
+                             (include-dir (string-append out "/include")))
+                        (with-output-to-file "frei0r.pc"
+                          (lambda _
+                            (format #t
+                             "Name: frei0r
+Description: minimalistic plugin API for video effects
+Version: ~a
+Libs:
+Cflags: -I~a"
+                             ,version include-dir)))))))))
+    (home-page "https://dyne.org/software/frei0r/")
+    (synopsis "Public API of frei0r")
+    (description
+     "Public header files of frei0r, a large collection of free and portable
+video plugins.")
+    (license license:gpl2+)))
+
+(define-public frei0r-plugins
+  (package
+    (name "frei0r-plugins")
+    (version "2.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dyne/frei0r")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0i8cxi9hzwazv12wlcf4nd6am9ajbq5k7vc3308j0w8fyisjfi14"))))
+        (base32 "13ba6cvgjzmw7pp8k8ra4gxfxdw89p871w75nz4ymk32xsy1c1fy"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ;package does not contain any tests
        ;; disable opencv because it creates a circlar dependency for ffmpeg
-       #:configure-flags '("-DWITHOUT_OPENCV:BOOL=ON")))
-    (inputs (list gavl cairo))
+       #:configure-flags '("-DWITHOUT_OPENCV:BOOL=ON")
+       #:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'delete-public-api-headers
+                    (lambda _
+                      (delete-file "include/frei0r.h")
+                      (delete-file "include/frei0r.hpp")))
+                  (add-after 'unpack 'prevent-installation-of-pkg-config-file
+                    (lambda _
+                      (substitute* "CMakeLists.txt"
+                        (("^install.*frei0r\\.pc.*pkgconfig.*$")
+                         "")))))))
+    (inputs (list cairo gavl))
+    (propagated-inputs (list frei0r-plugins-api))
     (native-inputs (list pkg-config))
     (home-page "https://dyne.org/software/frei0r/")
     (synopsis "Large collection of free and portable video plugins")
