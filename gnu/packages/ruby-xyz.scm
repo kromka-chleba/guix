@@ -11968,14 +11968,14 @@ can be used to e.g. hyperlink Markdown documentation between project files.")
 (define-public ruby-timecop
   (package
     (name "ruby-timecop")
-    (version "0.9.6")
+    (version "0.9.10")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "timecop" version))
        (sha256
         (base32
-         "0dlx4gx0zh836i7nzna03xdl7fc233s5z6plnr6k3kw46ah8d1fc"))))
+         "1syq1hdxq13ggy5c4sfk2378kzc1cgxdyv6b8c86pkydaz74bfhj"))))
     (build-system ruby-build-system)
     (arguments
      (list
