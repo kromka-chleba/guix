@@ -1535,48 +1535,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_VHOST_VDPA" . m))
                       (default-extra-linux-options linux-libre-lts-version))))
 
-(define-public reform-debian-packages-for-6.17
-  (package
-    (name "reform-debian-packages")
-    (version "2023-07-10-496-gd25e032") ;from git describe
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://source.mnt.re/reform/reform-debian-packages.git")
-             (commit "d25e032b53d231c43d23248518e9bba681858739")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1pyf7lfkjwa244bq7kqbg0ri4bn6n5l0siy9g4igw3nhrll57d5a"))))
-    (build-system copy-build-system)
-    (arguments
-     (list
-      #:install-plan
-      #~'(("linux/patches6.17/" "/patches6.17")
-          ("linux/" "/dts/amlogic"
-           #:include-regexp ("meson.*\\.dts$"))
-          ("linux/" "/dts/freescale"
-           #:include-regexp ("imx8.*\\.dts$"))
-          ("linux/" "/dts/freescale"
-           #:include-regexp ("fsl.*\\.dts$"))
-          ("linux/" "/dts/rockchip"
-           #:include-regexp ("rk3588.*\\.dts$"))
-          ("linux/config" "config"))))
-    (home-page "https://source.mnt.re/reform/reform-debian-packages")
-    (synopsis
-     "Linux kernel patches and device-trees used for MNT Reform systems")
-    (description
-     "Linux kernel patches and device-trees used for the MNT Reform systems")
-    (license (list
-              (license:fsf-free "file://filter-output"
-                                "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html")
-              license:bsd-2
-              license:expat
-              license:gpl2
-              license:gpl2+
-              license:gpl3
-              license:x11))))
-
 (define-public reform-debian-packages-for-6.18
   (package
     (name "reform-debian-packages")
@@ -1664,16 +1622,16 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 (define-public reform-debian-packages-for-6.17
   (package
     (name "reform-debian-packages")
-    (version "2023-07-10-485-g133081d") ;from git describe
+    (version "2023-07-10-496-gd25e032") ;from git describe
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://source.mnt.re/reform/reform-debian-packages.git")
-             (commit "133081db414ee31ea2751e5152223859d709751f")))
+             (commit "d25e032b53d231c43d23248518e9bba681858739")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "06234a91mkriyx8afm6dppr35r47wsm61dacwixlna22zbxgicgc"))))
+        (base32 "1pyf7lfkjwa244bq7kqbg0ri4bn6n5l0siy9g4igw3nhrll57d5a"))))
     (build-system copy-build-system)
     (arguments
      (list
