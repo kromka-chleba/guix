@@ -698,40 +698,39 @@ RSpec tests.")
     (license license:expat)))
 
 (define-public ruby-rspec-stubbed-env
-  ;; There is no release nor tag (see:
-  ;; https://github.com/pboling/rspec-stubbed_env/issues/7).
-  (let ((revision "0")
-        (commit "9d767dec77a6d130f6ad83c48a00a5c81b14b9fa"))
-    (package
-      (name "ruby-rspec-stubbed-env")
-      (version (git-version "1.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/pboling/rspec-stubbed_env")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1dy4m04h613dp0s59rknjd6h4lqs1h17mffc5kd8kh046mk8nr1p"))))
-      (build-system ruby-build-system)
-      (arguments
-       (list #:test-target "spec"
-             #:phases #~(modify-phases %standard-phases
-                          (add-after 'unpack 'streamline-requirements
-                            (lambda _
-                              ;; Remove extraneous development dependencies.
-                              (substitute* "rspec-stubbed_env.gemspec"
-                                ((".*bundler.*") "")
-                                ((".*rubocop.*") "")))))))
-      (native-inputs (list ruby-simplecov))
-      (propagated-inputs (list ruby-rspec))
-      (synopsis "RSpec plugin to stub environment variables")
-      (description
-       "This RSpec plugin can be used to stub environment variables in a scoped
+  (package
+    (name "ruby-rspec-stubbed-env")
+    (version "1.0.1") ;Newer versions require packages not in guix
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/galtzo-floss/rspec-stubbed_env")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wlixpr01f26nn44aa7kn6zagnzhn5cwjyirlgw87vcppkyimbp7"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list ;#:test-target "spec"
+            #:phases
+            #~(modify-phases %standard-phases
+              (add-before 'build 'delete-certificate
+                (lambda _
+                  ;; Remove 's.cert_chain' as we do not build with a private key
+                  (substitute* "rspec-stubbed_env.gemspec"
+                    ((".*cert_chain.*") "")
+                    ((".*signing_key.*") ""))))
+                  (add-before 'check 'disable-coverage-check
+                    (lambda _
+                      (setenv "CI" "1"))))))
+    (native-inputs (list ruby-rake ruby-rspec ruby-rspec-block-is-expected))
+    (synopsis "RSpec plugin to stub environment variables")
+    (description
+     "This RSpec plugin can be used to stub environment variables in a scoped
 context for testing.")
-      (home-page "https://github.com/pboling/rspec-stubbed_env")
-      (license license:expat))))
+    (home-page "https://rspec-stubbed-env.galtzo.com/")
+    (license license:expat)))
 
 (define-public ruby-rspec-wait
   (package
