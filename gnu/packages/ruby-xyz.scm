@@ -8762,6 +8762,10 @@ run.")
                           (target-riscv64?)))
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'loosen-dependencies
+           (lambda _
+             (substitute* "rubocop.gemspec"
+               (("'unicode\\-display\\_width'.*") "'unicode-display_width')\n"))))
          (add-before 'check 'set-home
            (lambda _
              (setenv "HOME" (getcwd))))
