@@ -1535,25 +1535,24 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_VHOST_VDPA" . m))
                       (default-extra-linux-options linux-libre-lts-version))))
 
-(define-public reform-debian-packages
+(define-public reform-debian-packages-for-6.17
   (package
     (name "reform-debian-packages")
-    (version "2023-07-10-475-ge469c2a") ;from git describe
+    (version "2023-07-10-496-gd25e032") ;from git describe
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://source.mnt.re/reform/reform-debian-packages.git")
-             (commit "e469c2ad131054c7afe4f9f059eb2eb575545b1a")))
+             (commit "d25e032b53d231c43d23248518e9bba681858739")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pv24b317n4h71rn25v2wa3qhs1i0wjfpys899cpm5lf0irvis7q"))))
+        (base32 "1pyf7lfkjwa244bq7kqbg0ri4bn6n5l0siy9g4igw3nhrll57d5a"))))
     (build-system copy-build-system)
     (arguments
      (list
       #:install-plan
-      #~'(("linux/patches6.16/" "/patches6.16")
-          ("linux/patches6.17/" "/patches6.17")
+      #~'(("linux/patches6.17/" "/patches6.17")
           ("linux/" "/dts/amlogic"
            #:include-regexp ("meson.*\\.dts$"))
           ("linux/" "/dts/freescale"
