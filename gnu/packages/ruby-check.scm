@@ -821,6 +821,19 @@ skipped.")
     (home-page "https://github.com/ivantsepp/minitest-skip")
     (license license:expat)))
 
+(define-public ruby-minitest-skip-0
+  (package
+    (inherit ruby-minitest-skip-1)
+    (name "ruby-minitest-skip")
+    (version "0.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "minitest-skip" version))
+       (sha256
+        (base32 "0qn5mvrb0d29f6b7r5jdnjv3585r4qkspj8x34ngr9103z03yasi"))))
+    (propagated-inputs (list ruby-minitest-5))))
+
 (define-public ruby-multi-test
   (package
     (name "ruby-multi-test")
