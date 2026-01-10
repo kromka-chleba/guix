@@ -40,6 +40,6 @@ system (X, Wayland).")
            #:button-callback-procedure
            (lambda _
              (abort-to-prompt 'installer-step 'abort)))))
-    (when (equal? result "Hurd")
-      (%current-target-system "i586-pc-gnu"))
+    (%current-target-system
+     (if (equal? result "Hurd") "i586-pc-gnu" #f))
     result))
