@@ -10729,6 +10729,24 @@ display width of strings in Ruby.")
     (home-page "https://github.com/janlelis/unicode-display_width")
     (license license:expat)))
 
+(define-public ruby-unicode-version
+  (package
+    (name "ruby-unicode-version")
+    (version "1.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "unicode-version" version))
+       (sha256
+        (base32 "0q2dy0vq6gd4x3lg9h09qv0fvafh7n227kiqbv9a74qiwcqiaxr7"))))
+    (build-system ruby-build-system)
+    (arguments (list #:tests? #f)) ;; Test data not included.
+    (synopsis "Check Unicode and Emoji support")
+    (description "Makes it easy to check for Unicode and Emoji support of your
+current Ruby (and older Rubies)")
+    (home-page "https://github.com/janlelis/unicode-version")
+    (license license:expat)))
+
 ;; There is another gem called 'ruby-version' so we use an underscore in this
 ;; name
 (define-public ruby_version
