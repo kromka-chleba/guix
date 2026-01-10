@@ -658,6 +658,27 @@ facilities supporting TDD, BDD, mocking, and benchmarking.")
 
 (define-deprecated-package ruby-minitest ruby-minitest-5)
 
+(define-public ruby-minitest-autotest
+  (package
+    (name "ruby-minitest-autotest")
+    (version "1.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "minitest-autotest" version))
+       (sha256
+        (base32 "13ccna0x1hk46hhdyminn3mqpsb22sc1ax4391ilraqhd6daf74p"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-hoe ruby-rdoc))
+    (propagated-inputs (list ruby-minitest-6))
+    (home-page "https://github.com/seattlerb/minitest-autotest")
+    (synopsis "Small test suite library for Ruby")
+    (description
+     "@emph{minitest-autotest} is a continous testing facility meant to be used
+during development. As soon as you save a file, minitest-autotest will run the
+corresponding dependent tests.")
+    (license license:expat)))
+
 (define-public ruby-minitest-bonus-assertions
   (package
     (name "ruby-minitest-bonus-assertions")
