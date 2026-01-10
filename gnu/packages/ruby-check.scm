@@ -798,6 +798,29 @@ MiniTest @code{Object#stub} with a global @code{stub} method.")
     (home-page "https://github.com/dockyard/minitest-moar")
     (license license:expat)))
 
+(define-public ruby-minitest-skip-1
+  (package
+    (name "ruby-minitest-skip")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "minitest-skip" version))
+       (sha256
+        (base32 "1bys99rhyws2axwq7lz99ly268qv75zw4qf029ijc3sif5v7wpjy"))))
+    (build-system ruby-build-system)
+    (native-inputs (list bundler ruby-rake))
+    (propagated-inputs (list ruby-minitest-6))
+    (synopsis "Alternative ways to skip tests in Minitest")
+    (description
+     "@code{MiniTest Skip} expands the availible options and syntax
+for skipping tests in minitest, including providing compatiblity with the spec
+spec style methods.  The new methods fully skip the tests and remove the need
+for minitest to skip the setup and teardown stages of tests that are to be
+skipped.")
+    (home-page "https://github.com/ivantsepp/minitest-skip")
+    (license license:expat)))
+
 (define-public ruby-multi-test
   (package
     (name "ruby-multi-test")
