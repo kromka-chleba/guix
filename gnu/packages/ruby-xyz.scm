@@ -12508,6 +12508,7 @@ RFC 3987, and RFC 6570 (level 4), providing support for IRIs and URI templates."
        (sha256
         (base32 "0drbrv5m3l3qpal7s87gvss81cbzl76gad1hqkpqfqlphf0h7qb3"))))
     (build-system ruby-build-system)
+    (arguments (list #:test-target "spec"))
     (native-inputs (list ruby-rake
                          ruby-rspec
                          ruby-rubocop
