@@ -6539,16 +6539,25 @@ back to Ruby via the @code{ruby2ruby} library.")
                (base32
                 "1dfcy4bz7kgmp4i7kvqg2w5l9rsf6vp9hhqqfg4ydds60yazjc2r"))))
     (build-system ruby-build-system)
-    (arguments
+    (arguments ;; TODO: Cleanup the substitutes and remove any unneccessary ones
      (list #:phases
            #~(modify-phases %standard-phases
                (add-after 'extract-gemspec 'relax-requirements
                  (lambda _
                    (delete-file "Gemfile.lock")
+                   ;; Remove the included gem files as they unnecessary.
+                   ;(delete-file-recursively "pkg/")
+                   ;; Accept any version of rake, rdoc and rspec
                    (substitute* "ruby_version.gemspec"
+                     (("%q<rake.*") "%q<rake>)\n")
+                     (("%q<rdoc.*") "%q<rdoc>)\n")
+                     (("%q<rspec.*") "%q<rspec>)\n")
                      (("\"Gemfile.lock\".freeze, ") "")
-                     ;; Allow a newers versions of development dependencies.
-                     (("~>") ">=")))))))
+                     ;; Allow newer versions of development dependencies.
+                     (("~>") ">="))
+                   ;; Do not use bundler.
+                   (substitute* "Rakefile"
+                     (("Bundler\\.setup.*") "nil\n")))))))
     (native-inputs (list ruby-rdoc ruby-rubygems-tasks ruby-rspec))
     (synopsis "Ruby class for checking the Ruby version")
     (description "This package provides a @code{RubyVersion} class which
