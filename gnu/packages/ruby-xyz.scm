@@ -16399,58 +16399,44 @@ and Nokogiri.")
        (sha256
         (base32 "1y83wzvhilyfqpn37d6rc23wl0p03q03wb5m1jdr10va7x1jh0dk"))))
     (build-system ruby-build-system)
-    (native-inputs (list ruby-hoe
-                         ;; ruby-hoe-highline
-                         ;; ruby-hoe-mercurial
-                         ruby-rake
-                         ruby-rake-compiler
-                         ruby-rspec
-                         ;; ruby-tidy-ext
-                         ))
+    (native-inputs
+      (list ruby-hoe-3
+            ruby-hoe-highline
+            ruby-hoe-mercurial
+            ruby-rake
+            ruby-rake-compiler
+            ruby-rspec
+            ruby-tidy-ext))
     (arguments
      (list
-      #:tests? #f ;TODO: need to tinker with these more
       #:phases
       #~(modify-phases %standard-phases
-          ;; (add-after 'unpack 'patch-minitest
-          ;; (lambda _
-          ;; (substitute* "test/lib/test_case.rb"
-          ;; (("MiniTest::Unit::TestCase")
-          ;; "Minitest::Test"))))
-          (add-after 'unpack 'patch
+          (add-after 'unpack 'fix-ruby-deprecations
             (lambda _
+              (substitute* (find-files "spec" "\\.rb$")
+                (("be\\_true") "be_truthy")
+                (("be\\_false") "be_falsey"))
               (substitute* "Rakefile"
-                ;; Update the Rakefile so it works
-                ;; (("-rubygems") "-rrubygems")
-                (("Config::")
-                 "RbConfig::"))))
-          ;; (add-before 'check 'set-LIB
-          ;; (lambda _
-          ;; ;; This is used in the rakefile when running the tests
-          ;; (setenv "LIB" "open4")))
-          ;; (replace 'check
-          ;; (lambda* (#:key tests? #:allow-other-keys)
-          ;; (when tests?
-          ;; (invoke "rspec" "spec" ))))
-          )))
-    ;; (arguments
-    ;; (list
-    ;; #:phases
-    ;; #~(modify-phases %standard-phases
-    ;; (replace 'check
-    ;; (lambda* (#:key tests? #:allow-other-keys)
-    ;; (when tests?
-    ;; (invoke "rspec" "spec" )))))))
+                (("Config::") "RbConfig::"))
+              ;; We need to do a multi-line match, using multiple passes
+              (substitute* "spec/bluecloth_spec.rb"
+                ((".*taint.*") "FIRSTPASS")
+                ((".*a string.*") "FIRSTPASS"))
+              (substitute* "spec/bluecloth_spec.rb"
+                ((".*FIRSTPASS.*") ""))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "rake" "spec")))))))
     (home-page "https://github.com/ged/bluecloth")
     (synopsis "Ruby implementation of Markdown")
     (description
      "BlueCloth is a Ruby implementation of John Gruber’s
 @url{Markdown, http://daringfireball.net/projects/markdown/}, a text-to-HTML
-conversion tool for web writers. To quote from the project page: Markdown allows
-you to write using an easy-to-read, easy-to-write plain text format, then
+conversion tool for web writers.  To quote from the project page: Markdown
+allows you to write using an easy-to-read, easy-to-write plain text format, then
 convert it to structurally valid XHTML (or HTML).")
-    (license (list license:bsd-3
-                   (license:x11-style "file://LICENSE.discount")))))
+    (license (list license:bsd-3 license:bsd-4))))
 
 (define-public ruby-wapiti
   (package
