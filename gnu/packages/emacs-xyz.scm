@@ -16,7 +16,7 @@
 ;;; Copyright © 2016, 2019 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2016-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2016, 2017, 2018 Alex Vong <alexvong1995@gmail.com>
-;;; Copyright © 2016-2022, 2024–2025 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2016-2022, 2024–2026 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2017 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2017, 2018, 2019, 2020, 2022 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2017, 2018, 2019, 2020, 2021, 2022 Clément Lassieur <clement@lassieur.org>
@@ -2543,7 +2543,7 @@ Forgejo-based (e.g. Codeberg) repositories.")
 (define-public emacs-magit
   (package
     (name "emacs-magit")
-    (version "4.4.2")
+    (version "4.5.0")
     (source
      (origin
        (method git-fetch)
@@ -2552,7 +2552,7 @@ Forgejo-based (e.g. Codeberg) repositories.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lsxldyjv2h69657pgrblhkxq8fvc0xdwlwpfmd09pb8zawygh2g"))))
+        (base32 "04yxjkv5h3arcj1s0nq9kyh3l1z4c9wml35vb67jvv1h7mslwz55"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -2565,7 +2565,9 @@ Forgejo-based (e.g. Codeberg) repositories.")
               (invoke "make" "-C" ".." "info")
               ;; Copy info files to the lisp directory, which acts as
               ;; the root of the project for the emacs-build-system.
-              (rename-file "../docs/magit.info" "../lisp/magit.info")))
+              (for-each (lambda (file)
+                          (install-file file "../lisp"))
+                        (find-files "../docs" "\\.info"))))
           (add-after 'unpack 'patch-version-executables
             (lambda* (#:key inputs #:allow-other-keys)
               (emacs-substitute-variables "magit.el"
@@ -6362,7 +6364,7 @@ Emacs buffer.")
 (define-public emacs-varuga
   (package
     (name "emacs-varuga")
-    (version "0.1.0")
+    (version "0.2.0")
     (source
      (origin
        (method git-fetch)
@@ -6372,7 +6374,7 @@ Emacs buffer.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "01hlnhqhys8qzfwhza1ypc436zg5lhlkx5yy71bhmrbmyfzfh0fr"))))
+         "1x7jzvg1dxv381qlqdsa3knj3i4xcv6gy16834wzpfkfz6jb0240"))))
     (build-system emacs-build-system)
     (home-page "https://git.systemreboot.net/varuga/about/")
     (synopsis "Send iCal calendar invites by email")
