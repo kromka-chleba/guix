@@ -57,7 +57,8 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages ruby))
+  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-xyz))
 
 ;;; Commentary:
 ;;;
@@ -1166,6 +1167,58 @@ unindent strings, which can be useful to unindent multiline strings embedded
 in already-indented code.")
   (home-page "https://github.com/mynyml/unindent")
   (license license:expat)))
+
+(define-public ruby-zentest
+  (package
+    (name "ruby-zentest")
+    (version "4.12.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/seattlerb/zentest")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "199n4a0vpii9bbkgm1nrg4r2a5rsq0j785prph06j8kqrfpiwr2v"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list
+	#:phases
+	#~(modify-phases %standard-phases
+          (delete 'replace-git-ls-files)
+	  (replace 'build
+	    (lambda _
+	      (invoke "rake" "package")))
+	  (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+	      (setenv "GEM_HOME" (string-append (assoc-ref outputs "out")
+						"/lib/ruby/vendor_ruby"))
+	      ;(invoke "rake" "install_gem")))
+	      (invoke "gem" "install" "--local" (string-append "pkg/ZenTest-*.gem") (string-append "--install-dir=" #$output))))
+	  ;(add-after 'install 'run-audit
+	  ;  (lambda _
+	  ;    ;; Post install tests expect to have access to the installed commands
+	  ;    (setenv "PATH" (string-append (getenv "PATH") ":" #$output "/bin"))
+	  ;    (setenv "GEM_PATH" (string-append (getenv "GEM_PATH") ":" #$output "/lib/ruby/vendor_ruby"))
+	  ;    ;(invoke "rake" "audit")
+	  ;    (invoke "rake" "autotest")
+	  ;    ))
+	  )))
+    (native-inputs (list ruby-hoe ruby-minitest ruby-rake ruby-rdoc))
+    (synopsis "Ruby test automation and tooling")
+    (description
+     "ZenTest provides 4 different tools:
+@enumerate
+@item zentest - Scans your target and unit-test code and writes missing code
+based on simple rules
+@item unit_diff - Command line filter to diff expected results from actual
+results
+@item autotest - Continuous testing, automatically running tests on file save
+@item multiruby - Test code against multiple ruby versions
+@end enumerate")
+    (home-page "https://github.com/seattlerb/zentest")
+    (license license:expat)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
