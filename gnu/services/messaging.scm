@@ -5,6 +5,7 @@
 ;;; Copyright © 2018 Pierre-Antoine Rouby <contact@parouby.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2026 Giacomo Leidi <therewasa@fishinthecalculator.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -30,12 +31,15 @@
   #:autoload   (gnu packages rust-apps) (mollysocket)
   #:use-module (gnu packages tls)
   #:use-module (gnu services)
+  #:use-module (gnu services admin)
   #:use-module (gnu services shepherd)
   #:use-module (gnu services configuration)
   #:use-module (gnu system shadow)
   #:autoload   (gnu build linux-container) (%namespaces)
   #:use-module ((gnu system file-systems) #:select (file-system-mapping))
+  #:use-module (guix diagnostics)
   #:use-module (guix gexp)
+  #:use-module (guix i18n)
   #:use-module (guix modules)
   #:use-module (guix records)
   #:use-module (guix packages)
@@ -208,7 +212,33 @@
             mollysocket-configuration-allowed-uuids
             mollysocket-configuration-db
             mollysocket-configuration-vapid-key-file
-            mollysocket-service-type))
+            mollysocket-service-type
+
+            %default-soju-shepherd-requirement
+
+            soju-configuration
+            soju-configuration?
+            soju-configuration-fields
+            soju-configuration-soju
+            soju-configuration-debug?
+            soju-configuration-listen
+            soju-configuration-hostname
+            soju-configuration-title
+            soju-configuration-ssl-certificate
+            soju-configuration-ssl-certificate-key
+            soju-configuration-datadir
+            soju-configuration-log-file
+            soju-configuration-shepherd-requirement
+            soju-configuration-db-driver
+            soju-configuration-db-source
+            soju-configuration-extra-content
+
+            soju-configuration->mixed-text-file
+            soju-activation
+            soju-accounts
+            soju-shepherd-services
+
+            soju-service-type))
 
 ;;; Commentary:
 ;;;
@@ -2386,3 +2416,251 @@ if it does not exist.")
                                          mollysocket-activation-service)))
     (default-value (mollysocket-configuration))
     (description "UnifiedPush provider for the Signal client Molly.")))
+
+
+;;;
+;;; Soju
+;;;
+
+(define %default-soju-shepherd-requirement
+  '(user-processes loopback))
+
+(define (sanitize-soju-db-driver value)
+  (if (or (eq? value 'sqlite3)
+          (eq? value 'postgres))
+      (symbol->string value)
+      (raise
+       (formatted-message
+        (G_ "db-driver can be either 'sqlite3 or 'postgres but ~a was found")
+        value))))
+
+(define-configuration/no-serialization soju-configuration
+  (soju
+   (package soju)
+   "Soju package to use for the service.")
+  (debug?
+   (boolean #f)
+   "Enable debug logging (this will leak sensitive information such as
+passwords).  This can be overriden at run time with the service command
+@code{server debug}.")
+  (listen
+   (list-of-strings '(":6697"))
+   "Listening URI.  The following URIs are supported:
+
+@itemize
+
+@item @code{[ircs://][host][:port]} listens with TLS over TCP (default port if
+omitted: 6697)
+@item @code{irc://localhost[:port]} listens with plain-text over TCP (default
+port if omitted: 6667, host must be @code{\"localhost\"})
+@item @code{irc+insecure://[host][:port]} listens with plain-text over TCP
+(default port if omitted: 6667)
+@item @code{unix://<path>} listens on a Unix domain socket
+@item @code{https://[host][:port]} listens for HTTPS connections (default port:
+443) and handles the following requests: @code{/socket} for WebSocket and
+@code{/uploads} (and subdirectories) for file uploads
+@item @code{http://localhost[:port]} listens for plain-text HTTP connections
+(default port: 80, host must be @code{\"localhost\"}) and handles requests like
+@code{https://} does
+@item @code{http+insecure://[host][:port]} listens for plain-text HTTP
+connections (default port: 80) and handles requests like @code{https://} does
+@item @code{http+unix://<path>} listens for plain-text HTTP connections on a
+Unix domain socket and handles requests like @code{https://} does
+@item @code{wss://[host][:port]} listens for WebSocket connections over TLS
+(default port: 443)
+@item @code{ws://localhost[:port]} listens for plain-text WebSocket connections
+(default port: 80, host must be @code{\"localhost\"})
+@item @code{ws+insecure://[host][:port]} listens for plain-text WebSocket
+connections (default port: 80)
+@item @code{ws+unix://<path>} listens for plain-text WebSocket connections on a
+Unix domain socket
+@item @code{ident://[host][:port]} listens for plain-text ident connections
+(default port: 113)
+@item @code{http+prometheus://localhost:<port>} listens for plain-text HTTP
+connections and serves Prometheus metrics (host must be @code{\"localhost\"})
+@item @code{http+pprof://localhost:<port>} listens for plain-text HTTP
+connections and serves pprof runtime profiling data (host must be
+@code{\"localhost\"}). For more information, see
+@url{https://pkg.go.dev/net/http/pprof,upstream} documentation
+@item @code{unix+admin://[path]} listens on a Unix domain socket for
+administrative connections, such as sojuctl (default path:
+@code{/run/soju/admin})
+
+@end itemize
+
+If the scheme is omitted, @code{ircs} is assumed.  If multiple @code{listen}
+values are specified, soju will listen on each of them.")
+  (hostname
+   (maybe-string)
+   "Server hostname, it defaults to the system hostname.  This should be set to
+a fully qualified domain name.")
+  (title
+   (string)
+   "Server title. This will be sent as the @code{ISUPPORT NETWORK} value when
+clients don't select a specific network.")
+  (ssl-certificate
+   (maybe-string)
+   "Where to find the certificate for secure connections.  If set together with
+@code{ssl-certificate-key}, this field will have the service run under root
+privileges.")
+  (ssl-certificate-key
+   (maybe-string)
+   "Where to find the private key for secure connections.  If set together with
+@code{ssl-certificate}, this field will have the service run under root
+privileges.")
+  (datadir
+   (string "/var/lib/soju")
+   "The name of the directory where soju will write its state.")
+  (shepherd-requirement
+   (list %default-soju-shepherd-requirement)
+   "A list of Shepherd services to use.  Add extra dependencies to
+@code{%default-soju-shepherd-requirement} to extend its value.")
+  (log-file
+   (string "/var/log/soju.log")
+   "The name of the file where soju will write its logs.")
+  (db-driver
+   (symbol 'sqlite3)
+   "Set the database driver for user, network and channel storage.
+
+Supported drivers:
+
+@itemize
+@item @code{'sqlite3}
+@item @code{'postgres}
+@end itemize"
+   (sanitizer sanitize-soju-db-driver))
+  (db-source
+   (maybe-string)
+   "Set the database location for user, network and channel storage.  By
+default, a sqlite3 database is opened in the directory specified in the
+@code{datadir} field.
+
+In general the driver expect the following:
+
+@itemize
+@item @code{'sqlite3} expects source to be a path to the SQLite file
+@item @code{'postgres} expects source to be a space-separated list of
+@code{key=value} parameters, e.g. @code{\"host=/run/postgresql dbname=soju\"}.
+Note that @code{sslmode defaults} to @code{require}.  For more information on
+connection strings, see
+@url{https://pkg.go.dev/github.com/lib/pq#hdr-Connection_String_Parameters,
+upstream}'s documentation.
+@end itemize")
+  (extra-content
+   (string "")
+   "Extra content to append to the configuration as-is."))
+
+(define (soju-needs-privileges? config)
+  ;; NOTE: Certificates on the Guix System are only readable by root. In case a
+  ;; certificate and a private key are passed no unprivileged users will be
+  ;; added to the system.
+  (and (maybe-value-set?
+        (soju-configuration-ssl-certificate config))
+       (maybe-value-set?
+        (soju-configuration-ssl-certificate-key config))))
+
+(define (soju-db-source config)
+  (let ((datadir (soju-configuration-datadir config))
+        (driver (soju-configuration-db-driver config))
+        (source (soju-configuration-db-source config)))
+    (if (maybe-value-set? source)
+        source
+        (if (string=? driver "sqlite3")
+            (string-append datadir "/soju.db")
+            (raise
+             (G_ "db-source can't be empty when db-driver is set to 'postgres.
+Make sure to pass a connection string"))))))
+
+(define (soju-configuration->mixed-text-file config)
+  (let ((hostname (soju-configuration-hostname config))
+        (ssl-certificate (soju-configuration-ssl-certificate config))
+        (ssl-certificate-key (soju-configuration-ssl-certificate-key config)))
+    (mixed-text-file "soju.conf"
+     #~(string-join (map (lambda (l) (string-append "listen " l))
+                         (list #$@(soju-configuration-listen config)))
+                    "\n")
+     "\n" (if (maybe-value-set? hostname)
+              #~(string-append "hostname " #$hostname "\n")
+              "")
+     #~(string-append "title \"" #$(soju-configuration-title config) "\"\n")
+     (if (and (maybe-value-set? ssl-certificate)
+              (maybe-value-set? ssl-certificate-key))
+         #~(string-append "tls " #$ssl-certificate " " #$ssl-certificate-key
+                          "\n")
+         "")
+     #~(string-append "db " #$(soju-configuration-db-driver config)
+                      " " #$(soju-db-source config)
+                      "\n"
+                      #$(soju-configuration-extra-content config)
+                      "\n"))))
+
+(define (soju-activation config)
+  (let ((datadir (soju-configuration-datadir config))
+        (user-name
+         (if (soju-needs-privileges? config) "root" "soju")))
+    #~(let* ((user (getpwnam #$user-name))
+             (uid (passwd:uid user))
+             (gid (passwd:gid user))
+             (datadir #$datadir))
+        ;; Setup datadir
+        (mkdir-p datadir)
+        (chown datadir uid gid)
+        (for-each (lambda (f) (chown f uid gid))
+                  (find-files datadir ".*")))))
+
+(define (soju-accounts config)
+  (if (soju-needs-privileges? config)
+      '()
+      (list (user-group (name "soju") (system? #t))
+            (user-account
+              (name "soju")
+              (group "soju")
+              (system? #t)
+              (comment "soju server user")
+              (home-directory "/var/empty")
+              (shell (file-append shadow "/sbin/nologin"))))))
+
+(define (soju-shepherd-services config)
+  (match-record config <soju-configuration>
+                (soju debug? datadir log-file shepherd-requirement
+                      ssl-certificate ssl-certificate-key)
+    (let ((user-name (if (soju-needs-privileges? config) "root" "soju"))
+          (soju-binary (file-append soju "/bin/soju"))
+          (config-file (soju-configuration->mixed-text-file config)))
+      (list (shepherd-service
+               (provision '(soju))
+               (documentation "Run the soju daemon.")
+               (requirement shepherd-requirement)
+               (start #~(make-forkexec-constructor
+                           (list #$soju-binary
+                                  #$@(if debug? '("-debug") '())
+                                  "-config" #$config-file)
+                           #:log-file #$log-file
+                           #:user #$user-name
+                           #:group #$user-name))
+               (stop #~(make-kill-destructor))
+               (actions
+                (list
+                 (shepherd-action
+                   (name 'reload)
+                   (documentation "Reload soju configuration file and restart
+it.  It is useful for situations where the same soju configuration file can
+point to different things after a reload, such as renewed TLS certificates.")
+                   (procedure
+                    #~(lambda (process . args)
+                        (kill (process-id process) SIGHUP))))
+                 (shepherd-configuration-action config-file))))))))
+
+(define soju-service-type
+  (service-type (name 'soju)
+                (extensions
+                 (list (service-extension shepherd-root-service-type
+                                          soju-shepherd-services)
+                       (service-extension log-rotation-service-type
+                                          (compose
+                                           list soju-configuration-log-file))
+                       (service-extension activation-service-type
+                                          soju-activation)
+                       (service-extension account-service-type
+                                          soju-accounts)))
+                (description "Run the soju IRC bouncer.")))
