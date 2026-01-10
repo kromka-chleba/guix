@@ -3496,7 +3496,7 @@ standard output stream.")
     (native-inputs
      (list bundler))
     (propagated-inputs
-     (list ruby-rspec-core ruby-progressbar))
+     (list ruby-rspec-core ruby-ruby-progressbar))
     (synopsis "Fuubar is an RSpec formatter that uses a progress bar")
     (description
      "Fuubar is an RSpec formatter that uses a progress bar instead of a
@@ -5683,7 +5683,7 @@ absence of failure.")
              (substitute* "minitest-reporters.gemspec"
                ((".*%q<rubocop>.*") "\n")))))))
     (propagated-inputs
-     (list ruby-ansi ruby-builder ruby-minitest-5 ruby-progressbar))
+     (list ruby-ansi ruby-builder ruby-minitest-5 ruby-ruby-progressbar))
     (native-inputs
      (list bundler ruby-maruku))
     (synopsis "Enhanced reporting for Minitest tests")
@@ -6621,9 +6621,9 @@ rate.")
     (home-page "https://github.com/paul/progress_bar")
     (license license:wtfpl2)))
 
-(define-public ruby-progressbar
+(define-public ruby-ruby-progressbar
   (package
-    (name "ruby-progressbar")
+    (name "ruby-ruby-progressbar")
     (version "1.13.0")
     (source
      (origin
@@ -6641,6 +6641,8 @@ rate.")
 The output can be customized with a formatting system.")
     (home-page "https://github.com/jfelchner/ruby-progressbar")
     (license license:expat)))
+
+(define-deprecated-package ruby-progressbar ruby-ruby-progressbar) ;; Package was incorrectly named
 
 (define-public ruby-latest-ruby
   (package
@@ -8798,7 +8800,7 @@ run.")
            ruby-language-server-protocol
            ruby-parallel
            ruby-parser
-           ruby-progressbar
+           ruby-ruby-progressbar
            ruby-rainbow
            ruby-regexp-parser
            ruby-rexml
@@ -13010,7 +13012,7 @@ interface.  It allows Jekyll to rebuild your site when a file changes.")
            ruby-rspec-rerun
            bundler
            ruby-activerecord
-           ruby-progressbar
+           ruby-ruby-progressbar
            ruby-bump
            procps
            lsof
