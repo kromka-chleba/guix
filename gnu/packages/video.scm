@@ -172,6 +172,7 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages hunspell)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages image-processing)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages iso-codes)
   #:use-module (gnu packages kde-frameworks)
@@ -5967,8 +5968,6 @@ video plugins.")
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ;package does not contain any tests
-       ;; disable opencv because it creates a circlar dependency for ffmpeg
-       #:configure-flags '("-DWITHOUT_OPENCV:BOOL=ON")
        #:phases (modify-phases %standard-phases
                   (add-after 'unpack 'delete-public-api-headers
                     (lambda _
@@ -5979,7 +5978,7 @@ video plugins.")
                       (substitute* "CMakeLists.txt"
                         (("^install.*frei0r\\.pc.*pkgconfig.*$")
                          "")))))))
-    (inputs (list cairo gavl))
+    (inputs (list cairo gavl opencv))
     (propagated-inputs (list frei0r-plugins-api))
     (native-inputs (list pkg-config))
     (home-page "https://dyne.org/software/frei0r/")
