@@ -16527,6 +16527,23 @@ instructions to unicode.  If you are in a hurry, it also allows for easy
 export/conversion to formats such as YAML, JSON, CSL, and XML (BibTeXML).")
     (license license:gpl3+)))
 
+(define-public ruby-unicode
+  (package
+    (name "ruby-unicode")
+    (version "0.4.4.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "unicode" version))
+       (sha256
+        (base32 "1mx9lwzy021lpcqql5kn4yi20njhf5h7c7wxm2fx51p1r2zr9wj2"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-rake-compiler ruby-rake-compiler-dock))
+    (home-page "https://github.com/blackwinter/unicode")
+    (synopsis "Ruby Unicode normalization library")
+    (description "Unicode string manipulation library for Ruby.")
+    (license license:ruby)))
+
 (define-public ruby-unicode-emoji
   (package
     (name "ruby-unicode-emoji")
