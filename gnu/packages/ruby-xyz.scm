@@ -1318,7 +1318,7 @@ Style Sheets (CSS) rule sets in Ruby.")
 (define-public ruby-prism
   (package
     (name "ruby-prism")
-    (version "1.3.0")
+    (version "1.7.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1327,7 +1327,7 @@ Style Sheets (CSS) rule sets in Ruby.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "03bs2gbackc3c3k4p979l2p9v215jb1m5h7b44n6yzh18kaimc85"))))
+                "0f7cbvjdszw04wrb9p06g6f32czqh02yb4b33k2lr9dlv0wj550h"))))
     (build-system ruby-build-system)
     (arguments
      `(#:phases
