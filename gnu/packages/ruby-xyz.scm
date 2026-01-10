@@ -10745,45 +10745,7 @@ current Ruby (and older Rubies)")
     (home-page "https://github.com/janlelis/unicode-version")
     (license license:expat)))
 
-;; There is another gem called 'ruby-version' so we use an underscore in this
-;; name
-(define-public ruby_version
-  (package
-    (name "ruby_version")
-    (version "1.0.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (rubygems-uri "ruby_version" version))
-       (sha256
-        (base32
-         "0lvc7bd5ps3w2vq2wb02i0pi3vfcx2rnckx2ix4rjym1qf52kb2j"))))
-    (build-system ruby-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'fix-dependencies
-           (lambda _
-             ;; Remove the Gemfile.lock, as we want to use Guix packages at
-             ;; whatever versions.
-             (delete-file "Gemfile.lock")
-             ;; Remove the included gem files as they unnecessary.
-             (delete-file-recursively "pkg/")
-             ;; Accept any version of rake, rdoc and rspec
-             (substitute* "ruby_version.gemspec"
-               (("%q<rake.*") "%q<rake>)\n")
-               (("%q<rdoc.*") "%q<rdoc>)\n")
-               (("%q<rspec.*") "%q<rspec>)\n"))
-             ;; Do not use bundler.
-             (substitute* "Rakefile"
-               (("Bundler\\.setup.*") "nil\n")))))))
-    (native-inputs
-     (list ruby-rdoc ruby-rspec ruby-rubygems-tasks))
-    (synopsis "Ruby library to help check the Ruby version")
-    (description "@code{ruby_version} provides a @code{RubyVersion} module to simplify
-checking for the right Ruby version in software.")
-    (home-page "https://github.com/janlelis/ruby_version")
-    (license license:expat)))
+(define-deprecated-package ruby_version ruby-ruby-version) ;; Old duplicate package
 
 (define-public ruby-websocket-client-simple
   (package
