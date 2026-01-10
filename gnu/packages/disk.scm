@@ -1537,7 +1537,7 @@ on your file system and offers to remove it.  @command{rmlint} can find:
 (define-public lf
   (package
     (name "lf")
-    (version "37")
+    (version "40")
     (source
      (origin
        (method git-fetch)
@@ -1546,12 +1546,23 @@ on your file system and offers to remove it.  @command{rmlint} can find:
               (commit (string-append "r" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0m2h0dnxbfqsnafy9bwvis35k0197zn768r764zs53qg9f3fdc93"))))
+        (base32 "1q5gj2cmdlr5lmbdcprf9x5izsidh7h41akyxaky2wmkhzmyzxil"))))
     (build-system go-build-system)
     (arguments
-     (list
-      #:install-source? #f
-      #:import-path "github.com/gokcehan/lf"))
+     (list #:install-source? #f
+           #:import-path "github.com/gokcehan/lf"
+           #:phases
+           #~(modify-phases %standard-phases
+              (add-after 'install 'install-man-page
+                (lambda* (#:key import-path #:allow-other-keys)
+                  (install-file
+                   (string-append "src/" import-path "/lf.1")
+                   (string-append #$output "/share/man/man1"))))
+              (add-after 'install 'install-desktop-entry
+                (lambda* (#:key import-path #:allow-other-keys)
+                  (install-file
+                   (string-append "src/" import-path "/lf.desktop")
+                   (string-append #$output "/share/applications")))))))
     (native-inputs
      (list go-github-com-djherbis-times
            go-github-com-fsnotify-fsnotify
