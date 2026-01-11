@@ -8934,6 +8934,34 @@ figure out how many times to run the code to get interesting data.")
     (home-page "https://github.com/evanphx/benchmark-ips")
     (license license:expat)))
 
+(define-public ruby-benchmark-trend
+  (package
+    (name "ruby-benchmark-trend")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "benchmark-trend" version))
+       (sha256
+        (base32
+         "10axhj80jan0b7c77hm0aj2yxv0dh9clfy4pppxvxfj3yjlh4nny"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list
+        #:phases
+        #~(modify-phases %standard-phases
+          (replace 'check (lambda _ (invoke "rspec"))))))
+    (native-inputs (list ruby-rake ruby-rspec))
+    (synopsis "Measure performance trends of Ruby code")
+    (description "@code{Benchmark::Trend} measures performance trends of Ruby
+code based on the input size distribution.  @code{Benchmark::Trend} will help
+you estimate the computational complexity of Ruby code by running it on inputs
+increasing in size, measuring their execution times, and then fitting these
+observations into a model that best predicts how a given Ruby code will scale
+as a function of growing workload.")
+    (home-page "https://github.com/piotrmurach/benchmark-trend")
+    (license license:expat)))
+
 (define-public ruby-ffi-rzmq-core
   (package
     (name "ruby-ffi-rzmq-core")
