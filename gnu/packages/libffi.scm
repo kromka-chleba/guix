@@ -219,7 +219,7 @@ project.")
 (define-public ruby-ffi
   (package
     (name "ruby-ffi")
-    (version "1.15.5")
+    (version "1.17.3")
     (source (origin
               ;; Pull from git because the RubyGems release bundles LibFFI,
               ;; and comes with a gemspec that makes it difficult to unbundle.
@@ -230,7 +230,7 @@ project.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qk55s1zwpdjykwkj9l37m71i5n228i7f8bg3ply3ks9py16m7s6"))))
+                "0v63xbv4bc882sqilnmha3a3nzcbnk61qj72g6qc3a48fdmz02w8"))))
     (build-system ruby-build-system)
     (arguments
      `(#:phases
