@@ -2364,7 +2364,7 @@ because the NUMBER is zero.)"
   (let ((profile (and=> (getenv "HOME")
                         (cut string-append <> "/.guix-profile"))))
     (if (file-exists? profile) profile
-        (string-append (config-directory) "/profile"))))
+        (string-append (xdg-config-directory) "/profile"))))
 
 (define %profile-directory
   (string-append %state-directory "/profiles/"
@@ -2436,7 +2436,7 @@ as if '-p' was omitted."  ; see <http://bugs.gnu.org/17939>
 
 (define %known-shorthand-profiles
   ;; Known shorthand forms for profiles that the user manipulates.
-  (list (string-append (config-directory #:ensure? #f) "/current")
+  (list (string-append (xdg-config-directory #:ensure? #f) "/current")
         %user-profile-directory))
 
 (define (user-friendly-profile profile)

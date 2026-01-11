@@ -1115,11 +1115,17 @@ environment variable name like \"XDG_CONFIG_HOME\"; SUFFIX is a suffix like
       (mkdir-p dir))
     dir))
 
-(define config-directory
+(define xdg-cache-directory
+  (cut xdg-directory "XDG_CACHE_HOME" "/.cache" <...>))
+
+(define xdg-config-directory
   (cut xdg-directory "XDG_CONFIG_HOME" "/.config" <...>))
 
-(define cache-directory
-  (cut xdg-directory "XDG_CACHE_HOME" "/.cache" <...>))
+(define xdg-data-directory
+  (cut xdg-directory "XDG_STATE_HOME" "/.local/share" <...>))
+
+(define xdg-state-directory
+  (cut xdg-directory "XDG_STATE_HOME" "/.local/state" <...>))
 
 (define (readlink* file)
   "Call 'readlink' until the result is not a symlink."

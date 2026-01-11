@@ -38,7 +38,7 @@
   #:autoload   (ice-9 rdelim) (read-line)
   #:autoload   (guix base32) (bytevector->base32-string)
   #:autoload   (rnrs bytevectors) (string->utf8)
-  #:autoload   (guix utils) (config-directory cache-directory)
+  #:autoload   (guix utils) (xdg-config-directory xdg-cache-directory)
   #:autoload   (guix describe) (current-channels)
   #:autoload   (guix channels) (channel-commit)
   #:autoload   (gcrypt hash) (sha256)
@@ -207,7 +207,7 @@ interactive shell in that environment.\n"))
 (define (authorized-directory-file)
   "Return the name of the file listing directories for which 'guix shell' may
 automatically load 'guix.scm' or 'manifest.scm' files."
-  (string-append (config-directory) "/shell-authorized-directories"))
+  (string-append (xdg-config-directory) "/shell-authorized-directories"))
 
 (define (authorized-shell-directory? directory)
   "Return true if DIRECTORY is among the authorized directories for automatic
@@ -334,7 +334,7 @@ echo ~a >> ~a
 
 (define %legacy-cache-directory
   ;; Former cache directory, by default under $HOME/.cache.
-  (string-append (cache-directory #:ensure? #f) "/profiles"))
+  (string-append (xdg-cache-directory #:ensure? #f) "/profiles"))
 
 (define (profile-cache-primary-key)
   "Return the \"primary key\" used when computing keys for the profile cache.

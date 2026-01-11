@@ -631,7 +631,7 @@ all are dependent packages: ~{~a~^ ~}~%")
                                   (%gpg-command)))
                              (current-keyring
                               (or (assoc-ref opts 'keyring)
-                                  (string-append (config-directory)
+                                  (string-append (xdg-config-directory)
                                                  "/upstream/trustedkeys.kbx"))))
                 (let* ((spec->location
                         (compose package-location

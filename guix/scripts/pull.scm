@@ -510,7 +510,7 @@ true, display what would be built without actually building it."
 
 (define %user-profile-directory
   ;; The user-friendly name of %CURRENT-PROFILE.
-  (string-append (config-directory #:ensure? #f) "/current"))
+  (string-append (xdg-config-directory #:ensure? #f) "/current"))
 
 (define (ensure-default-profile)
   (ensure-profile-directory)
@@ -718,7 +718,7 @@ transformations specified in OPTS (resulting from '--url', '--commit', or
     (assoc-ref opts 'ignore-channel-files?))
 
   (define default-file
-    (string-append (config-directory) "/channels.scm"))
+    (string-append (xdg-config-directory) "/channels.scm"))
 
   (define global-file
     (string-append %sysconfdir "/guix/channels.scm"))

@@ -29,7 +29,7 @@
   #:use-module ((srfi srfi-34) #:select (raise))
   #:use-module (guix diagnostics)
   #:use-module (guix i18n)
-  #:use-module ((guix utils) #:select (config-directory))
+  #:use-module ((guix utils) #:select (xdg-config-directory))
   #:use-module ((guix build utils) #:select (mkdir-p))
   #:export (%gpg-command
             %openpgp-key-server
@@ -55,7 +55,7 @@
 
 (define current-keyring
   ;; The default keyring of "trusted keys".
-  (make-parameter (string-append (config-directory #:ensure? #f)
+  (make-parameter (string-append (xdg-config-directory #:ensure? #f)
                                  "/gpg/trustedkeys.kbx")))
 
 (define %openpgp-key-server

@@ -623,7 +623,7 @@ desktop session from the system or user profile will be used."
                                 (lambda (pw)
                                   (string-append (passwd:dir pw) "/.guix-profile")))))
             (if (file-exists? profile) profile
-                     (string-append (config-directory) "/profile"))))
+                     (string-append (xdg-config-directory) "/profile"))))
 
 
         (define (xsession-command desktop-file)
@@ -1151,7 +1151,7 @@ argument.")))
                                (lambda (pw)
                                  (string-append (passwd:dir pw) "/.guix-profile")))))
            (if (file-exists? profile) profile
-               (string-append (config-directory) "/profile"))))
+               (string-append (xdg-config-directory) "/profile"))))
 
        (define home-profile
          (and=> (getpw (getuid))

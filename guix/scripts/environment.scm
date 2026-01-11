@@ -960,7 +960,7 @@ WHILE-LIST."
              ;; request it be purified again.
              (launch-environment command
                                  (if link-profile?
-                                     (string-append (config-directory) "/profile")
+                                     (string-append (xdg-config-directory) "/profile")
                                      profile)
                                  manifest #:pure? #f
                                  #:emulate-fhs? emulate-fhs?)))
@@ -1042,7 +1042,7 @@ directory determined by 'user-override-home'; otherwise, return DIR."
 
 (define (link-environment profile)
   "Create a symbolic link from ~/.config/guix/profile to PROFILE."
-  (let ((profile-dir (string-append (config-directory) "/profile")))
+  (let ((profile-dir (string-append (xdg-config-directory) "/profile")))
     (catch 'system-error
       (lambda ()
         (symlink profile profile-dir))
