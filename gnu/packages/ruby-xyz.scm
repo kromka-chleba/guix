@@ -14826,19 +14826,17 @@ entities.")
     (home-page "https://github.com/threedaymonk/htmlentities")
     (license license:expat)))
 
-;;; FIXME: Currently broken with rack 3, awaiting the merge for
-;;; https://github.com/sinatra/sinatra/pull/1857 and a new release.
 (define-public ruby-sinatra
   (package
     (name "ruby-sinatra")
-    (version "3.0.5")
+    (version "3.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "sinatra" version))
        (sha256
         (base32
-         "1ryfja9yd3fq8n1p5yi3qnd0pjk7bkycmxxmbb1bj0axlr1pdv20"))))
+         "01wq20aqk5kfggq3wagx5xr1cz0x08lg6dxbk9yhd1sf0d6pywkf"))))
     (build-system ruby-build-system)
     (propagated-inputs
      (list ruby-mustermann ruby-rack ruby-rack-protection ruby-tilt))
