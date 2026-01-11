@@ -3974,14 +3974,14 @@ package provides an API for comparing Golden files.")
     (version "0.0.0-20250910184208-1e3a578dd00d")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (go-version->git-ref version
                                           #:subdir "exp/slice"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jbyg0ar8cz5f1lfnsqrzsbl51c74xf27v065nwcw78b26i7mg2g"))))
+        (base32 "18rj7aakx6fk9hq5v802mpby204cwfg92fifsni36klkdhh5dnv6"))))
     (build-system go-build-system)
     (arguments
      (list
