@@ -23,23 +23,32 @@
   #:export (run-kernel-page))
 
 (define (run-kernel-page)
-  (let* ((kernels `(,@(if (target-x86?) '("Hurd") '())
-                    "Linux Libre"))
+  (let* ((hurd-label
+          ;; TRANSLATORS: "Hurd" is a proper noun and must not be translated.
+          (G_ "Hurd (experimental)"))
+         (kernels `("Linux Libre"
+                    ,@(if (target-x86?)
+                          (list hurd-label)
+                          '())))
          (result
           (run-listbox-selection-page
            #:title (G_ "Kernel")
            #:info-text
            (G_ "Please select a kernel.  When in doubt, choose \"Linux Libre\".
+
 The Hurd is offered as a technology preview and development aid; many packages \
 are not yet available in Guix, such as a desktop environment or even a windowing \
 system (X, Wayland).")
            #:listbox-items kernels
            #:listbox-item->text identity
            #:listbox-default-item "Linux Libre"
+           #:sort-listbox-items? #f               ;keep Linux first
            #:button-text (G_ "Back")
            #:button-callback-procedure
            (lambda _
              (abort-to-prompt 'installer-step 'abort)))))
-    (when (equal? result "Hurd")
-      (%current-target-system "i586-pc-gnu"))
-    result))
+    (if (equal? result hurd-label)
+        (begin
+          (%current-target-system "i586-pc-gnu")
+          "Hurd")
+        result)))
