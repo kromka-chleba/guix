@@ -10338,6 +10338,39 @@ TomDoc format.")
     (home-page "http://rubyworks.github.com/tomparse/")
     (license license:bsd-2)))
 
+(define-public ruby-tool
+  (package
+    (name "ruby-tool")
+    (version "0.2.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "tool" version))
+       (sha256
+        (base32
+         "1iymkxi4lv2b2k905s9pl4d9k9k4455ksk3a98ssfn7y94h34np0"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list #:phases
+            #~(modify-phases %standard-phases
+              (add-after 'unpack 'remove-coveralls-requirement
+                (lambda _
+                  (substitute* "spec/support/coverage.rb"
+                    (("require 'coveralls'") "")
+                    (("Coveralls::SimpleCov::Formatter") ""))
+                  (substitute* "tool.gemspec"
+                    ((".*'coveralls'.*") "\n"))))
+              (replace 'check
+                (lambda* (#:key tests? #:allow-other-keys)
+                  (when tests?
+                    (invoke "rspec" "spec" "-w" "-f" "d")))))))
+    (native-inputs
+     (list ruby-rake ruby-rspec ruby-simplecov))
+    (synopsis "General purpose utility library")
+    (description "General purpose Ruby library providing various utilities.")
+    (home-page "http://rubyworks.github.com/yard-tomdoc/")
+    (license license:expat)))
+
 (define-public ruby-yard-tomdoc
   (package
     (name "ruby-yard-tomdoc")
