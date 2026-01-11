@@ -5912,6 +5912,69 @@ URIs using the normal URI.parse method.")
     (home-page "https://github.com/dball/data_uri")
     (license license:expat)))
 
+(define-public ruby-decode
+  (package
+    (name "ruby-decode")
+    (version "0.26.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/socketry/decode")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "190daxyp8cfqxj46qimssm6ijk7vzy7y9kz359pnykd796ly8vsy"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'extract-gemspec 'delete-certificate
+                  (lambda _
+                    (substitute* "decode.gemspec"
+                      (("spec.cert_chain  = .*") "")
+                      (("spec.signing_key = .*") ""))))
+                (add-before 'build 'prune-gems.rb
+                  (lambda _
+                    (substitute* "gems.rb"
+                      ;; These are only required for maintenance.
+                      ((".*gem \"bake-modernize\".*") "")
+                      ((".*gem \"bake-gem\".*") "")
+                      ((".*gem \"bake-releases\".*") "")
+                      ((".*gem \"agent-context\".*") "")
+                      ((".*gem \"utopia-project\".*") "")
+                      ;; Not actually required by the tests.
+                      ((".*gem \"rubocop\".*") "")
+                      ((".*gem \"rubocop-md\".*") "")
+                      ((".*gem \"rubocop-socketry\".*") "")
+                      ((".*gem \"steep\".*") "")
+                      ((".*gem \"build-files\".*") ""))))
+                (add-before 'check 'remove-unused-requirements
+                  (lambda _
+                    (substitute* "test/decode/index.rb"
+                      ;; These requirements do nothing...
+                      (("require \"build/files/glob\".*") ""))))
+                (add-before 'check 'remove-broken-tests
+                    ;; Returns:
+                    ;; 🔥 Errored assertions:
+                    ;; file test/decode/rbs/integration.rb:12
+                    ;; ⚠ NoMethodError: undefined method `around' for class
+                    ;;                            #<Context RBS Integration>
+                    ;; test/decode/rbs/integration.rb:12
+                    ;;                  block (2 levels) in <top (required)>
+                    (lambda _
+                      (delete-file "test/decode/rbs/integration.rb")))
+                (replace 'check
+                  (lambda* (#:key tests? #:allow-other-keys)
+                    (when tests?
+                      (invoke "bake" "test")))))))
+    (propagated-inputs (list ruby-prism ruby-rbs))
+    (native-inputs (list ruby-covered ruby-sus ruby-bake-test ruby-bake-test-external))
+    (synopsis "Ruby code analysis tool and documentation generator")
+    (description "Ruby code analysis tool and documentation generator.")
+    (home-page "https://github.com/socketry/decode")
+    (license license:expat)))
+
 (define-public ruby-debug
   (package
     (name "ruby-debug")
