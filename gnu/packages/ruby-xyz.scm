@@ -12879,6 +12879,27 @@ supported) using pure Ruby.")
 strings or files.")
     (license license:expat)))
 
+(define-public ruby-digest
+  (package
+    (name "ruby-digest")
+    (version "3.2.1")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference (url "https://github.com/ruby/digest")
+                            (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+          (base32 "0xcb6lr2wc53y1clwik2wfnfbydmmvdln7nbyghbq4m9pxxfgs8y"))))
+    (native-inputs (list ruby-rake-compiler
+                         ruby-test-unit
+                         ruby-test-unit-ruby-core))
+    (build-system ruby-build-system)
+    (home-page "https://github.com/ruby/digest")
+    (synopsis "Provides a framework for message digest libraries")
+    (description "Provides a framework for message digest libraries.")
+    (license (list license:bsd-2 license:ruby))))
+
 (define-public ruby-sass-spec
   (package
     (name "ruby-sass-spec")
