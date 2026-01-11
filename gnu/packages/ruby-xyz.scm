@@ -6389,7 +6389,7 @@ then be analyzed or manipulated more easily than the underlying AST layer.")
 (define-public ruby-parallel-tests
   (package
     (name "ruby-parallel-tests")
-    (version "4.9.0")
+    (version "5.5.0")
     (home-page "https://github.com/grosser/parallel_tests")
     (source (origin
               (method git-fetch)
@@ -6399,7 +6399,7 @@ then be analyzed or manipulated more easily than the underlying AST layer.")
               (file-name (string-append name version))
               (sha256
                (base32
-                "0ljb17i1bvlr0y1avwishcrg60h48bj6iwgkp8yrck08wcs7b338"))))
+                "014r47iswc31n00pcjz1zysyynlgr9s2wzf6gangl4c67835xmyf"))))
     (build-system ruby-build-system)
     (arguments
      '(#:test-target "spec"             ;avoid rubocop dependency
