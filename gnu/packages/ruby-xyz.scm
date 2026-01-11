@@ -9436,6 +9436,32 @@ variable length integers (varint) in Ruby Protocol Buffers.")
     (home-page "https://github.com/liquidm/varint")
     (license license:bsd-3)))
 
+(define-public ruby-version
+  (package
+    (name "ruby-version")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "version" version))
+       (sha256
+        (base32 "1jhss2shm9ib41f91f4bqbrzrgn0d6m4n6s62221lmx4bd51v5h9"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:test-target "spec"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'load-spec-helper
+            (lambda _
+              (setenv "SPEC_OPTS" "--require spec_helper"))))))
+    (native-inputs (list ruby-rake ruby-rspec ruby-rspec-its))
+    (synopsis "Simple version-numbering encoding and helper methods")
+    (description "Version is a simple wrapper around the concept of
+version-numbering schemes.")
+    (home-page "https://github.com/stouset/version")
+    (license license:expat)))
+
 (define-public ruby-version-gem
   (package
     (name "ruby-version-gem")
