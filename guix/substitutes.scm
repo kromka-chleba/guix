@@ -83,7 +83,7 @@
       (or (and=> (getenv "XDG_CACHE_HOME")
                  (cut string-append <> "/guix/substitute"))
           (string-append %state-directory "/substitute/cache"))
-      (string-append (cache-directory #:ensure? #f) "/substitute")))
+      (string-append (xdg-cache-directory #:ensure? #f) "/substitute")))
 
 (define %debug?
   ;; Enable debug mode by setting the GUIX_SUBSTITUTE_DEBUG environmnent

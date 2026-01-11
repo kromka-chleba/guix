@@ -27,7 +27,7 @@
                 #:select (%current-system
                           call-with-temporary-directory
                           version>? version-prefix?
-                          cache-directory))
+                          xdg-cache-directory))
   #:use-module ((guix store)
                 #:select (store-connection-socket
                           store-connection-major-version
@@ -866,7 +866,7 @@ failing when GUIX is too old and lacks the 'guix repl' command."
 
 (define %legacy-inferior-cache-directory
   ;; Former directory for cached inferiors, by default under $HOME/.cache.
-  (string-append (cache-directory #:ensure? #f) "/inferiors"))
+  (string-append (xdg-cache-directory #:ensure? #f) "/inferiors"))
 
 (define* (channel-full-commit channel #:key (verify-certificate? #t))
   "Return the commit designated by CHANNEL as quickly as possible.  If

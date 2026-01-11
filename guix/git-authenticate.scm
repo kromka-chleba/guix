@@ -29,7 +29,7 @@
   #:use-module ((guix diagnostics) #:select (formatted-message))
   #:use-module (guix openpgp)
   #:use-module ((guix utils)
-                #:select (cache-directory with-atomic-file-output))
+                #:select (xdg-cache-directory with-atomic-file-output))
   #:use-module ((guix build utils)
                 #:select (mkdir-p))
   #:use-module (guix progress)
@@ -311,7 +311,7 @@ REPOSITORY."
 (define (authenticated-commit-cache-file key)
   "Return the name of the file that contains the cache of
 previously-authenticated commits for KEY."
-  (string-append (cache-directory) "/authentication/" key))
+  (string-append (xdg-cache-directory) "/authentication/" key))
 
 (define (previously-authenticated-commits key)
   "Return the previously-authenticated commits under KEY as a list of commit

@@ -40,7 +40,7 @@
   #:use-module (guix http-client)
   #:use-module (guix packages)
   #:use-module (guix upstream)
-  #:use-module ((guix utils) #:select (cache-directory
+  #:use-module ((guix utils) #:select (xdg-cache-directory
                                        version>?))
   #:use-module ((guix import utils) #:select (beautify-description
                                               guix-hash-url
@@ -130,7 +130,7 @@
 (define-peg-pattern condition-var all (+ (or (range #\a #\z) "-" ":")))
 
 (define (opam-cache-directory path)
-  (string-append (cache-directory) "/opam/" path))
+  (string-append (xdg-cache-directory) "/opam/" path))
 
 (define known-repositories
   '((opam . "https://opam.ocaml.org")

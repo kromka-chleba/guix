@@ -43,7 +43,7 @@
   #:autoload   (guix progress) (progress-reporter/bar
                                 call-with-progress-reporter)
   #:use-module (guix sets)
-  #:use-module ((guix utils) #:select (cache-directory))
+  #:use-module ((guix utils) #:select (xdg-cache-directory))
   #:autoload   (guix build utils) (find-files mkdir-p)
   #:autoload   (gnu packages) (fold-packages)
   #:use-module (srfi srfi-1)
@@ -199,7 +199,7 @@ SELECT version FROM SchemaVersion ORDER BY version DESC LIMIT 1;"
 
 (define user-database-file
   ;; Default user database file name.
-  (string-append (cache-directory #:ensure? #f)
+  (string-append (xdg-cache-directory #:ensure? #f)
                  "/locate/db.sqlite"))
 
 (define system-database-file

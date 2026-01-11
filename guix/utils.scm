@@ -147,8 +147,10 @@
             with-environment-variables
             arguments-from-environment-variable
 
-            config-directory
-            cache-directory
+            xdg-config-directory
+            xdg-cache-directory
+            xdg-state-directory
+            xdg-data-directory
 
             readlink*
             go-to-location

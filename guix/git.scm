@@ -81,7 +81,7 @@
             git-reference->git-checkout))
 
 (define %repository-cache-directory
-  (make-parameter (string-append (cache-directory #:ensure? #f)
+  (make-parameter (string-append (xdg-cache-directory #:ensure? #f)
                                  "/checkouts")))
 
 (define (honor-system-x509-certificates!)
