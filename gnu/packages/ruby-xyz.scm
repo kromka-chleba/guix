@@ -17509,6 +17509,42 @@ has not yet been packaged for Guix.")
     (license license:bsd-2)
     (properties `((upstream-name . "anystyle-cli")))))
 
+(define-public ruby-goodcheck
+  ;; Commits are not tagged
+  (let ((commit "a3fa981db1e53cfea3ca118c7bd0a01344019dae")
+        (revision "0"))
+  (package
+    (name "ruby-goodcheck")
+    (version (git-version "3.1.0" revision commit))
+    (source
+      (origin
+       (method git-fetch) ;for tests
+       (uri (git-reference
+             (url "https://github.com/CEE-TEE/goodcheck")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fqjn8q00bjs3s48l8wmk9pcivjy2mhkiw3dpfasgl7pppii8cwl"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list #:phases
+            #~(modify-phases %standard-phases
+                (add-before 'check 'disable-failing-tests
+                  (lambda _
+                    (setenv "TESTOPTS"
+                      (string-append
+                        "--verbose" " "
+                        ;; Disable tests requiring networking:
+                        "--exclude='/(SmokeTest|test_http|test_load_url)/'")))))))
+    (propagated-inputs (list ruby-marcel ruby-psych ruby-rainbow ruby-strong-json))
+    (native-inputs (list ruby-minitest-5 ruby-rake ruby-simplecov))
+    (synopsis "Gegexp based customizable linter")
+    (description "@url{Goodcheck,https://sider.github.io/goodcheck} is a regexp
+based linter that allows you to define custom rules in a YAML file.")
+    (home-page "https://github.com/CEE-TEE/goodcheck")
+    (license license:expat))))
+
 (define-public ruby-google-protobuf
   (package
     (name "ruby-google-protobuf")
