@@ -7026,7 +7026,7 @@ define executable specifications of your code.")
 (define-public ruby-timers
   (package
     (name "ruby-timers")
-    (version "4.3.5")
+    (version "4.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7035,7 +7035,7 @@ define executable specifications of your code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vvahlhk6i1xks1bsha6s64pjjxhagmzvvf1q9h6z3lpcba43rpx"))))
+                "08jzmzq6gzk44ibh1qzpyxzh7pncjr9gs5pv3xm7gw8bjnnb14a1"))))
     (build-system ruby-build-system)
     (arguments
      (list #:phases
@@ -7046,8 +7046,9 @@ define executable specifications of your code.")
                      ;; These are only required for maintenance.
                      ((".*gem \"bake-modernize\".*") "")
                      ((".*gem \"bake-gem\".*") "")
+                     ((".*gem \"rubocop\".*") "")
                      ;; Not actually required by the tests.
-                     ((".*gem 'benchmark-ips'.*") "")
+                     ;((".*gem 'benchmark-ips'.*") "")
                      ((".*gem \"ruby-prof\".*") ""))))
                (add-before 'build 'remove-missing-signing-key
                  (lambda _
@@ -7059,7 +7060,9 @@ define executable specifications of your code.")
                    (when tests?
                      (invoke "bake" "test")))))))
     (native-inputs
-     (list ruby-covered
+     (list ruby-benchmark-ips
+           ruby-covered
+           ruby-decode
            ruby-bake-test
            ruby-bake-test-external
            ruby-sus))
