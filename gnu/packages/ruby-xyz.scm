@@ -3428,7 +3428,7 @@ libraries such as Libnotify.")
 (define-public ruby-forking-test-runner
   (package
     (name "ruby-forking-test-runner")
-    (version "1.6.0")
+    (version "1.16.0")
     (home-page "https://github.com/grosser/forking_test_runner")
     (source (origin
               (method git-fetch)
@@ -3437,32 +3437,27 @@ libraries such as Libnotify.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1mrglzkj2nrgisccf2f30zbfmcs0awv1g3lw994b2az90fl39x8m"))))
+                "1ns6yr0zkcsi5rnwdaj4p19c1mlaci330k3cym3vzcz53idrlpsr"))))
     (build-system ruby-build-system)
     (arguments
      '(#:test-target "spec"
-       ;; FIXME: ActiveRecord depends on sqlite3 1.3.6, but Guix has
-       ;; 1.4.1, which in turn breaks the tests that use ActiveRecord.
-       #:tests? #f
        #:phases (modify-phases %standard-phases
                   (replace 'replace-git-ls-files
                     (lambda _
                       (substitute* "forking_test_runner.gemspec"
                         (("`git ls-files lib/ bin/ MIT-LICENSE`")
                          "`find lib/ bin/ MIT-LICENSE -type f | sort`"))))
-                  (add-before 'check 'remove-version-constraints
+                  (add-before 'build 'remove-version-constraints
                     (lambda _
-                      ;; Ignore hard coded version constraints for the tests.
-                      (delete-file "Gemfile.lock")))
-                  (add-before 'check 'set-HOME
-                    (lambda _
-                      ;; Many tests invoke Bundler, and fails when Bundler
-                      ;; warns that /homeless-shelter does not exist.
-                      (setenv "HOME" "/tmp"))))))
+                      (delete-file "Gemfile.lock")
+                      (substitute* "forking_test_runner.gemspec"
+                        (("\"rubocop.*") "\"rubocop\"\n")
+                        (("\"sqlite3.*") "\"sqlite3\"\n")))))))
     (native-inputs
-     (list ruby-activerecord ruby-bump ruby-rspec ruby-sqlite3 ruby-wwtd))
+     (list ruby-activerecord ruby-bump ruby-drb ruby-logger ruby-minitest-6
+           ruby-mutex-m ruby-rake ruby-rspec ruby-rubocop ruby-sqlite3))
     (propagated-inputs
-     (list ruby-parallel-tests))
+     (list ruby-benchmark ruby-parallel-tests))
     (synopsis "Run every test in a fork")
     (description
      "This package is a wrapper around @code{parallel_tests} that runs every
