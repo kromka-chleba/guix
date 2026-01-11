@@ -1030,7 +1030,7 @@ already included in Rails.")
 (define-public ruby-marcel
   (package
     (name "ruby-marcel")
-    (version "1.0.4")
+    (version "1.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1039,29 +1039,9 @@ already included in Rails.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "08lfdzv7niy0wyh6lh4zp47li35shg8dyik02m9h9xfldxri5gjw"))))
+                "0x303diwzhw1lfqd184w5ib83c2mh5jqrgbg2c68waz66p9jc7c7"))))
     (build-system ruby-build-system)
-    (arguments
-     (list
-      #:test-target "default"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch
-            (lambda _
-              ;; Remove byebug dependency
-              (substitute* "test/test_helper.rb"
-                (("require 'byebug'") ""))))
-          (add-before 'check 'disable-problematic-tests
-            (lambda _
-              (substitute* "test/mime_type_test.rb"
-                ;; One test fails because of the newer rack
-                ;; version used (see:
-                ;; https://github.com/rails/marcel/issues/91).
-                (("test \"gets content type.*" all)
-                 (string-append
-                  all "    skip('fails on guix')\n"))))))))
-    (native-inputs (list ruby-nokogiri ruby-rack))
-    (propagated-inputs (list ruby-mimemagic))
+    (native-inputs (list ruby-minitest-5 ruby-nokogiri ruby-rake ruby-rack))
     (synopsis "MIME type detection using magic numbers, filenames and extensions")
     (description
      "@code{marcel} provides @acronym{MIME, Multipurpose Internet Mail
