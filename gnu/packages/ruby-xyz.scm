@@ -13174,13 +13174,13 @@ logging.")
 (define-public ruby-capybara
   (package
     (name "ruby-capybara")
-    (version "3.38.0")
+    (version "3.40.0")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "capybara" version))
               (sha256
                (base32
-                "123198zk2ak8mziwa5jc3ckgpmsg08zn064n3aywnqm9s1bwjv3v"))))
+                "1vxfah83j6zpw3v5hic0j70h519nvmix2hbszmjwm8cfawhagns2"))))
     (build-system ruby-build-system)
     (arguments
      (list #:tests? #f                ;sinatra is currently broken with rack 3
