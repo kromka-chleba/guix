@@ -6942,7 +6942,7 @@ intended for use with event loops such as async.")
 (define-public ruby-tilt
   (package
     (name "ruby-tilt")
-    (version "2.2.0")
+    (version "2.7.0")
     (source
      (origin
        (method git-fetch)               ;the distributed gem lacks tests
@@ -6951,7 +6951,7 @@ intended for use with event loops such as async.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "056zm4vzx9xjwl7zgmb17hzb91qx5cvzk60wvsxchfybvl03gn5d"))))
+        (base32 "1yzf4mgnypb2dxj1jw08qli01pnczyafgb7akjgl131i96zpdg03"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -6960,10 +6960,6 @@ intended for use with event loops such as async.")
           (add-before 'check 'set-SASS_IMPLEMENTATION
             (lambda _
               (setenv "SASS_IMPLEMENTATION" "sassc"))))))
-    (propagated-inputs
-     (list ruby-pandoc-ruby ruby-sassc))
-    (native-inputs
-     (list bundler ruby-yard ruby-builder ruby-erubis ruby-markaby))
     (synopsis "Generic interface to multiple Ruby template engines")
     (description
      "Tilt is a thin interface over a number of different Ruby template
