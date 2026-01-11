@@ -6823,24 +6823,60 @@ The output can be customized with a formatting system.")
 (define-public ruby-pry
   (package
     (name "ruby-pry")
-    (version "0.14.2")
+    (version "0.16.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (rubygems-uri "pry" version))
+       (method git-fetch)
+         (uri (git-reference (url "https://github.com/pry/pry")
+                             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0k9kqkd9nps1w1r1rb7wjr31hqzkka2bhi8b518x78dcxppm9zn4"))))
+         "1h8zvmhg9kih8j2abmvay0p2wicmxpy21h22h0nv4jalxrabhmmj"))))
     (build-system ruby-build-system)
     (arguments
-     '(#:tests? #f)) ; no tests
+      (list #:phases
+            #~(modify-phases %standard-phases
+                (add-before 'check 'patch-tests
+                  (lambda _
+                    (substitute* "spec/cli_spec.rb"
+                      ;; Update the test regex for more build combinations
+                      (("pry/foo") "(source|bin|pry)/foo"))))
+                (add-before 'check 'disable-failing-tests
+                  (lambda _
+                    (let ((skippedtests
+                            (list ;; These are the tests that don't work for us
+                              ;; Not sure what the cause of this one is
+                              "Pry::REPL autoindent should raise no exception when indented with a tab"
+                              ;; Not sure what the cause of this one is
+                              "Pry::REPL eval_string and binding_stack should immediately evaluate eval_string after cmd if complete")))
+                         (setenv "SPEC_OPTS"
+                           (string-append
+                             "--format d --warnings" " "
+                             ;; Disable tests failing in the guix environment:
+                             "--example-matches "
+			     "'(^(?!.*(" (string-join skippedtests "|") ")).*)'")))))
+                (add-before 'check 'set-environment
+                  (lambda _
+                    ;; pry expects HOME, TERM, and EDITOR to be set
+                    ;; See: https://github.com/pry/pry/issues/2364
+                    (setenv "HOME" "/tmp")
+                    (setenv "EDITOR" "none")
+                    (setenv "TERM" "dumb")))
+                (replace 'check
+                  (lambda* (#:key tests? #:allow-other-keys)
+                    (when tests?
+                      (invoke "rake" "spec")
+                      (invoke "rake" "profile")))))))
+    (native-inputs (list ruby-irb ruby-prism ruby-profile
+                         ruby-rake ruby-rspec ruby-yard))
     (propagated-inputs
-     (list ruby-coderay ruby-method-source))
+     (list ruby-coderay ruby-method-source ruby-reline))
     (synopsis "Ruby REPL")
     (description "Pry is an IRB alternative and runtime developer console for
 Ruby.  It features syntax highlighting, a plugin architecture, runtime
 invocation, and source and documentation browsing.")
-    (home-page "https://cobaltbluemedia.com/pryrepl/")
+    (home-page "http://pry.github.io/")
     (license license:expat)))
 
 (define-public ruby-pry-doc
