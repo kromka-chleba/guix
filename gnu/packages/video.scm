@@ -1765,7 +1765,7 @@ operate properly.")
       (list dav1d
             fontconfig
             freetype
-            frei0r-plugins-api
+            frei0r-api
             gnutls
             opus
             ladspa
@@ -4016,7 +4016,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
       #~(modify-phases %standard-phases
           (add-after 'install 'wrap-executable
             (lambda _
-              (let* ((frei0r #$(this-package-input "frei0r-plugins"))
+              (let* ((frei0r #$(this-package-input "frei0r"))
                      (ladspa #$(this-package-input "ladspa"))
                      ;; In MLT 7, 'melt' symlinks to 'melt-7'.  Try to keep
                      ;; compatibility with MLT 6 where it's only 'melt'.
@@ -4037,7 +4037,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
            eigen ; movit requires.private
            ffmpeg
            fftw
-           frei0r-plugins
+           frei0r
            gdk-pixbuf
            gtk+
            jack-1
@@ -5918,9 +5918,9 @@ these formats and provides some elementary operations (copying, scaling,
 alpha blending etc).")
     (license license:gpl3)))
 
-(define-public frei0r-plugins-api
+(define-public frei0r-api
   (package
-    (name "frei0r-plugins-api")
+    (name "frei0r-api")
     (version "1.2")
     (source
      (origin
@@ -5957,9 +5957,9 @@ Cflags: -I~a"
 video plugins.")
     (license license:gpl2+)))
 
-(define-public frei0r-plugins
+(define-public frei0r
   (package
-    (name "frei0r-plugins")
+    (name "frei0r")
     (version "2.5.1")
     (source
      (origin
@@ -5983,7 +5983,7 @@ video plugins.")
                         (("^install.*frei0r\\.pc.*pkgconfig.*$")
                          "")))))))
     (inputs (list cairo gavl opencv))
-    (propagated-inputs (list frei0r-plugins-api))
+    (propagated-inputs (list frei0r-api))
     (native-inputs (list pkg-config))
     (home-page "https://dyne.org/software/frei0r/")
     (synopsis "Large collection of free and portable video plugins")
@@ -6288,7 +6288,7 @@ API.  It includes bindings for Python, Ruby, and other languages.")
                   (("\"melt-7\"") (string-append "\"" mlt "/bin/melt-7\""))))))
           (add-after 'install 'wrap-executable
             (lambda _
-             (let ((frei0r #$(this-package-input "frei0r-plugins"))
+             (let ((frei0r #$(this-package-input "frei0r"))
                     (jack #$(this-package-input "jack"))
                     (ladspa #$(this-package-input "ladspa"))
                     (mlt #$(this-package-input "mlt"))
@@ -6308,7 +6308,7 @@ API.  It includes bindings for Python, Ruby, and other languages.")
      (list bash-minimal
            ffmpeg
            fftw
-           frei0r-plugins
+           frei0r
            jack-1
            ladspa
            libxkbcommon

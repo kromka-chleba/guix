@@ -531,7 +531,7 @@ This package is part of the KDE multimedia module.")
           (add-after 'install 'wrap-executable
             (lambda _
               (let* ((ffmpeg #$(this-package-input "ffmpeg"))
-                     (frei0r #$(this-package-input "frei0r-plugins"))
+                     (frei0r #$(this-package-input "frei0r"))
                      (ladspa #$(this-package-input "ladspa"))
                      (qtbase #$(this-package-input "qtbase")))
                 (wrap-program (string-append #$output "/bin/kdenlive")
@@ -552,7 +552,7 @@ This package is part of the KDE multimedia module.")
            breeze                       ; make dark theme available easily
            breeze-icons                 ; recommended icon set
            ffmpeg
-           frei0r-plugins
+           frei0r
            imath
            karchive
            kcrash
