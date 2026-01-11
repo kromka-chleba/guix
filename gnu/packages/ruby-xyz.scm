@@ -8903,7 +8903,7 @@ abstraction for Ruby.")
 (define-public ruby-benchmark-ips
   (package
     (name "ruby-benchmark-ips")
-    (version "2.12.0")
+    (version "2.14.0")
     (source
      (origin
        (method git-fetch)               ;no tests in distributed gem
@@ -8913,7 +8913,7 @@ abstraction for Ruby.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "19pa2a1lgjzrxcz6vxwfiq5qq337vr15bbbpc2mfwzljdlx5059s"))))
+         "133gh8in20b9hxxiczm1i15jyvwfnqnz4sg183hddhkmm30ig5jv"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -8927,8 +8927,6 @@ abstraction for Ruby.")
               (substitute* "benchmark-ips.gemspec"
                 (("git ls-files -- examples lib")
                  "find examples lib -type f | sort")))))))
-    (native-inputs
-     (list ruby-hoe))
     (synopsis "Iterations per second enhancement for the Ruby Benchmark module")
     (description "Benchmark-ips enhances the Ruby Benchmark module with the
 iterations per second count.  For short snippets of code, it can automatically
