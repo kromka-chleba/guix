@@ -101,6 +101,7 @@
             check-inputs-should-use-a-minimal-variant
             check-input-labels
             check-wrapper-inputs
+            check-qt-svg-support
             check-qt-wayland-support
             check-patch-file-names
             check-patch-headers
@@ -742,17 +743,46 @@ or \"bash-minimal\" is not in its inputs. 'wrap-script' is not supported."
            (_ #f)))
        (package-inputs package)))
 
+(define (check-qt-svg-support package)
+  "Emit a warning if PACKAGE has qtbase as an input but is missing qtsvg.
+Also suggest using 'wrap-qt-program' from (guix build qt-utils) when not
+using qt-build-system."
+  (define qtbase-version (package-input-version package "qtbase"))
+  (define qtsvg-version (package-input-version package "qtsvg"))
   (define uses-qt-build-system?
     (eq? (build-system-name (package-build-system package)) 'qt))
 
   (cond
-   ((and has-qtbase? (not has-qtwayland?) uses-qt-build-system?)
+   ((not qtbase-version)
+    '())
+   ((and (string=? (version-major qtbase-version) "6")
+         (not qtsvg-version)
+         uses-qt-build-system?)
     (list (make-warning package
-                        (G_ "Qt application is missing 'qtwayland' input")
+                        (G_ "Qt6 application is missing 'qtsvg' input (for SVG \
+theme icons)")
                         #:field 'inputs)))
-   ((and has-qtbase? (not has-qtwayland?))
+   ((and (string=? (version-major qtbase-version) "6")
+         (not qtsvg-version))
     (list (make-warning package
-                        (G_ "Qt application is missing 'qtwayland' input and \
+                        (G_ "Qt6 application is missing 'qtsvg' input (for SVG \
+theme icons) and may need 'wrap-qt-program' from (guix build qt-utils)")
+                        #:field 'inputs)))
+   ((and (string=? (version-major qtbase-version) "5")
+         (not qtsvg-version)
+         uses-qt-build-system?)
+    (list (make-warning package
+                        (G_ "Qt5 application is missing 'qtsvg-5' input (for SVG \
+theme icons)")
+                        #:field 'inputs)))
+   ((and (string=? (version-major qtbase-version) "5")
+         (not qtsvg-version))
+    (list (make-warning package
+                        (G_ "Qt5 application is missing 'qtsvg-5' input (for SVG \
+theme icons) and may need 'wrap-qt-program' from (guix build qt-utils)")
+                        #:field 'inputs)))
+   (else '())))
+
 (define (check-qt-wayland-support package)
   "Emit a warning if PACKAGE has qtbase as an input but is missing qtwayland.
 Also suggest using 'wrap-qt-program' from (guix build qt-utils) when not
@@ -2188,6 +2218,10 @@ them for PACKAGE."
      (name        'wrapper-inputs)
      (description "Make sure 'wrap-program' can find its interpreter.")
      (check       check-wrapper-inputs))
+   (lint-checker
+     (name        'qt-svg-support)
+     (description "Check that Qt program packages have qtsvg")
+     (check       check-qt-svg-support))
    (lint-checker
      (name        'qt-wayland-support)
      (description "Check that Qt program packages have qtwayland")
