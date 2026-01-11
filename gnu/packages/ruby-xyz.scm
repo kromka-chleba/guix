@@ -3467,17 +3467,18 @@ test in a fork to avoid pollution and get clean output per test.")
 (define-public ruby-formatador
   (package
     (name "ruby-formatador")
-    (version "0.2.5")
+    (version "1.2.3")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "formatador" version))
               (sha256
                (base32
-                "1gc26phrwlmlqrmz4bagq1wd5b7g64avpx0ghxr9xdxcvmlii0l0"))))
+                "156qa2wiizmdalz6cim04yaasdz1q6c6k7yhnpdnrhn26f0qkyhr"))))
     (build-system ruby-build-system)
     ;; Circular dependency: Tests require ruby-shindo, which requires
     ;; ruby-formatador at runtime.
     (arguments `(#:tests? #f))
+    (propagated-inputs (list ruby-reline))
     (synopsis "Ruby library to format text on stdout")
     (description "Formatador is a Ruby library to format text printed to the
 standard output stream.")
