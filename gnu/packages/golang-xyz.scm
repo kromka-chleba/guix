@@ -3932,7 +3932,7 @@ ECMA-48} specs.")
     (version "0.1.1")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (string-append "conpty/v" version))))
