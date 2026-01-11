@@ -13056,7 +13056,7 @@ interface.  It allows Jekyll to rebuild your site when a file changes.")
 (define-public ruby-parallel
   (package
     (name "ruby-parallel")
-    (version "1.21.0")
+    (version "1.27.0")
     (source
      (origin
        (method git-fetch)
@@ -13066,26 +13066,21 @@ interface.  It allows Jekyll to rebuild your site when a file changes.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1xqjcvl3gq3shvrqp8wc3fbqibzh4mf1yczq6np9gd79558dwj3w"))))
+         "0lxx4fdbfmjgfwj4979p3sx3vdy0mc0b167f83q54pawi5k6cap3"))))
     (build-system ruby-build-system)
     (arguments
-     `(;; TODO 3 test failures
-       ;; rspec ./spec/parallel_spec.rb:190 # Parallel.in_processes does not
-       ;; open unnecessary pipes
-       ;; rspec './spec/parallel_spec.rb[1:9:7]' # Parallel.each works with
-       ;; SQLite in processes
-       ;; rspec './spec/parallel_spec.rb[1:9:16]' # Parallel.each works with
-       ;; SQLite in threads
-       #:tests? #f
+      (list
        #:test-target "rspec-rerun:spec"
        #:phases
-       (modify-phases %standard-phases
+       #~(modify-phases %standard-phases
          (add-after 'unpack 'patch-Gemfile
            (lambda _
              (substitute* "Gemfile"
                (("gem 'rspec-legacy_formatters'") "")
-               (("gem 'activerecord.*$") "gem 'activerecord'\n"))))
-         (add-before 'check 'delete-Gemfile.lock
+               (("gem 'activerecord.*$") "gem 'activerecord'\n")
+               (("gem 'rubocop.*$") "")
+               (("gem 'sqlite3.*$") "gem 'sqlite3'\n"))))
+         (add-before 'build 'delete-Gemfile.lock
            (lambda _
              ;; Bundler isn't being used for fetching dependencies, so
              ;; delete the Gemfile.lock
@@ -13093,19 +13088,41 @@ interface.  It allows Jekyll to rebuild your site when a file changes.")
          (add-before 'build 'patch-gemspec
            (lambda _
              (substitute* "parallel.gemspec"
-               (("git ls-files") "find")))))))
+               (("git ls-files") "find"))))
+         (add-before 'check 'disable-failing-tests
+           (lambda _
+             (setenv "SPEC_OPTS"
+               (string-append
+                 "--format d --warnings --backtrace" " "
+                 ;; Disable unsupport SQLite test:
+                 ;; See: https://github.com/grosser/parallel/issues/127
+                 ;; rspec ./spec/parallel_spec.rb[1:11:16]
+                 ;; # Parallel.each works with SQLite in processes
+                 ;"--exclude-pattern '(^(?!.*SQLite).*)"
+                 "--example-matches" " "
+                 "'(^(?!.*works with SQLite in processes).*)'"
+                 ;; Disable flakey test with intermittent failures:
+                 ;; rspec ./spec/parallel_spec.rb[1:17:3]
+                 ;; # Parallel GC does not leak memory in ractors
+                 "--example-matches" " "
+                 "'(^(?!.*does not leak memory in ractors).*)'")))))))
     (native-inputs
-     (list ruby-rspec
-           ruby-rspec-rerun
-           bundler
-           ruby-activerecord
-           ruby-ruby-progressbar
-           ruby-bump
+     (list lsof
            procps
-           lsof
+           ruby-activerecord
+           ruby-base64
+           ;ruby-bigdecimal ; using ruby v3.3.x stdlib as not yet in guix
+           ruby-bump
+           ruby-benchmark
+           ruby-logger
+           ruby-mutex-m
            ruby-mysql2
-           ruby-sqlite3
-           ruby-i18n))
+           ruby-ruby-progressbar
+           ruby-rake
+           ruby-rspec
+           ruby-rspec-rerun
+           ruby-rspec-rerun
+           ruby-sqlite3-1.4))
     (home-page "https://github.com/grosser/parallel")
     (synopsis "Parallel processing in Ruby")
     (description "Parallel allows you to run any code in parallel Processes
