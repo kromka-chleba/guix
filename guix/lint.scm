@@ -101,6 +101,7 @@
             check-inputs-should-use-a-minimal-variant
             check-input-labels
             check-wrapper-inputs
+            check-qt-qtbase-argument
             check-qt-svg-support
             check-qt-wayland-support
             check-patch-file-names
@@ -819,6 +820,56 @@ may need 'wrap-qt-program' from (guix build qt-utils)")
                         (G_ "Qt5 application is missing 'qtwayland-5' input and \
 may need 'wrap-qt-program' from (guix build qt-utils)")
                         #:field 'inputs)))
+   (else '())))
+
+(define (check-qt-qtbase-argument package)
+  "Emit a warning if PACKAGE uses qt-build-system with incorrect #:qtbase
+argument.  For packages with Qt6 qtbase input, #:qtbase must be present
+and be Qt6.  For packages with Qt5 qtbase input, #:qtbase should be
+missing or be Qt5."
+  (define uses-qt-build-system?
+    (eq? (build-system-name (package-build-system package)) 'qt))
+
+  (define qtbase-input-version
+    (package-input-version package "qtbase"))
+
+  (define qtbase-argument
+    (apply (lambda* (#:key qtbase #:allow-other-keys)
+             qtbase)
+           (package-arguments package)))
+
+  (define qtbase-argument-version
+    (and qtbase-argument
+         (package? qtbase-argument)
+         (package-version qtbase-argument)))
+
+  (cond
+   ((not uses-qt-build-system?)
+    '())
+   ((not qtbase-input-version)
+    '())
+   ;; Qt6: must have #:qtbase with version 6.x
+   ((and (string=? (version-major qtbase-input-version) "6")
+         (not qtbase-argument))
+    (list (make-warning package
+                        (G_ "Qt6 application using qt-build-system must specify \
+#:qtbase qtbase in arguments")
+                        #:field 'arguments)))
+   ((and (string=? (version-major qtbase-input-version) "6")
+         qtbase-argument-version
+         (not (string=? (version-major qtbase-argument-version) "6")))
+    (list (make-warning package
+                        (G_ "Qt6 application has Qt6 qtbase input but #:qtbase \
+argument is not Qt6")
+                        #:field 'arguments)))
+   ;; Qt5: #:qtbase should be missing or Qt5
+   ((and (string=? (version-major qtbase-input-version) "5")
+         qtbase-argument-version
+         (not (string=? (version-major qtbase-argument-version) "5")))
+    (list (make-warning package
+                        (G_ "Qt5 application has Qt5 qtbase input but #:qtbase \
+argument is not Qt5")
+                        #:field 'arguments)))
    (else '())))
 
 (define (package-name-regexp package)
@@ -2218,6 +2269,10 @@ them for PACKAGE."
      (name        'wrapper-inputs)
      (description "Make sure 'wrap-program' can find its interpreter.")
      (check       check-wrapper-inputs))
+   (lint-checker
+     (name        'qt-qtbase-argument)
+     (description "Check that Qt program packages have correct #:qtbase argument")
+     (check       check-qt-qtbase-argument))
    (lint-checker
      (name        'qt-svg-support)
      (description "Check that Qt program packages have qtsvg")
