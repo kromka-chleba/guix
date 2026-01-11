@@ -533,7 +533,7 @@ rm -rf "$module_dir"
 
 # Make sure we can see user profiles.
 guix package --list-profiles | grep "$profile"
-guix package --list-profiles | grep '\.guix-profile'
+guix package --list-profiles | grep 'config/guix/profile'
 
 # Make sure we can properly lock a profile.
 mkdir "$module_dir"
