@@ -15703,6 +15703,29 @@ value semantics for a given set of attributes.  The behaviour is similar to an
 immutable Struct class, plus extensible, lightweight validation and coercion.")
     (license license:expat)))
 
+(define-public ruby-profile
+  (package
+    (name "ruby-profile")
+    (version "0.4.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (rubygems-uri "profile" version))
+        (sha256
+          (base32 "0gvdrgqhfhsmhxhmba6lsghvrlb1capahjmvh8d9zcii5i1h4rfx"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-rake))
+    (arguments (list #:tests? #f)) ; no tests
+    (home-page "https://github.com/ruby/profile")
+    (synopsis "Determine which methods are called and how long they take")
+    (description "Profiling your program is a way of determining which methods
+are called and how long each method takes to complete. This way you can detect
+which methods are possible bottlenecks.
+
+Profiling your program will slow down your execution time considerably, so
+activate it only when you need it. Don't confuse benchmarking with profiling.")
+    (license license:ruby)))
+
 (define-public ruby-promise
   (package
     (name "ruby-promise")
