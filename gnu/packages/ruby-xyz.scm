@@ -7178,6 +7178,31 @@ IANA Time Zone database packaged as Ruby modules for use with @code{TZInfo}.")
     (home-page "https://tzinfo.github.io")
     (license license:expat)))
 
+(define-public ruby-rbs
+  (package
+    (name "ruby-rbs")
+    (version "3.10.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "rbs" version))
+       (sha256
+        (base32
+         "1z26r1wynx540hlj37a497k7k70zld21idj60419y8igqv25v2mx"))))
+    (build-system ruby-build-system)
+    (native-inputs (list ruby-activesupport ruby-digest ruby-irb ruby-json
+                         ruby-json-schema ruby-rake ruby-rake-compiler
+                         ruby-rspec ruby-test-unit
+                         ruby-extconf-compile-commands-json))
+    (propagated-inputs (list ruby-logger))
+    (synopsis "Type Signature for Ruby")
+    (description "@emph{RBS} is a language to describe the structure of Ruby
+programs.  You can write down the definition of a class or module: methods
+defined in the class, instance variables and their types, and inheritance/mix-in
+relations.  It also allows declaring constants and global variables.")
+    (home-page "https://github.com/ruby/rbs")
+    (license (list license:bsd-2 license:ruby))))
+
 (define-public ruby-rb-inotify
   (package
     (name "ruby-rb-inotify")
