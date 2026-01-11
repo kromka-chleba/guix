@@ -420,7 +420,7 @@ notebook).")
 (define-public ruby-date
   (package
     (name "ruby-date")
-    (version "3.3.3")
+    (version "3.5.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -429,15 +429,26 @@ notebook).")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jiqjnaap1jk1r8z37iicnzqha1rhc713qmcir17f4vnz8ac8v75"))))
+                "1mpr1qp8q11sqhkwbcihalll8d22w5cg8my6qxvq9aj9i6h4qcj4"))))
     (build-system ruby-build-system)
-    (arguments (list #:test-target "default"))
-    (native-inputs (list ruby-rake-compiler))
+    (arguments
+      (list #:phases
+            #~(modify-phases %standard-phases
+              (add-before 'check 'remove-unsupported-tests
+                ;; The following tests require test-unit-ruby-core >= 1.0.7
+                ;; which hasn't been upgraded yet
+                (lambda _
+                  (delete-file "test/date/test_date_parse.rb")
+                  (delete-file "test/date/test_date_ractor.rb")
+                  (delete-file "test/date/test_date_strftime.rb")
+                  (delete-file "test/date/test_switch_hitter.rb"))))))
+    (native-inputs (list ruby-rake ruby-rake-compiler ruby-test-unit
+                         ruby-test-unit-ruby-core))
     (synopsis "Ruby @code{Object} subclass with date comparison capability")
     (description "This package provides a subclass of @code{Object} that
 includes the @code{Comparable} module for handling dates.")
     (home-page "https://github.com/ruby/date")
-    (license license:bsd-2)))
+    (license (list license:bsd-2 license:ruby))))
 
 (define-public ruby-time
   (package
