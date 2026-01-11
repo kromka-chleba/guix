@@ -2819,6 +2819,54 @@ a Ruby object.")
     (home-page "https://github.com/rails/execjs")
     (license license:expat)))
 
+(define-public ruby-extconf-compile-commands-json
+  ;; Latest version published to rubygems is missing the LICENSE file
+  ;; and the git repo is missing the corresponding tag
+  (let ((commit "21534c5e5c87997b1827d164e993dfb97291e015")
+        (revision "0"))
+  (package
+    (name "ruby-extconf-compile-commands-json")
+    (version (git-version "0.0.7" revision commit))
+    (source (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/KJTsanaktsidis/extconf_compile_commands_json")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1fgg0r9wx332v8iwax5dnfn9drn9d7isah1598anr1fnbk0iyir5"))))
+              ;(method url-fetch)
+              ;(uri (rubygems-uri "extconf_compile_commands_json" version))
+              ;(sha256
+              ; (base32
+              ;  "0wmwyg2drz5zgkkwhfmz085r2clvi81x8z86byp399g2gb50sg49"))))
+    (build-system ruby-build-system)
+    (arguments
+      (list #:tests? #f ; no tests
+            #:phases
+	    #~(modify-phases %standard-phases
+              (add-after 'unpack 'add-extra-files
+                (lambda _
+                  (substitute* "extconf_compile_commands_json.gemspec"
+                    (("autoload\\.rb.*") (string-append "autoload.rb\n"
+                                                        "LICENSE\n"
+                                                        "README.md\n")))))
+              (add-before 'build 'remove-version-constraints
+                (lambda _
+                  (delete-file "Gemfile")
+                  (delete-file "Gemfile.lock")
+                  (substitute* "extconf_compile_commands_json.gemspec"
+                    ;; Remove unused dependencies
+                    (("s\\.add_development\\._dependency \"standard\".*")
+                      "\n")))))))
+    (synopsis "Generate clangd compile_commands.json files for gems")
+    (description "Generates a clangd-compatible @code{compile_commands.json}
+file from the extconf.rb file of a native gem.  It's purpose is to enable
+clangd/LSP to work better when developing native Ruby extension gems.")
+    (home-page "https://github.com/KJTsanaktsidis/extconf_compile_commands_json")
+    (license license:expat))))
+
 (define-public ruby-fakefs
   (package
     (name "ruby-fakefs")
