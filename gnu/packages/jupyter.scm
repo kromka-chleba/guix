@@ -377,7 +377,7 @@ the namespace @code{/nbclassic/}.")
            python-ipykernel
            python-ipython-genutils
            python-jinja2
-           python-jupyter-client-7
+           python-jupyter-client
            python-jupyter-core
            python-nest-asyncio
            python-nbclassic
