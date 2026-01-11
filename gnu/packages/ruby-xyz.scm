@@ -14805,6 +14805,28 @@ can be used to build formatters, linters, language servers, and more.")
     (home-page "https://github.com/monora/stream")
     (license license:bsd-2)))
 
+(define-public ruby-strong-json
+  (package
+    (name "ruby-strong-json")
+    (version "2.1.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/soutaro/strong_json")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0kjhqdvifimz0y3pnly6mdf8z1mrj8iifn6da3f74zmkq8v45k7d"))))
+    (build-system ruby-build-system)
+    (arguments (list #:test-target "spec"))
+    (native-inputs (list ruby-rake ruby-rake-compiler ruby-rspec ruby-test-unit-ruby-core))
+    (synopsis "Type check JSON objects")
+    (description
+      "This library allows you to test the structure of JSON objects.")
+    (home-page "https://github.com/soutaro/strong_json")
+    (license license:expat)))
+
 (define sorbet-version "0.5.10610.20230106174520-1fa668010")
 
 (define sorbet-monorepo
