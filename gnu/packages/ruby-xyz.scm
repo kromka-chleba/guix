@@ -14846,7 +14846,7 @@ minimal effort.")
 (define-public ruby-timeout
   (package
     (name "ruby-timeout")
-    (version "0.4.3")
+    (version "0.6.0")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -14855,14 +14855,14 @@ minimal effort.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1mw2dwyp2j05fl2gmw8cj132kk145sbxj5i0whpxcnddlc8gw781"))))
+                "1chs1g273254ghhfq85926kzy5gyv6c5m6g7ndz1i93c3a53d57x"))))
     (build-system ruby-build-system)
     (native-inputs (list ruby-test-unit-ruby-core))
     (synopsis "Timeout library for Ruby")
     (description "Timeout provides a way to auto-terminate a potentially
 long-running operation if it hasn't finished in a fixed amount of time.")
     (home-page "https://github.com/ruby/timeout")
-    (license (list license:bsd-2))))
+    (license (list license:bsd-2 license:ruby))))
 
 (define-public ruby-thin
   (package
