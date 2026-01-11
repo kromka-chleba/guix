@@ -3779,7 +3779,7 @@ glamorous default themes.")
     (version "0.8.0")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/huh")
              (commit (string-append "v" version))))
