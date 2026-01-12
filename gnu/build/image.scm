@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013-2020, 2025 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013-2020, 2025-2026 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2017 Marius Bakke <mbakke@fastmail.com>
@@ -85,6 +85,9 @@ turn doesn't take any constant overhead into account, force a 1-MiB minimum."
     (apply invoke
            `("unshare" "--map-root-user" "mkfs.btrfs"
              "-r" ,root
+             ,@(if (eq? size 'guess)
+                   '()
+                   `("--byte-count" ,(number->string size)))
              "-L" ,label
              ,@(if uuid
                    `("-U" ,(uuid->string uuid))
