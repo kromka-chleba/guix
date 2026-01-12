@@ -445,19 +445,20 @@ load path must be adjusted as needed."
           ;; Behave like an init process: create a sub-process that calls
           ;; THUNK, and wait for child processes.  Furthermore, forward
           ;; RELAYED-SIGNALS to the child process.
-          (match (primitive-fork)
-            (0
-             (call-with-clean-exit thunk))
-            (pid
-             (install-signal-handlers pid)
-             (let loop ()
-               (match (wait-child-process)
-                 ((child . status)
-                  (if (= child pid)
-                      (primitive-exit (status->exit-status status))
-                      (loop)))
-                 (#f
-                  (primitive-exit 128)))))))      ;cannot happen
+          ;; XXX: This (primitive-fork) worked fine, strange.
+          (safe-clone (logior CLONE_CHILD_CLEARTID CLONE_CHILD_SETTID SIGCHLD)
+            (lambda ()
+              (call-with-clean-exit thunk))
+            (lambda (pid)
+              (install-signal-handlers pid)
+              (let loop ()
+                (match (wait-child-process)
+                  ((child . status)
+                   (if (= child pid)
+                       (primitive-exit (status->exit-status status))
+                       (loop)))
+                  (#f
+                   (primitive-exit 128)))))))      ;cannot happen
         thunk))
 
   (define (periodically-schedule-asyncs)
@@ -498,8 +499,8 @@ return the exit status, an integer as returned by 'waitpid'."
   (define (namespace-file pid namespace)
     (string-append "/proc/" (number->string pid) "/ns/" namespace))
 
-  (match (primitive-fork)
-    (0
+  (safe-clone (logior CLONE_CHILD_CLEARTID CLONE_CHILD_SETTID SIGCHLD)
+    (lambda ()
      (call-with-clean-exit
       (lambda ()
         ;; First, determine the user namespace that owns the pid namespace and
@@ -537,13 +538,14 @@ return the exit status, an integer as returned by 'waitpid'."
         ;; Per setns(2), changing the PID namespace only applies to child
         ;; processes, not to the process itself.  Thus fork so that THUNK runs
         ;; in the right PID namespace, which also gives it access to /proc.
-        (match (primitive-fork)
-          (0 (call-with-clean-exit thunk))
-          (pid (primitive-exit
-                (match (waitpid pid)
-                  ((_ . status)
-                   (or (status:exit-val status) 127)))))))))
-    (pid
+        (safe-clone (logior CLONE_CHILD_CLEARTID CLONE_CHILD_SETTID SIGCHLD)
+          (lambda () (call-with-clean-exit thunk))
+          (lambda (pid)
+            (primitive-exit
+              (match (waitpid pid)
+                ((_ . status)
+                 (or (status:exit-val status) 127)))))))))
+    (lambda (pid)
      (match (waitpid pid)
        ((_ . status)
         status)))))

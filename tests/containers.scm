@@ -87,15 +87,14 @@
   (zero?
    (call-with-container '()
      (lambda ()
-       (match (primitive-fork)
-         (0
-          ;; The first forked process in the new pid namespace is pid 2.
-          (assert-exit (= 2 (getpid))))
-         (pid
-          (primitive-exit
-           (match (waitpid pid)
-             ((_ . status)
-              (status:exit-val status)))))))
+       (safe-clone (logior CLONE_CHILD_CLEARTID CLONE_CHILD_SETTID SIGCHLD)
+          (lambda ()
+            (assert-exit (= 2 (getpid))))
+          (lambda (pid)
+            (primitive-exit
+             (match (waitpid pid)
+               ((_ . status)
+                (status:exit-val status)))))))
      #:namespaces '(user pid))))
 
 (skip-if-unsupported)
