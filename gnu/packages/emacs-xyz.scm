@@ -24436,33 +24436,38 @@ lines, and @code{gc} to comment out the target of a motion.")
     (license license:gpl3+)))
 
 (define-public emacs-eglot
-  (package
-    (name "emacs-eglot")
-    (version "1.19")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/eglot-" version
-                           ".tar"))
-       (sha256
-        (base32
-         "0bsz3grw41nh5r76brfdb4gb3hncs5chlhwsqm6qqg0ach69m7zi"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-eldoc
-           emacs-external-completion
-           emacs-flymake
-           emacs-jsonrpc
-           emacs-project
-           emacs-xref))
-    (home-page "https://github.com/joaotavora/eglot")
-    (synopsis "Client for Language Server Protocol (LSP) servers")
-    (description
-     "Emacs Polyglot, or Eglot, is an Emacs @acronym{Language Server Protocol,
+  (let ((commit "689c83e3faecd81b856d54908a674a33080629c6")
+        (revision "0"))
+    (package
+      (name "emacs-eglot")
+      (version "1.21")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/joaotavora/eglot/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0025fp3kj0lwvdl5ywmrcxi4xbm4cg4knibbfdxll80bbrzdwi1c"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:test-command
+        #~(list "emacs" "--batch"
+                "-l" "eglot.el"
+                "-l" "eglot-tests.el"
+                "-f" "ert-run-tests-batch-and-exit")))
+      (native-inputs
+       (list emacs-ert-runner emacs-jsonrpc emacs-company emacs-yasnippet))
+      (home-page "https://github.com/joaotavora/eglot")
+      (synopsis "Client for Language Server Protocol (LSP) servers")
+      (description
+       "Emacs Polyglot, or Eglot, is an Emacs @acronym{Language Server Protocol,
 LSP} client that stays out of the way.  It guesses the LSP program to start
 for the current file, using the major mode as a hint.  It prompts you to enter
 one if it fails.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-eglot-x
   ;; Not tagged.
