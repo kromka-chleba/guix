@@ -25,7 +25,7 @@
 ;;; Copyright © 2021 ZmnSCPxj jxPCSnmZ <ZmnSCPxj@protonmail.com>
 ;;; Copyright © 2021 François J <francois-oss@avalenn.eu>
 ;;; Copyright © 2021 Foo Chuan Wei <chuanwei.foo@hotmail.com>
-;;; Copyright © 2021 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2021, 2026 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Kyle Meyer <kyle@kyleam.com>
 ;;; Copyright © 2022 Aleksandr Vityazev <avityazev@posteo.org>
 ;;; Copyright © 2022, 2025 Maxim Cournoyer <maxim@guixotic.coop>
@@ -63,6 +63,7 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system emacs)
@@ -139,6 +140,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages security-token)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
@@ -613,6 +615,43 @@ allow doing that off the ERiC library (which is proprietary however).
 It's not clear at the moment whether one day it will be possible to
 do so.")
     (license license:agpl3+)))
+
+(define-public libbwt-jni
+  (package
+    (name "libbwt-jni")
+    (version "0.2.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/bwt-dev/libbwt-jni")
+                     (commit (string-append "v" version))
+                     ;; TODO: replace bwt submodule with packaged bwt.
+                     (recursive? #t)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "0z5kvrv08vk5dskhgasyjrn6zbr561rcli1xms0vzl5c6h082dj7"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-lib
+            (lambda _
+              (install-file "target/release/libbwt_jni.so"
+                            (string-append #$output "/lib")))))))
+    (inputs (cargo-inputs 'libbwt-jni))
+    (home-page "https://github.com/bwt-dev/libbwt-jni")
+    (synopsis "Java Native Interface bindings for Bitcoin Wallet Tracker")
+    (description "Libbwt-jni is Java Native Interface bindings for Bitcoin
+Wallet Tracker, a lightweight personal indexer for Bitcoin wallets.
+
+Libbwt-jni allows you to programmatically manage bwt's Electrum RPC and HTTP
+API servers.  It can be used as a compatibility layer for easily upgrading
+Electrum-backed wallets to support a Bitcoin Core full node backend (by
+running the Electrum server in the wallet), or for shipping software that
+integrates bwt's HTTP API as an all-in-one package.")
+    (license license:expat)))
 
 (define-public python-electrum-ecc
   (package
