@@ -7930,7 +7930,6 @@ type, for example: packages, buffers, files, etc.")
              emacs-edit-indirect
              emacs-geiser
              emacs-geiser-guile
-             emacs-magit-popup
              guile-gcrypt))
       (home-page "https://guix.gnu.org")
       (synopsis "Emacs interface for GNU Guix")
