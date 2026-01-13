@@ -13690,7 +13690,7 @@ historical battery usage and related statistics.")
            tpm2-tss))
     (native-inputs
      (list asciidoc
-           dbus
+           dbus-next
            docbook-xsl
            docbook-xml-4.3
            gettext-minimal
