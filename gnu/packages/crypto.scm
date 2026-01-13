@@ -1696,14 +1696,23 @@ checksum tool based on the BLAKE3 cryptographic hash function.")
     (arguments
      (cond
        ((target-ppc32?)
-        (list #:tests? #f))     ; TODO: Investigate test failures.
+        (list #:tests? #f       ; TODO: Investigate test failures.
+              #:configure-flags
+              #~(list "--disable-failure-tokens")))
        ((target-mingw?)
         (list #:configure-flags
               #~(list #$(string-append "CFLAGS=-g -O2"
                                        " -Wno-error=pedantic"
                                        " -Wno-error=conversion")
-                      "ac_cv_ld_no_undefined=-no-undefined")))
-       (else '())))
+                      "ac_cv_ld_no_undefined=-no-undefined"
+                      "--disable-failure-tokens")))
+       (else
+        ;; --disable-failure-tokens is necessary for the "crypt: glibc EINVAL"
+        ;; test of guile-2.2.4, which was used in Guix 1.0.0.  The flag is
+        ;; necessary to use `guix time-machine` for commits using guile-2.2.4
+        ;; or older.
+        (list #:configure-flags
+              #~(list "--disable-failure-tokens")))))
     (synopsis
      "Extended crypt library for descrypt, md5crypt, bcrypt, and others")
     (description
