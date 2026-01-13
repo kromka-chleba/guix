@@ -11251,59 +11251,6 @@ primarily for the mahogany window manager.")
 (define-public ecl-cl-wayland
   (sbcl-package->ecl-package sbcl-cl-wayland))
 
-(define-public sbcl-cl-webkit
-  (package
-    (name "sbcl-cl-webkit")
-    (version "3.5.10")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/joachifm/cl-webkit")
-             (commit version)))
-       (file-name (git-file-name "cl-webkit" version))
-       (sha256
-        (base32
-         "0bn8idvbi58kg0g76lanvjzkgnkcy41yn9vbp7f80q9fa7w892rq"))))
-    (build-system asdf-build-system/sbcl)
-    (inputs
-     `(("cffi" ,sbcl-cffi)
-       ("cl-cffi-gtk" ,sbcl-cl-cffi-gtk)
-       ("webkitgtk" ,webkitgtk-for-gtk3)))
-    (native-inputs
-     `(;; Tests seem to need Xorg.
-       ;; ("xorg-server" ,xorg-server-for-tests)
-       ("calispel" ,sbcl-calispel)
-       ("fiveam" ,sbcl-fiveam)
-       ("float-features" ,sbcl-float-features)))
-    (arguments
-     `(#:asd-systems '("cl-webkit2")
-       #:tests? #f                      ; TODO: Tests hang, why?
-       #:phases
-       (modify-phases %standard-phases
-         ;; The following phase is needed for tests:
-         ;; (add-before 'check 'start-xorg-server
-         ;;   (lambda* (#:key inputs #:allow-other-keys)
-         ;;     ;; The test suite requires a running X server.
-         ;;     (system (string-append (assoc-ref inputs "xorg-server")
-         ;;                            "/bin/Xvfb :1 &"))
-         ;;     (setenv "DISPLAY" ":1")
-         ;;     #t))
-         (add-after 'unpack 'fix-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "webkit2/webkit2.init.lisp"
-               (("libwebkit2gtk" all)
-                (string-append
-                 (assoc-ref inputs "webkitgtk") "/lib/" all))))))))
-    (home-page "https://github.com/joachifm/cl-webkit")
-    (synopsis "Binding to WebKitGTK+ for Common Lisp")
-    (description
-     "@command{cl-webkit} is a binding to WebKitGTK+ for Common Lisp,
-currently targeting WebKit version 2.  The WebKitGTK+ library adds web
-browsing capabilities to an application, leveraging the full power of the
-WebKit browsing engine.")
-    (license license:expat)))
-
 (define-public sbcl-cl-who
   (let ((version "1.1.4")
         (commit "07dafe9b351c32326ce20b5804e798f10d4f273d")
