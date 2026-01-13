@@ -89,6 +89,7 @@
                                        (search-input-file
                                         %build-inputs "lib/libgssrpc.so"))))
               "--with-libssh2"
+              "--with-ca-path=/etc/ssl/certs"
               "--disable-static")
       #:test-target "test-nonflaky"     ;avoid tests marked as "flaky"
       #:phases
