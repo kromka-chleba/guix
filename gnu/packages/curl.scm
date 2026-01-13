@@ -131,7 +131,7 @@
                 (close port)))))))
     (native-inputs
      (list nghttp2 perl pkg-config python-minimal-wrapper))
-    (inputs
+    (propagated-inputs
      (list gnutls libidn libssh2 libpsl mit-krb5 `(,nghttp2 "lib") zlib))
     (native-search-paths
      (list $SSL_CERT_DIR
