@@ -11304,9 +11304,6 @@ browsing capabilities to an application, leveraging the full power of the
 WebKit browsing engine.")
     (license license:expat)))
 
-(define-public cl-webkit
-  (sbcl-package->cl-source-package sbcl-cl-webkit))
-
 (define-public sbcl-cl-who
   (let ((version "1.1.4")
         (commit "07dafe9b351c32326ce20b5804e798f10d4f273d")
