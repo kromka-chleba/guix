@@ -339,7 +339,7 @@ JSON APIs with Behave.")
 (define-public python-blacksheep
   (package
     (name "python-blacksheep")
-    (version "2.4.5")
+    (version "2.4.6")
     (source
      (origin
        (method git-fetch)
@@ -348,11 +348,11 @@ JSON APIs with Behave.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02lfa75p8phdw3pi9c4n4fr3pmkyi3rdp6mqgz9xhq58g9blpddx"))))
+        (base32 "120q6hrhfjxdsqav8h5z8yqfi0iiacwxbkryjk7kb20ic2879vqh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 1799 passed
+      ;; tests: 1821 passed
       ;;
       ;; Run all unit tests, but do not run integration tests from `itests`
       ;; directory.
@@ -7126,7 +7126,7 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 2692 passed, 40 warnings 
+      ;; tests: 2692 passed, 40 warnings
       #:test-flags
       #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
               ;; Compete test suite is huge and compute hungry, run just unit
