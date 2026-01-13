@@ -1170,51 +1170,52 @@ private network between hosts on the internet.")
         (base32 "0v4z2w5kcrqkxsz1pgs1sqm1kx4yismjana2lxsq5zyfs3vn3y26"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:modules
-           `((guix build pyproject-build-system)
-             (guix build utils)
-             (ice-9 match)
-             (srfi srfi-26))
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-FHS-file-names
-                 (lambda _
-                   (substitute* "sshuttle/client.py"
-                     (("/usr/bin/env") (which "env")))
-                   (substitute* "sshuttle/ssh.py"
-                     (("/bin/sh") "sh"))))
-               (add-after 'install 'install-documentation
-                 (lambda _
-                   (with-directory-excursion "docs"
-                     (invoke "make" "info" "man")
-                     (with-directory-excursion "_build"
-                       (define (install-man-page file)
-                         (match (string-split file #\.)
-                           ((_ ... section)
-                            (install-file file
-                                          (string-append #$output
-                                                         "/share/man/man"
-                                                         section)))))
+     (list
+      #:modules `((guix build pyproject-build-system)
+                  (guix build utils)
+                  (ice-9 match)
+                  (srfi srfi-26))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-FHS-file-names
+            (lambda _
+              (substitute* "sshuttle/client.py"
+                (("/usr/bin/env")
+                 (which "env")))
+              (substitute* "sshuttle/ssh.py"
+                (("/bin/sh")
+                 "sh"))))
+          (add-after 'install 'install-documentation
+            (lambda _
+              (with-directory-excursion "docs"
+                (invoke "make" "info" "man")
+                (with-directory-excursion "_build"
+                  (define (install-man-page file)
+                    (match (string-split file #\.)
+                      ((_ ... section)
+                       (install-file file
+                                     (string-append #$output "/share/man/man"
+                                                    section)))))
 
-                       (for-each install-man-page
-                                 (find-files "man" "\\.[0-9]$"))
-                       (for-each (cut install-file <>
-                                      (string-append #$output "/share/info"))
-                                 (find-files "texinfo" "\\.info$")))))))))
-    (native-inputs
-     (list python-setuptools-scm
-           ;; For tests only.
-           python-hatchling
-           python-flake8
-           python-mock
-           python-pytest-cov
-           python-pytest-runner
-           ;; For documentation only.
-           python-sphinx
-           texinfo))
+                  (for-each install-man-page
+                            (find-files "man" "\\.[0-9]$"))
+                  (for-each (cut install-file <>
+                                 (string-append #$output "/share/info"))
+                            (find-files "texinfo" "\\.info$")))))))))
+    (native-inputs (list python-setuptools-scm
+                         ;; For tests only.
+                         python-hatchling
+                         python-flake8
+                         python-mock
+                         python-pytest-cov
+                         python-pytest-runner
+                         ;; For documentation only.
+                         python-sphinx
+                         texinfo))
     (home-page "https://github.com/sshuttle/sshuttle")
     (synopsis "VPN that transparently forwards connections over SSH")
-    (description "sshuttle creates an encrypted virtual private network (VPN)
+    (description
+     "sshuttle creates an encrypted virtual private network (VPN)
 connection to any remote server to which you have secure shell (SSH) access.
 The only requirement is a suitable version of Python on the server;
 administrative privileges are required only on the client.  Unlike most VPNs,
@@ -1222,7 +1223,8 @@ sshuttle forwards entire sessions, not packets, using kernel transparent
 proxying.  This makes it faster and more reliable than SSH's own tunneling and
 port forwarding features.  It can forward both TCP and UDP traffic, including
 DNS domain name queries.")
-    (license license:lgpl2.0))) ; incorrectly identified as GPL in ‘setup.py’
+    (license license:lgpl2.0)))
+; incorrectly identified as GPL in ‘setup.py’
 
 (define-public sshoot
   (package
