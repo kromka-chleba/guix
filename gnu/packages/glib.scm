@@ -196,6 +196,92 @@ or through unencrypted TCP/IP suitable for use behind a firewall with
 shared NFS home directories.")
     (license license:gpl2+)))                     ; or Academic Free License 2.1
 
+(define-public dbus-next
+  (package
+    (name "dbus-next")
+    (version "1.16.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://dbus.freedesktop.org/releases/dbus/dbus-"
+                    version ".tar.xz"))
+              (sha256
+               (base32
+                "1qmppvb4nf23nvdr1hnywl43ab4ckblrqzn0nb77pzkan6ja38hb"))
+              (patches (search-patches "dbus-helper-search-path.patch"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         ;; Install the system bus socket under /var.
+         "-Dlocalstatedir=/var"
+
+         ;; Install the session bus socket under /tmp.
+         "-Dsession_socket_dir=/tmp"
+
+         ;; Use /etc/dbus-1 for system-wide config.
+         ;; Look for configuration file under
+         ;; /etc/dbus-1.  This is notably required by
+         ;; 'dbus-daemon-launch-helper', which looks for
+         ;; the 'system.conf' file in that place,
+         ;; regardless of what '--config-file' was
+         ;; passed to 'dbus-daemon' on the command line;
+         ;; see <https://bugs.freedesktop.org/show_bug.cgi?id=92458>.
+         "-Dsysconfdir=/etc")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'install
+            (lambda _
+              ;; Don't try to create /var and /etc.
+              (invoke "meson"
+                      "install"
+                      "--destdir=/tmp/dummy")
+              (copy-recursively (string-append "/tmp/dummy/" #$output)
+                                #$output)
+              (mkdir-p (string-append #$output:doc "/share"))
+              (rename-file (string-append #$output "/share/doc")
+                           (string-append #$output:doc "/share/doc")))))))
+    (native-inputs
+     ;; Some dependencies are required to generate the documentation.  Also,
+     ;; quoting NEWS for 1.16.2: “Autotools-generated files are no longer
+     ;; included in the tarball release.”
+     (list docbook-xml-4.4
+           docbook-xsl
+           doxygen
+           libtool
+           libxslt
+           which
+           python
+           xmlto
+           yelp-tools
+           pkg-config))
+    (inputs
+     (list expat
+           ;; Add a dependency on libx11 so that 'dbus-launch' has support for
+           ;; '--autolaunch'.
+           libx11))
+    (outputs '("out" "doc"))            ;22 MiB of HTML doc
+    (home-page "https://www.freedesktop.org/wiki/Software/dbus/")
+    (synopsis "Message bus for inter-process communication (IPC)")
+    (description
+     "D-Bus is a message bus system, a simple way for applications to
+talk to one another.  In addition to interprocess communication, D-Bus
+helps coordinate process lifecycle; it makes it simple and reliable to
+code a \"single instance\" application or daemon, and to launch
+applications and daemons on demand when their services are needed.
+
+D-Bus supplies both a system daemon (for events such as \"new hardware
+device added\" or \"printer queue changed\") and a
+per-user-login-session daemon (for general IPC needs among user
+applications).  Also, the message bus is built on top of a general
+one-to-one message passing framework, which can be used by any two apps
+to communicate directly (without going through the message bus
+daemon).  Currently the communicating applications are on one computer,
+or through unencrypted TCP/IP suitable for use behind a firewall with
+shared NFS home directories.")
+    (license license:gpl2+)))                     ; or Academic Free License 2.1
+
 ;;; This variant is used for the Jami service: it provides an entry point to
 ;;; further customize the configuration of the D-Bus instance run by the
 ;;; jami-dbus-session service.
