@@ -858,17 +858,48 @@ Use '~/.config/guix/channels.scm' instead."))
                            (N_ "Building from this channel:~%"
                                "Building from these channels:~%"
                                (length instances)))
-                   (for-each (lambda (instance)
-                               (let ((channel
-                                      (channel-instance-channel instance)))
-                                 (format (current-error-port)
-                                         "  ~10a~a\t~a~%"
-                                         (channel-name channel)
-                                         (channel-url channel)
-                                         (string-take
-                                          (channel-instance-commit instance)
-                                          7))))
-                             instances)
+                   ;; Find the longest strings to correctly
+                   ;; tabulate the guix pull output
+                   (let* ((get-longest-width
+                           (lambda (channels padding value-function)
+                             "Given a list of channels iterate over them finding the longest string width from the list.
+                              padding is then applied on top of the longest width to define the space between the tabulated columns.
+                              value-function is used to extract the strings from the channel records."
+                             (+ padding
+                                (apply max (map (compose string-length value-function) channels)))))
+                          ;; Set the width of the space between the longest
+                          ;; string and its neighbour. A padding of 4 gives us
+                          ;; the width of one tab stop
+                          (padding 4)
+                          (longest-channel-name-width
+                           (get-longest-width instances
+                                              padding
+                                              (compose symbol->string
+                                                       channel-name
+                                                       channel-instance-channel)))
+                          (longest-channel-url-width
+                           (get-longest-width instances
+                                              padding
+                                              (compose channel-url
+                                                       channel-instance-channel)))
+                          (channel-information-fmt-string
+                           ;; This resolves to "  ~10a~33a~a~%" in the case
+                           ;; longest-channel-name-width is 10
+                           ;; longest-channel-url-width is 33
+                           (format #f "  ~~~aa~~~aa~~a~~%"
+                                   longest-channel-name-width
+                                   longest-channel-url-width)))
+                     (for-each (lambda (instance)
+                                 (let ((channel
+                                         (channel-instance-channel instance)))
+                                   (format (current-error-port)
+                                           channel-information-fmt-string
+                                           (channel-name channel)
+                                           (channel-url channel)
+                                           (string-take
+                                            (channel-instance-commit instance)
+                                            7))))
+                               instances))
                    (parameterize ((%guile-for-build
                                    (package-derivation
                                     store
