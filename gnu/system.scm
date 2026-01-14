@@ -75,6 +75,7 @@
   #:use-module (gnu system shadow)
   #:use-module (gnu system nss)
   #:use-module (gnu system locale)
+  #:use-module (gnu system keyboard)
   #:use-module (gnu system pam)
   #:use-module (gnu system linux-initrd)
   #:use-module (gnu system privilege)
@@ -1263,7 +1264,24 @@ use 'plain-file' instead~%")
 
     ;; By default, applications that use D-Bus, such as Emacs, abort at startup
     ;; when /etc/machine-id is missing.  Make sure these warnings are non-fatal.
-    ("DBUS_FATAL_WARNINGS" . "0")))
+    ("DBUS_FATAL_WARNINGS" . "0")
+
+    ;; Set up keyboard layout for Wayland desktop environments where
+    ;; ‘set-xorg-configuration’ won't take effect.
+    ,@(let ((layout (operating-system-keyboard-layout os)))
+        (if layout
+            (filter identity
+                    (list (and=> (keyboard-layout-model layout)
+                                 (cut cons "XKB_DEFAULT_MODEL"   <>))
+                          (and=> (keyboard-layout-name layout)
+                                 (cut cons "XKB_DEFAULT_LAYOUT"  <>))
+                          (and=> (keyboard-layout-variant layout)
+                                 (cut cons "XKB_DEFAULT_VARIANT" <>))
+                          (and=> (keyboard-layout-options layout)
+                                 (lambda (options)
+                                   (cons "XKB_DEFAULT_OPTIONS"
+                                         (string-join options ","))))))
+            '()))))
 
 (define %default-privileged-programs
   (let ((shadow (@ (gnu packages admin) shadow)))
