@@ -39,6 +39,10 @@ else
     EXTRA_OPTIONS=""
 fi
 
+# glibc 2.39 briefly broke guix time-machine for commits using guile-2.2.4,
+# so verify that this still works.
+guix time-machine -q --commit=v1.0.0 $EXTRA_OPTIONS -- describe
+
 # Visiting a commit older than v0.16.0 must fail (this test is expensive
 # because it clones the whole repository).
 guix time-machine -q --commit=v0.15.0 $EXTRA_OPTIONS -- describe && false
