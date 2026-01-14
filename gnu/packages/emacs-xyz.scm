@@ -21045,20 +21045,21 @@ required by the LaTeX output produced by Org mode.")
 (define-public emacs-org-contacts
   ;; XXX: Upstream does not tag version bumps. Commit below matches latest
   ;; version bump.
-  (let ((commit "217ba04c9d638067a6ccb0829cf1885f54c1d568"))
+  (let ((commit "33c1efd417974896f1991b4c94833bd5ef370e92"))
     (package
       (name "emacs-org-contacts")
-      (version "1.1")
+      (version "1.2")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://repo.or.cz/org-contacts")
-               (commit commit)))
+                (url "https://repo.or.cz/org-contacts")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0f0vjdvx0hffj2xvyrya8yfl77djmzmpxdxsx58ym4lmdvwyb6x3"))))
+          (base32 "1wgnm45chscp8xl58x8z6csl1vp53cwmlyd53ivvc9fh1z34bzz3"))))
       (build-system emacs-build-system)
+      (native-inputs (list emacs-ert-runner))
       (propagated-inputs (list emacs-org))
       (home-page "https://repo.or.cz/org-contacts")
       (synopsis "Contacts management system for Org mode")
