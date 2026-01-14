@@ -1903,6 +1903,33 @@ formats.")
       (home-page "https://github.com/parallaxsw/OpenSTA/")
       (license license:gpl3+))))
 
+(define-public opentimer
+  (let ((commit "cd0565fc7a720368e75751c717be92d76350ee8d")
+        (revision "1"))
+    (package
+      (name "opentimer")
+      ;; The version string is taken from the CMakeLists.txt.
+      (version (git-version "3.12.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/opentimer/opentimer/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0l75mppq434ya44gx9fdg45vgig3kyp8mb62sal30s54q67px7xz"))))
+      (build-system cmake-build-system)
+      (inputs (list tcl tcllib python-minimal))
+      (synopsis "Timing analysis tool for VLSI systems")
+      (description
+       "OpenTimer is a @acronym{STA, static timing analysis} tool for
+verifying the timing behavior of integrated circuits.
+It supports graph-based as well as path-based timing analysis and
+industry standard file formats (.lib, .v, .spef, .sdc).")
+      (home-page "https://github.com/opentimer/opentimer/")
+      (license license:expat))))
+
 (define-public pulseview
   (package
     (name "pulseview")
