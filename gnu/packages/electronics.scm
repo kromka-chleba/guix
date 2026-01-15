@@ -323,6 +323,30 @@ supporting gerber, excellon and g-code.  It is part of the RiNgDove EDA
 suite.")
     (license license:gpl2+)))
 
+(define-public ciel
+  (package
+    (name "ciel")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fossi-foundation/ciel")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cj4cpmpqi7aqj9jkpp87qs9bjcg3j97adv1s91pnfrkplff8rh1"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core))
+    (inputs (list python-httpx python-rich))
+    (home-page "https://github.com/fossi-foundation/ciel")
+    (synopsis
+     "Version manager for open-source @acronym{PDKs, process design kits}")
+    (description
+     "Ciel helps installing open-source @{PDKs, process design kits} which are
+    used for chip design and @acryonym{EDA, electronic design automation}.")
+    (license license:asl2.0)))
+
 (define-public comedilib
   (package
     (name "comedilib")
