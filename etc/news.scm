@@ -42,6 +42,35 @@
 (channel-news
  (version 0)
 
+ (entry (commit "xxx")
+        (title
+         (en "Changes in @code{%desktop-services} login manager"))
+        (body
+         (en "The @code{%desktop-services} contains login manager that is architecture
+dependent. Now this login manager has been changed on all platforms except
+x86_64.  The goal is to have GDM on all platforms, however that is not
+possible yet.
+
+Currently the login manager is chosen as follows:
+@itemize
+@item On x86_64 and AArch64, @code{gdm-service-type} is used.
+@item On other architectures, it is @code{slim-service-type}.
+@end itemize
+
+Previously GDM has been used only on x86_64 and SDDM on all other
+architectures.  SDDM has been swapped for SLiM, because it has less
+dependencies, so it's easier to ensure it builds. However, SLiM does not
+support launching Wayland environments.
+
+On top of that, to ease the burden of changing this variable,
+@code{login-manager-service-type-for-system} is now exposed,
+so you can use
+@example
+(modify-services %desktop-services
+              (delete (login-manager-service-type-for-system)))
+@end example
+to remove the login manager without worrying about the platform.")))
+
  (entry (commit "d3b79beaa806452dceaffb8b211b69dc4c346aba")
         (title
          (en "Linux-libre 5.4 no longer supported")
