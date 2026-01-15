@@ -112,7 +112,9 @@
       (name "Sway")
       (packages (map (lambda (package)
                        `(specification->package ,package))
-                     '("sway" "wmenu" "foot"))))
+                     '("sway" "wmenu" "foot")))
+      ;; XXX: Assume 'keyboard-layout' is in scope.
+      (snippet '((service xkbcommon-service-type keyboard-layout))))
 
      ;; Networking.
      (system-service
