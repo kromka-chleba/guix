@@ -49,6 +49,7 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages password-utils)
+  #:use-module (gnu packages pdf)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
@@ -445,7 +446,7 @@ and a high score table.")
 (define-public komikku
   (package
     (name "komikku")
-    (version "1.87.0")
+    (version "1.99.0")
     (source
      (origin
        (method git-fetch)
@@ -455,9 +456,7 @@ and a high score table.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0fsmhigvvr9fahvczbwc5lv7xcvl9px9c10dv8sqx5j9sr1fhlcq"))
-       (patches (search-patches "komikku-python-3.11-compat.patch"
-                                "komikku-fix-colorthief.patch"))))
+         "1did8rh3aw6d3g1myavsma986rwashw09g3m442lv8fzmdiw18r4"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -517,6 +516,8 @@ and a high score table.")
            python-pure-protobuf
            python-pycairo
            python-pygobject
+           python-pyjwt
+           python-pypdf
            python-rarfile
            python-requests
            python-unidecode
