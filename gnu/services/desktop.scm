@@ -55,6 +55,7 @@
                           file-system))
   #:autoload   (gnu services sddm) (sddm-service-type)
   #:use-module (gnu system)
+  #:use-module (gnu system keyboard)
   #:use-module (gnu system privilege)
   #:use-module (gnu system shadow)
   #:use-module (gnu system uuid)
@@ -215,6 +216,9 @@
 
             seatd-configuration
             seatd-service-type
+
+            keyboard-layout->xkbcommon-environment-variables
+            xkbcommon-service-type
 
             %desktop-services))
 
@@ -2509,6 +2513,39 @@ applications needing access to be root.")
      (service-extension file-system-service-type (const %control-groups))
      (service-extension shepherd-root-service-type seatd-shepherd-service)))
    (default-value (seatd-configuration))))
+
+
+;;;
+;;; Set up default keyboard layout for libxkbcommon, notably used by Wayland
+;;; compositors.
+;;;
+
+(define (keyboard-layout->xkbcommon-environment-variables keyboard-layout)
+  (if keyboard-layout
+      (filter identity
+              (list (and=> (keyboard-layout-model keyboard-layout)
+                           (cut cons "XKB_DEFAULT_MODEL" <>))
+                    (and=> (keyboard-layout-name keyboard-layout)
+                           (cut cons "XKB_DEFAULT_LAYOUT" <>))
+                    (and=> (keyboard-layout-variant keyboard-layout)
+                           (cut cons "XKB_DEFAULT_VARIANT" <>))
+                    (and=> (keyboard-layout-options keyboard-layout)
+                           (lambda (options)
+                             (cons "XKB_DEFAULT_OPTIONS"
+                                   (string-join options ","))))))
+      '()))
+
+(define xkbcommon-service-type
+  (service-type
+    (name 'xkbcommon)
+    (extensions
+     (list
+      (service-extension session-environment-service-type
+                         keyboard-layout->xkbcommon-environment-variables)))
+    (description
+     "Set up default keyboard layout for @code{libxkbcommon}.  This is
+implemented by setting @code{XKB_DEFAULT_*} environment variables
+system-wide.")))
 
 
 ;;;

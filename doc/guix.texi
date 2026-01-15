@@ -19464,8 +19464,10 @@ is properly configured (@pxref{operating-system Reference,
 @code{keyboard-layout}}).
 
 @item
-The @emph{graphical display server}, usually Xorg, also has its own idea of
-the keyboard layout (@pxref{X Window, @code{keyboard-layout}}).
+The @emph{graphical display server} also has its own idea of the keyboard
+layout.  Different configurations are used for Xorg (@pxref{X Window,
+@code{keyboard-layout}}) and Wayland compositors (@pxref{xkbcommon-service-type,
+@code{xkbcommon-service-type}}).
 @end itemize
 
 Guix allows you to configure all three separately but, fortunately, it allows
@@ -19525,13 +19527,13 @@ for a complete list of supported layouts, variants, and models.
 
 @cindex keyboard layout, configuration
 Let's say you want your system to use the Turkish keyboard layout throughout
-your system---bootloader, console, and Xorg.  Here's what your system
-configuration would look like:
+your system---bootloader, console, and graphical display server.  Here's what
+your system configuration would look like:
 
 @findex set-xorg-configuration
 @lisp
 ;; Using the Turkish layout for the bootloader, the console,
-;; and for Xorg.
+;; and for graphical display servers.
 
 (operating-system
   ;; ...
@@ -19540,17 +19542,18 @@ configuration would look like:
                 (bootloader grub-efi-bootloader)
                 (targets '("/boot/efi"))
                 (keyboard-layout keyboard-layout))) ;for GRUB
-  (services (cons (set-xorg-configuration
+  (services (cons* (service xkbcommon-service-type keyboard-layout) ;for Wayland compositors
+                   (set-xorg-configuration
                     (xorg-configuration             ;for Xorg
                       (keyboard-layout keyboard-layout)))
-                  %desktop-services)))
+                   %desktop-services)))
 @end lisp
 
-In the example above, for GRUB and for Xorg, we just refer to the
-@code{keyboard-layout} field defined above, but we could just as well refer to
-a different layout.  The @code{set-xorg-configuration} procedure communicates
-the desired Xorg configuration to the graphical log-in manager, by default
-GDM.
+In the example above, for GRUB, and for graphical display servers (Wayland
+compositors and Xorg), we just refer to the @code{keyboard-layout} field defined
+above, but we could just as well refer to a different layout.  The
+@code{set-xorg-configuration} procedure communicates the desired Xorg
+configuration to the graphical log-in manager, by default GDM.
 
 We've discussed how to specify the @emph{default} keyboard layout of your
 system when it starts, but you can also adjust it at run time:
@@ -27680,6 +27683,18 @@ Log level to output logs. Possible values: @samp{"silent"}, @samp{"error"},
 @end table
 @end deftp
 
+@anchor{xkbcommon-service-type}
+@cindex keyboard layout, for Wayland
+@cindex libxkbcommon, default keyboard layout
+@defvar xkbcommon-service-type
+This is the service type to specify the default keyboard layout for the
+@uref{https://xkbcommon.org/, xkbcommon} library, notably used by Wayland
+compositors (like Sway and niri).
+
+The value of this type is a @code{keyboard-layout} object.  @xref{Keyboard
+Layout}, for more information and an example on how to specify the keyboard
+layout.
+@end defvar
 
 @node Sound Services
 @subsection Sound Services
