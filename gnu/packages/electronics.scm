@@ -106,17 +106,20 @@
   #:use-module (gnu packages m4)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby)
+  #:use-module ((guix search-paths) #:select ($SSL_CERT_DIR $SSL_CERT_FILE))
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages shells)
@@ -322,6 +325,48 @@ generating bitstreams with Gowin FPGAs.")
 supporting gerber, excellon and g-code.  It is part of the RiNgDove EDA
 suite.")
     (license license:gpl2+)))
+
+(define-public ciel
+  (package
+    (name "ciel")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fossi-foundation/ciel")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cj4cpmpqi7aqj9jkpp87qs9bjcg3j97adv1s91pnfrkplff8rh1"))))
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'wrap 'wrap-ciel
+            (lambda* (#:key inputs #:allow-other-keys)
+              (wrap-program (string-append #$output "/bin/ciel")
+                `("PATH" ":" prefix
+                  (,(string-append (assoc-ref inputs "git-minimal") "/bin")))
+                `("GIT_SSL_CAINFO" ":" =
+                  ("/etc/ssl/certs/ca-certificates.crt"))))))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core))
+    (inputs (list bash-minimal
+                  git-minimal
+                  python-click
+                  python-httpx
+                  python-pcpp
+                  python-rich
+                  python-zstandard))
+    (home-page "https://github.com/fossi-foundation/ciel")
+    (synopsis
+     "Version manager for open-source @acronym{PDKs, process design kits}")
+    (description
+     "@code{ciel} downloads and installs open-source @acronym{PDKs, process design kits}
+which are used for chip design and @acronym{EDA, electronic design automation}.")
+    (license license:asl2.0)))
 
 (define-public comedilib
   (package
