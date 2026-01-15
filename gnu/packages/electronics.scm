@@ -1024,6 +1024,44 @@ an embedded event driven algorithm.")
                    license:bsd-3 ;ciderlib
                    license:public-domain)))) ;xspice
 
+(define-public librelane
+  (package
+    (name "librelane")
+    (version "2.4.10")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/librelane/librelane")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1zibb9j3w1qxqrh1mxg0qmhxv7355r03zx3pmkmj42kr4vp114if"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core python-setuptools python-wheel))
+    (inputs
+     (list ciel
+           python-click
+           python-cloup
+           python-deprecated
+           python-httpx
+           python-klayout
+           python-lln-libparse
+           python-lxml
+           python-psutil
+           python-pyyaml
+           python-rapidfuzz
+           python-rich
+           python-semver
+           python-yamlcore))
+    (home-page "https://librelane.readthedocs.io/")
+    (synopsis "ASIC implementation flow infrastructure")
+    (description "LibreLane is an ASIC infrastructure library based on several
+components including OpenROAD, Yosys, Magic, Netgen, CVC, KLayout and a number
+of custom scripts for design exploration and optimization.")
+    (license license:asl2.0)))
+
 (define librnd
   (package
     (name "librnd")
