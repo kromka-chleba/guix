@@ -239,15 +239,16 @@ human.")
 (define-public keepassxc
   (package
     (name "keepassxc")
-    (version "2.7.10")
+    (version "2.7.11")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/keepassxreboot/keepassxc"
-                           "/releases/download/" version "/keepassxc-"
-                           version "-src.tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/keepassxreboot/keepassxc")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1ylxh72bpf4pzsj13j8zlxpidp6aygaikw454n228v4q81j6vrsw"))))
+        (base32 "1sg0ffnm368ax8w7qndmqpasjx259s58g4dib5d23nvwpnzqf3i3"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -329,8 +330,6 @@ manage your passwords in a secure way.  You can put all your passwords in one
 database, which is locked with one master key or a key-file which can be stored
 on an external storage device.  The databases are encrypted using the
 algorithms AES or Twofish.")
-    (properties
-     '((release-monitoring-url . "https://github.com/keepassxreboot/keepassxc/releases")))
     ;; While various parts of the software are licensed under different licenses,
     ;; the combined work falls under the GPLv3.
     (license license:gpl3)))
