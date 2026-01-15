@@ -27694,6 +27694,10 @@ compositors (like Sway and niri).
 The value of this type is a @code{keyboard-layout} object.  @xref{Keyboard
 Layout}, for more information and an example on how to specify the keyboard
 layout.
+
+The service sets environment variables for login sessions on the system.
+@xref{Desktop Home Services, @code{home-xkbcommon-service-type}}, for per-user
+setup using Guix Home.
 @end defvar
 
 @node Sound Services
@@ -52192,6 +52196,19 @@ API.
 
 @end table
 @end deftp
+
+@cindex keyboard layout, for Wayland (per-user)
+@cindex libxkbcommon, default keyboard layout (per-user)
+@defvar home-xkbcommon-service-type
+This is the service type to specify the default keyboard layout for Wayland
+compositors (like Sway and niri), specifically using the underlying
+@uref{https://xkbcommon.org/, xkbcommon} library.
+
+The value of this type is a @code{keyboard-layout} object.  @xref{Keyboard
+Layout}, for more information on how to specify the keyboard layout.
+
+@xref{Desktop Services, @code{xkbcommon-service-type}}, for system-wide setup.
+@end defvar
 
 @defvar home-gcr-ssh-agent-service-type
 

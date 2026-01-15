@@ -24,6 +24,7 @@
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu services configuration)
+  #:use-module (gnu services desktop)
   #:use-module (gnu services xorg)
   #:autoload   (gnu packages glib)    (dbus)
   #:autoload   (gnu packages xdisorg) (darkman redshift unclutter)
@@ -51,7 +52,9 @@
 
             home-darkman-configuration
             home-darkman-configuration?
-            home-darkman-service-type))
+            home-darkman-service-type
+
+            home-xkbcommon-service-type))
 
 
 ;;;
@@ -542,3 +545,23 @@ disables automatic transitions entirely.")
     (description "Run the @code{darkman} daemon, which will invoke scripts in
 $XDG_DATA_DIRS/dark-mode.d/ when sundown, and invoke scripts in
 $XDG_DATA_DIRS/light-mode.d/ when sunrise.")))
+
+
+;;;
+;;; Set up default keyboard layout for libxkbcommon, notably used by Wayland
+;;; compositors.
+
+(define home-xkbcommon-service-type
+  (service-type
+    (name 'home-xkbcommon)
+    (extensions
+     (list
+      (service-extension home-environment-variables-service-type
+                         keyboard-layout->xkbcommon-environment-variables)))
+    (description
+     "Set up default keyboard layout for @code{libxkbcommon}.  This is
+implemented by setting @code{XKB_DEFAULT_*} environment variables in the home
+environment.")))
+
+(define-service-type-mapping
+  xkbcommon-service-type => home-xkbcommon-service-type)
