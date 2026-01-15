@@ -41983,6 +41983,24 @@ you do not want to store entirely on disk or on memory.")
     (arguments
      `(#:configure-flags '("PYTHON_VERSION=2")))))
 
+(define-public python-yamlcore
+  (package
+    (name "python-yamlcore")
+    (version "0.0.2") ;; there's a 0.0.4 but librelane needs exactly this version
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "yamlcore" version))
+              (sha256
+               (base32
+                "0vwjiryrx58ycmlbv668izswda4jmdpw7g9cn6bsy5my3iabjblb"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools))
+    (inputs (list python-pyyaml))
+    (home-page "https://github.com/perlpunk/pyyaml-core")
+    (synopsis "YAML 1.2 support for PyYAML")
+    (description "TODO")
+    (license license:expat)))
+
 (define-public shrinkwrap
   (package
     (name "shrinkwrap")
