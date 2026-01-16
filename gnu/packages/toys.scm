@@ -9,6 +9,7 @@
 ;;; Copyright © 2023 Sarthak Shah <shahsarthakw@gmail.com>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2026 Carlos Durán Domínguez <wurt@wurt.eu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -52,7 +53,9 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages xml)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg))
 
 ;;; Commentary:
@@ -511,6 +514,42 @@ on the text terminal.  It serves no useful purpose but to discourage
 mistakenly typing @command{sl} instead of @command{ls}.")
     (license (license:non-copyleft "file://LICENSE"
                                    "See LICENSE in the distribution."))))
+
+(define-public wayneko
+  (let ((commit "c1919dc3a7e610d30e4c06efaa5af85941f27d86")
+        (revision "0"))
+    (package
+      (name "wayneko")
+      (version (git-version "0.0.0" revision commit))
+      (home-page "https://git.sr.ht/~leon_plickat/wayneko")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url home-page)
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "189mlpjfx9s1jzsm7vdm7q186p35csfddn3vw3g96nds69qc9inr"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ; No tests.
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "DESTDIR=" #$output)
+                "PREFIX=''")
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure))))      ; No configure script.
+      (native-inputs (list pkg-config))
+      (inputs (list wayland pixman))
+      (synopsis "Neko on Wayland")
+      (description
+       "Display an animated neko cat on the bottom of an output.  Requires the
+Wayland server to implement zwlr-layer-shell-unstable-v1.")
+      (license (list license:gpl3+              ; Code
+                     license:public-domain))))) ; Assets
 
 (define-public xfishtank
   (package
