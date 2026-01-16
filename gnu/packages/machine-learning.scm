@@ -2081,7 +2081,6 @@ with a single function call.")
               ;; XXX: Fixes build with gcc@14.
               "-DCMAKE_CXX_FLAGS=-Wl,-z,noexecstack")
       #:phases
-      (with-extensions (list (pyproject-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _
@@ -2144,7 +2143,7 @@ with a single function call.")
               ((assoc-ref py:%standard-phases 'sanity-check)
                #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
                           ,@inputs)
-               #:outputs `(("out" . ,#$output:python)))))))))
+               #:outputs `(("out" . ,#$output:python))))))))
     (outputs (list "out" "python"))
     (inputs
      (list abseil-cpp-20250127
@@ -3572,7 +3571,6 @@ Python.")
          "-DFARMHASH_SOURCE_DIR=/tmp/farmhash"
          (string-append "-Dgemmlowp_ROOT=" #$(this-package-input "gemmlowp")))
       #:phases
-      (with-extensions (list (pyproject-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _
@@ -3698,7 +3696,7 @@ find_library(ML_DTYPES_LIBRARIES
               ((assoc-ref py:%standard-phases 'sanity-check)
                #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
                           ,@inputs)
-               #:outputs `(("out" . ,#$output:python)))))))))
+               #:outputs `(("out" . ,#$output:python))))))))
     (inputs
      (list abseil-cpp
            cpuinfo
@@ -4597,7 +4595,6 @@ different backends")
               "LLAMA_PORTABLE=1"
               "LLAMA_USE_BUNDLED_GLSLC=0")    ;; TODO: add CLBLAS
       #:phases
-      (with-extensions (list (pyproject-guile-json))
         #~(modify-phases %standard-phases
             (delete 'configure)
             (replace 'install
@@ -4616,7 +4613,7 @@ different backends")
                 (wrap-program (search-input-file outputs "bin/koboldcpp.py")
                   `("GUIX_PYTHONPATH" =
                     (,(getenv "GUIX_PYTHONPATH")
-                     ,(python:site-packages inputs outputs))))))))))
+                   ,(python:site-packages inputs outputs)))))))))
     (inputs
      (list bash-minimal
            openblas
@@ -5911,7 +5908,6 @@ definite approximations of Optimal Transport (Wasserstein) distances.
                   ((guix build pyproject-build-system) #:prefix py:)
                   (guix build utils))
       #:phases
-      (with-extensions (list (pyproject-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'check 'python-check
             (lambda _
@@ -5935,7 +5931,7 @@ definite approximations of Optimal Transport (Wasserstein) distances.
                 (copy-file "PKG-INFO" (string-append info "/METADATA"))
                 (copy-recursively
                  "py_src/tokenizers"
-                 (string-append lib "tokenizers")))))))))
+                 (string-append lib "tokenizers"))))))))
     (native-inputs
      (list pkg-config python-minimal python-pytest))
     (inputs
