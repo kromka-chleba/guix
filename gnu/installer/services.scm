@@ -56,7 +56,7 @@
                    (default #f))
   (snippet         system-service-snippet         ;list of sexps
                    (default '()))
-  (packages        system-service-packages        ;list of sexps
+  (packages        system-service-packages        ;list of strings
                    (default '())))
 
 (define system-service-none
@@ -87,32 +87,25 @@
       (snippet '((service plasma-desktop-service-type))))
      (desktop-environment
       (name "Icewm")
-      (packages '((specification->package "icewm"))))
+      (packages '("icewm")))
      (desktop-environment
       (name "Openbox")
-      (packages '((specification->package "openbox"))))
+      (packages '("openbox")))
      (desktop-environment
       (name "awesome")
-      (packages '((specification->package "awesome"))))
+      (packages '("awesome")))
      (desktop-environment
       (name "i3")
-      (packages (map (lambda (package)
-                       `(specification->package ,package))
-                     '("i3-wm" "i3status" "dmenu" "st"))))
+      (packages '("i3-wm" "i3status" "dmenu" "st")))
      (desktop-environment
       (name "ratpoison")
-      (packages '((specification->package "ratpoison")
-                  (specification->package "xterm"))))
+      (packages '("ratpoison" "xterm")))
      (desktop-environment
       (name "Emacs EXWM")
-      (packages '((specification->package "emacs")
-                  (specification->package "emacs-exwm")
-                  (specification->package "emacs-desktop-environment"))))
+      (packages '("emacs" "emacs-exwm" "emacs-desktop-environment")))
      (desktop-environment
       (name "Sway")
-      (packages (map (lambda (package)
-                       `(specification->package ,package))
-                     '("sway" "wmenu" "foot"))))
+      (packages '("sway" "wmenu" "foot")))
 
      ;; Networking.
      (system-service
@@ -237,7 +230,7 @@
                       (packages %base-packages/hurd))
                     '())
                 `(,@package-heading
-                  (packages (append (list ,@packages)
+                  (packages (append (specifications->packages ',packages)
                                     ,(if (target-hurd?)
                                          '%base-packages/hurd
                                          '%base-packages)))))
@@ -250,7 +243,7 @@
                       (packages %base-packages/hurd))
                     '())
                 `(,@package-heading
-                  (packages (append (list ,@packages)
+                  (packages (append (specifications->packages ',packages)
                                     ,(if (target-hurd?)
                                          '%base-packages/hurd
                                          '%base-packages)))))
