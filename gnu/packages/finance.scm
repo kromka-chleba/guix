@@ -687,7 +687,7 @@ require Coincurve.")
 (define-public electrum
   (package
     (name "electrum")
-    (version "4.6.1")
+    (version "4.6.2")
     (source
      (origin
        (method url-fetch)
@@ -695,7 +695,7 @@ require Coincurve.")
                            version "/Electrum-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1h7z019sp99csrj1djmhlm9y7vyyzl7wvar7z9x4jx59lmmvs1xs"))
+        (base32 "1qa6rb2dg4gfrif2aq4bc7wc8ph4d070xiij5cxbndlcww0k7g36"))
        (modules '((guix build utils)))
        (snippet
         '(begin
