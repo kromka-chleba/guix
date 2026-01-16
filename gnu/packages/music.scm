@@ -7847,7 +7847,6 @@ streaming audio server.")
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build utils))
       #:phases
-      (with-extensions (list (pyproject-guile-json))
         #~(modify-phases %standard-phases
             (add-before 'check 'pre-check
               (lambda _
@@ -7872,7 +7871,7 @@ streaming audio server.")
                        `("GI_TYPELIB_PATH" ":" = (,gi-typelib-path))
                        `("GST_PLUGIN_SYSTEM_PATH" ":" suffix
                          (,gst-plugins-path))))
-                   '("exfalso" "operon" "quodlibet")))))))))
+                 '("exfalso" "operon" "quodlibet"))))))))
     (native-inputs (list xvfb-run gettext-minimal python-pytest
                          python-setuptools))
     (inputs
