@@ -265,7 +265,7 @@ desktop and the mate-about program.")
 (define-public libmateweather
   (package
     (name "libmateweather")
-    (version "1.28.1")
+    (version "1.28.2")
     (source
      (origin
        (method git-fetch)
@@ -275,7 +275,7 @@ desktop and the mate-about program.")
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "150wzqd619rggfwhzn4s456rbz9dv5l0qx7x80jcinibwgw7hjjv"))))
+        (base32 "15ajz83na76lcnw9cy1m36f9xfzl1nywk9xwwjax1cklfz63vl0g"))))
     (build-system gnu-build-system)
     (arguments
      (list
