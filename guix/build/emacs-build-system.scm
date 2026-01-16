@@ -70,7 +70,8 @@ name that has been stripped of the hash and version number."
 (define* (unpack #:key source lisp-directory #:allow-other-keys)
   "Unpack SOURCE into the build directory.  SOURCE may be a compressed
 archive, a directory, or an Emacs Lisp file."
-  (if (string-suffix? ".el" source)
+  (if (and (string-suffix? ".el" source)
+           (eq? 'regular (stat:type (stat source))))
       (begin
         (mkdir "source")
         (chdir "source")
