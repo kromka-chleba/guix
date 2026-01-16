@@ -4587,6 +4587,30 @@ elastic message queue for managing data and event flow within cloud
 applications and between systems.")
       (license license:bsd-2))))
 
+(define-public python-rassumfrassum
+  (package
+    (name "python-rassumfrassum")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/joaotavora/rassumfrassum")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jjfx0a4qp2mdvr8ripf44r056fa4spmmhdpvpli89bl5711lm0l"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/joaotavora/rassumfrassum")
+    (synopsis
+     "LSP/JSONRPC multiplexer for connecting one LSP client to multiple servers")
+    (description
+     "Rassumfrassum is a LSP/JSONRPC multiplexer that allows one LSP client
+(Emacs' @code{eglot}, Neovim, etc.) to connect to multiple language servers
+seamlessly.")
+    (license license:gpl3+)))
+
 (define-public python-rasterio
   (package
     (name "python-rasterio")
