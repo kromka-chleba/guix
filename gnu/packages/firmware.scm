@@ -1308,19 +1308,17 @@ Virtual Machines.  OVMF contains a sample UEFI firmware for QEMU and KVM.")
         (string=? (%current-system) (gnu-triplet->nix-system triplet))))
   (package
     (name (downstream-package-name "arm-trusted-firmware-" platform))
-    (version "2.12.2")
+    (version "2.14.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
               (url (string-append "https://git.trustedfirmware.org"
                                   "/TF-A/trusted-firmware-a.git/"))
-              (commit (string-append "lts-v" version))))
+              (commit (string-append "v" version))))
        (file-name (git-file-name "arm-trusted-firmware" version))
        (sha256
-        (base32 "01i40asy9dsbx4l5kbvsvi55bdf308nnraf8kfli5d4cx8pxqmrj"))
-       (patches (search-patches "8mq-enable-imx_hab_handler.patch"
-                                "8mq-move-stack-to-ocram_s.patch"))
+        (base32 "0nx966ap6fr27fj28bavkb2h7dyi5k73c89ibn32qc86hx19wagf"))
        (modules '((guix build utils)))
        ;; Remove binary blobs: they don't reference a source or license.
        (snippet #~(for-each delete-file (find-files "." "\\.bin$")))))
