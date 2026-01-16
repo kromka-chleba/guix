@@ -2714,7 +2714,6 @@ execution of any hook written in any language before every commit.")
                   (guix build utils))
       #:make-flags #~(list (string-append "PREFIX=" #$output))
       #:phases
-      (with-extensions (list (pyproject-guile-json))
         #~(modify-phases %standard-phases
             (delete 'configure)
             (add-after 'unpack 'patch-tests
@@ -2809,7 +2808,7 @@ execution of any hook written in any language before every commit.")
                 ((assoc-ref py:%standard-phases 'sanity-check)
                  #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
                             ,@inputs)
-                 #:outputs outputs)))))))
+               #:outputs outputs))))))
     (native-inputs
      (list python-docutils
            ;; The following inputs are only needed to run the tests.
@@ -2886,13 +2885,12 @@ history.  It implements the changeset evolution concept for Mercurial.")
                               #$(this-package-native-input "python"))
                              "/site-packages/hgext3rd/commitsigs.py")))
         #:phases
-        (with-extensions (list (pyproject-guile-json))
           #~(modify-phases %standard-phases
               (add-after 'unpack 'patch-paths
                 (lambda _
                   (substitute* "commitsigs.py"
                     (("b'(gpg|openssl)'," _ bin)
-                     (format #f "b'~a'," (which bin))))))))))
+                   (format #f "b'~a'," (which bin)))))))))
       (native-inputs
        (list python))
       (inputs
