@@ -6520,19 +6520,19 @@ basic eye-candy effects.")
 (define-public xpra
   (package
     (name "xpra")
-    (version "6.3.6")
+    (version "6.4.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-           (url "https://github.com/Xpra-org/xpra.git")
-           (commit (string-append "v" version))))
+              (url "https://github.com/Xpra-org/xpra.git")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lrhj1xipgx839bvjwp2mbxf72c1c5g3y66vcaqs0zzk50zvyxwi"))
-       (patches (search-patches "xpra-6.0-systemd-run.patch"
-                                "xpra-6.1-install_libs.patch"))))
-    (build-system python-build-system)
+        (base32 "0y6b70g16bh1pbjzmwsrrdjgnm0vgw8ff934n1y69vfb93sdfbc0"))
+       (patches (search-patches "xpra-6.4-systemd-run.patch"
+                                "xpra-6.4-install_libs.patch"))))
+    (build-system pyproject-build-system)
     (inputs
      (list bash-minimal                 ; for wrap-program
            ;; Essential dependencies.
@@ -6572,27 +6572,19 @@ basic eye-candy effects.")
            python-lz4                   ; Faster compression than zlib.
            python-netifaces
            python-pycups))
-    (native-inputs (list pkg-config pandoc python-cython))
+    (native-inputs (list pkg-config pandoc python-cython python-setuptools))
     (arguments
      (list
-      #:configure-flags #~(list "--without-Xdummy"
-                                "--without-Xdummy_wrapper"
-                                "--with-opengl"
-                                "--without-debug"
-                                "--without-strict") ; Ignore compiler warnings.
-      #:modules '((guix build python-build-system)
-                  (guix build utils))
-      ;; Do not run test-cases.  This would rebuild all modules and they seem
-      ;; to require python2.
+      #:configure-flags
+      #~'(("--without-Xdummy" . "")
+          ("--without-Xdummy_wrapper" . "")
+          ("--with-opengl" . "")
+          ("--without-debug" . "")
+          ("--without-strict" . "")) ; Ignore compiler warnings.
+      ;; Do not run test-cases as they seem to require python2.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
-          ;; Must pass the same flags as 'install, otherwise enabled modules may
-          ;; not be built.
-          (replace 'build
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (apply invoke (append (list "python" "setup.py" "build")
-                                    configure-flags))))
           (add-before 'install 'fix-paths
             (lambda* (#:key inputs #:allow-other-keys)
               ;; Fix binary paths.
@@ -6625,7 +6617,7 @@ basic eye-candy effects.")
                 "EndSection\n\n"))
               (substitute* '("xpra/scripts/config.py"
                              "fs/etc/xpra/conf.d/60_server.conf.in"
-                             "tests/unittests/unit/server/mixins/notification_test.py")
+                             "tests/unittests/unit/server/subsystem/notification_test.py")
                 ;; The trailing -- is intentional, so we only replace it inside
                 ;; a command line.
                 (("dbus-launch --")
@@ -6636,10 +6628,10 @@ basic eye-candy effects.")
                 (("socket-dir.*: \"\",")
                  "socket-dir\"        : \"~/.xpra\","))))
           ;; GTK3 will not be found, if GI can’t find its typelibs.
-          (add-after 'install 'wrap-program
-            (lambda* (#:key outputs #:allow-other-keys)
+          (add-after 'wrap 'wrap-program
+            (lambda _
               ;; XXX: only export typelibs in inputs
-              (wrap-program (search-input-file outputs "bin/xpra")
+              (wrap-program (string-append #$output "/bin/xpra")
                 `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH")))))))))
     (home-page "https://www.xpra.org/")
     (synopsis "Remote access to individual applications or full desktops")
@@ -6657,7 +6649,7 @@ X11 servers, Windows, or macOS.")
   (package
     (inherit xpra)
     (name "xpra")
-    (version "5.1.3")
+    (version "5.1.4")
     (source
      (origin
        (method git-fetch)
@@ -6666,7 +6658,7 @@ X11 servers, Windows, or macOS.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1046dqfh97l586gzbvcd1vb515na35147jm55i50kc9zkssfmygc"))
+        (base32 "1hb6pjixs85laarypkx6dvb8n9qyahy8v251f71h7qll9l2w8ak0"))
        (patches (search-patches "xpra-5.0-systemd-run.patch"
                                 "xpra-5.0-install_libs.patch"))))))
 
