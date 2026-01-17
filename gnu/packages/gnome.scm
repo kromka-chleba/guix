@@ -7687,7 +7687,13 @@ such as gzip tarballs.")
               (wrap-program (search-input-file outputs "bin/gnome-session")
                 `("PATH" ":" prefix
                   (,(dirname (search-input-file (or native-inputs inputs)
-                                                "bin/gdbus"))))))))))
+                                                "bin/gdbus")))))
+              ;; GNOME session can re-exec itself using argv[0], so
+              ;; “gnome-session-binary” needs to be in PATH.
+              ;; See <https://codeberg.org/guix/guix/issues/3629>.
+              (wrap-program (search-input-file outputs "libexec/gnome-session-binary")
+                `("PATH" ":" prefix
+                  (,(string-append #$output "/libexec")))))))))
     (build-system meson-build-system)
     (native-inputs
      (list docbook-xml-4.1.2
