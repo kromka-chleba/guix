@@ -7115,6 +7115,7 @@ included for convenience.")
     (build-system meson-build-system)
     (arguments
      (list
+      #:glib-or-gtk? #t
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'setenv
