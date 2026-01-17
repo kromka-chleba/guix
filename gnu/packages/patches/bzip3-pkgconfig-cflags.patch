@@ -1,0 +1,36 @@
+From 3c15cc7ccd44c4a55732b597204c85d33170feef Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Petr=20P=C3=ADsa=C5=99?= <ppisar@redhat.com>
+Date: Mon, 18 Aug 2025 16:45:20 +0200
+Subject: [PATCH] autoconf: Define extra_cflags variable
+
+Building with autotools on Linux produces bzip3.pc with a garbage in
+Cflags:
+
+    [...]
+    Libs: -L${libdir} -lbzip3
+    Cflags: -I${includedir}@extra_cflags@
+
+This bug was introduced in dca13c82311e60cc47f01623d6281119024b5b44
+commit (Fix handling of DLLs on Windows) which added @extra_cflags@ to
+pkg-config file and defined the variable in CMake script, but forgot
+to define it in an Autoconf script.
+
+This patch defines it unconditionally in the Autoconf script as an
+empty string, assuming people don't use this script on Windows
+platforms.
+---
+ configure.ac | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configure.ac b/configure.ac
+index 031b3e6..8314417 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -34,6 +34,7 @@ AM_CONDITIONAL([ENABLE_ARCH_NATIVE], [test x"$enable_arch_native" != xno])
+ AC_ARG_ENABLE([static-exe],
+ 			AS_HELP_STRING([--enable-static-exe], [Enable static builds of the executable.]))
+ AM_CONDITIONAL([ENABLE_STATIC], [test x"$enable_static_exe" = xyes])
++AC_SUBST([extra_cflags], [])
+ 
+ AM_COND_IF([PASSED_CFLAGS], [
+ 	AC_MSG_NOTICE([skipping compiler feature detection, using '$CFLAGS'])

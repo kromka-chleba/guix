@@ -1070,6 +1070,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
   %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
   %D%/packages/patches/busybox-no-cbq.patch			\
+  %D%/packages/patches/bzip3-pkgconfig-cflags.patch		\
   %D%/packages/patches/cadical-add-shared-library.patch		\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/calibre-remove-test-sqlite.patch		\

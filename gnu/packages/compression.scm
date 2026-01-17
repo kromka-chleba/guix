@@ -513,6 +513,39 @@ compressed with pbzip2 can be decompressed with bzip2).")
     (license (license:non-copyleft "file://COPYING"
                                    "See COPYING in the distribution."))))
 
+(define-public bzip3
+  (package
+    (name "bzip3")
+    (version "1.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/iczelia/bzip3/releases/"
+             "download/" version "/bzip3-" version".tar.gz"))
+       (sha256
+        (base32
+         "0rqxwfqxkx4as009gw291gj7il5bjm9gsi5s1md2mpw460sj7264"))
+       (patches
+        (search-patches "bzip3-pkgconfig-cflags.patch"))
+       (snippet '(begin
+                   (delete-file "configure")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags #~'("--disable-arch-native")))
+    (native-inputs
+     ;; Regenerate configure.
+     (list autoconf automake libtool pkg-config))
+    (inputs (list bash-minimal))
+    (home-page "https://github.com/iczelia/bzip3")
+    (synopsis "Library and tools for compressing and decompressing bzip3 files")
+    (description "A better, faster and stronger spiritual successor to BZip2. 
+Features higher  compression ratios and better performance thanks to a order-0 
+context mixing entropy coder, a fast Burrows-Wheeler transform code making use 
+of suffix arrays and a RLE with Lempel Ziv+Prediction pass based on LZ77-style 
+string matching and PPM-style context modeling.")
+    (license license:lgpl3)))
+
 ;; We call this streambuf-shrinkwrap because a Python package with the name
 ;; "shrinkwrap" already exists.
 (define-public streambuf-shrinkwrap
@@ -522,8 +555,8 @@ compressed with pbzip2 can be decompressed with bzip2).")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/jonathonl/shrinkwrap")
-                    (commit (string-append "v" version))))
+                     (url "https://github.com/jonathonl/shrinkwrap")
+                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
