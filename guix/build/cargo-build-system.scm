@@ -24,7 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix build cargo-build-system)
-  #:autoload (json) (json->scm)
+  #:autoload (json parser) (json->scm)
   #:use-module ((guix build gnu-build-system) #:prefix gnu:)
   #:use-module ((guix build utils) #:hide (delete))
   #:use-module (ice-9 binary-ports)
