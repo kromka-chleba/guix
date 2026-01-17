@@ -680,14 +680,14 @@ ISO 8601 dates, time and duration.")
         (sha256
          (base32
           "1ccl6plks706hxm35cn1wsvxhqh3bfwi5cjgjpdxjib81qi07x97"))))
-     (build-system python-build-system)
+     (build-system pyproject-build-system)
      (arguments
       '(#:phases (modify-phases %standard-phases
                    (replace 'check
                      (lambda _
                        (invoke "pytest" "-vv" "iso8601"))))))
      (native-inputs
-      (list python-pytest python-pytz)))))
+      (list python-pytest python-pytz python-setuptools)))))
 
 (define-public python-monotonic
   (package
