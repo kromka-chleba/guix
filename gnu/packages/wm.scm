@@ -84,6 +84,7 @@
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2026 Carlos Durán Domínguez <wurt@wurt.eu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2502,7 +2503,7 @@ modules for building a Wayland compositor.")
 (define-public wl-mirror
   (package
     (name "wl-mirror")
-    (version "0.18.2")
+    (version "0.18.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2511,7 +2512,7 @@ modules for building a Wayland compositor.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0n7i9jmij5vpnsas3j1namdrsncpp6q008nzny5kgbg96cq267ym"))))
+                "1acx42p74p1bz569l3whk1mw0s3ki229jz6072n0hc6yy5j84gy6"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;No tests.
