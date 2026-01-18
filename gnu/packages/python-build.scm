@@ -731,14 +731,17 @@ Python Package Index (PyPI).")
           ;; Platformdirs is a bit tedious to properly bootstrap and
           ;; propagate, and is used in a single place that will be dropped
           ;; soon, we might as well drop it now.
-          (add-after 'check 'drop-platformdirs-requirement
+          (add-before 'compile-bytecode 'drop-platformdirs-requirement
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (with-directory-excursion (site-packages inputs outputs)
                 (substitute* "pkg_resources/__init__.py"
                   (("^from platformdirs import.*")
                    "")
                   (("_user_cache_dir\\(appname='Python-Eggs'\\)")
-                   "f\"{os.environ.get('XDG_CACHE_HOME')}/Python-Eggs\"")))))
+                   "f\"{os.environ.get('XDG_CACHE_HOME')}/Python-Eggs\""))
+                (substitute* (string-append "setuptools-" #$version
+                                            ".dist-info/METADATA")
+                  (("Requires-Dist: platformdirs.*") "")))))
           (add-after 'check 'cleanup-installed-tests
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (let ((site (site-packages inputs outputs)))
