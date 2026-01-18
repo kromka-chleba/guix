@@ -169,6 +169,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages sagemath)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sqlite)
@@ -2352,7 +2353,7 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
 (define-public librepcb
   (package
     (name "librepcb")
-    (version "1.2.0")
+    (version "1.3.0")
     (source
      (origin
        (method git-fetch)
@@ -2374,30 +2375,23 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
                        (items (scandir "." pred)))
                   (for-each (cut delete-file-recursively <>) items))))
             (delete-all-but "libs"
+                            "corrosion"
                             "delaunay-triangulation"
                             "dxflib"
-                            ;; "fontobene-qt"
-                            ;; "googletest"
-                            ;; "hoedown"
                             "librepcb"
-                            ;; "muparser"
-                            "optional"
                             "parseagle"
-                            ;; "polyclipping"
-                            ;; "quazip"
                             "type_safe")))
        (sha256
-        (base32 "1g3k2g2p5yy7zk971bg7qh4k38p30aydp27c5bfb02gn7djknz7w"))))
-    (build-system cmake-build-system)
+        (base32 "1pvxhapq2gs61sl46f1727yk9il16d29ib6r6wpfif2d8s5b9317"))))
+    (build-system qt-build-system)
     (arguments
      (list
+      #:qtbase qtbase
       #:configure-flags
       #~(list "-DUNBUNDLE_FONTOBENE_QT=ON"
               "-DUNBUNDLE_GTEST=ON"
-              "-DUNBUNDLE_HOEDOWN=ON"
               "-DUNBUNDLE_MUPARSER=ON"
-              "-DUNBUNDLE_POLYCLIPPING=ON"
-              "-DUNBUNDLE_QUAZIP=ON")
+              "-DUNBUNDLE_POLYCLIPPING=ON")
       #:phases
       #~(modify-phases %standard-phases
           (replace 'check
@@ -2449,20 +2443,20 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
            fontconfig
            fontobene-qt
            glu
-           hoedown
            muparser
            opencascade-occt
-           qtbase-5
-           qtdeclarative-5
+           openssl
+           qtbase
+           qtdeclarative
            qtquickcontrols2-5
-           qtsvg-5
-           quazip-5
+           qtsvg
+           rust `(,rust "cargo")
            zlib))
     (native-inputs
      (list googletest
            pkg-config
            python-minimal-wrapper
-           qttools-5
+           qttools
            unzip))
     (home-page "https://librepcb.org/")
     (synopsis
