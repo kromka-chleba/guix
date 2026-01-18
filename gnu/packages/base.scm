@@ -1539,14 +1539,14 @@ test environments.")
 (define-public which
   (package
     (name "which")
-    (version "2.21")
+    (version "2.23")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/which/which-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1bgafvy3ypbhhfznwjv1lxmd6mci3x1byilnnkc7gcr486wlb8pl"))))
+                "0wraiabzjklac53y801cbl8mby8p7wygvlhv6g7f9nf4dwi5iid2"))))
     (build-system gnu-build-system)
     (home-page "https://gnu.org/software/which/")
     (synopsis "Find full path of shell commands")
