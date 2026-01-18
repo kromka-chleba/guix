@@ -1581,8 +1581,7 @@ graphics.")
                                  "src/test/OpenEXRCoreTest/main.cpp")
                      (("/var/tmp")
                       "/tmp"))))
-               #$@(if (target-64bit?)
-                      #~()
+               #$@(if (target-32bit?)
                       #~((add-after 'patch-test-directory 'disable-broken-tests
                            (lambda _
                              ;; Disable tests that fail at least on i686-linux.
@@ -1603,7 +1602,8 @@ graphics.")
                                (("TEST\\( testB44ACompression, \"core_compression\" \\);")
                                 "")
                                (("TEST \\(testOptimizedInterleavePatterns, \"basic\"\\);")
-                                ""))))))
+                                "")))))
+                      #~())
                #$@(if (target-aarch64?)
                       #~((add-after 'patch-test-directory 'disable-broken-aarch64-tests
                            ;; Disable tests known to fail on aarch64. Remove once
@@ -1662,7 +1662,7 @@ with strong support for multi-part, multi-channel use cases.")
                  all
                  "set_tests_properties(OpenEXR.IlmImf PROPERTIES TIMEOUT 15000)")))
              #t))
-         ,@(if (not (target-64bit?))
+         ,@(if (target-32bit?)
                `((add-after 'change-directory 'disable-broken-test
                    (lambda _
                      (substitute* "IlmImfTest/main.cpp"

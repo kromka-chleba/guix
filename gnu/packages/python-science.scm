@@ -4069,7 +4069,7 @@ tissue-specificity metrics for gene expression.")
                      "test_groupby_raises_category_on_category"
                      ;; These tests should be skipped on 32bit systems:
                      ;; Cannot cast array data from dtype('int64') to dtype('int32')
-                     #$@(if (not (target-64bit?))
+                     #$@(if (target-32bit?)
                             #~("test_inf_bound_infinite_recursion"
                                "test_reindex_behavior_with_interval_index"
                                "test_repeating_interval_index_with_infs")
