@@ -588,19 +588,23 @@ server and embedded PowerPC, and S390 guests.")
                  (lambda _
                    (install-file "qemuafl/qasan.h"
                                  (string-append #$output "/include"))))
+
                (delete 'delete-firmwares)
-               #$@(if (target-riscv64?)
-                      '((replace 'disable-some-tests
-                          (lambda _
-                            ;; qemu.qmp.QMPConnectError:
-                            ;; Unexpected empty reply from server
-                            (delete-file "tests/qemu-iotests/040")
-                            (delete-file "tests/qemu-iotests/041")
-                            (delete-file "tests/qemu-iotests/256")
-                            ;; No 'PCI' bus found for device 'virtio-scsi-pci'
-                            (delete-file "tests/qemu-iotests/127")
-                            (delete-file "tests/qemu-iotests/267"))))
-                      '())))))
+               #$@(cond
+                   ((target-riscv64?)
+                    '((replace 'disable-some-tests
+                        (lambda _
+                          ;; qemu.qmp.QMPConnectError:
+                          ;; Unexpected empty reply from server
+                          (delete-file "tests/qemu-iotests/040")
+                          (delete-file "tests/qemu-iotests/041")
+                          (delete-file "tests/qemu-iotests/256")
+                          ;; No 'PCI' bus found for device 'virtio-scsi-pci'
+                          (delete-file "tests/qemu-iotests/127")
+                          (delete-file "tests/qemu-iotests/267")))))
+                   ((target-aarch64?)
+                    '((delete 'disable-some-tests)))
+                   (else '()))))))
        (inputs (modify-inputs (package-inputs base)
                  (delete "dtc")))
        (home-page "https://github.com/AFLplusplus/qemuafl")
