@@ -142,6 +142,7 @@
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages fonts)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fribidi)
   #:use-module (gnu packages gawk)
@@ -2142,6 +2143,42 @@ solution in their Wayland environment.")
     ;;             LICENSE      LICENSE.dtao
     (license (list license:gpl3 license:expat))
     (home-page "https://github.com/kolunmi/sandbar")))
+
+(define-public sov
+  (package
+    (name "sov")
+    (version "0.94")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/milgra/sov")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k39pr83yqpzmbk0a8a302gxmsdgpjdlvm2dijyp2yvjdn3xl0i6"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Fontconfig tests needs a home.
+          (add-before 'check 'set-home
+            (lambda _
+              (setenv "HOME" (getcwd)))))))
+    (inputs (list wayland libglvnd libxkbcommon freetype libpng))
+    (native-inputs (list pkg-config wayland-protocols fontconfig
+                         font-liberation)) ;Tests need this font.
+    (home-page "https://github.com/milgra/sov")
+    (synopsis "Wayland overlay that shows schemas for all workspaces")
+    (description
+     "Sway Overview (SOV) provides a schematic workspace overview for Sway
+window manager.  Unlike thumbnail-based solutions that become unreadable at
+small scales, SOV maintains clarity by displaying window layouts, titles, and
+contents across all outputs.  Designed for complex multi-workspace setups, it's
+structured via HTML and styled with CSS.  Typically triggered by
+desktop-switching keys with minimal latency.")
+    (license license:gpl3+)))
 
 (define-public spectrwm
   (package
