@@ -38201,6 +38201,7 @@ their files and supports any packaging format (including wheels).")
            python-typing-extensions
            python-zope-interface
            ;; [conch]
+           (list python "tk")
            python-appdirs
            python-bcrypt
            python-cryptography
