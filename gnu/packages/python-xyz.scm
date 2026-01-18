@@ -15968,14 +15968,15 @@ versions number match PEP 440.")
     (inherit python-pep517-bootstrap)
     (name "python-pep517")
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (delete-file "pytest.ini")
-                      (delete-file "tests/test_meta.py")
-                      (if tests?
-                          (invoke "pytest") #t))))))
-    (native-inputs (list python-mock python-pytest python-testpath))))
+     (list
+      #:test-flags
+      #~(list "-c" "/dev/null"
+              "--ignore=tests/test_meta.py"
+              ;; Incompatible with current setuptools.
+              "--deselect=tests/test_call_hooks.py::test_setup_py")))
+    (native-inputs
+     (modify-inputs (package-native-inputs python-pep517-bootstrap)
+       (append python-mock python-pytest python-testpath)))))
 
 (define-public python-pyproject-metadata
   (package
