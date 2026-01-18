@@ -12514,7 +12514,6 @@ as Flask.")
            python-pytest-trio))
     (propagated-inputs
      (list hypercorn
-           python-exceptiongroup
            python-quart
            python-trio))
     (home-page "https://github.com/pgjones/quart-trio")
