@@ -17245,7 +17245,7 @@ tasks, sockets, files, locks, and queues.")
         (base32 "1p496yran6zwg47m7w26r8y89nrsbkrrbf4119slj3qaczf4wcpl"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-curio python-pytest python-setuptools))
+     (list python-pytest python-setuptools))
     (home-page "https://github.com/python-trio/sniffio")
     (synopsis "Detect which async library a program is running under")
     (description
