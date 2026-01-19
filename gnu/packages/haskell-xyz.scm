@@ -17506,6 +17506,27 @@ determine how many additions, removals and changes are necessary to change the
 first list into the second list.")
     (license license:bsd-3)))
 
+(define-public ghc-foreign-store
+  (package
+    (name "ghc-foreign-store")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "foreign-store" version))
+       (sha256
+        (base32 "0ghs17wx32jwzk1fd1480cmnfakgdb3yc9v4yvzdxcipjc95abgj"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "foreign-store")))
+    (home-page "https://github.com/chrisdone/foreign-store")
+    (synopsis
+     "Store a stable pointer in a foreign context to be retrieved later.")
+    (description
+     "Store a stable pointer in a foreign context to be retrieved later.  Persists
+through GHCi reloads.")
+    (license license:bsd-3)))
+
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
