@@ -17526,6 +17526,25 @@ first list into the second list.")
 through GHCi reloads.")
     (license license:bsd-3)))
 
+(define-public ghc-messagepack
+  (package
+    (name "ghc-messagepack")
+    (version "0.5.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "messagepack" version))
+       (sha256
+        (base32 "1naa6lrvy56z6r41r800v4bqa3467j5d6rvgq9npaz6nm2nvrvmk"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "messagepack")))
+    (inputs (list ghc-cereal))
+    (native-inputs (list ghc-quickcheck))
+    (home-page "https://github.com/rodrigosetti/messagepack")
+    (synopsis "Serialize instance for Message Pack Object")
+    (description "Serialize instance for Message Pack Object.")
+    (license license:expat)))
+
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
