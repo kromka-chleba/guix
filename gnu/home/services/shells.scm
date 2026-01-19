@@ -3,6 +3,7 @@
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2026 Luis Guilherme Coelho <lgcoelho@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -27,11 +28,15 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages shells)
   #:use-module (gnu services configuration)
+  #:use-module (guix build utils)
+  #:use-module (guix derivations)
   #:use-module (guix diagnostics)
   #:use-module (guix gexp)
   #:use-module (guix i18n)
+  #:use-module (guix monads)
   #:use-module (guix packages)
   #:use-module (guix records)
+  #:use-module (guix store)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
@@ -560,6 +565,13 @@ with text blocks from other extensions and the base service."))
   (or (alist? lst)                    ; remove this once the deprecation period ends
       ((list-of abbreviation?) lst)))
 
+(define (fish-plugin? x)
+  (and (package? x)
+       (string-prefix? "fish-" (package-name x))))
+
+(define fish-plugins?
+  (list-of fish-plugin?))
+
 (define (alist->abbreviations lst)
   (map (match-lambda
          [(key . value)
@@ -638,7 +650,12 @@ shells, see the @code{abbreviations} field."
    (fish-abbreviations '())
    "List of abbreviations for Fish.  These are words that, when
 typed in the shell, will automatically expand to the full text."
-   (sanitizer sanitize-fish-abbreviations)))
+   (sanitizer sanitize-fish-abbreviations))
+  (plugins
+   (fish-plugins '())
+   "List of plugins for Fish.  These are packages that, provide extra functions,
+hooks, and/or abbreviations for fish."
+   empty-serializer))
 
 (define (fish-files-service config)
   `(("fish/config.fish"
@@ -658,10 +675,12 @@ and begin
 end\n\n")
        (serialize-configuration
         config
-        home-fish-configuration-fields)))))
+        home-fish-configuration-fields)))
+    ,@(fish-plugin-files-service config)))
 
 (define (fish-profile-service config)
-  (list (home-fish-configuration-package config)))
+  (cons* (home-fish-configuration-package config)
+         (home-fish-configuration-plugins config)))
 
 (define-configuration/no-serialization home-fish-extension
   (config
@@ -675,7 +694,10 @@ end\n\n")
    "Association list of Fish aliases.")
   (abbreviations
    (fish-abbreviations '())
-   "List of Fish abbreviations."))
+   "List of Fish abbreviations.")
+  (plugins
+   (fish-plugins '())
+   "List of plugins for Fish."))
 
 (define (home-fish-extensions original-config extension-configs)
   (home-fish-configuration
@@ -695,10 +717,40 @@ end\n\n")
    (abbreviations
     (append (home-fish-configuration-abbreviations original-config)
             (append-map
-             home-fish-extension-abbreviations extension-configs)))))
+             home-fish-extension-abbreviations extension-configs)))
+   (plugins
+    (append (home-fish-configuration-plugins original-config)
+            (append-map
+             home-fish-extension-plugins extension-configs)))))
+
+(define (fish-plugin-files-service config)
+  (define (plugin-files plugin drv)
+    (define out (derivation->output-path drv))
+    (define dir (string-append out "/share/fish/"))
+    (map (lambda (file)
+           (let ((file (string-append "fish" (string-drop file (string-length dir)))))
+             (list file
+                   (file-append plugin (string-append "/share/" file)))))
+         (find-files dir)))
+
+  (define plugins (home-fish-configuration-plugins config))
+  (define derivations
+    (with-store store
+      (set-build-options store
+                         #:print-build-trace #t
+                         #:print-extended-build-trace? #t
+                         #:multiplexed-build-output? #t)
+      (run-with-store store
+        (mlet %store-monad
+              ((drvs (mapm %store-monad
+                           package->derivation
+                           plugins)))
+          (build-derivations store drvs)
+          (return drvs)))))
+
+  (append-map plugin-files plugins derivations))
 
 ;; TODO: Support for generating completion files
-;; TODO: Support for installing plugins
 (define home-fish-service-type
   (service-type (name 'home-fish)
                 (extensions
