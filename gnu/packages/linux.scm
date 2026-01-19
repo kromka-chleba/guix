@@ -1779,6 +1779,8 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                                            ("CONFIG_USB_ETH_RNDIS" . m)
                                            ("CONFIG_USB_ETH_EEM" . m)
                                            ("CONFIG_USB_G_NCM" . m)
+                                           ;; Provide support for wireguard
+                                           ("CONFIG_WIREGUARD" . #t)
                                            ;; Provide support for ath9k wireless
                                            ("CONFIG_ATH9K" . m)
                                            ("CONFIG_ATH9K_HTC" . m))
@@ -2096,6 +2098,8 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-pocket-reform.dtb")))))))))))
                                            ("CONFIG_NFT_FIB_IPV6" . m)
                                            ("CONFIG_NFT_BRIDGE_META" . m)
                                            ("CONFIG_NFT_BRIDGE_REJECT" . m)
+                                           ;; Provide support for wireguard
+                                           ("CONFIG_WIREGUARD" . #t)
                                            ;; Provide support for ath9k wireless
                                            ("CONFIG_ATH9K" . m)
                                            ("CONFIG_ATH9K_HTC" . m))
