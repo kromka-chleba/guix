@@ -17567,6 +17567,56 @@ through GHCi reloads.")
 Haskell.")
     (license license:expat)))
 
+  (define-public ghc-nvim-hs
+  (package
+    (name "ghc-nvim-hs")
+    (version "2.3.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "nvim-hs" version))
+       (sha256
+        (base32 "1wvmysvhmlmqm2nx8psjj6z38a49krrqwd57v2lf822lch4gi5lc"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "nvim-hs")))
+    (inputs (list ghc-data-default
+                  ghc-prettyprinter
+                  ghc-prettyprinter-ansi-terminal
+                  ghc-unliftio
+                  ghc-unliftio-core
+                  ghc-vector
+                  ghc-void
+                  ghc-cereal
+                  ghc-cereal-conduit
+                  ghc-conduit
+                  ghc-foreign-store
+                  ghc-hslogger
+                  ghc-messagepack
+                  ghc-network
+                  ghc-optparse-applicative
+                  ghc-time-locale-compat
+                  ghc-megaparsec
+                  ghc-streaming-commons
+                  ghc-template-haskell-compat-v0208
+                  ghc-typed-process
+                  ghc-utf8-string))
+    (native-inputs (list ghc-hspec ghc-hspec-discover ghc-quickcheck))
+    (home-page "https://github.com/neovimhaskell/nvim-hs")
+    (synopsis "Haskell plugin backend for neovim")
+    (description
+     "This package provides a plugin provider for neovim.  It allows you to write
+plugins for one of the great editors of our time in the best programming
+language of our time! ;-) .  You should find all the documentation you need
+inside the \"Neovim\" module.  Most other modules are considered internal, so
+don't be annoyed if using things from there may break your code! .  The
+following modules may also be of interest and they should not change their API:
+\"Neovim.Quickfix\" .  If you want to write unit tests that interact with neovim,
+\"Neovim.Test\" provides some useful functions for that. .  If you are keen to
+debug /nvim-hs/ or a module you are writing, take a look at the \"Neovim.Debug\"
+module. .  If you spot any errors or if you have great ideas, feel free to open
+an issue on github.")
+    (license license:asl2.0)))
+
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
