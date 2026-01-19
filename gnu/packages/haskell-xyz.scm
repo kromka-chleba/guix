@@ -17483,6 +17483,28 @@ providing boxed wrappers for @code{ByteArray} and
     (description "See \"@code{DiffLoc}\".")
     (license license:expat)))
 
+(define-public ghc-levenshtein
+  (package
+    (name "ghc-levenshtein")
+    (version "0.2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "levenshtein" version))
+       (sha256
+        (base32 "0n3sbnbagb5am9z0jb8rd3m8d46ipmypbraqjj14zscih4lhapyi"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "levenshtein")))
+    (inputs (list ghc-hashable ghc-data-default-class ghc-quickcheck))
+    (native-inputs (list ghc-hspec ghc-hspec-discover))
+    (home-page "https://github.com/hapytex/levenshtein#readme")
+    (synopsis "Calculate the edit distance between two foldables.")
+    (description
+     "This package provides a package to determine the edit distance between two
+Foldable's.  These are converted to lists, and the Levenshtein distance
+determine how many additions, removals and changes are necessary to change the
+first list into the second list.")
+    (license license:bsd-3)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
