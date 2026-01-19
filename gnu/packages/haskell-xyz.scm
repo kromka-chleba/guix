@@ -17617,6 +17617,30 @@ module. .  If you spot any errors or if you have great ideas, feel free to open
 an issue on github.")
     (license license:asl2.0)))
 
+(define-public ghc-nvim-hs-contrib
+  (package
+    (name "ghc-nvim-hs-contrib")
+    (version "2.0.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "nvim-hs-contrib" version))
+       (sha256
+        (base32 "03syv1fsickcmgk9qagavidgh9hyy0v00df29jd5wia631xc60a6"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "nvim-hs-contrib")))
+    (inputs (list ghc-nvim-hs
+                  ghc-prettyprinter
+                  ghc-prettyprinter-ansi-terminal
+                  ghc-data-default
+                  ghc-messagepack
+                  ghc-utf8-string
+                  ghc-yaml))
+    (native-inputs (list ghc-hspec ghc-hspec-discover ghc-quickcheck))
+    (home-page "https://github.com/neovimhaskell/nvim-hs-contrib")
+    (synopsis "Haskell plugin backend for neovim")
+    (description "Library for nvim-hs.")
+    (license license:asl2.0)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
