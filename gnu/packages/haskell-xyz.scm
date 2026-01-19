@@ -17545,6 +17545,28 @@ through GHCi reloads.")
     (description "Serialize instance for Message Pack Object.")
     (license license:expat)))
 
+(define-public ghc-show-combinators
+  (package
+    (name "ghc-show-combinators")
+    (version "0.2.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "show-combinators" version))
+       (sha256
+        (base32 "07ds87ldl9165hj3k5h84iawc6vqlbggni3dg1nhbxww1spxn0n9"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "show-combinators")))
+    (arguments
+     `(#:cabal-revision ("2"
+                         "0n3xlpm41wpw1ybmacg9s7150nx00qrdlw2rq4fzz7iw7333cyjx")))
+    (home-page "https://github.com/Lysxia/show-combinators#readme")
+    (synopsis "Combinators to write Show instances")
+    (description
+     "This package provides a minimal pretty-printing library for Show instances in
+Haskell.")
+    (license license:expat)))
+
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
