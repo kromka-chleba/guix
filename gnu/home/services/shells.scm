@@ -20,19 +20,23 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu home services shells)
-  #:use-module (gnu services configuration)
   #:use-module ((gnu services) #:select (%default-bash-aliases))
   #:autoload   (gnu system shadow) (%default-bashrc %default-zprofile)
   #:use-module (gnu home services utils)
   #:use-module (gnu home services)
-  #:use-module (gnu packages shells)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages shells)
+  #:use-module (gnu services configuration)
+  #:use-module (guix diagnostics)
   #:use-module (guix gexp)
+  #:use-module (guix i18n)
   #:use-module (guix packages)
   #:use-module (guix records)
+  #:use-module (ice-9 format)
+  #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
-  #:use-module (ice-9 match)
+  #:use-module (srfi srfi-9)
 
   #:export (home-shell-profile-service-type
             home-shell-profile-configuration
@@ -48,6 +52,10 @@
             home-fish-service-type
             home-fish-configuration
             home-fish-extension
+            abbreviation
+            alist->abbreviations
+            fish-function
+
 
             home-inputrc-service-type
             home-inputrc-configuration))
@@ -527,17 +535,74 @@ with text blocks from other extensions and the base service."))
   #~(string-append
      #$@(map (match-lambda
                ((key . value)
-                #~(string-append "alias " #$key " \"" #$value "\"\n"))
+                #~(string-append "alias '" #$key "' \"" #$value "\"\n"))
                (_ ""))
              val)))
 
+(define-record-type <fish-function>
+  (fish-function name)
+  fish-function?
+  (name fish-function-name))
+
+(define-record-type* <abbreviation>
+  abbreviation make-abbreviation
+  abbreviation?
+  (name      abbreviation-name)       ; string | symbol
+  (pattern   abbreviation-pattern     ; string | #f
+             (default #f))
+  (position  abbreviation-position    ; 'command | 'anywhere | #f
+             (default 'command))
+  (marker    abbreviation-marker      ; char
+             (default #\%))
+  (expansion abbreviation-expansion)) ; string | <fish-function>
+
+(define (fish-abbreviations? lst)
+  (or (alist? lst)                    ; remove this once the deprecation period ends
+      ((list-of abbreviation?) lst)))
+
+(define (alist->abbreviations lst)
+  (map (match-lambda
+         [(key . value)
+          (abbreviation
+            (name key)
+            (expansion value))])
+       lst))
+
 (define (serialize-fish-abbreviations field-name val)
   #~(string-append
-     #$@(map (match-lambda
-               ((key . value)
-                #~(string-append "abbr --add " #$key " " #$value "\n"))
-               (_ ""))
+     #$@(map (match-record-lambda <abbreviation>
+               (name pattern position marker expansion)
+               #~(format #f
+                   "abbr --add '~a' ~
+                      ~@[--position ~a ~]~
+                      ~@[--regex '~a' ~]~
+                      ~@[--set-cursor=~a ~]~
+                      ~@[~a~]~%"
+                   '#$name
+                   '#$position
+                   #$pattern
+                   #$marker
+                   #$(if (fish-function? expansion)
+                       (format #f "--function ~a"
+                                  (fish-function-name expansion))
+                       (format #f "\"~a\"" expansion))))
              val)))
+
+(define (sanitize-fish-abbreviations val)
+  (let loop [[lst val] [warn? #f]]
+    (match lst
+      (((? abbreviation? head) . tail)
+       (cons head (loop tail warn?)))
+      (((key . value) . tail)
+       (cons (abbreviation
+              (name key)
+              (expansion value))
+             (loop tail #t)))
+      (()
+       (when warn?
+         (warning (G_ "alist value for abbrevations is deprecated, use a list of \
+fish-abbreviation, or call alist->abbreviations on the current value instead.~%")))
+       '()))))
 
 (define (serialize-fish-env-vars field-name val)
   #~(string-append
@@ -570,10 +635,10 @@ command, If you want something more akin to @dfn{aliases} in POSIX
 shells, see the @code{abbreviations} field."
    (serializer serialize-fish-aliases))
   (abbreviations
-   (alist '())
-   "Association list of abbreviations for Fish.  These are words that,
-when typed in the shell, will automatically expand to the full text."
-   (serializer serialize-fish-abbreviations)))
+   (fish-abbreviations '())
+   "List of abbreviations for Fish.  These are words that, when
+typed in the shell, will automatically expand to the full text."
+   (sanitizer sanitize-fish-abbreviations)))
 
 (define (fish-files-service config)
   `(("fish/config.fish"
@@ -584,9 +649,7 @@ when typed in the shell, will automatically expand to the full text."
 status --is-login; and not set -q __fish_login_config_sourced
 and begin
 
-  set --prepend fish_function_path "
-                        #$fish-foreign-env
-                        "/share/fish/functions
+  set --prepend fish_function_path " #$fish-foreign-env "/share/fish/functions
   fenv source $HOME/.profile
   set -e fish_function_path[1]
 
@@ -611,8 +674,8 @@ end\n\n")
    (alist '())
    "Association list of Fish aliases.")
   (abbreviations
-   (alist '())
-   "Association list of Fish abbreviations."))
+   (fish-abbreviations '())
+   "List of Fish abbreviations."))
 
 (define (home-fish-extensions original-config extension-configs)
   (home-fish-configuration
