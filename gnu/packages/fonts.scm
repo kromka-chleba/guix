@@ -70,6 +70,7 @@
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;; Copyright © 2025 Alexandre Hannud Abdo <abdo@member.fsf.org>
+;;; Copyright © 2026 Carlos Durán Domínguez <wurt@wurt.eu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3505,6 +3506,56 @@ typographical palette.")
      "Mona Sans is a strong and versatile typeface, designed with Degarism and
 inspired by industrial-era grotesques.")
     (license license:silofl1.1)))
+
+(define-public font-monocraft
+  (package
+    (name "font-monocraft")
+    (version "4.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/IdreesInc/Monocraft")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "048brcg78wa76h9lfm178ms03j5qg7kw5ldmin746zxb1w22fzxs"))))
+    (build-system gnu-build-system)
+    (outputs (list "out" "otf"))
+    (arguments
+     (list
+      #:tests? #f ;No tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'fix-python-reference
+            (lambda _
+              (substitute* "build/build.sh"
+                (("python3\\.12")
+                 #$(file-append python "/bin/python3")))))
+          (replace 'build
+            (lambda _
+              (with-directory-excursion "build"
+                (invoke "./build.sh"))))
+          (replace 'install
+            (lambda _
+              (for-each (lambda (file)
+                          (install-file file
+                                        (string-append #$output
+                                         "/share/fonts/truetype")))
+                        (find-files #$source "\\.ttf"))
+              (for-each (lambda (file)
+                          (install-file file
+                                        (string-append #$output:otf
+                                         "/share/fonts/opentype")))
+                        (find-files #$source "\\.otf")))))))
+    (native-inputs (list fontforge python ttfautohint zip))
+    (home-page "https://github.com/IdreesInc/Monocraft")
+    (synopsis "Pixel font with ligatures")
+    (description
+     "A monospaced programming font inspired by the Minecraft typeface.")
+    (license (list license:gpl3+         ;Code
+                   license:silofl1.1)))) ;Font
 
 (define-public font-mononoki
   (package
