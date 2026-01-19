@@ -22325,7 +22325,6 @@ lightweight implementation.")
      (list python-freezegun
            python-pytest
            python-setuptools
-           python-ukpostcodeparser
            python-validators))
     (propagated-inputs
      (list python-tzdata))
@@ -38983,7 +38982,7 @@ bindings for Python 3.")
 distance (Ukkonen).")
     (license license:expat)))
 
-(define-public python-ukpostcodeparser
+(define-deprecated/public python-ukpostcodeparser #f
   (package
     (name "python-ukpostcodeparser")
     (version "1.1.2")
