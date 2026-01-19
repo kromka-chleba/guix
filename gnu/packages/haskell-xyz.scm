@@ -17462,6 +17462,28 @@ providing boxed wrappers for @code{ByteArray} and
 @code{MutableByteArray} and relevant instances for GHC < 9.4.")
     (license license:bsd-3)))
 
+(define-public ghc-diff-loc
+  (package
+    (name "ghc-diff-loc")
+    (version "0.1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "diff-loc" version))
+       (sha256
+        (base32 "08sbxkf804bq3lwr9s1k1vigq7yrdjgicrj114zi14cdi4168k3x"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "diff-loc")))
+    (inputs (list ghc-fingertree ghc-show-combinators))
+    (arguments
+     `(#:cabal-revision ("4"
+                         "1ns06a8wvilv07z3qvd3q72sdmknvzhgcc0659lbghcv1babbhni")))
+    (home-page "https://gitlab.com/lysxia/diff-loc")
+    (synopsis "Map file locations across diffs")
+    (description "See \"@code{DiffLoc}\".")
+    (license license:expat)))
+
+
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
 ;;; of a merge conflict, place them above by existing packages with similar
