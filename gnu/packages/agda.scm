@@ -321,3 +321,47 @@ not a “linear” resource: Concepts are presented as a directed graph, with
 links indicating dependencies.")
       (home-page "https://1lab.dev")
       (license license:agpl3))))
+
+(define-public agda-cornelis
+  ; Version should always be matched to the same agda release.
+  (package
+    (name "cornelis")
+    (version "2.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/agda/cornelis")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c92mjmkqh2xyjav6sjk2ba068mi2s4j8js4rfij8f9711x00pw7"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "cornelis")))
+    (inputs (list ghc-quickcheck
+                  ghc-aeson
+                  ghc-async
+                  ghc-diff-loc
+                  ghc-fingertree
+                  ghc-generic-lens
+                  ghc-hspec
+                  ghc-hspec-discover
+                  ghc-lens
+                  ghc-levenshtein
+                  ghc-megaparsec
+                  ghc-nvim-hs
+                  ghc-nvim-hs-contrib
+                  ghc-prettyprinter
+                  ghc-random
+                  ghc-resourcet
+                  ghc-unagi-chan
+                  ghc-unliftio-core
+                  ghc-vector))
+    (native-inputs (list ghc-temporary ghc-hspec ghc-hspec-discover))
+    (home-page "https://github.com/agda/cornelis")
+    (synopsis "Agda-mode, but for neovim")
+    (description "It supports highlighting, goal listing, type-context,
+refinement, auto, solving, case splitting, go-to definition, normalization,
+and helper functions.  These are exposed via vim commands. Most commands
+have an equivalent in agda-mode.")
+    (license license:bsd-3)))
