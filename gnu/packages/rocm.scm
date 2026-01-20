@@ -542,3 +542,13 @@ command-line tool, @command{amd-smi}, which can be used to do the same.")
 ;; ROCm libraries.
 
 (define %rocm-libraries-url "https://github.com/ROCm/rocm-libraries")
+(define %rocm-libraries-origin
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url %rocm-libraries-url)
+           (commit (string-append "rocm-" %rocm-version))))
+    (file-name (git-file-name "rocm-libraries" %rocm-version))
+    (sha256
+     (base32
+      "00cidx2x4b75yndabn174ka8231h4m257qpmijn5pdmcx2xzn0xm"))))
