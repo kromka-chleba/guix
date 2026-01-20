@@ -19,6 +19,7 @@
 (define-module (gnu packages fish-xyz)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages rust-apps)
   #:use-module (guix build-system copy)
@@ -102,6 +103,37 @@ for the Fish shell.")
       (description "This package provides color-enabled man pages plugin for
 fish-shell.")
       (license license:expat))))
+
+(define-public fish-done
+  (package
+    (name "fish-done")
+    (version "1.19.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/franciscolourenco/done")
+             (commit version)))
+       (sha256
+        (base32 "12l7m08bp8vfhl8dmi0bfpvx86i344zbg03v2bc7wfhm20li3hhc"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("conf.d" "share/fish/"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-scripts
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "conf.d/done.fish"
+                     (("notify-send")
+                      (search-input-file inputs "bin/notify-send"))))))))
+    (inputs
+     (list libnotify))
+    (home-page "https://github.com/franciscolourenco/done")
+    (synopsis "Automatic notifications of long process completion for fish shell")
+    (description "A fish-shell package to automatically receive notifications
+when long processes finish.")
+    (license license:expat)))
 
 (define-public fish-expand
   (package
