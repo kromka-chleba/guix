@@ -2,6 +2,7 @@
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2022, 2023, 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2026 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+;;; Copyright © 2026 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify it
 ;;; under the terms of the GNU General Public License as published by
@@ -552,3 +553,51 @@ command-line tool, @command{amd-smi}, which can be used to do the same.")
     (sha256
      (base32
       "00cidx2x4b75yndabn174ka8231h4m257qpmijn5pdmcx2xzn0xm"))))
+
+(define-public rocrand
+  (package
+    (name "rocrand")
+    (version %rocm-version)
+    (source %rocm-libraries-origin)
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;tests require a ROCm-capable device
+      #:build-type "Release"
+      #:configure-flags
+      #~(list
+         (string-append
+          "-DCMAKE_CXX_COMPILER=" #$(this-package-input "rocm-hip-runtime")
+          "/bin/hipcc")
+         (string-append
+          "-DAMDGPU_TARGETS="
+          #$(assoc-ref (package-properties this-package) 'amdgpu-targets)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "projects/rocrand")))
+          (add-after 'unpack 'add-rocm-device-lib-path
+            (lambda _
+              (setenv "ROCM_PATH"
+                      #$(this-package-input "rocm-device-libs")))))))
+    (inputs
+     (list rocr-runtime
+           rocm-hip-runtime
+           rocm-device-libs
+           rocm-comgr))
+    (native-inputs
+     (list clang-rocm
+           googletest
+           lld-rocm
+           python-minimal-wrapper
+           rocm-cmake))
+    (properties
+     (list %default-amdgpu-targets-property))
+    (home-page %rocm-libraries-url)
+    (synopsis "RAND library for the HIP programming language")
+    (description "The rocRAND library provides functions that generate
+pseudo-random and quasi-random numbers.  The library is implemented in the HIP
+programming language and optimized for the latest discrete AMD GPUs.  It is
+designed to run on top of the AMD ROCm platform.")
+    (license license:expat)))
