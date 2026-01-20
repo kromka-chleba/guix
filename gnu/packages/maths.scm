@@ -11364,18 +11364,18 @@ to Wolfram.")
 (define-public python-mathicsscript
   (package
     (name "python-mathicsscript")
-    (version "8.0.0")
+    (version "9.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mathicsscript" version))
        (sha256
-        (base32 "12si397b9ap5ibvbap72bvkmssh8hdap8jbmdmhsj1qdb1axrac4"))))
+        (base32 "0pamvbmm8ichxapblfck913frdmr82vmb0s2jbiiy7iil5bzn59i"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         (add-before 'check 'setenv
+         (add-before 'sanity-check 'set-home
            (lambda _
              (setenv "HOME" "/tmp"))))))
     (propagated-inputs (list python-click
