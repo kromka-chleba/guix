@@ -19,7 +19,11 @@
 (define-module (gnu packages fish-xyz)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages terminals)
+  #:use-module (gnu packages rust-apps)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system trivial)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module ((guix licenses) #:prefix license:)
@@ -69,4 +73,45 @@
     (description "@code{fish-foreign-env} wraps bash script execution in a way
 that environment variables that are exported or modified get imported back
 into fish.")
+    (license license:expat)))
+
+(define-public fish-fzf
+  (package
+    (name "fish-fzf")
+    (version "10.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PatrickF1/fzf.fish")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hqqppna8iwjnm8135qdjbd093583qd2kbq8pj507zpb1wn9ihjg"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("completions" "share/fish/")
+               ("conf.d" "share/fish/")
+               ("functions" "share/fish/"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-scripts
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (let ((bat (search-input-file inputs "bin/bat"))
+                         (fd  (search-input-file inputs "bin/fd"))
+                         (fzf (search-input-file inputs "bin/fzf")))
+                     (substitute* "functions/_fzf_wrapper.fish"
+                       (("fzf \\$argv") (string-append fzf " $argv")))
+                     (substitute* "functions/_fzf_search_directory.fish"
+                       (("set -f fd_cmd .*")
+                        (string-append "set -f fd_cmd " fd "\n")))
+                     (substitute* "functions/_fzf_preview_file.fish"
+                       (("bat") bat))))))))
+    (inputs
+     (list bat fd fzf))
+    (home-page "https://github.com/PatrickF1/fzf.fish")
+    (synopsis "Mnemonic key bindings for using fzf within the Fish shell")
+    (description "This package aims to augment your Fish shell with mnemonic
+key bindings to efficiently find what you need using fzf.")
     (license license:expat)))
