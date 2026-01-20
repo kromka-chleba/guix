@@ -56,6 +56,7 @@
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages fish-xyz)
   #:use-module (gnu packages groff)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages libbsd)
@@ -315,52 +316,6 @@ include smart terminal handling based on terminfo, an easy to search history,
 and syntax highlighting.")
     (home-page "https://fishshell.com/")
     (license license:gpl2)))
-
-(define-public fish-foreign-env
-  (package
-    (name "fish-foreign-env")
-    (version "0.20230823")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/oh-my-fish/plugin-foreign-env")
-             (commit "7f0cf099ae1e1e4ab38f46350ed6757d54471de7")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0d16mdgjdwln41zk44qa5vcilmlia4w15r8z2rc3p49i5ankksg3"))))
-    (build-system trivial-build-system)
-    (arguments
-     '(#:modules ((guix build utils))
-       #:builder
-       (begin
-         (use-modules (guix build utils))
-         (let* ((source (assoc-ref %build-inputs "source"))
-                (out (assoc-ref %outputs "out"))
-                (func-path (string-append out "/share/fish/functions")))
-           (mkdir-p func-path)
-           (copy-recursively (string-append source "/functions")
-                             func-path)
-
-           ;; Embed absolute paths.
-           (substitute* `(,(string-append func-path "/fenv.fish")
-                          ,(string-append func-path "/fenv.main.fish"))
-             (("bash")
-              (search-input-file %build-inputs "/bin/bash"))
-             (("sed")
-              (search-input-file %build-inputs "/bin/sed"))
-             ((" tr ")
-              (string-append " "
-                             (search-input-file %build-inputs "/bin/tr")
-                             " ")))))))
-    (inputs
-     (list bash coreutils sed))
-    (home-page "https://github.com/oh-my-fish/plugin-foreign-env")
-    (synopsis "Foreign environment interface for fish shell")
-    (description "@code{fish-foreign-env} wraps bash script execution in a way
-that environment variables that are exported or modified get imported back
-into fish.")
-    (license license:expat)))
 
 (define-public rc
   (package

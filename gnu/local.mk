@@ -291,6 +291,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/file-systems.scm			\
   %D%/packages/finance.scm			\
   %D%/packages/firmware.scm			\
+  %D%/packages/fish-xyz.scm			\
   %D%/packages/flashing-tools.scm		\
   %D%/packages/flex.scm				\
   %D%/packages/fltk.scm				\

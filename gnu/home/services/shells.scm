@@ -26,6 +26,7 @@
   #:use-module (gnu home services utils)
   #:use-module (gnu home services)
   #:use-module (gnu packages shells)
+  #:use-module (gnu packages fish-xyz)
   #:use-module (gnu packages bash)
   #:use-module (guix gexp)
   #:use-module (guix packages)
