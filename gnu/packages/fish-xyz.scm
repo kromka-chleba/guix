@@ -53,6 +53,31 @@
 for the Fish shell.")
     (license license:expat)))
 
+(define-public fish-colored-man
+  (let ((commit "1ad8fff696d48c8bf173aa98f9dff39d7916de0e")
+        (revision "0"))
+    (package
+      (name "fish-colored-man")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/decors/fish-colored-man")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0l32a5bq3zqndl4ksy5iv988z2nv56a91244gh8mnrjv45wpi1ms"))))
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan
+             #~'(("functions" "share/fish/"))))
+      (home-page "https://github.com/decors/fish-colored-man")
+      (synopsis "Color-enabled man pages plugin for fish-shell")
+      (description "This package provides color-enabled man pages plugin for
+fish-shell.")
+      (license license:expat))))
+
 (define-public fish-expand
   (package
     (name "fish-expand")
