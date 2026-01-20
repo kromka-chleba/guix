@@ -29,6 +29,30 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils))
 
+(define-public fish-autopair
+  (package
+    (name "fish-autopair")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jorgebucaran/autopair.fish")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mfx43n3ngbmyfp4a4m9a04gcgwlak6f9myx2089bhp5qkrkanmk"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("conf.d" "share/fish/")
+               ("functions" "share/fish/"))))
+    (home-page "https://github.com/jorgebucaran/autopair.fish")
+    (synopsis "Auto-complete matching pairs for the Fish shell")
+    (description "This package aims to provide auto-complete matching pairs
+for the Fish shell.")
+    (license license:expat)))
+
 (define-public fish-expand
   (package
     (name "fish-expand")
