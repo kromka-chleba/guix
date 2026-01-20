@@ -234,3 +234,26 @@ Fish shell.")
     (description "This package aims to augment your Fish shell with mnemonic
 key bindings to efficiently find what you need using fzf.")
     (license license:expat)))
+
+(define-public fish-puffer
+  (package
+    (name "fish-puffer")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nickeb96/puffer-fish.git")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "06g8pv68b0vyhhqzj469i9rcics67cq1kbhb8946azjb8f7rhy6s"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("functions" "share/fish/")
+               ("conf.d" "share/fish/"))))
+    (home-page "https://github.com/nickeb96/puffer-fish.git")
+    (synopsis "Text Expansions for the Fish shell")
+    (description "This plugin aims to provide text expansions for the Fish
+shell.")
+    (license license:expat)))
