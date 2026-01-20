@@ -75,6 +75,28 @@ that environment variables that are exported or modified get imported back
 into fish.")
     (license license:expat)))
 
+(define-public fish-functional
+  (package
+    (name "fish-functional")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oh-my-fish/plugin-functional")
+             (commit "0d3ab3169ff489714761c7a9ad21e268914afa31")))
+       (sha256
+        (base32 "0vnq4kpilg0z470d7782pp8wdj57cfkfad27d6mcylwl8n7wnhrn"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("functions" "share/fish/"))))
+    (home-page "https://github.com/oh-my-fish/plugin-functional")
+    (synopsis "Higher order functions for the Fish shell")
+    (description "This plugin aims to provide higher order functions for the
+Fish shell.")
+    (license license:expat)))
+
 (define-public fish-fzf
   (package
     (name "fish-fzf")
