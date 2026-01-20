@@ -289,3 +289,27 @@ key bindings to efficiently find what you need using fzf.")
     (description "This plugin aims to provide text expansions for the Fish
 shell.")
     (license license:expat)))
+
+(define-public fish-sponge
+  (package
+    (name "fish-sponge")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/meaningful-ooo/sponge")
+             (commit version)))
+       (sha256
+        (base32 "0p4vk6pq858h2v39c41irrgw1fbbcs7gd9cdr9i9fd3d6i81kmri"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("conf.d" "share/fish/")
+               ("functions" "share/fish/"))))
+    (home-page "https://github.com/meaningful-ooo/sponge")
+    (synopsis "A fish-shell plugin to clean fish history from typos
+automatically")
+    (description "A fish-shell plugin to clean fish history from typos
+automatically.")
+    (license license:expat)))
