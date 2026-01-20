@@ -53,6 +53,31 @@
 for the Fish shell.")
     (license license:expat)))
 
+(define-public fish-bang-bang
+  (let ((commit "ec991b80ba7d4dda7a962167b036efc5c2d79419")
+        (revision "0"))
+    (package
+      (name "fish-bang-bang")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/oh-my-fish/plugin-bang-bang")
+               (commit commit)))
+         (sha256
+          (base32 "1bf61f6h5p7mc0schwbd693cafp1vcjz2f7pzy6gn33nafsc5wx0"))))
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan
+             #~'(("conf.d" "share/fish/")
+                 ("functions" "share/fish/"))))
+      (home-page "https://github.com/oh-my-fish/plugin-bang-bang")
+      (synopsis "Bash style history substitution for the Fish shell")
+      (description "This package aims to provide Bash style history substitution
+for the Fish shell.")
+      (license license:expat))))
+
 (define-public fish-colored-man
   (let ((commit "1ad8fff696d48c8bf173aa98f9dff39d7916de0e")
         (revision "0"))
