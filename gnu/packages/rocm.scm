@@ -535,3 +535,10 @@ applications to control GPU operations, monitor performance, and retrieve
 information about the system's drivers and GPUs.  It also provides a
 command-line tool, @command{amd-smi}, which can be used to do the same.")
     (license (list license:expat license:ncsa))))
+
+
+
+
+;; ROCm libraries.
+
+(define %rocm-libraries-url "https://github.com/ROCm/rocm-libraries")
