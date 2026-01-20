@@ -29,6 +29,29 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils))
 
+(define-public fish-expand
+  (package
+    (name "fish-expand")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oh-my-fish/plugin-expand")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1k4bmk0c4kk42rr0x78vif02wq5cnwbyk9jgw8n846wvrnypm9bs"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("completions" "share/fish/")
+               ("functions" "share/fish/"))))
+    (home-page "https://github.com/oh-my-fish/plugin-expand")
+    (synopsis "Interactive word expansions in real-time for fish shell")
+    (description "This package provides interactive word expansions in
+real-time for fish-shell.")
+    (license license:expat)))
+
 (define-public fish-foreign-env
   (package
     (name "fish-foreign-env")
