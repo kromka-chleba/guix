@@ -5,6 +5,7 @@
 ;;; Copyright © 2019 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2025, 2026 Cayetano Santos <csantosb@inventati.org>
@@ -474,6 +475,68 @@ Description Language} Analysis and Standardization Group.")
 hardware designs in Verilog.")
       (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
+
+(define-public geda-gaf
+  (package
+    (name "geda-gaf")
+    (version "1.10.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "http://ftp.geda-project.org/geda-gaf/stable/v"
+                    (version-major+minor version) "/"
+                    version "/geda-gaf-" version ".tar.gz"))
+              (sha256
+               (base32
+                "19688b0671imy2i3jphcnq1120b8ymhr4wz2psiqylr82ljanqp8"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         ;; tests require a writable HOME
+         (add-before 'check 'set-home
+           (lambda _
+             (setenv "HOME" (getenv "TMPDIR"))))
+         (add-after 'unpack 'disable-failing-tests
+           (lambda _
+             (substitute* "xorn/tests/Makefile.in"
+               (("-Werror") ""))
+             ;; This test returns its correct result in an unexpected order.
+             (substitute* "libgeda/scheme/unit-tests/t0402-config.scm"
+               (("\\(begin-config-test 'config-keys" m)
+                (string-append "#;" m))))))
+      #:configure-flags
+      #~(let ((pcb #$(this-package-input "pcb")))
+          (list (string-append "--with-pcb-datadir=" pcb "/share")
+                (string-append "--with-pcb-lib-path="
+                               pcb "/share/pcb/pcblib-newlib:"
+                               pcb "/share/pcb/newlib")))))
+    (inputs
+     (list gamin
+           gdk-pixbuf
+           glib
+           gtk+-2
+           guile-2.0
+           libxcrypt
+           shared-mime-info
+           m4
+           pcb
+           python-2)) ; for xorn
+    (native-inputs
+     (list groff pkg-config desktop-file-utils perl)) ; for tests
+    (home-page "http://geda-project.org/")
+    (synopsis "Schematic capture, netlister, symbols, symbol checker, and utils")
+    (description
+     "Gaf stands for “gschem and friends”.  It is a subset of the entire tool
+suite grouped together under the gEDA name.  gEDA/gaf is a collection of tools
+which currently includes: gschem, a schematic capture program; gnetlist, a
+netlist generation program; gsymcheck, a syntax checker for schematic symbols;
+gattrib, a spreadsheet programme that manipulates the properties of symbols of
+a schematic; libgeda, libraries for gschem gnetlist and gsymcheck; gsch2pcb, a
+tool to forward annotation from your schematic to layout using PCB; some minor
+utilities.")
+    (license license:gpl2+)))
 
 (define-public gerbv
   (package
