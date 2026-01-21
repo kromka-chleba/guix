@@ -235,7 +235,11 @@ access to exported repositories under @file{/srv/git}."
     (($ <git-http-configuration> package git-root export-all?
                                  uri-path fcgiwrap-socket)
      (nginx-location-configuration
-      (uri (string-append "~ /" (string-trim-both uri-path #\/) "(/.*)"))
+      (uri (string-append "~ "
+			  (if (string=? uri-path "/")
+                              ""
+                              (string-append "/" (string-trim-both uri-path #\/)))
+			  "/(info/refs|git-upload-pack|git-receive-pack)"))
       (body
        (list
         (list "fastcgi_pass " fcgiwrap-socket ";")
@@ -254,7 +258,7 @@ access to exported repositories under @file{/srv/git}."
               (plain-file "gitconfig"
                           (string-append "[safe]\n\tdirectory = " git-root "/*\n"))
               ";")
-        "fastcgi_param PATH_INFO $1;"))))))
+        "fastcgi_param PATH_INFO $uri;"))))))
 
 
 ;;;
