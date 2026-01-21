@@ -2220,9 +2220,6 @@ Changes over @code{nose}:
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
           ;; Patch based on
           ;; https://github.com/aio-libs/pytest-aiohttp/pull/115/files
           (add-after 'unpack 'create-pytest-ini
@@ -2518,12 +2515,7 @@ failures per test.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:tests? #f ;tests require network access
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+      #:tests? #f)) ;tests require network access
     (native-inputs
      (list python-pytest-bootstrap
            python-setuptools-scm
@@ -3086,13 +3078,6 @@ applicative benchmarking purposes.")
        (sha256
         (base32 "0ikwiwp9ycgg7px78nxdkqvg7j97krb6vzqlb8fq8fvbwrj4q4v2"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (native-inputs (list python-pytest python-setuptools python-setuptools-scm
                          python-setuptools-declarative-requirements
                          python-wheel))
@@ -3118,13 +3103,6 @@ import them in their actual tests to use them.")
        (sha256
         (base32 "151xx48dahbh7yx2a9cr9f2iy2i6f7s3zsm4zn5apvgl9qmjhkk7"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (propagated-inputs (list python-pytest))
     (native-inputs
      (list git-minimal
@@ -3260,13 +3238,6 @@ access to test session metadata.")
        (sha256
         (base32 "0rq4mb1ycs3l1mpl682ybycvywmf4cp3vlrv9r1a9d2cb6qdwz8r"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (native-inputs
      (list python-hatch-vcs
            python-hatchling
