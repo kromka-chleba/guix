@@ -216,6 +216,14 @@
 (define (serialize-block name block)
   (serialize-block-entry (list name block) 0))
 
+(define list-of-blocks?
+  (list-of block?))
+
+(define (serialize-list-of-blocks name blocks)
+  #~(string-join
+     (list #$@(map (λ (v) (serialize-block name v)) blocks))
+     "\n"))
+
 ;;; Monitor transform -> number
 (define (monitor-transform? x)
   (and (number? x)
@@ -564,7 +572,7 @@
   (decoration (block '()) "Decoration configuration variables")
   (animations (block '()) "Animation configuration variables")
   (workspace (list-of-strings '()) "Workspaces settings")
-  (windowrule (list-of-strings '()) "Window rules (v2)")
+  (windowrule (list-of-blocks '()) "Window rules")
   (dwindle (block '()) "Dwindle layout settings")
   (master (block '()) "Master layout settings")
   (misc (block '()) "Misc settings")
@@ -609,8 +617,21 @@
         (value "24"))))
 
 (define-public %default-hyprland-windowrule
-  '("suppressevent maximize, class:.*"
-    "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"))
+  '(((name "suppress-maximize-events")
+     (match:class ".*")
+     (suppress_event "maximize"))
+    ((name "fix-xwayland-drags")
+     (match:class "^$")
+     (match:title "^$")
+     (match:xwayland #t)
+     (match:float #t)
+     (match:fullscreen #f)
+     (match:pin #f)
+     (no_focus #t))
+    ((name "move-hyprland-run")
+     (match:class "hyprland-run")
+     (move "20 monitor_h-120")
+     (float "yes"))))
 
 (define-public %default-hyprland-general
   '((gaps_in 5)
