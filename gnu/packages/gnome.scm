@@ -11277,29 +11277,27 @@ basically a text box in which notes can be written.")
                            ',unicode-files))
                #t)))))
       (native-inputs
-       `(("desktop-file-utils" ,desktop-file-utils)
-         ("docbook-xml" ,docbook-xml-4.5)
-         ("glib:bin" ,glib "bin")       ; for glib-compile-resources.
-         ("gobject-introspection" ,gobject-introspection)
-         ("gtk-doc" ,gtk-doc/stable)
-         ("intltool" ,intltool)
-         ("itstool" ,itstool)
-         ("pkg-config" ,pkg-config)
-         ("python" ,python)
-         ,@(map (match-lambda
-                  ((file hash)
-                   `(,file
-                     ,(origin
-                        (method url-fetch)
-                        (uri (string-append
-                              "https://www.unicode.org/Public/17.0.0/ucd/"
-                              file))
-                        (sha256 (base32 hash))))))
-                unicode-files)
-         ("unzip" ,unzip)))
-      (inputs
-       `(("gtk+" ,gtk+)
-         ("xmllint" ,libxml2)))
+        (cons* desktop-file-utils
+               docbook-xml-4.5
+               `(,glib "bin")
+               gobject-introspection
+               gtk-doc
+               intltool
+               itstool
+               pkg-config
+               python
+               unzip
+               (map (match-lambda
+                      ((file hash)
+                       (origin
+                         (method url-fetch)
+                         (uri (string-append
+                                "https://www.unicode.org/Public/17.0.0/ucd/"
+                                file))
+                         (sha256 (base32 hash)))))
+                    unicode-files)))
+      (inputs (list gtk+
+                    libxml2))
       (home-page "https://wiki.gnome.org/Apps/Gucharmap")
       (synopsis "Unicode character picker and font browser")
       (description
