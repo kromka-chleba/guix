@@ -94,6 +94,7 @@
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages java)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libffi)
@@ -1691,6 +1692,62 @@ such as:
 @item Reads FZ (with key), BRD, BRD2, BDV and BV* formats.
 @end itemize")
     (license license:expat)))
+
+(define-public pcb
+  (package
+    (name "pcb")
+    (version "4.3.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/pcb/pcb/pcb-" version
+                                  "/pcb-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0ppv8cblw0h70laly4zp8gmbxkbzzhbbjgw13pssgaw4mx32z1df"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'convert-encoding
+            (lambda _
+              (for-each
+               (lambda (name)
+                 (invoke "iconv" "-f" "LATIN1" "-t" "UTF-8" name "-o" name))
+               '("src/pcb-menu.res.in"
+                 "src/pcb-menu.res.h"))))
+          (add-before 'check 'pre-check
+            (lambda _
+              (system "Xvfb :1 &")
+              (setenv "DISPLAY" ":1"))))))
+    (inputs
+     (list dbus
+           mesa
+           glu
+           gd
+           gtk+-2
+           gtkglext
+           shared-mime-info
+           tk))
+    (native-inputs
+     (list bison
+           desktop-file-utils
+           flex
+           intltool
+           pkg-config
+           ;; For tests
+           imagemagick
+           gerbv
+           ghostscript
+           xorg-server-for-tests))
+    (home-page "http://pcb.geda-project.org/")
+    (synopsis "Design printed circuit board layouts")
+    (description
+     "GNU PCB is an interactive tool for editing printed circuit board
+layouts.  It features a rats-nest implementation, schematic/netlist import,
+and design rule checking.  It also includes an autorouter and a trace
+optimizer; and it can produce photorealistic and design review images.")
+    (license license:gpl2+)))
 
 (define-public pcb-rnd
   (package
