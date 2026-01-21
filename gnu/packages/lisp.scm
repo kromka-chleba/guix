@@ -1453,7 +1453,7 @@ be built as a stand-alone REPL interpreter.")
                                (target-x86-32?))
                          ;; 3072 is too much for these architectures.
                          `("--dynamic-space-size=2048")
-                         `("--dynamic-space-size=3072"))
+                         `("--dynamic-space-size=4096"))
                      "--with-sb-core-compression"
                      "--with-sb-xref-for-internals"
                      ;; SB-SIMD will only be built on x86_64 CPUs supporting
