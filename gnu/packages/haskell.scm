@@ -58,6 +58,7 @@
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lisp)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
@@ -1445,6 +1446,140 @@ interactive environment for the functional language Haskell.")
             (file-pattern ".*\\.conf\\.d$")
             (file-type 'directory))))))
 
+(define ghc-bootstrap-aarch64-8.10.7
+  (origin
+    (method url-fetch)
+    (uri
+     "https://downloads.haskell.org/ghc/8.10.7/ghc-8.10.7-aarch64-deb10-linux.tar.xz")
+    (sha256
+     (base32 "0m8fklyqcd8xrmhwnimyhyg3b5h82kkc0yfyiazk6li9kdzl3lps"))))
+
+(define-public binary-ghc-8.10.7
+  (package
+    ;; Named like this to be able to install it in profile without ghc-package-cache-file (guix profiles)
+    ;; trying to install ghc...
+    (name "binary-ghc")
+    (version "8.10.7")
+    (source ghc-bootstrap-aarch64-8.10.7)
+    (build-system gnu-build-system)
+    (supported-systems '("aarch64-linux"))
+    (outputs '("out"))
+    ;; We need llvm until 9.2 which introduce aarch64 native code generation
+    (inputs (list llvm-12 gcc-13 gmp ncurses/tinfo numactl))
+    (native-inputs
+     (list perl patchelf))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         (string-append "--with-gmp-libraries=" (assoc-ref %build-inputs "gmp") "/lib")
+         (string-append "--with-gmp-includes=" (assoc-ref %build-inputs "gmp") "/include"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build)
+          (delete 'check)
+          (add-before 'configure 'fix-lnuma
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "rts/package.conf.in"
+                (("FFI_LIB_DIR")
+                 (string-append
+                  "FFI_LIB_DIR "
+                  (assoc-ref inputs "numactl") "/lib")))))
+          (add-after 'fix-lnuma 'add-rpaths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((libraries
+                      (list
+                       "./rts/dist/build/libHSrts_debug-ghc8.10.7.so"
+                       "./rts/dist/build/libHSrts_thr-ghc8.10.7.so"
+                       "./rts/dist/build/libHSrts_thr_l-ghc8.10.7.so"
+                       "./rts/dist/build/libHSrts_thr_debug-ghc8.10.7.so"
+                       "./rts/dist/build/libHSrts_l-ghc8.10.7.so"
+                       "./rts/dist/build/libHSrts-ghc8.10.7.so"
+                       "./rts/dist/build/libffi.so"
+                       "./libraries/integer-gmp/dist-install/build/libHSinteger-gmp-1.0.3.0-ghc8.10.7.so"
+                       "./libraries/pretty/dist-install/build/libHSpretty-1.1.3.6-ghc8.10.7.so"
+                       "./libraries/xhtml/dist-install/build/libHSxhtml-3000.2.2.1-ghc8.10.7.so"
+                       "./libraries/array/dist-install/build/libHSarray-0.5.4.0-ghc8.10.7.so"
+                       "./libraries/mtl/dist-install/build/libHSmtl-2.2.2-ghc8.10.7.so"
+                       "./libraries/process/dist-install/build/libHSprocess-1.6.13.2-ghc8.10.7.so"
+                       "./libraries/base/dist-install/build/libHSbase-4.14.3.0-ghc8.10.7.so"
+                       "./libraries/parsec/dist-install/build/libHSparsec-3.1.14.0-ghc8.10.7.so"
+                       "./libraries/unix/dist-install/build/libHSunix-2.7.2.2-ghc8.10.7.so"
+                       "./libraries/ghc-heap/dist-install/build/libHSghc-heap-8.10.7-ghc8.10.7.so"
+                       "./libraries/haskeline/dist-install/build/libHShaskeline-0.8.2-ghc8.10.7.so"
+                       "./libraries/filepath/dist-install/build/libHSfilepath-1.4.2.1-ghc8.10.7.so"
+                       "./libraries/text/dist-install/build/libHStext-1.2.4.1-ghc8.10.7.so"
+                       "./libraries/hpc/dist-install/build/libHShpc-0.6.1.0-ghc8.10.7.so"
+                       "./libraries/directory/dist-install/build/libHSdirectory-1.3.6.0-ghc8.10.7.so"
+                       "./libraries/stm/dist-install/build/libHSstm-2.5.0.1-ghc8.10.7.so"
+                       "./libraries/ghc-boot/dist-install/build/libHSghc-boot-8.10.7-ghc8.10.7.so"
+                       "./libraries/time/dist-install/build/libHStime-1.9.3-ghc8.10.7.so"
+                       "./libraries/ghc-boot-th/dist-install/build/libHSghc-boot-th-8.10.7-ghc8.10.7.so"
+                       "./libraries/ghc-prim/dist-install/build/libHSghc-prim-0.6.1-ghc8.10.7.so"
+                       "./libraries/deepseq/dist-install/build/libHSdeepseq-1.4.4.0-ghc8.10.7.so"
+                       "./libraries/Cabal/Cabal/dist-install/build/libHSCabal-3.2.1.0-ghc8.10.7.so"
+                       "./libraries/bytestring/dist-install/build/libHSbytestring-0.10.12.0-ghc8.10.7.so"
+                       "./libraries/binary/dist-install/build/libHSbinary-0.8.8.0-ghc8.10.7.so"
+                       "./libraries/transformers/dist-install/build/libHStransformers-0.5.6.2-ghc8.10.7.so"
+                       "./libraries/ghci/dist-install/build/libHSghci-8.10.7-ghc8.10.7.so"
+                       "./libraries/exceptions/dist-install/build/libHSexceptions-0.10.4-ghc8.10.7.so"
+                       "./libraries/libiserv/dist-install/build/libHSlibiserv-8.10.7-ghc8.10.7.so"
+                       "./libraries/terminfo/dist-install/build/libHSterminfo-0.4.1.4-ghc8.10.7.so"
+                       "./libraries/ghc-compact/dist-install/build/libHSghc-compact-0.1.0.0-ghc8.10.7.so"
+                       "./libraries/template-haskell/dist-install/build/libHStemplate-haskell-2.16.0.0-ghc8.10.7.so"
+                       "./libraries/containers/containers/dist-install/build/libHScontainers-0.6.5.1-ghc8.10.7.so"
+                       "./compiler/stage2/build/libHSghc-8.10.7-ghc8.10.7.so"))
+                     (binaries
+                      (list
+                       "./ghc/stage2/build/tmp/ghc-stage2"
+                       "utils/hsc2hs/dist-install/build/tmp/hsc2hs"
+                       "utils/haddock/dist/build/tmp/haddock"
+                       "utils/ghc-pkg/dist-install/build/tmp/ghc-pkg"
+                       "utils/hp2ps/dist-install/build/tmp/hp2ps"
+                       "utils/hpc/dist-install/build/tmp/hpc"
+                       "utils/unlit/dist-install/build/tmp/unlit"
+                       "utils/ghc-cabal/dist-install/build/tmp/ghc-cabal"
+                       "utils/runghc/dist-install/build/tmp/runghc"
+                       "utils/iserv/stage2_p/build/tmp/ghc-iserv-prof"
+                       "utils/iserv/stage2_dyn/build/tmp/ghc-iserv-dyn"
+                       "utils/iserv/stage2/build/tmp/ghc-iserv"))
+                     (ld-so (search-input-file inputs #$(glibc-dynamic-linker))))
+                (for-each
+                 (lambda (b)
+                   (invoke "patchelf" "--add-rpath" (string-append #$gmp "/lib")  b)
+                   (invoke "patchelf" "--add-rpath" (string-append (assoc-ref inputs "ncurses-with-tinfo") "/lib")  b)
+                   (invoke "patchelf" "--add-rpath" (string-append #$gcc-13:lib "/lib")  b)
+                   (invoke "patchelf" "--add-rpath" (string-append #$numactl "/lib")  b))
+                 (append libraries binaries))
+                ;; The binaries have "/lib64/ld-linux-aarch64.so.1" hardcoded.
+                (for-each
+                 (lambda (b)
+                   (invoke "patchelf" "--set-interpreter" ld-so b))
+                 binaries))))
+          (add-before 'add-rpaths 'set-target-programs
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let ((binutils (assoc-ref inputs "binutils"))
+                      (gcc (assoc-ref inputs "gcc"))
+                      (ld-wrapper (assoc-ref inputs "ld-wrapper"))
+                      (llvm (assoc-ref inputs "llvm")))
+                  (setenv "CC" (string-append gcc "/bin/gcc"))
+                  (setenv "fp_prog_ar" (string-append binutils "/bin/ar"))
+                  (setenv "LD" (string-append binutils "/bin/ld"))
+                  (setenv "LLC" (string-append llvm "/bin/llc"))
+                  (setenv "OPT" (string-append llvm "/bin/opt"))))))))
+    (native-search-paths (list (search-path-specification
+                                 (variable "GHC_PACKAGE_PATH")
+                                 (files (list
+                                         (string-append "lib/ghc-" version)))
+                                 (file-pattern ".*\\.conf\\.d$")
+                                 (file-type 'directory))))
+    (home-page "https://www.haskell.org/ghc")
+    (synopsis "The Glasgow Haskell Compiler")
+    (description
+     "The Glasgow Haskell Compiler (GHC) is a state-of-the-art compiler and
+interactive environment for the functional language Haskell.")
+    (license license:bsd-3)))
+
 (define-public ghc-9.2
   ;; Use 8.10 to shorten the build chain.
   (let ((base ghc-8.10))
@@ -1452,6 +1587,7 @@ interactive environment for the functional language Haskell.")
       (inherit base)
       (name "ghc")
       (version "9.2.8")
+      (supported-systems '("i686-linux" "x86_64-linux" "aarch64-linux"))
       (source (origin
                 (method url-fetch)
                 (uri (string-append "https://www.haskell.org/ghc/dist/" version
@@ -1474,14 +1610,34 @@ interactive environment for the functional language Haskell.")
                 (lambda _
                   (substitute* '("testsuite/tests/simplCore/should_compile/all.T")
                     (("^test\\('T21694', \\[ " all)
-                     (string-append all "when(arch('i386'), skip), ")))))))
+                     (string-append all "when(arch('i386'), skip), ")))))
+              ;; eats up all memory then fail
+              (add-after 'skip-more-tests 'skip-T16992
+                (lambda _
+                  (substitute* "libraries/ghc-compact/tests/all.T"
+                    (("^test\\('T16992', \\[" all)
+                     (string-append all "when(arch('aarch64'), skip), ")))))
+              ;; The RTS linker does not find __aarch64_*_sync symbols,
+              ;; Fixed in 9.12 :
+              ;; https://gitlab.haskell.org/ghc/ghc/-/commit/7db8c9927fae3369fc4ecff68f80c4cb32eea757
+              #$@(if (target-aarch64?)
+                     #~((add-before 'configure 'no-outline-atomics
+                          (lambda _
+                            (with-output-to-file "mk/build.mk"
+                              (lambda ()
+                                (display "
+SRC_HC_OPTS += -optc-mno-outline-atomics
+              "))))))
+                     '())))
          ;; Increase verbosity, so running the test suite does not time out on CI.
          ((#:make-flags make-flags ''())
           #~(cons "VERBOSE=4" #$make-flags))))
       (properties '((max-silent-time . 36000))) ; 10 hours, for i686.
       (native-inputs
-       `(;; GHC 9.2 must be built with GHC >= 8.6.
-         ("ghc-bootstrap" ,base)
+       `( ;; GHC 9.2 must be built with GHC >= 8.6.
+         ("ghc-bootstrap" ,(if (string= (or (%current-target-system) (%current-system)) "aarch64-linux")
+                               binary-ghc-8.10.7
+                               base))
          ("ghc-testsuite"
           ,(origin
              (method url-fetch)
