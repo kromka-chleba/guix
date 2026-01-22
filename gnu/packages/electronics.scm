@@ -5,7 +5,7 @@
 ;;; Copyright © 2019 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Leo Famulari <leo@famulari.name>
-;;; Copyright © 2018, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2018, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2025, 2026 Cayetano Santos <csantosb@inventati.org>
@@ -28,7 +28,7 @@
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2025, 2026 Gabriel Wicki <gabriel@erlikon.ch>
+;;; Copyright © 2022, 2025, 2026 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2026 Thomas Kramer <thomas@f-si.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -529,6 +529,87 @@ Description Language} Analysis and Standardization Group.")
 hardware designs in Verilog.")
       (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
+
+(define-public fritzing
+  (package
+    (name "fritzing")
+    (version "0.9.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fritzing/fritzing-app")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "083nz7vj7a334575smjry6257535h68gglh8a381xxa36dw96aqs"))
+       (patches (search-patches "fritzing-0.9.6-fix-types.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-files
+            (lambda _
+              ;; Trick the internal mechanism to load the parts
+              (substitute* "src/version/partschecker.cpp"
+                ((".*git_libgit2_init.*")
+                 "return \"083nz7vj7a334575smjry6257535h68gglh8a381xxa36dw96aqs\";"))
+              (substitute* "src/utils/textutils.cpp"
+                (("QUuid::createUuid\\(\\)") "QUuid()"))))
+          (replace 'configure
+            (lambda _
+              ;; Integrate parts library
+              (copy-recursively
+               (string-append #$(this-package-native-input "fritzing-parts")
+                              "/share/library")
+               "parts")
+              ;; Use system libgit2 and boost.
+              (substitute* "phoenix.pro"
+                (("^LIBGIT_STATIC.*")
+                 (string-append
+                  "LIBGIT2INCLUDE=" #$(this-package-input "libgit2") "/include\n"
+                  "LIBGIT2LIB=" #$(this-package-input "libgit2") "/lib\n"
+                  "INCLUDEPATH += $$LIBGIT2INCLUDE\n"
+                  "LIBS += -L$$LIBGIT2LIB -lgit2\n"))
+                (("^.*pri/libgit2detect.pri.") ""))
+              (invoke "qmake"
+                      (string-append "QMAKE_LFLAGS_RPATH=-Wl,-rpath," #$output "/lib")
+                      (string-append "PREFIX=" #$output)
+                      "phoenix.pro")))
+          (add-after 'install 'generate-parts-db
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out"))
+                    (env-qt-qpa-platform (getenv "QT_QPA_PLATFORM"))
+                    (env-qt-hash-seed (getenv "QT_HASH_SEED")))
+                (setenv "QT_QPA_PLATFORM" "offscreen")
+                (setenv "QT_HASH_SEED" "0")
+                (invoke (string-append out "/bin/Fritzing")
+                        "-db" (string-append out "/share/fritzing/parts/parts.db")
+                        "-folder" (string-append out "/share/fritzing"))
+                (setenv "QT_QPA_PLATFORM" env-qt-qpa-platform)
+                (setenv "QT_HASH_SEED" env-qt-hash-seed)))))))
+    (native-inputs
+     (list fritzing-parts))
+    (inputs
+     (list boost
+           libgit2
+           qtbase-5
+           qtserialport-5
+           qtsvg-5
+           zlib))
+    (home-page "https://fritzing.org")
+    (synopsis "Electronic circuit design")
+    (description
+     "The Fritzing application is @dfn{Electronic Design Automation} (EDA)
+software with a low entry barrier, suited for the needs of makers and
+hobbyists.  It offers a unique real-life \"breadboard\" view, and a parts
+library with many commonly used high-level components.  Fritzing makes it very
+easy to communicate about circuits, as well as to turn them into PCB layouts
+ready for production.")
+    ;; Documentation and parts are released under CC-BY-SA 3.0; source code is
+    ;; released under GPLv3+.
+    (license (list license:gpl3+ license:cc-by-sa3.0))))
 
 (define-public fritzing-parts
   ;; XXX: Release of the parts stopped in 2016 and it looks like develop
