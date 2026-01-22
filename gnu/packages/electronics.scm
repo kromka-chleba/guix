@@ -9,7 +9,7 @@
 ;;; Copyright © 2022, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2025, 2026 Cayetano Santos <csantosb@inventati.org>
-;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2023, 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
 ;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
@@ -529,6 +529,43 @@ Description Language} Analysis and Standardization Group.")
 hardware designs in Verilog.")
       (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
+
+(define-public fritzing-parts
+  ;; XXX: Release of the parts stopped in 2016 and it looks like develop
+  ;; branch has latest changes comparing to other branches.
+  (let ((commit "d61d63de9294343b1b6e86f149e78e4b1d3a0009")
+        (revision "0"))
+    (package
+      (name "fritzing-parts")
+      (version (git-version "0.9.6" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/fritzing/fritzing-parts")
+               (commit commit)))
+         (file-name (git-file-name "fritzing-parts" version))
+         (sha256
+          (base32 "0g39ja1aqw5qx8alf61m6zcy6y78j9ky556x6x1cnd6g7kkzd861"))))
+      (build-system copy-build-system)
+      (arguments
+       (list
+        #:install-plan
+        #~'(("." "share/library/"
+             #:exclude-regexp (".github.*"
+                               ".gitignore"
+                               "CONTRIBUTING.md"
+                               "LICENSE.txt"
+                               "README.md")))
+        #:modules '(((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build copy-build-system)
+                    (guix build utils)
+                    (ice-9 match))))
+      (home-page "https://fritzing.org")
+      (synopsis "Electronic components (parts library) for use in the Fritzing app")
+      (description "This package contains all part definitions that are
+required for Fritzing app.")
+      (license license:cc-by-sa3.0))))
 
 (define-public geda-gaf
   (package
