@@ -20,7 +20,7 @@
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020, 2021, 2025 Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024, 2025 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2021, 2023 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2021 qblade <qblade@protonmail.com>
 ;;; Copyright © 2021 Gerd Heber <gerd.heber@gmail.com>
@@ -1131,57 +1131,6 @@ alternative to atomic operations for critical fast paths and are usually used
 in the context of per-cpu data.  The library offers ABI headers to interface
 with the kernel and various utilities such as per-cpu counters.")
       (license (list license:lgpl2.1 license:expat)))))
-
-(define-public horizon-eda
-  (package
-    (name "horizon-eda")
-    (version "2.7.0")
-    ;; TODO: try to unbundle some of the 3rd parties.
-    ;; We have packages for nlohmann-json, range-v3, catch2 and clipper.
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/horizon-eda/horizon")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1sq1d2x9wq168cz91l2rd93gnlq5scknb45bi1njqqcw3jjjhsk3"))))
-    (build-system meson-build-system)
-    (arguments
-     (list
-      #:tests? #f ; no tests
-      #:glib-or-gtk? #t))
-    (native-inputs (list cmake-minimal ;; OpenCASCADE is only found by cmake
-                         `(,glib "bin")
-                         gobject-introspection
-                         pkg-config))
-    (inputs (list boost
-                  cairomm
-                  cppzmq
-                  curl
-                  glib
-                  glibmm
-                  glm
-                  gsettings-desktop-schemas
-                  gtk+
-                  gtkmm-3
-                  libarchive
-                  libgit2-glib
-                  librsvg
-                  libspnav
-                  libzip
-                  opencascade-occt
-                  podofo
-                  sqlite
-                  `(,util-linux "lib")
-                  zeromq))
-    (home-page "https://horizon-eda.org/")
-    (synopsis "Electronic Design Automation package")
-    (description "Horizon EDA is an Electronic Design Automation package
-supporting an integrated end-to-end workflow for printed circuit board design
-including parts management and schematic entry.")
-    (license license:gpl3+)))
 
 (define-public linsmith
   (package
