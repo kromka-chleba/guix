@@ -24,7 +24,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages display-managers)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages xorg)
+  #:autoload   (gnu packages xorg) (xauth xorg-server)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu services xorg)
