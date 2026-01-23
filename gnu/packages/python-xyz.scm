@@ -12512,7 +12512,11 @@ and therefore easier to read and write.")
             (lambda _
               (setenv "HOME" "/tmp")
               ;; NOTE: Any value works, the variable just has to be present.
-              (setenv "SKIP_ONLINE" "1"))))))
+              (setenv "SKIP_ONLINE" "1")
+              ;; /etc may be writable under unprivileged daemon (sandbox).
+              (substitute* "tests/test_util.py"
+                (("self\\.assertFalse\\(self.*is_writable\\('/etc'\\)\\)" all)
+                 (string-append "pass # " all))))))))
     (native-inputs
      (list python-pytest python-setuptools python-wheel))
     (inputs
