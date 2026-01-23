@@ -1637,8 +1637,7 @@ in Python 3.13 by PEP-594.")
        (sha256
         (base32 "19yr3hfwdc9sv8df4vydxcsxnpld3xi57siq4w8xanrm42qka1sl"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-importlib-metadata
-                             python-typing-extensions))
+    (propagated-inputs (list python-typing-extensions))
     (native-inputs (list python-hatchling
                          python-opentelemetry-test-utils-bootstrap))
     (home-page "https://opentelemetry.io/docs/languages/python/")
@@ -3658,8 +3657,6 @@ CSS3 that adds programming capabilities and some other syntactic sugar.")
              (setenv "TZ" "UTC")
              (setenv "TZDIR"
                      (search-input-directory inputs "share/zoneinfo")))))))
-    (propagated-inputs
-     (list python-importlib-metadata))
     (native-inputs
      (list python-bson
            python-ecdsa
@@ -7341,7 +7338,6 @@ WSGI.")
      (list python-asgiref               ;async extra
            python-click
            python-blinker
-           python-importlib-metadata
            python-itsdangerous
            python-jinja2
            python-werkzeug))

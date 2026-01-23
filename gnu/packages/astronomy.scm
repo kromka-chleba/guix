@@ -2172,7 +2172,6 @@ Main features:
      (list python-asdf-standard
            python-asdf-transform-schemas
            python-attrs ;; for vendorized jsonschema
-           python-importlib-metadata
            python-jmespath
            python-numpy
            python-packaging
@@ -2277,8 +2276,7 @@ Astropy objects.")
       (list python-setuptools
             python-setuptools-scm))
     (propagated-inputs
-     (list python-importlib-metadata
-           python-numpy
+     (list python-numpy
            python-pyyaml
            python-semantic-version)))))
 
@@ -5760,7 +5758,6 @@ milliarcsecond).")
            python-crds-minimal
            python-drizzle
            python-gwcs
-           python-importlib-metadata
            python-jsonschema
            python-numpy
            python-packaging
@@ -9479,7 +9476,6 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
      (list python-asdf
            python-astropy
            python-crds
-           python-importlib-metadata
            python-pyyaml))
     (home-page "https://github.com/spacetelescope/stpipe")
     (synopsis "STScI framework for calibration pipeline software")

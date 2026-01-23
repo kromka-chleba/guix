@@ -707,15 +707,13 @@ output.")
               (setenv "PYTHONHASHSEED" "0")))))) ;tests rely on this value
     (native-inputs
      (list python-icontract ;optional
-           python-importlib-metadata
            python-mypy
            python-numpy
            python-pytest
            python-pytest-xdist
            python-setuptools))
     (propagated-inputs
-     (list python-importlib-metadata
-           python-packaging
+     (list python-packaging
            python-pygls
            python-typeshed-client
            python-typing-inspect
@@ -4355,8 +4353,7 @@ friendly library for concurrency and async I/O in Python.")
            python-setuptools-git
            python-wheel))
     (propagated-inputs
-     (list python-importlib-metadata
-           python-pytest-shutil
+     (list python-pytest-shutil
            python-pytest-fixture-config
            python-virtualenv))
     (home-page "https://github.com/man-group/pytest-plugins")

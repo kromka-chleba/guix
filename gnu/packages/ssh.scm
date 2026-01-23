@@ -888,8 +888,7 @@ need OpenSSH binaries to be installed.")
         (base32 "1igcjjsaa2x4zbdwzrybv077kghjair3ighs9jdmgsa7wj66pcaf"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-importlib-metadata
-           python-mock-ssh-server
+     (list python-mock-ssh-server
            python-pytest
            python-pytest-asyncio
            python-setuptools
