@@ -576,7 +576,6 @@ package.  It is not useful on its own, only as a dependency for awkward.")
     (propagated-inputs
      (list python-awkward-cpp
            python-fsspec
-           python-importlib-metadata
            python-numpy
            python-packaging))
     (home-page "https://awkward-array.org/")
@@ -1588,7 +1587,6 @@ comparison operators, as defined in the original
                 (chdir "sdk/python/core"))))))
       (propagated-inputs
        (list python-cryptography
-             python-importlib-metadata
              python-requests))
       (native-inputs
        (list python-pytest
@@ -3500,7 +3498,6 @@ that best match text queries.")
      (list python-babel
            python-click
            python-ghp-import
-           python-importlib-metadata
            python-jinja2
            python-markdown
            python-markupsafe
@@ -8326,7 +8323,6 @@ and convert DDL to BigQuery JSON schema.")
        ((#:tests? _ #t) #f)))
     (propagated-inputs
      (list python-attrs
-           python-importlib-metadata
            python-pyrsistent
            python-typing-extensions))
     (native-inputs
@@ -8959,7 +8955,6 @@ logic-free templating system Mustache.")
                       #$(assoc-ref properties 'upstream-version)))))))
     (native-inputs (list python-hatchling python-hatch-vcs python-pytest))
     (inputs (list python-html5lib
-                  python-importlib-metadata
                   python-markdown
                   python-pypdf
                   python-validators))
@@ -10572,7 +10567,6 @@ Server (PLS).")
     (propagated-inputs
      (list python-black
            python-docstring-to-markdown
-           python-importlib-metadata
            python-jedi
            python-lsp-jsonrpc
            python-pluggy
@@ -18384,7 +18378,6 @@ time.")
      (list python-beautifulsoup4
            python-bleach
            python-defusedxml
-           python-importlib-metadata
            python-jinja2
            python-jupyter-core
            python-jupyterlab-pygments
@@ -27044,7 +27037,6 @@ derivation parsing, namingly @code{b32decode()}, @code{b32encode()} and
      (list python-beautifulsoup4
            python-cryptography
            python-dnspython
-           python-importlib-metadata
            python-pyotp
            python-pyyaml
            python-requests
@@ -27240,7 +27232,6 @@ tool).")
            `(,zstd "lib")))
     (propagated-inputs
      (list python-google-crc32c
-           python-importlib-metadata
            python-msgpack
            python-numpy))
     (native-inputs
@@ -29741,7 +29732,6 @@ information for your operating system.")
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (propagated-inputs
      (list python-canonicaljson
-           python-importlib-metadata
            python-pynacl
            python-typing-extensions
            python-unpaddedbase64))
@@ -39780,7 +39770,6 @@ add the log levels NOTICE, SPAM, SUCCESS and VERBOSE.")
        (sha256
         (base32 "1xp0qfzy4l4fs1rn1670fbf7d7xv1p2s3rplspx8xqszjd5j0n8c"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-importlib-metadata))
     (native-inputs
      (list python-pretend python-pytest python-pytest-cov python-setuptools))
     (home-page "https://github.com/pyveci/verlib2")

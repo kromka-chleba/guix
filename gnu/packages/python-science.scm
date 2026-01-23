@@ -2160,8 +2160,7 @@ backward differences are used.")
            python-setuptools
            python-sympy))
     (propagated-inputs
-     (list python-importlib-metadata
-           python-numpy))
+     (list python-numpy))
     (home-page "https://numpoly.readthedocs.io/en/master/")
     (synopsis "Polynomials as a numpy datatype")
     (description "Numpoly is a generic library for creating, manipulating and

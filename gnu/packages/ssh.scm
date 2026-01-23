@@ -895,8 +895,7 @@ need OpenSSH binaries to be installed.")
             (lambda _
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (native-inputs
-     (list python-importlib-metadata
-           python-mock-ssh-server
+     (list python-mock-ssh-server
            python-pytest
            python-pytest-asyncio
            python-setuptools

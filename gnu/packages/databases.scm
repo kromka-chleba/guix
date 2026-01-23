@@ -4903,7 +4903,7 @@ postgresql = postgresql://nixbld@/yoyo_test~%")))
            tms
            tzdata-for-tests))
     (propagated-inputs
-     (list python-sqlparse python-tabulate python-importlib-metadata))
+     (list python-sqlparse python-tabulate))
     (home-page "https://ollycope.com/software/yoyo/latest/")
     (synopsis "Database migrations with SQL")
     (description
