@@ -36,7 +36,8 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages gdb)
-  #:use-module (gnu packages perl))
+  #:use-module (gnu packages perl)
+  #:use-module (gnu packages python))
 
 (define-public valgrind/pinned
   (package
@@ -78,6 +79,8 @@
                       (rename-file orig dest))))))))
     (native-inputs
      (list perl))
+    (inputs
+     (list python))                     ;necessary for shebangs
     (home-page "https://www.valgrind.org/")
     (synopsis "Debugging and profiling tool suite")
     (description
