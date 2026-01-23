@@ -687,20 +687,17 @@ require Coincurve.")
 (define-public electrum
   (package
     (name "electrum")
-    (version "4.6.1")
+    (version "4.7.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://download.electrum.org/"
-                           version "/Electrum-"
-                           version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/spesmilo/electrum.git")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1h7z019sp99csrj1djmhlm9y7vyyzl7wvar7z9x4jx59lmmvs1xs"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Delete the bundled dependencies.
-           (delete-file-recursively "packages")))))
+        (base32 "15rkinaknaw199wrqcknnjy8989z1hwdcb3b4pdfd24fzkppa1kv"))
+       (modules '((guix build utils)))))
     (build-system pyproject-build-system)
     (arguments
      (list
