@@ -3121,6 +3121,83 @@ mode line as @samp{[ status | name (primary) secondary ]}.  It can be
 displayed at the bottom or at the top.")
       (license license:gpl3+))))
 
+(define (make-nethack+lisp nethack emacs-nethack-origin)
+  "Create a nethack package variant with nethack-el patches."
+  ;; Compute the patch file name from the nethack package version.
+  (let ((patch-file-name
+         (string-append
+          "/enh-"
+          (string-replace-substring (package-version nethack)
+                                    "." "")
+          ".patch")))
+    (package
+      (inherit nethack)
+      (name (string-append (package-name nethack) "+lisp"))
+      (source
+       (origin
+         (inherit (package-source nethack))
+         (patches
+          (list
+           (file-append emacs-nethack-origin patch-file-name)))))
+      (properties '((target . "lisp")))
+      (license
+       (cons
+        ;; nethack-el patches are under 3-clause BSD.
+        license:bsd-3
+        (list (package-license nethack)))))))
+
+(define-public emacs-nethack
+  (package
+    (name "emacs-nethack")
+    (version "0.15.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Feyorsh/nethack-el")
+              (commit (string-append
+                       "v"
+                       (string-replace-substring version "." "-")))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z9n9rrr178m3cilaxg1248ybpj5a0182azrfl83m07y3y9z09cd"))))
+    (build-system emacs-build-system)
+    (inputs
+     (list (make-nethack+lisp nethack (package-source this-package))))
+    (arguments
+     (list
+      #:include ''("^nethack[^/]*.el$")
+      ;; Tests are tightly coupled to the network, and the only non-network
+      ;; test is broken.
+      #:tests? #f
+      ;; Test command included, should the situation change.
+      #:test-command
+      #~(list
+         "emacs" "--batch"
+         ;; "-L" "nethack-el"
+         "-l" "test/nethack-tests.el"
+         "--eval" "(ert-run-tests-batch-and-exit)")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-nethack-program-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "nethack.el"
+                ("nethack-program"
+                 (search-input-file inputs "bin/nethack"))))))))
+    (home-page "https://github.com/Feyorsh/nethack-el")
+    (synopsis "Run Nethack inside Emacs")
+    (description
+     "FIXME")
+    (license
+     (list
+      ;; Emacs Lisp code is under GPL3 or later.
+      license:gpl3+
+      ;; Nethack patches are 3-clause BSD.
+      license:bsd-3))))
+
+(define-public nethack+lisp
+  (make-nethack+lisp nethack (package-source emacs-nethack)))
+
 (define-public emacs-nftables-mode
   (package
     (name "emacs-nftables-mode")
