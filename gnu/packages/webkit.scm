@@ -273,7 +273,7 @@ engine that uses Wayland for graphics output.")
            libxt
            mesa
            openjpeg
-           sqlite
+           sqlite/pinned
            sysprof
            woff2
            wpebackend-fdo

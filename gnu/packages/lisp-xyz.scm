@@ -10249,7 +10249,7 @@ Common Lisp.")
     (inputs
      `(("iterate" ,sbcl-iterate)
        ("cffi" ,sbcl-cffi)
-       ("sqlite" ,sqlite)))
+       ("sqlite" ,sqlite/pinned)))
     (native-inputs
      `(("fiveam" ,sbcl-fiveam)
        ("bordeaux-threads" ,sbcl-bordeaux-threads)))

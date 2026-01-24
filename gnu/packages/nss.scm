@@ -253,7 +253,7 @@ in the Mozilla clients.")
                                           (string-append #$output:static
                                                          "/" (dirname f))))
                           (find-files "." "\\.a$"))))))))
-    (inputs (list sqlite zlib))
+    (inputs (list sqlite/pinned zlib))
     (propagated-inputs (list nspr))               ;required by nss.pc.
     (native-inputs (list perl                     ;for tests
                          (if (target-64bit?) libfaketime datefudge)

@@ -36493,7 +36493,7 @@ information about geometries.")
            openssl
            pcre2
            proj
-           sqlite
+           sqlite/pinned
            zlib))
     (propagated-inputs
      (list r-classint
@@ -41000,7 +41000,7 @@ emphasize hidden group structures in networks or focus on specific nodes.")
            geos
            pcre2
            proj
-           sqlite
+           sqlite/pinned
            tbb
            zlib))
     (propagated-inputs

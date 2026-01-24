@@ -795,7 +795,7 @@ Guile's foreign function interface.")
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (native-inputs (list autoconf automake guile-3.0 pkg-config))
-    (inputs (list guile-3.0 sqlite-next))
+    (inputs (list guile-3.0 sqlite))
     (synopsis "Access SQLite databases from Guile")
     (description
      "This package provides Guile bindings to the SQLite database system.")

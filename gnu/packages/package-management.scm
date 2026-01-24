@@ -2027,7 +2027,7 @@ environments.")
              guile-next))
       (inputs
        (list guile-next
-             sqlite-next
+             sqlite
              bash-minimal
              (libc-utf8-locales-for-target)
              sqitch))

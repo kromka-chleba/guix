@@ -4631,7 +4631,7 @@ PickleShare.")
     (build-system pyproject-build-system)
     (native-inputs
      (list unzip python-setuptools python-wheel))
-    (inputs (list sqlite-next))         ;SQLite 3.45.1 required.
+    (inputs (list sqlite))
     (arguments
      (list
       #:phases
@@ -6086,7 +6086,7 @@ compatible with SQLite using a graphical user interface.")
                   qtbase-5
                   qtsvg-5
                   readline
-                  sqlite-next))
+                  sqlite))
     (native-inputs (list python qttools-5 qtdeclarative-5 tcl))
     (home-page "https://sqlitestudio.pl/")
     (synopsis "Graphical user interface to browse and edit SQLite databases")

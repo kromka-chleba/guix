@@ -3320,7 +3320,7 @@ deviation, and minimum and maximum values.  It can show a nice histogram too.")
     (inputs
      (list file                         ;for libmagic
            ncurses
-           sqlite
+           sqlite/pinned
            zlib))
     (native-inputs
      (list net-base                     ;for tests

@@ -562,7 +562,7 @@ system, and the core design of Django is reused in Grantlee.")
            pcre2
            postgresql
            pulseaudio
-           sqlite
+           sqlite/pinned
            unixodbc
            xcb-util
            xcb-util-image

@@ -521,7 +521,7 @@ editor (console only)")
                 libsm
                 libxml2
                 m17n-lib
-                sqlite
+                sqlite/pinned
                 tree-sitter
                 zlib)))))
 

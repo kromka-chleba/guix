@@ -425,7 +425,7 @@
            libffi        ; for ctypes
            libxcrypt     ; crypto module slated for removal in 3.13, re-enable
                                         ; python tests of libxcrypt when that happens
-           sqlite                       ; for sqlite extension
+           sqlite/pinned                ; for sqlite extension
            openssl-1.1
            readline
            zlib
@@ -1059,7 +1059,7 @@ def contents() -> str:
                   gdbm
                   libffi                ;for ctypes
                   libxcrypt             ;crypto module slated for removal in 3.13
-                  sqlite                ;for sqlite extension
+                  sqlite/pinned         ;for sqlite extension
                   openssl
                   readline
                   zlib
@@ -1439,7 +1439,7 @@ def contents() -> str:
                   expat
                   gdbm
                   libffi                ;for ctypes
-                  sqlite                ;for sqlite extension
+                  sqlite/pinned         ;for sqlite extension
                   openssl
                   readline
                   zlib

@@ -2579,7 +2579,7 @@ library.")
     (propagated-inputs
      (list dune-configurator ocaml-odoc))
     (native-inputs
-     (list ocaml-ppx-inline-test pkg-config sqlite))
+     (list ocaml-ppx-inline-test pkg-config sqlite/pinned))
     (home-page "https://mmottl.github.io/sqlite3-ocaml")
     (synopsis "SQLite3 Bindings for OCaml")
     (description

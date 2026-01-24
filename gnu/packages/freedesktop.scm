@@ -1146,7 +1146,7 @@ with localed.  This package is extracted from the broader systemd package.")
            gst-plugins-base
            gtk+
            polkit))
-    (propagated-inputs (list sqlite))
+    (propagated-inputs (list sqlite/pinned))
     (home-page "https://www.freedesktop.org/software/PackageKit/")
     (synopsis "API for package management, through D-Bus")
     (description

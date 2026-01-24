@@ -462,7 +462,7 @@ many popular formats.")
            proj
            python
            ;("pugixml" ,pugixml)
-           sqlite
+           sqlite/pinned
            xorgproto
            qtbase
            zlib))

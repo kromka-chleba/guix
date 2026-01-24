@@ -138,7 +138,7 @@
                   ncurses
                   openal
                   sdl2
-                  sqlite
+                  sqlite/pinned
                   `(,zstd "lib")))
     (outputs '("out" "debug"))
     (synopsis "Voxel game engine")

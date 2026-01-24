@@ -1005,7 +1005,7 @@ hydrology and waste deposition.")
          "1g0hkpiablvhsmw0kn5frwgdir3q7avc45p6lc1zhhhzkv5ikydh"))))
     (build-system cmake-build-system)
     (native-inputs (list googletest pkg-config))
-    (propagated-inputs (list curl libtiff sqlite)) ;required by proj.pc
+    (propagated-inputs (list curl libtiff sqlite/pinned)) ;required by proj.pc
     (home-page "https://proj.org/")
     (synopsis "Coordinate transformation software")
     (description
@@ -1777,7 +1777,7 @@ vector data.")
            proj
            qhull
            shapelib
-           sqlite
+           sqlite/pinned
            swig
            zlib
            zstd))

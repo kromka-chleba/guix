@@ -5144,7 +5144,7 @@ as OpenStreetMap, OpenCycleMap, OpenAerialMap and Maps.")
            nghttp2 ;for pkg-config
            `(,nghttp2 "lib")
            libxml2
-           sqlite
+           sqlite/pinned
            zlib))
     (inputs
      (list mit-krb5 samba/pinned))     ; For ntlm_auth support
@@ -5685,7 +5685,7 @@ file.")
            libusb
            polkit
            python-wrapper
-           sqlite))
+           sqlite/pinned))
     (home-page "https://www.freedesktop.org/software/colord/")
     (synopsis "Color management service")
     (description "Colord is a system service that makes it easy to manage,
@@ -8257,7 +8257,7 @@ Microsoft Exchange, Last.fm, IMAP/SMTP, Jabber, SIP and Kerberos.")
            libsecret
            libsoup
            nss
-           sqlite))
+           sqlite/pinned))
     (inputs
      (list bdb
            boost
@@ -9740,7 +9740,7 @@ easy, safe, and automatic.")
            icu4c                ;libunistring gets miner-miner-fs test to fail
            json-glib
            libxml2
-           sqlite))
+           sqlite/pinned))
     (synopsis "Metadata database, indexer and search tool")
     (home-page "https://wiki.gnome.org/Projects/Tracker")
     (description
@@ -10310,7 +10310,7 @@ It includes a wide variety of applications with a common interface for
 browsing the web, editing text and images, creating documents and diagrams,
 playing media, scanning, and much more.")
                     (license license:gpl2+)
-                    (properties `((hidden? . #t))))))
+                    (properties `((hidden? . #f))))))
              (package (inherit base)
                       field ...)))))))
 

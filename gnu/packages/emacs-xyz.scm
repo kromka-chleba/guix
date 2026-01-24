@@ -10836,7 +10836,7 @@ It is not intended as a user interface.")
               (install-file "sqlite3-api.so"
                             (string-append #$output "/lib")))))))
     (native-inputs (list python sed))
-    (inputs (list sqlite))
+    (inputs (list sqlite/pinned))
     (home-page "https://github.com/pekingduck/emacs-sqlite3-api")
     (synopsis "Dynamic module for Emacs to access the SQLite C interface")
     (description "This package provides a dynamic module for Emacs that allows

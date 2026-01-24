@@ -343,7 +343,7 @@ compatible to GNU Pth.")
            openldap
            pcsc-lite
            readline
-           sqlite
+           sqlite/pinned
            zlib))
     (arguments
      (list

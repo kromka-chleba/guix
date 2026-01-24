@@ -3229,7 +3229,7 @@ degradation and failure.")
         (base32 "0dhpgcylf99cnxz8h4i4dhv2i3124cs0n8lssbhwn783knijfysj"))))
     (build-system gnu-build-system)
     (inputs
-     (list ncurses pcre2 sqlite))
+     (list ncurses pcre2 sqlite/pinned))
     (home-page "https://github.com/adrianlopezroche/fdupes")
     (synopsis "Identify duplicate files")
     (description

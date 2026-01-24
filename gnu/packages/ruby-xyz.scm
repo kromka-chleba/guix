@@ -10419,7 +10419,7 @@ methods for copying, moving, removing, etc.")
     (propagated-inputs
      (list ruby-mini-portile-2))
     (inputs
-     (list sqlite))
+     (list sqlite/pinned))
     (native-inputs
      (list ruby-hoe
            ruby-rake-compiler

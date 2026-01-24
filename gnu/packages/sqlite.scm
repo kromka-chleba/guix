@@ -63,7 +63,7 @@
     (string-append "https://sqlite.org/" (number->string year)
                    "/sqlite-autoconf-" numeric-version ".tar.gz")))
 
-(define-public sqlite
+(define-public sqlite/pinned
   (package
    (name "sqlite")
    (version "3.39.3")
@@ -114,10 +114,9 @@ widely deployed SQL database engine in the world.  The source code for SQLite
 is in the public domain.")
    (license license:public-domain)))
 
-;; Newer version required for e.g. fossil.
-(define-public sqlite-next
+(define-public sqlite
   (package
-    (inherit sqlite)
+    (inherit sqlite/pinned)
     (version "3.51.0")
     (source (origin
               (method url-fetch)
@@ -126,7 +125,7 @@ is in the public domain.")
                (base32
                 "19bc2inw7f9fn0y6j3b57w4mk6bzi2q8hp5yn6qyd8kav7ynvqj2"))))
     (arguments
-     (substitute-keyword-arguments (package-arguments sqlite)
+     (substitute-keyword-arguments (package-arguments sqlite/pinned)
        ((#:tests? _ #f)
         #f)
        ((#:configure-flags flags #~(list))
@@ -155,3 +154,6 @@ is in the public domain.")
                     (substitute* (string-append out "/lib/libsqlite3.la")
                       (("^old_library=.*")
                        "old_library=''\n"))))))))))))
+
+(define-deprecated-package sqlite-next
+  sqlite)

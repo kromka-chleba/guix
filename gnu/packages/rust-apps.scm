@@ -3266,7 +3266,7 @@ background agent taking care of maintaining the necessary state.")
             libgit2-1.8
             libssh2
             openssl
-            sqlite
+            sqlite/pinned
             zlib
             (cargo-inputs 'rust-cargo-c)))
     (home-page "https://github.com/lu-zero/cargo-c")
