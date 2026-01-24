@@ -9899,6 +9899,10 @@
   (crate-source "itoa" "1.0.16"
                 "040hqvfkxl7mpjs54y495ch2qkxx26kbfxyydmi42k7vk8rvbrby"))
 
+(define rust-itoa-1.0.17
+  (crate-source "itoa" "1.0.17"
+                "1lh93xydrdn1g9x547bd05g0d3hra7pd1k4jfd2z1pl1h5hwdv4j"))
+
 (define rust-itoa-1.0.9
   (crate-source "itoa" "1.0.9"
                 "0f6cpb4yqzhkrhhg6kqsw3wnmmhdnnffi6r2xzy248gzi2v0l5dg"))
@@ -10502,6 +10506,10 @@
 (define rust-libc-0.2.178
   (crate-source "libc" "0.2.178"
                 "1490yks6mria93i3xdva1gm05cjz824g14mbv0ph32lxma6kvj9p"))
+
+(define rust-libc-0.2.180
+  (crate-source "libc" "0.2.180"
+                "1z2n7hl10fnk1xnv19ahhqxwnb4qi9aclnl6gigim2aaahw5mhxw"))
 
 (define rust-libc-stdhandle-0.1.0
   (crate-source "libc-stdhandle" "0.1.0"
@@ -14737,6 +14745,10 @@
   (crate-source "proc-macro2" "1.0.101"
                 "1pijhychkpl7rcyf1h7mfk6gjfii1ywf5n0snmnqs5g4hvyl7bl9"))
 
+(define rust-proc-macro2-1.0.105
+  (crate-source "proc-macro2" "1.0.105"
+                "1rvgs5qdznlrqrgicmv24nybnrnv8kyvk2vi7s52ddna1q71hpak"))
+
 (define rust-proc-macro2-diagnostics-0.10.1
   (crate-source "proc-macro2-diagnostics" "0.10.1"
                 "1j48ipc80pykvhx6yhndfa774s58ax1h6sm6mlhf09ls76f6l1mg"))
@@ -15553,6 +15565,10 @@
 (define rust-quote-1.0.42
   (crate-source "quote" "1.0.42"
                 "0zq6yc7dhpap669m27rb4qfbiywxfah17z6fwvfccv3ys90wqf53"))
+
+(define rust-quote-1.0.43
+  (crate-source "quote" "1.0.43"
+                "02n41mlr81qmczac7m5kjy51y8b7yrb8ym4ncmjycampjjjxjx6w"))
 
 (define rust-quote-1.0.44
   (crate-source "quote" "1.0.44"
@@ -17733,6 +17749,10 @@
   (crate-source "serde_json" "1.0.145"
                 "1767y6kxjf7gwpbv8bkhgwc50nhg46mqwm9gy9n122f7v1k6yaj0"))
 
+(define rust-serde-json-1.0.149
+  (crate-source "serde_json" "1.0.149"
+                "11jdx4vilzrjjd1dpgy67x5lgzr0laplz30dhv75lnf5ffa07z43"))
+
 (define rust-serde-json-1.0.99
   (crate-source "serde_json" "1.0.99"
                 "1qzal5a1wlfw587xqfwngly0nhrkzqi7d1rva27hp820q9qnh9j6"))
@@ -18096,6 +18116,10 @@
 (define rust-signal-hook-registry-1.4.6
   (crate-source "signal-hook-registry" "1.4.6"
                 "12y2v1ms5z111fymaw1v8k93m5chnkp21h0jknrydkj8zydp395j"))
+
+(define rust-signal-hook-registry-1.4.8
+  (crate-source "signal-hook-registry" "1.4.8"
+                "06vc7pmnki6lmxar3z31gkyg9cw7py5x9g7px70gy2hil75nkny4"))
 
 (define rust-signal-hook-tokio-0.3.1
   (crate-source "signal-hook-tokio" "0.3.1"
@@ -24075,6 +24099,10 @@
 (define rust-zlib-rs-0.5.5
   (crate-source "zlib-rs" "0.5.5"
                 "1lxa1hf3bs8ip15jq8i8h9wdaaahcgxlzxvsj2vc5qmaa7fhx6a0"))
+
+(define rust-zmij-1.0.14
+  (crate-source "zmij" "1.0.14"
+                "1siglzwmyqs0zc0crnm8r1mylnhv410qxdmchzw2ips8p183z3xx"))
 
 (define rust-zmij-1.0.16
   (crate-source "zmij" "1.0.16"
@@ -57714,6 +57742,58 @@
                                   rust-zerofrom-derive-0.1.6
                                   rust-zerovec-0.10.4
                                   rust-zerovec-derive-0.10.3))
+                     (tramp-rpc-server =>
+                                       (list rust-base64-0.22.1
+                                             rust-bitflags-2.10.0
+                                             rust-bytes-1.11.0
+                                             rust-cfg-if-1.0.4
+                                             rust-cfg-aliases-0.2.1
+                                             rust-errno-0.3.14
+                                             rust-futures-0.3.31
+                                             rust-futures-channel-0.3.31
+                                             rust-futures-core-0.3.31
+                                             rust-futures-executor-0.3.31
+                                             rust-futures-io-0.3.31
+                                             rust-futures-macro-0.3.31
+                                             rust-futures-sink-0.3.31
+                                             rust-futures-task-0.3.31
+                                             rust-futures-util-0.3.31
+                                             rust-itoa-1.0.17
+                                             rust-libc-0.2.180
+                                             rust-memchr-2.7.6
+                                             rust-mio-1.1.1
+                                             rust-nix-0.29.0
+                                             rust-pin-project-lite-0.2.16
+                                             rust-pin-utils-0.1.0
+                                             rust-proc-macro2-1.0.105
+                                             rust-quote-1.0.43
+                                             rust-serde-1.0.228
+                                             rust-serde-core-1.0.228
+                                             rust-serde-derive-1.0.228
+                                             rust-serde-json-1.0.149
+                                             rust-signal-hook-registry-1.4.8
+                                             rust-slab-0.4.11
+                                             rust-socket2-0.6.1
+                                             rust-syn-2.0.114
+                                             rust-thiserror-1.0.69
+                                             rust-thiserror-impl-1.0.69
+                                             rust-tokio-1.49.0
+                                             rust-tokio-macros-2.6.0
+                                             rust-unicode-ident-1.0.22
+                                             rust-wasi-0.11.1+wasi-snapshot-preview1
+                                             rust-windows-link-0.2.1
+                                             rust-windows-sys-0.60.2
+                                             rust-windows-sys-0.61.2
+                                             rust-windows-targets-0.53.5
+                                             rust-windows-aarch64-gnullvm-0.53.1
+                                             rust-windows-aarch64-msvc-0.53.1
+                                             rust-windows-i686-gnu-0.53.1
+                                             rust-windows-i686-gnullvm-0.53.1
+                                             rust-windows-i686-msvc-0.53.1
+                                             rust-windows-x86-64-gnu-0.53.1
+                                             rust-windows-x86-64-gnullvm-0.53.1
+                                             rust-windows-x86-64-msvc-0.53.1
+                                             rust-zmij-1.0.14))
                      (transanno =>
                                 (list rust-addr2line-0.24.2
                                       rust-adler2-2.0.0
