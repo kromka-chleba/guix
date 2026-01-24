@@ -644,6 +644,8 @@ or by starting the installer, using `guix-system-installer` command.
   `(,@(if (target-aarch64? system)
           '("sr_mod" "sd_mod"
             "usb_common" "usbcore"
+            "fixed" "fixed_phy"
+            "pwm_regulator" "gpio_regulator"
             ;; USB 3.0
             "xhci_pci" "xhci_hcd"
             "xhci_plat_hcd"
@@ -661,6 +663,9 @@ or by starting the installer, using `guix-system-installer` command.
             ;; Rockchip
             "phy_rockchip_usb"
             "phy_rockchip_inno_usb2" "phy_rockchip_typec"
+            "spi_rockchip" "pwm_rockchip"
+            ;; Rockpro64
+            "i2c_rk3x" "fusb302"
             ;; NXP i.MX
             "phy_fsl_imx8mq_usb"
             ;; Generic
