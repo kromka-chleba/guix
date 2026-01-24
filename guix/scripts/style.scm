@@ -56,6 +56,94 @@
   #:use-module (srfi srfi-71)
   #:export (guix-style))
 
+
+
+;;;
+;;; Transform package field.
+;;;
+;;; Currently: remove
+;;; Ideas : append / prepend / sort
+
+(define (input-matches? expr pkg-name)
+  "Return true if EXPR refers to package named PKG-NAME."
+  (let ((sym (string->symbol pkg-name)))
+    (match expr
+      ((? symbol? s) (eq? s sym))
+      (('quasiquote (('unquote s) . _)) (eq? s sym))
+      (('list (? symbol? s) . _) (eq? s sym))
+      (_ #f))))
+
+(define (package-list->string obj location)
+  (call-with-output-string
+   (cut pretty-print-with-comments <> obj
+        #:indent (location-column location)
+        ;; Try to keep a coherent list,
+        ;; 3 seems to lead to better results.
+        #:long-list 3)))
+
+(define* (remove-package-field package field to-remove
+                               #:key
+                               (policy 'safe)
+                               (edit-expression edit-expression))
+  (let* ((name (package-name to-remove))
+         (select? (lambda (inputs location)
+                    (and (any (match-lambda
+                                ((_ (? (cute eq? to-remove <>)) . _)
+                                 #t)
+                                (_ #f))
+                              inputs)
+                         (info location
+                               (G_ "removing ~a from native-inputs~%")
+                               name)))))
+    (transform-package-field package
+                             field
+                             (lambda (items)
+                               (remove (cute input-matches? <> name) items))
+                             #:select? select?)))
+
+(define* (transform-package-field package field
+                                  transform
+                                  #:key
+                                  (edit-expression edit-expression)
+                                  (select? (const #t)))
+  "TRANSFORM PACKAGE FIELD (list content only) if SELECT? matches.
+
+SELECT? is a procedure taking the list content and location.
+TRANSFORM is a procedure taking
+Call EDIT-EXPRESSION to edit the source code."
+  (define (transform-expr location str)
+    (match (call-with-input-string str read-with-comments)
+      (((or 'list 'cons*) . items)
+       (let ((new-items (transform items)))
+         (cond
+          ((equal? new-items items)
+           str)
+          ((null? (remove blank? new-items))
+           #f)
+          (else
+           (package-list->string `(list ,@new-items) location)))))
+      (_
+       (warning location
+                (G_ "~a: unsupported format, only list, and cons*\
+ are accepted~%")
+                field)
+       str)))
+
+  (match (((record-accessor (record-type-descriptor package) field)
+           package)
+          package)
+    (() #f)
+    (items
+     (match (package-field-location package field)
+       (#f #f)
+       (location
+        (when (select? items location)
+          (edit-expression
+           (location->source-properties (absolute-location location))
+           (lambda (str)
+             (or (transform-expr location str) str)))))))))
+
+
 
 ;;;
 ;;; Simplifying input expressions.
