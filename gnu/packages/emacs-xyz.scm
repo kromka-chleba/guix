@@ -39116,6 +39116,44 @@ global minor mode whose purpose is to automatically feed TRAMP sub-processes
 with passwords for paths matching regexps.")
       (license license:gpl3+))))
 
+(define-public emacs-tramp-rpc
+  (package
+    (name "emacs-tramp-rpc")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ArthurHeymans/emacs-tramp-rpc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yiwa7hsc8anj1l6902ycwmcxjwkl4crrn7h84797m2dbrh524gm"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-tramp))
+    (arguments
+     (list
+      #:emacs emacs
+      #:lisp-directory "lisp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'make-autoloads 'patch-autoloads
+            (lambda _
+              (substitute* "tramp-rpc-autoloads.el"
+                (((string-append
+                   "\\(("
+                   (string-join '("add-to-list 'tramp-methods"
+                                  "tramp-register-foreign-file-name-handler")
+                                "|") ") .*\\)")
+                  all)
+                 (string-append "(eval-after-load 'tramp-rpc '" all ")"))))))))
+    (home-page "https://github.com/ArthurHeymans/emacs-tramp-rpc")
+    (synopsis "High-performance TRAMP frontend using JSON-RPC")
+    (description
+     "A high-performance TRAMP backend for Emacs that uses a binary RPC server
+instead of parsing shell command output.")
+    (license license:gpl3+)))
+
 (define-public emacs-ssh-tunnels
   ;; There are no tags or releases upstream.
   (let ((commit "5010d779edef33f869065231b99d74723c9c7eaf")
