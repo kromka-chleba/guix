@@ -1538,16 +1538,16 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 (define-public reform-debian-packages-for-6.18
   (package
     (name "reform-debian-packages")
-    (version "2023-07-10-508-g5c84f17") ;from git describe
+    (version "2023-07-10-515-gc527a1d") ;from git describe
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://source.mnt.re/reform/reform-debian-packages.git")
-             (commit "5c84f17518e89047b10d3c14fd6ffe218b07d58d")))
+             (commit "c527a1d0e548dfb9d7c28bb2c78907230efa4314")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19c7cbl3flrxjsz7sr5n246sraaqfnf1xx2ga4zk9gy9ax0zz114"))))
+        (base32 "1vfq46s4mxc94sdm5i15kj51s6cwjgg5xijag5g5hcqzi29hpclm"))))
     (build-system copy-build-system)
     (arguments
      (list
@@ -1919,7 +1919,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                              "rk3588-mnt-reform2/0107-WIP-FRL-drm-rockchip-vop2-Add-HDMI-2.1-FRL-support.patch"
                              "rk3588-mnt-reform2/0108-dt-bindings-phy-rockchip-usbdp-add-improved-ports-sc.patch"
                              "rk3588-mnt-reform2/0114-media-dt-bindings-video-interfaces-add-defines-for-s.patch"
-                             "rk3588-mnt-reform2/0142-drm-bridge-dw-hdmi-qp-Fix-spurious-IRQ-on-resume.patch"
                              "rk3588-mnt-reform2/2001-drm-bridge-dw-hdmi-qp-Return-0-in-audio-prepare-when.patch"
                              "rk3588-mnt-reform2/2003-drm-bridge-synopsys-Do-not-warn-about-audio-params-c.patch"
                              "rk3588-mnt-reform2/5200-drm-rockchip-Set-dma-mask-to-64-bit.patch"))))
