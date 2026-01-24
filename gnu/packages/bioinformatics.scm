@@ -26,7 +26,7 @@
 ;;; Copyright © 2022-2025 Navid Afkhami <navid.afkhami@mdc-berlin.de>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2024 Alexis Simon <alexis.simon@runbox.com>
-;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2024, 2026 Spencer King <spencer.king@wustl.edu>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
@@ -9563,7 +9563,7 @@ name/ID compression and quality score compression derived from fqzcomp.")
 (define-public htslib
   (package
     (name "htslib")
-    (version "1.21")
+    (version "1.23")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -9571,7 +9571,7 @@ name/ID compression and quality score compression derived from fqzcomp.")
                     version "/htslib-" version ".tar.bz2"))
               (sha256
                (base32
-                "08qq1yn6lqqnww532s11nr6gz0gfpn58rn3gy90kd5pl6pki1dc4"))
+                "1kg4nwm6qjdhf3v2x2r4hl1y22k0rfb5vfa5cc4h7slwxycp34k3"))
               (snippet
                #~(begin
                    (use-modules (guix build utils))
