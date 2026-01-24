@@ -7849,13 +7849,13 @@ streaming audio server.")
        (patches (search-patches "quodlibet-disable-bundled-packages.patch"))
        (modules '((guix build utils)))
        (snippet '(delete-file-recursively "quodlibet/packages"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:modules '((guix build python-build-system)
+      #:modules '((guix build pyproject-build-system)
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build utils))
-      #:imported-modules `((guix build python-build-system)
+      #:imported-modules `(,@%pyproject-build-system-modules
                            ,@%glib-or-gtk-build-system-modules)
       #:phases
       #~(modify-phases %standard-phases
