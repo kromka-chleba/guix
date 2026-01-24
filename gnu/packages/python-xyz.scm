@@ -36074,13 +36074,13 @@ markdown-compliant strings.")
 (define-public python-islenska
   (package
     (name "python-islenska")
-    (version "1.0.4")
+    (version "1.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "islenska" version))
        (sha256
-        (base32 "1jw3knms8h32jjq64mj4lb7b866dzc3z16w1dkyzd39xbmy4nyqg"))))
+        (base32 "017wxz2pdj2f8flf53lmrlk88z1b49n24xf0xxgjsfssyhhhwdrf"))))
     (build-system pyproject-build-system)
     (arguments
      ;; XXX: Test data is not included, see:
