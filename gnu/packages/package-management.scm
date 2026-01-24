@@ -2332,6 +2332,15 @@ Microsoft cabinet (.@dfn{CAB}) files.")
     (license (list license:gpl2+        ; tests/testsuite.at
                    license:lgpl2.1+)))) ; the rest
 
+(define gcab-introspection
+  (package/inherit gcab
+    (inputs
+     (list glib zlib gobject-introspection))
+    (arguments
+     `(#:configure-flags
+       (list "-Ddocs=false"
+             "-Dintrospection=true")))))
+
 (define-public msitools
   (package
     (name "msitools")
