@@ -2816,6 +2816,10 @@
   (crate-source "chrono" "0.4.42"
                 "1lp8iz9js9jwxw0sj8yi59v54lgvwdvm49b9wch77f25sfym4l0l"))
 
+(define rust-chrono-0.4.43
+  (crate-source "chrono" "0.4.43"
+                "06312amlyys4kkjazl13mbxw0j2f7zxygzjkr1yk7s2sn57p9i7s"))
+
 (define rust-chrono-humanize-0.2.3
   (crate-source "chrono-humanize" "0.2.3"
                 "0fq25fcdqd7s39dx81hq123210q4lpcbjdz82jl2fy6jnkk2g5kr"))
