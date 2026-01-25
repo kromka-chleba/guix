@@ -10495,6 +10495,10 @@
                 "0pqnh9n3a8wxqzdj7d30f99g322da8zpnixsq5gfs9n1klccj380"
                 #:snippet '(delete-file-recursively "c_src")))
 
+(define rust-kasuari-0.4.11
+  (crate-source "kasuari" "0.4.11"
+                "0nqa4gkq9jgznnqs8yxzv200lysiny4m152zgn68abk6a08hrscg"))
+
 (define rust-keccak-0.1.5
   (crate-source "keccak" "0.1.5"
                 "0m06swsyd58hvb1z17q6picdwywprf1yf1s6l491zi8r26dazhpc"))
