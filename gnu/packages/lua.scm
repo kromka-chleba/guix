@@ -98,6 +98,20 @@
        (sha256
         (base32 "0gcbsr00difm2s82pflxg28zcnjka9048lncbfvwl1fhpcmw7k2p"))))
     (build-system gnu-build-system)
+    (native-search-paths
+     (let ((lua-version (version-major+minor version)))
+       (list (search-path-specification
+              (variable "LUA_CPATH")
+              (files (list (string-append "lib/lua/" lua-version)))
+              (file-pattern ".*\\.so$")
+              (separator ";")
+              (file-type 'regular))
+             (search-path-specification
+              (variable "LUA_PATH")
+              (files (list (string-append "share/lua/" lua-version)))
+              (file-pattern ".*\\.lua$")
+              (separator ";")
+              (file-type 'regular)))))
     (arguments
      `(#:modules ((guix build gnu-build-system)
                   (guix build utils)
