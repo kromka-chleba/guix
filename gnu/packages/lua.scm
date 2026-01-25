@@ -91,14 +91,13 @@
   (package
     (name "lua")
     (version "5.3.5")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "https://www.lua.org/ftp/lua-"
-                                 version ".tar.gz"))
-             (sha256
-              (base32 "1b2qn2rv96nmbm6zab4l877bd4zq7wpwm8drwjiy2ih4jqzysbhc"))
-             (patches (search-patches "lua-pkgconfig.patch"
-                                      "lua-liblua-so.patch"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
+       (sha256
+        (base32 "1b2qn2rv96nmbm6zab4l877bd4zq7wpwm8drwjiy2ih4jqzysbhc"))
+       (patches (search-patches "lua-pkgconfig.patch" "lua-liblua-so.patch"))))
     (build-system gnu-build-system)
     (inputs (list readline))
     (arguments
@@ -106,22 +105,21 @@
                   (guix build utils)
                   (srfi srfi-1))
        #:test-target "test"
-       #:make-flags
-       (list "MYCFLAGS=-fPIC -DLUA_DL_DLOPEN"
-             (string-append "CC=" ,(cc-for-target))
-             (string-append "SYSLIBS=-L" (assoc-ref %build-inputs "readline")
-                            "/lib")
-             "linux")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (invoke "make" "install"
-                       (string-append "INSTALL_TOP=" out)
-                       (string-append "INSTALL_MAN=" out
-                                      "/share/man/man1"))))))))
+       #:make-flags (list "MYCFLAGS=-fPIC -DLUA_DL_DLOPEN"
+                          (string-append "CC="
+                                         ,(cc-for-target))
+                          (string-append "SYSLIBS=-L"
+                                         (assoc-ref %build-inputs "readline")
+                                         "/lib") "linux")
+       #:phases (modify-phases %standard-phases
+                  (delete 'configure)
+                  (replace 'install
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let ((out (assoc-ref outputs "out")))
+                        (invoke "make" "install"
+                                (string-append "INSTALL_TOP=" out)
+                                (string-append "INSTALL_MAN=" out
+                                               "/share/man/man1"))))))))
     (home-page "https://www.lua.org/")
     (synopsis "Embeddable scripting language")
     (description
@@ -134,47 +132,48 @@ for configuration, scripting, and rapid prototyping.")
     (license license:x11)))
 
 (define-public lua-5.4
-  (package (inherit lua)
-           (version "5.4.8")
-           (arguments
-            (substitute-keyword-arguments (package-arguments lua)
-              ((#:make-flags flags)
-               (append (delete "linux" flags)
-                       '("linux-readline")))))
-           (source (origin
-                     (method url-fetch)
-                     (uri (string-append "https://www.lua.org/ftp/lua-"
-                                         version ".tar.gz"))
-                     (sha256
-                      (base32 "1bi90r9nzmqhjwhr8ysffhmhq30wxxcpqwmbxr33wyaf2npds62g"))
-                     (patches (search-patches "lua-5.4-pkgconfig.patch"
-                                              "lua-5.4-liblua-so.patch"))))))
+  (package
+    (inherit lua)
+    (version "5.4.8")
+    (arguments
+     (substitute-keyword-arguments (package-arguments lua)
+       ((#:make-flags flags)
+        (append (delete "linux" flags)
+                '("linux-readline")))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
+       (sha256
+        (base32 "1bi90r9nzmqhjwhr8ysffhmhq30wxxcpqwmbxr33wyaf2npds62g"))
+       (patches (search-patches "lua-5.4-pkgconfig.patch"
+                                "lua-5.4-liblua-so.patch"))))))
 
 (define-public lua-5.2
-  (package (inherit lua)
-           (version "5.2.4")
-           (source
-            (origin
-              (method url-fetch)
-              (uri (string-append "https://www.lua.org/ftp/lua-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32 "0jwznq0l8qg9wh5grwg07b5cy3lzngvl5m2nl1ikp6vqssmf9qmr"))
-              (patches (search-patches "lua-pkgconfig.patch"
-                                       "lua-liblua-so.patch"))))))
+  (package
+    (inherit lua)
+    (version "5.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
+       (sha256
+        (base32 "0jwznq0l8qg9wh5grwg07b5cy3lzngvl5m2nl1ikp6vqssmf9qmr"))
+       (patches (search-patches "lua-pkgconfig.patch" "lua-liblua-so.patch"))))))
 
 (define-public lua-5.1
-  (package (inherit lua)
+  (package
+    (inherit lua)
     (version "5.1.5")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "https://www.lua.org/ftp/lua-"
-                                 version ".tar.gz"))
-             (sha256
-              (base32 "0cskd4w0g6rdm2q8q3i4n1h3j8kylhs3rq8mxwl9vwlmlxbgqh16"))
-             (patches (search-patches "lua51-liblua-so.patch"
-                                      "lua-CVE-2014-5461.patch"
-                                      "lua51-pkgconfig.patch"))))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
+       (sha256
+        (base32 "0cskd4w0g6rdm2q8q3i4n1h3j8kylhs3rq8mxwl9vwlmlxbgqh16"))
+       (patches (search-patches "lua51-liblua-so.patch"
+                                "lua-CVE-2014-5461.patch"
+                                "lua51-pkgconfig.patch"))))))
 
 (define-public luajit
   (let ((branch "v2.1")
@@ -360,7 +359,7 @@ handy.")
                      (url "https://github.com/keplerproject/luafilesystem")
                      (commit (string-append "v"
                                             (string-join
-                                              (string-split version #\.) "_")))))
+                                             (string-split version #\.) "_")))))
               (file-name (git-file-name name version))
               (sha256
                (base32
