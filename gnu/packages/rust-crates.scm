@@ -13390,6 +13390,10 @@
   (crate-source "objc2-core-image" "0.2.2"
                 "102csfb82zi2sbzliwsfd589ckz0gysf7y6434c9zj97lmihj9jm"))
 
+(define rust-objc2-core-image-0.3.2
+  (crate-source "objc2-core-image" "0.3.2"
+                "01phi7cx2k32a8x45qr0y1623l2b8gg764c6isgj15rbinrn7mg5"))
+
 (define rust-objc2-core-location-0.2.2
   (crate-source "objc2-core-location" "0.2.2"
                 "10apgsrigqryvi4rcc0f6yfjflvrl83f4bi5hkr48ck89vizw300"))
