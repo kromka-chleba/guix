@@ -4084,6 +4084,18 @@
                 "1im9vs6fvkql0sr378dfr4wdm1rrkrvr22v4i8byz05k1dd9b7c2"
                 #:snippet '(delete-file-recursively "docs")))
 
+(define rust-crossterm-0.28.1.87db8bfa
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/nornagon/crossterm")
+          (commit "87db8bfa6dc99427fd3b071681b07fc31c6ce995")))
+    (file-name (git-file-name "rust-crossterm" "0.28.1.87db8bfa"))
+    (sha256
+     (base32 "0vzgpvbri4m4qydkj50ch468az7myy04qh5z2n500p1f4dysv87a"))
+    (modules '((guix build utils)))
+    (snippet '(delete-file-recursively "docs"))))
+
 (define rust-crossterm-0.29.0
   (crate-source "crossterm" "0.29.0"
                 "0yzqxxd90k7d2ac26xq1awsznsaq0qika2nv1ik3p0vzqvjg5ffq"
