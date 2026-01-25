@@ -722,6 +722,50 @@ through tools like `gdb`.")
      "This package provides CLI Tool for codeberg similar to gh and glab.")
     (license license:agpl3+)))
 
+(define-public codex-acp
+  (package
+    (name "codex-acp")
+    (version "0.4.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cola-io/codex-acp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1v8267n0wifxfnygxrlyvp0zdhasljsi5xiv3a35r69d1msrxp0h"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:rust rust-1.88
+      #:install-source? #f
+      ;; Skip doctests (--doc) because rustdoc is unavailable for non-default
+      ;; Rust versions in Guix.
+      #:cargo-test-flags '(list "--lib" "--bins" "--tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-codex-deps
+            (lambda _
+              ;; Rewrite git dependencies to use vendored sources from rust-codex
+              ;; FIXME: Remove rust-version hack when rust-1.91 is available
+              (substitute* "Cargo.toml"
+                (("git = \"https://github.com/openai/codex\", branch = \"main\"")
+                 "version = \"0.0.0\"")
+                (("rust-version = \"1.91\"")
+                 "")))))))
+    (native-inputs (list pkg-config))
+    (inputs (cons openssl (cargo-inputs 'codex-acp)))
+    (home-page "https://github.com/cola-io/codex-acp")
+    (synopsis "ACP-compatible agent bridging OpenAI Codex with ACP clients")
+    (description
+     "This package provides an Agent Client Protocol (ACP) compatible agent
+that bridges the OpenAI Codex runtime with ACP clients over stdio.  It
+supports multiple LLM providers through configuration in
+@file{~/.codex/config.toml} and integrates with MCP servers for filesystem
+operations.")
+    (license license:asl2.0)))
+
 (define-public complgen
   (package
     (name "complgen")
