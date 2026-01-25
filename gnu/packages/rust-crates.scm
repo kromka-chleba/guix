@@ -17866,6 +17866,10 @@
   (crate-source "serde_json" "1.0.122"
                 "1nk8phyvwmhrmcbwdr8rbjd9bqp8np62dcbnhisgymqwjl1n4jvq"))
 
+(define rust-serde-json-1.0.148
+  (crate-source "serde_json" "1.0.148"
+                "1ni2d8rv2ilz3p2h52wfx9k3i5xs5ai85wcnb53qjqnxl53bb11h"))
+
 (define rust-serde-json-1.0.149
   (crate-source "serde_json" "1.0.149"
                 "11jdx4vilzrjjd1dpgy67x5lgzr0laplz30dhv75lnf5ffa07z43"))
