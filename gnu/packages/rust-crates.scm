@@ -21254,6 +21254,10 @@
   (crate-source "tui-react" "0.23.2"
                 "1inc78yngwkambrpcs1alallndysnzdq6p8pd7c12cqgw00sf519"))
 
+(define rust-tui-scrollbar-0.2.1
+  (crate-source "tui-scrollbar" "0.2.1"
+                "1kfaxwqg5hpi3hp78xvg6qw2b3l5drk70ihlkw7f7chmk44i69n4"))
+
 (define rust-tui-textarea-0.7.0
   (crate-source "tui-textarea" "0.7.0"
                 "1bnb3andd8gcqkf5rdvz530zykkj8s8d2yj1m593rmwyc7fihlqa"))
