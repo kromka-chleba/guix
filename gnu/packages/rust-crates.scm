@@ -21218,6 +21218,10 @@
   (crate-source "ts-rs" "11.1.0"
                 "094l6z274nahkpgd7p2wwbakl7lrand55nf1hlxjpk924pmar529"))
 
+(define rust-ts-rs-11.0.1
+  (crate-source "ts-rs" "11.0.1"
+                "1gk82pp8b3zg7vxd9pmwhwvr123hxcksj7wfxlkl38qlv6kbgwbf"))
+
 (define rust-ttf-parser-0.15.2
   (crate-source "ttf-parser" "0.15.2"
                 "1pfqn06vjlr6pvlljjmkmcb2kb8ind09q5f78nvxc3nqp74hcgkv"
