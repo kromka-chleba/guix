@@ -11699,6 +11699,10 @@
   (crate-source "lsp-textdocument" "0.4.2"
                 "0b7dxa7x3v5z58nj5rsscv1kpifasbdp5x0v0wycsgafbxclsmid"))
 
+(define rust-lsp-types-0.94.1
+  (crate-source "lsp-types" "0.94.1"
+                "18aym1qfgyaf9f9504yz911gssck5rv190izzr3hdqbal12gssy6"))
+
 (define rust-lsp-types-0.95.1
   (crate-source "lsp-types" "0.95.1"
                 "0ra36fd4yr7lf5igfrdvwjx9g87z3a99mrjgzk9nq04viqxd6d4f"))
