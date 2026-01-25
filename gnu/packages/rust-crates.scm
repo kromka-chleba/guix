@@ -13763,6 +13763,21 @@
                        (string-append bindgen "\"*\",")))
                     (copy-file "Cargo.toml.orig" "Cargo.toml"))))
 
+(define rust-openssl-sys-0.9.111
+  (crate-source "openssl-sys" "0.9.111"
+                "08f3mpsabivfi3fd0qv9231qidqy68lr8a4qi32y6xda43av5jl2"
+                #:snippet
+                #~(begin
+                    ;; Remove dependency on boringssl and vendor openssl source.
+                    (substitute* "Cargo.toml.orig"
+                      (("vendored = .*") "vendored = []\n")
+                      ((".*bssl.*") "")
+                      ((".*openssl-src.*") "")
+                      ;; Allow any version of bindgen.
+                      (("(bindgen = \\{ version =) \".*\"," _ bindgen)
+                       (string-append bindgen "\"*\",")))
+                    (copy-file "Cargo.toml.orig" "Cargo.toml"))))
+
 (define rust-optfield-0.3.0
   (crate-source "optfield" "0.3.0"
                 "079a5n7lhqsj444fkgk580vra5v2nhym7czwnky9iip9rljz0ngs"))
