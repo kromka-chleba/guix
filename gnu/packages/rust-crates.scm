@@ -20872,6 +20872,10 @@
   (crate-source "tracing-attributes" "0.1.30"
                 "00v9bhfgfg3v101nmmy7s3vdwadb7ngc8c1iw6wai9vj9sv3lf41"))
 
+(define rust-tracing-attributes-0.1.31
+  (crate-source "tracing-attributes" "0.1.31"
+                "1np8d77shfvz0n7camx2bsf1qw0zg331lra0hxb4cdwnxjjwz43l"))
+
 (define rust-tracing-chrome-0.7.2
   (crate-source "tracing-chrome" "0.7.2"
                 "0977zy46gpawva2laffigxr2pph8v0xa51kfp6ghlifnsn7762mz"))
