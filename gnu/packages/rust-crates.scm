@@ -1464,6 +1464,10 @@
   (crate-source "base64ct" "1.8.0"
                 "1fj4vc6ghy3j1120r7dwn4xw90crfy46b448g5pm9w6an13qn92m"))
 
+(define rust-base64ct-1.8.1
+  (crate-source "base64ct" "1.8.1"
+                "12h6iwd0ib6xxwd0814wf3x6nd91r851xcycvlkpm199cii0y18f"))
+
 (define rust-basic-cookies-0.1.5
   (crate-source "basic-cookies" "0.1.5"
                 "1xwnmmcn32m18nis7azfxylkqyhirkqcag94i23b1g8n5ka8zgb7"))
