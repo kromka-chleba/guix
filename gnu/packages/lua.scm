@@ -392,19 +392,21 @@ handy.")
 (define (make-lua-filesystem name lua)
   (package
     (name name)
-    (version "1.7.0.2")
+    (version "1.9.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/keplerproject/luafilesystem")
+                     (url "https://github.com/lunarmodules/luafilesystem")
                      (commit (string-append "v"
                                             (string-join
                                              (string-split version #\.) "_")))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zmprgkm9zawdf9wnw0v3w6ibaj442wlc6alp39hmw610fl4vghi"))))
+                "0vd1b9rnbjl24bbnk91jrkli81dc1b2kvpjlsx319azjmynlk0y6"))))
     (build-system gnu-build-system)
+    (inputs
+     (list lua))
     (arguments
      `(#:make-flags
        (let ((out (assoc-ref %outputs "out"))
@@ -414,9 +416,12 @@ handy.")
        #:test-target "test"
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
-    (inputs
-     (list lua))
+         (delete 'configure)
+         (replace 'check
+           (lambda _
+             (setenv "LUA_CPATH" "src/?.so;;")
+             (setenv "LUA_PATH"  "src/?.lua;;")
+             (invoke "lua" "tests/test.lua"))))))
     (home-page "https://keplerproject.github.io/luafilesystem/index.html")
     (synopsis "File system library for Lua")
     (description "LuaFileSystem is a Lua library developed to complement the
