@@ -178,6 +178,7 @@
 ;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;; Copyright © 2025 Andy Tai <atai@atai.org>
+;;; Copyright © 2026 Luca Alloatti <luca-guix@f-si.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -10197,6 +10198,32 @@ validation and serialization.")
     (description
      "@code{python-pydantic} enables specifying @acronym{CLI, Command Line
 Interfaces} via data models provided in the JSON format.")
+    (license license:expat)))
+
+(define-public python-pydantic-extra-types
+  (package
+    (name "python-pydantic-extra-types")
+    (version "2.10.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pydantic/pydantic-extra-types")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vhis793jy1sgz603grjy37qqxq035nyzi9y6szcbzhd10h8d76k"))))
+    (build-system pyproject-build-system)
+    (arguments
+     '(#:tests? #f)) ;Tests require unavailable packages python-ulid and python-pytz
+    (native-inputs (list python-hatchling))
+    (propagated-inputs (list python-pydantic-2))
+    (home-page "https://github.com/pydantic/pydantic-extra-types")
+    (synopsis "Extra types for Pydantic")
+    (description
+     "This package provides additional data types for use with
+Pydantic, including country codes, phone numbers, colors, and payment card
+numbers.")
     (license license:expat)))
 
 (define-public python-pydantic-settings
