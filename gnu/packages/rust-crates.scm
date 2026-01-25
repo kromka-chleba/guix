@@ -22005,6 +22005,10 @@
   (crate-source "uuhelp_parser" "0.0.29"
                 "1g2cj9lhr1cmrfmdw73i70ps8shs180ahv0djiwxrddz3arwix0c"))
 
+(define rust-uuid-1.19.0
+  (crate-source "uuid" "1.19.0"
+                "0jjbclx3f36fjl6jjh8f022q0m76v3cfh61y6z6jgl2b3f359q72"))
+
 (define rust-uuid-1.8.0
   (crate-source "uuid" "1.8.0"
                 "1h7wks153j08xmdk06wnza3is8pn6j37hihd3kfv95xsxrzwz0x1"))
