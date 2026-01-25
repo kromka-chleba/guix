@@ -21226,6 +21226,10 @@
   (crate-source "ts-rs-macros" "11.1.0"
                 "1qk23wqd17m063mgslb1lphc8k8m75fm0r1rag1sxjy9csbgavzf"))
 
+(define rust-ts-rs-macros-11.0.1
+  (crate-source "ts-rs-macros" "11.0.1"
+                "02iaa2l9k5cz25paz0874a8qfs7sxjhrw7had851bk0q9ixyvm79"))
+
 (define rust-ttf-parser-0.15.2
   (crate-source "ttf-parser" "0.15.2"
                 "1pfqn06vjlr6pvlljjmkmcb2kb8ind09q5f78nvxc3nqp74hcgkv"
