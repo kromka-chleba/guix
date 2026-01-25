@@ -13794,6 +13794,10 @@
   (crate-source "opentelemetry-otlp" "0.31.0"
                 "1gv3h75z8c0p9b85mbq7f1rgsi18wip1xlfa6g82lkfa5pdnc8vs"))
 
+(define rust-opentelemetry-proto-0.31.0
+  (crate-source "opentelemetry-proto" "0.31.0"
+                "03xkjsjrsm7zkkx5gascqd9bg2z20wymm06l16cyxsp5dpq5s5x7"))
+
 (define rust-optfield-0.3.0
   (crate-source "optfield" "0.3.0"
                 "079a5n7lhqsj444fkgk580vra5v2nhym7czwnky9iip9rljz0ngs"))
