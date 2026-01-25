@@ -15281,6 +15281,10 @@
   (crate-source "proptest" "1.8.0"
                 "1kp45ni5j31l0r27fqx68if0ldi5nj7jj1xl1dm6h46dpq3vxc1b"))
 
+(define rust-proptest-1.9.0
+  (crate-source "proptest" "1.9.0"
+                "0h4cprpwir4dkxfamj1iz6qx3cp38gp552rln1ma3l1b7928krmy"))
+
 (define rust-proptest-derive-0.5.1
   (crate-source "proptest-derive" "0.5.1"
                 "0jay6jwfvrwzz5bqpi4hxx3ax6kax06p0h29vgkxb0vl42nckqaf"))
