@@ -9932,6 +9932,10 @@
   (crate-source "inventory" "0.3.20"
                 "10ybwdx175d7xpvzpz0g2cczn0yvqykkwf75974z55sq5k6xf25b"))
 
+(define rust-inventory-0.3.21
+  (crate-source "inventory" "0.3.21"
+                "0vml3zmj9bwixf0xfrbvw8ip5ci1c8blprxy36cv3gig12f20qdw"))
+
 (define rust-io-close-0.3.7
   (crate-source "io-close" "0.3.7"
                 "1g4hldfn436rkrx3jlm4az1y5gdmkcixdlhkwy64yx06gx2czbcw"))
