@@ -2119,6 +2119,10 @@
   (crate-source "bytestring" "1.4.0"
                 "0pwf6x2hxy6imy7ph15c5jxx51js5p5xwl1zfnq26a1vw9x68rg4"))
 
+(define rust-bytestring-1.5.0
+  (crate-source "bytestring" "1.5.0"
+                "128j4zlv63dr0z1lfhsr7bki5c687kgdikh1six7wqgnnm1l6fqi"))
+
 (define rust-bzip2-0.4.4
   (crate-source "bzip2" "0.4.4"
                 "1y27wgqkx3k2jmh4k26vra2kqjq1qc1asww8hac3cv1zxyk1dcdx"
