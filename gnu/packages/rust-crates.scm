@@ -9330,6 +9330,10 @@
   (crate-source "icu_locale" "2.0.0"
                 "1zdy5ym97gj0aqggk8zs2fngazf33szmssbc3gd92pik50ar5rba"))
 
+(define rust-icu-locale-2.1.1
+  (crate-source "icu_locale" "2.1.1"
+                "0q6xwqzj9yb5jjcfrbv64s9lpr9yzq7fp9kbj6zvc2im5rr12ask"))
+
 (define rust-icu-locale-core-2.0.0
   (crate-source "icu_locale_core" "2.0.0"
                 "02phv7vwhyx6vmaqgwkh2p4kc2kciykv2px6g4h8glxfrh02gphc"))
