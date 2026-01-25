@@ -6696,6 +6696,28 @@ refreshed.  This is useful when using @option{--file} or
 file has external dependencies, or if its behavior depends, say, on
 environment variables.
 
+@item -q
+Inhibit implicit loading of a @file{guix.scm} or @file{manifest.scm}
+file.  By default, when @command{guix shell} is invoked interactively
+without packages or manifest, it looks for these files in the current
+directory and its ancestors (@pxref{shell-manifest}).  This option
+disables that behavior.
+
+@item --implicit
+@itemx -a
+Implicitly load a @file{guix.scm} or @file{manifest.scm} file even when
+a command is given after @code{--}.  By default, the implicit loading
+only happens for interactive shells; this option enables it for
+non-interactive use as well.
+
+@example
+guix shell -a -- make
+@end example
+
+The above command searches for @file{manifest.scm} or @file{guix.scm}
+in the current directory and ancestors, just like an interactive
+@command{guix shell} would.
+
 @item --root=@var{file}
 @itemx -r @var{file}
 @cindex persistent environment

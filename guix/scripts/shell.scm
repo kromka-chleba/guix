@@ -68,6 +68,10 @@ interactive shell in that environment.\n"))
   (display (G_ "
   -q                     inhibit loading of 'guix.scm' and 'manifest.scm'"))
   (display (G_ "
+  -a, --implicit         implicitly load 'guix.scm' or 'manifest.scm' even
+                         when a command is given"))
+
+  (display (G_ "
       --rebuild-cache    rebuild cached environment, if any"))
   (display (G_ "
       --export-manifest  print a manifest for the given options"))
@@ -142,6 +146,9 @@ interactive shell in that environment.\n"))
               (option '(#\q) #f #f
                       (lambda (opt name arg result)
                         (alist-cons 'explicit-loading? #t result)))
+              (option '(#\a "implicit") #f #f
+                      (lambda (opt name arg result)
+                        (alist-cons 'implicit-loading? #t result)))
               (option '("rebuild-cache") #f #f
                       (lambda (opt name arg result)
                         (alist-cons 'rebuild-cache? #t result)))
@@ -291,7 +298,11 @@ Return the modified OPTS."
   (define disallow-implicit-load?
     (assoc-ref opts 'explicit-loading?))
 
-  (if (or (not interactive?)
+  (define implicit-loading?
+    (assoc-ref opts 'implicit-loading?))
+
+  (if (or (and (not interactive?)
+               (not implicit-loading?))
           disallow-implicit-load?
           (options-contain-payload? opts))
       opts
