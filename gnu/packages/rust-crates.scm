@@ -16686,6 +16686,10 @@
   (crate-source "rlimit" "0.9.1"
                 "13mb3ligflqb4h7m76pkyc8z5pswpc38fcl6qm1lvp2jls3rv8pq"))
 
+(define rust-rmcp-0.12.0
+  (crate-source "rmcp" "0.12.0"
+                "1yiwn75dfk5pg135cjw97dmrm8fhs4bjn639x9qmwvkf2zw453aj"))
+
 (define rust-rmp-0.8.14
   (crate-source "rmp" "0.8.14"
                 "1i1l6dhv7vws5vp0ikakj44fk597xi59g3j6ng1q55x3dz0xg3i2"))
