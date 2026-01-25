@@ -4576,6 +4576,10 @@
   (crate-source "dbl" "0.3.2"
                 "1ng33ncai537xlxfy9r4v24parm9mf7zwiwkixq7d0qmj6kka9xx"))
 
+(define rust-dbus-0.9.10
+  (crate-source "dbus" "0.9.10"
+                "1m252djlnskgb89i2177yf9w6p4nx9475gamc8ryxaz7sxlamcr1"))
+
 (define rust-dbus-0.9.7
   (crate-source "dbus" "0.9.7"
                 "06vdv4aarjs4w6byg9nqajr67c8qvlhk3153ic2i65pvp63ikchv"))
