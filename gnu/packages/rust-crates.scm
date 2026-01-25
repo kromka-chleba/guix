@@ -3676,6 +3676,10 @@
   (crate-source "const_format_proc_macros" "0.2.34"
                 "0i3pxxcl4xvwq4mlfg3csb4j0n6v0mhj07p6yk0vlvdirznc4mqx"))
 
+(define rust-const-hex-1.17.0
+  (crate-source "const-hex" "1.17.0"
+                "0dg7g6q9445kpgn3hhhnc7hxyvn215xsj2i84mzhsxd0r3521crv"))
+
 (define rust-const-oid-0.10.1
   (crate-source "const-oid" "0.10.1"
                 "0gki8wlh67rnrjkd3ii52879diqlrmfynm042kj9xywjbxavdaqd"))
