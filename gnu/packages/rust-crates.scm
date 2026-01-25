@@ -10616,6 +10616,10 @@
   (crate-source "lalrpop-util" "0.22.2"
                 "0cw7nizh1a0p8m4msxbs2i98lls6fs86js2f4vysxwc4zzlsbfmm"))
 
+(define rust-landlock-0.4.4
+  (crate-source "landlock" "0.4.4"
+                "120hp0x6gsydcy9r5zf1pljrg4j2wv0a8i15lfm6hzf5a9kgvzj9"))
+
 (define rust-language-tags-0.3.2
   (crate-source "language-tags" "0.3.2"
                 "124k6w9nx33q4xs8rpa9f7klshrsa0x4f7qngdwq890lpdj5jd6l"))
