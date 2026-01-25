@@ -8959,6 +8959,10 @@
   (crate-source "home" "0.5.11"
                 "1kxb4k87a9sayr8jipr7nq9wpgmjk4hk4047hmf9kc24692k75aq"))
 
+(define rust-home-0.5.12
+  (crate-source "home" "0.5.12"
+                "13bjyzgx6q9srnfvl43dvmhn93qc8mh5w7cylk2g13sj3i3pyqnc"))
+
 (define rust-home-0.5.9
   (crate-source "home" "0.5.9"
                 "19grxyg35rqfd802pcc9ys1q3lafzlcjcv2pl2s5q8xpyr5kblg3"))
