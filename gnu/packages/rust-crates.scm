@@ -13782,6 +13782,10 @@
   (crate-source "opentelemetry" "0.31.0"
                 "18629xsj4rsyiby9aj511q6wcw6s9m09gx3ymw1yjcvix1mcsjxq"))
 
+(define rust-opentelemetry-appender-tracing-0.31.1
+  (crate-source "opentelemetry-appender-tracing" "0.31.1"
+                "1hnwizzgfhpjfnvml638yy846py8hf2gl1n3p1igbk1srb2ilspg"))
+
 (define rust-optfield-0.3.0
   (crate-source "optfield" "0.3.0"
                 "079a5n7lhqsj444fkgk580vra5v2nhym7czwnky9iip9rljz0ngs"))
