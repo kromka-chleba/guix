@@ -3365,6 +3365,9 @@
 (define rust-codex-client-0.0.0.4c3d2a5
   package:rust-codex-0.0.0.4c3d2a5)
 
+(define rust-codex-common-0.0.0.4c3d2a5
+  package:rust-codex-0.0.0.4c3d2a5)
+
 (define rust-codspeed-2.10.0
   (crate-source "codspeed" "2.10.0"
                 "1x9anwlfzlfby794d5fcvp214bj8bp29br8pkksxwb7834djja6j"))
@@ -30410,6 +30413,123 @@
                                                  rust-crossbeam-deque-0.8.6
                                                  rust-crossbeam-epoch-0.9.18
                                                  rust-crossbeam-utils-0.8.21))
+                     (codex-common =>
+                                   (list rust-inflector-0.11.4
+                                         rust-actix-codec-0.5.2
+                                         rust-actix-http-3.11.2
+                                         rust-actix-router-0.5.3
+                                         rust-actix-rt-2.11.0
+                                         rust-actix-server-2.6.0
+                                         rust-actix-service-2.0.3
+                                         rust-actix-utils-3.0.1
+                                         rust-actix-web-4.12.1
+                                         rust-addr2line-0.24.2
+                                         rust-adler2-2.0.1
+                                         rust-aes-0.8.4
+                                         rust-ahash-0.8.12
+                                         rust-aho-corasick-1.1.3
+                                         rust-allocative-0.3.4
+                                         rust-allocative-derive-0.3.3
+                                         rust-allocator-api2-0.2.21
+                                         rust-android-system-properties-0.1.5
+                                         rust-annotate-snippets-0.9.2
+                                         rust-ansi-to-tui-7.0.0
+                                         rust-anstream-0.6.19
+                                         rust-anstyle-1.0.11
+                                         rust-anstyle-parse-0.2.7
+                                         rust-anstyle-query-1.1.3
+                                         rust-anstyle-wincon-3.0.9
+                                         rust-anyhow-1.0.100
+                                         rust-arboard-3.6.1
+                                         rust-arc-swap-1.8.0
+                                         rust-arrayvec-0.7.6
+                                         rust-ascii-1.1.0
+                                         rust-ascii-canvas-3.0.0
+                                         rust-assert-json-diff-2.0.2
+                                         rust-assert-cmd-2.0.17
+                                         rust-assert-matches-1.5.0
+                                         rust-async-broadcast-0.7.2
+                                         rust-async-channel-2.5.0
+                                         rust-async-executor-1.13.3
+                                         rust-async-fs-2.2.0
+                                         rust-async-io-2.6.0
+                                         rust-async-lock-3.4.1
+                                         rust-async-process-2.5.0
+                                         rust-async-recursion-1.1.1
+                                         rust-async-signal-0.2.13
+                                         rust-async-stream-0.3.6
+                                         rust-async-stream-impl-0.3.6
+                                         rust-async-task-4.7.1
+                                         rust-async-trait-0.1.89
+                                         rust-asynk-strim-0.1.5
+                                         rust-atomic-waker-1.1.2
+                                         rust-autocfg-1.5.0
+                                         rust-axum-0.8.4
+                                         rust-axum-core-0.5.2
+                                         rust-backtrace-0.3.75
+                                         rust-base64-0.22.1
+                                         rust-base64ct-1.8.1
+                                         rust-beef-0.5.2
+                                         rust-bindgen-0.72.1
+                                         rust-bit-set-0.5.3
+                                         rust-bit-vec-0.6.3
+                                         rust-bitflags-1.3.2
+                                         rust-bitflags-2.10.0
+                                         rust-block-buffer-0.10.4
+                                         rust-block-padding-0.3.3
+                                         rust-blocking-1.6.2
+                                         rust-borsh-1.6.0
+                                         rust-bstr-1.12.0
+                                         rust-bumpalo-3.19.0
+                                         rust-bytemuck-1.23.1
+                                         rust-byteorder-1.5.0
+                                         rust-byteorder-lite-0.1.0
+                                         rust-bytes-1.10.1
+                                         rust-bytestring-1.5.0
+                                         rust-cassowary-0.3.0
+                                         rust-castaway-0.2.4
+                                         rust-cbc-0.1.2
+                                         rust-cc-1.2.52
+                                         rust-cesu8-1.1.0
+                                         rust-cexpr-0.6.0
+                                         rust-cfg-if-1.0.1
+                                         rust-cfg-aliases-0.1.1
+                                         rust-cfg-aliases-0.2.1
+                                         rust-chardetng-0.1.17
+                                         rust-chrono-0.4.43
+                                         rust-chunked-transfer-1.5.0
+                                         rust-cipher-0.4.4
+                                         rust-clang-sys-1.8.1
+                                         rust-clap-4.5.54
+                                         rust-clap-builder-4.5.54
+                                         rust-clap-complete-4.5.64
+                                         rust-clap-derive-4.5.49
+                                         rust-clap-lex-0.7.5
+                                         rust-clipboard-win-5.4.1
+                                         rust-cmake-0.1.57
+                                         rust-cmp-any-0.8.1
+                                         rust-color-eyre-0.6.5
+                                         rust-color-spantrace-0.3.0
+                                         rust-colorchoice-1.0.4
+                                         rust-combine-4.6.7
+                                         rust-compact-str-0.8.1
+                                         rust-concurrent-queue-2.5.0
+                                         rust-console-0.15.11
+                                         rust-const-hex-1.17.0
+                                         rust-const-format-0.2.35
+                                         rust-const-format-proc-macros-0.2.34
+                                         rust-convert-case-0.6.0
+                                         rust-convert-case-0.10.0
+                                         rust-core-foundation-0.9.4
+                                         rust-core-foundation-0.10.1
+                                         rust-core-foundation-sys-0.8.7
+                                         rust-cpufeatures-0.2.17
+                                         rust-crc32fast-1.5.0
+                                         rust-critical-section-1.2.0
+                                         rust-crossbeam-channel-0.5.15
+                                         rust-crossbeam-deque-0.8.6
+                                         rust-crossbeam-epoch-0.9.18
+                                         rust-crossbeam-utils-0.8.21))
                      (complgen =>
                                (list rust-ahash-0.7.8
                                      rust-ahash-0.8.11
