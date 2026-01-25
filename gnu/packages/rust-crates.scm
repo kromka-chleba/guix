@@ -5011,6 +5011,10 @@
   (crate-source "dispatch2" "0.3.0"
                 "1v1ak9w0s8z1g13x4mj2y5im9wmck0i2vf8f8wc9l1n6lqi9z849"))
 
+(define rust-display-container-0.9.0
+  (crate-source "display_container" "0.9.0"
+                "1yk6jiijfl8gibyrb79nga5jh46pl40flgc2cn7frvbbr5shl48a"))
+
 (define rust-display-error-chain-0.2.2
   (crate-source "display-error-chain" "0.2.2"
                 "1xbcilzyfc8n60vjkmsf8v53kw855xw68jh69hpza6dwhrp19hhb"))
