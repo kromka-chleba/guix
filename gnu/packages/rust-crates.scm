@@ -17934,6 +17934,10 @@
   (crate-source "sentry" "0.46.0"
                 "094llm5yk7vb21rq9ndfwd4rcl4861fif9p3az07cpj7mmllyyfr"))
 
+(define rust-sentry-actix-0.46.0
+  (crate-source "sentry-actix" "0.46.0"
+                "045i43xhifig5lx5d3k2c8vjk0l97c8n7l6iy7jaqqs0jc1f5zp0"))
+
 (define rust-seq-io-0.3.4
   (crate-source "seq_io" "0.3.4"
                 "1pkasxcf25p1cf2w99a4flhjjaicg4rs14w5g8fkrs0fafg5a0qk"))
