@@ -16690,6 +16690,10 @@
   (crate-source "rmcp" "0.12.0"
                 "1yiwn75dfk5pg135cjw97dmrm8fhs4bjn639x9qmwvkf2zw453aj"))
 
+(define rust-rmcp-macros-0.12.0
+  (crate-source "rmcp-macros" "0.12.0"
+                "0nbg1q38ngfxdkbsz2plk595xc0srvbgfqllbjc8xswlljm1vy73"))
+
 (define rust-rmp-0.8.14
   (crate-source "rmp" "0.8.14"
                 "1i1l6dhv7vws5vp0ikakj44fk597xi59g3j6ng1q55x3dz0xg3i2"))
