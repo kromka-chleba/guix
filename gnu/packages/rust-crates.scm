@@ -4796,6 +4796,10 @@
   (crate-source "derive_more-impl" "2.0.1"
                 "1wqxcb7d5lzvpplz9szp4rwy1r23f5wmixz0zd2vcjscqknji9mx"))
 
+(define rust-derive-more-impl-2.1.1
+  (crate-source "derive_more-impl" "2.1.1"
+                "1jwdp836vymp35d7mfvvalplkdgk2683nv3zjlx65n1194k9g6kr"))
+
 (define rust-derive-new-0.5.9
   (crate-source "derive-new" "0.5.9"
                 "0d9m5kcj1rdmdjqfgj7rxxhdzx0as7p4rp1mjx5j6w5dl2f3461l"))
