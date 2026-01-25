@@ -5172,6 +5172,10 @@
   (crate-source "dunce" "1.0.5"
                 "04y8wwv3vvcqaqmqzssi6k0ii9gs6fpz96j5w9nky2ccsl23axwj"))
 
+(define rust-dupe-0.9.1
+  (crate-source "dupe" "0.9.1"
+                "175z5wxc6kvnyr6bgns6zfx5aykkacd39nvc5fy3zjdr3l0vrlkf"))
+
 (define rust-duplicate-1.0.0
   (crate-source "duplicate" "1.0.0"
                 "1jrh28a3g9xw0w9v21y92d4k08lgr1ffg8mjhw2h67h6r5mfcy6y"))
