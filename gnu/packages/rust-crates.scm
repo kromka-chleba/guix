@@ -262,6 +262,10 @@
   (crate-source "alloca" "0.4.0"
                 "1x6p4387rz6j7h342kp3b7bgvqzyl9mibf959pkfk9xflrgd19z5"))
 
+(define rust-allocative-0.3.4
+  (crate-source "allocative" "0.3.4"
+                "1xqh0w5msvjjs3dx15ajbvdfj9690g58da1akgp8r2yv27k2rb4g"))
+
 (define rust-allocator-api2-0.2.18
   (crate-source "allocator-api2" "0.2.18"
                 "0kr6lfnxvnj164j1x38g97qjlhb7akppqzvgfs0697140ixbav2w"))
