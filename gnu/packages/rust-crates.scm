@@ -5581,6 +5581,10 @@
   (crate-source "env_filter" "0.1.4"
                 "1qk8yn4lsqzxsz025kf4kaabika6aidykqih3c2p1jjms9cw5wqv"))
 
+(define rust-env-flags-0.1.1
+  (crate-source "env-flags" "0.1.1"
+                "05f4537d68a0wg9iy3kj77hb8xcrkyy2fsirr7kcbpijqrzhxzfv"))
+
 (define rust-env-home-0.1.0
   (crate-source "env_home" "0.1.0"
                 "1zn08mk95rjh97831rky1n944k024qrwjhbcgb0xv9zhrh94xy67"))
