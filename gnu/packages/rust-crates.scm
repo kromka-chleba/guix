@@ -13688,6 +13688,10 @@
                 "0m5nxchp0lmkqclgxs4ym3sg9w340s7sslhglghnj8j18pfi9b94"
                 #:snippet '(delete-file-recursively "test")))
 
+(define rust-openssl-0.10.75
+  (crate-source "openssl" "0.10.75"
+                "0a238gvrzjq0r62a7472i685hi5jjzgfj72kp1xd32ir46qqv0q8"))
+
 (define rust-openssl-macros-0.1.0
   (crate-source "openssl-macros" "0.1.0"
                 "0v3kgnzbadrf9c06q4cqmbjas53av73n5w7wwz3n0nb6257y80dm"))
