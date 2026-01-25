@@ -21034,6 +21034,10 @@
   (crate-source "tree-sitter-bash" "0.23.3"
                 "0bm5chcqq5fvfb505h87d6ab5ny9l60lxy0x5ga3ghrsc944v6ij"))
 
+(define rust-tree-sitter-bash-0.25.1
+  (crate-source "tree-sitter-bash" "0.25.1"
+                "0qihqn7nska917s2fc8q1pa0lsxjvsjxiw1x3mb1pjcw4xlwfply"))
+
 (define rust-tree-sitter-c-0.23.4
   (crate-source "tree-sitter-c" "0.23.4"
                 "0wcwdvp8k9qsyfb5zpa9cq05kc5dp0fx11wysvv2xp452nzv3lmg"))
