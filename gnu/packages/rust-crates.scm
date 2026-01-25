@@ -20599,6 +20599,10 @@
   (crate-source "toml" "0.5.11"
                 "0d2266nx8b3n22c7k24x4428z6di8n83a9n466jm7a2hipfz1xzl"))
 
+(define rust-toml-0.9.5
+  (crate-source "toml" "0.9.5"
+                "1s7n4l40hvpf46jmgidfknnzpyblz4hip7gfkymgn2q0qlfrw4km"))
+
 (define rust-toml-0.7.8
   (crate-source "toml" "0.7.8"
                 "0mr2dpmzw4ndvzpnnli2dprcx61pdk62fq4mzw0b6zb27ffycyfx"))
