@@ -96,6 +96,7 @@
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
   #:use-module (gnu packages java)
+  #:use-module (gnu packages jupyter)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libftdi)
@@ -112,6 +113,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-graphics)
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -2203,6 +2205,73 @@ developing hardware based on synchronous digital logic using the Python
 programming language, as well as evaluation board definitions and a System on
 Chip toolkit.")
     (license license:bsd-3)))
+
+(define-public python-gdsfactory
+  (package
+    (name "python-gdsfactory")
+    (version "9.32.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gdsfactory/gdsfactory")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kp8p4z68ir5jx3cqd73vplwyn2hxpcwvz45cw6ml3igqhm70fcx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'sanity-check)
+          )))
+    (native-inputs (list python-flit-core))
+    (propagated-inputs (list python-aenum
+                             python-attrs
+                             python-click
+                             python-freetype-py
+                             python-graphviz
+                             python-ipykernel
+                             python-jinja2
+                             python-kfactory
+                             python-klayout
+                             python-loguru
+                             python-matplotlib
+                             python-natsort
+                             python-networkx
+                             python-numpy
+                             python-orjson
+                             python-pandas
+                             python-pydantic-2
+                             python-pydantic-settings
+                             python-pygit2
+                             python-pyglet
+                             python-pyyaml
+                             python-qrcode
+                             python-requests
+                             python-rich
+                             python-scikit-image
+                             python-scipy
+                             python-shapely
+                             python-toolz
+                             python-tqdm
+                             python-trimesh
+                             python-typer
+                             python-types-pyyaml
+                             python-typing-extensions
+                             python-watchdog
+                             python-xmltodict))
+    (home-page "https://gdsfactory.github.io/gdsfactory/")
+    (synopsis "Python library for photonic chip design automation")
+    (description
+     "GDSFactory is a Python library for designing chips including
+photonics, analog, quantum, and MEMS devices.  It provides tools for creating,
+manipulating, and validating designs, outputting industry-standard GDSII and
+OASIS formats.  GDSFactory leverages the KLayout library for high-performance
+geometry operations.")
+    (license license:expat)))
 
 (define-public python-kfactory
   (package
