@@ -20070,6 +20070,10 @@
   (crate-source "test-log" "0.2.18"
                 "0yxywma018rfr4mb409b1yz4ppg8ir9rg87bd08vx81fb25bjcqy"))
 
+(define rust-test-log-0.2.19
+  (crate-source "test-log" "0.2.19"
+                "1m149b9hkr2a0kybam120ih2q0p7vnsc94clfvj3jan9f70kmm9p"))
+
 (define rust-test-log-macros-0.2.16
   (crate-source "test-log-macros" "0.2.16"
                 "1xd3490hvpa6fk5sqnmyzbz5xwndfpmmshjfpa8k221jm97f56ar"))
