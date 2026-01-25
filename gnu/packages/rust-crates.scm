@@ -23074,6 +23074,10 @@
   (crate-source "webbrowser" "1.0.5"
                 "166yrfz20a5qzxq881acw973537v0dq1bi6cwns853l3pb0g7x5a"))
 
+(define rust-webbrowser-1.0.6
+  (crate-source "webbrowser" "1.0.6"
+                "15sc38k0j8ssgr4li6bgavmad8r46h4rc0zs68x3w8c5ywz29w80"))
+
 (define rust-webkit2gtk-sys-0.12.0
   (crate-source "webkit2gtk-sys" "0.12.0"
                 "0686iy2jrq8h2i2p4zb53mg32ql5zagba1fskcdi23asr0w537iq"))
