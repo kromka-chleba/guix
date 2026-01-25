@@ -11109,6 +11109,10 @@
   (crate-source "libredox" "0.1.4"
                 "0f06ikfym363zrqy9llp4asgcbakz0aiq0ds0rkljdg52088100m"))
 
+(define rust-libredox-0.1.6
+  (crate-source "libredox" "0.1.6"
+                "1h43psqhnqciwlg1c8jwryvxxdyr4sqxh1mrmm4f9pi8jd5mk224"))
+
 (define rust-libredox-0.1.9
   (crate-source "libredox" "0.1.9"
                 "1qqczzfqcc3sw3bl7la6qv7i9hy1s7sxhxmdvpxkfgdd3c9904ir"))
