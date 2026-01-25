@@ -18567,6 +18567,10 @@
   (crate-source "shell-words" "1.1.0"
                 "1plgwx8r0h5ismbbp6cp03740wmzgzhip85k5hxqrrkaddkql614"))
 
+(define rust-shell-words-1.1.1
+  (crate-source "shell-words" "1.1.1"
+                "0xzd5p53xl0ndnk63r0by52rhdrh6pd37szfxszkg73zb6ffcvyw"))
+
 (define rust-shellexpand-3.1.0
   (crate-source "shellexpand" "3.1.0"
                 "0jz1i14ziz8gbyj71212s7dqrw6q96f25i48zkmy66fcjhxzl0ys"))
