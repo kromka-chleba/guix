@@ -20780,6 +20780,10 @@
   (crate-source "tonic-build" "0.12.3"
                 "04baqblgrlc0g8scnhpky5s0n4cljaixrrdrr6cv6wx7kq8cwmwm"))
 
+(define rust-tonic-prost-0.14.2
+  (crate-source "tonic-prost" "0.14.2"
+                "0rxamvbxxl7x673g97pvhr5gag2czrj3sjq2xy3js9g1djnm1gb6"))
+
 (define rust-topological-sort-0.2.2
   (crate-source "topological-sort" "0.2.2"
                 "0gcxahg24c058izagz642vs0kfb2zja48my3qrd0kkaf2d730s7a"))
