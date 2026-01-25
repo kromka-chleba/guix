@@ -5437,6 +5437,10 @@
   (crate-source "endi" "1.1.0"
                 "1gxp388g2zzbncp3rdn60wxkr49xbhhx94nl9p4a6c41w4ma7n53"))
 
+(define rust-endi-1.1.1
+  (crate-source "endi" "1.1.1"
+                "16a0076dx41vgrzzimm9clcym77h732czqjiajanmzvd1i1y5dv6"))
+
 (define rust-endian-type-0.1.2
   (crate-source "endian-type" "0.1.2"
                 "0bbh88zaig1jfqrm7w3gx0pz81kw2jakk3055vbgapw3dmk08ky3"))
