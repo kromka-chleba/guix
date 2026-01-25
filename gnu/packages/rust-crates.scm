@@ -3555,6 +3555,10 @@
   (crate-source "compact_str" "0.8.1"
                 "0cmgp61hw4fwaakhilwznfgncw2p4wkbvz6dw3i7ibbckh3c8y9v"))
 
+(define rust-compact-str-0.9.0
+  (crate-source "compact_str" "0.9.0"
+                "0ykhh2scg32lmzxak107pmby6fmnz7qbhsi9i8g9iknfl4ji7nrz"))
+
 (define rust-compose-spec-0.2.0
   (crate-source "compose_spec" "0.2.0"
                 "17h8g1mrwk8yphqxfhdgyvn5hpagmm5p3p8p6yxh23hl3d6zdshi"))
