@@ -14900,6 +14900,10 @@
   (crate-source "portable-pty" "0.8.1"
                 "1gmh9ij90qwxx8gzvs6dj2vlc1ackv8zhd4mzfly3nq3586fhvl0"))
 
+(define rust-portable-pty-0.9.0
+  (crate-source "portable-pty" "0.9.0"
+                "07k710gj2ixgp4r1lcfxvl2qfyvkjr52vb0zyna2sxfjnfi9d9dl"))
+
 (define rust-portaudio-rs-0.3.2
   (crate-source "portaudio-rs" "0.3.2"
                 "0qnmc7amk0fzbcs985ixv0k4955f0fmpkhrl9ps9pk3cz7pvbdnd"))
