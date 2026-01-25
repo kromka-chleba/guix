@@ -9346,6 +9346,10 @@
   (crate-source "icu_locale_data" "2.0.0"
                 "0r974pj4waqfb5k935xccgmm8rc1a21r77n68fkhd7bl4k0z1pjg"))
 
+(define rust-icu-locale-data-2.1.1
+  (crate-source "icu_locale_data" "2.1.1"
+                "0iriiv9d1ca6yp5pfkym9ndrdavr1rs92vrxkxhhbpzcxz52ygph"))
+
 (define rust-icu-locid-1.5.0
   (crate-source "icu_locid" "1.5.0"
                 "0dznvd1c5b02iilqm044q4hvar0sqibq1z46prqwjzwif61vpb0k"))
