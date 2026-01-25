@@ -994,6 +994,10 @@
   (crate-source "async-lock" "3.4.1"
                 "1p6i1sw3mwv1msdx9jqkr0h0a2jlrp3717yyx5n9pvkw0h23dl2z"))
 
+(define rust-async-lock-3.4.2
+  (crate-source "async-lock" "3.4.2"
+                "04c3xrrdrfrvh9v0ajxrangpy38qi76qq268zslphnxxjqjpy3r9"))
+
 (define rust-async-net-2.0.0
   (crate-source "async-net" "2.0.0"
                 "1xyc5a5vcp3a7h1q2lbfh79wz8136dig4q4x6g4w2ws8ml7h0j5r"))
