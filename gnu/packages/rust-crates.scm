@@ -17590,6 +17590,10 @@
   (crate-source "schemars" "1.0.4"
                 "1l7w773jfk6mz0v8wpahp60aslksjijlbm65ysi4y5mwj520rll2"))
 
+(define rust-schemars-1.2.0
+  (crate-source "schemars" "1.2.0"
+                "1lk7qb6797dmixnb0qfkmlpsa5p2kgwk29s91xvpmia2hw811sal"))
+
 (define rust-schemars-derive-0.8.22
   (crate-source "schemars_derive" "0.8.22"
                 "0kakyzrp5801s4i043l4ilv96lzimnlh01pap958h66n99w6bqij"))
