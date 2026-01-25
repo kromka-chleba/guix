@@ -10600,6 +10600,10 @@
   (crate-source "lalrpop" "0.22.2"
                 "00cm28s3m7hcscqf7d14icyzlyqslpsqaldk1z8w24g4ikabnkms"))
 
+(define rust-lalrpop-util-0.19.12
+  (crate-source "lalrpop-util" "0.19.12"
+                "1vd0iy505h97xxm66r3m68a34v0009784syy093mlk30p4vq5i6k"))
+
 (define rust-lalrpop-util-0.20.2
   (crate-source "lalrpop-util" "0.20.2"
                 "0lr5r12bh9gjjlmnjrbblf4bfcwnad4gz1hqjvp34yzb22ln0x2h"))
