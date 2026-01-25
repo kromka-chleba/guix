@@ -5111,6 +5111,10 @@
   (crate-source "dtor" "0.1.0"
                 "0d198g4lwkimvkrlpfpksva47phaw1dv8iskjllanmfvrmj0g2p5"))
 
+(define rust-dtor-proc-macro-0.0.6
+  (crate-source "dtor-proc-macro" "0.0.6"
+                "19fg0mivy9qyvbwmqj3ysj0qm5cay0gyp5fyw1imq89cj95cyy7n"))
+
 (define rust-dpc-pariter-0.4.0
   (crate-source "dpc-pariter" "0.4.0"
                 "0s546d43yyiw55jz3yw4nyxgzmnc4f0gamzkfi6m7kyw2xlf2anl"))
