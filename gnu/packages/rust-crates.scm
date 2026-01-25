@@ -110,6 +110,10 @@
   (crate-source "actix-web" "4.10.2"
                 "0kcv8z8hgwxmhpzgp4hy5c0apm29k2g3hcj0dscyvin67mdv3qzj"))
 
+(define rust-actix-web-4.12.1
+  (crate-source "actix-web" "4.12.1"
+                "1mmqwnprcrgba75m3g7w26pi8ic6bxlfb8rpjq27zqs2l5xsfm0n"))
+
 (define rust-actix-web-codegen-4.3.0
   (crate-source "actix-web-codegen" "4.3.0"
                 "1f12ss948vpanh98a1v7f2x893g7xfh1mpgiz9fhnjb85q73i4gm"))
