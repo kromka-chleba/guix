@@ -3296,6 +3296,10 @@
   (crate-source "cmake" "0.1.57"
                 "0zgg10qgykig4nxyf7whrqfg7fkk0xfxhiavikmrndvbrm23qi3m"))
 
+(define rust-cmp-any-0.8.1
+  (crate-source "cmp_any" "0.8.1"
+                "08bydg7d4jxw1dyvpg9i4mwdn5645q3j96ijclpwx0rl4lrq5cg9"))
+
 (define rust-coarsetime-0.1.36
   (crate-source "coarsetime" "0.1.36"
                 "1x5wl76fhg7j2i0jqvwvbaz0mjzv7b4fv40lv0fb9q9d0j39d14i"))
