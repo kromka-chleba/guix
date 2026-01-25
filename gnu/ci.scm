@@ -230,19 +230,15 @@ SYSTEM."
               (remove (either from-32-to-64? same? pointless?)
                       (targets))))
 
-(define* (guix-jobs store systems #:key source commit)
+(define* (guix-jobs store systems #:key instances)
   "Return a list of jobs for Guix itself."
-  (define build
-    (primitive-load (string-append source "/build-aux/build-self.scm")))
-
   (map
    (lambda (system)
      (let ((name (string->symbol
                   (string-append "guix." system)))
            (drv (run-with-store store
-                  (build source #:version commit #:system system
-                         #:pull-version 1
-                         #:guile-version "2.2"))))
+                  (channel-instances->derivation instances
+                                                 #:system system))))
        (derivation->job name drv)))
    systems))
 
@@ -502,6 +498,20 @@ names, for each one of SYSTEMS."
     (let ((channels (assq-ref arguments 'channels)))
       (map sexp->channel channels)))
 
+  (define channel-specs
+    (let ((channels (assq-ref arguments 'channel-specs)))
+      (map sexp->channel channels)))
+
+  (define instances
+    (map
+     (match-lambda
+       ((channel-checkout channel-spec)
+        (channel-instance
+         channel-spec
+         (channel-commit channel-checkout)
+         (channel-url channel-checkout))))
+     (zip channels channel-specs)))
+
   (define guix
     (find guix-channel? channels))
 
@@ -549,8 +559,7 @@ names, for each one of SYSTEMS."
          ('guix
           ;; Build Guix modules only.
           (guix-jobs store systems
-                     #:source source
-                     #:commit commit))
+                     #:instances instances))
          ('hello
           ;; Build hello package only.
           (let ((hello (specification->package "hello")))
