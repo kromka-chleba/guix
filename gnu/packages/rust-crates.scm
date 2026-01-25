@@ -21102,6 +21102,10 @@
   (crate-source "tree-sitter-language" "0.1.5"
                 "1f14p8i09yrfsf9708jmayy0km78n9pqzxmf31xzd0vk45q3j0f4"))
 
+(define rust-tree-sitter-language-0.1.6
+  (crate-source "tree-sitter-language" "0.1.6"
+                "1kp38d4pz47s64g4mll75lgi3iicnx48crbn3g3lkdaymrz2zrja"))
+
 (define rust-tree-sitter-lua-0.2.0
   (crate-source "tree-sitter-lua" "0.2.0"
                 "07k4753h1nz3pbffcnclxjz2xcfvb6hb7jv0fs7cbzk517grmnsw"))
