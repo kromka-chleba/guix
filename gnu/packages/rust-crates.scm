@@ -20086,6 +20086,10 @@
   (crate-source "test-log-macros" "0.2.18"
                 "0djzwzwqnalwf00r81lv0yv71s4sqwmx7y7fn40pc3ck552kf6s5"))
 
+(define rust-test-log-macros-0.2.19
+  (crate-source "test-log-macros" "0.2.19"
+                "0fvq379zv4iya0jp9blg7ran7kxck17nxdla8l0m873qs2gj0ddy"))
+
 (define rust-test-strategy-0.4.1
   (crate-source "test-strategy" "0.4.1"
                 "04lbqbhgxbnr8q8gpv44xnsz572wm6nz8k47sy6yrlsw7wi2vswm"))
