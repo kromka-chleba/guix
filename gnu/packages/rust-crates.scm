@@ -4918,6 +4918,10 @@
   (crate-source "diffs" "0.5.1"
                 "01f8bp77kgahgvr3s2igmnmsxynjklq830lmp2wp2jyph6bnq4gz"))
 
+(define rust-diffy-0.4.2
+  (crate-source "diffy" "0.4.2"
+                "14fjsz0gnd06fy96l1mksp7m78fv645sp19r504d1gcl072vhidm"))
+
 (define rust-digest-0.10.7
   (crate-source "digest" "0.10.7"
                 "14p2n6ih29x81akj097lvz7wi9b6b9hvls0lwrv7b6xwyy0s5ncy"))
