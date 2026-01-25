@@ -13346,6 +13346,10 @@
   (crate-source "objc2-cloud-kit" "0.2.2"
                 "02dhjvmcq8c2bwj31jx423jygif1scs9f0lmlab0ayhw75b3ppbl"))
 
+(define rust-objc2-cloud-kit-0.3.2
+  (crate-source "objc2-cloud-kit" "0.3.2"
+                "0714xrydi9wvh25s2110sjfpx9mv4xs9p4ys71q8fhxvh3c79bbk"))
+
 (define rust-objc2-contacts-0.2.2
   (crate-source "objc2-contacts" "0.2.2"
                 "12a8m927xrrxa54xhqhqnkkl1a6l07pyrpnqfk9jz09kkh755zx5"))
