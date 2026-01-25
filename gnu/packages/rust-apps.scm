@@ -46,6 +46,7 @@
 ;;; Copyright © 2025 Julian Flake <julian@flake.de>
 ;;; Copyright © 2025 Ahmad Jarara <ajarara@fastmail.com>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2026 Luis Guilherme Coelho <lgcoelho@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3066,6 +3067,40 @@ compilation, and intuitive error messages.")
 universal consistency and correctness as top priorities.  It is
 configuration-free.")
     (license license:asl2.0)))
+
+(define-public rheo
+  (package
+    (name "rheo")
+    (version "0.1.0")
+    (source
+     (origin
+      (method git-fetch)
+      (uri (git-reference
+            (url "https://github.com/freecomputinglab/rheo")
+            (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+       (base32 "1f3xgv07j8xq1s16b889sxm5h14zmgpnmr7y00d8v5wpmnf9ac0c"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list #:install-source? #f
+           #:rust rust-1.89
+           #:cargo-test-flags
+           ''("--release" "--all-targets" "--"
+              ;; The following tests require internet
+              "--skip=run_test_case_examples_slashcover_minusletter_full_stoptyp"
+              "--skip=run_test_case_examples_slashfcl_site"
+              "--skip=run_test_case_examples_slashrheo_docs")))
+    (inputs
+     (cons* openssl pkg-config (cargo-inputs 'rheo)))
+    (synopsis "Typesetting and static site engine based on Typst")
+    (description "Rheo is a typesetting and static site engine based on Typst.  You
+can use it to compile folders containing Typst to PDF, HTML, and EPUB
+simultaneously.  Rheo is a standalone CLI tool that includes a development server
+for rapid website iteration.")
+    (home-page "https://rheo.ohrg.org")
+    (license (list license:asl2.0
+                   license:expat))))
 
 (define-public vhdl-ls
   (package
