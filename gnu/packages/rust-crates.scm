@@ -21074,6 +21074,10 @@
   (crate-source "tree-sitter-highlight" "0.24.7"
                 "15axx9avb1cb3mjyhkf5h36n2lsxwqy0z2xrj79qgg4y98z824b4"))
 
+(define rust-tree-sitter-highlight-0.25.10
+  (crate-source "tree-sitter-highlight" "0.25.10"
+                "1wvg02kgbm0y9184ql1vbsvsiwac09bka75qikl993wdmn0giidd"))
+
 (define rust-tree-sitter-html-0.23.2
   (crate-source "tree-sitter-html" "0.23.2"
                 "1vk3xyxnf3xv19qisyj2knd346dq4yjamawv6bg1w1ljbn7706r6"))
