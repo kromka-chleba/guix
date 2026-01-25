@@ -13398,6 +13398,10 @@
   (crate-source "objc2-core-location" "0.2.2"
                 "10apgsrigqryvi4rcc0f6yfjflvrl83f4bi5hkr48ck89vizw300"))
 
+(define rust-objc2-core-location-0.3.2
+  (crate-source "objc2-core-location" "0.3.2"
+                "02908pp1knq64wjq07zd6q2z77qppdpd7l2z0by77jabw8a74d6a"))
+
 (define rust-objc2-encode-4.1.0
   (crate-source "objc2-encode" "4.1.0"
                 "0cqckp4cpf68mxyc2zgnazj8klv0z395nsgbafa61cjgsyyan9gg"))
