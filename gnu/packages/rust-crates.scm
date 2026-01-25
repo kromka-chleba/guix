@@ -17886,6 +17886,10 @@
   (crate-source "serde_with" "3.16.1"
                 "1rz2824yhfn5n5vxmnnk01x7d3xrf2122jinw0wd4h3lh3r3g8jg"))
 
+(define rust-serde-with-macros-3.16.1
+  (crate-source "serde_with_macros" "3.16.1"
+                "0v3hfn474ny4as1gwvqgrhjzk9p5959gjl5bf0gi4ad61k5f7a2j"))
+
 (define rust-serde-xml-rs-0.6.0
   (crate-source "serde-xml-rs" "0.6.0"
                 "10i7dvd0c1clj4jbljd08qs8466nlymx7ma7k3ncksx1rn7affpv"))
