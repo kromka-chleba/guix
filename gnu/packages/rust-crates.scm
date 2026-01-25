@@ -22214,6 +22214,10 @@
                 "1g9xgnw7q7zdwgfqa6zfcfsp92wn0j0h13kzsqy0dq3c80c414m5"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-vt100-0.16.2
+  (crate-source "vt100" "0.16.2"
+                "1nbgsgamgibyx6y4xiyk6nkz7zggzbs6s445wq4yd0zsp1gzfkq5"))
+
 (define rust-vte-generate-state-changes-0.1.2
   (crate-source "vte_generate_state_changes" "0.1.2"
                 "0biwgpcji3w4llz7h4bi8c2rwqchm9gmyr7dnjki1m853gp9ndif"))
