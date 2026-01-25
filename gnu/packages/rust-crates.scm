@@ -16177,6 +16177,10 @@
   (crate-source "ratatui-core" "0.1.0"
                 "14y2pv5njy7kpzjsfn20a8vmjbhnfq5vgbgppxrszjljkahdxy2y"))
 
+(define rust-ratatui-macros-0.6.0
+  (crate-source "ratatui-macros" "0.6.0"
+                "1x1dlns91bqs2dpg7nsccbpnbswcg1vn1yk669vs1s6vh07m9vvg"))
+
 (define rust-raunch-1.0.1
   (crate-source "raunch" "1.0.1"
                 "1ia9mfxpsvpdr0dzcr1kb6q911nmyw26x0jwbz2ikm6ci5kj4rqs"))
