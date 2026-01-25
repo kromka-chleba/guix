@@ -15132,6 +15132,10 @@
   (crate-source "proc-macro2" "1.0.103"
                 "1s29bz20xl2qk5ffs2mbdqknaj43ri673dz86axdbf47xz25psay"))
 
+(define rust-proc-macro2-1.0.105
+  (crate-source "proc-macro2" "1.0.105"
+                "1rvgs5qdznlrqrgicmv24nybnrnv8kyvk2vi7s52ddna1q71hpak"))
+
 (define rust-proc-macro2-1.0.106
   (crate-source "proc-macro2" "1.0.106"
                 "0d09nczyaj67x4ihqr5p7gxbkz38gxhk4asc0k8q23g9n85hzl4g"))
