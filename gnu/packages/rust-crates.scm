@@ -10833,6 +10833,11 @@
                 "17xx4dy30fn81zhwsm4y2c84wr0apyiams8hy20lc3mmzrp8bgjw"
                 #:snippet '(delete-file-recursively "vendor")))
 
+(define rust-libdbus-sys-0.2.7
+  ;; TODO REVIEW: Check bundled sources.
+  (crate-source "libdbus-sys" "0.2.7"
+                "0hzhq0dz6lfzmhsym9m95cfhjzrwq74qdg85xkpg2012sj4lg31j"))
+
 (define rust-libdeflate-sys-1.19.3
   (crate-source "libdeflate-sys" "1.19.3"
                 "0xzi0c9dl9jdzs758fvxmb9wmsqjm0a4b3ygxz2fhvncr1vam76c"
