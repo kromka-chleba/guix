@@ -3721,6 +3721,10 @@
                 "0f1gwv4axxw9wck4a4jxlkm7xjjakb3616isll2k0s4chmpadgdp"
                 #:snippet '(delete-file-recursively "testdata")))
 
+(define rust-convert-case-0.10.0
+  (crate-source "convert_case" "0.10.0"
+                "1fff1x78mp2c233g68my0ag0zrmjdbym8bfyahjbfy4cxza5hd33"))
+
 (define rust-convert-case-0.4.0
   (crate-source "convert_case" "0.4.0"
                 "03jaf1wrsyqzcaah9jf8l1iznvdw5mlsca2qghhzr9w27sddaib2"))
