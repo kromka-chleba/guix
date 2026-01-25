@@ -658,6 +658,10 @@
   (crate-source "arc-swap" "1.7.1"
                 "0mrl9a9r9p9bln74q6aszvf22q1ijiw089jkrmabfqkbj31zixv9"))
 
+(define rust-arc-swap-1.8.0
+  (crate-source "arc-swap" "1.8.0"
+                "0zi02pwgn0vj615k6gpsr36fa6ix8qqsys88ywpcr8lcpd4k9l2i"))
+
 (define rust-archery-1.2.1
   (crate-source "archery" "1.2.1"
                 "0sdqlmybcvd0rzv22ac3k3xxm5anr1gpm03sf02iy0jmrlhyvqpa"))
