@@ -13474,6 +13474,10 @@
   (crate-source "objc2-user-notifications" "0.2.2"
                 "1cscv2w3vxzaslz101ddv0z9ycrrs4ayikk4my4qd3im8bvcpkvn"))
 
+(define rust-objc2-user-notifications-0.3.2
+  (crate-source "objc2-user-notifications" "0.3.2"
+                "0gk1frfj875pkbz3ncs8swvjgdipz3vwq5l42vd3rxzypf615ycx"))
+
 (define rust-object-0.28.4
   (crate-source "object" "0.28.4"
                 "0964501nlfh806mik3f9v6n05mx74qa0w7byvn0sqpwm5lprhb74"))
