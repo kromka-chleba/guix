@@ -24706,6 +24706,10 @@
   (crate-source "zeroize_derive" "1.4.2"
                 "0sczjlqjdmrp3wn62g7mw6p438c9j4jgp2f9zamd56991mdycdnf"))
 
+(define rust-zeroize-derive-1.4.3
+  (crate-source "zeroize_derive" "1.4.3"
+                "0bl5vd1lz27p4z336nximg5wrlw5j7jc8fxh7iv6r1wrhhav99c5"))
+
 (define rust-zerotrie-0.1.3
   (crate-source "zerotrie" "0.1.3"
                 "07qa5ljss8j706iy0rd023naamwly4jfwz0pc1gmqcw7bpalsngv"))
