@@ -190,6 +190,10 @@
   (crate-source "age-plugin" "0.5.0"
                 "17gb57sa6vidvwxxbx8cjmznlfm2m2289gygykm0c3mc7achsx04"))
 
+(define rust-agent-client-protocol-0.9.2
+  (crate-source "agent-client-protocol" "0.9.2"
+                "0v7dlxvhl8wgg7841i11dxgncy8aiwqxkla27lqk9wz0vzbjgrfk"))
+
 (define rust-ahash-0.7.8
   (crate-source "ahash" "0.7.8"
                 "1y9014qsy6gs9xld4ch7a6xi9bpki8vaciawxq4p75d8qvh7f549"))
