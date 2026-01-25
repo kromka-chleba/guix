@@ -17954,6 +17954,10 @@
   (crate-source "sentry-debug-images" "0.46.0"
                 "0ip601alxqsg9982cqacc064pqpqf8d38z0206xhxn9g4a57g8h6"))
 
+(define rust-sentry-panic-0.46.0
+  (crate-source "sentry-panic" "0.46.0"
+                "1gma18dkd84jvhxg2ldly2rvkkh9hzklkgqfbavsickj3r79zxrx"))
+
 (define rust-seq-io-0.3.4
   (crate-source "seq_io" "0.3.4"
                 "1pkasxcf25p1cf2w99a4flhjjaicg4rs14w5g8fkrs0fafg5a0qk"))
