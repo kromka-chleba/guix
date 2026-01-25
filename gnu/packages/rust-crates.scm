@@ -5646,6 +5646,10 @@
   (crate-source "equivalent" "1.0.2"
                 "03swzqznragy8n0x31lqc78g2af054jwivp7lkrbrc0khz74lyl7"))
 
+(define rust-erased-serde-0.3.31
+  (crate-source "erased-serde" "0.3.31"
+                "0v5jyid1v8irf2n2875iwhm80cw8x75gfkdh7qvzxrymz5s8j4vc"))
+
 (define rust-erased-serde-0.4.6
   (crate-source "erased-serde" "0.4.6"
                 "1dx5hj16hsl143czwl2g7ymdi1y84lsjyyii2zprzjqzyn3xh170"))
