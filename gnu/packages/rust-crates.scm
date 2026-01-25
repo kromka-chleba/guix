@@ -17566,6 +17566,10 @@
   (crate-source "scheduled-thread-pool" "0.2.7"
                 "068s77f9xcpvzl70nsxk8750dzzc6f9pixajhd979815cj0ndg1w"))
 
+(define rust-schemafy-0.5.2
+  (crate-source "schemafy" "0.5.2"
+                "1mc63prw2j3rm8y7ks3yx7sl318kr3dn92y4y8qy7nl70aj5psla"))
+
 (define rust-schemars-0.8.22
   (crate-source "schemars" "0.8.22"
                 "05an9nbi18ynyxv1rjmwbg6j08j0496hd64mjggh53mwp3hjmgrz"))
