@@ -10798,6 +10798,10 @@
   (crate-source "libc" "0.2.177"
                 "0xjrn69cywaii1iq2lib201bhlvan7czmrm604h5qcm28yps4x18"))
 
+(define rust-libc-0.2.179
+  (crate-source "libc" "0.2.179"
+                "07s3mxl54kimb55qp0q51pcbm6i3bv8k4chkilix2c55p9vd78n5"))
+
 (define rust-libc-0.2.180
   (crate-source "libc" "0.2.180"
                 "1z2n7hl10fnk1xnv19ahhqxwnb4qi9aclnl6gigim2aaahw5mhxw"))
