@@ -20772,6 +20772,10 @@
   (crate-source "tonic" "0.12.3"
                 "0ljd1lfjpw0vrm5wbv15x6nq2i38llsanls5rkzmdn2n0wrmnz47"))
 
+(define rust-tonic-0.14.2
+  (crate-source "tonic" "0.14.2"
+                "00vjbvccmyzjbi0j0ydi1l8psd0lb1nb4p8qzrdxzxz9ihc16xpb"))
+
 (define rust-tonic-build-0.12.3
   (crate-source "tonic-build" "0.12.3"
                 "04baqblgrlc0g8scnhpky5s0n4cljaixrrdrr6cv6wx7kq8cwmwm"))
