@@ -1113,6 +1113,10 @@
   (crate-source "asyncgit" "0.27.0"
                 "16yx5lga0ays5av92h2vf77qzzcxam5ph5w1dl3rj24s5f15idhy"))
 
+(define rust-asynk-strim-0.1.5
+  (crate-source "asynk-strim" "0.1.5"
+                "1xnj557406wv237l02mnz7q6wk6709qykacijfi43i5aplspfsaj"))
+
 (define rust-atk-0.8.0
   (crate-source "atk" "0.8.0"
                 "0gk6ijqsd6kh8cki1wznw570499psbppg3d5bqaayagjapxawka4"))
