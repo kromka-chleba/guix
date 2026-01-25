@@ -6080,6 +6080,10 @@
   (crate-source "find-msvc-tools" "0.1.5"
                 "0i1ql02y37bc7xywkqz10kx002vpz864vc4qq88h1jam190pcc1s"))
 
+(define rust-find-msvc-tools-0.1.6
+  (crate-source "find-msvc-tools" "0.1.6"
+                "1zwdxinsg7i0agvapxa5cj7k09vygzjy8nkxc4qpa2z6hhxbnp34"))
+
 (define rust-find-msvc-tools-0.1.8
   (crate-source "find-msvc-tools" "0.1.8"
                 "1nv8hn78xphg04l6w7iq1v8lsmmqx6ripbig18qn92m9r2yb14c5"))
