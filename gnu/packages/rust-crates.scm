@@ -5800,6 +5800,10 @@
   (crate-source "event-listener-strategy" "0.5.4"
                 "14rv18av8s7n8yixg38bxp5vg2qs394rl1w052by5npzmbgz7scb"))
 
+(define rust-eventsource-stream-0.2.3
+  (crate-source "eventsource-stream" "0.2.3"
+                "1awhkl4xh9f66j9m770qvn2l74cr4l59ssqmv4lz99a7j9bg9zkl"))
+
 (define rust-executable-path-1.0.0
   (crate-source "executable-path" "1.0.0"
                 "0y0lhhrx9f9q1f81am3b20f8znixjcvqfg7kx220pjg3i5nmmg1y"))
