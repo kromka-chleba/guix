@@ -17726,6 +17726,10 @@
   (crate-source "secret-service" "3.1.0"
                 "1yd8r1k0706052zrk9bwxy6h01gy5pyk4llk8hcnvw1pvwwls85m"))
 
+(define rust-secret-service-4.0.0
+  (crate-source "secret-service" "4.0.0"
+                "1m5zkmmhg1wv67g4lr6pqjyqg3yrh3b8bgpw1ykf06qqkbcmmlz4"))
+
 (define rust-section-testing-0.0.5
   (crate-source "section_testing" "0.0.5"
                 "18dfl8nacwcd1z2y4sgdx7751czzpl6282q6cd49ys5gd0xlkljz"))
