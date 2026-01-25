@@ -20856,6 +20856,10 @@
   (crate-source "tracing-appender" "0.2.3"
                 "1kq69qyjvb4dxch5c9zgii6cqhy9nkk81z0r4pj3y2nc537fhrim"))
 
+(define rust-tracing-appender-0.2.4
+  (crate-source "tracing-appender" "0.2.4"
+                "1bxf7xvsr89glbq174cx0b9pinaacbhlmc85y1ssniv2rq5lhvbq"))
+
 (define rust-tracing-attributes-0.1.22
   (crate-source "tracing-attributes" "0.1.22"
                 "1qjf90dvc9jiw78bjzb3iqzrhaybypg8nm0n0zhwi6smmy9miiqi"))
