@@ -32687,6 +32687,43 @@ result.")
 lets you write CommonMark inside of Docutils & Sphinx projects.")
     (license license:expat)))
 
+(define-public python-rectangle-packer
+  (package
+    (name "python-rectangle-packer")
+    (version "2.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Penlect/rectangle-packer")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1djlidpgkpbri8hbscy80ncqmr5i0w2wzssvdb8z0wdbrkrp4w84"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Cython extensions have to be built before running the tests.
+          (add-before 'check 'build-ext
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "pytest" "test"))))
+
+          )))
+    (native-inputs (list python-cython python-pytest python-setuptools))
+    (home-page "https://github.com/Penlect/rectangle-packer")
+    (synopsis "Pack rectangles into a bounding box")
+    (description
+     "Rectangle-packer is a Python library for packing rectangles
+into a bounding box with minimal wasted space.  It is useful for texture
+atlases, sprite sheets, and bin packing problems.")
+    (license license:expat)))
+
 (define-public python-redo
   (package
     (name "python-redo")
