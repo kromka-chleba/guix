@@ -194,6 +194,10 @@
   (crate-source "agent-client-protocol" "0.9.2"
                 "0v7dlxvhl8wgg7841i11dxgncy8aiwqxkla27lqk9wz0vzbjgrfk"))
 
+(define rust-agent-client-protocol-schema-0.10.5
+  (crate-source "agent-client-protocol-schema" "0.10.5"
+                "190xb42ia0md75s9qz5v5v3qfwsdflr1k6n5raxgj8n8i87a00v9"))
+
 (define rust-ahash-0.7.8
   (crate-source "ahash" "0.7.8"
                 "1y9014qsy6gs9xld4ch7a6xi9bpki8vaciawxq4p75d8qvh7f549"))
