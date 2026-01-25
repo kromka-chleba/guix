@@ -18419,6 +18419,10 @@
   (crate-source "serial2" "0.2.31"
                 "1fympa15yl83xxfmcjc7a80qi2bpnlvy6bfffbfrv9h3d2aybq96"))
 
+(define rust-serial2-0.2.33
+  (crate-source "serial2" "0.2.33"
+                "0g3g1jhjnwabgysd6p70jcqbxw3y8hywbqx15i4p3rr5isk6ziwc"))
+
 (define rust-serialport-4.7.2
   (crate-source "serialport" "4.7.2"
                 "0aqaig121lm034irzal6j9dyg7jpf4hczrjlmf5yzxka9ycbrc6d"))
