@@ -15305,6 +15305,10 @@
   (crate-source "prost" "0.13.5"
                 "1r8yi6zxxwv9gq5ia9p55nspgwmchs94sqpp64x33v5k3njgm5i7"))
 
+(define rust-prost-0.14.1
+  (crate-source "prost" "0.14.1"
+                "0gazm7m6yqvksw0jilhrdd4rzbf0br5wgfmdb1mwhcrx7ndvscbj"))
+
 (define rust-prost-build-0.13.5
   (crate-source "prost-build" "0.13.5"
                 "1gw1mr0rmv15fc2yvn9jmxbqaj8qh80w5nn5x5s1932y8ijr8xmy"))
