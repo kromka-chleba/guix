@@ -16181,6 +16181,16 @@
   (crate-source "ratatui-macros" "0.6.0"
                 "1x1dlns91bqs2dpg7nsccbpnbswcg1vn1yk669vs1s6vh07m9vvg"))
 
+(define rust-ratatui-0.29.0.9b2ad129
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/nornagon/ratatui")
+          (commit "9b2ad1298408c45918ee9f8241a6f95498cdbed2")))
+    (file-name (git-file-name "rust-ratatui" "0.29.0.9b2ad129"))
+    (sha256
+     (base32 "06jyq7m4ch7d5y2cmsf0pqdyyycqif8qrkgp66qj1ch6rzjx66qw"))))
+
 (define rust-raunch-1.0.1
   (crate-source "raunch" "1.0.1"
                 "1ia9mfxpsvpdr0dzcr1kb6q911nmyw26x0jwbz2ikm6ci5kj4rqs"))
