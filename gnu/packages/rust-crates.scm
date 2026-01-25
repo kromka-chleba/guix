@@ -9883,6 +9883,10 @@
   (crate-source "insta" "1.43.2"
                 "181m173v4f7s2f3j0lq462s0r6yg60y7fgxmnm1hy06yxd3vdza6"))
 
+(define rust-insta-1.46.0
+  (crate-source "insta" "1.46.0"
+                "1rbjljj11akajysmxlydnb838pgw8ksvyb05nl5453fi2inqhrhv"))
+
 (define rust-insta-cmd-0.6.0
   (crate-source "insta-cmd" "0.6.0"
                 "1rix5nmswns1p5p5f7pj5l9wvm69awzby0fbkkacwp4j4ylyzvpz"))
