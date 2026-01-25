@@ -20736,6 +20736,10 @@
   (crate-source "toml_parser" "1.0.4"
                 "03l0750d1cyliij9vac4afpp1syh1a6yhbbalnslpnsvsdlf5jy0"))
 
+(define rust-toml-parser-1.0.6+spec-1.1.0
+  (crate-source "toml_parser" "1.0.6+spec-1.1.0"
+                "0i5zxv5y3z9g6r3gm6ly4q0hhkahh013q4rys2fz04cf195qn6d3"))
+
 (define rust-toml-span-0.4.1
   (crate-source "toml-span" "0.4.1"
                 "1ifdm3lyqssp1zsfixy3pvm2857b1dx2ssgvv5ga5cz7j3s3czvm"))
