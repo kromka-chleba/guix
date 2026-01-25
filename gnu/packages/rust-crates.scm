@@ -17324,6 +17324,10 @@
                 "0yjzsnpv1sjbnfxbbmrnyimd23jip48nav6l9hr1rjd06vcjl64l"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-rustls-pki-types-1.13.2
+  (crate-source "rustls-pki-types" "1.13.2"
+                "10hjgkw4y5bjkm08j5dskcwpl9qajayshdk7p28l5ji856mz5ri1"))
+
 (define rust-rustls-pki-types-1.14.0
   (crate-source "rustls-pki-types" "1.14.0"
                 "1p9zsgslvwzzkzhm6bqicffqndr4jpx67992b0vl0pi21a5hy15y"))
