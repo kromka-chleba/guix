@@ -20892,6 +20892,10 @@
   (crate-source "tracing-core" "0.1.34"
                 "0y3nc4mpnr79rzkrcylv5f5bnjjp19lsxwis9l4kzs97ya0jbldr"))
 
+(define rust-tracing-core-0.1.35
+  (crate-source "tracing-core" "0.1.35"
+                "0v0az9hivci6bysd796za7g823gkasb8qmdqdsiwd2awmd7y413s"))
+
 (define rust-tracing-core-0.1.36
   (crate-source "tracing-core" "0.1.36"
                 "16mpbz6p8vd6j7sf925k9k8wzvm9vdfsjbynbmaxxyq6v7wwm5yv"))
