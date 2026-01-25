@@ -24074,6 +24074,10 @@
   (crate-source "winsafe" "0.0.23"
                 "1f94wsw4w13nkgb00q3iynkj8r40ak1s07207khh3imjiiigr5m0"))
 
+(define rust-winsplit-0.1.0
+  (crate-source "winsplit" "0.1.0"
+                "0mnr78r4h9vsk1hiy8dvfl2n899p74k3alwsqcsjz9x65lsh7drs"))
+
 (define rust-wio-0.2.2
   (crate-source "wio" "0.2.2"
                 "199p404fp96w1f1c93bf1jrvaqwypxf3hmmldhww4jk4yhr9j4jx"))
