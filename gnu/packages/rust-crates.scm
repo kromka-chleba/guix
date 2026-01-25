@@ -10584,6 +10584,10 @@
   (crate-source "lab" "0.11.0"
                 "13ymsn5cwl5i9pmp5mfmbap7q688dcp9a17q82crkvb784yifdmz"))
 
+(define rust-lalrpop-0.19.12
+  (crate-source "lalrpop" "0.19.12"
+                "0yw3m7br8zsby1vb7d0v952hdllg6splc85ba4l9yn1746avy70a"))
+
 (define rust-lalrpop-0.20.2
   (crate-source "lalrpop" "0.20.2"
                 "1jn1qg7gs9kka6sy2sbxx8wp6z8lm892ksr414b9yaansrx0gjsm"))
