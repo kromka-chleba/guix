@@ -942,6 +942,10 @@
   (crate-source "async-fs" "2.1.2"
                 "0jp0p7lg9zqy2djgdmivbzx0yqmfn9sm2s9dkhaws3zlharhkkgb"))
 
+(define rust-async-fs-2.2.0
+  (crate-source "async-fs" "2.2.0"
+                "1iclw9970mh4ndb0bd68a6901kqy81rf9yypvf78pvaavy0scd40"))
+
 (define rust-async-generic-1.1.2
   (crate-source "async-generic" "1.1.2"
                 "0wqnsinxaw6cj6wfbrj96qfrbc1gfgsm95qm6cw8gypfcs2p5wyx"))
