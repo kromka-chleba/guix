@@ -17710,6 +17710,10 @@
   (crate-source "seccomp-sys" "0.1.3"
                 "1rkbiq1vd5d3cc4w5ql05pj1vbjqfi7zir02szwfm2khl15zgg75"))
 
+(define rust-seccompiler-0.5.0
+  (crate-source "seccompiler" "0.5.0"
+                "1168zx8gmcp2shpp21g0ypd5yqv74v0vnnd52b8q2x47avg5bbm4"))
+
 (define rust-secrecy-0.10.3
   (crate-source "secrecy" "0.10.3"
                 "0nmfsf9qm8921v2jliz08bj8zrryqar4gj3d6irqfc3kaj2az4g8"))
