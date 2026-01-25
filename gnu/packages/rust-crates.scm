@@ -19610,6 +19610,10 @@
   (crate-source "syn" "2.0.111"
                 "11rf9l6435w525vhqmnngcnwsly7x4xx369fmaqvswdbjjicj31r"))
 
+(define rust-syn-2.0.113
+  (crate-source "syn" "2.0.113"
+                "1d2w2hw4impxkr0qwmhd82rcqbnrfprbs302s8nvg7hwcl0am3v7"))
+
 (define rust-syn-2.0.114
   (crate-source "syn" "2.0.114"
                 "0akw62dizhyrkf3ym1jsys0gy1nphzgv0y8qkgpi6c1s4vghglfl"))
