@@ -4448,6 +4448,10 @@
   (crate-source "darling" "0.21.3"
                 "1h281ah78pz05450r71h3gwm2n24hy8yngbz58g426l4j1q37pww"))
 
+(define rust-darling-0.23.0
+  (crate-source "darling" "0.23.0"
+                "179fj6p6ajw4dnkrik51wjhifxwy02x5zhligyymcb905zd17bi5"))
+
 (define rust-darling-0.9.0
   (crate-source "darling" "0.9.0"
                 "1mnksf0i47pb7sxvi1iqfwmqy9iny0x8w56ilybpb431b46cpyzw"))
