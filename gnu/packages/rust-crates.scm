@@ -2663,6 +2663,10 @@
   (crate-source "cc" "1.2.51"
                 "00zj303al745qymzfx3qp4wnj5s5wncaadc8c64hbagi9zzyl2ks"))
 
+(define rust-cc-1.2.52
+  (crate-source "cc" "1.2.52"
+                "18xdg9jj7yc6zxcpc1cr8xa1yhim03za8mh9qqv2nh0jznp34jfd"))
+
 (define rust-cc-1.2.54
   (crate-source "cc" "1.2.54"
                 "10q5q3kzcqg9s1zrgpk9sn1a98xjnz177ixkkkx9qbfnpwdwhm33"))
