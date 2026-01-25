@@ -17187,6 +17187,10 @@
   (crate-source "rustix" "1.1.2"
                 "0gpz343xfzx16x82s1x336n0kr49j02cvhgxdvaq86jmqnigh5fd"))
 
+(define rust-rustix-1.1.3
+  (crate-source "rustix" "1.1.3"
+                "0d0z2zcw4rwzni1hm8snw8xdxwwrij336m31c4ghq66cghj9wv0l"))
+
 (define rust-rustix-dlmalloc-0.1.7
   (crate-source "rustix-dlmalloc" "0.1.7"
                 "1pgjqzxydrp734zb76xba5akapqqk123rzvnlqvdyv2agggnim7w"))
