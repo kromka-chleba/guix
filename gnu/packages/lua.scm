@@ -21,7 +21,7 @@
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
 ;;; Copyright © 2023 Valter Nazianzeno <manipuladordedados@gmail.com>
 ;;; Copyright © 2023 Timo Wilken <guix@twilken.net>
-;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
+;;; Copyright © 2024, 2026 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
@@ -90,16 +90,14 @@
 (define-public lua
   (package
     (name "lua")
-    (version "5.3.5")
+    (version "5.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
        (sha256
-        (base32 "1b2qn2rv96nmbm6zab4l877bd4zq7wpwm8drwjiy2ih4jqzysbhc"))
-       (patches (search-patches "lua-pkgconfig.patch" "lua-liblua-so.patch"))))
+        (base32 "0gcbsr00difm2s82pflxg28zcnjka9048lncbfvwl1fhpcmw7k2p"))))
     (build-system gnu-build-system)
-    (inputs (list readline))
     (arguments
      `(#:modules ((guix build gnu-build-system)
                   (guix build utils)
@@ -107,10 +105,7 @@
        #:test-target "test"
        #:make-flags (list "MYCFLAGS=-fPIC -DLUA_DL_DLOPEN"
                           (string-append "CC="
-                                         ,(cc-for-target))
-                          (string-append "SYSLIBS=-L"
-                                         (assoc-ref %build-inputs "readline")
-                                         "/lib") "linux")
+                                         ,(cc-for-target)) "linux")
        #:phases (modify-phases %standard-phases
                   (delete 'configure)
                   (replace 'install
@@ -135,11 +130,6 @@ for configuration, scripting, and rapid prototyping.")
   (package
     (inherit lua)
     (version "5.4.8")
-    (arguments
-     (substitute-keyword-arguments (package-arguments lua)
-       ((#:make-flags flags)
-        (append (delete "linux" flags)
-                '("linux-readline")))))
     (source
      (origin
        (method url-fetch)
@@ -148,6 +138,26 @@ for configuration, scripting, and rapid prototyping.")
         (base32 "1bi90r9nzmqhjwhr8ysffhmhq30wxxcpqwmbxr33wyaf2npds62g"))
        (patches (search-patches "lua-5.4-pkgconfig.patch"
                                 "lua-5.4-liblua-so.patch"))))))
+
+(define-public lua-5.3
+  (package
+    (inherit lua)
+    (version "5.3.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
+       (sha256
+        (base32 "1b2qn2rv96nmbm6zab4l877bd4zq7wpwm8drwjiy2ih4jqzysbhc"))
+       (patches (search-patches "lua-pkgconfig.patch" "lua-liblua-so.patch"))))
+    (inputs (list readline))
+    (arguments
+     (substitute-keyword-arguments (package-arguments lua)
+       ((#:make-flags flags)
+        (append flags
+                (list (string-append "SYSLIBS=-L"
+                                     (assoc-ref %build-inputs "readline")
+                                     "/lib -lreadline"))))))))
 
 (define-public lua-5.2
   (package
@@ -159,7 +169,15 @@ for configuration, scripting, and rapid prototyping.")
        (uri (string-append "https://www.lua.org/ftp/lua-" version ".tar.gz"))
        (sha256
         (base32 "0jwznq0l8qg9wh5grwg07b5cy3lzngvl5m2nl1ikp6vqssmf9qmr"))
-       (patches (search-patches "lua-pkgconfig.patch" "lua-liblua-so.patch"))))))
+       (patches (search-patches "lua-pkgconfig.patch" "lua-liblua-so.patch"))))
+    (inputs (list readline))
+    (arguments
+     (substitute-keyword-arguments (package-arguments lua)
+       ((#:make-flags flags)
+        (append flags
+                (list (string-append "SYSLIBS=-L"
+                                     (assoc-ref %build-inputs "readline")
+                                     "/lib -lreadline"))))))))
 
 (define-public lua-5.1
   (package
@@ -173,7 +191,15 @@ for configuration, scripting, and rapid prototyping.")
         (base32 "0cskd4w0g6rdm2q8q3i4n1h3j8kylhs3rq8mxwl9vwlmlxbgqh16"))
        (patches (search-patches "lua51-liblua-so.patch"
                                 "lua-CVE-2014-5461.patch"
-                                "lua51-pkgconfig.patch"))))))
+                                "lua51-pkgconfig.patch"))))
+    (inputs (list readline))
+    (arguments
+     (substitute-keyword-arguments (package-arguments lua)
+       ((#:make-flags flags)
+        (append flags
+                (list (string-append "SYSLIBS=-L"
+                                     (assoc-ref %build-inputs "readline")
+                                     "/lib -lreadline"))))))))
 
 (define-public luajit
   (let ((branch "v2.1")
