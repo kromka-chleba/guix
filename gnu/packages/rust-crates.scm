@@ -13965,6 +13965,10 @@
   (crate-source "owo-colors" "4.2.1"
                 "1v0cvfas9v8fkk4w8jk3m51igj57sjp1cry3aqv7z88z40bm7696"))
 
+(define rust-owo-colors-4.2.2
+  (crate-source "owo-colors" "4.2.2"
+                "0pjlic0x9gc12iv1rxc6gvvx0sw0wpq629a6s07l81c45i54zpa8"))
+
 (define rust-p256-0.13.2
   (crate-source "p256" "0.13.2"
                 "0jyd3c3k239ybs59ixpnl7dqkmm072fr1js8kh7ldx58bzc3m1n9"
