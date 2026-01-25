@@ -70,6 +70,10 @@
   (crate-source "actix-http" "3.10.0"
                 "1jblgim18lhbbxyi3myfky9lc0z7a5066b0mwi2n15k7ddjq5a0g"))
 
+(define rust-actix-http-3.11.2
+  (crate-source "actix-http" "3.11.2"
+                "0jds7l5dx1fvwbk84ki2r8mx6fxlg8w1wwqk3xfzpqnb2h1qc9kr"))
+
 (define rust-actix-macros-0.2.4
   (crate-source "actix-macros" "0.2.4"
                 "1jsmhq9k5nsms8sci2lqkihym5nrhlpfv8dgd0n4539g1cad67p0"))
