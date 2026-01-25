@@ -13358,6 +13358,10 @@
   (crate-source "objc2-core-data" "0.2.2"
                 "1vvk8zjylfjjj04dzawydmqqz5ajvdkhf22cnb07ihbiw14vyzv1"))
 
+(define rust-objc2-core-data-0.3.2
+  (crate-source "objc2-core-data" "0.3.2"
+                "1ylqsa6hpma7k4090pkil8b7c0i8dcxnh46zwhnfidgv7rjjlh0b"))
+
 (define rust-objc2-core-foundation-0.3.0
   (crate-source "objc2-core-foundation" "0.3.0"
                 "09frj2bc6w6dnpjfix1skq8g91kx7w788bqwiaa2c7a74l7zdsns"))
