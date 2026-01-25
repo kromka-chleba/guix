@@ -17602,6 +17602,10 @@
   (crate-source "schemars_derive" "1.0.4"
                 "107sprdfa5kacifxq41qv5ccv7a78msxyr8ikz0qs4qxdlwj1l1k"))
 
+(define rust-schemars-derive-1.2.0
+  (crate-source "schemars_derive" "1.2.0"
+                "0ibwb8amvy70xrgbfqp1iqk0mvqd4x4hvpyg2bmshdahihlas229"))
+
 (define rust-scm-record-0.8.0
   (crate-source "scm-record" "0.8.0"
                 "15yjqrq78q24znz1sdykgbrmlb5x6yf4ay3i7rsn65paw77acqij"))
