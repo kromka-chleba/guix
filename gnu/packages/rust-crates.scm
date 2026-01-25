@@ -17962,6 +17962,10 @@
   (crate-source "sentry-tracing" "0.46.0"
                 "14salzf1av907k8c93c25w3l5kkxqrbdcfxbnvh7ajzx4zslc87z"))
 
+(define rust-sentry-types-0.46.0
+  (crate-source "sentry-types" "0.46.0"
+                "0p65wrkvqadvlh6gmlj7l1fyxjyjj6mbhy4cq51kck9sq3jb9ff7"))
+
 (define rust-seq-io-0.3.4
   (crate-source "seq_io" "0.3.4"
                 "1pkasxcf25p1cf2w99a4flhjjaicg4rs14w5g8fkrs0fafg5a0qk"))
