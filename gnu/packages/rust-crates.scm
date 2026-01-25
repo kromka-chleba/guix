@@ -19167,6 +19167,10 @@
   (crate-source "starlark_derive" "0.13.0"
                 "0ah87ysmlf1n0dmaw8gyxd1dn4ij1hh4i3wz9kza303ridnbqn7y"))
 
+(define rust-starlark-map-0.13.0
+  (crate-source "starlark_map" "0.13.0"
+                "0g8pa2wynpdgqp2yqkhdx289lykvb0rhn8mvq30hrpr0y5q9jrcj"))
+
 (define rust-starship-battery-0.10.1
   (crate-source "starship-battery" "0.10.1"
                 "1k7xz7i9p543bi54h49hbibgal2yp5bw884m336skjx2hqjwj2yf"))
