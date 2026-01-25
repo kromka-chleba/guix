@@ -9322,6 +9322,10 @@
   (crate-source "icu_decimal_data" "1.5.1"
                 "1qhah965n48j2izqx8bcm1pn8dkxxjb584cwga1nvkswgzcmvjb7"))
 
+(define rust-icu-decimal-data-2.1.1
+  (crate-source "icu_decimal_data" "2.1.1"
+                "1xzy8qszcqqka08lf2ck7amn6ysnjn8ry6c4zr4dhbdb9q2b8199"))
+
 (define rust-icu-locale-2.0.0
   (crate-source "icu_locale" "2.0.0"
                 "1zdy5ym97gj0aqggk8zs2fngazf33szmssbc3gd92pik50ar5rba"))
