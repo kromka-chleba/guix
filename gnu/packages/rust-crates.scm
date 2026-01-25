@@ -5107,6 +5107,10 @@
   (crate-source "downcast-rs" "1.2.1"
                 "1lmrq383d1yszp7mg5i7i56b17x2lnn3kb91jwsq0zykvg2jbcvm"))
 
+(define rust-dtor-0.1.0
+  (crate-source "dtor" "0.1.0"
+                "0d198g4lwkimvkrlpfpksva47phaw1dv8iskjllanmfvrmj0g2p5"))
+
 (define rust-dpc-pariter-0.4.0
   (crate-source "dpc-pariter" "0.4.0"
                 "0s546d43yyiw55jz3yw4nyxgzmnc4f0gamzkfi6m7kyw2xlf2anl"))
