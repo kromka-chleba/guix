@@ -16127,8 +16127,9 @@
   (crate-source "rgb" "0.8.52"
                 "1km115a9lblf9pldvx51dmmg30y8ms4ka67hvas2ndcq556qhshc"))
 
+
+(define rust-ring-0.17.14 package:rust-ring-0.17.14)
 (define rust-ring-0.17.8 package:rust-ring-0.17)
-(define rust-ring-0.17.14 package:rust-ring-0.17)
 
 (define rust-ripemd-0.1.3
   (crate-source "ripemd" "0.1.3"
