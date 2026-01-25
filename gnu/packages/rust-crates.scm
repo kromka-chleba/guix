@@ -16313,6 +16313,10 @@
   (crate-source "redox_syscall" "0.5.13"
                 "1mlzna9bcd7ss1973bmysr3hpjrys82b3bd7l03h4jkbxv8bf10d"))
 
+(define rust-redox-syscall-0.5.15
+  (crate-source "redox_syscall" "0.5.15"
+                "1v28zzpfl6w2gpfbrl1vh64r8hqrjf3x8h57wq8n004lw3fz12ky"))
+
 (define rust-redox-syscall-0.5.17
   (crate-source "redox_syscall" "0.5.17"
                 "0xrvpchkaxph3r5ww2i04v9nwg3843fp3prf8kqlh1gv01b4c1sl"))
