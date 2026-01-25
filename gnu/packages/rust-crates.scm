@@ -21872,6 +21872,10 @@
   (crate-source "ureq" "3.0.10"
                 "07979dkp96fdrbgbwzhqq9i7zxjmjxfnrfzrwjl42yswcb5520sb"))
 
+(define rust-ureq-3.1.4
+  (crate-source "ureq" "3.1.4"
+                "0njqfnfqbahady0357va33cqn64yq7x2yff0fylq4bb9mgdv376k"))
+
 (define rust-ureq-proto-0.3.5
   (crate-source "ureq-proto" "0.3.5"
                 "195g5y87f6y9f9kq3g5y3ka8gkngczfd254l4nabrbj16c59s8xf"
