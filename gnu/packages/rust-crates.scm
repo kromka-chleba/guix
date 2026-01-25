@@ -4632,6 +4632,10 @@
   (crate-source "debugid" "0.8.0"
                 "13f15dfvn07fa7087pmacixqqv0lmj4hv93biw4ldr48ypk55xdy"))
 
+(define rust-debugserver-types-0.5.0
+  (crate-source "debugserver-types" "0.5.0"
+                "0jmgv2f77y1k20gldkvf3w7ibshb34kxz0hqwkjfh57df1587xib"))
+
 (define rust-deelevate-0.2.0
   (crate-source "deelevate" "0.2.0"
                 "0kj2kcqv47l3iacpamgzbn742yf9d09h0xgwbadxs1l9qkw9fwqw"))
