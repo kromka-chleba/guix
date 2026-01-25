@@ -1906,6 +1906,39 @@ HTTP/HTTPS library, easy to setup.  It can also be used as a single-header
 library.")
     (license license:expat)))
 
+(define-public cpp-jwt
+  (package
+    (name "cpp-jwt")
+    (version "1.5.0")
+    (source (origin
+              (method url-fetch)
+              ;; This is Eden's fork of cpp-jwt; the commit is pinned in
+              ;; Eden's externals/cpmfile.json.
+              (uri (string-append
+                    "https://github.com/crueter/cpp-jwt/archive/9eaea6328f.tar.gz"))
+              (sha256
+               (base32 "0lrxlscsfnzg8p582alf9bpb23kk8zinl0vxs6ra672zg6zxykyr"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         ;; Use the system nlohmann-json instead of the vendored copy.
+         "-DCPP_JWT_USE_VENDORED_NLOHMANN_JSON=OFF"
+         ;; Examples are not needed for library usage.
+         "-DCPP_JWT_BUILD_EXAMPLES=OFF")))
+    (inputs
+     (list openssl nlohmann-json))
+    (native-inputs
+     (list googletest))
+    (synopsis "C++14 library for JSON Web Tokens (JWT)")
+    (description "@code{cpp-jwt} is a header-only C++14 library for creating
+and validating @acronym{JWTs, JSON Web Tokens}.  It supports various
+algorithms including HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384,
+and ES512.")
+    (home-page "https://github.com/arun11299/cpp-jwt")
+    (license license:expat)))
+
 (define-public rapidfuzz-cpp
   (package
     (name "rapidfuzz-cpp")
