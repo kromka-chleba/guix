@@ -84,6 +84,7 @@
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Hugo Buddelmeijer <hugo@buddelmeijer.nl>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2026 Spencer King <spencer.king@wustl.edu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -200,7 +201,7 @@
 (define-public bspwm
   (package
     (name "bspwm")
-    (version "0.9.10")
+    (version "0.9.12")
     (source
      (origin
        (method git-fetch)
@@ -209,7 +210,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qlv7b4c2mmjfd65y100d11x8iqyg5f6lfiws3cgmpjidhdygnxc"))))
+        (base32 "09arpajpgdh2yvadr8r1d81x5w1mrg84wl1a2b150ab00rc5wj5h"))))
     (build-system gnu-build-system)
     (inputs
      (list libxcb
