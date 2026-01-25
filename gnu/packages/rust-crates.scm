@@ -3292,6 +3292,10 @@
   (crate-source "cmake" "0.1.54"
                 "1w41ma28yzad9x757s9sfq1wigjs9j902hbzc0nbxpc9vvws7jp7"))
 
+(define rust-cmake-0.1.57
+  (crate-source "cmake" "0.1.57"
+                "0zgg10qgykig4nxyf7whrqfg7fkk0xfxhiavikmrndvbrm23qi3m"))
+
 (define rust-coarsetime-0.1.36
   (crate-source "coarsetime" "0.1.36"
                 "1x5wl76fhg7j2i0jqvwvbaz0mjzv7b4fv40lv0fb9q9d0j39d14i"))
