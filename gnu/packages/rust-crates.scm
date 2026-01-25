@@ -3348,6 +3348,11 @@
   (crate-source "codex" "0.2.0"
                 "0g22dvnqq4nkdx1bn91x0nr072qmak34b5l98yivxb2wzkpy32cm"))
 
+;;; Aliases for codex workspace crates (see rust-sources.scm for workspace package)
+
+(define rust-codex-api-0.0.0.4c3d2a5
+  package:rust-codex-0.0.0.4c3d2a5)
+
 (define rust-codspeed-2.10.0
   (crate-source "codspeed" "2.10.0"
                 "1x9anwlfzlfby794d5fcvp214bj8bp29br8pkksxwb7834djja6j"))
