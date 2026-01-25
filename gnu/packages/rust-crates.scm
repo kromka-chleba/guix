@@ -4504,6 +4504,10 @@
   (crate-source "darling_macro" "0.21.3"
                 "10ac85n4lnx3rmf5rw8lijl2c0sbl6ghcpgfmzh0s26ihbghi0yk"))
 
+(define rust-darling-macro-0.23.0
+  (crate-source "darling_macro" "0.23.0"
+                "13fvzji9xyp304mgq720z5l0xgm54qj68jibwscagkynggn88fdc"))
+
 (define rust-darling-macro-0.9.0
   (crate-source "darling_macro" "0.9.0"
                 "1lcq9418w0vmvncg4a3n9k64zjvqz0048aviqi0rmlpiqv0xmn66"))
