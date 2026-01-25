@@ -15197,6 +15197,10 @@
   (crate-source "process-wrap" "8.2.1"
                 "189vzjn8dan18cnb0qlk3b472a6imji8wqlzxj13mwi20hplzvx3"))
 
+(define rust-process-wrap-9.0.0
+  (crate-source "process-wrap" "9.0.0"
+                "1nm520fcsjfn1ak8wss8q18s9g5qabyf6rg6yl3gsmgsnwxdhpsy"))
+
 (define rust-procfs-0.17.0
   (crate-source "procfs" "0.17.0"
                 "17swyjqinpb745f07dpdi7c8q37hxvhx9xmmsi2dhxaj2kc74nyc"))
