@@ -29,6 +29,7 @@
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2025, 2026 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2026 Thomas Kramer <thomas@f-si.org>
+;;; Copyright © 2026 Luca Alloatti <luca-guix@f-si.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2202,6 +2203,52 @@ developing hardware based on synchronous digital logic using the Python
 programming language, as well as evaluation board definitions and a System on
 Chip toolkit.")
     (license license:bsd-3)))
+
+(define-public python-kfactory
+  (package
+    (name "python-kfactory")
+    (version "2.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gdsfactory/kfactory")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0brbd7yl5rgj1858knqpcz5s3dlg63qsyns4rjcb4l4iiinlix8l"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ;TODO many tests fail
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'sanity-check) ;Requires typer 0.21, but guix provides 0.20
+          )))
+    (native-inputs (list python-setuptools python-pytest
+                         python-pytest-regressions))
+    (propagated-inputs (list python-aenum
+                             python-cachetools
+                             python-klayout
+                             python-loguru
+                             python-pydantic-2
+                             python-pydantic-extra-types
+                             python-pydantic-settings
+                             python-pygit2
+                             python-rectangle-packer
+                             python-requests
+                             python-ruamel.yaml
+                             python-scipy
+                             python-semver
+                             python-toolz
+                             python-typer))
+    (home-page "https://github.com/gdsfactory/kfactory")
+    (synopsis "KLayout Python API for chip design")
+    (description
+     "KFactory is a Python library built on top of KLayout for
+designing integrated circuits and photonic devices.  It provides a high-level
+API for creating and manipulating layout geometries.")
+    (license license:expat)))
 
 (define-public python-klayout
   (package
