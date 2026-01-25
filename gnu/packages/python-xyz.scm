@@ -14,7 +14,7 @@
 ;;; Copyright © 2015, 2016, 2017, 2019, 2022 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2015, 2017 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2015, 2016 Erik Edrosa <erik.edrosa@gmail.com>
-;;; Copyright © 2015-2025 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2026 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2015, 2017, 2020 Kyle Meyer <kyle@kyleam.com>
 ;;; Copyright © 2015, 2016 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym+a@scratchpost.org>
@@ -31183,6 +31183,8 @@ It adds a simple and readable way to print stuff during development.")
      (list
       #:test-flags
       #~(cons* "-k" "not test_relative_base_setting_2_en"
+               ;; These tests have a timebomb in them.
+               "-k" "not test_search_dates_with_prepositions"
                (map
                 (lambda (name)
                   (string-append "--ignore=tests/" name ".py"))
