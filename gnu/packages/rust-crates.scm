@@ -11932,6 +11932,9 @@
   (crate-source "maybe-rayon" "0.1.1"
                 "06cmvhj4n36459g327ng5dnj8d58qs472pv5ahlhm7ynxl6g78cf"))
 
+(define rust-mcp-types-0.0.0.4c3d2a5
+    package:rust-codex-0.0.0.4c3d2a5)
+
 (define rust-md-5-0.10.6
   (crate-source "md-5" "0.10.6"
                 "1kvq5rnpm4fzwmyv5nmnxygdhhb2369888a06gdc9pxyrzh7x7nq"
