@@ -20937,6 +20937,10 @@
   (crate-source "tracing-subscriber" "0.3.20"
                 "1m9447bxq7236avgl6n5yb2aqwplrghm61dgipw03mh7ad7s2m10"))
 
+(define rust-tracing-subscriber-0.3.22
+  (crate-source "tracing-subscriber" "0.3.22"
+                "07hz575a0p1c2i4xw3gs3hkrykhndnkbfhyqdwjhvayx4ww18c1g"))
+
 (define rust-tracing-test-0.2.5
   (crate-source "tracing-test" "0.2.5"
                 "0s0x076wpga7k1a3cl8da76rrgvs45zzq9rl6q75w3gy6qa8jysm"))
