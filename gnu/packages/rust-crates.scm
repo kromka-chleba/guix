@@ -4253,6 +4253,10 @@
   (crate-source "ctor" "0.5.0"
                 "1nwg2zg9q3r9y8pwdncigmvknq3p4jkc84kncdm6a0v165430xv7"))
 
+(define rust-ctor-proc-macro-0.0.6
+  (crate-source "ctor-proc-macro" "0.0.6"
+                "1hl2cxpv92322sqq972w257dc5d1dz6gqsnjx7c4bh1xw7vim4z2"))
+
 (define rust-ctr-0.8.0
   (crate-source "ctr" "0.8.0"
                 "1sk1aykwhkny92cnvl6s75dx3fyvfzw5xkd6xz3y7w5anhgvk6q4"
