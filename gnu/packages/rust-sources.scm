@@ -678,3 +678,98 @@ intelligence.")
 webview, a tiny cross-platform library to render web-based GUIs as desktop
 applications.")
        (license license:expat)))))
+
+(define-public rust-codex-0.0.0.4c3d2a5
+  (let ((commit "4c3d2a5bbe38346cdfc112b49b34be1ce654aea7")
+        (revision "0"))
+    (hidden-package
+     (package
+       (name "rust-codex")
+       (version (git-version "0.0.0" revision commit))
+       (source
+        (origin
+          (method git-fetch)
+          (uri (git-reference
+                (url "https://github.com/openai/codex")
+                (commit commit)))
+          (file-name (git-file-name name version))
+          (sha256
+           (base32 "0gsrar16k32l16w7k6x81sxabi70hc5a4hzvsjbkqb0p45q1rya6"))
+          ;; TODO: Remove patches when Rust provides stable file locking API.
+          ;; The file_lock feature is tracked at
+          ;; <https://github.com/rust-lang/rust/issues/130994>.
+          (patches (search-patches "rust-codex-execpolicy-file-lock.patch"
+                                   "rust-codex-core-file-lock.patch"))))
+       (build-system cargo-build-system)
+       (arguments
+        (list
+         #:skip-build? #t
+         #:cargo-package-crates
+         ;; Order matters: dependencies must come before packages that need them
+         ''("codex-async-utils"        ; No internal deps
+            "codex-client"             ; No internal deps
+            "codex-execpolicy"         ; No internal deps
+            "codex-file-search"        ; No internal deps
+            "codex-git"                ; No internal deps
+            "codex-keyring-store"      ; No internal deps
+            "codex-utils-absolute-path" ; No internal deps
+            "codex-utils-cache"        ; No internal deps
+            "codex-utils-cargo-bin"    ; No internal deps
+            "codex-utils-pty"          ; No internal deps
+            "codex-utils-readiness"    ; No internal deps
+            "codex-utils-string"       ; No internal deps
+            "mcp-types"                ; No internal deps
+            "codex-utils-image"        ; Depends on codex-utils-cache
+            "codex-apply-patch"        ; Depends on codex-utils-cargo-bin
+            "codex-protocol"           ; Depends on codex-git, codex-utils-*, mcp-types
+            "codex-windows-sandbox"    ; Depends on codex-utils-absolute-path, codex-protocol
+            "codex-api"                ; Depends on codex-client, codex-protocol
+            "codex-app-server-protocol" ; Depends on codex-protocol, mcp-types
+            "codex-rmcp-client"        ; Depends on codex-keyring-store, codex-protocol
+            "codex-otel"               ; Depends on codex-app-server-protocol, codex-api
+            "codex-core"               ; Depends on many packages above
+            "codex-lmstudio"           ; Depends on codex-core
+            "codex-ollama"             ; Depends on codex-core
+            "codex-common")
+         #:phases
+         #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir-to-workspace
+              (lambda _
+                (chdir "codex-rs")))
+            (add-after 'chdir-to-workspace 'patch-git-deps-to-vendor
+              (lambda _
+                ;; Avoid git fetches in offline builds by pointing patches
+                ;; at the vendored sources provided via cargo-inputs.
+                (substitute* "Cargo.toml"
+                  (("crossterm = \\{ git = [^}]+\\}")
+                   "crossterm = { path = \"../guix-vendor/rust-crossterm-0.28.1.87db8bfa-checkout\" }")
+                  (("ratatui = \\{ git = [^}]+\\}")
+                   "ratatui = { path = \"../guix-vendor/rust-ratatui-0.29.0.9b2ad129-checkout\" }"))))
+            (add-after 'chdir-to-workspace 'add-version-to-workspace-deps
+              (lambda _
+                ;; cargo package requires all dependencies to have versions.
+                ;; Add version = "0.0.0" to internal path dependencies.
+                (let ((cargo-files (find-files "." "^Cargo\\.toml$")))
+                  (substitute* cargo-files
+                    ;; Remove self-reference dev-dependencies (path = ".")
+                    ;; codex-core has: codex-core = { path = ".", features = [...] }
+                    (("codex-core = \\{ path = \"\\.\", [^}]+\\}")
+                     "# removed self-reference for packaging")
+                    ;; Handle inline deps: name = { path = "..." }
+                    (("(codex-[a-z-]+) = \\{ path = " all name)
+                     (string-append name " = { version = \"0.0.0\", path = "))
+                    (("(mcp-types) = \\{ path = " all name)
+                     (string-append name " = { version = \"0.0.0\", path = "))
+                    ;; Handle inline deps with package: name = { package = "...", path = "..." }
+                    (("(codex-[a-z-]+) = \\{ package = " all name)
+                     (string-append name " = { version = \"0.0.0\", package = "))
+                    ;; Handle section deps: [dependencies.X] with path = "..."
+                    (("^(path = \"\\.\\./[^\"]*\")" all path-line)
+                     (string-append path-line "\nversion = \"0.0.0\"")))))))))
+       (inputs (cargo-inputs 'rust-codex-0.0.0.4c3d2a5))
+       (home-page "https://github.com/openai/codex")
+       (synopsis "OpenAI Codex workspace crates")
+       (description
+        "This package provides the workspace crates for the OpenAI Codex CLI
+and runtime for AI-assisted coding.")
+       (license license:asl2.0)))))
