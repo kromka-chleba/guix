@@ -3380,6 +3380,9 @@
 (define rust-codex-git-0.0.0.4c3d2a5
   package:rust-codex-0.0.0.4c3d2a5)
 
+(define rust-codex-keyring-store-0.0.0.4c3d2a5
+  package:rust-codex-0.0.0.4c3d2a5)
+
 (define rust-codspeed-2.10.0
   (crate-source "codspeed" "2.10.0"
                 "1x9anwlfzlfby794d5fcvp214bj8bp29br8pkksxwb7834djja6j"))
