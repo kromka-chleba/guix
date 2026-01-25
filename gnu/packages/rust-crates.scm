@@ -17574,6 +17574,10 @@
   (crate-source "schemafy_core" "0.5.2"
                 "06sin2ydn55xfb9clbid0f83n3gad92p9yvy534m5zgljbh1ly21"))
 
+(define rust-schemafy-lib-0.5.2
+  (crate-source "schemafy_lib" "0.5.2"
+                "1ymy532p81zchx9nq697c6xfr9znnq0hin2iqjccm6crawrdnlz9"))
+
 (define rust-schemars-0.8.22
   (crate-source "schemars" "0.8.22"
                 "05an9nbi18ynyxv1rjmwbg6j08j0496hd64mjggh53mwp3hjmgrz"))
