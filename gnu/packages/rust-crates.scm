@@ -23100,6 +23100,10 @@
   (crate-source "webpki-root-certs" "1.0.3"
                 "0vkqczsmad6rr1rc5qnr36f6jqblz9p1xrvv5rv4ps0d93n53mh5"))
 
+(define rust-webpki-root-certs-1.0.4
+  (crate-source "webpki-root-certs" "1.0.4"
+                "0nz88daciiybxv5jcghzqm0j7wg5yhxk9l781krqkg40brgkngpf"))
+
 (define rust-webpki-roots-0.25.4
   (crate-source "webpki-roots" "0.25.4"
                 "1qgqa615gc1cgklls4bkjp9jv9pvv3jnl82lc6wd7dkximywa82z"
