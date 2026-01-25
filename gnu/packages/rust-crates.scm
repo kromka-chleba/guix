@@ -23138,6 +23138,11 @@
                 "00mm4bhkvis59pm2a7yz3ak6q8rykcj0ddj09wxfskm285ddv0l7"
                 #:snippet '(delete-file-recursively "tests")))
 
+(define rust-webpki-roots-1.0.2
+  (crate-source "webpki-roots" "1.0.2"
+                "1ck1wa1prinrvz3q34c3xp4cpa2f3i4x5npwgj0gpmikmg1q72by"
+                #:snippet '(delete-file-recursively "tests")))
+
 (define rust-webpki-roots-1.0.3
   (crate-source "webpki-roots" "1.0.3"
                 "1f49w0s7f3fgczvjri179wh2a9g8jpkmdi5bi5l8p7ylsb031c9j"
