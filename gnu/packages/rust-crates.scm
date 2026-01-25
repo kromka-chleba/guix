@@ -14217,6 +14217,10 @@
   (crate-source "paste-impl" "0.1.18"
                 "1dlqzk05cx74522s4iyhyzzhszig4n401pp6r1qg6zmr02r7snnr"))
 
+(define rust-pastey-0.2.0
+  (crate-source "pastey" "0.2.0"
+                "0ynjddjn4yixmdqa4hk7b0k2h57kxaqcl0lyz7gkf040xsac1mjp"))
+
 (define rust-path-abs-0.5.1
   (crate-source "path_abs" "0.5.1"
                 "1hrkjrk9w2mhgzwl84gl2lmajs7yagdrcpxnjf51vh1a6kv05vq5"))
