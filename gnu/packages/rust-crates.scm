@@ -94,6 +94,10 @@
   (crate-source "actix-server" "2.5.1"
                 "092ycxvlpc8vvv521zvbc70gvddvxw0mg5h7mxl4fkr8si7rg633"))
 
+(define rust-actix-server-2.6.0
+  (crate-source "actix-server" "2.6.0"
+                "00kmzwcr0vyb4q6m7sch2xr3px2vd560p8zvy83syzj59bm68l56"))
+
 (define rust-actix-service-2.0.3
   (crate-source "actix-service" "2.0.3"
                 "0zyw2178kcyy3r775klvkb3riai1sjxnzcxxqjyl9bz5y1mz6ily"))
