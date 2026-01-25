@@ -21881,6 +21881,10 @@
                 "195g5y87f6y9f9kq3g5y3ka8gkngczfd254l4nabrbj16c59s8xf"
                 #:snippet '(delete-file-recursively "doc")))
 
+(define rust-ureq-proto-0.5.3
+  (crate-source "ureq-proto" "0.5.3"
+                "0vzdcxabp5qs1b5mhsjb94mh82m12n40csm46icvwcphkpx9w7yq"))
+
 (define rust-urid-0.1.0
   (crate-source "urid" "0.1.0"
                 "195672gs136vczn1r4hkjg5vfa7vdzr26bzv6lwhk0z7cvbvaa38"))
