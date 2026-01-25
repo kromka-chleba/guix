@@ -4249,6 +4249,10 @@
   (crate-source "ctor" "0.2.9"
                 "00b5vprqi4a2cr29xhqijg800b4dwkhrr5wj2kf3s7vnambpi8ij"))
 
+(define rust-ctor-0.5.0
+  (crate-source "ctor" "0.5.0"
+                "1nwg2zg9q3r9y8pwdncigmvknq3p4jkc84kncdm6a0v165430xv7"))
+
 (define rust-ctr-0.8.0
   (crate-source "ctr" "0.8.0"
                 "1sk1aykwhkny92cnvl6s75dx3fyvfzw5xkd6xz3y7w5anhgvk6q4"
