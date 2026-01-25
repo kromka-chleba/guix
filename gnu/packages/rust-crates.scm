@@ -13450,6 +13450,10 @@
   (crate-source "objc2-quartz-core" "0.2.2"
                 "0ynw8819c36l11rim8n0yzk0fskbzrgaqayscyqi8swhzxxywaz4"))
 
+(define rust-objc2-quartz-core-0.3.2
+  (crate-source "objc2-quartz-core" "0.3.2"
+                "07vzaf6y1lk7zygkgvpp23mm19ipdm9yq8af22gvywdkaa23bhcn"))
+
 (define rust-objc2-symbols-0.2.2
   (crate-source "objc2-symbols" "0.2.2"
                 "1p04hjkxan18g2b7h9n2n8xxsvazapv2h6mfmmdk06zc7pz4ws0a"))
