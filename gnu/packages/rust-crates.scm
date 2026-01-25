@@ -13704,6 +13704,10 @@
   (crate-source "openssl-probe" "0.1.6"
                 "0bl52x55laalqb707k009h8kfawliwp992rlsvkzy49n47p2fpnh"))
 
+(define rust-openssl-probe-0.2.0
+  (crate-source "openssl-probe" "0.2.0"
+                "14bk0gw4sqw4fqywl2032d69k538r91a42mdf7byq2dvvarxjl4z"))
+
 (define rust-openssl-probe-0.2.1
   (crate-source "openssl-probe" "0.2.1"
                 "1gpwpb7smfhkscwvbri8xzbab39wcnby1jgz1s49vf1aqgsdx1vw"))
