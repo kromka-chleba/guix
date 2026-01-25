@@ -24904,6 +24904,10 @@
   (crate-source "zune-jpeg" "0.4.21"
                 "04r7g6y9jp7d4c9bq23rz3gwzlr1dsl7vdk4yly35bc4jf52rki9"))
 
+(define rust-zune-jpeg-0.5.5
+  (crate-source "zune-jpeg" "0.5.5"
+                "13nm6gim4rv65bsva8ag0njng9dk701kcmzpndzs1s9j7rqbfvyw"))
+
 (define rust-zvariant-2.10.0
   (crate-source "zvariant" "2.10.0"
                 "0995d59vl8409mk3qrbshqrz5d76dq52szg0x2vqji07y9app356"))
