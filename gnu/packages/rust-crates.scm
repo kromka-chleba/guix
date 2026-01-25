@@ -23263,6 +23263,10 @@
   (crate-source "wildmatch" "2.5.0"
                 "10nk5s864iczsdrxn38iypixp5mk36pwyv2k0xkfzfka4dxd1drr"))
 
+(define rust-wildmatch-2.6.1
+  (crate-source "wildmatch" "2.6.1"
+                "0s4cldiyc1yr3h06ph94hb3l2kp89vr3yik32whig2xsl4z3qcr9"))
+
 (define rust-win-crypto-ng-0.5.1
   (crate-source "win-crypto-ng" "0.5.1"
                 "14mv2wsvji8x7ds72zsjpz6hdq57y4r8r38xjyr4mrbib91zpawr"))
