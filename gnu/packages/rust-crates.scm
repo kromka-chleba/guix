@@ -6100,6 +6100,10 @@
   (crate-source "fixed_decimal" "0.5.6"
                 "1f1xqn2fxns768isv4h5vm1yi0j8npbfl825dvpcv7la26qvxsqg"))
 
+(define rust-fixed-decimal-0.7.0
+  (crate-source "fixed_decimal" "0.7.0"
+                "0picdka9jxqd61iwr7f8852yjn411a8ibygck2qhr77in8i3v51m"))
+
 (define rust-fixedbitset-0.2.0
   (crate-source "fixedbitset" "0.2.0"
                 "0kg03p777wc0dajd9pvlcnsyrwa8dhqwf0sd9r4dw0p82rs39arp"))
