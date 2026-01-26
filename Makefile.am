@@ -339,6 +339,7 @@ MODULES =					\
   guix/scripts/install.scm			\
   guix/scripts/remove.scm			\
   guix/scripts/upgrade.scm			\
+  guix/scripts/new.scm				\
   guix/scripts/search.scm			\
   guix/scripts/show.scm				\
   guix/scripts/gc.scm				\
