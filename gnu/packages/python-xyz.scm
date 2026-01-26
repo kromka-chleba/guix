@@ -178,6 +178,7 @@
 ;;; Copyright © 2025 Luca Kredel <luca.kredel@web.de>
 ;;; Copyright © 2025 Isidor Zeuner <guix@quidecco.pl>
 ;;; Copyright © 2025 Andy Tai <atai@atai.org>
+;;; Copyright © 2026 Ryan Desfosses <rdesfo@sdf.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19488,26 +19489,30 @@ minimal and fast API targeting the following uses:
 (define-public python-icalendar
   (package
     (name "python-icalendar")
-    (version "5.0.13")
+    (version "6.3.2")
     (source (origin
              (method url-fetch)
              (uri (pypi-uri "icalendar" version))
              (sha256
               (base32
-               "01lp0advx60z8wgng8aga1p1668ydn1r6d9qm3d622yfikg9yycj"))))
+               "188hj57l5l1jjnrfxwkmsh8hsn5pwvv93m7p7b9misgbzk5hxhg0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv" "src/icalendar/tests")))))))
+       #:test-flags
+       #~(list
+          "-k"
+          "not Arctic/Longyearbyen" "src/icalendar/tests/test_issue_722_generate_vtimezone.py"
+          )))
     (propagated-inputs
      (list python-dateutil python-pytz python-tzdata))
     (native-inputs
-     (list python-pytest python-pytz python-setuptools python-wheel))
+     (list python-pytest
+           python-pytz
+           python-setuptools
+           python-wheel
+           python-hatchling
+           python-hatch-vcs))
     (synopsis "Python library for parsing and generating iCalendar files")
     (description
      "@code{icalendar} is a Python library for parsing and generating iCalendar files.")
