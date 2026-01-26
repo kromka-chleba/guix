@@ -48,6 +48,7 @@
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2025 bdunahu <bdunahu@operationnull.com>
 ;;; Copyright © 2026 Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2026 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -194,6 +195,55 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module ((srfi srfi-1) #:hide (zip)))
+
+(define-public carvera-controller
+  (package
+    (name "carvera-controller")
+    (version "0.9.14")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/MakeraInc/CarveraController")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "07c5kiaj566srcjks6vc7xdyq1wjydj5ryn1s4rlzaa49q99dsd1"))
+      (patches (search-patches "carvera-controller-user-data.patch"))))
+    (build-system copy-build-system)
+    (inputs (list
+      bash-minimal
+      mtdev
+      python-distro
+      python-kivy
+      python-pyquicklz
+      python-pyserial
+      python-wrapper
+      xclip))
+    (arguments
+      (let ((source-location "share/carvera-controller"))
+        (list
+          #:install-plan #~'(("src" #$source-location))
+          #:phases #~(modify-phases %standard-phases
+            (add-after 'install 'create-wrapper
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let*
+                  ( (out (assoc-ref outputs "out"))
+                    (executable (string-append out "/bin/carvera-controller")))
+                  (mkdir-p (dirname executable))
+                  (call-with-output-file executable (lambda (port)
+                    (format port "#!/bin/sh~%cd ~a~%exec ~a makera.py~%"
+                      (string-append out "/" #$source-location)
+                      (search-input-file inputs "/bin/python3"))))
+                  (chmod executable #o755)
+                  (wrap-program executable
+                    `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH")))
+                    `("LD_LIBRARY_PATH" ":" prefix (,(string-append #$mtdev "/lib")))
+                    `("PATH" ":" prefix (,(string-append #$xclip "/bin")))))))))))
+    (home-page (git-reference-url (origin-uri source)))
+    (synopsis "Controller for Makera CNC machines")
+    (description "CNC control software for the Makera line of CNC machines
+including the Carvera and Carvera Air.  Allows users to connect to and control a
+Makera CNC machine, including preparing, uploading, and starting G-code jobs.")
+    (license license:gpl3)))
 
 (define-public cutecom
   (package

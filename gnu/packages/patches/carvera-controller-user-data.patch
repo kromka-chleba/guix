@@ -1,0 +1,74 @@
+Uses user data folder to store config and G-code files.
+
+--- a/src/makera.py
++++ b/src/makera.py
+@@ -2871,7 +2871,7 @@ class Makera(RelativeLayout):
+             local_path = join(expanduser('~'), 'Documents')
+             local_path = join(local_path, remote_post_path)
+         else:
+-            local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), remote_post_path)
++            local_path = os.path.join(user_data, remote_post_path)
+         app = App.get_running_app()
+         app.selected_local_filename = local_path
+         app.selected_remote_filename = remote_path
+@@ -2892,7 +2892,7 @@ class Makera(RelativeLayout):
+             app.selected_local_filename = os.path.join(tmp_file, 'config.txt')
+             #print(f"实际文件目录 directory: {app.selected_local_filename}")
+         else:
+-            app.selected_local_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.txt')
++            app.selected_local_filename = os.path.join(user_data, 'config.txt')
+         self.downloading_file = '/sd/config.txt'
+         self.downloading_size = 1024 * 5
+         self.downloading_config = True
+@@ -2908,7 +2908,7 @@ class Makera(RelativeLayout):
+                 tmp_file = tempfile.gettempdir()  # 获取临时目录
+                 config_path = os.path.join(tmp_file, 'config.txt')
+             else:
+-                config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.txt')
++                config_path = os.path.join(user_data, 'config.txt')
+             with open(config_path, 'r') as f:
+                 config_string = '[dummy_section]\n' + f.read()
+             # remove notes
+@@ -3443,7 +3443,7 @@ class Makera(RelativeLayout):
+                 curr_dir = os.path.join(sandbox_documents_path, "gcodes")
+                 local_path = os.path.join(os.path.dirname(curr_dir), remote_post_path)
+             else:
+-                local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), remote_post_path)
++                local_path = os.path.join(user_data, remote_post_path)
+             if self.uploading_file != local_path and not self.file_popup.firmware_mode:
+                 if self.uploading_file.endswith('.lz'):
+                     #copy lz file to .lz dir
+@@ -3561,7 +3561,7 @@ class Makera(RelativeLayout):
+                 curr_dir = os.path.join(sandbox_documents_path, "gcodes")
+                 local_path = os.path.join(os.path.dirname(curr_dir), remote_post_path)
+             else:
+-                local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), remote_post_path)
++                local_path = os.path.join(user_data, remote_post_path)
+             if self.uploading_file != local_path and not self.file_popup.firmware_mode:
+                 if self.uploading_file.endswith('.lz'):
+                     # copy lz file to .lz dir
+@@ -5106,7 +5106,24 @@ class SplashScreenApp(App):
+         MakeraApp().run()  # start main page
+ 
+ 
++user_data = os.getenv('XDG_DATA_HOME')
++if not user_data:
++    user_data = os.path.expanduser('~/.local/share')
++user_data = os.path.join(user_data, 'carvera-controller')
++user_config = os.path.join(user_data, 'config.txt')
++user_gcodes = os.path.join(user_data, 'gcodes')
+ if __name__ == '__main__':
++    if not os.path.exists(user_config):
++        os.makedirs(user_data, exist_ok=True)
++        shutil.copy(
++            os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.txt'),
++            user_config
++        )
++    if not os.path.exists(user_gcodes):
++        shutil.copytree(
++            os.path.join(os.path.dirname(os.path.realpath(__file__)), 'gcodes'),
++            user_gcodes
++        )
+     if kivy_platform == 'android':
+         MakeraApp().run()  # start main page
+     else:
