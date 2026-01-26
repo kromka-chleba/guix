@@ -13,6 +13,7 @@
 ;;; Copyright © 2024 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2026 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -597,6 +598,26 @@ decompressing text data, using the @dfn{Prediction by partial matching} (PPM)
 compression algorithm variation H and I.2.  It provides an API similar to
 Python's zlib/bz2/lzma modules.")
     (license license:lgpl2.1+)))
+
+(define-public python-pyquicklz
+  (package
+    (name "python-pyquicklz")
+    (version "1.4.1")
+    (source (origin
+      (method url-fetch)
+      (uri (pypi-uri "pyquicklz" version))
+      (sha256 (base32 "09n2ky132n2dzvz6p7a4a8413r0fsyhpaawikhj43zzhyqkfl2ad"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list
+      python-cython
+      python-setuptools))
+    (arguments (list
+      #:tests? #f)) ; No tests
+    (home-page "https://pypi.org/project/pyquicklz")
+    (synopsis "Python binding of quicklz")
+    (description "Library providing Python binding of quicklz, a C
+implementation of a LZ77-based dictionary compression algorithm.")
+    (license license:gpl3)))
 
 ;; XXX: Project is archived and not maintained since 2022.
 (define-public python-ppmd-cffi
