@@ -899,46 +899,41 @@ displayed in a terminal.")
   (package
     (name "imv")
     (version "5.0.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://git.sr.ht/~exec64/imv")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "0fy8kaxi6071j983kb709xsmps8nqg1aa55ach2drdzs33zfr56q"))
-              (file-name (git-file-name name version))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~exec64/imv")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "0fy8kaxi6071j983kb709xsmps8nqg1aa55ach2drdzs33zfr56q"))
+       (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'install 'record-absolute-file-names
-                 (lambda _
-                   ;; 'imv' is a script that execs 'imv-x11' or 'imv-wayland'.
-                   ;; 'imv-dir' execs 'imv'. Record their absolute file names.
-                   (let ((bin (string-append #$output "/bin")))
-                     (substitute* (string-append bin "/imv")
-                       (("imv-") (string-append bin "/imv-")))
-                     (substitute* (string-append bin "/imv-dir")
-                       (("imv") (string-append bin "/imv")))))))))
-    (native-inputs
-     (list asciidoc
-           cmocka
-           pkg-config))
-    (inputs
-     (list freeimage
-           glu
-           libheif
-           libinih
-           libjpeg-turbo
-           libjxl
-           libnsgif
-           (librsvg-for-system)
-           libtiff
-           libxkbcommon
-           pango
-           wayland
-           wayland-protocols))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'record-absolute-file-name
+            (lambda _
+              ;; 'imv-dir' execs 'imv'. Record the absolute file name.
+              (substitute* (string-append #$output "/bin/imv-dir")
+                (("exec imv")
+                 (string-append "exec "
+                                #$output "/bin/imv"))))))))
+    (native-inputs (list asciidoc cmocka pkg-config))
+    (inputs (list freeimage
+                  glu
+                  libheif
+                  libinih
+                  libjpeg-turbo
+                  libjxl
+                  libnsgif
+                  (librsvg-for-system)
+                  libtiff
+                  libxkbcommon
+                  pango
+                  wayland
+                  wayland-protocols))
     (synopsis "Image viewer for tiling window managers")
     (description "@code{imv} is a command line image viewer intended for use
 with tiling window managers.  Features include:
@@ -957,7 +952,8 @@ with tiling window managers.  Features include:
 @end itemize
 @item Configurable key bindings and behavior.
 @item Highly scriptable with IPC via imv-msg.
-@end itemize\n")
+@end itemize
+")
     (home-page "https://git.sr.ht/~exec64/imv/")
     (license license:expat)))
 
