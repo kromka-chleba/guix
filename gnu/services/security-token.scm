@@ -20,6 +20,7 @@
 
 (define-module (gnu services security-token)
   #:use-module (gnu services)
+  #:use-module (gnu services dbus)
   #:use-module (gnu services shepherd)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
@@ -79,6 +80,9 @@
                                (map (cut file-append <> "/pcsc")
                                     usb-drivers))))))))
 
+(define (pcscd-pokit-package config)
+  (list (pcscd-configuration-pcsc-lite config)))
+
 (define pcscd-service-type
   (service-type
    (name 'pcscd)
@@ -88,5 +92,7 @@
     (list (service-extension shepherd-root-service-type
                              (compose list pcscd-shepherd-service))
           (service-extension activation-service-type
-                             pcscd-activation)))
+                             pcscd-activation)
+          (service-extension polkit-service-type
+                             pcscd-pokit-package)))
    (default-value (pcscd-configuration))))
