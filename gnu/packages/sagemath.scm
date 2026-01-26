@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2019, 2025 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2019, 2025, 2026 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;;
@@ -35,6 +35,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages fontutils)
@@ -51,7 +52,8 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-science)
-  #:use-module (gnu packages python-xyz))
+  #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages sphinx))
 
 (define-public brial
   (package
@@ -364,7 +366,7 @@ database.")
 (define-public sage
   (package
     (name "sage")
-    (version "10.7")
+    (version "10.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -373,16 +375,17 @@ database.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0513nmym1shlj0vkb982hpj1v86f327w5kav0523wk1xljc432cx"))))
+                "0j85a5i8y36pjg4b457hfcqfsilismxzxwdiic09hg35yy8yxhx6"))))
     (build-system pyproject-build-system)
     (native-inputs
       (list autoconf automake m4 pkg-config ; for ./bootstrap
+            meson-python
             python-cython
             python-cysignals
             python-memory-allocator
             python-pkgconfig
             python-jinja2
-            python-setuptools
+            python-sphinx
             python-wheel))
     (propagated-inputs
       (list ;; required to make the sage script start
@@ -471,6 +474,10 @@ database.")
                     (sed #$(this-package-input "sed"))
                     (graphs #$(this-package-input "graphs"))
                     (polytopes-db #$(this-package-input "polytopes-db")))
+                ;; Patch out meson checks for things that will work since we
+                ;; patch env.py below.
+                (substitute* "src/sage/libs/meson.build"
+                  (("maxima_check.returncode\\(\\) == 0") "true"))
                 (substitute* (find-files "build/bin")
                   (("sage-bootstrap-python") "python"))
                 (substitute* "src/sage/env.py"
@@ -519,8 +526,7 @@ database.")
             (lambda _
               (setenv "SAGE_NUM_THREADS"
                       (number->string (parallel-job-count)))
-              (invoke "./bootstrap")
-              (chdir "src")))
+              (invoke "./bootstrap")))
           (delete 'sanity-check)))) ; does not reflect reality
     (home-page "https://www.sagemath.org/")
     (synopsis "SageMath computer algebra system")
