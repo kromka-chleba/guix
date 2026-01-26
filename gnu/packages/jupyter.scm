@@ -377,7 +377,7 @@ the namespace @code{/nbclassic/}.")
            python-ipykernel
            python-ipython-genutils
            python-jinja2
-           python-jupyter-client-7
+           python-jupyter-client
            python-jupyter-core
            python-nest-asyncio
            python-nbclassic
@@ -431,9 +431,9 @@ interactive computing.")
 to Jupyter Server for their Python Web application backend.")
     (license license:bsd-3)))
 
-(define-public python-jupyter-client
+(define-public python-jupyter-client-next
   (package
-    (name "python-jupyter-client")
+    (name "python-jupyter-client-next")
     (version "8.7.0")
     (source
      (origin
@@ -490,9 +490,9 @@ for working with kernels, and the @code{jupyter kernelspec} entrypoint for
 installing @code{kernelspec}s for use with Jupyter frontends.")
     (license license:bsd-3)))
 
-(define-public python-jupyter-client-7
+(define-public python-jupyter-client
   (package
-    (inherit python-jupyter-client)
+    (inherit python-jupyter-client-next)
     (name "python-jupyter-client")
     (version "7.4.9")
     (source
