@@ -21,11 +21,16 @@ from __future__ import print_function  # Python 2 support.
 import importlib
 import sys
 import traceback
+
 try:
-    import pkg_resources
+    from importlib.metadata import (
+        distributions,
+        _top_level_declared,
+    )
 except ImportError:
-    print('Warning: Skipping, because python-setuptools are not available.')
+    print("Warning: Skipping, because Python version too old.")
     sys.exit(0)
+
 
 try:
     from importlib.machinery import PathFinder
@@ -33,35 +38,40 @@ except ImportError:
     PathFinder = None
 
 ret = 0
+# this is the site-packages path of the guix python package:
+# (string-append #$output "/lib/python" (python-version python) "/site-packages")
+site_packages_path = sys.argv[1]
 
 # Only check site-packages installed by this package, but not dependencies
-# (which pkg_resources.working_set would include). Path supplied via argv.
-ws = pkg_resources.find_distributions(sys.argv[1])
+# we need to convert the name to a Requirement object to get rid of
+# extras information
+ws = distributions(path=[site_packages_path])
 
 for dist in ws:
-    print('validating', repr(dist.project_name), dist.location)
+    print("validating", dist.name, dist._path)
     try:
-        print('...checking requirements: ', end='')
-        req = str(dist.as_requirement())
-        # dist.activate() is not enough to actually check requirements, we
-        # have to .require() it.
-        pkg_resources.require(req)
-        print('OK')
+        print("...checking requirements: ", end="")
+        # we have to import the distribution to check if it works
+        importlib.import_module(dist.name)
+        print("OK")
     except Exception as e:
-        print('ERROR:', req, repr(e))
+        print(
+            f'ERROR: could not import distribution "{dist.name}"'
+            f'failed with exception "{e}"'
+        )
         ret = 1
         continue
 
     # Try to load top level modules. This should not have any side-effects.
     try:
-        metalines = dist.get_metadata_lines('top_level.txt')
+        top_level_module_names = _top_level_declared(dist)
     except (KeyError, EnvironmentError):
         # distutils (i.e. #:use-setuptools? #f) will not install any metadata.
         # This file is also missing for packages built using a PEP 517 builder
         # such as poetry.
-        print('WARNING: cannot determine top-level modules')
+        print("WARNING: cannot determine top-level modules")
         continue
-    for name in metalines:
+    for name in top_level_module_names:
         # Only available on Python 3.
         if PathFinder and PathFinder.find_spec(name) is None:
             # Ignore unavailable modules, often C modules, which were not
@@ -69,28 +79,32 @@ for dist in ws:
             # because it is raised by failed imports too.
             continue
         try:
-            print('...trying to load module', name, end=': ')
+            print("...trying to load module", name, end=": ")
             importlib.import_module(name)
-            print('OK')
+            print("OK")
         except Exception:
-            print('ERROR:')
+            print("ERROR:")
             traceback.print_exc(file=sys.stdout)
             ret = 1
 
     # Try to load entry points of console scripts too, making sure they
     # work. They should be removed if they don't. Other groups may not be
     # safe, as they can depend on optional packages.
-    for group, v in dist.get_entry_map().items():
-        if group not in {'console_scripts', 'gui_scripts'}:
+    for entry_point in dist.entry_points:
+        if entry_point.group not in {"console_scripts", "gui_scripts"}:
             continue
-        for name, ep in v.items():
-            try:
-                print('...trying to load endpoint', group, name, end=': ')
-                ep.load()
-                print('OK')
-            except Exception:
-                print('ERROR:')
-                traceback.print_exc(file=sys.stdout)
-                ret = 1
+        try:
+            print(
+                "...trying to load endpoint",
+                entry_point.group,
+                entry_point.name,
+                end=": ",
+            )
+            entry_point.load()
+            print("OK")
+        except Exception:
+            print("ERROR:")
+            traceback.print_exc(file=sys.stdout)
+            ret = 1
 
 sys.exit(ret)
