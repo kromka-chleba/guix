@@ -28,9 +28,11 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages libffi)
+  #:use-module (gnu packages opencl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages rocm)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages vulkan))
 
 ;; This file adds SYCL implementation related packages. Due to the fact that
@@ -53,19 +55,36 @@
                 "0sv5f366ybzpsdpka0fb578pb4q3537h6hkn825m0kbssh32wxk7"))))
     (build-system cmake-build-system)
     ;; Sync with llvm version used by llvm-rocm.
-    (native-inputs (list clang-20 lld-20 python-minimal))
+    (native-inputs (list clang-20 lld-20 python-minimal git-minimal))
     (inputs
      (list boost
            libffi
            numactl
+           opencl-icd-loader
+           opencl-clhpp                 ;requires 67d100e70
+           opencl-headers               ;requires 265df85ae
            rocm-opencl-runtime
            rocm-device-libs
            rocm-hip-runtime
            rocr-runtime
            spirv-headers
+           spirv-llvm-translator-for-adaptivecpp
            spirv-tools))
     (arguments
      (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'unbundle-opencl
+            (lambda _
+              (substitute* "src/runtime/CMakeLists.txt"
+                (("FetchContent_Declare")
+                 "# FetchContent_Declare")
+                (("GIT_REPOSITORY")
+                 "# GIT_REPOSITORY")
+                (("GIT_TAG .*\n")
+                 "# GIT_TAG")
+                (("FetchContent_MakeAvailable.*")
+                 "# FetchContent_MakeAvailable")))))
       #:configure-flags
       #~(list
          (string-append "-DCMAKE_EXE_LINKER_FLAGS=" "-Wl,-rpath="
@@ -73,6 +92,11 @@
                         #$output "/lib/hipSYCL/llvm-to-backend")
          (string-append
           "-DACPP_LLD_PATH=" (search-input-file %build-inputs "/bin/ld.lld"))
+         ;; OpenCL backend, see doc/install-opencl.md
+         "-DWITH_OPENCL_BACKEND=ON"
+         (string-append "-DOpenCL_LIBRARY="
+                        (search-input-file %build-inputs "/lib/libOpenCL.so"))
+         ;; RocM backend, see doc/install-rocm.md
          "-DWITH_ROCM_BACKEND=ON"
          (string-append
           "-DROCM_PATH=" #$(this-package-input "rocm-device-libs"))
