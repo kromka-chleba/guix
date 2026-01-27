@@ -5043,3 +5043,44 @@ and stable references (iterators are NOT stable) on insert.")
     (description "This package provides a single-header C++14 library for
 saving and loading C++ objects using a binary format.")
     (license license:expat)))
+
+(define-public tcb-span
+  (let ((commit "836dc6a0efd9849cb194e88e4aa2387436bb079b")
+        (revision "0"))
+    (package
+      (name "tcb-span")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tcbrindle/span")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1v3x1mj4if8jrr7cmrcbhv8n8ygla0liqb0dic6g6ji7px2pr6jf"))
+         (modules '((guix build utils)))
+         (snippet #~(delete-file-recursively "test/catch.hpp"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'build 'use-guix-vendored-dependencies
+              (lambda _
+                (copy-recursively (string-append #$(this-package-native-input
+                                                    "catch2")
+                                                 "/include/catch2/catch.hpp")
+                                  "../source/test/catch.hpp")))
+            (replace 'install
+              (lambda _
+                (install-file "../source/include/tcb/span.hpp"
+                              (string-append #$output:out "/include/tcb")))))))
+      (native-inputs (list catch2))
+      (home-page "https://github.com/tcbrindle/span")
+      (synopsis "Library implementing sdt::span for C++11 and later")
+      (description
+       "This package provides a single-header implementation of C++20's std::span,
+conforming to the C++20 committee draft.  It is compatible with C++11, but will
+use newer language features if they are available.")
+      (license license:boost1.0))))
