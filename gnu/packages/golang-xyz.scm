@@ -4457,6 +4457,30 @@ source files.  A neutral variety of English is used by default, but a US or UK
 locale can be selected.")
     (license license:expat)))
 
+(define-public go-github-com-cloudflare-backoff
+  (package
+    (name "go-github-com-cloudflare-backoff")
+    (version "0.0.0-20240920015135-e46b80a3a7d0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cloudflare/backoff")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bzcvsgakjyxgw47r2j6xxbs8v67srwzvvw60biqcqvpsvncbw42"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/cloudflare/backoff"))
+    (home-page "https://github.com/cloudflare/backoff")
+    (synopsis "Backoff strategies for retry logic for Golang")
+    (description
+     "This package provides configurable backoff algorithms (exponential, constant, etc.)
+for Golang commonly used in retry loops for network calls or transient error handling.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-cloudwego-iasm
   (package
     (name "go-github-com-cloudwego-iasm")
