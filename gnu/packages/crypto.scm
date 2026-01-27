@@ -1197,7 +1197,7 @@ trivial to build for local use.  Portability is emphasized over performance.")
 (define-public libsecp256k1
   (package
     (name "libsecp256k1")
-    (version "0.7.0")
+    (version "0.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1206,7 +1206,7 @@ trivial to build for local use.  Portability is emphasized over performance.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1d0cnd2s607j642h64821mpklfvvzy70mkyl2dlsm5s9lgvndn2p"))))
+                "10cvh8jks3rjg6p7y0vm1v4kw9y7vljbfijj0zxwkxzysxx60w0f"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -1228,16 +1228,17 @@ trivial to build for local use.  Portability is emphasized over performance.")
                                                "src/precomputed_ecmult_gen.c"))))))))
     (native-inputs
      (list autoconf automake libtool))
-    (synopsis "C library for EC operations on curve secp256k1")
+    (synopsis
+     "C library for cryptographic primitives on the secp256k1 elliptic curve")
     (description
-     "Optimized C library for EC operations on curve secp256k1.
+     "High-performance high-assurance C library for digital signatures and other cryptographic primitives on the secp256k1 elliptic curve.
 
 Features:
 
 @itemize
 @item secp256k1 ECDSA signing/verification and key generation.
 @item Additive and multiplicative tweaking of secret/public keys.
-@item Serialization/parsing of private keys, public keys, signatures.
+@item Serialization/parsing of secret keys, public keys, signatures.
 @item Constant time, constant memory access signing and public key generation.
 @item Derandomized ECDSA (via RFC6979 or with a caller provided function.)
 @item Very efficient implementation.
@@ -1246,7 +1247,10 @@ Features:
 @item Optional module for public key recovery.
 @item Optional module for ECDH key exchange.
 @item Optional module for Schnorr signatures according to BIP-340.
-@end itemize\n")
+@item Optional module for ElligatorSwift key exchange according to BIP-324.
+@item Optional module for MuSig2 Schnorr multi-signatures according to BIP-327.
+@end itemize
+")
     (home-page "https://github.com/bitcoin-core/secp256k1")
     (license license:expat)))
 
