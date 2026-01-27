@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2025 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2023-2025 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2026 Gábor Udvari <mail@gaborudvari.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -54,6 +55,34 @@
       (sha256
        (base32
         "1yhs9lj9gnzbvimv0y5f1a4my0slbvygkcjjkaxd4wkkyfvfbkxy")))))
+
+(define-public rust-autocxx-0.26.0.056f40c
+  (hidden-package
+   (package
+     (name "rust-autocxx")
+     (version "0.26.0.056f40c")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference (url "https://github.com/romainthomas/autocxx.git")
+                            (commit "056f40c6c8cc345cd5537d4a2c9f7e10c1d178d7")))
+        (file-name (git-file-name name version))
+        (sha256 (base32 "1hias0xfl4lrh0v41pm795y875v03gmc04q3pv741jbrgr5wj5hk"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:cargo-package-crates
+            ''("autocxx-parser" ;Dependency of autocxx-engine
+               "autocxx-engine"
+               "autocxx-build"
+               "autocxx-macro"
+               "autocxx-reduce"
+               "autocxx")))
+     (inputs (cargo-inputs 'rust-autocxx-0.26.0))
+     (home-page "https://docs.rs/autocxx/latest/autocxx/")
+     (synopsis "Provide safe ergonomic Rust/C++ interop")
+     (description "Tool for safe ergonomic Rust/C++ interop driven from existing C++ headers.")
+     (license license:asl2.0))))
 
 (define-public rust-deunicode-1
   (hidden-package
