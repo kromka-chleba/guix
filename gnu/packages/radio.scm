@@ -971,10 +971,10 @@ used by RDS Spy, and audio files containing @dfn{multiplex} signals (MPX).")
            python-numpy
            python-pycairo
            python-pygobject
-           python-pyqt-6
+           python-pyqt
            python-pyqtgraph
            python-pyyaml
-           qtbase
+           qtbase-5
            qwt
            sdl
            soapysdr
@@ -992,6 +992,7 @@ used by RDS Spy, and audio files containing @dfn{multiplex} signals (MPX).")
                            (guix build python-build-system))
        #:configure-flags
        (list "-DENABLE_GRC=ON"
+             "-DENABLE_GR_QTGUI=ON"
              (string-append "-DMATHJAX2_ROOT="
                             (assoc-ref %build-inputs "js-mathjax")
                             "/share/javascript/mathjax"))
