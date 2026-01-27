@@ -62,6 +62,7 @@
   #:use-module (gnu system vm)
   #:use-module (gnu system install)
   #:use-module (gnu system images hurd)
+  #:use-module (gnu system images mnt-reform)
   #:use-module (gnu system images novena)
   #:use-module (gnu system images pine64)
   #:use-module (gnu system images pinebook-pro)
@@ -254,6 +255,7 @@ SYSTEM."
 
 (define %guix-system-images
   (list hurd-barebones-qcow2-image
+        mnt-reform-barebones-raw-image
         pine64-barebones-raw-image
         pinebook-pro-barebones-raw-image
         novena-barebones-raw-image

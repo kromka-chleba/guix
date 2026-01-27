@@ -806,6 +806,7 @@ GNU_SYSTEM_MODULES =				\
 						\
   %D%/system/images/a20-olinuxino-lime2.scm			\
   %D%/system/images/hurd.scm			\
+  %D%/system/images/mnt-reform.scm			\
   %D%/system/images/novena.scm			\
   %D%/system/images/orangepi-r1-plus-lts-rk3328.scm	\
   %D%/system/images/pine64.scm			\
