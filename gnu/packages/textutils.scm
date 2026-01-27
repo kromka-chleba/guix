@@ -40,6 +40,7 @@
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 John Khoo <johnkhootf@gmail.com>
+;;; Copyright © 2026 Gábor Udvari <mail@gaborudvari.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -879,6 +880,26 @@ in a portable way.")
                (install-file "README.md" doc)))))))
     (native-inputs '())))
 
+(define-public utfcpp-4
+  (package
+    (inherit utfcpp)
+    (name (package-name utfcpp))
+    (version "4.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nemtrif/utfcpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fkhd8l4dll9iwbgqbr5ci73qays2b2lpmff0hvy0556ghl0qn6h"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DUTF8CPP_ENABLE_TESTS=ON")))
+    (native-inputs '())))
 
 (define-public dbacl
   (package
