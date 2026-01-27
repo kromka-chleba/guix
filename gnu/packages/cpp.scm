@@ -51,6 +51,7 @@
 ;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2025 Philippe Swartvagher <phil.swart@gmx.fr>
 ;;; Copyright © 2025 Murilo <murilo@disroot.org>
+;;; Copyright © 2026 Gábor Udvari <mail@gaborudvari.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2750,6 +2751,25 @@ code will be mixed in with the actual programming logic.  This implementation
 provides a number of utilities to make coding with expected cleaner.")
     (home-page "https://tl.tartanllama.xyz/")
     (license license:cc0)))
+
+(define-public libexpected-1.2
+  (package
+    (inherit libexpected)
+    (name "libexpected")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/TartanLlama/expected")
+             (commit (string-append "v" version))
+             ;; NOTE: Requires TL_CMAKE from custom
+             ;; repository. Should not affect reproducibility.
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00a5barxl77vrcdhsmhhz270mdmmmi5qwc0p82gn08mlj8j67rd6"))
+       (patches (search-patches "libexpected-use-provided-catch2.patch"))))))
 
 (define-public immer
   ;; Use latest commit to fix build with gcc 14.
