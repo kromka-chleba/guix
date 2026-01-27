@@ -375,6 +375,11 @@ static void _deletePathAt(int fd, const Path & path, const Path & fullPath, unsi
 
     if (S_ISDIR(st.st_mode)) {
       /* Note: fds required scales with depth of directory nesting */
+
+      /* Ensure PATH is readable and writable so 'openat' below succeeds.  */
+      (void) fchmodat(fd, path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR,
+		      AT_SYMLINK_NOFOLLOW);
+
       AutoCloseFD dirfd = openat(fd, path.c_str(),
                                  O_RDONLY |
                                  O_DIRECTORY |
@@ -382,17 +387,6 @@ static void _deletePathAt(int fd, const Path & path, const Path & fullPath, unsi
                                  O_CLOEXEC);
       if(!dirfd.isOpen())
         throw SysError(std::format("opening `{}'", fullPath));
-
-      /* st.st_mode may currently be from a different file than what we
-         actually opened, get it straight from the file instead */
-      if(fstat(dirfd, &st))
-        throw SysError(std::format("re-getting status of `{}'", fullPath));
-
-      /* Make the directory writable. */
-      if (!(st.st_mode & S_IWUSR)) {
-        if (fchmod(dirfd, st.st_mode | S_IWUSR) == -1)
-          throw SysError(std::format("making `{}' writable", fullPath));
-      }
 
       for (auto & i : readDirectory(dirfd))
         _deletePathAt(dirfd, i.name, path + "/" + i.name, bytesFreed, linkThreshold);
