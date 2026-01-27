@@ -602,7 +602,7 @@
                "Extra environment variables")
   (exec (list-of-executables '()) "Commands to be executed with hyprland")
   (bindings (list-of-bindings '()) "Extra binds")
-  (windowrule (list-of-strings '()) "Extra Window rules (v2)")
+  (windowrule (list-of-blocks '()) "Extra Window rules")
   (no-serialization))
 
 ;;;
