@@ -1230,6 +1230,38 @@ good error messages when parsing fails.  See also
    (description "Law-abiding lenses for aeson.")
    (license license:expat)))
 
+(define-public ghc-authenticate-oauth
+  (package
+   (name "ghc-authenticate-oauth")
+   (version "1.7")
+   (source
+    (origin
+     (method url-fetch)
+     (uri (hackage-uri "authenticate-oauth" version))
+     (sha256
+      (base32 "0y4v46rn0cvm0sr1v8qq1zgzllrlrr3ji5gij1xprgf1zsazcvvl"))))
+   (build-system haskell-build-system)
+   (properties '((upstream-name . "authenticate-oauth")))
+   (inputs (list ghc-http-client
+		 ghc-crypto-pubkey-types
+		 ghc-rsa
+		 ghc-data-default
+		 ghc-base64-bytestring
+		 ghc-sha
+		 ghc-random
+		 ghc-http-types
+		 ghc-blaze-builder
+		 ghc-transformers-compat))
+   (arguments
+    `(#:cabal-revision ("1"
+			"198xm2qdaqwg2m9kgrkw5gdk2bh19mmj6c4d5fsbpcjnhxlh6axg")))
+   (home-page "http://github.com/yesodweb/authenticate")
+   (synopsis
+    "Library to authenticate with OAuth for Haskell web applications.")
+   (description "API docs and the README are available at
+<http://www.stackage.org/package/authenticate-oauth>.")
+   (license license:bsd-3)))
+
 (define-public ghc-multipart
   (package
     (name "ghc-multipart")
