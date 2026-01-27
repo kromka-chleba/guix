@@ -6,6 +6,7 @@
 ;;; Copyright © 2017, 2019, 2023 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Giacomo Leidi <therewasa@fishinthecalculator.me>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 bigbookofbug <bigbookofbug@proton.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -432,6 +433,35 @@ Mail} (PEM) format.")
 the MD5 digest (hash) algorithm.  This now supports the @code{crypto-api} class
 interface.")
     (license license:bsd-3)))
+
+(define-public ghc-rsa
+  (package
+   (name "ghc-rsa")
+   (version "2.4.1")
+   (source
+    (origin
+     (method url-fetch)
+     (uri (hackage-uri "RSA" version))
+     (sha256
+      (base32 "0hchsqrxpfw7mqrqwscfy8ig1w2di6w3nxpzi873w0gibv2diibj"))))
+   (build-system haskell-build-system)
+   (properties '((upstream-name . "RSA")))
+   (inputs (list ghc-crypto-api ghc-crypto-pubkey-types ghc-sha))
+   (native-inputs (list ghc-quickcheck ghc-tagged ghc-test-framework
+			ghc-test-framework-quickcheck2))
+   (arguments
+    `(#:cabal-revision ("2"
+			"090yzm99fmh7c6z4m9hbkasqhc3xlw104g2b6wnk77n1abd13ryj")))
+   (home-page "http://hackage.haskell.org/package/RSA")
+   (synopsis
+    "Implementation of RSA, using the padding schemes of PKCS#1 v2.1.")
+   (description
+    "This library implements the RSA encryption and signature algorithms for
+arbitrarily-sized @code{ByteStrings}.  While the implementations work, they are
+not necessarily the fastest ones on the planet.  Particularly key generation.
+The algorithms included are based of RFC 3447, or the Public-Key Cryptography
+Standard for RSA, version 2.1 (a.k.a, PKCS#1 v2.1).")
+   (license license:bsd-3)))
 
 (define-public ghc-sha
   (package
