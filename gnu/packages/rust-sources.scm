@@ -84,6 +84,37 @@
      (description "Tool for safe ergonomic Rust/C++ interop driven from existing C++ headers.")
      (license license:asl2.0))))
 
+(define-public rust-autocxx-0.27.0.c22ecd1
+  (hidden-package
+   (package
+     (name "rust-autocxx")
+     (version "0.27.0.c22ecd1")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference (url "https://github.com/romainthomas/autocxx.git")
+                            (commit "c22ecd135ffc8d08cbfc2cdbbd1936281e9cdba6")))
+        (file-name (git-file-name "rust-autocxx-build" "0.27.0.c22ecd1"))
+        (sha256 (base32 "0f0flc2922pbi9135wlv9gqg8nn8licvxrjcq6g6jfq4dq96x3az"))
+        (modules '((guix build utils)))
+        (snippet
+         '(copy-recursively "gen/build" "build"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:cargo-package-crates
+            ''("autocxx-parser" ;Dependency of autocxx-engine
+               "autocxx-engine"
+               "autocxx-build"
+               "autocxx-macro"
+               "autocxx-reduce"
+               "autocxx")))
+     (inputs (cargo-inputs 'rust-autocxx-0.27.0))
+     (home-page "https://docs.rs/autocxx/latest/autocxx/")
+     (synopsis "Provide safe ergonomic Rust/C++ interop")
+     (description "Tool for safe ergonomic Rust/C++ interop driven from existing C++ headers.")
+     (license license:asl2.0))))
+
 (define-public rust-deunicode-1
   (hidden-package
    (package
