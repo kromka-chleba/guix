@@ -222,6 +222,26 @@ SPIR-V, aiming to emit GLSL or MSL that looks like human-written code.")
 translation between LLVM IR and SPIR-V.")
     (license license:asl2.0)))
 
+(define-public spirv-llvm-translator-for-adaptivecpp
+  (package
+    (inherit spirv-llvm-translator)
+    (name "spirv-llvm-translator-for-adaptivecpp")
+    (version "180")                     ;sync with spirv-llvm-translator
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/AdaptiveCpp/SPIRV-LLVM-Translator")
+              (commit (string-append "llvm_release_" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nagvrsa1ld7aqfm7kb5m3hlxh3428jlmn5yg7h7iydwy6x7k6g8"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments spirv-llvm-translator)
+       ((#:tests? _ #t)
+        #f)))
+    (home-page "https://github.com/AdaptiveCpp/SPIRV-LLVM-Translator")))
+
 (define-public glslang
   (package
     (name "glslang")
