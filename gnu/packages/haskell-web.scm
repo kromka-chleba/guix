@@ -1262,6 +1262,93 @@ good error messages when parsing fails.  See also
 <http://www.stackage.org/package/authenticate-oauth>.")
    (license license:bsd-3)))
 
+(define-public ghc-wreq
+  (package
+   (name "ghc-wreq")
+   (version "0.5.4.3")
+   (source
+    (origin
+     (method url-fetch)
+     (uri (hackage-uri "wreq" version))
+     (sha256
+      (base32 "00z6i4myg18bq15h9h889k7s9j5564cfjvzxd65i37dknwi2mpw6"))))
+   (build-system haskell-build-system)
+   (properties '((upstream-name . "wreq")))
+   ;; Tests require Internet access
+   (arguments `(#:tests? #f))
+   (inputs (list ghc-psqueues
+		 ghc-aeson
+		 ghc-attoparsec
+		 ghc-authenticate-oauth
+		 ghc-base16-bytestring
+		 ghc-case-insensitive
+		 ghc-crypton
+		 ghc-hashable
+		 ghc-http-client
+		 ghc-http-client-tls
+		 ghc-http-types
+		 ghc-lens
+		 ghc-lens-aeson
+		 ghc-memory
+		 ghc-mime-types
+		 ghc-time-locale-compat
+		 ghc-unordered-containers))
+   (native-inputs (list ghc-hunit
+			ghc-quickcheck
+			ghc-aeson-pretty
+			ghc-base64-bytestring
+			ghc-network-info
+			ghc-snap-core
+			ghc-snap-server
+			ghc-temporary
+			ghc-test-framework
+			ghc-test-framework-hunit
+			ghc-test-framework-quickcheck2
+			ghc-unix-compat
+			ghc-uuid
+			ghc-vector
+			ghc-doctest
+			ghc-cabal-doctest))
+   (home-page "http://www.serpentine.com/wreq")
+   (synopsis "An easy-to-use HTTP client library.")
+   (description
+    ".  A web client library that is designed for ease of use. .  Tutorial:
+<http://www.serpentine.com/wreq/tutorial.html> .  Features include: . * Simple
+but powerful `lens`-based API . * A solid test suite, and built on reliable
+libraries like http-client and lens . * Session handling includes connection
+keep-alive and pooling, and cookie persistence . * Automatic response body
+decompression . * Powerful multipart form and file upload handling . * Support
+for JSON requests and responses, including navigation of schema-less responses .
+* Basic and OAuth2 bearer authentication . * Early TLS support via the tls
+package.")
+   (license license:bsd-3)))
+
+(define-public ghc-wuss
+  (package
+   (name "ghc-wuss")
+   (version "2.0.1.8")
+   (source
+    (origin
+     (method url-fetch)
+     (uri (hackage-uri "wuss" version))
+     (sha256
+      (base32 "1pdh44r11yxyjgyb8la28crsm7sk09fshmqcgxyxczwfjsa85dpk"))))
+   (build-system haskell-build-system)
+   (properties '((upstream-name . "wuss")))
+   (inputs (list ghc-crypton-connection ghc-data-default ghc-network
+		 ghc-websockets))
+   (home-page "http://hackage.haskell.org/package/wuss")
+   (synopsis "Secure WebSocket (WSS) clients")
+   (description
+    "Wuss is a library that lets you easily create secure @code{WebSocket} clients
+over the WSS protocol.  It is a small addition to
+<https://hackage.haskell.org/package/websockets the websockets package> and is
+adapted from existing solutions by <https://gist.github.com/jaspervdj/7198388
+@@jaspervdj>, <https://gist.github.com/mpickering/f1b7ba3190a4bb5884f3
+@@mpickering>, and <https://gist.github.com/elfenlaid/7b5c28065e67e4cf0767
+@@elfenlaid>.")
+   (license license:expat)))
+
 (define-public ghc-multipart
   (package
     (name "ghc-multipart")
