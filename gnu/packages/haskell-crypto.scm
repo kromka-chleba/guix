@@ -157,6 +157,24 @@ cipher operations using the crypto-api interface.  Known answer tests (KATs)
 for common cryptographic algorithms are included.")
     (license license:bsd-3)))
 
+(define-public ghc-crypto-pubkey-types
+  (package
+   (name "ghc-crypto-pubkey-types")
+   (version "0.4.3")
+   (source
+    (origin
+     (method url-fetch)
+     (uri (hackage-uri "crypto-pubkey-types" version))
+     (sha256
+      (base32 "0q0wlzjmpx536h1zcdzrpxjkvqw8abj8z0ci38138kpch4igbnby"))))
+   (build-system haskell-build-system)
+   (properties '((upstream-name . "crypto-pubkey-types")))
+   (inputs (list ghc-asn1-types ghc-asn1-encoding))
+   (home-page "http://github.com/vincenthz/hs-crypto-pubkey-types")
+   (synopsis "Generic cryptography Public keys algorithm types")
+   (description "Generic cryptography public keys algorithm types.")
+   (license license:bsd-3)))
+
 (define-public ghc-cryptohash
   (package
     (name "ghc-cryptohash")
