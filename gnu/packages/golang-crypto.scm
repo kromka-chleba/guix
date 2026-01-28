@@ -63,6 +63,7 @@
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages password-utils)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages security-token)
   #:use-module (gnu packages specifications)
   #:use-module (gnu packages tls))
