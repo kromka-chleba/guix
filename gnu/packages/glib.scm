@@ -854,19 +854,16 @@ by GDBus included in Glib.")
     (arguments
      (list
       #:tests? #f                  ;one test fails.
-      #:imported-modules `((guix build python-build-system)
-                           ,@%meson-build-system-modules)
-      #:modules '(((guix build python-build-system)
-                   #:select (python-version))
+      #:imported-modules (append %meson-build-system-modules
+                                 %pyproject-build-system-modules)
+      #:modules '(((guix build pyproject-build-system) #:prefix py:)
                   (guix build meson-build-system)
                   (guix build utils))
       ;; don't try installing to python store path.
       #:configure-flags
       #~(list (string-append "-Dpy-overrides-dir="
-                             #$output "/lib/python"
-                             (python-version #$(this-package-input
-                                                "python"))
-                             "/site-packages/gi/overrides"))
+                             (py:site-packages %build-inputs %outputs)
+                             "/gi/overrides"))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'check
