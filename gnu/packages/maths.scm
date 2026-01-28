@@ -72,6 +72,7 @@
 ;;; Copyright © 2025 Sören Tempel <soeren@soeren-tempel.net>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;; Copyright © 2025 Reza Housseini <reza@housseini.me>
+;;; Copyright © 2026 Luca Alloatti <luca-guix@f-si.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -10881,6 +10882,36 @@ primal-dual interior-point method are made available.  Interfaces are
 provided for applications written in C++ and Python.  Parallel
 computation is supported via MPI.")
     (license license:bsd-2))))
+
+(define-public soplex
+  (package
+    (name "soplex")
+    (version "7.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/scipopt/soplex")
+             (commit "release-715")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wpvbdp42brv0d09h65wwfmfi2ci5mjrnz46rpxlxk1cj63zdp42"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DPAPILO=OFF")))
+    (inputs (list boost gmp mpfr zlib))
+    (home-page "https://soplex.zib.de/")
+    (synopsis "Sequential object-oriented simPlex linear programming solver")
+    (description
+     "SoPlex is an optimization package for solving linear
+programming problems (LPs) based on an advanced implementation of the primal
+and dual revised simplex algorithm.  It provides special support for the exact
+solution of LPs with rational input data.  It can be used as a standalone
+solver reading MPS or LP format files via a command line interface as well as
+embedded into other programs via a C++ class library.")
+    (license license:asl2.0)))
 
 (define-public scilab
   (package
