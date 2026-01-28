@@ -17,6 +17,7 @@
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2026 Gábor Udvari <mail@gaborudvari.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -39,6 +40,8 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
+  #:use-module (guix build-system cargo)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system gnu)
   #:use-module ((guix licenses) #:prefix license:)
@@ -47,16 +50,23 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages digest)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gcc)
+  #:use-module (gnu packages llvm)
+  #:use-module (gnu packages logging)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages texinfo)
+  #:use-module (gnu packages textutils)
+  #:use-module (gnu packages tls)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
@@ -478,3 +488,166 @@ format.  The included utilities are:
 debugging information format.")
     ;; See https://www.prevanders.net/dwarflicense.html:
     (license (list license:lgpl2.1 license:gpl2 license:bsd-2))))
+
+(define-public lief-patchelf
+  (package
+    (name "lief-patchelf")
+    (version "0.17.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lief-project/LIEF")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "138mkvmbx1yqpk9m2vii1lpb09r3ws5gf2j6a8x3ad6f2xdmx9r6"))
+       (modules '((guix build utils)))
+       (snippet #~(delete-file-recursively "third-party"))))
+    (outputs '("out" "precompiled" "sdk"))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules ,@%cmake-build-system-modules)
+      #:modules '(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build cmake-build-system)
+                  (guix build utils))
+      ;; Tests need a 343 MB large binary file collection, and some of the
+      ;; files included are not free software. The download code can be found
+      ;; in tests/dl_samples.py.
+      #:tests? #f
+      #:build-type "Release"
+      #:configure-flags
+      #~(list "-DLIEF_TESTS=OFF"
+              "-DLIEF_PYTHON_API=OFF" ;Separated into the python-lief package
+              "-DLIEF_RUST_API=ON"
+              "-DLIEF_EXTERNAL_SPDLOG=ON"
+              "-DLIEF_OPT_EXTERNAL_EXPECTED=ON"
+              "-DLIEF_OPT_EXTERNAL_SPAN=ON"
+              "-DLIEF_OPT_FROZEN_EXTERNAL=ON"
+              "-DLIEF_OPT_MBEDTLS_EXTERNAL=ON"
+              "-DLIEF_OPT_NLOHMANN_JSON_EXTERNAL=ON"
+              "-DLIEF_OPT_UTFCPP_EXTERNAL=ON"
+              (string-append "-DCMAKE_INSTALL_PREFIX="
+                             (assoc-ref %outputs "sdk")))
+      #:phases (with-extensions (list (cargo-guile-json))
+      #~(modify-phases %standard-phases
+          (add-after 'configure 'prepare-cargo-build-system
+                     (lambda args
+                       (for-each (lambda (phase)
+                                   (format #t
+                                           "Running cargo phase: ~a~%"
+                                           phase)
+                                   (apply (assoc-ref
+                                           cargo:%standard-phases
+                                           phase) args))
+                                 '(unpack-rust-crates
+                                   configure
+                                   check-for-pregenerated-files
+                                   patch-cargo-checksums))))
+          (add-after 'install 'finish-sdk-build
+                     (lambda _
+                       (chdir "../source")))
+          (add-after 'finish-sdk-build 'use-guix-vendored-dependencies
+                     (lambda _
+                       ;; Delete Cargo.lock files, the cargo configure phase would do
+                       ;; this, but the package is built from multiple directories.
+                       (delete-file
+                        "api/rust/cargo/Cargo.lock")
+                       (delete-file "tools/Cargo.lock")
+                       (substitute* '("api/rust/cargo/lief-ffi/Cargo.toml"
+                                      "api/rust/cargo/lief-ffigen/Cargo.toml")
+                                    (("git[^,]+,")
+                                     "")
+                                    (("branch[^,]+, (version.*)$" _ end)
+                                     end)
+                                    (("branch = \"([^\"]+)\"" _ branch)
+                                     (string-append "version = \""
+                                                    branch "\"")))
+                       (substitute* "tools/lief-patchelf/Cargo.toml"
+                                    (("path = \"[^\"]+\"")
+                                     (string-append "version = \""
+                                                    #$(package-version
+                                                       this-package)
+                                                    "\"")))))
+          (add-after 'use-guix-vendored-dependencies 'build-lief-ffigen
+                     (lambda* (#:key cargo:cargo-build-flags
+                               #:allow-other-keys #:rest args)
+                       (chdir "api/rust/cargo")
+                       ;; Only build lief-ffigen, this is the prerequisite for
+                       ;; everything else.
+                       (apply (assoc-ref
+                               cargo:%standard-phases
+                               'build)
+                              (append args
+                                      (list
+                                       #:cargo-build-flags '
+                                       ("--release" "-p"
+                                        "lief-ffigen"))))))
+          (add-after 'build-lief-ffigen 'build-rust-precompiled
+                     (lambda _
+                       (setenv "RUSTFLAGS" "-l dylib=spdlog")
+                       (invoke "./target/release/lief-ffigen"
+                               "--output-dir"
+                               "./out-gen"
+                               "--lief-dir"
+                               #$output:sdk
+                               "--target"
+                               #$(or (%current-target-system)
+                                     (%current-system))
+                               "--host"
+                               #$(%current-system))))
+          (add-after 'build-rust-precompiled 'install-rust-precompiled
+                     (lambda _
+                       (install-file (string-append #$output:sdk
+                                                    "/lib/libLIEF.a")
+                                     (string-append #$output:precompiled
+                                                    "/lib"))
+                       (install-file
+                        "out-gen/cxx_builder/liblief-sys.a"
+                        (string-append #$output:precompiled
+                                       "/lib"))
+                       (install-file
+                        "out-gen/autocxx_builder/rs/autocxx-autocxx_ffi-gen.rs"
+                        (string-append #$output:precompiled
+                                       "/rs"))))
+          (add-after 'install-rust-precompiled 'build-patchelf
+                     (lambda args
+                       ;; The lief-ffi lib checks for some precompiled lief files,
+                       ;; if not found it tries to download them from github.
+                       (setenv "LIEF_RUST_PRECOMPILED"
+                               #$output:precompiled)
+                       (setenv "RUSTFLAGS"
+                               (string-join (list "fmt"
+                                                  "mbedtls"
+                                                  "mbedcrypto"
+                                                  "mbedx509"
+                                                  "spdlog")
+                                            " -l dylib="
+                                            'prefix))
+                       (chdir "../../../tools")
+                       (apply (assoc-ref
+                               cargo:%standard-phases
+                               'build) args)))
+          (add-after 'build-patchelf 'install-patchelf
+                     (lambda _
+                       (install-file
+                        "target/release/lief-patchelf"
+                        (string-append #$output:out "/bin"))))))))
+    (native-inputs (cons* frozen
+                          libexpected-1.2
+                          nlohmann-json
+                          rust
+                          `(,rust "cargo")
+                          tcb-span
+                          utfcpp-4
+                          (cargo-inputs 'lief-patchelf)))
+    (inputs (list clang-21 fmt-11 mbedtls spdlog-1.15))
+    (home-page "https://lief.re/doc/latest/tools/lief-patchelf/")
+    (synopsis "Tool to work with ELF, PE and MachO executable formats")
+    (description
+     "This package provides a @command{lief-patchelf} command, which
+can be used to modify the interpreter and RPATH of and ELF binary.  It
+maintains the same command-line interface as @command{patchelf} and
+can be used as a replacement.")
+    (license license:asl2.0)))
