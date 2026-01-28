@@ -91,6 +91,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gperf)
+  #:use-module (gnu packages graph)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
@@ -98,16 +99,21 @@
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libftdi)
+  #:use-module (gnu packages logging)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages man)
+  #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages pretty-print)
+  #:use-module (gnu packages protobuf)
+  #:use-module (gnu packages regex)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
@@ -1902,6 +1908,76 @@ executable it can be used to verify the timing of a design using standard file
 formats.")
       (home-page "https://github.com/parallaxsw/OpenSTA/")
       (license license:gpl3+))))
+
+(define-public openroad
+  (package
+    (name "openroad")
+    (version "26Q1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/The-OpenROAD-Project/OpenROAD")
+             (commit "e06ca0f5f2e641cd7b138a4d9b4fdd290359eca8")
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13x4kqi4j489k4sz56ws4aqhp60nff1i18z6hjd6xx8y7flaik0c"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_GUI=OFF"
+              "-DBUILD_PYTHON=ON"
+              "-DUSE_SYSTEM_ABC=OFF"
+              "-DUSE_SYSTEM_ORTOOLS=ON" )
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'fix-test-paths
+            (lambda _
+              ;; Tests expect build dir inside source, but Guix uses sibling dirs
+              (symlink "../build" "../source/build")))
+          (add-after 'unpack 'fix-boost-cmake
+            (lambda _
+              (substitute* (find-files "." "CMakeLists\\.txt")
+                (("set\\(Boost_USE_STATIC_LIBS ON\\)")
+                 "set(Boost_USE_STATIC_LIBS OFF)")
+                (("Boost_USE_STATIC_LIBS TRUE")
+                 "Boost_USE_STATIC_LIBS FALSE")
+                (("COMPONENTS serialization system thread")
+                 "COMPONENTS serialization thread")
+                (("COMPONENTS system thread")
+                 "COMPONENTS thread")
+                (("Boost::system")
+                 "")))))))
+    (native-inputs (list bison flex googletest pkg-config swig))
+    (inputs (list abseil-cpp
+                  boost
+                  cudd
+                  eigen
+                  glpk
+                  gmp
+                  lemon-graph
+                  libomp
+                  mpfr
+                  or-tools
+                  protobuf-6
+                  python
+                  re2-next
+                  scip
+                  spdlog-1.15
+                  tcl
+                  yaml-cpp
+                  zlib))
+    (home-page "https://openroad.readthedocs.io/")
+    (synopsis "RTL-to-GDS flow for VLSI design")
+    (description
+     "OpenROAD is an @acronym{EDA, electronic design automation} toolkit which
+provides an integrated chip physical design tool that takes a
+design from synthesized Verilog to routed layout. It includes tools for
+floorplanning, placement, clock tree synthesis, routing, parasitic extraction,
+and timing analysis.")
+    (license license:bsd-3)))
 
 (define-public pulseview
   (package
