@@ -20,6 +20,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system cmake)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
@@ -155,7 +156,7 @@ a.s.o.
        (sha256
         (base32
          "1gabdxllx2pcw1mbv4gw9zpn6817ikz9ql8xs9w86wswd6f0m5kl"))))
-    (build-system meson-build-system)
+    (build-system cmake-build-system)
     (arguments
      (list
       #:configure-flags
