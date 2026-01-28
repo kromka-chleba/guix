@@ -608,6 +608,50 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
        (base32
         "0vzs9i3sdh6f1b25vdbxwyphmxzbqixrnjlgws56fzfngy4my9dj")))))
 
+(define-public rust-lief
+  (hidden-package
+   (package
+     (name "rust-lief")
+     (version "0.17.3")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/lief-project/LIEF")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "138mkvmbx1yqpk9m2vii1lpb09r3ws5gf2j6a8x3ad6f2xdmx9r6"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:cargo-package-crates ''("lief-build"
+                                      "lief-ffi"
+                                      "lief")
+            #:phases #~(modify-phases %standard-phases
+                         (add-after 'unpack 'change-directory
+                           (lambda _
+                             (chdir "api/rust/cargo")))
+                         (add-after 'change-directory 'use-guix-vendored-dependencies
+                           (lambda _
+                             (substitute* '("lief-ffi/Cargo.toml"
+                                            "lief-ffigen/Cargo.toml")
+                               (("git[^,]+,")
+                                "")
+                               (("branch[^,]+, (version.*)$" _ end)
+                                end)
+                               (("branch = \"([^\"]+)\"" _ branch)
+                                (string-append "version = \"" branch "\""))))))))
+     (inputs (cargo-inputs 'rust-lief-0.17.3))
+     (home-page "https://lief.re//doc/latest/tools/lief-patchelf/")
+     (synopsis "Work with ELF, PE and MachO executable formats")
+     (description
+      "This package provides a @command{lief-patchelf} command, which
+can be used to modify the interpreter and RPATH of and ELF binary. It
+maintains the same command-line interface as @command{patchelf} and
+can be used as a replacement.")
+     (license license:asl2.0))))
+
 (define-public rust-syntect-5.2
   (hidden-package
    (package
