@@ -1114,8 +1114,7 @@ Duperemove can also take input from the @command{fdupes} program.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://ranger.github.io/" "ranger-" version
-                           ".tar.gz"))
+       (uri (string-append "https://ranger.fm/ranger-" version ".tar.gz"))
        (sha256
         (base32 "128ggxfhfmckl7x89flwxks7gxq0m02insdizcsp62193c6mxmvs"))))
     (build-system pyproject-build-system)
@@ -1140,9 +1139,9 @@ Duperemove can also take input from the @command{fdupes} program.")
                 (wrap-program ranger
                   `("W3MIMGDISPLAY_PATH" ":" prefix
                     (,w3mimgdisplay)))))))))
-    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-setuptools))
     (inputs (list bash-minimal file w3m))
-    (home-page "https://ranger.github.io/")
+    (home-page "https://ranger.fm")
     (synopsis "Console file manager")
     (description
      "ranger is a console file manager with Vi key bindings.  It provides a
