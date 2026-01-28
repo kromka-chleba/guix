@@ -598,6 +598,65 @@ cryptographic algorithms targeting Post-Quantum (PQ) and Elliptic Curve
 Cryptography (ECC).")
     (license license:bsd-3)))
 
+(define-public go-github-com-cloudflare-redoctober
+  (package
+    (name "go-github-com-cloudflare-redoctober")
+    (version "0.0.0-20241112165158-ce2ad370627b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cloudflare/redoctober")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mlmm68x0y4m6dzris6ggkhzfxpd99df4syj3zc6350q3fxi0kv9"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/cloudflare/redoctober"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-imports
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+               (substitute* "server/server.go"
+            (("github.com/coreos/go-systemd/activation")
+              "github.com/coreos/go-systemd/v22/activation"))))))
+     #:test-flags
+     #~(list "-vet=off"
+             "-skip" (string-join
+                       ;; Could not find redoctober binary at "./redoctober" or
+                       ;; "/tmp/guix-...-0/bin/redoctober"
+                      (list "TestCreate"
+                            "TestDelegate"
+                            "TestCreateUser"
+                            "TestModify"
+                            "TestEncrypt"
+                            "TestDecrypt"
+                            "TestReEncrypt"
+                            "TestOwners"
+                            "TestSummary"
+                            "TestPassword"
+                            "TestPurge"
+                            "TestRestore")
+                      "|"))))
+    (propagated-inputs (list go-github-com-coreos-go-systemd-v22
+                             go-github-com-getsentry-sentry-go
+                             go-github-com-prometheus-client-golang
+                             go-golang-org-x-crypto))
+    (home-page "https://github.com/cloudflare/redoctober")
+    (synopsis "Cloudflare Red October key management support for Golang")
+    (description
+     "This package provides an implementation of the Red October keyserver
+protocol for Golang.  It uses the Two-Person Rule to protect sensitive data,
+which means it supports generating, distributing, and recovering keys among
+multiple parties with configurable quorum requirements.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-cloudwego-base64x
   (package
     (name "go-github-com-cloudwego-base64x")
