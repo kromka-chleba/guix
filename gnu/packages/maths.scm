@@ -10913,6 +10913,44 @@ solver reading MPS or LP format files via a command line interface as well as
 embedded into other programs via a C++ class library.")
     (license license:asl2.0)))
 
+(define-public scip
+  (package
+    (name "scip")
+    (version "10.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/scipopt/scip")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1109xcagbamyan4891mfdkh5bh6zx7zm67gq8wd3k9vcwkccsvi9"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:build-type "Release"
+      #:parallel-tests? #f
+      #:configure-flags
+      #~(list "-DPAPILO=OFF" "-DZIMPL=OFF" "-DAMPL=ON" "-DIPOPT=OFF"
+              (string-append "-DSOPLEX_DIR="
+                             #$(this-package-input "soplex")))))
+    (inputs (list boost
+                  gmp
+                  mpfr
+                  readline
+                  soplex
+                  zlib))
+    (home-page "https://www.scipopt.org/")
+    (synopsis "Solving constraint integer programs")
+    (description
+     "SCIP is one of the fastest non-commercial solvers for mixed
+integer programming (MIP) and mixed integer nonlinear programming (MINLP).  It
+is a framework for constraint integer programming and branch-cut-and-price,
+allowing total control of the solution process and access to detailed
+information down to the guts of the solver.")
+    (license license:asl2.0)))
+
 (define-public scilab
   (package
     (name "scilab")
