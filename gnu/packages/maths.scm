@@ -180,6 +180,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages prolog)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages protobuf)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -187,6 +188,7 @@
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages regex)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages ruby-xyz)
@@ -10949,6 +10951,100 @@ integer programming (MIP) and mixed integer nonlinear programming (MINLP).  It
 is a framework for constraint integer programming and branch-cut-and-price,
 allowing total control of the solution process and access to detailed
 information down to the guts of the solver.")
+    (license license:asl2.0)))
+
+(define-public or-tools
+  (package
+    (name "or-tools")
+    (version "9.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/or-tools")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hb608s6c7aiyr8vaj0gi0jf45z39wvwvrgfq8x5dzgyzy06zszp"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_CXX=ON"
+              "-DBUILD_DEPS=OFF"
+              "-DBUILD_DOTNET=OFF"
+              "-DBUILD_EXAMPLES=OFF"
+              "-DBUILD_JAVA=OFF"
+              "-DBUILD_PYTHON=OFF"
+              "-DBUILD_SAMPLES=OFF"
+              "-DBUILD_SHARED_LIBS=ON"
+              "-DUSE_COINOR=OFF"
+              "-DUSE_CPLEX=OFF"
+              "-DUSE_GLPK=ON"
+              "-DUSE_HIGHS=OFF"
+              "-DUSE_SCIP=ON"
+              (string-append "-DSCIP_DIR="
+                             #$(this-package-input "scip")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'fix-protobuf-cmake
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((protobuf (assoc-ref inputs "protobuf"))
+                     (protobuf-static (assoc-ref inputs "protobuf:static"))
+                     (cmake-dir (string-append protobuf "/lib/cmake/protobuf"))
+                     (patched-root (string-append (getcwd) "/patched-protobuf")))
+                (mkdir-p (string-append patched-root "/lib/cmake/protobuf"))
+                (mkdir-p (string-append patched-root "/bin"))
+                (mkdir-p (string-append patched-root "/include"))
+                (copy-recursively cmake-dir
+                                  (string-append patched-root
+                                                 "/lib/cmake/protobuf"))
+                (for-each (lambda (f)
+                            (symlink f
+                                     (string-append patched-root "/lib/"
+                                                    (basename f))))
+                          (find-files (string-append protobuf "/lib")
+                                      "\\.(so|a)"))
+                (symlink (string-append protobuf-static "/lib/libupb.a")
+                         (string-append patched-root "/lib/libupb.a"))
+                (for-each (lambda (f)
+                            (symlink f
+                                     (string-append patched-root "/bin/"
+                                                    (basename f))))
+                          (find-files (string-append protobuf "/bin")))
+                (symlink (string-append protobuf "/include/google")
+                         (string-append patched-root "/include/google"))
+                (setenv "CMAKE_PREFIX_PATH"
+                        (string-append patched-root ":"
+                                       (getenv "CMAKE_PREFIX_PATH"))))))
+          (add-after 'install 'fix-runpath
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (protobuf (assoc-ref inputs "protobuf"))
+                     (protobuf-lib (string-append protobuf "/lib")))
+                (for-each (lambda (f)
+                            (invoke "patchelf" "--add-rpath" protobuf-lib f))
+                          (append (find-files (string-append out "/lib")
+                                              "\\.so$")
+                                  (find-files (string-append out "/bin"))))))))
+      #:tests? #f))
+    (native-inputs (list patchelf pkg-config))
+    (inputs `(("abseil-cpp" ,abseil-cpp)
+              ("eigen" ,eigen)
+              ("glpk" ,glpk)
+              ("gmp" ,gmp)
+              ("mpfr" ,mpfr)
+              ("protobuf" ,protobuf-6)
+              ("protobuf:static" ,protobuf-6 "static")
+              ("re2" ,re2-next)
+              ("scip" ,scip)
+              ("zlib" ,zlib)))
+    (home-page "https://developers.google.com/optimization")
+    (synopsis "Google Operations Research Tools")
+    (description
+     "OR-Tools is an open source software suite for optimization, tuned for
+tackling the world's toughest problems in vehicle routing, flows, integer and
+linear programming, and constraint programming.")
     (license license:asl2.0)))
 
 (define-public scilab
