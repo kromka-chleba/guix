@@ -4510,7 +4510,7 @@ the tensors contained therein.")
                     libxml2
                     llvm-19
                     opencl-clhpp
-                    opencl-headers
+                    opencl-headers-2022
                     rang
                     mesa
                     mesa-opencl
