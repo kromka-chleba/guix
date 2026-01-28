@@ -5216,39 +5216,38 @@ repositories.")
 (define-public go-github-com-containers-winquit
   ;; As it's seen in description, it's a Windows specific package but
   ;; gvisor-tap-vsock can't be build if it's absent.
-  (hidden-package
-   (package
-     (name "go-github-com-containers-winquit")
-     (version "1.1.0")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/containers/winquit")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "00kvrjq0jcjvhpdxgcz99r9azm3n0ds43smwc0ss1rxx7jszpjpv"))))
-     (build-system go-build-system)
-     (arguments
-      (list
-       #:skip-build? #t
-       #:import-path "github.com/containers/winquit"))
-     (native-inputs
-      (list go-github-com-onsi-ginkgo-v2
-            go-github-com-onsi-gomega))
-     (propagated-inputs
-      (list go-github-com-sirupsen-logrus))
-     (home-page "https://github.com/containers/winquit")
-     (synopsis "Graceful shutdown of Windows applications support for Golang")
-     (description
-      "winquit is a golang module that supports graceful shutdown of Windows
+  (package
+    (name "go-github-com-containers-winquit")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/containers/winquit")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00kvrjq0jcjvhpdxgcz99r9azm3n0ds43smwc0ss1rxx7jszpjpv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/containers/winquit"))
+    (native-inputs
+     (list go-github-com-onsi-ginkgo-v2
+           go-github-com-onsi-gomega))
+    (propagated-inputs
+     (list go-github-com-sirupsen-logrus))
+    (home-page "https://github.com/containers/winquit")
+    (synopsis "Graceful shutdown of Windows applications support for Golang")
+    (description
+     "winquit is a golang module that supports graceful shutdown of Windows
 applications through the sending and receiving of Windows quit events on Win32
 message queues.  This allows golang applications to implement behavior
 comparable to SIGTERM signal handling on UNIX derived systems.  Additionally,
 it supports the graceful shutdown mechanism employed by Windows system tools,
 such as @code{taskkill.exe}.")
-     (license license:asl2.0))))
+    (license license:asl2.0)))
 
 (define-public go-github-com-coocood-freecache
   (package
@@ -8662,32 +8661,31 @@ goroutines.")
 
 ;; For delve@1.25.1
 (define-public go-github-com-go-delve-liner
-  (hidden-package
-   (package
-     (name "go-github-com-go-delve-liner")
-     (version "1.2.3-0.20231231155935-4726ab1d7f62")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/go-delve/liner")
-               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "0f94qx7jzign64gv865whirq9xw7rakxf3wy4y9fsn52bxx408x0"))))
-     (build-system go-build-system)
-     (arguments
-      (list
-       #:import-path "github.com/go-delve/liner"))
-     (propagated-inputs
-      (list go-github-com-mattn-go-runewidth
-            go-golang-org-x-sys))
-     (home-page "https://github.com/go-delve/liner")
-     (synopsis "Command line editor Go library")
-     (description
-      "This package is an alternative fork of https://github.com/peterh/liner
+  (package
+    (name "go-github-com-go-delve-liner")
+    (version "1.2.3-0.20231231155935-4726ab1d7f62")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/go-delve/liner")
+              (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f94qx7jzign64gv865whirq9xw7rakxf3wy4y9fsn52bxx408x0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-delve/liner"))
+    (propagated-inputs
+     (list go-github-com-mattn-go-runewidth
+           go-golang-org-x-sys))
+    (home-page "https://github.com/go-delve/liner")
+    (synopsis "Command line editor Go library")
+    (description
+     "This package is an alternative fork of https://github.com/peterh/liner
 to build @code{delve} - debugger for the Go programming language.")
-     (license license:expat))))
+    (license license:expat)))
 
 (define-public go-github-com-go-errors-errors
   (package
@@ -23548,38 +23546,37 @@ programming language.")
 
 (define-public go-github-com-wader-gojq
   ;; This is a modified fork only for fq.
-  (hidden-package
-   (package
-     (name "go-github-com-wader-gojq")
-     (version "0.12.1-0.20250208151254-0aa7b87b2c2b")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
+  (package
+    (name "go-github-com-wader-gojq")
+    (version "0.12.1-0.20250208151254-0aa7b87b2c2b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
               (url "https://github.com/wader/gojq")
               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "1byil5r5nzs6fx0si3ipanq1c8vcqbsr0rhyd5380vp7zr5j9cxl"))))
-     (build-system go-build-system)
-     (arguments
-      (list
-       #:import-path "github.com/wader/gojq"))
-     (native-inputs
-      (list go-github-com-google-go-cmp))
-     (propagated-inputs
-      (list go-github-com-itchyny-timefmt-go
-            go-github-com-mattn-go-isatty
-            go-github-com-mattn-go-runewidth
-            go-gopkg-in-yaml-v3))
-     (home-page "https://github.com/wader/gojq")
-     (synopsis "Pure Go implementation of jq")
-     (description
-      "Package gojq provides the parser and the interpreter of gojq.  Please refer to
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1byil5r5nzs6fx0si3ipanq1c8vcqbsr0rhyd5380vp7zr5j9cxl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/wader/gojq"))
+    (native-inputs
+     (list go-github-com-google-go-cmp))
+    (propagated-inputs
+     (list go-github-com-itchyny-timefmt-go
+           go-github-com-mattn-go-isatty
+           go-github-com-mattn-go-runewidth
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/wader/gojq")
+    (synopsis "Pure Go implementation of jq")
+    (description
+     "Package gojq provides the parser and the interpreter of gojq.  Please refer to
 @url{https://github.com/itchyny/gojq#usage-as-a-library, Usage as a library} for
 introduction. It's fork of github.com/itchyny/gojq, see github.com/wader/gojq fq
 branc.")
-     (license license:expat))))
+    (license license:expat)))
 
 (define-public go-github-com-wadey-gocovmerge
   (package
@@ -24903,27 +24900,26 @@ Platforms supported:
 
 ;; For micro@2.0.14
 (define-public go-github-com-zyedidia-go-runewidth
-  (hidden-package
-   (package
-     (inherit go-github-com-mattn-go-runewidth)
-     (name "go-github-com-zyedidia-go-runewidth")
-     (version "0.0.12")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
+  (package
+    (inherit go-github-com-mattn-go-runewidth)
+    (name "go-github-com-zyedidia-go-runewidth")
+    (version "0.0.12")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
               (url "https://github.com/zyedidia/go-runewidth")
               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "18gv5fkd69v8bwngj6r5zc572vyd1qhafz1wi3d7ynz3w0mmq85c"))))
-     (arguments
-      (list
-       #:import-path "github.com/zyedidia/go-runewidth"))
-     (home-page "https://github.com/zyedidia/go-runewidth")
-     (description
-      "It's an alternative fork of
-@url{https://github.com/mattn/go-runewidth}."))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18gv5fkd69v8bwngj6r5zc572vyd1qhafz1wi3d7ynz3w0mmq85c"))))
+    (arguments
+     (list
+      #:import-path "github.com/zyedidia/go-runewidth"))
+    (home-page "https://github.com/zyedidia/go-runewidth")
+    (description
+     "It's an alternative fork of
+@url{https://github.com/mattn/go-runewidth}.")))
 
 (define-public go-github-com-zyedidia-go-shellquote
   (package

@@ -812,32 +812,28 @@ attacks you can use on opponents.")
   ;; revision available.
   (let ((commit 1463)
         (revision "0"))
-    ;; The package is hidden as the game data is *required* by the install
-    ;; target of vdrift itself, and there is no need for users to manually
-    ;; install it.
-    (hidden-package
-     (package
-       (name "vdrift-data")
-       ;; The date is the last modified time shown next to the 'vdrift-data'
-       ;; directory when visiting
-       ;; https://sourceforge.net/p/vdrift/code/HEAD/tree/.
-       (version (format #f "2024-10-23-~a.~a" revision commit))
-       (source (origin
-                 (method svn-fetch)
-                 (uri (svn-reference
+    (package
+      (name "vdrift-data")
+      ;; The date is the last modified time shown next to the 'vdrift-data'
+      ;; directory when visiting
+      ;; https://sourceforge.net/p/vdrift/code/HEAD/tree/.
+      (version (format #f "2024-10-23-~a.~a" revision commit))
+      (source (origin
+                (method svn-fetch)
+                (uri (svn-reference
                        (url "https://svn.code.sf.net/p/vdrift/code/vdrift-data")
                        (revision commit)))
-                 (file-name (string-append name "-" version "-checkout"))
-                 (sha256
-                  (base32
-                   "1zx08q4v3s4l5r0wxphd323h0rqp9pjb7kr08s3gb2qr85lw587h"))))
-       (build-system copy-build-system)
-       (arguments (list #:install-plan #~'(("." "share/games/vdrift/data"))))
-       (home-page "https://vdrift.net/")
-       (synopsis "Game data for Vdrift")
-       (description "This package contains the assets for the Vdrift racing
+                (file-name (string-append name "-" version "-checkout"))
+                (sha256
+                 (base32
+                  "1zx08q4v3s4l5r0wxphd323h0rqp9pjb7kr08s3gb2qr85lw587h"))))
+      (build-system copy-build-system)
+      (arguments (list #:install-plan #~'(("." "share/games/vdrift/data"))))
+      (home-page "https://vdrift.net/")
+      (synopsis "Game data for Vdrift")
+      (description "This package contains the assets for the Vdrift racing
 game.")
-       (license license:gpl3+)))))      ;assumed same as Vdrift itself
+      (license license:gpl3+))))      ;assumed same as Vdrift itself
 
 (define-public vdrift
   ;; The latest release is from 2014, and lacks build system and other
@@ -4885,46 +4881,45 @@ This package expects the game(s) to be placed in subdirectories of
   ;; which revision is bundled into the released SuperTuxKart-*-src tarball;
   ;; use the latest SVN revision available.
   (let ((commit "18621"))
-    (hidden-package
-     (package
-       (name "supertuxkart-data")
-       ;; The package produced is a merger of supertuxkart's "stk-assets"
-       ;; repository and the "stk-code" repository's "data" directory, so
-       ;; include the code version as well.
-       (version (string-append %supertuxkart-version "-" commit))
-       (source
-        (origin
-          (method svn-fetch)
-          (uri (svn-reference
+    (package
+      (name "supertuxkart-data")
+      ;; The package produced is a merger of supertuxkart's "stk-assets"
+      ;; repository and the "stk-code" repository's "data" directory, so
+      ;; include the code version as well.
+      (version (string-append %supertuxkart-version "-" commit))
+      (source
+       (origin
+         (method svn-fetch)
+         (uri (svn-reference
                 (url "https://svn.code.sf.net/p/supertuxkart/code/stk-assets")
                 (revision (string->number commit))))
-          (file-name (string-append name "-" commit "-checkout"))
-          (sha256
-           (base32
-            "0bz4rab0h6dyf014andw7lpd5gh3b2xqdslx0ffdglmf65xi594a"))))
-       (build-system copy-build-system)
-       (arguments
-        (list #:install-plan
-              #~'(("." "share/supertuxkart/data"
-                   #:exclude-regexp ("wip-.*")))
-              #:phases
-              #~(modify-phases %standard-phases
-                  (add-after 'unpack 'copy-code-data
-                    (lambda _
-                      (copy-recursively
-                       (string-append
-                        #$(this-package-input
-                           (git-file-name "supertuxkart" %supertuxkart-version))
-                        "/data/")
-                       "."))))))
-       (inputs (list supertuxkart-source))
-       (home-page "https://supertuxkart.net/Main_Page")
-       (synopsis "Data files for SuperTuxKart")
-       (description "This package contains data files for SuperTuxKart.")
-       (license (list license:gpl3+
-                      license:cc-by-sa3.0
-                      license:cc-by-sa4.0
-                      license:cc0))))))
+         (file-name (string-append name "-" commit "-checkout"))
+         (sha256
+          (base32
+           "0bz4rab0h6dyf014andw7lpd5gh3b2xqdslx0ffdglmf65xi594a"))))
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan
+             #~'(("." "share/supertuxkart/data"
+                  #:exclude-regexp ("wip-.*")))
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'copy-code-data
+                   (lambda _
+                     (copy-recursively
+                      (string-append
+                       #$(this-package-input
+                          (git-file-name "supertuxkart" %supertuxkart-version))
+                       "/data/")
+                      "."))))))
+      (inputs (list supertuxkart-source))
+      (home-page "https://supertuxkart.net/Main_Page")
+      (synopsis "Data files for SuperTuxKart")
+      (description "This package contains data files for SuperTuxKart.")
+      (license (list license:gpl3+
+                     license:cc-by-sa3.0
+                     license:cc-by-sa4.0
+                     license:cc0)))))
 
 (define-public supertuxkart
   (package
@@ -4982,25 +4977,24 @@ against each other or just trying to beat the computer; single-player mode is
 also available.")
     (license license:gpl3+)))
 
-(define ring-racers-data
-  (hidden-package
-   (package
-     (name "ring-racers-data")
-     (version "2.4")
-     (source
-      (origin
-        (method url-fetch/zipbomb)
-        (uri (string-append
-              "https://github.com/KartKrewDev/RingRacers/releases/download/v"
-              version "/Dr.Robotnik.s-Ring-Racers-v" version "-Assets.zip"))
-        (file-name (string-append name "-" version ".zip"))
-        (sha256
-         (base32 "087i1bz46g57s0850j5wf9j2bdmr451lzg156hrg681chwdxgfpf"))))
-     (build-system copy-build-system)
-     (home-page "https://github.com/KartKrewDev/RingRacers/releases")
-     (synopsis "Data files for Ring Racers")
-     (description "This package contains data files for Ring Racers.")
-     (license license:gpl2+))))
+(define-public ring-racers-data
+  (package
+    (name "ring-racers-data")
+    (version "2.4")
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append
+             "https://github.com/KartKrewDev/RingRacers/releases/download/v"
+             version "/Dr.Robotnik.s-Ring-Racers-v" version "-Assets.zip"))
+       (file-name (string-append name "-" version ".zip"))
+       (sha256
+        (base32 "087i1bz46g57s0850j5wf9j2bdmr451lzg156hrg681chwdxgfpf"))))
+    (build-system copy-build-system)
+    (home-page "https://github.com/KartKrewDev/RingRacers/releases")
+    (synopsis "Data files for Ring Racers")
+    (description "This package contains data files for Ring Racers.")
+    (license license:gpl2+)))
 
 (define-public ring-racers
   (package
@@ -9959,38 +9953,35 @@ civilized than your own.")
                    license:public-domain))))
 
 (define-public speed-dreams-data
-  ;; Use the same tag version as speed-dreams package.
-  (hidden-package
-   (package
-     (name "speed-dreams-data")
-     (version "2.4.2")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
+  (package
+    (name "speed-dreams-data")
+    (version (package-version speed-dreams))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
               (url (string-append "https://forge.a-lec.org/speed-dreams/"
                                   name))
               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "1igavpsn8v9v866hawmgx47a6wz0bxykmf540961jfzav85j5m7p"))))
-     (build-system cmake-build-system)
-     (arguments (list #:tests? #f))   ;no test suite
-     (home-page "https://www.speed-dreams.net/en")
-     (synopsis "Data for the Speed Dreams racing game")
-     (description "This package contains the non-functional data for the
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1igavpsn8v9v866hawmgx47a6wz0bxykmf540961jfzav85j5m7p"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))   ;no test suite
+    (home-page "https://www.speed-dreams.net/en")
+    (synopsis "Data for the Speed Dreams racing game")
+    (description "This package contains the non-functional data for the
 Speed Dreams racing game.")
-     (license license:gpl2+))))
+    (license license:gpl2+)))
 
 (define-public speed-dreams-freesolid
   ;; Use the commit corresponding to the 'freesolid' submodule
   ;; (https://forge.a-lec.org/speed-dreams/speed-dreams-code).
-  (hidden-package
-    (package
-      (name "speed-dreams-freesolid")
-      (version "2.1.2")
-      (source (origin
+  (package
+    (name "speed-dreams-freesolid")
+    (version "2.1.2")
+    (source (origin
               (method git-fetch)
               (uri (git-reference
                      (url (string-append "https://forge.a-lec.org/speed-dreams/freesolid"))
@@ -9999,21 +9990,21 @@ Speed Dreams racing game.")
               (sha256
                (base32
                 "025ml2nzhkfki28ckjjggqpkr1gd02c2blpr4afc5175r8bfh2w4"))))
-      (build-system cmake-build-system)
-      (arguments
-       (list
-        #:tests? #f ;no test suite
-        #:build-type "Release"
-        #:configure-flags
-          #~(list "-DBUILD_SHARED_LIBS=ON"))) ;speed-dreams build system needs a shared library
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no test suite
+      #:build-type "Release"
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"))) ;speed-dreams build system needs a shared library
 
-      (home-page "https://forge.a-lec.org/speed-dreams/freesolid")
-      (synopsis "Speed-Dreams 3D collision detection C++ library")
-      (description "Speed Dreams FreeSOLID is a fork of FreeSOLID, a library for
+    (home-page "https://forge.a-lec.org/speed-dreams/freesolid")
+    (synopsis "Speed-Dreams 3D collision detection C++ library")
+    (description "Speed Dreams FreeSOLID is a fork of FreeSOLID, a library for
 collision detection of three-dimensional objects undergoing rigid motion and
 deformation. It is designed to be used in interactive 3D graphics
 applications.")
-      (license license:lgpl2.0+))))
+    (license license:lgpl2.0+)))
 
 (define-public speed-dreams
   (package

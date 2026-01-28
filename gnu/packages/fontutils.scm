@@ -948,28 +948,27 @@ object.")
   ;; There is no release tag, so use the latest commit.
   (let ((revision "0")
         (commit "1e4c5061d328105c4dcfcb6fdbc27ec49b3e9d23"))
-    (hidden-package
-     (package
-       (name "psautohint-font-data")
-       (version (git-version "0.0.0" revision commit))
-       (source
-        (origin
-          (method git-fetch)
-          (uri (git-reference
+    (package
+      (name "psautohint-font-data")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
                 (url "https://github.com/adobe-type-tools/psautohint-testdata")
                 (commit commit)))
-          (file-name (git-file-name name version))
-          (sha256
-           (base32
-            "0p7g8mnndzp8zpbj9h6lkvfdpvd74fy10q8wmkagbg2ahbdi1zva"))))
-       (build-system copy-build-system)
-       (home-page "https://github.com/adobe-type-tools/psautohint-testdata")
-       (synopsis "Test font data psautohint")
-       (description "This package contains the font data used by the test
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0p7g8mnndzp8zpbj9h6lkvfdpvd74fy10q8wmkagbg2ahbdi1zva"))))
+      (build-system copy-build-system)
+      (home-page "https://github.com/adobe-type-tools/psautohint-testdata")
+      (synopsis "Test font data psautohint")
+      (description "This package contains the font data used by the test
 suite of the @code{psautohint} package.")
-       ;; The bundle contains font data from the Cantarell, Libertinus, Source
-       ;; Code Pro, Source Serif Pro, all available under the same license.
-       (license license:silofl1.1)))))
+      ;; The bundle contains font data from the Cantarell, Libertinus, Source
+      ;; Code Pro, Source Serif Pro, all available under the same license.
+      (license license:silofl1.1))))
 
 (define-public psautohint
   (package

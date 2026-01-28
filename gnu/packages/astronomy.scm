@@ -2429,36 +2429,35 @@ up-front for extensibility.")
     (license license:bsd-3)))
 
 (define-public python-asdf-transform-schemas
-  (hidden-package
-   (package
-     (name "python-asdf-transform-schemas")
-     (version "0.6.0")
-     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "asdf_transform_schemas" version))
-        (sha256
-         (base32 "0clp3a2ldfhvsh5c7zqd7nr2bvv62a89aaf8p4a2vzgzjvhghl0g"))))
-     (build-system pyproject-build-system)
-     (arguments
-      (list
-       ;; XXX: Check why all tests fail in this file.
-       #:test-flags #~(list "--deselect=tests/test_invalid.py")))
-     (native-inputs
-      (list python-asdf-bootstrap
-            python-pytest
-            python-setuptools
-            python-setuptools-scm
-            python-wheel))
-     (propagated-inputs
-      (list python-asdf-standard))
-     (home-page "https://github.com/asdf-format/asdf-transform-schemas")
-     (synopsis "ASDF schemas for transforms")
-     (description
-      "This package provides ASDF schemas for validating transform tags.
+  (package
+    (name "python-asdf-transform-schemas")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "asdf_transform_schemas" version))
+       (sha256
+        (base32 "0clp3a2ldfhvsh5c7zqd7nr2bvv62a89aaf8p4a2vzgzjvhghl0g"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Check why all tests fail in this file.
+      #:test-flags #~(list "--deselect=tests/test_invalid.py")))
+    (native-inputs
+     (list python-asdf-bootstrap
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-asdf-standard))
+    (home-page "https://github.com/asdf-format/asdf-transform-schemas")
+    (synopsis "ASDF schemas for transforms")
+    (description
+     "This package provides ASDF schemas for validating transform tags.
 Users should not need to install this directly; instead, install an
 implementation package such as asdf-astropy.")
-     (license license:bsd-3))))
+    (license license:bsd-3)))
 
 (define-public python-asdf-transform-schemas-bootstrap
   (hidden-package
@@ -2473,38 +2472,37 @@ implementation package such as asdf-astropy.")
      (propagated-inputs '()))))
 
 (define-public python-asdf-wcs-schemas
-  (hidden-package
-   (package
-     (name "python-asdf-wcs-schemas")
-     (version "0.5.0")
-     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "asdf_wcs_schemas" version))
-        (sha256
-         (base32 "1dar2pzf2plwyl1rbmnv8fqvx1ljgpf3z39d4ybmn690djjdsyxg"))))
-     (build-system pyproject-build-system)
-     (arguments
-      (list
-       #:test-flags #~(list "tests")))
-     (native-inputs
-      (list python-asdf
-            python-pytest
-            python-pytest-openfiles
-            python-setuptools
-            python-setuptools-scm
-            python-wheel))
-     (propagated-inputs
-      (list python-asdf-coordinates-schemas
-            python-asdf-standard
-            python-asdf-transform-schemas))
-     (home-page "https://github.com/asdf-format/asdf-wcs-schemas")
-     (synopsis "ASDF WCS Schemas")
-     (description
-      "This package provides ASDF schemas for validating World Coordinate
+  (package
+    (name "python-asdf-wcs-schemas")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "asdf_wcs_schemas" version))
+       (sha256
+        (base32 "1dar2pzf2plwyl1rbmnv8fqvx1ljgpf3z39d4ybmn690djjdsyxg"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "tests")))
+    (native-inputs
+     (list python-asdf
+           python-pytest
+           python-pytest-openfiles
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-asdf-coordinates-schemas
+           python-asdf-standard
+           python-asdf-transform-schemas))
+    (home-page "https://github.com/asdf-format/asdf-wcs-schemas")
+    (synopsis "ASDF WCS Schemas")
+    (description
+     "This package provides ASDF schemas for validating World Coordinate
 System (WCS) tags.  Users should not need to install this directly; instead,
 install an implementation package such as gwcs.")
-     (license license:bsd-3))))
+    (license license:bsd-3)))
 
 (define-public python-asdf-zarr
   (package

@@ -277,30 +277,29 @@ paste on @url{https://www.pastebin.com, Pastebin} without API keys.")
 
 (define-public geolite-country-data
   ;; TODO: Figure out how to get an updated, free database.
-  (hidden-package
-   (package
-     (name "geolite-country-data")
-     (version "2019-12-06")
-     (source (origin
-               (method url-fetch)
-               (uri (string-append
-                     "https://web.archive.org/web/20181229152721/"
-                     "http://geolite.maxmind.com/download/geoip/database/"
-                     "GeoLiteCountry/" "GeoIP.dat.gz"))
-               (sha256
-                (base32
-                 "0j84ms2x893cpn7x8gffy082gnx882pmr0f6zpfsd46gpyw5xh5r"))))
-     (build-system copy-build-system)
-     (arguments
-      (list #:install-plan #~'(("GeoIP.dat" "share/GeoIP/"))))
-     (home-page "https://dev.maxmind.com/geoip/geolite2-free-geolocation-data")
-     (synopsis "Country-level GeoIP data (December 2018)")
-     (description
-      "This package provides an old GeoIP database in the legacy @file{.dat}
+  (package
+    (name "geolite-country-data")
+    (version "2019-12-06")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://web.archive.org/web/20181229152721/"
+                    "http://geolite.maxmind.com/download/geoip/database/"
+                    "GeoLiteCountry/" "GeoIP.dat.gz"))
+              (sha256
+               (base32
+                "0j84ms2x893cpn7x8gffy082gnx882pmr0f6zpfsd46gpyw5xh5r"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan #~'(("GeoIP.dat" "share/GeoIP/"))))
+    (home-page "https://dev.maxmind.com/geoip/geolite2-free-geolocation-data")
+    (synopsis "Country-level GeoIP data (December 2018)")
+    (description
+     "This package provides an old GeoIP database in the legacy @file{.dat}
 format.  The data was collected before MaxMind changed the license and format
 of their databases.  It is intended only as a compatibility package for
 SpamAssassin.")
-     (license license:cc-by-sa4.0))))
+    (license license:cc-by-sa4.0)))
 
 (define-public perl-geo-ip
   (package

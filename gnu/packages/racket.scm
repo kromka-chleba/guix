@@ -300,89 +300,86 @@ One of the early layers implements macros.")
       ,(string-append "--prefix=" #$output "/opt/racket-vm")))
 
 (define-public racket-vm-cgc
-  ;; Eventually, it may make sense for some vm packages to not be hidden,
-  ;; but this one is especially likely to remain hidden.
-  (hidden-package
-   (package
-     (name "racket-vm-cgc")
-     (version %racket-version)
-     (source %racket-origin)
-     (inputs (list ncurses ;; <- common to all variants (for #%terminal)
-                   libffi)) ;; <- for BC and non-native CS variants
-     (native-inputs (cons* zuo ;; <- for all variants
-                           libtool ;; <- only for BC variants
-                           (if (%current-target-system)
-                               (list this-package)
-                               '())))
-     (outputs '("out" "debug"))
-     (build-system gnu-build-system)
-     (arguments
-      (list
-       #:configure-flags
-       #~(cons "--enable-cgcdefault"
-               #$racket-vm-common-configure-flags)
-       #:make-flags
-       #~(list (string-append "ZUO="
-                              #+(this-package-native-input "zuo")
-                              "/bin/zuo"))
-       ;; Tests are in packages like racket-test-core and
-       ;; main-distribution-test that aren't part of the main
-       ;; distribution.
-       #:tests? #f
-       ;; Upstream recommends #:out-of-source?, and it
-       ;; helps a lot with debugging.
-       #:out-of-source? #t
-       #:modules '((ice-9 match)
-                   (ice-9 regex)
-                   (guix build gnu-build-system)
-                   (guix build utils))
-       #:strip-directories #~'("opt/racket-vm/bin"
-                               "opt/racket-vm/lib")
-       #:phases
-       #~(modify-phases %standard-phases
-           (add-before 'configure 'initialize-config.rktd
-             (lambda* (#:key inputs #:allow-other-keys)
-               (define (write-racket-hash alist)
-                 ;; inside must use dotted pair notation
-                 (display "#hash(")
-                 (for-each (match-lambda
-                             ((k . v)
-                              (format #t "(~s . ~s)" k v)))
-                           alist)
-                 (display ")\n"))
-               (define maybe-release-catalog
-                 (let ((v #$(package-version this-package)))
-                   (if (string-match "^[0-9]+\\.[0-9]+($|\\.[0-8][0-9]*$)"
-                                     v)
-                       `(,(string-append
-                           "https://download.racket-lang.org/releases/"
-                           v
-                           "/catalog/"))
-                       '())))
-               (mkdir-p "racket/etc")
-               (with-output-to-file "racket/etc/config.rktd"
-                 (lambda ()
-                   (write-racket-hash
-                    `((build-stamp . "")
-                      (catalogs ,@maybe-release-catalog
-                                #f)))))))
-           (add-before 'configure 'chdir
-             (lambda _
-               (chdir "racket/src")))
-           (replace 'install-license-files
-             ;; The #:out-of-source? mode for install-license-files fails
-             ;; to find the srcdir: as a workaround, navigate there ourselves.
-             (let ((install-license-files
-                    (assoc-ref %standard-phases 'install-license-files)))
-               (lambda args
-                 (with-directory-excursion "../src"
-                   (apply install-license-files
-                          `(,@args
-                            ;; if there are duplicate keywords, last is used
-                            #:out-of-source? #f)))))))))
-     (home-page "https://racket-lang.org")
-     (synopsis "Old Racket implementation used for bootstrapping")
-     (description "This variant of the Racket BC (``before Chez'' or
+  (package
+    (name "racket-vm-cgc")
+    (version %racket-version)
+    (source %racket-origin)
+    (inputs (list ncurses ;; <- common to all variants (for #%terminal)
+                  libffi)) ;; <- for BC and non-native CS variants
+    (native-inputs (cons* zuo ;; <- for all variants
+                          libtool ;; <- only for BC variants
+                          (if (%current-target-system)
+                              (list this-package)
+                              '())))
+    (outputs '("out" "debug"))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(cons "--enable-cgcdefault"
+              #$racket-vm-common-configure-flags)
+      #:make-flags
+      #~(list (string-append "ZUO="
+                             #+(this-package-native-input "zuo")
+                             "/bin/zuo"))
+      ;; Tests are in packages like racket-test-core and
+      ;; main-distribution-test that aren't part of the main
+      ;; distribution.
+      #:tests? #f
+      ;; Upstream recommends #:out-of-source?, and it
+      ;; helps a lot with debugging.
+      #:out-of-source? #t
+      #:modules '((ice-9 match)
+                  (ice-9 regex)
+                  (guix build gnu-build-system)
+                  (guix build utils))
+      #:strip-directories #~'("opt/racket-vm/bin"
+                              "opt/racket-vm/lib")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'initialize-config.rktd
+            (lambda* (#:key inputs #:allow-other-keys)
+              (define (write-racket-hash alist)
+                ;; inside must use dotted pair notation
+                (display "#hash(")
+                (for-each (match-lambda
+                            ((k . v)
+                             (format #t "(~s . ~s)" k v)))
+                          alist)
+                (display ")\n"))
+              (define maybe-release-catalog
+                (let ((v #$(package-version this-package)))
+                  (if (string-match "^[0-9]+\\.[0-9]+($|\\.[0-8][0-9]*$)"
+                                    v)
+                      `(,(string-append
+                          "https://download.racket-lang.org/releases/"
+                          v
+                          "/catalog/"))
+                      '())))
+              (mkdir-p "racket/etc")
+              (with-output-to-file "racket/etc/config.rktd"
+                (lambda ()
+                  (write-racket-hash
+                   `((build-stamp . "")
+                     (catalogs ,@maybe-release-catalog
+                               #f)))))))
+          (add-before 'configure 'chdir
+            (lambda _
+              (chdir "racket/src")))
+          (replace 'install-license-files
+            ;; The #:out-of-source? mode for install-license-files fails
+            ;; to find the srcdir: as a workaround, navigate there ourselves.
+            (let ((install-license-files
+                   (assoc-ref %standard-phases 'install-license-files)))
+              (lambda args
+                (with-directory-excursion "../src"
+                  (apply install-license-files
+                         `(,@args
+                           ;; if there are duplicate keywords, last is used
+                           #:out-of-source? #f)))))))))
+    (home-page "https://racket-lang.org")
+    (synopsis "Old Racket implementation used for bootstrapping")
+    (description "This variant of the Racket BC (``before Chez'' or
 ``bytecode'') implementation is not recommended for general use.  It uses
 CGC (a ``Conservative Garbage Collector''), which was succeeded as default in
 PLT Scheme version 370 (which translates to 3.7 in the current versioning
@@ -392,9 +389,9 @@ Racket CS implementation.
 Racket CGC is primarily used for bootstrapping Racket BC [3M].  It may
 also be used for embedding applications without the annotations needed in C
 code to use the 3M garbage collector.")
-     ;; https://download.racket-lang.org/license.html
-     ;; The LGPL components are only used by Racket BC.
-     (license (list license:lgpl3+ license:asl2.0 license:expat)))))
+    ;; https://download.racket-lang.org/license.html
+    ;; The LGPL components are only used by Racket BC.
+    (license (list license:lgpl3+ license:asl2.0 license:expat))))
 
 (define-public racket-vm-bc
   (package

@@ -1525,8 +1525,7 @@ test environments.")
 (define-public glibc-locales
   (make-glibc-locales glibc))
 (define-public glibc-utf8-locales
-  (hidden-package
-   (make-glibc-utf8-locales glibc)))
+  (make-glibc-utf8-locales glibc))
 
 ;; Packages provided to ease use of binaries linked against the previous libc.
 (define-public glibc-locales-2.35
