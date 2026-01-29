@@ -798,6 +798,12 @@ training, HMM clustering, HMM mixtures.")
       (build-system cmake-build-system)
       (arguments
        (list
+        #:imported-modules (append %cmake-build-system-modules
+                                   %pyproject-build-system-modules)
+        #:modules '((ice-9 textual-ports)
+                    (guix build utils)
+                    ((guix build pyproject-build-system) #:prefix python:)
+                    (guix build cmake-build-system))
         #:configure-flags
         #~(list #$(string-append "-DGGML_BUILD_NUMBER=" tag)
                 "-DBUILD_SHARED_LIBS=ON"
@@ -819,12 +825,6 @@ training, HMM clustering, HMM mixtures.")
                 "-DGGML_AVX512_VBMI=OFF"
                 "-DGGML_AVX512_VNNI=OFF")
 
-        #:modules '((ice-9 textual-ports)
-                    (guix build utils)
-                    ((guix build python-build-system) #:prefix python:)
-                    (guix build cmake-build-system))
-        #:imported-modules `(,@%cmake-build-system-modules
-                             (guix build python-build-system))
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-paths
