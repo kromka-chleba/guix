@@ -728,48 +728,43 @@ NumPy @code{dtype} extensions used in machine learning libraries, including:
                   "07kdsngvr4n1qxpqzv1nlay7g41d6jzjppa8vzmrg220s8ing87z"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:imported-modules (,@%default-gnu-imported-modules
-                             (guix build python-build-system))
-         #:modules          ((guix build python-build-system)
-                             ,@%default-gnu-modules)
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'enter-dir
-             (lambda _ (chdir "ghmm")))
-           (add-after 'enter-dir 'fix-runpath
-             (lambda* (#:key outputs #:allow-other-keys)
-               (substitute* "ghmmwrapper/setup.py"
-                 (("^(.*)extra_compile_args = \\[" line indent)
-                  (string-append indent
-                                 "extra_link_args = [\"-Wl,-rpath="
-                                 (assoc-ref outputs "out") "/lib\"],\n"
-                                 line
-                                 "\"-Wl,-rpath="
-                                 (assoc-ref outputs "out")
-                                 "/lib\", ")))))
-           (add-after 'enter-dir 'disable-broken-tests
-             (lambda _
-               (substitute* "tests/Makefile.am"
-                 ;; GHMM_SILENT_TESTS is assumed to be a command.
-                 (("TESTS_ENVIRONMENT.*") "")
-                 ;; Do not build broken tests.
-                 (("chmm .*") "")
-                 (("read_fa .*") "")
-                 (("mcmc .*") "")
-                 (("label_higher_order_test.*$")
-                  "label_higher_order_test\n"))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'enter-dir
+              (lambda _ (chdir "ghmm")))
+            (add-after 'enter-dir 'fix-runpath
+              (lambda _
+                (substitute* "ghmmwrapper/setup.py"
+                  (("^(.*)extra_compile_args = \\[" line indent)
+                   (string-append indent
+                                  "extra_link_args = [\"-Wl,-rpath="
+                                  #$output "/lib\"],\n"
+                                  line
+                                  "\"-Wl,-rpath=" #$output "/lib\", ")))))
+            (add-after 'enter-dir 'disable-broken-tests
+              (lambda _
+                (substitute* "tests/Makefile.am"
+                  ;; GHMM_SILENT_TESTS is assumed to be a command.
+                  (("TESTS_ENVIRONMENT.*") "")
+                  ;; Do not build broken tests.
+                  (("chmm .*") "")
+                  (("read_fa .*") "")
+                  (("mcmc .*") "")
+                  (("label_higher_order_test.*$")
+                   "label_higher_order_test\n"))
 
-               ;; These Python unittests are broken as there is no gato.
-               ;; See https://sourceforge.net/p/ghmm/support-requests/3/
-               (substitute* "ghmmwrapper/ghmmunittests.py"
-                 (("^(.*)def (testNewXML|testMultipleTransitionClasses|testNewXML)"
-                   line indent)
-                  (string-append indent
-                                 "@unittest.skip(\"Disabled by Guix\")\n"
-                                 line))))))))
+                ;; These Python unittests are broken as there is no gato.
+                ;; See https://sourceforge.net/p/ghmm/support-requests/3/
+                (substitute* "ghmmwrapper/ghmmunittests.py"
+                  (("^(.*)def (testNewXML|testMultipleTransitionClasses|testNewXML)"
+                    line indent)
+                   (string-append indent
+                                  "@unittest.skip(\"Disabled by Guix\")\n"
+                                  line))))))))
       (inputs
-       `(("python" ,python-2) ; only Python 2 is supported
-         ("libxml2" ,libxml2)))
+       (list python-2
+             libxml2))
       (native-inputs
        (list pkg-config
              dejagnu
