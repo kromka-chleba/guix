@@ -10181,8 +10181,8 @@ known as Slingshot.")
     (arguments
      (list #:configure-flags
            #~(append (if #$(target-64bit?)
-                           (list "--enable-efa")
-                           '())
+                         (list "--enable-efa")
+                         '())
                      (list #$@(if (this-package-input "libcxi")
                                   #~("--enable-cxi")
                                   #~())
