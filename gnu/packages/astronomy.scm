@@ -10173,7 +10173,7 @@ functionality needed for solar data analysis.")
                     " and not "))
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'check 'pre-check
+          (add-before 'build 'set-home-env
             (lambda _
               (setenv "HOME" "/tmp"))))))
     (native-inputs
