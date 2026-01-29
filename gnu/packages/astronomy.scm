@@ -6399,7 +6399,7 @@ Carlo.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; tests: 397 passed, 7 skipped, 10 xfailed
+      ;; tests: 404 passed, 8 skipped, 10 xfailed
       #:test-flags
       #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
               #$@(map (lambda (test) (string-append "--deselect="
@@ -6415,7 +6415,7 @@ Carlo.")
                             "test_2d[celestial_2d_fitswcs]")))
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'check 'set-home-env
+          (add-before 'build 'set-home-env
             (lambda _
               ;; Tests require HOME to be set.
               ;;  Permission denied: '/homeless-shelter'
