@@ -453,16 +453,21 @@ the palette can be injected into.")
 (define-public cargo-audit
   (package
     (name "cargo-audit")
-    (version "0.21.2")
+    (version "0.22.0")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "cargo-audit" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "1a00yqpckkw86zh2hg7ra82c5fx0ird5766dyynimbvqiwg2ps0n"))))
+        (base32 "18akvsm5zlc8352phs8sifks1n9s1dp7q209slbfdb9d0zz3xa9i"))))
     (build-system cargo-build-system)
-    (arguments (list #:install-source? #f))
+    (arguments
+     (list
+      #:rust rust-1.89
+      #:install-source? #f
+      ;; Remove this line when ‘rustdoc’ is available in #:rust.
+      #:cargo-test-flags ''("--lib" "--bins" "--tests" "--examples")))
     (inputs (cargo-inputs 'cargo-audit))
     (home-page "https://rustsec.org/")
     (synopsis "Audit Cargo.lock for crates with security vulnerabilities")
