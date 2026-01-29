@@ -108,7 +108,7 @@ QEMU monitor and to the guest's backdoor REPL."
     (list "-nographic"
           "-monitor" (string-append "unix:" socket-directory "/monitor")
           "-chardev" (string-append "socket,id=repl,path=" socket-directory
-                                    "/repl,reconnect=1")
+                                    "/repl,reconnect-ms=1000")
           "-chardev" (string-append "socket,id=qga,server=on,wait=off,path="
                                     socket-directory "/qemu-ga")
 
