@@ -39,6 +39,8 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages llvm)
+  #:use-module (gnu packages machine-learning)
+  #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pkg-config)
@@ -210,7 +212,7 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
 (define-public pocl
   (package
     (name "pocl")
-    (version "6.0")
+    (version "7.1")
     (source
      (origin
        (method git-fetch)
@@ -219,7 +221,7 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
               (commit (string-append "v" version))))
        (sha256
         (base32
-         "0darr71kj21scavikbm7if1d4nz5vca77y0q5hw6nf9f1c4axlkp"))
+         "06qnc6ay49j167pwz73mnxwrms4aaljbzml1a7rvi4z59np9mn6m"))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
        (snippet
@@ -239,8 +241,16 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
       #~(let* ((libdir (string-append #$output "/lib")))
           (list "-DENABLE_ICD=ON"
                 "-DENABLE_TESTSUITES=ON"
+                "-DENABLE_LOADABLE_DRIVERS=OFF"
                 ;; We are not developers, don't run conformance suite.
                 "-DENABLE_CONFORMANCE=OFF"
+                ;; "-DENABLE_TESTSUITES=ON"
+                "-DINSTALL_OPENCL_HEADERS=OFF"
+                ;; Otherwise, clang executable not found.
+                ;; FIXME: -- Did NOT find usable llvm-spirv!
+                (string-append
+                 "-DLLVM_BINDIR="
+                 (dirname (search-input-file %build-inputs "/bin/clang")))
                 (string-append "-DEXTRA_HOST_LD_FLAGS=-L"
                                (assoc-ref %build-inputs "libc") "/lib")
                 ;; We need both libdir and libdir/pocl in RUNPATH.
@@ -255,11 +265,15 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
               ;; fake topology.
               (setenv "HWLOC_SYNTHETIC" "4"))))))
     (inputs
-     (list clang-toolchain-18       ;otherwise, clang executable not found
+     (list clang-21
            `(,hwloc "lib")
+           openblas
+           onnxruntime
            opencl-icd-loader))
     (native-inputs
      (list pkg-config
+           ocl-icd
+           opencl-headers
            spirv-llvm-translator
            spirv-tools
            python-minimal-wrapper))
