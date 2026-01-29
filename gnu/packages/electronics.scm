@@ -2588,9 +2588,9 @@ testing to @code{cocotb}, removing the need of manipulating Makefiles.")
 form of AXI, AXI lite, and AXI stream modules.")
     (license license:expat)))
 
-(define-public python-edalize
+(define-public edalize
   (package
-    (name "python-edalize")
+    (name "edalize")
     (version "0.6.3")
     (source
      (origin
@@ -2629,6 +2629,8 @@ initialization files, IP description files etc).  Together with the files,
 perhaps a couple of Verilog `defines, some top-level parameters/generics or
 some tool-specific options are set.")
     (license license:bsd-2)))
+
+(define-deprecated-package python-edalize edalize)
 
 (define-public python-hdlmake
   (package
