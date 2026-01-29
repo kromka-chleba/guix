@@ -37,8 +37,12 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages image)
+  #:use-module (gnu packages image-processing)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages llvm)
+  #:use-module (gnu packages machine-learning)
+  #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pkg-config)
@@ -210,7 +214,7 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
 (define-public pocl
   (package
     (name "pocl")
-    (version "6.0")
+    (version "7.1")
     (source
      (origin
        (method git-fetch)
@@ -219,7 +223,7 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
               (commit (string-append "v" version))))
        (sha256
         (base32
-         "0darr71kj21scavikbm7if1d4nz5vca77y0q5hw6nf9f1c4axlkp"))
+         "06qnc6ay49j167pwz73mnxwrms4aaljbzml1a7rvi4z59np9mn6m"))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
        (snippet
@@ -233,14 +237,25 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
             (substitute* "tests/kernel/CMakeLists.txt"
               (("NOT ENABLE_POCL_FLOAT_CONVERSION") "false"))))))
     (build-system cmake-build-system)
+    ;; See https://portablecl.org/docs/html/install.html
     (arguments
      (list
       #:configure-flags
       #~(let* ((libdir (string-append #$output "/lib")))
           (list "-DENABLE_ICD=ON"
                 "-DENABLE_TESTSUITES=ON"
+                ;; "-DHOST_COMPILER_SUPPORTS_FLOAT16=OFF"
+                "-DENABLE_LOADABLE_DRIVERS=ON"
+                ;; "-DENABLE_CUDA_FP16=OFF"
                 ;; We are not developers, don't run conformance suite.
                 "-DENABLE_CONFORMANCE=OFF"
+                ;; "-DENABLE_TESTSUITES=ON"
+                "-DINSTALL_OPENCL_HEADERS=OFF"
+                ;; Otherwise, clang executable not found.
+                ;; FIXME: -- Did NOT find usable llvm-spirv!
+                (string-append
+                 "-DLLVM_BINDIR="
+                 (dirname (search-input-file %build-inputs "/bin/clang")))
                 (string-append "-DEXTRA_HOST_LD_FLAGS=-L"
                                (assoc-ref %build-inputs "libc") "/lib")
                 ;; We need both libdir and libdir/pocl in RUNPATH.
@@ -257,13 +272,20 @@ incorporate inside an OpenCL implementation to give it ICD functionalities.")
     (inputs
      (list clang-toolchain-18       ;otherwise, clang executable not found
            `(,hwloc "lib")
+           libjpeg-turbo
+           openblas
+           opencv
+           spirv-llvm-translator
+           spirv-tools
+           onnxruntime
+           libblastrampoline
+           ocl-icd
            opencl-icd-loader))
     (native-inputs
      (list pkg-config
-           spirv-llvm-translator
-           spirv-tools
+           opencl-headers
            python-minimal-wrapper))
-    (home-page "http://portablecl.org/")
+    (home-page "https://portablecl.org/")
     (synopsis "Portable Computing Language (pocl), an OpenCL implementation")
     (description
      "Pocl is a portable implementation of the OpenCL standard (1.2 with some
