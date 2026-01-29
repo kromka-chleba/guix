@@ -5210,7 +5210,7 @@ and more
 (define-public python-plotly
   (package
     (name "python-plotly")
-    (version "5.24.1")
+    (version "5.24.1") ;XXX: it's the last 5.X.X, released on <2024-09-12>
     (source
      (origin
        (method git-fetch)
@@ -5301,7 +5301,7 @@ and more
            python-pillow
            python-psutil
            python-pyshp
-           python-pytest
+           python-pytest-8
            python-pytz
            python-requests
            python-retrying
