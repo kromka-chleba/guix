@@ -79,6 +79,7 @@
 ;;; Copyright © 2025 Julian Flake <flake@uni-koblenz.de>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
 ;;; Copyright © 2026 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2026 Timo Wilken <guix@twilken.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3256,7 +3257,7 @@ video streaming services of the Finnish national broadcasting company Yle.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2026.01.29")
+    (version "2026.01.31")
     (source
      (origin
        (method git-fetch)
@@ -3264,11 +3265,8 @@ video streaming services of the Finnish national broadcasting company Yle.")
              (url "https://github.com/yt-dlp/yt-dlp/")
              (commit version)))
        (file-name (git-file-name name version))
-       (modules '((guix build utils)))
-       (snippet #~(substitute* "pyproject.toml"
-                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "095lk2zc8syra8s1156m4qywbfm1zhmg4wkddn198058avpwn3wz"))))
+        (base32 "05w3a8zsyr6q21yzx4nr3l3c2944r7kr0902769s48whdg4xgify"))))
     (build-system pyproject-build-system)
     (arguments
      (list
