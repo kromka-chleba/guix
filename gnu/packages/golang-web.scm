@@ -350,6 +350,32 @@ cloud.google.com/go/auth and golang.org/x/oauth2.")
 API service accounts for Go.")
     (license license:asl2.0)))
 
+(define-public go-github-com-foxcpp-go-mockdns
+  (package
+    (name "go-github-com-foxcpp-go-mockdns")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/foxcpp/go-mockdns")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jjln1bjgvh8g6r508vygjfm6h125q8yn4ynvldcd8npg4sj5z5h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/foxcpp/go-mockdns"))
+    (propagated-inputs (list go-github-com-miekg-dns))
+    (home-page "https://github.com/foxcpp/go-mockdns")
+    (synopsis "DNS mock for Golang")
+    (description
+     "This package provides Golang boilerplate for testing code
+involving DNS lookups, including hacks to redirect @code{net.Lookup*}
+calls.")
+    (license license:expat)))
+
 (define-public go-github-com-googleapis-enterprise-certificate-proxy
   (package
     (name "go-github-com-googleapis-enterprise-certificate-proxy")
