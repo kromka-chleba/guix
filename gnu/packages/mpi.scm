@@ -64,6 +64,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rocm)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -237,6 +238,7 @@ bind processes, and much more.")
                      openssh-sans-x)
                (if-supported psm)
                (if-supported psm2)
+               (if-supported rocm-hip-runtime)
                (if-supported ucx)
                (if-supported valgrind/pinned)
                (list rdma-core
@@ -397,6 +399,11 @@ software vendors, application developers and computer science researchers.")
                           #~("--enable-memchecker"
                              "--with-valgrind")
                           #~("--without-valgrind"))
+
+                   #$@(if (package? (this-package-input "rocm-hip-runtime"))
+                          #~((string-append "--with-rocm="
+                                            #$(this-package-input "rocm-hip-runtime")))
+                          #~())
 
                    "--with-hwloc=external"
                    "--with-libevent"
