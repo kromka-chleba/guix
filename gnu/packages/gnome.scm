@@ -1476,7 +1476,7 @@ tour of all gnome components and allows the user to set them up.")
 (define-public gnome-user-share
   (package
     (name "gnome-user-share")
-    (version "48.1")
+    (version "48.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -1484,7 +1484,7 @@ tour of all gnome components and allows the user to set them up.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0xxsb3w2x2pzwyzw9h98v3f79qblni2rmfkzmyrdfzzayd7gvg42"))))
+                "01mzc9gpj1f8hbq4k2a3gvn67rn08smmvfhq9sx80l7q1ba6ha03"))))
     (build-system meson-build-system)
     (arguments
      (list #:glib-or-gtk? #t
