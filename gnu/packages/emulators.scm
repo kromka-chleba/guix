@@ -1908,6 +1908,125 @@ Nintendo Switch's proprietary format.")
     ;; The converter is MIT licensed; the generated data is public domain.
     (license (list license:expat license:public-domain))))
 
+(define-public mcl-cpp-for-eden
+  (package
+    (name "mcl-cpp-for-eden")
+    (version "0.1.12")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/azahar-emu/mcl")
+                     ;; This commit is pinned by Eden's dependency specification
+                     ;; in src/dynarmic/externals/cpmfile.json for compatibility.
+                     (commit "7b08d83418")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "1hpjhknx02vwmc1bm8i1zzr6dvskhlm5bvd8ii9bca9kacxa4cxr"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; No tests.
+      #:tests? #f
+      #:configure-flags
+      ;; MCL_INSTALL generates installation targets for headers and CMake
+      ;; config files; it defaults to ON only when built as the master
+      ;; project, so we enable it explicitly.
+      #~(list "-DMCL_INSTALL=ON")))
+    (inputs
+     (list fmt))
+    (synopsis "C++20 utilities collection, patched for Eden")
+    (description "MCL is a collection of C++20 utilities which is common to a
+number of merry's projects.  It provides bit manipulation, intrinsics, type
+traits, and other utility functions.  This version includes patches from Eden
+to avoid macro conflicts.")
+    (home-page "https://github.com/azahar-emu/mcl")
+    (license license:expat)))
+
+(define-public eden
+  (package
+    (name "eden")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.eden-emu.dev/eden-emu/eden")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name "eden" version))
+       (sha256
+        (base32 "1w9ri2n56svhf1585li9dsrznf9zqscdpjvp77mjqiv3fmph9rng"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; Tests require packaging additional dependencies (oaknut) and fail
+      ;; to build on x86 systems.
+      #:tests? #f
+      #:configure-flags
+      #~(list
+         ;; Use system libraries instead of bundled copies.
+         "-DCPMUTIL_FORCE_SYSTEM=ON"
+         ;; Prevent CMake from downloading dependencies during build.
+         "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"
+         "-DCPM_DOWNLOAD_ALL=OFF"
+         ;; Enable the Qt frontend with translations and web applet.
+         "-DENABLE_QT=ON"
+         "-DENABLE_QT_TRANSLATION=ON"
+         "-DYUZU_USE_QT_WEB_ENGINE=ON"
+         ;; Disable web services (telemetry, etc.).
+         "-DENABLE_WEB_SERVICE=OFF"
+         ;; Update checker is not useful in Guix.
+         "-DENABLE_UPDATE_CHECKER=OFF"
+         ;; Use our nx-tzdb package for timezone data.
+         (string-append "-DYUZU_TZDB_PATH="
+                        #$(this-package-input "nx-tzdb")))))
+    (inputs
+     (list
+      boost
+      cubeb
+      enet
+      ffmpeg
+      fmt
+      frozen
+      gamemode
+      glslang
+      libusb
+      lz4
+      mbedtls
+      mcl-cpp-for-eden
+      nlohmann-json
+      nx-tzdb
+      openssl
+      opus
+      qt5compat
+      qtbase
+      qttools
+      qtwebengine
+      quazip
+      sdl2
+      simpleini
+      sirit
+      spirv-headers
+      spirv-tools
+      stb
+      unordered-dense
+      vulkan-headers
+      vulkan-memory-allocator
+      vulkan-utility-libraries
+      xbyak
+      zlib
+      (list zstd "lib")))
+    (native-inputs
+     (list pkg-config))
+    (synopsis "Nintendo Switch emulator")
+    (description "Eden is a Nintendo Switch emulator derived from Yuzu and
+Sudachi.  It is written in C++ with portability in mind and is capable of
+running most commercial games at full speed.
+
+This emulator requires encryption keys and firmware files obtained from a
+Nintendo Switch console.")
+    (home-page "https://git.eden-emu.dev/eden-emu/eden")
+    (license license:gpl3+)))
+
 (define (make-libretro-beetle-psx name hw)
   (let ((commit "80d3eba272cf6efab6b76e4dc44ea2834c6f910d")
 	(revision "0"))
