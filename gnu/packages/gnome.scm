@@ -9889,7 +9889,7 @@ through portals.")
 (define-public nautilus
   (package
     (name "nautilus")
-    (version "48.3")
+    (version "48.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -9897,7 +9897,7 @@ through portals.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0g9rbgnaf981nvmzjkn04b3mr14vk30d5m51qy1v038n0nhax8i1"))
+                "0bwxvapfidanblwv732w98xvvzaz3203zz2g4mcq52hwphyk7cpg"))
               (patches
                (search-patches "nautilus-extension-search-path.patch"))))
     (build-system meson-build-system)
