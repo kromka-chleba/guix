@@ -14004,7 +14004,7 @@ GNU Privacy Guard built with libadwaita.")
 (define-public gnome-software
   (package
     (name "gnome-software")
-    (version "48.3")
+    (version "48.4")
     (source
      (origin
        (method url-fetch)
@@ -14013,7 +14013,7 @@ GNU Privacy Guard built with libadwaita.")
                        name "/"
                        (version-major version) "/"
                        name "-" version ".tar.xz"))
-       (sha256 (base32 "0fp20zkzzcq6p8920kjavr1fskhiyz4gmj3q04hdq380pkl72s8j"))))
+       (sha256 (base32 "0fr6rmnbglf4h0c3q6zfb1fyf5y7pihndcif48xbc26dcay31lcw"))))
     (build-system meson-build-system)
     (arguments
      (list
