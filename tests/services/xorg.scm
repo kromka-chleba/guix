@@ -193,9 +193,9 @@
     (xorg-configuration-server
      (gdm-configuration-xorg
       (service-value
-       (fold-services
-        (operating-system-services os)
-        #:target-type gdm-service-type))))))
+       (find-service
+        gdm-service-type
+        (operating-system-services os) ))))))
 
 ;; extra-config tests.
 
@@ -250,8 +250,8 @@
     (xorg-configuration-keyboard-layout
      (lightdm-configuration-xorg-configuration
       (service-value
-       (fold-services
-        (operating-system-services os)
-        #:target-type lightdm-service-type))))))
+       (find-service
+        lightdm-service-type
+        (operating-system-services os)))))))
 
 (test-end "merge-xorg-configurations")

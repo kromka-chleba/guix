@@ -43,7 +43,7 @@ Copyright @copyright{} 2016, 2017, 2018, 2019, 2020, 2021 Christopher Baines@*
 Copyright @copyright{} 2017, 2018, 2019 Clément Lassieur@*
 Copyright @copyright{} 2017, 2018, 2020, 2021, 2022 Mathieu Othacehe@*
 Copyright @copyright{} 2017 Federico Beffa@*
-Copyright @copyright{} 2017, 2018, 2024, 2025 Carlo Zancanaro@*
+Copyright @copyright{} 2017, 2018, 2024, 2025, 2026 Carlo Zancanaro@*
 Copyright @copyright{} 2017 Thomas Danckaert@*
 Copyright @copyright{} 2017 humanitiesNerd@*
 Copyright @copyright{} 2017, 2021 Christine Lemmer-Webber@*
@@ -49317,17 +49317,17 @@ be extended---i.e., services that do not receive ``values'' from other
 services.
 
 Otherwise, it must be a one-argument procedure.  The procedure is called
-by @code{fold-services} and is passed a list of values collected from
-extensions.  It may return any single value.
+by @code{resolve-service-extensions} and is passed a list of values
+collected from extensions.  It may return any single value.
 
 @item @code{extend} (default: @code{#f})
 If this is @code{#f}, services of this type cannot be extended.
 
-Otherwise, it must be a two-argument procedure: @code{fold-services}
-calls it, passing it the initial value of the service as the first
-argument and the result of applying @code{compose} to the extension
-values as the second argument.  It must return a value that is a valid
-parameter value for the service instance.
+Otherwise, it must be a two-argument procedure:
+@code{resolve-service-extensions}} calls it, passing it the initial
+value of the service as the first argument and the result of applying
+@code{compose} to the extension values as the second argument.  It must
+return a value that is a valid parameter value for the service instance.
 
 @item @code{description}
 This is a string, possibly using Texinfo markup, describing in a couple
@@ -49350,11 +49350,15 @@ The returned service in this case has the default value specified by
 @xref{Service Types and Services}, for examples.
 @end deftp
 
-@deffn {Procedure} service-extension target-type compute
+@deffn {Procedure} service-extension target-type compute [active?]
 Return a new extension for services of type @var{target-type}.
-@var{compute} must be a one-argument procedure: @code{fold-services}
-calls it, passing it the value associated with the service that provides
-the extension; it must return a valid value for the target service.
+@var{compute} must be a one-argument procedure:
+@code{resolve-service-extensions}} calls it, passing it the value
+associated with the service that provides the extension; it must return
+a valid value for the target service.  @var{active?} is an optional
+one-argument procedure (defaulting to @code{(const #t)}), which is
+passed the value associated with the service; if it returns @code{#f}
+then the extension is ignored.
 @end deffn
 
 @deffn {Procedure} service-extension? obj
@@ -49380,17 +49384,23 @@ an additional job:
 @end lisp
 @end deffn
 
-At the core of the service abstraction lies the @code{fold-services}
-procedure, which is responsible for ``compiling'' a list of services
-down to a single directory that contains everything needed to boot and
-run the system---the directory shown by the @command{guix system build}
-command (@pxref{Invoking guix system}).  In essence, it propagates
-service extensions down the service graph, updating each node parameters
-on the way, until it reaches the root node.
+At the core of the service abstraction lies the
+@code{resolve-service-extensions}} procedure, which is responsible for
+``compiling'' a list of services down to a single directory that
+contains everything needed to boot and run the system---the directory
+shown by the @command{guix system build} command (@pxref{Invoking guix
+system}).  In essence, it propagates service extensions down the service
+graph, updating each node parameters on the way, until it reaches the
+root node.
 
-@deffn {Procedure} fold-services services [#:target-type system-service-type]
-Fold @var{services} by propagating their extensions down to the root of
-type @var{target-type}; return the root service adjusted accordingly.
+@deffn {Procedure} resolve-service-extensions services
+Propagate extensions for all the services in @var{services},
+constructing a new list of service values with any missing services
+instantiated, and all extensions applied.
+@end deffn
+
+@deffn {Procedure} find-service target-type services
+Find a service of type @var{target-type} in the list @var{services}.
 @end deffn
 
 Lastly, the @code{(gnu services)} module also defines several essential

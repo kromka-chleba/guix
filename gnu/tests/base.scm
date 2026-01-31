@@ -94,8 +94,8 @@ inserted after the last test. This is meant as a way of extending the basic
 tests that are defined within this procedure."
   (define special-files
     (service-value
-     (fold-services (operating-system-services os)
-                    #:target-type special-files-service-type)))
+     (find-service special-files-service-type
+                   (operating-system-services os))))
 
   (define guix&co
     (match (package-transitive-propagated-inputs guix)

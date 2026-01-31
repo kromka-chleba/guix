@@ -944,8 +944,7 @@ with 'reboot --kexec'~%"))))))))
                                 #:key (backend (lookup-backend "graphviz")))
   "Export the graph of shepherd services of OS to PORT using BACKEND."
   (let* ((services  (operating-system-services os))
-         (pid1      (fold-services services
-                                   #:target-type shepherd-root-service-type))
+         (pid1      (find-service shepherd-root-service-type services))
          ;; Get the list of <shepherd-service>.
          (shepherds (shepherd-configuration-services (service-value pid1)))
          (sinks     (filter (lambda (service)

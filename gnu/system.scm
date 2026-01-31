@@ -889,7 +889,7 @@ bookkeeping."
 
 (define* (operating-system-services os)
   "Return all the services of OS, including \"essential\" services."
-  (instantiate-missing-services
+  (resolve-service-extensions
    (append (operating-system-user-services os)
            (operating-system-essential-services os))))
 
@@ -1240,8 +1240,7 @@ use 'plain-file' instead~%")
 (define (operating-system-etc-directory os)
   "Return that static part of the /etc directory of OS."
   (etc-directory
-   (fold-services (operating-system-services os)
-                  #:target-type etc-service-type)))
+   (find-service etc-service-type (operating-system-services os))))
 
 (define (operating-system-environment-variables os)
   "Return the environment variables of OS for
@@ -1312,22 +1311,20 @@ root ALL=(ALL) ALL
 stateful part of OS, including user accounts and groups, special directories,
 etc."
   (let* ((services   (operating-system-services os))
-         (activation (fold-services services
-                                    #:target-type activation-service-type)))
+         (activation (find-service activation-service-type services)))
     (activation-service->script activation)))
 
 (define* (operating-system-boot-script os)
   "Return the boot script for OS---i.e., the code started by the initrd once
 we're running in the final root."
   (let* ((services (operating-system-services os))
-         (boot     (fold-services services #:target-type boot-service-type)))
+         (boot     (find-service boot-service-type services)))
     (service-value boot)))
 
 (define (operating-system-user-accounts os)
   "Return the list of user accounts of OS."
   (let* ((services (operating-system-services os))
-         (account  (fold-services services
-                                  #:target-type account-service-type)))
+         (account  (find-service account-service-type services)))
     (filter user-account?
             (service-value account))))
 
@@ -1336,14 +1333,13 @@ we're running in the final root."
   (append-map shepherd-service-provision
               (shepherd-configuration-services
                (service-value
-                (fold-services (operating-system-services os)
-                               #:target-type
-                               shepherd-root-service-type)))))
+                (find-service shepherd-root-service-type
+                               (operating-system-services os))))))
 
 (define* (operating-system-derivation os)
   "Return a derivation that builds OS."
   (let* ((services (operating-system-services os))
-         (system   (fold-services services)))
+         (system   (find-service system-service-type services)))
     ;; SYSTEM contains the derivation as a monadic value.
     (service-value system)))
 
@@ -1351,8 +1347,7 @@ we're running in the final root."
   "Return a derivation that builds the system profile of OS."
   (mlet* %store-monad
       ((services -> (operating-system-services os))
-       (profile (fold-services services
-                               #:target-type profile-service-type)))
+       (profile (find-service profile-service-type services)))
     (match profile
       (("profile" profile)
        (return profile)))))

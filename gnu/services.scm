@@ -10,6 +10,7 @@
 ;;; Copyright © 2023 Brian Cully <bjc@spork.org>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2026 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -89,8 +90,8 @@
             simple-service
             modify-services
             service-back-edges
-            instantiate-missing-services
-            fold-services
+            resolve-service-extensions
+            find-service
 
             remove-service-extensions
             for-home
@@ -168,17 +169,17 @@
 ;;; derivation that produces the 'system' directory as returned by
 ;;; 'operating-system-derivation'.
 ;;;
-;;; The 'fold-services' procedure can be passed a list of procedures, which it
-;;; "folds" by propagating extensions down the graph; it returns the root
-;;; service after the applying all its extensions.
-;;;
 ;;; Code:
 
 (define-record-type <service-extension>
-  (service-extension target compute)
+  (%service-extension target compute active?)
   service-extension?
   (target  service-extension-target)              ;<service-type>
-  (compute service-extension-compute))            ;params -> params
+  (compute service-extension-compute)             ;params -> params
+  (active? service-extension-active?))            ;params -> boolean
+
+(define* (service-extension target compute #:optional (active? (const #t)))
+  (%service-extension target compute active?))
 
 (define &no-default-value
   ;; Value used to denote service types that have no associated default value.
@@ -296,6 +297,12 @@ for service of type '~a'")
   missing-value-service-error?
   (type     missing-value-service-error-type)
   (location missing-value-service-error-location))
+
+(define (active-service-extensions service)
+  (filter (lambda (ext)
+            (let ((active? (service-extension-active? ext)))
+              (active? (service-value service))))
+          (service-type-extensions (service-kind service))))
 
 
 
@@ -1285,6 +1292,17 @@ service type to add particular modules to the set of linux-loadable modules.")))
                         (service-type-name
                          (service-kind service))))))))
 
+(define (ambiguous-target-error service target-type)
+  (raise
+   (condition (&ambiguous-target-service-error
+               (service service)
+               (target-type target-type))
+              (&message
+               (message
+                (format #f
+                        (G_ "more than one target service of type '~a'")
+                        (service-type-name target-type)))))))
+
 (define (service-back-edges services)
   "Return a procedure that, when passed a <service>, returns the list of
 <service> objects that depend on it."
@@ -1309,106 +1327,142 @@ service type to add particular modules to the set of linux-loadable modules.")))
                                  (G_ "more than one target service of type '~a'")
                                  (service-type-name target-type))))))))))
 
-    (fold add-edge edges (service-type-extensions (service-kind service))))
+    (fold add-edge edges (active-service-extensions service)))
 
   (let ((edges (fold add-edges vlist-null services)))
     (lambda (node)
       (reverse (vhash-foldq* cons '() node edges)))))
 
-(define (instantiate-missing-services services)
-  "Return SERVICES, a list, augmented with any services targeted by extensions
-and missing from SERVICES.  Only service types with a default value can be
-instantiated; other missing services lead to a
-'&missing-target-service-error'."
-  (define (adjust-service-list svc result instances)
-    (fold2 (lambda (extension result instances)
-             (define target-type
-               (service-extension-target extension))
+(define (resolve-service-extensions services)
+  "Return SERVICES, a list, with all service extensions resolved.  This
+involves modifying the value of services according to the extensions of the
+other services in the list.
 
-             (match (vhash-assq target-type instances)
-               (#f
-                (let ((default (service-type-default-value target-type)))
-                  (if (eq? &no-default-value default)
-                      (missing-target-error svc target-type)
-                      (let ((new (service target-type)))
-                        (values (cons new result)
-                                (vhash-consq target-type new instances))))))
-               (_
-                (values result instances))))
-           result
-           instances
-           (service-type-extensions (service-kind svc))))
+If an extension targets a service that does not exist then the targeted
+service will be added to the resulting list.  Only service types with a
+default value can be instantiated in this way; other missing services lead to
+a '&missing-target-service-error'."
+  (define (transitively-might-extend? service-type target-type)
+    ;; Return #t if SERVICE-TYPE has a chain of extensions that might apply an
+    ;; extension to TARGET-TYPE.  This does not consider whether the
+    ;; extensions are active in the current system configuration, it only
+    ;; considers the extensions declared on the service types.
+    ;;
+    ;; We need to consider all possible transitive extensions to ensure that
+    ;; we resolve services in the right order.  A service extension may
+    ;; instantiate a service that is missing from the graph, so we cannot
+    ;; assume that all relevant extensions are immediately visible in the
+    ;; provided services.  This assumes that all extensions are active, but
+    ;; apply-extensions (below) will check after the service's value is
+    ;; resolved.
+    (any (lambda (extension)
+           (or (eq? (service-extension-target extension) target-type)
+               (transitively-might-extend? (service-extension-target extension) target-type)))
+         (service-type-extensions service-type)))
 
-  (let loop ((services services))
-    (define instances
-      (fold (lambda (service result)
-              (vhash-consq (service-kind service) service
-                           result))
-            vlist-null services))
+  (define (compute-extension-values-for target service)
+    ;; Compute the values for all relevant extensions defined on SERVICE and
+    ;; targeting TARGET.  We use append-map here instead of filter-map because
+    ;; an extension may legitimately return #f as its value which filter-map
+    ;; would unintentionally remove.
+    (append-map (match-lambda
+                  (($ <service-extension> target-type compute active?)
+                   (if (and (eq? target-type (service-kind target))
+                            (active? (service-value service)))
+                       (list (compute (service-value service)))
+                       '())))
+                ;; Don't use active-service-extensions here to avoid running
+                ;; active? for extensions which we know are irrelevant.
+                (service-type-extensions (service-kind service))))
 
-    (define adjusted
-      (fold2 adjust-service-list
-             services instances
-             services))
+  (define (compute-extension-values target services)
+    ;; Compute the values for all relevant extensions defined on the services
+    ;; in SERVICES and targeting TARGET.
+    (append-map (match-lambda
+                  ((_ . #f)      '())
+                  ((_ . service) (compute-extension-values-for target service))
+                  (_             '()))
+                services))
 
-    ;; If we instantiated services, they might in turn depend on missing
-    ;; services.  Loop until we've reached fixed point.
-    (if (= (length adjusted) (vlist-length instances))
-        adjusted
-        (loop adjusted))))
+  (define (unprocessed-services-for target services)
+    ;; Filter SERVICES to find the services which have not yet been processed,
+    ;; but which might transitively extend TARGET.  These are the services
+    ;; must be processed before TARGET can be processed.
+    (let ((target-type (service-kind target)))
+      (filter-map (match-lambda
+                    ((service . #f)
+                     (let ((service-type (service-kind service)))
+                       (and (transitively-might-extend? service-type target-type)
+                            service)))
+                    (_ #f))
+                  services)))
 
-(define* (fold-services services
-                        #:key (target-type system-service-type))
-  "Fold SERVICES by propagating their extensions down to the root of type
-TARGET-TYPE; return the root service adjusted accordingly."
-  (define dependents
-    (service-back-edges services))
+  (define (process-dependents target services)
+    ;; Process any unprocessed SERVICES that need to be processed before
+    ;; TARGET is processed.  Returns an alist of SERVICES which is ready for
+    ;; TARGET to be processed.
+    (match (unprocessed-services-for target services)
+      (()          services)
+      (unprocessed (process-dependents target (fold process services unprocessed)))))
 
-  (define (matching-extension target)
-    (let ((target (service-kind target)))
-      (match-lambda
-        (($ <service-extension> type)
-         (eq? type target)))))
+  (define (add-missing-services svc services)
+    ;; Add into SERVICES any services targeted by SVC which are missing.
+    (fold (lambda (extension services)
+            (let* ((target-type (service-extension-target extension))
+                   (target-count (count (match-lambda ((k . _) (eq? (service-kind k) target-type)))
+                                        services)))
+              (match target-count
+                (0                      ; target does not exist - create it
+                 (let ((default (service-type-default-value target-type)))
+                   (if (eq? &no-default-value default)
+                       (missing-target-error svc target-type)
+                       (acons (service target-type) #f services))))
+                (1                      ; target already exists - do nothing
+                 services)
+                (_                   ; multiple targets exist - raise an error
+                 (ambiguous-target-error svc target-type)))))
+          services
+          (active-service-extensions svc)))
 
-  (define (apply-extension target)
-    (lambda (service)
-      (match (find (matching-extension target)
-                   (service-type-extensions (service-kind service)))
-        (($ <service-extension> _ compute)
-         (compute (service-value service))))))
+  (define (process svc services)
+    ;; Process SVC within the list of SERVICES.  This involves first
+    ;; recursively processing any services which might extend this one, then
+    ;; using those values to calculate a new value for this service.
+    (match (assq-ref services svc)
+      (#f
+       (let* ((with-dependents (process-dependents svc services))
+              (extensions (compute-extension-values svc with-dependents))
+              (extend     (service-type-extend (service-kind svc)))
+              (compose    (service-type-compose (service-kind svc)))
+              (params     (service-value svc))
+              (new-svc
+               ;; Distinguish COMPOSE and EXTEND because PARAMS typically
+               ;; has a different type than the elements of EXTENSIONS.
+               (if extend
+                   (service (service-kind svc)
+                            (extend params (compose extensions)))
+                   svc))
+              (with-new-svc
+               (assq-set! services svc new-svc)))
+         (add-missing-services new-svc with-new-svc)))
+      (_ services)))
 
+  ;; Reversing services isn't strictly necessary, but it makes the order more
+  ;; consistent with an earlier form of this code.
+  (let loop ((services (map (cut cons <> #f) (reverse services))))
+    (match (filter-map (match-lambda ((k . #f) k) (_ #f)) services)
+      (()          (map (match-lambda ((_ . v) v)) services))
+      (unprocessed (loop (fold process services unprocessed))))))
+
+(define* (find-service target-type services)
+  "Find the single service of TARGET-TYPE in SERVICES, a list of services.
+Raises a &missing-target-service-error if no matching service is found, and a
+&ambiguous-target-service-error if more than one is found."
   (match (filter (lambda (service)
                    (eq? (service-kind service) target-type))
                  services)
     ((sink)
-     ;; Use the state monad to keep track of already-visited services in the
-     ;; graph and to memoize their value once folded.
-     (run-with-state
-         (let loop ((sink sink))
-           (mlet %state-monad ((visited (current-state)))
-             (match (vhash-assq sink visited)
-               (#f
-                (mlet* %state-monad
-                    ((dependents (mapm %state-monad loop (dependents sink)))
-                     (visited    (current-state))
-                     (extensions -> (map (apply-extension sink) dependents))
-                     (extend     -> (service-type-extend (service-kind sink)))
-                     (compose    -> (service-type-compose (service-kind sink)))
-                     (params     -> (service-value sink))
-                     (service
-                      ->
-                      ;; Distinguish COMPOSE and EXTEND because PARAMS typically
-                      ;; has a different type than the elements of EXTENSIONS.
-                      (if extend
-                          (service (service-kind sink)
-                                   (extend params (compose extensions)))
-                          sink)))
-                  (mbegin %state-monad
-                    (set-current-state (vhash-consq sink service visited))
-                    (return service))))
-               ((_ . service)                     ;SINK was already visited
-                (return service)))))
-       vlist-null))
+     sink)
     (()
      (raise
       (make-compound-condition
@@ -1418,15 +1472,7 @@ TARGET-TYPE; return the root service adjusted accordingly."
        (formatted-message (G_ "service of type '~a' not found")
                           (service-type-name target-type)))))
     (x
-     (raise
-      (condition (&ambiguous-target-service-error
-                  (service #f)
-                  (target-type target-type))
-                 (&message
-                  (message
-                   (format #f
-                           (G_ "more than one target service of type '~a'")
-                           (service-type-name target-type)))))))))
+     (ambiguous-target-error #f target-type))))
 
 (define (remove-service-extensions type lst)
   "Return TYPE, a service type, without any of the service extensions

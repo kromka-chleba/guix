@@ -103,15 +103,14 @@
 
 (define* (home-environment-services he)
   "Return all the services of home environment."
-  (instantiate-missing-services
+  (resolve-service-extensions
    (append (home-environment-user-services he)
            (home-environment-essential-services he))))
 
 (define* (home-environment-derivation he)
   "Return a derivation that builds home environment."
-  (let* ((services         (home-environment-services he))
-         (home (fold-services services
-                              #:target-type home-service-type)))
+  (let* ((services (home-environment-services he))
+         (home (find-service home-service-type services)))
     (service-value home)))
 
 

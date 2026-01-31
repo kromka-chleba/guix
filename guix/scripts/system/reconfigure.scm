@@ -208,8 +208,7 @@ services as defined by OS."
   (define target-services
     (shepherd-configuration-services
      (service-value
-      (fold-services (operating-system-services os)
-                     #:target-type shepherd-root-service-type))))
+      (find-service shepherd-root-service-type (operating-system-services os)))))
 
   (mlet* %store-monad ((live-services (running-services eval)))
     (let* ((to-unload to-restart

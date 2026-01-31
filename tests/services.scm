@@ -60,10 +60,26 @@
          (lset= eq? (e s2) (list s3))
          (null? (e s3)))))
 
-(test-equal "fold-services"
-  ;; Make sure 'fold-services' returns the right result.  The numbers come
-  ;; from services of type T3; 'xyz 60' comes from the service of type T2,
-  ;; where 60 = 15 × 4 = (1 + 2 + 3 + 4 + 5) × 4.
+(test-assert "service-back-edges, inactive extensions"
+  (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
+                           (compose append) (extend list)))
+         (t2 (service-type (name 't2) (description "")
+                           (extensions (list (service-extension t1 (const 't2) identity)))))
+         (t3 (service-type (name 't3) (description "")
+                           (extensions (list (service-extension t1 (const 't3) identity)))))
+         (s1 (service t1 #t))
+         (s2 (service t2 #t))
+         (s3 (service t3 #f))
+         (e  (service-back-edges (list s1 s2 s3))))
+    (and (lset= eq? (e s1) (list s2))
+         (null? (e s2))
+         (null? (e s3)))))
+
+(test-equal "resolve-service-extensions and find-service"
+  ;; Make sure the combination of resolve-service-extensions and find-service
+  ;; returns the right result.  This is what used to be called fold-services.
+  ;; The numbers come from services of type T3; 'xyz 60' comes from the
+  ;; service of type T2, where 60 = 15 × 4 = (1 + 2 + 3 + 4 + 5) × 4.
   '(initial-value 5 4 3 2 1 xyz 60)
   (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
                            (compose concatenate)
@@ -78,16 +94,67 @@
                            (extensions
                             (list (service-extension t2 identity)
                                   (service-extension t1 list)))))
-         (r  (fold-services (cons* (service t1 'initial-value)
+         (r  (find-service t1
+                           (resolve-service-extensions
+                            (cons* (service t1 'initial-value)
                                    (service t2 4)
                                    (map (lambda (x)
                                           (service t3 x))
-                                        (iota 5 1)))
-                            #:target-type t1)))
+                                        (iota 5 1)))))))
     (and (eq? (service-kind r) t1)
          (service-value r))))
 
-(test-assert "fold-services, ambiguity"
+(test-equal "resolve-service-extensions and find-service, active extension from extension values"
+  '(t1-value (t2 (t2-value 5 4 3 2 1)) (t3 5) (t3 4) (t3 3) (t3 2) (t3 1))
+  (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
+                           (compose append)
+                           (extend append)))
+         (t2 (service-type (name 't2) (description "")
+                           (default-value '(t2-value))
+                           (extensions
+                            (list (service-extension t1
+                                                     (cut list 't2 <>)
+                                                     (lambda (value) (member 5 value))))) ; present after extension
+                           (compose concatenate)
+                           (extend append)))
+         (t3 (service-type (name 't3) (description "")
+                           (extensions
+                            (list (service-extension t2 list)
+                                  (service-extension t1 (cut list 't3 <>))))))
+         (r  (find-service t1
+                           (resolve-service-extensions (cons (service t1 '(t1-value))
+                                                             (map (lambda (x)
+                                                                    (service t3 x))
+                                                                  (iota 5 1)))))))
+    (and (eq? (service-kind r) t1)
+         (service-value r))))
+
+(test-equal "resolve-service-extensions and find-service, inactive extension from extension values"
+  '(t1-value (t3 4) (t3 3) (t3 2) (t3 1)) ; no t2 values, because the (member 5 value) check fails
+  (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
+                           (compose append)
+                           (extend append)))
+         (t2 (service-type (name 't2) (description "")
+                           (default-value '(t2-value))
+                           (extensions
+                            (list (service-extension t1
+                                                     (cut list 't2 <>)
+                                                     (lambda (value) (member 5 value))))) ; not present after extension
+                           (compose concatenate)
+                           (extend append)))
+         (t3 (service-type (name 't3) (description "")
+                           (extensions
+                            (list (service-extension t2 list)
+                                  (service-extension t1 (cut list 't3 <>))))))
+         (r  (find-service t1
+                           (resolve-service-extensions (cons (service t1 '(t1-value))
+                                                             (map (lambda (x)
+                                                                    (service t3 x))
+                                                                  (iota 4 1)))))))
+    (and (eq? (service-kind r) t1)
+         (service-value r))))
+
+(test-assert "resolve-service-extensions and find-service, ambiguity"
   (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
                            (compose concatenate)
                            (extend cons)))
@@ -100,13 +167,13 @@
                          t1)
                     (eq? (ambiguous-target-service-error-service c)
                          s))))
-      (fold-services (list (service t1 'first)
-                           (service t1 'second)
-                           s)
-                     #:target-type t1)
+      (find-service t1
+                    (resolve-service-extensions (list (service t1 'first)
+                                                      (service t1 'second)
+                                                      s)))
       #f)))
 
-(test-assert "fold-services, missing target"
+(test-assert "resolve-service-extensions and find-service, missing target"
   (let* ((t1 (service-type (name 't1) (extensions '()) (description "")))
          (t2 (service-type (name 't2) (description "")
                            (extensions
@@ -117,10 +184,10 @@
                          t1)
                     (eq? (missing-target-service-error-service c)
                          s))))
-      (fold-services (list s) #:target-type t1)
+      (find-service t1 (resolve-service-extensions (list s)))
       #f)))
 
-(test-assert "instantiate-missing-services"
+(test-assert "resolve-service-extensions"
   (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
                            (default-value 'dflt)
                            (compose concatenate)
@@ -129,14 +196,14 @@
                            (extensions
                             (list (service-extension t1 list)))))
          (s1 (service t1 'hey!))
-         (s2 (service t2 42)))
-    (and (lset= equal?
-                (list (service t1) s2)
-                (instantiate-missing-services (list s2)))
-         (equal? (list s1 s2)
-                 (instantiate-missing-services (list s1 s2))))))
+         (s2 (service t2 42))
+         (== (cut lset= equal? <...>)))
+    (and (== (list (service t1 '(dflt 42)) s2)
+             (resolve-service-extensions (list s2)))
+         (== (list s2 (service t1 '(hey! 42)))
+             (resolve-service-extensions (list s1 s2))))))
 
-(test-assert "instantiate-missing-services, indirect"
+(test-assert "resolve-service-extensions indirect"
   (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
                            (default-value 'dflt)
                            (compose concatenate)
@@ -154,14 +221,14 @@
          (s2 (service t2))
          (s3 (service t3 42))
          (== (cut lset= equal? <...>)))
-    (and (== (list s1 s2 s3)
-             (instantiate-missing-services (list s3)))
-         (== (list s1 s2 s3)
-             (instantiate-missing-services (list s1 s3)))
-         (== (list s1 s2 s3)
-             (instantiate-missing-services (list s2 s3))))))
+    (and (== (list (service t1 '(dflt (dflt2 42))) (service t2 '(dflt2 42)) s3)
+             (resolve-service-extensions (list s3)))
+         (== (list (service t1 '(dflt (dflt2 42))) (service t2 '(dflt2 42)) s3)
+             (resolve-service-extensions (list s1 s3)))
+         (== (list (service t1 '(dflt (dflt2 42))) (service t2 '(dflt2 42)) s3)
+             (resolve-service-extensions (list s2 s3))))))
 
-(test-assert "instantiate-missing-services, no default value"
+(test-assert "resolve-service-extensions, no default value"
   (let* ((t1 (service-type (name 't1) (extensions '()) (description "")))
          (t2 (service-type (name 't2) (description "")
                            (extensions
@@ -172,8 +239,24 @@
                          t1)
                     (eq? (missing-target-service-error-service c)
                          s))))
-      (instantiate-missing-services (list s))
+      (resolve-service-extensions (list s))
       #f)))
+
+(test-assert "resolve-service-extensions, inactive extension"
+  (let* ((t1 (service-type (name 't1) (extensions '()) (description "")
+                           (default-value 'dflt)
+                           (compose concatenate)
+                           (extend cons)))
+         (t2 (service-type (name 't2) (description "")
+                           (extensions
+                            (list (service-extension t1 list (const #f))))))
+         (s1 (service t1 'hey!))
+         (s2 (service t2 42))
+         (== (cut lset= equal? <...>)))
+    (and (== (list s2)
+             (resolve-service-extensions (list s2)))
+         (== (list (service t1 '(hey!)) s2)
+             (resolve-service-extensions (list s1 s2))))))
 
 (test-assert "shepherd-service-lookup-procedure"
   (let* ((s1 (shepherd-service (provision '(s1 s1b)) (start #f)))

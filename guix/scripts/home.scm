@@ -395,8 +395,7 @@ immediately.  Return the exit status of the process in the container."
                                 #:key (backend (lookup-backend "graphviz")))
   "Export the graph of shepherd services of HOME to PORT using BACKEND."
   (let* ((services  (home-environment-services home))
-         (root      (fold-services services
-                                   #:target-type home-shepherd-service-type))
+         (root      (find-service home-shepherd-service-type services))
          ;; Get the list of <shepherd-service>.
          (shepherds (home-shepherd-configuration-services
                      (service-value root)))
