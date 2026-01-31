@@ -1375,6 +1375,43 @@ versus schematic} tests and can assist with automatic routing.")
 understand and improve testbench coverage.")
     (license license:isc)))
 
+(define-public netgen
+  (package
+    (name "netgen")
+    (version "1.5.315")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/RTimothyEdwards/netgen")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ddp8kcygwiand5db3f5xxr8r8ac5cjkvjxhrfvpvhnmkjdrjw3m"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests
+      #:configure-flags
+      #~(list (string-append
+               "--with-tcl=" #$(this-package-input "tcl"))
+              (string-append
+               "--with-tk=" #$(this-package-input "tk")))))
+    (inputs (list ; cairo
+                  ; glu
+                  ; libx11
+                  ; mesa
+                  readline
+                  tcl
+                  tk))
+    (home-page "http://opencircuitdesign.com/netgen/")
+    (synopsis "@acronym{LVS, layout versus schematic} tool for comparing SPICE or verilog netlists")
+    (description "@code{netgen} compares netlists of circuits. This is commonly used as a part of
+@acronym{EDA, electronic design automation} toolchains in a
+process called @acronym{LVS, layout versus schematic} with the intent to verify
+that the layout of a circuit corresponds to the desired netlists.")
+    (license license:gpl1)))
+    
 (define-public nextpnr
   (let ((commit "ad76625d4d828cb093b55aa9f5aae59b7ba9724f")
         (revision "0"))
