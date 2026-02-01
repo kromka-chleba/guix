@@ -1447,8 +1447,8 @@ coverage.")
     (license license:isc)))
 
 (define-public nextpnr
-  (let ((commit "d8117e3cadaa4f4db606b64a465b7638b05dac68")
-        (revision "1"))
+  (let ((commit "b4da86edce20516fd030086d8527da3be58cc9c4")
+        (revision "2"))
     (package
       (name "nextpnr")
       (version (git-version "0.9" revision commit))
@@ -1484,7 +1484,7 @@ coverage.")
                               "oourafft")))
          (patches (search-patches "nextpnr-imgui.patch"))
          (sha256
-          (base32 "0668adviwh8n9c5xy7k3qiyfn77rrzd79b403i3m19hhy8vq907p"))))
+          (base32 "0q27745zqc89z8br0zwa5zlhff1kxcqh8hd7cagl0a87331rabzi"))))
       (outputs '("out" "bba"))
       (build-system qt-build-system)
       (arguments
@@ -1571,7 +1571,7 @@ coverage.")
              sanitizers-cmake
              yosys))
       (inputs
-       (list boost-1.88
+       (list boost
              eigen
              pybind11
              qtbase-5
