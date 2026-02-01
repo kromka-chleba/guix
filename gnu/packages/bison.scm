@@ -21,14 +21,14 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages bison)
-  #:use-module (guix licenses)
-  #:use-module (guix packages)
-  #:use-module (guix download)
-  #:use-module (guix utils)
-  #:use-module (guix build-system gnu)
+  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages flex)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages perl)
-  #:use-module (gnu packages flex)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix download)
+  #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (srfi srfi-1))
 
 (define-public bison
@@ -69,7 +69,7 @@
      "GNU Bison is a general-purpose parser generator.  It can build a
 deterministic or generalized LR parser from an annotated, context-free
 grammar.  It is versatile enough to have many applications, from parsers for
-simple tools through complex programming languages.
+simple tools to complex programming languages.
 
 Bison also provides an implementation of @command{yacc}, as specified by POSIX.")
-    (license gpl3+)))
+    (license license:gpl3+)))
