@@ -27,6 +27,7 @@
   #:use-module (gnu packages perl)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1))
@@ -45,22 +46,25 @@
         "1wjvbbzrr16k1jlby3l436an3kvv492h08arbnf0gwgprha05flv"))))
     (build-system gnu-build-system)
     (arguments
-     `(;; Building in parallel on many-core systems may cause an error such as
-       ;; "mv: cannot stat 'examples/c/reccalc/scan.stamp.tmp': No such file or
-       ;; directory".  See <https://bugs.gnu.org/36238>.
-       #:parallel-build? #f
-       ;; Similarly, when building tests in parallel, Make may produce this error:
-       ;; "./examples/c/reccalc/scan.l:13:10: fatal error: parse.h: No such file
-       ;; or directory".  Full log in <https://bugs.gnu.org/36238>.
-       #:parallel-tests? #f
-       ;; On the Hurd with glibc 2.41 bison uses weak symbols from pthread
-       ;; but does not link to it.
-       ,@(if (target-hurd?)
-             (list #:configure-flags ''("LIBS=-lpthread"))
-             '())))
-    (native-inputs (list perl
-                         ;; m4 is not present in PATH when cross-building.
-                         m4))
+     (list
+      ;; Building in parallel on many-core systems may cause an error such as
+      ;; "mv: cannot stat 'examples/c/reccalc/scan.stamp.tmp': No such file or
+      ;; directory".  See <https://bugs.gnu.org/36238>.
+      #:parallel-build? #f
+      ;; Similarly, when building tests in parallel, Make may produce this error:
+      ;; "./examples/c/reccalc/scan.l:13:10: fatal error: parse.h: No such file
+      ;; or directory".  Full log in <https://bugs.gnu.org/36238>.
+      #:parallel-tests? #f
+      ;; On the Hurd with glibc 2.41 bison uses weak symbols from pthread
+      ;; but does not link to it.
+      #:configure-flags
+      (if (target-hurd?)
+          #~(list "LIBS=-lpthread")
+          #~(list))))
+    (native-inputs
+     (list perl
+           ;; m4 is not present in PATH when cross-building.
+           m4))
     (inputs (list flex))
     (propagated-inputs (list m4))
     (home-page "https://www.gnu.org/software/bison/")
