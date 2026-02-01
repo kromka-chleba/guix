@@ -1835,7 +1835,7 @@ chip database for NG-Ultra architecture from NanoXplore.")
 (define-public prjpeppercorn
   (package
     (name "prjpeppercorn")
-    (version "1.9")
+    (version "1.11")
     (source
      (origin
        (method git-fetch)
@@ -1844,7 +1844,7 @@ chip database for NG-Ultra architecture from NanoXplore.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1z0kzkdham3pwh4fj03yyv9bla5v08mbv0ysbyq1snxr8cdabm8y"))))
+        (base32 "0s3p6nbbkmvfnmhg7r4yc4i7jfk1qinl3lir69ipiqrpccdns6n0"))))
     (outputs (list "out"
                    "db"))               ;FPGA database files
     (build-system cmake-build-system)
@@ -1870,7 +1870,7 @@ chip database for NG-Ultra architecture from NanoXplore.")
                 (copy-recursively "tools"
                                   (string-append datadir "/tools"))))))))
     (inputs
-     (list boost-1.88))
+     (list boost))
     (synopsis "GateMate FPGAs bitstream tools")
     (description
      "@code{Prjpeppercorn} includes programming tools for GateMate
