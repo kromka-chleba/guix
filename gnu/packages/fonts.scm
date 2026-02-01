@@ -3882,6 +3882,24 @@ characteristic so that they sit smoothly with the Tamil glyphs.")
 a customized Bitstream Vera Sans Mono).")
     (license license:silofl1.1)))
 
+(define-public font-meslo-lg-dz
+  (package
+    (inherit font-meslo-lg)
+    (name "font-meslo-lg-dz")
+    (version (package-version font-meslo-lg))
+    (source
+     (origin
+       (file-name "font-meslo-lg-dz")
+       (method url-fetch/zipbomb)
+       (uri (string-append
+             "https://github.com/andreberg/Meslo-Font/raw/master/"
+             "dist/v" version "Meslo%20LG%20DZ%20v" version ".zip"))
+       (sha256
+        (base32
+         "0lnbkrvcpgz9chnvix79j6fiz36wj6n46brb7b1746182rl1l875"))))
+    (description
+      "Meslo LG DZ is a customized version of Meslo LG with dotted zeros.")))
+
 (define-public font-ipa
   (package
     (name "font-ipa")
