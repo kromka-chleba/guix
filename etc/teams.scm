@@ -1435,6 +1435,11 @@ the \"texlive\" importer."
                        "reza@housseini.me"
                        "rhou")
   python science c++)
+
+(define-member (person "Wilko Meyer"
+                       "w@wmeyer.eu"
+                       "theesm")
+  kernel)
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
