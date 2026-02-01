@@ -631,7 +631,7 @@ intended for translating Direct3D 12 to Vulkan.")
 (define-public vulkan-validationlayers
   (package
     (name "vulkan-validationlayers")
-    (version "1.4.321.0")
+    (version "1.4.335.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -646,14 +646,14 @@ intended for translating Direct3D 12 to Vulkan.")
                            "")))
               (sha256
                (base32
-                "1lmkcgz80386304s6kr4fi825r5004305fhvfc7gmsqdih0bqcv9"))))
+                "06kx3769xn6xrk2xjs5k9hpkv8gvmjwn7yvz423yy7d9fzgnn70m"))))
     (build-system cmake-build-system)
     (inputs (list glslang
                   libxrandr
                   mesa
                   robin-hood-hashing
                   shaderc
-                  spirv-tools
+                  spirv-tools-static
                   vulkan-loader
                   vulkan-utility-libraries
                   wayland))
