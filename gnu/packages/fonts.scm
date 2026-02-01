@@ -70,6 +70,7 @@
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;; Copyright © 2025 Alexandre Hannud Abdo <abdo@member.fsf.org>
+;;; Copyright © 2026 Luis Guilherme Coelho <lgcoelho@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3857,6 +3858,28 @@ designs.  Meera Inimai can be thought of as similar to Helvetica and its
 variation Arial.  Tamil characters are inherently vertically-elliptical.  The
 orthography of Roman glyphs of Meera Inimai are also based on this
 characteristic so that they sit smoothly with the Tamil glyphs.")
+    (license license:silofl1.1)))
+
+(define-public font-meslo-lg
+  (package
+    (name "font-meslo-lg")
+    (version "1.2.1")
+    (source
+     (origin
+       (file-name "font-meslo-lg")
+       (method url-fetch/zipbomb)
+       (uri (string-append
+             "https://github.com/andreberg/Meslo-Font/raw/master/"
+             "dist/v" version "Meslo%20LG%20v" version ".zip"))
+       (sha256
+        (base32
+         "1l08mxlzaz3i5bamnfr49s2k4k23vdm64b8nz2ha33ysimkbgg6h"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/andreberg/Meslo-Font")
+    (synopsis "Font for dyslexics and high readability")
+    (description
+     "Meslo LG is a customized version of Apple's Menlo-Regular font (which is
+a customized Bitstream Vera Sans Mono).")
     (license license:silofl1.1)))
 
 (define-public font-ipa
