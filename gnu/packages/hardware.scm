@@ -1259,14 +1259,14 @@ technology, such as head mounted displays with built in head tracking.")
 (define-public libsurvive
   (package
     (name "libsurvive")
-    (version "2023.12")
+    (version "2023.12.rc0")
     (source
       (origin ;;TODO: make release
         (method git-fetch)
         (uri (git-reference
               (url "https://codeberg.org/LibreVR/libsurvive")
               (recursive? #t)
-              (commit "v2023.12.rc0"))) ;; make a final release this year
+              (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256 (base32 "0fkdgvpm987yl5q6yq0979cfj99ffi6k0dpmddlpxfm2rngn85r5"))))
     (build-system cmake-build-system)
