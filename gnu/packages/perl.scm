@@ -42,6 +42,7 @@
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2020, 2023 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2026 Robin Templeton <robin@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4874,6 +4875,26 @@ path variables, defined as that subclass of environment variables which name
 an ordered list of file system elements separated by a platform-standard
 separator.")
     (license (package-license perl))))
+
+(define-public perl-enum
+  (package
+    (name "perl-enum")
+    (version "1.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/N/NE/NEILB/enum-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "1aby8k8xfyzxjiwbrh2iqcpad4lz90grmsf50a5yv21qrn8si9v9"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/enum")
+    (synopsis "C-style enumerated types and bitmask flags in Perl")
+    (description "This module is used to define a set of constants with
+ordered numeric values, similar to enumeration types in the C programming
+language.  It also supports bit-mask constants, where the value assigned to
+each constant has exactly one bit set.")
+    (license license:perl-license)))
 
 (define-public perl-error
   (package
@@ -12015,6 +12036,26 @@ a particular way.  It was inspired by
 routines.  It supports named or positional formatting, custom conversions,
 fixed string interpolation, and simple width-matching.")
     (license license:gpl2)))
+
+(define-public perl-string-interpolate
+  (package
+    (name "perl-string-interpolate")
+    (version "0.33")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/N/NE/NEILB/String-Interpolate-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "04y454qmhhmlqj3xxq0xinin8p1gcfh76vd9vbvimlq7i69x0zm8"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-padwalker perl-safe-hole))
+    (home-page "https://metacpan.org/release/String-Interpolate")
+    (synopsis "Wrapper for the built-in Perl interpolation engine")
+    (description "This module provides an interface for invoking the Perl
+string interpolation engine on a string contained in a scalar variable.")
+    (license license:perl-license)))
 
 (define-public perl-string-rewriteprefix
   (package
