@@ -1435,6 +1435,12 @@ the \"texlive\" importer."
                        "reza@housseini.me"
                        "rhou")
   python science c++)
+
+(define-member (person "Mathieu Lirzin"
+                       "mthl@gnu.org"
+                       "mthl")
+  java)
+
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
