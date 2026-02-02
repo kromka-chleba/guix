@@ -1615,8 +1615,15 @@ combine the information contained in both.")
           (add-after 'unpack 'make-reproducible
             (lambda _
               (substitute* "CMakeLists.txt"
-                (("TODAY\\(SNAP_VERSION_COMPILE_DATE\\)")
-                 "SET(SNAP_VERSION_COMPILE_DATE \"(removed for reproducibility)\")"))))
+                (("ENDMACRO \\(TODAY\\)")
+                 (string-append "ENDMACRO (TODAY)\n\n"
+                                "MACRO (TODAY RESULT)\n"
+                                "  SET(${RESULT} "
+                                "\"(removed for reproducibility)\")\n"
+                                "ENDMACRO (TODAY)")))
+              (substitute* "Common/SNAPCommon.cxx.in"
+                (("@CMAKE_HOST_SYSTEM@ @CMAKE_HOST_SYSTEM_PROCESSOR@")
+                 "(removed for reproducibility)"))))
           (add-after 'unpack 'prepare-submodules
             (lambda _
               (rmdir "Submodules/c3d")
