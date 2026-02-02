@@ -94,6 +94,7 @@
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages hardware)
   #:use-module (gnu packages haskell-xyz)
+  #:use-module (gnu packages hardware)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
@@ -2946,6 +2947,7 @@ and enables interoperable use of content across the industry.")
            libusb
            libxcb
            libxrandr
+           libsurvive
            mesa
            openhmd
            openvr
