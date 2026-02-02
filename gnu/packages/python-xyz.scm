@@ -4300,7 +4300,7 @@ configuration file.")
 (define-public python-pytooling
   (package
     (name "python-pytooling")
-    (version "8.7.6")
+    (version "8.11.0")
     (source
      (origin
        (method git-fetch)
@@ -4309,7 +4309,7 @@ configuration file.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1n0idfiwcsssvy3kfwkgdpwx7zmvzp44mv0285d8argdy6rd48p0"))))
+        (base32 "07vlx2kfcxhkm0dj3d3pgdxmqbv2hzgzgdrnpnjjf30pacwrlq1m"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4327,9 +4327,11 @@ configuration file.")
                     " and not "))))
     (native-inputs
      (list git-minimal/pinned
+           python-aiohttp
            python-colorama
            python-pytest
            python-ruamel.yaml
+           python-requests
            python-setuptools))
     (home-page "https://pytooling.github.io/pyTooling/")
     (synopsis "Miscellaneous Python tools")
