@@ -2714,15 +2714,15 @@ watch your CPU playing while enjoying a cup of tea!")
     (native-inputs
       (list bison flex))
     (inputs
-      (list ncurses less))
+      (list ncurses less coreutils bash gzip))
     (build-system gnu-build-system)
     (arguments
-      '(#:make-flags
-        `(,(string-append "PREFIX=" (assoc-ref %outputs "out")))
-        #:phases
-        (modify-phases %standard-phases
+     (list
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
           (add-before 'configure 'patch-paths
-            (lambda _
+            (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "sys/unix/nethack.sh"
                 (("^ *cd .*$") ""))
               (substitute* "sys/unix/Makefile.utl"
@@ -2730,10 +2730,11 @@ watch your CPU playing while enjoying a cup of tea!")
                 (("^LEX *=.*$") "LEX = flex\n")
                 (("^# CC = gcc") "CC = gcc"))
               (substitute* "sys/unix/hints/linux"
-                (("/bin/gzip") (string-append
-                                 (assoc-ref %build-inputs "gzip")
-                                 "/bin/gzip"))
-                (("^WINTTYLIB=.*") "WINTTYLIB=-lncurses"))
+                (("/bin/gzip")
+                 (string-append
+                  (search-input-file inputs "/bin/gzip")))
+                (("^WINTTYLIB=.*")
+                 "WINTTYLIB=-lncurses"))
               (substitute* "include/config.h"
                 (("^.*define CHDIR.*$") "")
                 (("^/\\* *#*define *REPRODUCIBLE_BUILD *\\*/")
@@ -2745,30 +2746,27 @@ watch your CPU playing while enjoying a cup of tea!")
               (setenv "SOURCE_DATE_EPOCH" "1531865062")
 
               (substitute* "sys/unix/Makefile.src"
-                 (("^# CC = gcc") "CC = gcc"))
+                (("^# CC = gcc") "CC = gcc"))
               #t))
           (replace 'configure
-            (lambda _
-              (let ((bash (string-append
-                            (assoc-ref %build-inputs "bash")
-                            "/bin/bash")))
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((bash (search-input-file inputs "/bin/bash")))
                 (with-directory-excursion "sys/unix"
                   (substitute* "setup.sh" (("/bin/sh") bash))
                   (invoke bash "setup.sh" "hints/linux"))
                 #t)))
           (add-after 'install 'fixup-paths
-            (lambda _
-              (let* ((output (assoc-ref %outputs "out"))
-                     (nethack-script (string-append output "/bin/nethack")))
-                (mkdir-p (string-append output "/games/lib/nethackuserdir"))
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((nethack-script (string-append #$output "/bin/nethack")))
+                (mkdir-p (string-append #$output "/games/lib/nethackuserdir"))
                 (for-each
-                  (lambda (file)
-                    (rename-file
-                      (string-append output "/games/lib/nethackdir/" file)
-                      (string-append output "/games/lib/nethackuserdir/"
-                                     file)))
-                  '("xlogfile" "logfile" "perm" "record" "save"))
-                (mkdir-p (string-append output "/bin"))
+                 (lambda (file)
+                   (rename-file
+                    (string-append #$output "/games/lib/nethackdir/" file)
+                    (string-append #$output "/games/lib/nethackuserdir/"
+                                   file)))
+                 '("xlogfile" "logfile" "perm" "record" "save"))
+                (mkdir-p (string-append #$output "/bin"))
                 (call-with-output-file nethack-script
                   (lambda (port)
                     (format port "#!~a/bin/sh
@@ -2794,17 +2792,17 @@ for i in ~a/games/lib/nethackdir/*; do
   ln -s $i $(basename $i)
 done
 ~a/games/nethack \"$@\""
-                      (assoc-ref %build-inputs "bash")
-                      (list->search-path-as-string
-                        (list
-                          (string-append
-                            (assoc-ref %build-inputs "coreutils") "/bin")
-                          (string-append
-                            (assoc-ref %build-inputs "less") "/bin"))
-                        ":")
-                      output
-                      output
-                      output)))
+                            (assoc-ref inputs "bash")
+                            (list->search-path-as-string
+                             (list
+                              (string-append
+                               (assoc-ref inputs "coreutils") "/bin")
+                              (string-append
+                               (assoc-ref inputs "less") "/bin"))
+                             ":")
+                            #$output
+                            #$output
+                            #$output)))
                 (chmod nethack-script #o555)
                 #t)))
           (delete 'check))))
