@@ -51,6 +51,7 @@
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages profiling)
   #:use-module (gnu packages python)
@@ -64,6 +65,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rocm)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -817,3 +819,32 @@ high-performance computing (HPC) applications.")
     (license license:cpl1.0)))
 
 (define-public scorep-openmpi (make-scorep openmpi))
+
+(define-public openmpi-rocm
+  (package/inherit openmpi-5              ;needed due to use of libfabric 2.x
+    (name "openmpi-rocm")
+    (arguments
+     (substitute-keyword-arguments (package-arguments openmpi-5)
+       ((#:configure-flags flags)
+        #~(append (list (string-append "--with-rocm="
+                                       #$(this-package-input "rocm-hip-runtime"))
+                        (string-append "--with-ofi="
+                                       #$(this-package-input "libfabric")))
+                  #$flags))
+       ((#:phases phases '%standard-phases)
+        #~(modify-phases #$phases
+            ;; opensm is needed for InfiniBand support.
+            (add-after 'unpack 'find-opensm-headers
+              (lambda* (#:key inputs #:allow-other-keys)
+                (setenv "C_INCLUDE_PATH"
+                        (search-input-directory inputs
+                                                "/include/infiniband"))
+                (setenv "CPLUS_INCLUDE_PATH"
+                        (search-input-directory inputs
+                                                "/include/infiniband"))))))))
+    (inputs (modify-inputs (package-inputs openmpi-5)
+              (replace "ucx" ucx-rocm)
+              (replace "libfabric" libfabric-rocm)
+              (append rocm-hip-runtime)))
+    (native-inputs (modify-inputs (package-native-inputs openmpi-5)
+                     (append rocm-toolchain)))))
