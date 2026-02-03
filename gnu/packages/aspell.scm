@@ -52,7 +52,7 @@
 (define-public aspell
   (package
     (name "aspell")
-    (version "0.60.8")
+    (version "0.60.8.2")
     (source
      (origin
       (method url-fetch)
@@ -60,9 +60,8 @@
                           version ".tar.gz"))
       (sha256
        (base32
-        "1wi60ankalmh8ds7nplz434jd7j94gdvbahdwsr539rlad8pxdzr"))
-      (patches (search-patches "aspell-default-dict-dir.patch"
-                               "aspell-CVE-2019-25051.patch"))))
+        "06b9szgm9cj1zh58r7sbl5fbi3vi9fs7b1as4ir8y176x9ilizjp"))
+      (patches (search-patches "aspell-default-dict-dir.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
