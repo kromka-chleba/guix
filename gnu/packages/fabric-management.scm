@@ -34,8 +34,10 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages rocm)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages tcl))
 
@@ -246,3 +248,21 @@ memory mechanisms for efficient intra-node communication.")
     ;; and x86_64 as supported.
     (supported-systems '("x86_64-linux" "aarch64-linux" "powerpc64le-linux"
                          "riscv64-linux"))))
+
+(define-public ucx-rocm
+  (package/inherit ucx
+    (name "ucx-rocm")
+    (arguments
+     (substitute-keyword-arguments (package-arguments ucx)
+       ((#:configure-flags flags)
+        #~(append
+           (list "--without-cuda" "--without-knem" "--without-java"
+                 (string-append "--with-rocm="
+                                #$(this-package-input "rocr-runtime"))
+                 (string-append "--with-hip="
+                                #$(this-package-input "rocm-hip-runtime")))
+           #$flags))))
+    (inputs (modify-inputs (package-inputs ucx)
+              (append rocm-hip-runtime rocr-runtime)))
+    (native-inputs (modify-inputs (package-native-inputs ucx)
+                     (append rocm-toolchain)))))
