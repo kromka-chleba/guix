@@ -659,10 +659,10 @@ satisfy requests from peers."))
         (shepherd-action
          (name 'reload)
          (documentation "Reload the settings file from disk.")
-         (procedure #~(lambda (pid)
-                        (if pid
+         (procedure #~(lambda (running)
+                        (if running
                             (begin
-                              (kill pid SIGHUP)
+                              (kill (process-id running) SIGHUP)
                               (display #$(G_ "Service transmission-daemon has \
 been asked to reload its settings file.")))
                             (display #$(G_ "Service transmission-daemon is not \

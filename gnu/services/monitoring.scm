@@ -644,13 +644,13 @@ resolution.")
                (name 'reload)
                (documentation "Reload vnstatd.")
                (procedure
-                #~(lambda (pid)
-                    (if pid
+                #~(lambda (running)
+                    (if running
                         (begin
-                          (kill pid SIGHUP)
+                          (kill (process-id running) SIGHUP)
                           (format #t
                                   "Issued SIGHUP to vnstatd (PID ~a)."
-                                  pid))
+                                  (process-id running)))
                         (format #t "vnstatd is not running.")))))))))))
 
 (define (vnstat-account-service config)

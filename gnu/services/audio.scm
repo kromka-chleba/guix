@@ -640,13 +640,13 @@ appended to the configuration.")
                (name 'reopen)
                (documentation "Re-open log files and flush caches.")
                (procedure
-                #~(lambda (pid)
-                    (if pid
+                #~(lambda (running)
+                    (if running
                         (begin
-                          (kill pid SIGHUP)
+                          (kill (process-id running) SIGHUP)
                           (format #t
                                   "Issued SIGHUP to Service MPD (PID ~a)."
-                                  pid))
+                                  (process-id running)))
                         (format #t "Service MPD is not running.")))))))))))
 
 (define (mpd-accounts config)

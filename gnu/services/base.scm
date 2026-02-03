@@ -1712,10 +1712,10 @@ mail.*                                 -/var/log/maillog
            (name 'reload)
            (documentation "Reload the configuration file from disk.")
            (procedure
-            #~(lambda (pid)
-                (if pid
+            #~(lambda (running)
+                (if running
                     (begin
-                      (kill pid SIGHUP)
+                      (kill (process-id running) SIGHUP)
                       (display #$(G_ "Service syslog has been asked to \
 reload its settings file.")))
                     (display #$(G_ "Service syslog is not running."))))))))

@@ -2487,20 +2487,20 @@ worker \"fuzzy\" {
          (name 'reload)
          (documentation "Reload rspamd.")
          (procedure
-          #~(lambda (pid)
-              (if pid
+          #~(lambda (running)
+              (if running
                 (begin
-                  (kill pid SIGHUP)
+                  (kill (process-id running) SIGHUP)
                   (display "Service rspamd has been reloaded"))
                 (format #t "Service rspamd is not running.")))))
         (shepherd-action
          (name 'reopen)
          (documentation "Reopen log files.")
          (procedure
-          #~(lambda (pid)
-              (if pid
+          #~(lambda (running)
+              (if running
                 (begin
-                  (kill pid SIGUSR1)
+                  (kill (process-id running) SIGUSR1)
                   (display "Reopening the logs for rspamd"))
                 (format #t "Service rspamd is not running.")))))))))))
 
