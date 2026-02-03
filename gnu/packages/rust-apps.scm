@@ -1196,6 +1196,30 @@ While it does not seek to mirror all of find's powerful functionality, it provid
 defaults for 80% of the use cases.")
      (license (list license:expat license:asl2.0))))
 
+(define-public ffsend
+  (package
+    (name "ffsend")
+    (version "0.2.77")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ffsend" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "12gfg7fk8qyqrj6yvbn61rsdbnfbjh4wv7n0gh875sqzji2krpk4"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:rust rust-1.88
+      #:install-source? #f))
+    (native-inputs (list pkg-config))
+    (inputs (cons* openssl (cargo-inputs 'ffsend)))
+    (home-page "https://timvisee.com/projects/ffsend")
+    (synopsis "Easily and securely share files from the command line.")
+    (description
+     "This package provides a firefox send client command-line utility @code{ffsend} to easily and securely share files from the command line.  All files are end-to-end encrypted.")
+    (license license:gpl3)))
+
 (define-public forgejo-cli
   (package
     (name "forgejo-cli")
