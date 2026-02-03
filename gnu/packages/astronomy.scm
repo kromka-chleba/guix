@@ -8105,109 +8105,113 @@ natively in Siril.")
     (license license:gpl3)))
 
 (define-public python-pysm3
-  (package
-    (name "python-pysm3")
-    (version "3.4.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/galsci/pysm")
-              (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1qi01g71m0biqchdy1v7sk54kg1w3s75qfbf2s50ifsmprajjs5r"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; tests: 44 passed, 2 skipped, 97 deselected, 3 warnings
-      #:test-flags
-      ;; XXX: Tests requiring additional FITS files, check if they may be
-      ;; packages:
-      ;; - <http://www.astropy.org/astropy-data>
-      ;; - <https://github.com/healpy/healpy-data>
-      ;; - <https://healpy.github.io/healpy-data>
-      ;; - <https://portal.nersc.gov/project/cmb/pysm-data>
-      #~(list "-k" (string-join
-                    (list "not test_bandpass_unit_conversion"
-                          "test_bandpass_unit_conversion_CMB2MJysr"
-                          "test_bandpass_unit_conversion_MJysr2KRJ"
-                          "test_cmb_lensed"
-                          "test_cmb_lensed_delens"
-                          "test_cmb_lensed_l01"
-                          "test_cmb_lensed_no_delens"
-                          "test_cmb_lensed_with_patch_object"
-                          "test_cmb_map"
-                          "test_cmb_map_bandpass"
-                          "test_co"
-                          "test_co_model"
-                          "test_d10_vs_d11"
-                          "test_dust_model"
-                          "test_dust_model_353"
-                          "test_gnilc_857"
-                          "test_healpix_output_nside"
-                          "test_highfreq_dust_model"
-                          "test_model"
-                          "test_model_d12"
-                          "test_no_quadrupole"
-                          "test_presmoothed"
-                          "test_print_quadrupole_amplitudes"
-                          "test_quadrupole_corrected_freqs"
-                          "test_read_map_unit"
-                          "test_read_map_unit_dimensionless"
-                          "test_s6_vs_s5"
-                          "test_sky_max_nside"
-                          "test_sky_max_nside_highres"
-                          "test_smoothing_healpix"
-                          "test_smoothing_healpix_beamwindow"
-                          "test_synch_44"
-                          "test_synch_model_noscaling"
-                          "test_synch_model_s7_44"
-                          "test_synch_model_s7_noscaling"
-                          "test_synchrotron_model"
-                          ;; RuntimeError: This function has been removed. Use
-                          ;; reproject.healpix2map(...method='harm').
-                          "test_car_nosmoothing")
-                    " and not ")
-              "tests")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "pyproject.toml"
-                (("scipy < 1.15") "scipy"))))
-          (add-before 'build 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
-    (native-inputs
-     (list nss-certs-for-test
-           python-hatch-vcs
-           python-hatchling
-           python-nbval
-           python-netcdf4
-           python-pixell
-           python-psutil
-           python-pytest
-           python-pytest-astropy
-           python-setuptools-scm
-           python-xarray))
-    (propagated-inputs
-     (list python-astropy
-           python-h5py
-           python-healpy-1.18
-           python-numba
-           python-numpy-1
-           python-scipy
-           python-toml))
-    (home-page "https://pysm3.readthedocs.io/")
-    (synopsis "Sky emission simulations for Cosmic Microwave Background experiments")
-    (description
-     "PySM generates full-sky simulations of Galactic emissions in intensity
+  ;; NumPy2 support was added after 3.4.4 was released.
+  (let ((commit "7e5980e18a03aac9adf0eea09ef94b8e359a7fe0")
+        (revision "1")
+        (scm-version "3.4.4"))
+    (package
+      (name "python-pysm3")
+      (version (git-version scm-version revision commit))
+      (source
+       (origin
+         ;; git-fetch/lfs downloads the notebooks that are used for testing.
+         (method git-fetch/lfs)
+         (uri (git-reference
+                (url "https://github.com/galsci/pysm")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12jyic6hnz3jxppqv647kwp5g9k15rqmsxj26kfzyq79kijvmjy6"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        ;; tests: 44 passed, 2 skipped, 97 deselected, 3 warnings
+        #:test-flags
+        ;; XXX: Tests requiring additional FITS files, check if they may be
+        ;; packages:
+        ;; - <http://www.astropy.org/astropy-data>
+        ;; - <https://github.com/healpy/healpy-data>
+        ;; - <https://healpy.github.io/healpy-data>
+        ;; - <https://portal.nersc.gov/project/cmb/pysm-data>
+        #~(list "-k" (string-join
+                      (list "not test_bandpass_unit_conversion"
+                            "test_bandpass_unit_conversion_CMB2MJysr"
+                            "test_bandpass_unit_conversion_MJysr2KRJ"
+                            "test_cmb_lensed"
+                            "test_cmb_lensed_delens"
+                            "test_cmb_lensed_l01"
+                            "test_cmb_lensed_no_delens"
+                            "test_cmb_lensed_with_patch_object"
+                            "test_cmb_map"
+                            "test_cmb_map_bandpass"
+                            "test_co"
+                            "test_co_model"
+                            "test_d10_vs_d11"
+                            "test_dust_model"
+                            "test_dust_model_353"
+                            "test_gnilc_857"
+                            "test_healpix_output_nside"
+                            "test_highfreq_dust_model"
+                            "test_model"
+                            "test_model_d12"
+                            "test_no_quadrupole"
+                            "test_presmoothed"
+                            "test_print_quadrupole_amplitudes"
+                            "test_quadrupole_corrected_freqs"
+                            "test_read_map_unit"
+                            "test_read_map_unit_dimensionless"
+                            "test_s6_vs_s5"
+                            "test_sky_max_nside"
+                            "test_sky_max_nside_highres"
+                            "test_smoothing_healpix"
+                            "test_smoothing_healpix_beamwindow"
+                            "test_synch_44"
+                            "test_synch_model_noscaling"
+                            "test_synch_model_s7_44"
+                            "test_synch_model_s7_noscaling"
+                            "test_synchrotron_model"
+                            ;; RuntimeError: This function has been removed. Use
+                            ;; reproject.healpix2map(...method='harm').
+                            "test_car_nosmoothing")
+                      " and not ")
+                "tests")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'relax-requirements
+              (lambda _
+                (substitute* "pyproject.toml"
+                  (("scipy.* < 1.15") "scipy"))))
+            (add-before 'build 'set-version
+              (lambda _
+                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$scm-version))))))
+      (native-inputs
+       (list nss-certs-for-test
+             python-hatch-vcs
+             python-hatchling
+             python-nbval
+             python-netcdf4
+             python-pixell
+             python-psutil
+             python-pytest
+             python-pytest-astropy
+             python-xarray))
+      (propagated-inputs
+       (list python-astropy
+             python-h5py
+             python-healpy-1.18
+             python-numba
+             python-numpy
+             python-scipy
+             python-toml))
+      (home-page "https://pysm3.readthedocs.io/")
+      (synopsis "Sky emission simulations for Cosmic Microwave Background experiments")
+      (description
+       "PySM generates full-sky simulations of Galactic emissions in intensity
 and polarization relevant to @acronym{Cosmic Microwave Background, CMB}
 experiments.  It is a large refactor of
 @url{https://github.com/bthorne93/PySM_public, PySM 2} focused on reducing
 memory usage, improving performance and run in parallel with MPI.")
-    (license license:bsd-3)))
+      (license license:bsd-3))))
 
 (define-public python-pysynphot
   ;; XXX: 2.0.0 was released in 2021 there are a lot of changes since that
