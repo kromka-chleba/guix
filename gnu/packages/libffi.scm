@@ -97,6 +97,18 @@ conversions for values passed between the two languages.")
         ((#:configure-flags flags #~'())
          #~(append #$flags '("--disable-exec-static-tramp"))))))))
 
+;; Provide a variant compiled with PIC for rocm-llvm.
+(define-public libffi-shared
+  (package
+    (inherit libffi)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-CFLAGS
+            (lambda _
+              (setenv "CFLAGS" " -fPIC"))))))))
+
 (define-public python-cffi
   (package
     (name "python-cffi")
