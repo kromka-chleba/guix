@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2021, 2021-2025 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2021, 2021-2026 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2014, 2015, 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2012 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2015, 2016, 2017, 2018, 2019, 2020 Mark H Weaver <mhw@netris.org>
@@ -184,6 +184,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
+  #:use-module (gnu packages rocm)
   #:use-module (gnu packages rpc)
   #:use-module (gnu packages rrdtool)
   #:use-module (gnu packages rsync)
@@ -12994,3 +12995,15 @@ DualSense controller.  It has to be already connected via USB or connected
 via Bluetooth.")
     (home-page "https://github.com/nowrep/dualsensectl")
     (license license:gpl2)))
+
+(define-public libfabric-rocm
+  (package/inherit libfabric
+    (name "libfabric-rocm")
+    (arguments
+     (substitute-keyword-arguments (package-arguments libfabric)
+       ((#:configure-flags flags)
+        #~(cons (string-append
+                 "--with-rocr=" #$(this-package-input "rocr-runtime"))
+                #$flags))))
+    (inputs (modify-inputs (package-inputs libfabric)
+              (append rocr-runtime)))))
