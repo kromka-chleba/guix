@@ -392,6 +392,74 @@ be from a small sleek window manager to a full-featured desktop
 environment.")
     (license license:gpl2+)))
 
+(define-public exposway
+  (package
+    (name "exposway")
+    (version "1-a1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/RadioNoiseE/exposway")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v0rmy1nfqg1y8gw4bi0w15q42dn44d8wqwqhmajck7h6iziym4v"))))
+    (build-system gnu-build-system)
+    (native-inputs (list pkg-config))
+    (inputs (list pango
+                  grim
+                  json-c
+                  libxkbcommon
+                  wayland
+                  wayland-protocols))
+    (arguments
+     (list
+      #:tests? #f ;No tests.
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure) ;No configuration script.
+          (add-after 'unpack 'parent-dir
+            (lambda _
+              (substitute* "makefile"
+                ;; The install script does not create directories.
+                (("install -s")
+                 "install -s -D"))))
+          (add-after 'unpack 'fix-grim-reference
+            (lambda _
+              (substitute* "exposed.c"
+                ;; To avoid propagation in the user profile.
+                (("grim -g")
+                 #$(file-append grim "/bin/grim -g"))
+                ;; Expand buffer size for grim system call.
+                (("(SYSM_MAX_LNGTH )72" all prefix)
+                 (string-append
+                  prefix
+                  (number->string
+                   (+ 72 (string-length #$(file-append grim "/bin/"))))))))))))
+    (synopsis "MacOS X Exposé like feature for SwayWM")
+    (description
+     "Exposway brings the MacOS X Exposé functionality to the Sway window
+manager, allowing to overview all windows and navigate to desired one.  This
+feature is similar to:
+
+@itemize
+@item
+MacOS Mission Control
+
+@item
+Gnome Activities Overview
+
+@item
+KDE Present Windows
+
+@end itemize")
+    (home-page "https://github.com/RadioNoiseE/exposway")
+    (license license:expat)))
+
 (define-public herbstluftwm
   (package
     (name "herbstluftwm")
