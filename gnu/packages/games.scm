@@ -2729,7 +2729,10 @@ watch your CPU playing while enjoying a cup of tea!")
                 (("^YACC *=.*$") "YACC = bison -y\n")
                 (("^LEX *=.*$") "LEX = flex\n")
                 (("^# CC = gcc") "CC = gcc"))
-              (substitute* "sys/unix/hints/linux"
+              (substitute*
+                  (string-append
+                   "sys/unix/hints/"
+                   #$(assoc-ref (package-properties this-package) 'target))
                 (("/bin/gzip")
                  (string-append
                   (search-input-file inputs "/bin/gzip")))
@@ -2753,7 +2756,11 @@ watch your CPU playing while enjoying a cup of tea!")
               (let ((bash (search-input-file inputs "/bin/bash")))
                 (with-directory-excursion "sys/unix"
                   (substitute* "setup.sh" (("/bin/sh") bash))
-                  (invoke bash "setup.sh" "hints/linux"))
+                  (invoke
+                   bash "setup.sh"
+                   (string-append
+                    "hints/" #$(assoc-ref
+                                (package-properties this-package) 'target))))
                 #t)))
           (add-after 'install 'fixup-paths
             (lambda* (#:key inputs #:allow-other-keys)
@@ -2818,6 +2825,7 @@ different landscape - the random number generator provides an essentially
 unlimited number of variations of the dungeon and its denizens to be discovered
 by the player in one of a number of characters: you can pick your race, your
 role, and your gender.")
+    (properties '((target . "linux")))
     (license
       (license:fsdg-compatible
         "https://nethack.org/common/license.html"))))
