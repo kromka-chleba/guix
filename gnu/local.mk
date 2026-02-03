@@ -600,6 +600,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/regex.scm				\
   %D%/packages/robotics.scm			\
   %D%/packages/rocm.scm				\
+  %D%/packages/rocm-libs.scm			\
   %D%/packages/rocm-tools.scm			\
   %D%/packages/rpc.scm				\
   %D%/packages/rpm.scm				\
