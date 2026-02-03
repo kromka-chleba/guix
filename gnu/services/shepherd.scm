@@ -71,6 +71,7 @@
             shepherd-action-documentation
             shepherd-action-procedure
 
+            shepherd-signal-action
             shepherd-configuration-action
             shepherd-timer
             shepherd-trigger-action
@@ -420,6 +421,18 @@ and return the resulting '.go' file. SHEPHERD is used as shepherd package."
                      ;; It's faster to build locally than to download.
                      #:options '(#:local-build? #t
                                  #:substitutable? #f)))))
+
+(define (shepherd-signal-action name signal)
+  "Return a shepherd action with NAME to send SIGNAL to the running process-"
+  (shepherd-action
+    (name name)
+    (documentation "") ;; TODO
+    (procedure #~(lambda (running . args)
+                   (if running
+                       (let ((pid (process-id running)))
+                         (kill pid #$signal)
+                         (display #$(G_ ""))) ;; TODO
+                       (display #$(G_ "Service is not running.")))))))
 
 (define (shepherd-configuration-action file)
   "Return a 'configuration' action to display FILE, which should be the name

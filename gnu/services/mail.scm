@@ -2483,26 +2483,8 @@ worker \"fuzzy\" {
       (actions
        (list
         (shepherd-configuration-action config-file)
-        (shepherd-action
-         (name 'reload)
-         (documentation "Reload rspamd.")
-         (procedure
-          #~(lambda (running)
-              (if running
-                (begin
-                  (kill (process-id running) SIGHUP)
-                  (display "Service rspamd has been reloaded"))
-                (format #t "Service rspamd is not running.")))))
-        (shepherd-action
-         (name 'reopen)
-         (documentation "Reopen log files.")
-         (procedure
-          #~(lambda (running)
-              (if running
-                (begin
-                  (kill (process-id running) SIGUSR1)
-                  (display "Reopening the logs for rspamd"))
-                (format #t "Service rspamd is not running.")))))))))))
+        (shepherd-signal-action 'reload SIGHUP)
+        (shepherd-signal-action 'reopen SIGUSR1)))))))
 
 (define rspamd-service-type
   (service-type
