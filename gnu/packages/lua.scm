@@ -770,13 +770,19 @@ secure session between the peers.")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
-          (replace 'check
+          (add-before 'install 'create-install-dir
+            (lambda _
+              (let ((lua-version #$(version-major+minor (package-version lua))))
+                (mkdir-p (string-append #$output "/lib/lua/" lua-version)))))
+          (delete 'check)
+          (add-after 'install 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (let ((lua-version #$(version-major+minor (package-version lua))))
                   (setenv "LUA_CPATH"
                           (string-append #$output "/lib/lua/" lua-version "/?.so;;"))
-                  (invoke "lua" "test.lua"))))))))
+                  (invoke "lua" "test.lua")
+                  (invoke "lua" "tests-sqlite3.lua"))))))))
     (inputs
      (list lua sqlite))
     (home-page "https://lua.sqlite.org/")
