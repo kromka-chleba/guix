@@ -1437,6 +1437,11 @@ the \"texlive\" importer."
                        "reza@housseini.me"
                        "rhou")
   python science c++)
+
+(define-member (person "Collin Doering"
+                       "collin@rekahsoft.ca"
+                       "rekahsoft")
+  embedded electronics haskell sysadmin)
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
