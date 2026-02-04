@@ -81,6 +81,7 @@
   #:use-module (gnu packages re2c)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages rsync)
+  #:use-module (gnu packages sqlite)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
@@ -742,6 +743,61 @@ secure session between the peers.")
 
 (define-public lua5.2-sec
   (make-lua-sec "lua5.2-sec" lua-5.2))
+
+(define (make-lua-sqlite name lua)
+  (package
+    (name name)
+    (version "0.9.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/LuaDist/lsqlite3")
+                    (commit "78d148c21f4105592a0ba429b27886d732579dd4")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1r02apxfxcyxkscgibbhzanmilwvyh8lb5zh7av6nhil7rr60mfy"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(let ((lua-version #$(version-major+minor (package-version lua))))
+          (list (string-append "CC=" #$(cc-for-target))
+                (string-append "LUACMOD=" #$output "/lib/lua/" lua-version)
+                (string-append "LUAINC=" #$(this-package-input "lua") "/include")
+                (string-append "SQLITE3INC=" #$(this-package-input "sqlite") "/include")
+                (string-append "SQLITE3LIB=-L" #$(this-package-input "sqlite") "/lib -lsqlite3")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (let ((lua-version #$(version-major+minor (package-version lua))))
+                  (setenv "LUA_CPATH"
+                          (string-append #$output "/lib/lua/" lua-version "/?.so;;"))
+                  (invoke "lua" "test.lua"))))))))
+    (inputs
+     (list lua sqlite))
+    (home-page "https://lua.sqlite.org/")
+    (synopsis "SQLite bindings for Lua")
+    (description "LuaSQLite is a Lua binding for the SQLite3 database library.
+It provides a simple and efficient interface for accessing SQLite databases from
+Lua scripts, supporting prepared statements, transactions, and the full SQLite3
+API.")
+    (license license:expat)))
+
+(define-public lua-sqlite
+  (make-lua-sqlite "lua-sqlite" lua))
+
+(define-public lua5.1-sqlite
+  (make-lua-sqlite "lua5.1-sqlite" lua-5.1))
+
+(define-public lua5.2-sqlite
+  (make-lua-sqlite "lua5.2-sqlite" lua-5.2))
+
+(define-public luajit-sqlite
+  (make-lua-sqlite "luajit-sqlite" luajit))
 
 (define (make-lua-cqueues name lua lua-ossl)
   (package
