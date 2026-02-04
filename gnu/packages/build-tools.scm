@@ -1213,7 +1213,7 @@ but it does away with a lot of the complexity that comes with its history.")
 (define-public pdpmake
   (package
     (name "pdpmake")
-    (version "2.0.3")
+    (version "2.0.4")
     (source
      (origin
        (method git-fetch)
@@ -1223,7 +1223,7 @@ but it does away with a lot of the complexity that comes with its history.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1aka7iyrg97w9bayj7pp3cbx3fg3awmc1s4qhxj7zia8fcmzx6kr"))))
+         "13qfvn0kw1fkpmjdpk0cscmvj5iycdq68kqfiml1slf1936pllb9"))))
     (build-system gnu-build-system)
     (arguments
      (list
