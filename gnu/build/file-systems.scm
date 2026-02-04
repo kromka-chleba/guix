@@ -1339,8 +1339,8 @@ corresponds to the symbols listed in FLAGS."
            (host-part (string-take source idx))
            ;; Strip [] from around host if present
            (host (match (string-split host-part (string->char-set "[]"))
-                 (("" h "") h)
-                 ((h) h)))
+                   (("" h "") h)
+                   ((h) h)))
            (inet-addr (host-to-ip host "nfs")))
       ;; Mounting an NFS file system requires passing the address
       ;; of the server in the addr= option
@@ -1426,26 +1426,26 @@ corresponds to the symbols listed in FLAGS."
                                              "," 'prefix)
                                 "")))))
 
-  (let* ((type    (file-system-type fs))
-         (source  (canonicalize-device-spec (file-system-device fs)))
-         (target  (string-append root "/"
-                                 (file-system-mount-point fs)))
-         (flags   (logior (mount-flags->bit-mask (file-system-flags fs))
+  (catch #t
+    (lambda ()
+      (let* ((type    (file-system-type fs))
+             (source  (canonicalize-device-spec (file-system-device fs)))
+             (target  (string-append root "/"
+                                     (file-system-mount-point fs)))
+             (flags   (logior (mount-flags->bit-mask (file-system-flags fs))
 
-                          ;; For bind mounts, preserve the original flags such
-                          ;; as MS_NOSUID, etc.  Failing to do that, the
-                          ;; MS_REMOUNT call below fails with EPERM.
-                          ;; See <https://bugs.gnu.org/46292>
-                          (if (memq 'bind-mount (file-system-flags fs))
-                              (statfs-flags->mount-flags
-                               (file-system-mount-flags (statfs source)))
-                              0)))
-         (options (file-system-options fs)))
-    (when check?
-      (check-file-system source type (not skip-check-if-clean?) repair))
+                              ;; For bind mounts, preserve the original flags such
+                              ;; as MS_NOSUID, etc.  Failing to do that, the
+                              ;; MS_REMOUNT call below fails with EPERM.
+                              ;; See <https://bugs.gnu.org/46292>
+                              (if (memq 'bind-mount (file-system-flags fs))
+                                  (statfs-flags->mount-flags
+                                   (file-system-mount-flags (statfs source)))
+                                  0)))
+             (options (file-system-options fs)))
+        (when check?
+          (check-file-system source type (not skip-check-if-clean?) repair))
 
-    (catch 'system-error
-      (lambda ()
         ;; Create the mount point.  Most of the time this is a directory, but
         ;; in the case of a bind mount, a regular file or socket may be
         ;; needed.
@@ -1474,10 +1474,12 @@ corresponds to the symbols listed in FLAGS."
         (when (and (= MS_BIND (logand flags MS_BIND))
                    (= MS_RDONLY (logand flags MS_RDONLY)))
           (let ((flags (logior MS_REMOUNT flags)))
-            (mount source target type flags options))))
-      (lambda args
-        (or (file-system-mount-may-fail? fs)
-            (apply throw args))))))
+            (mount source target type flags options)))))
+    (lambda args
+      (or (begin
+            (format (current-error-port) "could not mount the file system: ~a~%" args)
+            (file-system-mount-may-fail? fs))
+          (apply throw args)))))
 
 (define %device-name-regexp "/dev/[hsvw]d([abcd])([0-9]*)")
 (define %hurd-device-name-regexp "part:([0-9]*):device:[hw]d([0-9]*)")
