@@ -763,7 +763,8 @@ secure session between the peers.")
       #:make-flags
       #~(let ((lua-version #$(version-major+minor (package-version lua))))
           (list (string-append "CC=" #$(cc-for-target))
-                (string-append "CFLAGS=-fPIC -DLSQLITE_VERSION=\"0.9.6\" -I"
+                (string-append "CFLAGS=-fPIC -DLSQLITE_VERSION=\""
+                               #$(package-version this-package) "\" -I"
                                #$(this-package-input "lua") "/include -I"
                                #$(this-package-input "sqlite") "/include")
                 (string-append "LUACMOD=" #$output "/lib/lua/" lua-version)
