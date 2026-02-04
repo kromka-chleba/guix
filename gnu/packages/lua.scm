@@ -801,7 +801,7 @@ secure session between the peers.")
 database engine.  The lsqlite3 module supports the creation and manipulation of
 SQLite3 databases.  Most sqlite3 functions are called via an object-oriented
 interface to either database or SQL statement objects.")
-    (license license:expat))
+    (license license:expat)))
 
 (define-public lua-sqlite
   (make-lua-sqlite "lua-sqlite" lua))
