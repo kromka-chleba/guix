@@ -258,14 +258,14 @@ alternative zones.")
 (define-public bat
   (package
     (name "bat")
-    (version "0.24.0")
+    (version "0.26.1")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "bat" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "11nc2iv2qhd1bs16yijqq934864ybnmg485rny70scy26xb9xk4x"))
+        (base32 "028d7gqblrlwab6d7y46f5xm199nky9x9f4l2vz7m0mn9lbd0rng"))
        (modules '((guix build utils)))
        (snippet
         '(begin (substitute* "Cargo.toml"
@@ -275,11 +275,14 @@ alternative zones.")
     (arguments
      (list
       #:install-source? #f
+      #:rust rust-1.87
+      ;; FIXME: Doctests fail (could not find rustdoc?)
+      #:cargo-test-flags ''("--lib" "--bins" "--tests" "--examples")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'pre-build
             (lambda _
-              (setenv "BAT_ASSETS_GEN_DIR" "target")))
+              (setenv "BAT_ASSETS_GEN_DIR" (string-append (getcwd) "/target"))))
           (add-after 'install 'install-extras
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
@@ -302,7 +305,7 @@ alternative zones.")
                               fish-completions-dir)
                 (install-file "target/assets/manual/bat.1" man1)))))))
     (native-inputs (list pkg-config))
-    (inputs (cons* libgit2-1.7 oniguruma zlib (cargo-inputs 'bat)))
+    (inputs (cons* libgit2-1.9 oniguruma zlib (cargo-inputs 'bat)))
     (home-page "https://github.com/sharkdp/bat")
     (synopsis "@command{cat} clone with syntax highlighting and git integration")
     (description
