@@ -2277,6 +2277,8 @@ publication are all controlled from the @file{pom.xml} declarative file.  Maven
 can be extended by plugins to utilise a number of other development tools for
 reporting or the build process.")))
 
+;;; maven-core 3.8.* and its dependencies are needed by clojure-tools-deps.
+
 (define maven-resolver-1.6-parent-pom
   (package
     (inherit maven-resolver-parent-pom)
@@ -2451,6 +2453,135 @@ reporting or the build process.")))
     (native-inputs
      (modify-inputs (package-native-inputs maven-resolver-transport-http)
        (replace "maven-resolver-test-util" maven-resolver-1.6-test-util)))))
+
+(define maven-3.8-pom
+  (package
+    (inherit maven-pom)
+    (version "3.8.8")
+    (source (origin
+              (inherit (package-source maven-pom))
+              (uri (string-append "mirror://apache/maven/"
+                                  "maven-3/" version "/source/"
+                                  "apache-maven-" version "-src.tar.gz"))
+              (sha256 (base32 "01q2g8sklxsys46i4dxqr89klcxfzz40f2kz4lxbdl1phyibqk92"))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-pom)
+       (replace "maven-parent-pom" maven-parent-pom-35)))))
+
+(define-public maven-3.8-artifact
+  (package
+    (inherit maven-artifact)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-artifact)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-model
+  (package
+    (inherit maven-model)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-model)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-builder-support
+  (package
+    (inherit maven-builder-support)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-builder-support)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-settings
+  (package
+    (inherit maven-settings)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-settings)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-settings-builder
+  (package
+    (inherit maven-settings-builder)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-settings-builder)
+       (replace "maven-builder-support" maven-3.8-builder-support)
+       (replace "maven-settings" maven-3.8-settings)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-model-builder
+  (package
+    (inherit maven-model-builder)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-model-builder)
+       (replace "maven-artifact" maven-3.8-artifact)
+       (replace "maven-builder-support" maven-3.8-builder-support)
+       (replace "maven-model" maven-3.8-model)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-repository-metadata
+  (package
+    (inherit maven-repository-metadata)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-repository-metadata)
+       (replace "maven-pom" maven-3.8-pom)))))
+
+(define-public maven-3.8-resolver-provider
+  (package
+    (inherit maven-resolver-provider)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-provider)
+       (replace "maven-model" maven-3.8-model)
+       (replace "maven-model-builder" maven-3.8-model-builder)
+       (replace "maven-builder-support" maven-3.8-builder-support)
+       (replace "maven-repository-metadata" maven-3.8-repository-metadata)
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)
+       (replace "maven-resolver-impl" maven-resolver-1.6-impl)
+       (replace "maven-resolver-util" maven-resolver-1.6-util)))))
+
+(define-public maven-3.8-plugin-api
+  (package
+    (inherit maven-plugin-api)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-plugin-api)
+       (replace "maven-artifact" maven-3.8-artifact)
+       (replace "maven-model" maven-3.8-model)))))
+
+(define-public maven-3.8-core
+  (package
+    (inherit maven-core)
+    (version (package-version maven-3.8-pom))
+    (source (package-source maven-3.8-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-core)
+       (replace "maven-artifact" maven-3.8-artifact)
+       (replace "maven-resolver-provider" maven-3.8-resolver-provider)
+       (replace "maven-model" maven-3.8-model)
+       (replace "maven-model-builder" maven-3.8-model-builder)
+       (replace "maven-builder-support" maven-3.8-builder-support)
+       (replace "maven-settings" maven-3.8-settings)
+       (replace "maven-settings-builder" maven-3.8-settings-builder)
+       (replace "maven-plugin-api" maven-3.8-plugin-api)
+       (replace "maven-repository-metadata" maven-3.8-repository-metadata)
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)
+       (replace "maven-resolver-impl" maven-resolver-1.6-impl)
+       (replace "maven-resolver-util" maven-resolver-1.6-util)))))
 
 ;; Many plugins require maven 3.0 as a dependency.
 (define maven-3.0-pom
