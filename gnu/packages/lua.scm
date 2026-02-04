@@ -787,10 +787,10 @@ secure session between the peers.")
      (list lua sqlite))
     (home-page "https://lua.sqlite.org/")
     (synopsis "SQLite bindings for Lua")
-    (description "LuaSQLite is a Lua binding for the SQLite3 database library.
-It provides a simple and efficient interface for accessing SQLite databases from
-Lua scripts, supporting prepared statements, transactions, and the full SQLite3
-API.")
+    (description "LuaSQLite (lsqlite3) is a Lua binding for the SQLite3 database
+library.  It provides a simple and efficient interface for accessing SQLite
+databases from Lua scripts, supporting prepared statements, transactions, and the
+full SQLite3 API.")
     (license license:expat)))
 
 (define-public lua-sqlite
