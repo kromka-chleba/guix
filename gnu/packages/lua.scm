@@ -754,6 +754,8 @@ secure session between the peers.")
               (file-name (string-append name "-" version ".zip"))
               (sha256
                (base32
+                ;; Note: Hash needs to be calculated from the actual download.
+                ;; When building, Guix will report the correct hash if this is wrong.
                 "0000000000000000000000000000000000000000000000000000"))))
     (build-system gnu-build-system)
     (arguments
