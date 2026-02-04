@@ -3833,7 +3833,11 @@ parallel computing platforms.  It also supports serial execution.")
             (lambda* (#:key inputs #:allow-other-keys)
               (wrap-program (string-append #$output "/bin/yosys-witness")
                 `("GUIX_PYTHONPATH" ":" prefix
-                  (,(getenv "GUIX_PYTHONPATH")))))))))
+                  (,(getenv "GUIX_PYTHONPATH"))))))
+          (add-before 'build 'build-info-manual
+            (lambda _
+              (invoke "make" "-C" "docs" "info")
+              (rename-file "docs/ollama-buddy.info" "ollama-buddy.info"))))))
     (native-inputs (list bison
                          cxxopts ;header-only library
                          flex
@@ -3841,6 +3845,9 @@ parallel computing platforms.  It also supports serial execution.")
                          gtkwave        ;for the tests
                          iverilog ;for the tests
                          pkg-config
+                         python-sphinxcontrib-bibtex
+                         python-sphinx-inline-tabs
+                         texinfo
                          perl))
     ;; Optional dependencies increase considerably package closure.
     ;; - gtkwave: required only for vcd2fst binary, used by ‘sim’ command.
