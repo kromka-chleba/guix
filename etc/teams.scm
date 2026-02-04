@@ -1268,6 +1268,11 @@ the \"texlive\" importer."
                        "Hellseher")
   go julia python science sysadmin)
 
+(define-member (person "Arthur Rodrigues"
+                       "arthurhdrodrigues@proton.me"
+                       "arthurhdrodrigues")
+  go)
+
 (define-member (person "Mark H Weaver"
                        "mhw@netris.org"
                        "mhw")
