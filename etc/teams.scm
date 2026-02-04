@@ -1468,6 +1468,11 @@ the \"texlive\" importer."
                        "mthl")
   java)
 
+(define-member (person "David Thompson"
+                       "dthompson2@worcester.edu"
+                       "dthompson")
+  guile)
+
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
       (error (format #false
