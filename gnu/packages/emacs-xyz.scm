@@ -26930,6 +26930,46 @@ supports multiple backends such as @code{vlc}, @code{mpg123},
 @code{afplay}.")
     (license license:gpl2+)))
 
+(define-public emacs-borg
+  (package
+    (name "emacs-borg")
+    (version "4.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacscollective/borg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18vnf0lkkribkinl0xr074vx1yhqmllxysbcgcf8p2vy92n4spzl"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-epkg emacs-magit))
+    (arguments
+     (list
+      #:tests? #f ; No tests.
+      #:include #~(list "^[^/]+.el$" "^docs/" "^[^/]+.mk$" "^borg.sh$")
+      #:exclude #~(list "^.dir-locals.el$" "^test.el$" "^tests.el$"
+                        "^[^/]+-test.el$" "^[^/]+-tests.el$")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'inject-git
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* (find-files "." "\\.el$")
+                (("\"git\"")
+                 (format #f "~s"
+                         (search-input-file inputs "bin/git"))))))
+          (add-before 'build 'pre-build
+            (lambda _  ;; XXX: Otherwise, expects user configuration.
+              (setenv "CI" "true"))))))
+    (inputs (list git-minimal))
+    (home-page "https://docs.emacsmirror.org/borg")
+    (synopsis "Assimilate Emacs packages as Git submodules")
+    (description
+     "The Borg package assimilate Emacs packages as Git submodules.  Borg is
+an alternative, bare-bones package manager for Emacs packages.")
+    (license license:gpl3+)))
+
 (define-public emacs-groovy-modes
   (package
     (name "emacs-groovy-modes")
