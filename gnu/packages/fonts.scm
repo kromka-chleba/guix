@@ -1477,7 +1477,12 @@ These fonts include glyphs from multiple icon sets:
 The monospaced variant ensures all glyphs have uniform width, which is essential
 for terminal emulators that require consistent character spacing.")
     ;; https://github.com/ryanoasis/nerd-fonts/blob/master/license-audit.md
-    (license license:expat)))
+    (license
+     (list license:expat
+           license:cc-by4.0
+           license:unlicense
+           license:asl2.0
+           license:silofl1.1))))
 
 (define-public font-new-computer-modern
   (package
