@@ -93,6 +93,7 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
+  #:use-module (guix memoization)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
@@ -125,6 +126,7 @@
   #:use-module (gnu packages code)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages cross-base)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
@@ -3045,6 +3047,17 @@ files as command-line parameters and it downloads them and exits.  NZBGet also
 contains a Web interface.  Its server can be controlled through remote
 procedure calls (RPCs).")
     (license license:gpl2+)))
+
+;;; BPF cross-compilation toolchain for eBPF programs
+
+(define-public make-binutils-bpf-unknown-none
+  (mlambda ()
+    (cross-binutils "bpf-unknown-none")))
+
+(define-public make-gcc-bpf-unknown-none
+  (mlambda ()
+    (cross-gcc "bpf-unknown-none"
+               #:xbinutils (make-binutils-bpf-unknown-none))))
 
 (define-public opensnitch-daemon
   (package
