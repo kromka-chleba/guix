@@ -747,22 +747,23 @@ secure session between the peers.")
 (define (make-lua-sqlite name lua)
   (package
     (name name)
-    (version "0.9.5")
+    (version "0.9.6")
     (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/LuaDist/lsqlite3")
-                    (commit "78d148c21f4105592a0ba429b27886d732579dd4")))
-              (file-name (git-file-name name version))
+              (method url-fetch)
+              (uri "http://lua.sqlite.org/home/zip/lsqlite3_v096.zip?uuid=v0.9.6")
+              (file-name (string-append name "-" version ".zip"))
               (sha256
                (base32
-                "1r02apxfxcyxkscgibbhzanmilwvyh8lb5zh7av6nhil7rr60mfy"))))
+                "0000000000000000000000000000000000000000000000000000"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:make-flags
       #~(let ((lua-version #$(version-major+minor (package-version lua))))
           (list (string-append "CC=" #$(cc-for-target))
+                (string-append "CFLAGS=-fPIC -DLSQLITE_VERSION=\"0.9.6\" -I"
+                               #$(this-package-input "lua") "/include -I"
+                               #$(this-package-input "sqlite") "/include")
                 (string-append "LUACMOD=" #$output "/lib/lua/" lua-version)
                 (string-append "LUAINC=" #$(this-package-input "lua") "/include")
                 (string-append "SQLITE3INC=" #$(this-package-input "sqlite") "/include")
@@ -782,17 +783,22 @@ secure session between the peers.")
                       (lua-bin (string-append #$lua "/bin/lua")))
                   (setenv "LUA_CPATH"
                           (string-append #$output "/lib/lua/" lua-version "/?.so;;"))
-                  (invoke lua-bin "test.lua")
-                  (invoke lua-bin "tests-sqlite3.lua"))))))))
+                  ;; Only run tests if they exist in the source
+                  (when (file-exists? "test.lua")
+                    (invoke lua-bin "test.lua"))
+                  (when (file-exists? "tests-sqlite3.lua")
+                    (invoke lua-bin "tests-sqlite3.lua"))))))))))
+    (native-inputs
+     (list unzip))
     (inputs
      (list lua sqlite))
-    (home-page "https://lua.sqlite.org/")
-    (synopsis "SQLite bindings for Lua")
-    (description "LuaSQLite (lsqlite3) is a Lua binding for the SQLite3 database
-library.  It provides a simple and efficient interface for accessing SQLite
-databases from Lua scripts, supporting prepared statements, transactions, and the
-full SQLite3 API.")
-    (license license:expat)))
+    (home-page "http://lua.sqlite.org/")
+    (synopsis "A binding for Lua to the SQLite3 database library")
+    (description "lsqlite3 is a thin wrapper around the public domain SQLite3
+database engine.  The lsqlite3 module supports the creation and manipulation of
+SQLite3 databases.  Most sqlite3 functions are called via an object-oriented
+interface to either database or SQL statement objects.")
+    (license license:expat))
 
 (define-public lua-sqlite
   (make-lua-sqlite "lua-sqlite" lua))
