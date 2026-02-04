@@ -778,11 +778,12 @@ secure session between the peers.")
           (add-after 'install 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                (let ((lua-version #$(version-major+minor (package-version lua))))
+                (let ((lua-version #$(version-major+minor (package-version lua)))
+                      (lua-bin (string-append #$lua "/bin/lua")))
                   (setenv "LUA_CPATH"
                           (string-append #$output "/lib/lua/" lua-version "/?.so;;"))
-                  (invoke "lua" "test.lua")
-                  (invoke "lua" "tests-sqlite3.lua"))))))))
+                  (invoke lua-bin "test.lua")
+                  (invoke lua-bin "tests-sqlite3.lua"))))))))
     (inputs
      (list lua sqlite))
     (home-page "https://lua.sqlite.org/")
