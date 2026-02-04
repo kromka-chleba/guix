@@ -2277,6 +2277,181 @@ publication are all controlled from the @file{pom.xml} declarative file.  Maven
 can be extended by plugins to utilise a number of other development tools for
 reporting or the build process.")))
 
+(define maven-resolver-1.6-parent-pom
+  (package
+    (inherit maven-resolver-parent-pom)
+    (version "1.6.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/apache/maven-resolver")
+                    (commit (string-append "maven-resolver-" version))))
+              (file-name (git-file-name "maven-resolver" version))
+              (sha256
+               (base32
+                "0hbbbxj14qyq8pccyab96pjqq90jnjmid1pml9kx55c5smfpjn37"))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-parent-pom)
+       (replace "maven-parent-pom" maven-parent-pom-34)))))
+
+(define-public maven-resolver-1.6-api
+  (package
+    (inherit maven-resolver-api)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-api)
+       (replace "maven-resolver-parent-pom" maven-resolver-1.6-parent-pom)))))
+
+(define-public maven-resolver-1.6-spi
+  (package
+    (inherit maven-resolver-spi)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-spi)
+       (replace "maven-resolver-api" maven-resolver-1.6-api)))))
+
+(define-public maven-resolver-1.6-test-util
+  (package
+    (inherit maven-resolver-test-util)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (inputs
+     (modify-inputs (package-inputs maven-resolver-test-util)
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)))))
+
+(define-public maven-resolver-1.6-util
+  (package
+    (inherit maven-resolver-util)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-util)
+       (replace "maven-resolver-api" maven-resolver-1.6-api)))
+    (native-inputs
+     (modify-inputs (package-native-inputs maven-resolver-util)
+       (replace "maven-resolver-test-util" maven-resolver-1.6-test-util)))))
+
+(define-public maven-resolver-1.6-connector-basic
+  (package
+    (inherit maven-resolver-connector-basic)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-connector-basic)
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)
+       (replace "maven-resolver-util" maven-resolver-1.6-util)))
+    (native-inputs
+     (modify-inputs (package-native-inputs maven-resolver-connector-basic)
+       (replace "maven-resolver-test-util" maven-resolver-1.6-test-util)))))
+
+(define-public maven-resolver-1.6-impl
+  (package
+    (inherit maven-resolver-impl)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (arguments
+     `(#:jar-name "maven-resolver-impl.jar"
+       #:source-dir "maven-resolver-impl/src/main/java"
+       #:test-dir "maven-resolver-impl/src/test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'generate-sisu
+           (lambda _
+             (mkdir-p "build/classes/META-INF/sisu")
+             (with-output-to-file "build/classes/META-INF/sisu/javax.inject.Named"
+               (lambda _
+                 (display
+                  (string-append
+                   ;; Build this list by looking for files containing "@Named"
+                   "org.eclipse.aether.internal.impl.DefaultArtifactResolver\n"
+                   "org.eclipse.aether.internal.impl.collect.DefaultDependencyCollector\n"
+                   "org.eclipse.aether.internal.impl.DefaultChecksumPolicyProvider\n"
+                   "org.eclipse.aether.internal.impl.DefaultDeployer\n"
+                   "org.eclipse.aether.internal.impl.DefaultFileProcessor\n"
+                   "org.eclipse.aether.internal.impl.DefaultInstaller\n"
+                   "org.eclipse.aether.internal.impl.DefaultLocalRepositoryProvider\n"
+                   "org.eclipse.aether.internal.impl.DefaultMetadataResolver\n"
+                   "org.eclipse.aether.internal.impl.DefaultOfflineController\n"
+                   "org.eclipse.aether.internal.impl.DefaultRemoteRepositoryManager\n"
+                   "org.eclipse.aether.internal.impl.DefaultRepositoryConnectorProvider\n"
+                   "org.eclipse.aether.internal.impl.DefaultRepositoryEventDispatcher\n"
+                   "org.eclipse.aether.internal.impl.DefaultRepositoryLayoutProvider\n"
+                   "org.eclipse.aether.internal.impl.DefaultRepositorySystem\n"
+                   "org.eclipse.aether.internal.impl.DefaultSyncContextFactory\n"
+                   "org.eclipse.aether.internal.impl.DefaultTransporterProvider\n"
+                   "org.eclipse.aether.internal.impl.DefaultUpdateCheckManager\n"
+                   "org.eclipse.aether.internal.impl.DefaultUpdatePolicyAnalyzer\n"
+                   "org.eclipse.aether.internal.impl.EnhancedLocalRepositoryManagerFactory\n"
+                   "org.eclipse.aether.internal.impl.LoggerFactoryProvider\n"
+                   "org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory\n"
+                   "org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory\n"
+                   "org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory"))))
+             #t))
+         (replace 'install
+           (install-from-pom "maven-resolver-impl/pom.xml")))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs maven-resolver-impl)
+       (delete "maven-resolver-named-locks")
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)
+       (replace "maven-resolver-util" maven-resolver-1.6-util)
+       (replace "maven-resolver-parent-pom" maven-resolver-1.6-parent-pom)))
+    (native-inputs
+     (modify-inputs (package-native-inputs maven-resolver-impl)
+       (delete "java-hamcrest-all")
+       (delete "java-mockito-1")
+       (replace "maven-resolver-test-util" maven-resolver-1.6-test-util)))))
+
+(define-public maven-resolver-1.6-transport-file
+  (package
+    (inherit maven-resolver-transport-file)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (inputs
+     (modify-inputs (package-inputs maven-resolver-transport-file)
+       (delete "maven-wagon-provider-api")
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)
+       (replace "maven-resolver-util" maven-resolver-1.6-util)))
+    (native-inputs
+     (modify-inputs (package-native-inputs maven-resolver-transport-file)
+       (replace "maven-resolver-test-util" maven-resolver-1.6-test-util)))))
+
+(define-public maven-resolver-1.6-transport-http
+  (package
+    (inherit maven-resolver-transport-http)
+    (version (package-version maven-resolver-1.6-parent-pom))
+    (source (package-source maven-resolver-1.6-parent-pom))
+    (arguments
+     `(#:jar-name "maven-resolver-transport-http.jar"
+       #:source-dir "maven-resolver-transport-http/src/main/java"
+       #:test-dir "maven-resolver-transport-http/src/test"
+       #:jdk ,icedtea-8
+       ;; Tests all fail because
+       ;; org.eclipse.aether.transport.http.SslSocketFactory is not available.
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'generate-sisu
+           (lambda _
+             (mkdir-p "build/classes/META-INF/sisu")
+             (with-output-to-file "build/classes/META-INF/sisu/javax.inject.Named"
+               (lambda _
+                 (display "org.eclipse.aether.transport.http.HttpTransporterFactory\n"))))))))
+    (inputs
+     (modify-inputs (package-inputs maven-resolver-transport-http)
+       (delete "maven-wagon-provider-api")
+       (replace "maven-resolver-api" maven-resolver-1.6-api)
+       (replace "maven-resolver-spi" maven-resolver-1.6-spi)
+       (replace "maven-resolver-util" maven-resolver-1.6-util)))
+    (native-inputs
+     (modify-inputs (package-native-inputs maven-resolver-transport-http)
+       (replace "maven-resolver-test-util" maven-resolver-1.6-test-util)))))
+
 ;; Many plugins require maven 3.0 as a dependency.
 (define maven-3.0-pom
   (package
