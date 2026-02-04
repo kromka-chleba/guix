@@ -1,0 +1,269 @@
+#+title: Python team lifecycle document
+
+* Synopsis
+This document is an extension of packaging recommendations and procedures
+described in Packaging Guidelines [1] adopted for Python flavored projects.
+
+The one may identify team's scope by running ~etc/teams.scm show python~ in
+Guix git checkout.
+
+Join the team!
+
+* Expectations of a team members and how to get started
+If a person would like to be a part of Python team we expect at least a
+certain level of experience with Python packaging standards [2], [3], [4]
+outside Guix (~setup.cfg~, ~setup.py~, ~pyproject.toml~, etc.), some
+understanding of build backends (~seuptools~, ~hatchling~, ~poetry~, ~uv~,
+etc.).
+
+A will to help with issues and Merge Requests (MR) on CodeBerg would be enough
+;-).
+
+After the MR to include a person to the team has been merged [5], one would
+start reciaving notifications if the issue or MR are marked with =team-python=
+tag, assined with ~@guix/team~ or mention in conversation on CodeBerg,
+depending on the user preferences, it would be an email or just a ping in
+CodeBerg web UI.
+
+Some guidance on how to start contributing as quick as possible:
+- The team member may check open issues without tags and identify if some of
+  them are related to =team-python= just apply a tag, replay or try to fix it;
+  the same for MRs.
+- Check open MRs for a simple version bump or package addition, try to build
+  it locally and place =user-reviewed= tag if the team member does not have a
+  commit access and package passes build, check, sanity-check phases.
+- When you identify some issue or MR where you think you have enough
+  experience to help, please, assign it to yourself - it would help others to
+  see that someone works on it already.
+
+* Quality assurance (QA)
+The process is well defined in general by [1] and this section highlights a
+few practicing flows within the team right now (2026-02-04) accumulated with
+time.
+
+** Adding a new package
+Clearification on ~python-~ prefix, see:
+<https://codeberg.org/guix/guix/issues/5841>.
+
+If the package is potential future Python module (e.g. ~python-astropy~,
+~python-numpy~, ~python-requests~) it should be prefixed with ~python-~ and
+all runtime dependencies should be part of ~propagated-inputs~, build and
+check time dependencies go to ~native-inputs~ no need for ~inputs~ at all;
+
+If the package is the final application/command (e.g. ~ansible~, ~awscli~,
+~oflate~, ~orange~, etc.) all runtime dependencies should go to ~inputs~.
+
+Common steps during package addition or review of MR processes which add a
+new package to one of the collections:
+- Package follows naming convention (see above)
+- Package inserted alphabetically a->z if the target module of of the team
+  scope
+- License is checked (the one may check source code manually or use some tools
+  to automate the process, e.g. ~licensecheck~)
+- The package follows common patterns seen in the target module and is as close
+  as the template providing by ~guix import pypi <package-name>~ e.g.
+#+begin_src scheme
+(define-public python-<name>
+  (package
+    (name "python-<name>)
+    (version "<version>")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "<name>" version))
+       (sha256
+        (base32 "<hash>"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list ...
+           ...))
+    (propagated-inputs
+     (list ...
+           ...))
+    (home-page "<URL>")
+    (synopsis "Capital case, no dot (.) in the end")
+    (description
+     "Starting from a new line.  Two (__) spaces after each end of sentence.")
+    (license license:<verified-license>)))
+#+end_src
+- The package does not include any binary blobs
+: find . -type f ! -size 0 -exec grep -IL . "{}" \;
+The snippet will find all not empty binary files.
+- If it's a ~git-fetch~ package variant, it does not include any git
+  submodules
+- The package passes all common phases e.g. build, check, sanity-check; in
+  case of ~#:tests? #f~ it has a reasoning of why tests are disabled, e.g. no
+  tests at all, too complex to set up, require network access etc.
+- The package passes ~guix lint <package-name>~
+  
+** Updating packages
+Python team would be more proactive in refreshing collation of packages during
+cycles which would help to reduce an amount of single-package update MRs.
+
+- Any trivial version bumps may be checked locally and marked with
+  =user-reviewed= tag for any commiter to merge on a free time.
+
+Some examples:
+https://codeberg.org/guix/guix/pulls?q=&type=all&sort=relevance&state=closed&labels=423039%2C434115&milestone=0&project=0&assignee=0&poster=0&archived=false
+#+begin_src diff
+@@ -339,7 +339,7 @@ (define-public python-behave-web-api
+ (define-public python-blacksheep
+   (package
+     (name "python-blacksheep")
+-    (version "2.4.5")
++    (version "2.4.6")
+     (source
+      (origin
+        (method git-fetch)
+@@ -348,11 +348,11 @@ (define-public python-blacksheep
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+-        (base32 "02lfa75p8phdw3pi9c4n4fr3pmkyi3rdp6mqgz9xhq58g9blpddx"))))
++        (base32 "120q6hrhfjxdsqav8h5z8yqfi0iiacwxbkryjk7kb20ic2879vqh"))))
+     (build-system pyproject-build-system)
+     (arguments
+      (list
+-      ;; tests: 1799 passed
++      ;; tests: 1821 passed
+       ;;
+       ;; Run all unit tests, but do not run integration tests from `itests`
+       ;; directory.
+#+end_src
+
+- Any styling adjustment, clarification of description and similar changes
+  which do not trigger package rebuild, may be checked and merged directly to
+  master; or marked with =user-reviewed= tag.
+
+** Large scale refresh
+Any packages which rebuild ratio is quite high should go to =python-team=
+branch, usually they are accumulated within a year 3-4 times (updates in ~(gnu
+packages python-build)~ would rebuild the world). You may have a quick glance
+of the whole Python collection from https://codeberg.org/Hellseher/guix-files
+~python-team-stats.json~; it's a manually generate stats which would help to
+make a decision where to refresh the package =master= or =python-team=
+branches:
+#+begin_src json
+{
+    "module_file_name": "gnu/packages/python-build.scm",
+    "build_system_name": "pyproject",
+    "package_name": "python-setuptools",
+    "package_guix_version": "80.9.0",
+    "package_upstream_version": "nil",
+    "all_inputs_count": 0,
+    "dependents_count": 22467,
+    "affect_ratio": 72.7959
+},
+{
+    "module_file_name": "gnu/packages/build-tools.scm",
+    "build_system_name": "pyproject",
+    "package_name": "meson",
+    "package_guix_version": "1.9.0",
+    "package_upstream_version": "nil",
+    "all_inputs_count": 3,
+    "dependents_count": 20890,
+    "affect_ratio": 67.68623
+}
+#+end_src
+
+Any improvements to ~pyproject-build-system~ should happen on a team branch,
+see the recently merged ones for inspiration:
+- build-system: pyproject: Drop python-importlib-metadata
+  input. https://codeberg.org/guix/guix/pulls/5845
+- [python-team] pyproject/meson/texlive decoupling
+ https://codeberg.org/guix/guix/pulls/5034
+- build-system/pyproject: Export default-sanity-check.py.
+  https://codeberg.org/guix/guix/pulls/1068
+
+CodeBerg Milestones is a helpful tool to plan long running updates, see [6],
+  [7], [8].
+
+Manifests are extremely useful to verify which packages need attention during
+maneuvers on the =python-team= branch Check current python-team for missing
+substitutes from a given manifest:
+#+begin_src sh 
+guix time-machine --branch=python-team -- \
+  weather \
+  --display-missing \
+  --substitute-urls=https://ci.guix.gnu.org \
+  --manifest=etc/teams/python/python-<name>-manifest.scm
+#+end_src
+
+https://qa.guix.gnu.org/ is still in use for branch monitoring builds
+(2026-02-04) [9].
+
+* What to improve
+This list is not deterministic and would be growing or shrinking with time,
+anyone may drop an item here if it's related to Python team scope and would
+improve the processes in general.
+
+- There are some packages which use ~git-fetch~ but during ~guix refresh
+  --update <package-name>~ the list of native-propagated/propagated-inputs are
+  not changed like when package is ~pypi-uri~; implement some logic in git
+  refresh which may check the current build system type and acts accordingly
+  to keep dependencies list refreshed as well
+- Inputs which are used for any local development (linting, styling,
+  formating) should not be included in package at all, see the open issue
+  <https://codeberg.org/guix/guix/issues/3375>; it's partly resolved in the
+  current cycle (2026-02-04)
+- Re-distribute a large collection in ~(gnu packages python-xyz)~ into
+  thematic modules, see <https://codeberg.org/guix/guix/issues/1485>.
+- Sort each ~python-*~ module alphabetically a->z
+- Prefix all Python related packages in ~(gnu packages bioinformatics)~, see
+  <https://codeberg.org/guix/guix/issues/5326>
+  
+* Communicating channels
+As for now (2026-02-04) the primary communication within the team is via
+CodeBerg issues, MR and mailing list to guix-devel@gnu.org; to reach the team
+on CodeBerg you may use global alias ~@guix/python~ which will send
+notification to all team members listed in ~etc/teams.scm~.
+
+* Glossary
+- Guix build system :: An abstracted collection of steps to produce a store
+  item, ~pyproject-build-system~ is one used for Python packages
+- CodeBerg Milestone :: more or less static document describing a some wide
+  scoped goal, it might be useful to aggregate issues and MRs which follows
+  the same direction
+- Merge Request (MR) :: see PR
+- Pull Request (PR) :: https://codeberg.org/guix/guix/pulls any modification
+  proposed for review and inclusion to Guix source, you may filter out by
+  =team-python= tag -
+  https://codeberg.org/guix/guix/pulls?q=&type=all&sort=relevance&labels=423039&state=open&milestone=0&project=0&assignee=0&poster=0
+- Python build backend :: Python specific tooling to produce a wheel,
+  described in ~pyproejct.toml~ under ~[build-system]~ section e.g.
+#+begin_src toml
+[build-system]
+requires = ["setuptools>=77.0.0",
+            "setuptools_scm>=8.0.0",
+            "cython>=3.0.0, <4",
+            "numpy>=2.0.0, <3",
+            "extension-helpers>=1.4,<2",
+            "pyerfa>=2.0.1.3"]
+build-backend = "setuptools.build_meta"
+#+end_src
+- Python wheel :: The artifact produced of Python build backend.
+- Python Enhancement Proposals (PEP) :: A large collection of documents
+  describing current agreed standards and processes in Python community, it
+  might be helpful to read it but not required to review packages in Guix.
+- Python module :: A reusable collection of codes (library) which is searched
+  in ~PYTHONPATH~ or ~GUIX_PYTHONPATH~
+  
+* References
+1. Guix manual: Contibuting: Packaging Guidelines
+   https://guix.gnu.org/manual/devel/en/guix.html#Packaging-Guidelines
+2. PEP 609 – Python Packaging Authority (PyPA) Governance
+ https://peps.python.org/pep-0609/  
+3. PEP 621 – Storing project metadata in pyproject.toml
+   https://peps.python.org/pep-0621/
+4. PEP 772 – Packaging Council governance process
+   https://peps.python.org/pep-0772/
+5. Guix manual: Contibuting: Teams
+   https://guix.gnu.org/manual/devel/en/html_node/Teams.html
+6. On the way to pyproject-build-system everywhere
+  https://codeberg.org/guix/guix/milestone/20775
+7. Towards NumPy 2 https://codeberg.org/guix/guix/milestone/27586
+8. Towards Python 3.12 and python-next@3.13
+   https://codeberg.org/guix/guix/milestone/35232
+9. Guix manual: Contibuting: Tracking Bugs and Changes: Managing Patches and
+   Branches: Managing Patches and Branches
+   https://guix.gnu.org/manual/devel/en/html_node/Managing-Patches-and-Branches.html
