@@ -7793,7 +7793,7 @@ streaming audio server.")
                   (guix build utils))
       #:phases
         #~(modify-phases %standard-phases
-            (add-before 'check 'pre-check
+            (add-before 'sanity-check 'pre-check
               (lambda _
                 (setenv "HOME" (getcwd))))
             (replace 'check
