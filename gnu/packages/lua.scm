@@ -790,7 +790,7 @@ secure session between the peers.")
                   (when (file-exists? "test.lua")
                     (invoke lua-bin "test.lua"))
                   (when (file-exists? "tests-sqlite3.lua")
-                    (invoke lua-bin "tests-sqlite3.lua"))))))))))
+                    (invoke lua-bin "tests-sqlite3.lua")))))))))
     (native-inputs
      (list unzip))
     (inputs
