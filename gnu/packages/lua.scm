@@ -1803,18 +1803,31 @@ way, following established lisp conventions.")
               (file-name (string-append "lsqlite3-v" version ".zip"))
               (sha256
                (base32
-                "0324082jmbly9x41ycri66vbdgf8826y979hpxd80i8wxph9a74q"))))
+                "10md6bfvbzflrhz4n75jr1ppmz86mwsip85llny23w2ld9iygipc"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (let ((out (assoc-ref %outputs "out"))
-             (lua-version ,(version-major+minor (package-version lua))))
-         (list ,(string-append "CC=" (cc-for-target))
-               (string-append "LUACMOD=" out "/lib/lua/" lua-version)))
-       #:tests? #f                     ;tests must run after installation
+     `(#:tests? #f                     ;tests must run after installation
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))))
+         (delete 'configure)
+         (replace 'build
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((lua (assoc-ref inputs "lua"))
+                   (sqlite (assoc-ref inputs "sqlite")))
+               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                       (string-append "-I" lua "/include")
+                       (string-append "-I" sqlite "/include")
+                       "-o" "lsqlite3.so"
+                       "lsqlite3.c"
+                       (string-append "-L" lua "/lib")
+                       (string-append "-L" sqlite "/lib")
+                       "-llua" "-lsqlite3"))))
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lua-version ,(version-major+minor (package-version lua)))
+                    (cmod-dir (string-append out "/lib/lua/" lua-version)))
+               (install-file "lsqlite3.so" cmod-dir)))))))
     (native-inputs (list unzip pkg-config))
     (inputs (list lua sqlite))
     (home-page "https://lua.sqlite.org/")
