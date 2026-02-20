@@ -121,7 +121,16 @@
             (files '("share/luanti/games")))
            (search-path-specification
             (variable "LUANTI_MOD_PATH")
-            (files '("share/luanti/mods")))))
+            (files '("share/luanti/mods")))
+           (search-path-specification
+            (variable "GUIX_LUA_PATH")
+            (separator ";")
+            (files '("share/lua/5.1"
+                     "share/luajit-2.1")))
+           (search-path-specification
+            (variable "GUIX_LUA_CPATH")
+            (separator ";")
+            (files '("lib/lua/5.1")))))
     (native-inputs (list catch2-3 pkg-config))
     (inputs (list curl
                   freetype
