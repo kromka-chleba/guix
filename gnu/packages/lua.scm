@@ -459,7 +459,7 @@ directory structure and file attributes.")
         ;; TODO: Re-enable the tests after luamake can use a newer bee commit
         ;; (see:
         ;; <https://github.com/actboy168/bee.lua/commit/679c566f0f26bcf0c19e37066e678993122e1f34>).
-        #:tests? #f
+        #:tests? #f                     ;tests must run after installation
         #:phases
         #~(modify-phases %standard-phases
             (delete 'configure)
@@ -1811,7 +1811,7 @@ way, following established lisp conventions.")
              (lua-version ,(version-major+minor (package-version lua))))
          (list ,(string-append "CC=" (cc-for-target))
                (string-append "LUACMOD=" out "/lib/lua/" lua-version)))
-       #:tests? #f
+       #:tests? #f                     ;tests must run after installation
        #:phases
        (modify-phases %standard-phases
          (delete 'configure))))
