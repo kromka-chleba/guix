@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2025 Danny Milosavljevic <dannym@friendly-machines.com>
+;;; Copyright © 2025 Matej Košík <matej@kosik.sk>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,12 +23,15 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix build-system node)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages chromium)
   #:use-module (gnu packages node)
   #:use-module (gnu packages node-xyz)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages web))
 
 ;; Playwright is a browser automation framework.  Upstream provides patched
@@ -254,4 +258,112 @@ const browser = await chromium.launch(@{
 For the command line variant $code{playwright-core}, set the environment
 variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
 @end enumerate")
+    (license license:asl2.0)))
+
+(define-public python-playwright
+  (package
+    (name "python-playwright")
+    (version "1.58.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/microsoft/playwright-python")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dmf1kr9wvnw11zamnwq9jarjlf2cf56z7xgj2zkqk3w62k7vbc0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;tests require browser binaries
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              ;; setuptools-scm requires a git checkout to determine the
+              ;; version; provide it explicitly instead.
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
+          (add-before 'build 'patch-build-files
+            (lambda _
+              ;; Relax exact build-dependency versions imposed by upstream.
+              (substitute* "pyproject.toml"
+                (("\"setuptools==[0-9.]+\", \"setuptools-scm==[0-9.]+\", \
+\"wheel==[0-9.]+\", \"auditwheel==[0-9.]+\"")
+                 "\"setuptools\", \"setuptools-scm\", \"wheel\""))
+              ;; Remove the custom bdist_wheel command that tries to
+              ;; download the Playwright driver bundle from the internet.
+              (substitute* "setup.py"
+                (("    cmdclass=\\{\"bdist_wheel\".*") ""))))
+          (add-after 'install 'install-driver
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((node (assoc-ref inputs "node"))
+                     (playwright-core (assoc-ref inputs "node-playwright-core"))
+                     (driver-dir
+                      (string-append (site-packages inputs outputs)
+                                     "/playwright/driver")))
+                (mkdir-p driver-dir)
+                ;; Point to the system Node.js binary.
+                (symlink (string-append node "/bin/node")
+                         (string-append driver-dir "/node"))
+                ;; Point to the playwright-core JavaScript package.
+                (symlink
+                 (string-append playwright-core
+                                "/lib/node_modules/playwright-core")
+                 (string-append driver-dir "/package")))))
+          (add-after 'install-driver 'patch-driver
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute*
+                  (string-append (site-packages inputs outputs)
+                                 "/playwright/_impl/_driver.py")
+                ;; node-playwright-core uses wrap-program on cli.js, turning
+                ;; it into a shell script (with "export VAR=..." lines) and
+                ;; saving the original JavaScript as .cli.js-real.  When the
+                ;; Python playwright driver calls "node cli.js", Node.js
+                ;; fails to parse the shell wrapper.  Use the original JS.
+                (("cli_path = str\\(driver_path / \"package\" / \"cli\\.js\"\\)")
+                 (string-append
+                  "_cli_real = driver_path / \"package\" / \".cli.js-real\"\n"
+                  "    cli_path = str(_cli_real if _cli_real.exists()"
+                  " else driver_path / \"package\" / \"cli.js\")"))
+                ;; Add the environment variables that node-playwright-core's
+                ;; cli.js shell wrapper was setting.
+                (("    env\\[\"PW_CLI_DISPLAY_VERSION\"\\] = version\n")
+                 (string-append
+                  "    env[\"PW_CLI_DISPLAY_VERSION\"] = version\n"
+                  "    env[\"PW_CODEGEN_NO_INSPECTOR\"] = \"1\"\n"
+                  "    env[\"PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD\"] = \"1\"\n"))))))))
+    (inputs
+     (list node-lts
+           node-playwright-core))
+    (propagated-inputs
+     (list python-greenlet
+           python-pyee))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (native-search-paths
+     ;; When ungoogled-chromium is in the profile, Guix automatically sets
+     ;; PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to its binary, telling playwright
+     ;; to use the system browser instead of downloading one.
+     (list
+      (search-path-specification
+       (variable "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+       (file-type 'regular)
+       (separator #f)              ;single entry
+       (files '("bin/chromium")))))
+    (home-page "https://playwright.dev/python/")
+    (synopsis "Browser automation library for Python")
+    (description
+     "Playwright is a Python library to automate Chromium, Firefox, and
+WebKit browsers with a single API.
+
+@strong{Important}: This package only supports Chromium-based browsers
+using the system @code{ungoogled-chromium}, because Playwright requires
+custom-patched versions of Firefox and WebKit that are not packaged for
+Guix.
+
+To use Playwright with the system Chromium, set the environment variable
+@env{PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH} to the Chromium binary path.")
     (license license:asl2.0)))
