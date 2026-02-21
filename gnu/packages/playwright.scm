@@ -263,7 +263,7 @@ variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
 (define-public python-playwright
   (package
     (name "python-playwright")
-    (version "1.50.0")
+    (version "1.58.0")
     (source
      (origin
        (method git-fetch)
@@ -272,7 +272,7 @@ variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0i9mynz9nnq4ci3n2yfclfas64a12fv7qvb8232np4xd03sajni5"))))
+        (base32 "1dmf1kr9wvnw11zamnwq9jarjlf2cf56z7xgj2zkqk3w62k7vbc0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -297,7 +297,7 @@ variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
                 (("    cmdclass=\\{\"bdist_wheel\".*") ""))))
           (add-after 'install 'install-driver
             (lambda* (#:key inputs outputs #:allow-other-keys)
-              (let* ((node (assoc-ref inputs "node-lts"))
+              (let* ((node (assoc-ref inputs "node"))
                      (playwright-core (assoc-ref inputs "node-playwright-core"))
                      (driver-dir
                       (string-append (site-packages inputs outputs)
@@ -316,8 +316,6 @@ variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
            node-playwright-core))
     (propagated-inputs
      (list python-greenlet
-           ;; Upstream constrains pyee to <13 for playwright 1.50.0, but the
-           ;; pyee 13 API is backward-compatible for the subset playwright uses.
            python-pyee))
     (native-inputs
      (list python-setuptools
