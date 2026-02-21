@@ -310,7 +310,29 @@ variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
                 (symlink
                  (string-append playwright-core
                                 "/lib/node_modules/playwright-core")
-                 (string-append driver-dir "/package"))))))))
+                 (string-append driver-dir "/package")))))
+          (add-after 'install-driver 'patch-driver
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute*
+                  (string-append (site-packages inputs outputs)
+                                 "/playwright/_impl/_driver.py")
+                ;; node-playwright-core uses wrap-program on cli.js, turning
+                ;; it into a shell script (with "export VAR=..." lines) and
+                ;; saving the original JavaScript as .cli.js-real.  When the
+                ;; Python playwright driver calls "node cli.js", Node.js
+                ;; fails to parse the shell wrapper.  Use the original JS.
+                (("cli_path = str\\(driver_path / \"package\" / \"cli\\.js\"\\)")
+                 (string-append
+                  "_cli_real = driver_path / \"package\" / \".cli.js-real\"\n"
+                  "    cli_path = str(_cli_real if _cli_real.exists()"
+                  " else driver_path / \"package\" / \"cli.js\")"))
+                ;; Add the environment variables that node-playwright-core's
+                ;; cli.js shell wrapper was setting.
+                (("    env\\[\"PW_CLI_DISPLAY_VERSION\"\\] = version\n")
+                 (string-append
+                  "    env[\"PW_CLI_DISPLAY_VERSION\"] = version\n"
+                  "    env[\"PW_CODEGEN_NO_INSPECTOR\"] = \"1\"\n"
+                  "    env[\"PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD\"] = \"1\"\n"))))))))
     (inputs
      (list node-lts
            node-playwright-core))
