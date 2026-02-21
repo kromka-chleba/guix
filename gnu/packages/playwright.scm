@@ -343,6 +343,16 @@ variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
      (list python-setuptools
            python-setuptools-scm
            python-wheel))
+    (native-search-paths
+     ;; When ungoogled-chromium is in the profile, Guix automatically sets
+     ;; PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to its binary, telling playwright
+     ;; to use the system browser instead of downloading one.
+     (list
+      (search-path-specification
+       (variable "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+       (file-type 'regular)
+       (separator #f)              ;single entry
+       (files '("bin/chromium")))))
     (home-page "https://playwright.dev/python/")
     (synopsis "Browser automation library for Python")
     (description
