@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2025 Danny Milosavljevic <dannym@friendly-machines.com>
+;;; Copyright © 2025 Matej Košík <matej@kosik.sk>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,12 +23,15 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix build-system node)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages chromium)
   #:use-module (gnu packages node)
   #:use-module (gnu packages node-xyz)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages web))
 
 ;; Playwright is a browser automation framework.  Upstream provides patched
@@ -254,4 +258,82 @@ const browser = await chromium.launch(@{
 For the command line variant $code{playwright-core}, set the environment
 variable $env{PWTEST_CLI_EXECUTABLE_PATH} to the Chromium binary path.
 @end enumerate")
+    (license license:asl2.0)))
+
+(define-public python-playwright
+  (package
+    (name "python-playwright")
+    (version "1.50.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/microsoft/playwright-python")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0i9mynz9nnq4ci3n2yfclfas64a12fv7qvb8232np4xd03sajni5"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;tests require browser binaries
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              ;; setuptools-scm requires a git checkout to determine the
+              ;; version; provide it explicitly instead.
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
+          (add-before 'build 'patch-build-files
+            (lambda _
+              ;; Relax exact build-dependency versions imposed by upstream.
+              (substitute* "pyproject.toml"
+                (("\"setuptools==[0-9.]+\", \"setuptools-scm==[0-9.]+\", \
+\"wheel==[0-9.]+\", \"auditwheel==[0-9.]+\"")
+                 "\"setuptools\", \"setuptools-scm\", \"wheel\""))
+              ;; Remove the custom bdist_wheel command that tries to
+              ;; download the Playwright driver bundle from the internet.
+              (substitute* "setup.py"
+                (("    cmdclass=\\{\"bdist_wheel\".*") ""))))
+          (add-after 'install 'install-driver
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((node (assoc-ref inputs "node-lts"))
+                     (playwright-core (assoc-ref inputs "node-playwright-core"))
+                     (driver-dir
+                      (string-append (site-packages inputs outputs)
+                                     "/playwright/driver")))
+                (mkdir-p driver-dir)
+                ;; Point to the system Node.js binary.
+                (symlink (string-append node "/bin/node")
+                         (string-append driver-dir "/node"))
+                ;; Point to the playwright-core JavaScript package.
+                (symlink
+                 (string-append playwright-core
+                                "/lib/node_modules/playwright-core")
+                 (string-append driver-dir "/package"))))))))
+    (inputs
+     (list node-lts
+           node-playwright-core))
+    (propagated-inputs
+     (list python-greenlet
+           ;; Upstream constrains pyee to <13 for playwright 1.50.0, but the
+           ;; pyee 13 API is backward-compatible for the subset playwright uses.
+           python-pyee))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (home-page "https://playwright.dev/python/")
+    (synopsis "Browser automation library for Python")
+    (description
+     "Playwright is a Python library to automate Chromium, Firefox, and
+WebKit browsers with a single API.
+
+@strong{Important}: This package only supports Chromium-based browsers
+using the system @code{ungoogled-chromium}, because Playwright requires
+custom-patched versions of Firefox and WebKit that are not packaged for
+Guix.
+
+To use Playwright with the system Chromium, set the environment variable
+@env{PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH} to the Chromium binary path.")
     (license license:asl2.0)))
