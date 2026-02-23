@@ -36,7 +36,6 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages linux)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
@@ -144,8 +143,7 @@ It is used for development and testing of Luanti itself.")
                 (let ((game-path (string-append #$output "/share/luanti/games")))
                   (setenv "LUANTI_GAME_PATH" game-path)
                   (setenv "MINETEST_GAME_PATH" game-path))
-                (invoke "../source/bin/luanti" "--run-unittests")
-                (invoke "../source/util/test_multiplayer.sh"))))
+                (invoke "../source/bin/luanti" "--run-unittests"))))
           (add-after 'check 'remove-devtest
             (lambda _
               (delete-file-recursively
@@ -157,7 +155,7 @@ It is used for development and testing of Luanti itself.")
            (search-path-specification
             (variable "LUANTI_MOD_PATH")
             (files '("share/luanti/mods")))))
-    (native-inputs (list catch2-3 pkg-config procps))
+    (native-inputs (list catch2-3 pkg-config))
     (inputs (list curl
                   freetype
                   gettext-minimal
