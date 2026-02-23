@@ -55,10 +55,36 @@
   #:use-module (guix build-system luanti)
   #:use-module ((guix licenses) #:prefix license:))
 
+(define %luanti-version "5.15.1")
+
+(define-public luanti-devtest
+  (package
+    (name "luanti-devtest")
+    (version %luanti-version)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/luanti-org/luanti")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07g41ljv117pmw6402mqznccwl1hd9jp2l8wkb4l211cbm4c6vv9"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan #~'(("games/devtest" "share/luanti/games/devtest"))))
+    (synopsis "Developer test game for Luanti")
+    (description
+     "This package provides the Devtest game for the Luanti game engine.
+It is used for development and testing of Luanti itself.")
+    (home-page "https://www.luanti.org/")
+    (license license:lgpl2.1+)))
+
 (define-public luanti
   (package
     (name "luanti")
-    (version "5.15.1")
+    (version %luanti-version)
     (source
      (origin
        (method git-fetch)
@@ -107,13 +133,15 @@
       #~(modify-phases %standard-phases
           (delete 'check)
           (add-after 'install 'check
-            (lambda* (#:key tests? #:allow-other-keys)
+            (lambda* (#:key tests? native-inputs #:allow-other-keys)
               ;; Thanks to our substitutions, the tests should also run
               ;; when invoked on the target outside of `guix build'.
               (when tests?
                 (setenv "HOME" "/tmp")
                 (setenv "LUANTI_GAME_PATH"
-                        (string-append (getcwd) "/../source/games"))
+                        (string-append
+                         (assoc-ref native-inputs "luanti-devtest")
+                         "/share/luanti/games"))
                 (invoke "../source/bin/luanti" "--run-unittests")
                 (invoke "../source/util/test_multiplayer.sh")))))))
     (native-search-paths
@@ -123,7 +151,7 @@
            (search-path-specification
             (variable "LUANTI_MOD_PATH")
             (files '("share/luanti/mods")))))
-    (native-inputs (list catch2-3 pkg-config procps))
+    (native-inputs (list catch2-3 luanti-devtest pkg-config procps))
     (inputs (list curl
                   freetype
                   gettext-minimal
