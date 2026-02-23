@@ -138,8 +138,11 @@ It is used for development and testing of Luanti itself.")
               ;; when invoked on the target outside of `guix build'.
               (when tests?
                 (setenv "HOME" "/tmp")
-                (setenv "LUANTI_GAME_PATH"
-                        #$(file-append luanti-devtest "/share/luanti/games"))
+                (let ((game-path (string-append (getcwd) "/../source/games")))
+                  ;; Set both variables so tests work with and without
+                  ;; luanti-paths.patch (e.g. when using --with-git-url).
+                  (setenv "LUANTI_GAME_PATH" game-path)
+                  (setenv "MINETEST_GAME_PATH" game-path))
                 (invoke "../source/bin/luanti" "--run-unittests")
                 (invoke "../source/util/test_multiplayer.sh")))))))
     (native-search-paths
@@ -149,7 +152,7 @@ It is used for development and testing of Luanti itself.")
            (search-path-specification
             (variable "LUANTI_MOD_PATH")
             (files '("share/luanti/mods")))))
-    (native-inputs (list catch2-3 luanti-devtest pkg-config procps))
+    (native-inputs (list catch2-3 pkg-config procps))
     (inputs (list curl
                   freetype
                   gettext-minimal
