@@ -114,7 +114,17 @@
                 (setenv "LUANTI_GAME_PATH"
                         (string-append (getcwd) "/../source/games"))
                 (invoke "../source/bin/luanti" "--run-unittests")
-                (invoke "../source/util/test_multiplayer.sh")))))))
+                (invoke "../source/util/test_multiplayer.sh"))))
+          (add-after 'check 'install-devtest
+            (lambda _
+              (let* ((devtest-src
+                      (string-append #$output "/share/luanti/games/devtest"))
+                     (devtest-out
+                      (string-append #$output:devtest
+                                     "/share/luanti/games/devtest")))
+                (mkdir-p devtest-out)
+                (copy-recursively devtest-src devtest-out)
+                (delete-file-recursively devtest-src)))))))
     (native-search-paths
      (list (search-path-specification
             (variable "LUANTI_GAME_PATH")
@@ -140,7 +150,7 @@
                   sdl2
                   sqlite
                   `(,zstd "lib")))
-    (outputs '("out" "debug"))
+    (outputs '("out" "debug" "devtest"))
     (synopsis "Voxel game engine")
     (description
      "Luanti is a voxel game engine that supports modding and game creation
@@ -148,7 +158,8 @@ using its Lua modding API.  It allows playing a wide range of voxel-based
 games, installing mods and texture packs.  This package only provides the base
 platform, users need to install games themselves (for example,
 @code{luanti-minetest-game}), either through Guix, the built-in interface or other
-sources.")
+sources.  The @code{devtest} output provides the bundled @emph{DevTest} game,
+which is intended for testing game engine features and Lua modding APIs.")
     (home-page "https://www.luanti.org/")
     (license license:lgpl2.1+)))
 
