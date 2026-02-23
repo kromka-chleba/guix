@@ -128,7 +128,8 @@ It is used for development and testing of Luanti itself.")
       #:configure-flags
       #~(list "-DBUILD_DOCUMENTATION=OFF" ;not installed anyway
               "-DENABLE_LTO=ON"
-              "-DENABLE_UPDATE_CHECKER=FALSE")
+              "-DENABLE_UPDATE_CHECKER=FALSE"
+              "-DINSTALL_DEVTEST=TRUE")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
@@ -138,13 +139,17 @@ It is used for development and testing of Luanti itself.")
               ;; when invoked on the target outside of `guix build'.
               (when tests?
                 (setenv "HOME" "/tmp")
-                (let ((game-path (string-append (getcwd) "/../source/games")))
-                  ;; Set both variables so tests work with and without
-                  ;; luanti-paths.patch (e.g. when using --with-git-url).
+                ;; Set both variables so tests work with and without
+                ;; luanti-paths.patch (e.g. when using --with-git-url).
+                (let ((game-path (string-append #$output "/share/luanti/games")))
                   (setenv "LUANTI_GAME_PATH" game-path)
                   (setenv "MINETEST_GAME_PATH" game-path))
                 (invoke "../source/bin/luanti" "--run-unittests")
-                (invoke "../source/util/test_multiplayer.sh")))))))
+                (invoke "../source/util/test_multiplayer.sh"))))
+          (add-after 'check 'remove-devtest
+            (lambda _
+              (delete-file-recursively
+               (string-append #$output "/share/luanti/games/devtest")))))))
     (native-search-paths
      (list (search-path-specification
             (variable "LUANTI_GAME_PATH")
