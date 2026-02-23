@@ -36,7 +36,6 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages linux)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
@@ -128,7 +127,8 @@ It is used for development and testing of Luanti itself.")
       #:configure-flags
       #~(list "-DBUILD_DOCUMENTATION=OFF" ;not installed anyway
               "-DENABLE_LTO=ON"
-              "-DENABLE_UPDATE_CHECKER=FALSE")
+              "-DENABLE_UPDATE_CHECKER=FALSE"
+              "-DINSTALL_DEVTEST=TRUE")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
@@ -138,10 +138,16 @@ It is used for development and testing of Luanti itself.")
               ;; when invoked on the target outside of `guix build'.
               (when tests?
                 (setenv "HOME" "/tmp")
-                (setenv "LUANTI_GAME_PATH"
-                        #$(file-append luanti-devtest "/share/luanti/games"))
-                (invoke "../source/bin/luanti" "--run-unittests")
-                (invoke "../source/util/test_multiplayer.sh")))))))
+                ;; Set both variables so tests work with and without
+                ;; luanti-paths.patch (e.g. when using --with-git-url).
+                (let ((game-path (string-append #$output "/share/luanti/games")))
+                  (setenv "LUANTI_GAME_PATH" game-path)
+                  (setenv "MINETEST_GAME_PATH" game-path))
+                (invoke "../source/bin/luanti" "--run-unittests"))))
+          (add-after 'check 'remove-devtest
+            (lambda _
+              (delete-file-recursively
+               (string-append #$output "/share/luanti/games/devtest")))))))
     (native-search-paths
      (list (search-path-specification
             (variable "LUANTI_GAME_PATH")
@@ -149,7 +155,7 @@ It is used for development and testing of Luanti itself.")
            (search-path-specification
             (variable "LUANTI_MOD_PATH")
             (files '("share/luanti/mods")))))
-    (native-inputs (list catch2-3 luanti-devtest pkg-config procps))
+    (native-inputs (list catch2-3 pkg-config))
     (inputs (list curl
                   freetype
                   gettext-minimal
