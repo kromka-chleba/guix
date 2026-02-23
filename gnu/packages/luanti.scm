@@ -36,6 +36,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
@@ -122,7 +123,7 @@
            (search-path-specification
             (variable "LUANTI_MOD_PATH")
             (files '("share/luanti/mods")))))
-    (native-inputs (list catch2-3 pkg-config))
+    (native-inputs (list catch2-3 pkg-config procps))
     (inputs (list curl
                   freetype
                   gettext-minimal
