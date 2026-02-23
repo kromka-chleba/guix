@@ -133,15 +133,13 @@ It is used for development and testing of Luanti itself.")
       #~(modify-phases %standard-phases
           (delete 'check)
           (add-after 'install 'check
-            (lambda* (#:key tests? native-inputs #:allow-other-keys)
+            (lambda* (#:key tests? #:allow-other-keys)
               ;; Thanks to our substitutions, the tests should also run
               ;; when invoked on the target outside of `guix build'.
               (when tests?
                 (setenv "HOME" "/tmp")
                 (setenv "LUANTI_GAME_PATH"
-                        (string-append
-                         (assoc-ref native-inputs "luanti-devtest")
-                         "/share/luanti/games"))
+                        #$(file-append luanti-devtest "/share/luanti/games"))
                 (invoke "../source/bin/luanti" "--run-unittests")
                 (invoke "../source/util/test_multiplayer.sh")))))))
     (native-search-paths
