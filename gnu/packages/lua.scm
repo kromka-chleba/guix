@@ -1806,8 +1806,7 @@ way, following established lisp conventions.")
                 "10md6bfvbzflrhz4n75jr1ppmz86mwsip85llny23w2ld9iygipc"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                     ;tests must run after installation
-       #:phases
+     `(#:phases
        (modify-phases %standard-phases
          (delete 'configure)
          (replace 'build
@@ -1821,7 +1820,18 @@ way, following established lisp conventions.")
              (let* ((out (assoc-ref outputs "out"))
                     (lua-version ,(version-major+minor (package-version lua)))
                     (cmod-dir (string-append out "/lib/lua/" lua-version)))
-               (install-file "lsqlite3.so" cmod-dir)))))))
+               (install-file "lsqlite3.so" cmod-dir))))
+         (delete 'check)
+         (add-after 'install 'check
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lua-version ,(version-major+minor (package-version lua))))
+               (setenv "LUA_CPATH"
+                       (string-append out "/lib/lua/" lua-version "/?.so;;"))
+               ;; test-dyld.lua tests load_extension and requires both lunitx
+               ;; and a compiled extension-functions.so; skip it.
+               (delete-file "test/test-dyld.lua")
+               (invoke "make" "test" "LUAEXE=lua")))))))
     (native-inputs (list unzip))
     (inputs (list lua sqlite))
     (home-page "https://lua.sqlite.org/")
