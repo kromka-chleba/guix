@@ -743,6 +743,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/services/dav.scm				\
   %D%/services/dbus.scm				\
   %D%/services/desktop.scm			\
+  %D%/services/antivirus.scm			\
   %D%/services/dict.scm				\
   %D%/services/dns.scm				\
   %D%/services/docker.scm			\
