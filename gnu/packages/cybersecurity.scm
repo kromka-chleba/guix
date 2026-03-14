@@ -32,10 +32,14 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system trivial)
+  #:use-module (gnu packages bash)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages engineering)
+  #:use-module (gnu packages java)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -160,6 +164,75 @@ Refresh}in-DRAM mitigations effectively and as such can trigger bit flips.")
 automotive domain.  The scope of the toolchain is conducting penetration tests
 from a single ECU up to whole cars.")
     (license license:apsl2)))
+
+(define-public ghidra
+  (package
+    (name "ghidra")
+    (version "12.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/NationalSecurityAgency/ghidra/releases/download/"
+             "Ghidra_" version "_build/"
+             "ghidra_" version "_PUBLIC_20260303.zip"))
+       (sha256
+        (base32
+         "0851cbd4pky2k7q73rfr5558mk23s610r73k7lh6xqk93mk5id63"))))
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((out #$output)
+                 (lib (string-append out "/lib/ghidra"))
+                 (bin (string-append out "/bin"))
+                 (unzip #$(file-append unzip "/bin/unzip"))
+                 (bash #$(file-append bash-minimal "/bin/bash"))
+                 (java-home #$(file-append openjdk21 "")))
+            (invoke unzip "-q" #$source "-d" "src")
+            (copy-recursively
+             (string-append "src/ghidra_" #$version "_PUBLIC")
+             lib)
+            (mkdir-p bin)
+            ;; Create ghidra wrapper script.
+            (call-with-output-file (string-append bin "/ghidra")
+              (lambda (port)
+                (format port "#!~a~%" bash)
+                (format port "export JAVA_HOME=\"~a\"~%" java-home)
+                (format port "export PATH=\"~a/bin:$PATH\"~%"
+                        java-home)
+                (format port "exec \"~a/ghidraRun\" \"$@\"~%" lib)))
+            (chmod (string-append bin "/ghidra") #o755)
+            ;; Create analyzeHeadless wrapper script.
+            (call-with-output-file (string-append bin
+                                                  "/ghidra-analyzeHeadless")
+              (lambda (port)
+                (format port "#!~a~%" bash)
+                (format port "export JAVA_HOME=\"~a\"~%" java-home)
+                (format port "export PATH=\"~a/bin:$PATH\"~%"
+                        java-home)
+                (format port "exec \"~a/support/analyzeHeadless\" \"$@\"~%"
+                        lib)))
+            (chmod (string-append bin "/ghidra-analyzeHeadless") #o755)))))
+    (inputs
+     (list bash-minimal openjdk21))
+    (native-inputs
+     (list unzip))
+    (home-page "https://ghidra-sre.org/")
+    (synopsis "Software reverse engineering framework")
+    (description
+     "Ghidra is a software reverse engineering (SRE) framework developed by
+the National Security Agency (NSA).  It helps analyze malicious code and
+malware, and can be used for a range of software reverse engineering tasks.
+Ghidra includes a suite of full-featured, high-end software analysis tools
+that enable users to analyze compiled code on a variety of platforms,
+including Windows, Mac OS, and Linux.  Capabilities include disassembly,
+assembly, decompilation, graphing, and scripting, along with hundreds of
+other features.")
+    (license license:asl2.0)))
 
 (define-public ropgadget
   (package
