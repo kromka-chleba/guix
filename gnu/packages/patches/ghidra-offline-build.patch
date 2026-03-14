@@ -1,0 +1,11 @@
+--- /tmp/build.gradle.orig	2026-03-14 03:49:06.820453062 +0000
++++ /tmp/build.gradle.patched	2026-03-14 03:49:06.838155209 +0000
+@@ -75,8 +75,6 @@
+ if (flatRepo.isDirectory()) {
+ 	allprojects {
+ 		repositories {
+-			mavenLocal()
+-			mavenCentral()
+ 			flatDir name: "flat", dirs:["$flatRepo"]
+ 		}
+ 	}
