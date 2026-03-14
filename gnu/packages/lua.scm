@@ -1871,9 +1871,9 @@ the @code{lunitx} module for running tests automatically at program exit.")
                  (install-file "lsqlite3.so" cmod-dir))))
            (delete 'check)
            (add-after 'install 'check
-             (lambda* (#:key outputs native-inputs #:allow-other-keys)
+             (lambda* (#:key outputs inputs native-inputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
-                      (lunitx-dir (assoc-ref native-inputs ,(string-append name "-lunitx")))
+                      (lunitx-dir (assoc-ref (or native-inputs inputs) ,(string-append name "-lunitx")))
                       (lua-version ,(version-major+minor (package-version lua))))
                  (setenv "LUA_CPATH"
                          (string-append out "/lib/lua/" lua-version "/?.so;;"))
