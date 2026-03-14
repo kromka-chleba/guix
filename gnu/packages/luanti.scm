@@ -54,10 +54,36 @@
   #:use-module (guix build-system luanti)
   #:use-module ((guix licenses) #:prefix license:))
 
+(define %luanti-version "5.15.1")
+
+(define-public luanti-devtest
+  (package
+    (name "luanti-devtest")
+    (version %luanti-version)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/luanti-org/luanti")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07g41ljv117pmw6402mqznccwl1hd9jp2l8wkb4l211cbm4c6vv9"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan #~'(("games/devtest" "share/luanti/games/devtest"))))
+    (synopsis "Developer test game for Luanti")
+    (description
+     "This package provides the Devtest game for the Luanti game engine.
+It is used for development and testing of Luanti itself.")
+    (home-page "https://www.luanti.org/")
+    (license license:lgpl2.1+)))
+
 (define-public luanti
   (package
     (name "luanti")
-    (version "5.15.1")
+    (version %luanti-version)
     (source
      (origin
        (method git-fetch)
