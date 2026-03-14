@@ -1858,7 +1858,11 @@ the @code{lunitx} module for running tests automatically at program exit.")
                (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
                        "-o" "lsqlite3.so"
                        "lsqlite3.c"
-                       "-llua" "-lsqlite3")))
+                       "-llua" "-lsqlite3")
+               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                       "-o" "extras/libsqlitefunctions.so"
+                       "extras/extension-functions.c"
+                       "-lsqlite3")))
            (replace 'install
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
@@ -1869,17 +1873,15 @@ the @code{lunitx} module for running tests automatically at program exit.")
            (add-after 'install 'check
              (lambda* (#:key outputs native-inputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
-                      (lunitx-dir (assoc-ref native-inputs ,lunitx-name))
+                      (lunitx-dir (assoc-ref native-inputs ,(string-append name "-lunitx")))
                       (lua-version ,(version-major+minor (package-version lua))))
                  (setenv "LUA_CPATH"
                          (string-append out "/lib/lua/" lua-version "/?.so;;"))
                  (setenv "LUA_PATH"
                          (string-append lunitx-dir "/share/lua/" lua-version
                                         "/?.lua;;"))
-                 ;; test-dyld.lua tests load_extension and requires both lunitx
-                 ;; and a compiled extension-functions.so; skip it.
-                 (delete-file "test/test-dyld.lua")
-                 (invoke "make" "test" "LUAEXE=lua")))))))
+                 (invoke "make" "test" "LUAEXE=lua")
+                 (invoke "lua" "test/test-dyld.lua")))))))
       (native-inputs (list unzip lunitx))
       (inputs (list lua sqlite))
       (home-page "https://lua.sqlite.org/")
