@@ -1805,7 +1805,7 @@ way, following established lisp conventions.")
               (file-name (git-file-name "lua-lunitx" version))
               (sha256
                (base32
-                "0000000000000000000000000000000000000000000000000000"))))
+                "0vcd8qawfshqsc5pqyy3hrxp8f9gf2fxq6aw5yxs6m189w49dpgg"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -1836,52 +1836,60 @@ the @code{lunitx} module for running tests automatically at program exit.")
   (make-lua-lunitx "lua5.2-lunitx" lua-5.2))
 
 (define (make-lua-lsqlite3 name lua)
-  (package
-    (name name)
-    (version "0.9.6")
-    (source (origin
-              (method url-fetch)
-              (uri "https://lua.sqlite.org/home/zip/lsqlite3_v096.zip")
-              (file-name (string-append "lsqlite3-v" version ".zip"))
-              (sha256
-               (base32
-                "10md6bfvbzflrhz4n75jr1ppmz86mwsip85llny23w2ld9iygipc"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace 'build
-           (lambda _
-             (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                     "-o" "lsqlite3.so"
-                     "lsqlite3.c"
-                     "-llua" "-lsqlite3")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (lua-version ,(version-major+minor (package-version lua)))
-                    (cmod-dir (string-append out "/lib/lua/" lua-version)))
-               (install-file "lsqlite3.so" cmod-dir))))
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (lua-version ,(version-major+minor (package-version lua))))
-               (setenv "LUA_CPATH"
-                       (string-append out "/lib/lua/" lua-version "/?.so;;"))
-               ;; test-dyld.lua tests load_extension and requires both lunitx
-               ;; and a compiled extension-functions.so; skip it.
-               (delete-file "test/test-dyld.lua")
-               (invoke "make" "test" "LUAEXE=lua")))))))
-    (native-inputs (list unzip))
-    (inputs (list lua sqlite))
-    (home-page "https://lua.sqlite.org/")
-    (synopsis "SQLite3 binding for Lua")
-    (description "LuaSQLite3 is a thin wrapper around the public domain
+  (let* ((lunitx-name (string-append name "-lunitx"))
+         (lunitx (make-lua-lunitx lunitx-name lua)))
+    (package
+      (name name)
+      (version "0.9.6")
+      (source (origin
+                (method url-fetch)
+                (uri "https://lua.sqlite.org/home/zip/lsqlite3_v096.zip")
+                (file-name (string-append "lsqlite3-v" version ".zip"))
+                (sha256
+                 (base32
+                  "10md6bfvbzflrhz4n75jr1ppmz86mwsip85llny23w2ld9iygipc"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:phases
+         (modify-phases %standard-phases
+           (delete 'configure)
+           (replace 'build
+             (lambda _
+               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                       "-o" "lsqlite3.so"
+                       "lsqlite3.c"
+                       "-llua" "-lsqlite3")
+               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                       "-o" "extras/libsqlitefunctions.so"
+                       "extras/extension-functions.c"
+                       "-lsqlite3")))
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let* ((out (assoc-ref outputs "out"))
+                      (lua-version ,(version-major+minor (package-version lua)))
+                      (cmod-dir (string-append out "/lib/lua/" lua-version)))
+                 (install-file "lsqlite3.so" cmod-dir))))
+           (delete 'check)
+           (add-after 'install 'check
+             (lambda* (#:key outputs native-inputs #:allow-other-keys)
+               (let* ((out (assoc-ref outputs "out"))
+                      (lunitx-dir (assoc-ref native-inputs ,(string-append name "-lunitx")))
+                      (lua-version ,(version-major+minor (package-version lua))))
+                 (setenv "LUA_CPATH"
+                         (string-append out "/lib/lua/" lua-version "/?.so;;"))
+                 (setenv "LUA_PATH"
+                         (string-append lunitx-dir "/share/lua/" lua-version
+                                        "/?.lua;;"))
+                 (invoke "make" "test" "LUAEXE=lua")
+                 (invoke "lua" "test/test-dyld.lua")))))))
+      (native-inputs (list unzip lunitx))
+      (inputs (list lua sqlite))
+      (home-page "https://lua.sqlite.org/")
+      (synopsis "SQLite3 binding for Lua")
+      (description "LuaSQLite3 is a thin wrapper around the public domain
 SQLite3 database engine.  It provides a complete binding to the SQLite3 C API
 from within Lua programs.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public lua-lsqlite3
   (make-lua-lsqlite3 "lua-lsqlite3" lua))
