@@ -1791,3 +1791,45 @@ way, following established lisp conventions.")
  language.")
     (home-page "https://git.sr.ht/~xerool/fennel-ls")
     (license license:expat)))
+
+(define (make-lua-lunitx name lua)
+  (package
+    (name name)
+    (version "0.8.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/dcurrie/lunit")
+                    (commit version)))
+              (file-name (git-file-name "lua-lunitx" version))
+              (sha256
+               (base32
+                "0vcd8qawfshqsc5pqyy3hrxp8f9gf2fxq6aw5yxs6m189w49dpgg"))))
+    (build-system trivial-build-system)
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder
+       (begin
+         (use-modules (guix build utils))
+         (let* ((source (assoc-ref %build-inputs "source"))
+                (out (assoc-ref %outputs "out"))
+                (lua-version ,(version-major+minor (package-version lua)))
+                (lua-dir (string-append out "/share/lua/" lua-version)))
+           (mkdir-p lua-dir)
+           (copy-recursively (string-append source "/lua") lua-dir)
+           #t))))
+    (home-page "https://github.com/dcurrie/lunit")
+    (synopsis "Unit testing framework for Lua")
+    (description "Lunit is a unit testing framework for Lua.  It includes
+lunitx extensions adding Lua 5.2 compatibility via @code{lunit.module} and
+the @code{lunitx} module for running tests automatically at program exit.")
+    (license license:expat)))
+
+(define-public lua-lunitx
+  (make-lua-lunitx "lua-lunitx" lua))
+
+(define-public lua5.1-lunitx
+  (make-lua-lunitx "lua5.1-lunitx" lua-5.1))
+
+(define-public lua5.2-lunitx
+  (make-lua-lunitx "lua5.2-lunitx" lua-5.2))
