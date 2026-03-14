@@ -121,7 +121,8 @@ DatabaseMirror database.clamav.net
   "Return a list of <shepherd-service> for the ClamAV daemons."
   (let ((clamav             (clamav-configuration-clamav config))
         (clamd-config       (clamav-configuration-clamd-config-file config))
-        (freshclam-config   (clamav-configuration-freshclam-config-file config)))
+        (freshclam-config   (clamav-configuration-freshclam-config-file config))
+        (freshclam-pid-file "/run/clamav/freshclam.pid"))
     (list
      (shepherd-service
       (documentation "ClamAV virus scanning daemon (clamd).")
@@ -144,9 +145,10 @@ DatabaseMirror database.clamav.net
                 (list (string-append #$clamav "/bin/freshclam")
                       "--config-file" #$freshclam-config
                       "--daemon"
-                      "--pid=/run/clamav/freshclam.pid")
-                #:pid-file "/run/clamav/freshclam.pid"
-                #:log-file "/var/log/clamav/freshclam.log"))
+                      #$(string-append "--pid=" freshclam-pid-file))
+                #:user "clamav"
+                #:group "clamav"
+                #:pid-file #$freshclam-pid-file))
       (stop #~(make-kill-destructor))))))
 
 (define clamav-service-type
