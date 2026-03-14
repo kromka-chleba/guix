@@ -97,7 +97,8 @@ It is used for development and testing of Luanti itself.")
        (modules '((guix build utils)
                   (srfi srfi-26)
                   (ice-9 ftw)))
-       (patches (search-patches "luanti-paths.patch"))
+       (patches (search-patches "luanti-paths.patch"
+                               "luanti-version-hash-fallback.patch"))
        ;; Delete bundled libraries.
        ;; - Keep lib/sha256 because there's no good upstream, see:
        ;;   https://github.com/openssl/openssl/blob/master/crypto/sha/sha512.c

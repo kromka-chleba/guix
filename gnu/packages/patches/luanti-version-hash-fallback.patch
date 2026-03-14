@@ -1,0 +1,30 @@
+When building in a hermetic build environment (like Guix), git is not available
+and there is no .git directory, so 'git rev-parse --short HEAD' fails.  For
+development builds (DEVELOPMENT_BUILD=TRUE), this previously caused
+VERSION_GITHASH to fall back to VERSION_STRING, making g_version_hash equal to
+g_version_string.  As a result, the 'hash' field was absent from the table
+returned by core.get_version(), despite 'is_dev' being true—causing the
+devtest unit test 'test_get_version' to fail.
+
+This patch changes the fallback to use VERSION_STRING-unknown when git is
+unavailable during a development build, so that the 'hash' field is always set
+when 'is_dev' is true, as the test contract requires.
+
+diff --git a/cmake/Modules/GenerateVersion.cmake b/cmake/Modules/GenerateVersion.cmake
+--- a/cmake/Modules/GenerateVersion.cmake
++++ b/cmake/Modules/GenerateVersion.cmake
+@@ -17,7 +17,13 @@
+ 	endif()
+ endif()
+ if(NOT VERSION_GITHASH)
+-	set(VERSION_GITHASH "${VERSION_STRING}")
++	if(DEVELOPMENT_BUILD)
++		# Git is unavailable (e.g. hermetic build); use a placeholder so that
++		# the 'hash' field is still present in core.get_version() as required.
++		set(VERSION_GITHASH "${VERSION_STRING}-unknown")
++	else()
++		set(VERSION_GITHASH "${VERSION_STRING}")
++	endif()
+ endif()
+ 
+ configure_file(
