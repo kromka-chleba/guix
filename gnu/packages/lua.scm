@@ -1880,7 +1880,9 @@ the @code{lunitx} module for running tests automatically at program exit.")
                  (setenv "LUA_PATH"
                          (string-append lunitx-dir "/share/lua/" lua-version
                                         "/?.lua;;"))
-                 (invoke "make" "test" "LUAEXE=lua")
+                 ;; Only test the dynamic lsqlite3 module; lsqlite3complete
+                 ;; (SQLite amalgamation) is not built by this package.
+                 (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
                  (invoke "lua" "test/test-dyld.lua")))))))
       (native-inputs (list unzip lunitx))
       (inputs (list lua sqlite))
