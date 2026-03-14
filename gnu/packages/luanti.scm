@@ -97,8 +97,7 @@ It is used for development and testing of Luanti itself.")
        (modules '((guix build utils)
                   (srfi srfi-26)
                   (ice-9 ftw)))
-       (patches (search-patches "luanti-paths.patch"
-                               "luanti-version-hash-fallback.patch"))
+       (patches (search-patches "luanti-paths.patch"))
        ;; Delete bundled libraries.
        ;; - Keep lib/sha256 because there's no good upstream, see:
        ;;   https://github.com/openssl/openssl/blob/master/crypto/sha/sha512.c
@@ -133,6 +132,26 @@ It is used for development and testing of Luanti itself.")
               "-DINSTALL_DEVTEST=TRUE")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-version-hash-for-dev-builds
+            ;; When git is unavailable in a hermetic build environment,
+            ;; GenerateVersion.cmake falls back to setting VERSION_GITHASH =
+            ;; VERSION_STRING.  For development builds (DEVELOPMENT_BUILD=TRUE),
+            ;; this makes g_version_hash equal to g_version_string, so the
+            ;; 'hash' field is omitted from core.get_version()—causing the
+            ;; devtest 'test_get_version' unit test to fail (it asserts that
+            ;; hash is a string when is_dev is true).  Use a placeholder instead
+            ;; so the field is always present.  This is done here rather than
+            ;; via a patch because --with-git-url replaces the source origin and
+            ;; therefore does not apply origin patches.
+            (lambda _
+              (substitute* "cmake/Modules/GenerateVersion.cmake"
+                (("\tset\\(VERSION_GITHASH \"\\$\\{VERSION_STRING\\}\"\\)")
+                 (string-append
+                  "\tif(DEVELOPMENT_BUILD)\n"
+                  "\t\tset(VERSION_GITHASH \"${VERSION_STRING}-unknown\")\n"
+                  "\telse()\n"
+                  "\t\tset(VERSION_GITHASH \"${VERSION_STRING}\")\n"
+                  "\tendif()")))))
           (delete 'check)
           (add-after 'install 'check
             (lambda* (#:key tests? #:allow-other-keys)
