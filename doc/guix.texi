@@ -45354,6 +45354,71 @@ under @file{pcsc/drivers} in the store directory of the package.
 @end table
 @end deftp
 
+@cindex ClamAV
+@cindex antivirus
+@subsubheading ClamAV Service
+
+The @code{(gnu services antivirus)} module provides a service to run
+@url{https://www.clamav.net, ClamAV}, an open-source antivirus engine.
+The service runs two daemons: @command{clamd}, the main virus scanning
+daemon, and @command{freshclam}, a daemon that periodically downloads
+updated virus signature databases.
+
+The @command{clamd} daemon makes its Unix socket available at
+@file{/run/clamav/clamd.ctl}, and virus databases are stored in
+@file{/var/lib/clamav}.  Both daemons log to @file{/var/log/clamav/}.
+
+@quotation Important
+Before starting @command{clamd} for the first time, you must download
+the virus database by running @command{freshclam}.  You can do so by
+running @command{herd start freshclam} and waiting for the initial
+download to complete, after which @command{clamd} can be started with
+@command{herd start clamd}.
+@end quotation
+
+Here is an example system configuration that enables the service with
+default settings:
+
+@lisp
+(service clamav-service-type)
+@end lisp
+
+@defvar clamav-service-type
+Service type for ClamAV.  Its value must be a @code{clamav-configuration}
+object.  This service automatically creates the @samp{clamav} user and
+group, sets up runtime and data directories, and provides two Shepherd
+services: @code{clamd} and @code{freshclam}.
+@end defvar
+
+@deftp {Data Type} clamav-configuration
+Data type representing the configuration of the ClamAV service.
+
+@table @asis
+@item @code{clamav} (default: @code{clamav})
+The ClamAV package to use.
+
+@item @code{clamd-config-file} (default: built-in configuration)
+A file-like object for the @file{clamd.conf} configuration file.
+@xref{clamd.conf(5),,,clamd.conf, ClamAV Manual} for available options.
+If you override this, make sure to include at least:
+
+@example
+LocalSocket /run/clamav/clamd.ctl
+DatabaseDirectory /var/lib/clamav
+@end example
+
+@item @code{freshclam-config-file} (default: built-in configuration)
+A file-like object for the @file{freshclam.conf} configuration file.
+@xref{freshclam.conf(5),,,freshclam.conf, ClamAV Manual} for available
+options.  If you override this, make sure to include at least:
+
+@example
+DatabaseDirectory /var/lib/clamav
+@end example
+
+@end table
+@end deftp
+
 @cindex LIRC
 @subsubheading LIRC Service
 
