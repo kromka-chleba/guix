@@ -76,9 +76,10 @@
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags ''("-DENABLE_MILTER=OFF" "-DENABLE_UNRAR=OFF"
-                          "-DAPP_CONFIG_DIRECTORY=/etc/clamav"
-                          "-DDATABASE_DIRECTORY=/var/lib/clamav")
+      #:configure-flags #~(list "-DENABLE_MILTER=OFF" "-DENABLE_UNRAR=OFF"
+                               (string-append "-DAPP_CONFIG_DIRECTORY="
+                                              #$output "/etc/clamav")
+                               "-DDATABASE_DIRECTORY=/var/lib/clamav")
       #:imported-modules `(,@%cmake-build-system-modules
                            ,@%cargo-build-system-modules)
       #:modules '(((guix build cargo-build-system) #:prefix cargo:)
