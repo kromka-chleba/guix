@@ -150,6 +150,7 @@ Copyright @copyright{} 2025 dan@*
 Copyright @copyright{} 2025 Noé Lopez@*
 Copyright @copyright{} 2026 David Elsing@*
 Copyright @copyright{} 2026 Nguyễn Gia Phong@*
+Copyright @copyright{} 2026 Jan Wielkiewicz@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -45783,6 +45784,121 @@ The pcsc-lite package that provides pcscd.
 @item @code{usb-drivers} (default: @code{(list ccid)})
 List of packages that provide USB drivers to pcscd.  Drivers are expected to be
 under @file{pcsc/drivers} in the store directory of the package.
+@end table
+@end deftp
+
+@cindex ClamAV
+@cindex antivirus
+@subsubheading ClamAV Service
+
+The @code{(gnu services antivirus)} module provides a service to run the
+@url{https://www.clamav.net, ClamAV} antivirus engine.  The service runs
+two daemons: @command{clamd}, the main virus scanning daemon, and
+@command{freshclam}, a daemon that periodically downloads updated virus
+signature databases.
+
+The @command{clamd} daemon makes its Unix socket available at
+@file{/run/clamav/clamd.ctl}, and virus databases are stored in
+@file{/var/lib/clamav}.  Both daemons log to @file{/var/log/clamav/}.
+
+@quotation Important
+Before starting @command{clamd} for the first time, you must download
+the virus database by running @command{freshclam}.  You can do so by
+running @command{herd start freshclam} and waiting for the initial
+download to complete, after which @command{clamd} can be started with
+@command{herd start clamd}.
+@end quotation
+
+@quotation Note
+When running ClamAV commands manually from the command line (outside
+of the Shepherd service), @command{freshclam} must be run as @code{root}
+or the @code{clamav} user, because the virus database directory
+@file{/var/lib/clamav} must be writable.  For example:
+
+@example
+sudo freshclam
+@end example
+
+After the initial database download, @command{clamscan} can be used by
+any user to scan files.
+@end quotation
+
+Here is an example system configuration that enables the service with
+default settings:
+
+@lisp
+(service clamav-service-type)
+@end lisp
+
+To use custom configuration files located outside of the Guix store,
+specify their paths as strings:
+
+@lisp
+(service clamav-service-type
+         (clamav-configuration
+          (clamd-config-file "/etc/clamav/my-clamd.conf")
+          (freshclam-config-file "/etc/clamav/my-freshclam.conf")))
+@end lisp
+
+@defvar clamav-service-type
+Service type for ClamAV.  Its value must be a @code{clamav-configuration}
+object.  This service automatically creates the @samp{clamav} user and
+group, sets up runtime and data directories, and provides two Shepherd
+services: @code{clamd} and @code{freshclam}.
+@end defvar
+
+@deftp {Data Type} clamav-configuration
+Data type representing the configuration of the ClamAV service.
+
+@table @asis
+@item @code{clamav} (default: @code{clamav})
+The ClamAV package to use.
+
+@item @code{clamd-config-file} (default: @code{"/etc/clamav/clamd.conf"})
+Path to the @file{clamd.conf} configuration file, as a string.  By
+default, the service installs the ClamAV package's default configuration
+at @file{/etc/clamav/clamd.conf} and uses it.  To use your own
+configuration file instead, set this to its path---it can reside anywhere
+on the file system, including outside the Guix store.  The service will
+not manage or install a file at the custom path; you must ensure the file
+exists there yourself.
+@xref{clamd.conf(5),,,clamd.conf, ClamAV Manual} for available options.
+If you provide a custom file, make sure to include at least:
+
+@example
+LocalSocket /run/clamav/clamd.ctl
+DatabaseDirectory /var/lib/clamav
+User clamav
+@end example
+
+The @code{User clamav} directive causes @command{clamd} (which must be
+started as @code{root}) to drop privileges and switch to the
+@code{clamav} user after startup.  Omitting it means @command{clamd}
+will continue running as @code{root}, which is a security risk for a
+process that parses potentially malicious files.
+
+@item @code{freshclam-config-file} (default: @code{"/etc/clamav/freshclam.conf"})
+Path to the @file{freshclam.conf} configuration file, as a string.  By
+default, the service installs the ClamAV package's default configuration
+at @file{/etc/clamav/freshclam.conf} and uses it.  To use your own
+configuration file instead, set this to its path---it can reside anywhere
+on the file system, including outside the Guix store.  The service will
+not manage or install a file at the custom path; you must ensure the file
+exists there yourself.
+@xref{freshclam.conf(5),,,freshclam.conf, ClamAV Manual} for available
+options.  If you provide a custom file, make sure to include at least:
+
+@example
+DatabaseDirectory /var/lib/clamav
+DatabaseOwner clamav
+@end example
+
+The @code{DatabaseOwner clamav} directive causes @command{freshclam}
+(which must be started as @code{root}) to drop privileges and switch to
+the @code{clamav} user after startup.  Omitting it means
+@command{freshclam} will continue running as @code{root}, which is a
+security risk.
+
 @end table
 @end deftp
 
