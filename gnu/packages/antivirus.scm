@@ -4,6 +4,7 @@
 ;;; Copyright © 2023 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2019–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2026 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -76,7 +77,10 @@
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags ''("-DENABLE_MILTER=OFF" "-DENABLE_UNRAR=OFF")
+      #:configure-flags #~(list "-DENABLE_MILTER=OFF" "-DENABLE_UNRAR=OFF"
+                               (string-append "-DAPP_CONFIG_DIRECTORY="
+                                              #$output "/etc/clamav")
+                               "-DDATABASE_DIRECTORY=/var/lib/clamav")
       #:imported-modules `(,@%cmake-build-system-modules
                            ,@%cargo-build-system-modules)
       #:modules '(((guix build cargo-build-system) #:prefix cargo:)
@@ -111,7 +115,29 @@
                 (substitute* "unit_tests/CMakeLists.txt"
                   (("clamd_test\\.py" test)
                    (string-append
-                    test " -k \"not test_clamd_08_VirusEvent\"")))))))))
+                    test " -k \"not test_clamd_08_VirusEvent\""))))))
+          (add-after 'install 'install-config
+            ;; Install working configuration files.  The cmake build
+            ;; installs sample configs with the 'Example' keyword that
+            ;; prevents the programs from running.  Replace them with
+            ;; minimal working defaults so that freshclam, clamd, and
+            ;; clamscan work out of the box.
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((etc (string-append (assoc-ref outputs "out")
+                                        "/etc/clamav")))
+                (mkdir-p etc)
+                (call-with-output-file (string-append etc "/freshclam.conf")
+                  (lambda (port)
+                    (display "# Default freshclam configuration.\n" port)
+                    (display "# See freshclam.conf(5) for options.\n" port)
+                    (display "DatabaseDirectory /var/lib/clamav\n" port)
+                    (display "DatabaseMirror database.clamav.net\n" port)))
+                (call-with-output-file (string-append etc "/clamd.conf")
+                  (lambda (port)
+                    (display "# Default clamd configuration.\n" port)
+                    (display "# See clamd.conf(5) for options.\n" port)
+                    (display "LocalSocket /run/clamav/clamd.ctl\n" port)
+                    (display "DatabaseDirectory /var/lib/clamav\n" port)))))))))
     (native-inputs
      (append
       (list pkg-config

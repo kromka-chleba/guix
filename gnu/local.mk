@@ -33,7 +33,7 @@
 # Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 # Copyright © 2020, 2021, 2022, 2023 Felix Gruber <felgru@posteo.net>
 # Copyright © 2020 Ryan Prior <rprior@protonmail.com>
-# Copyright © 2020 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
+# Copyright © 2020, 2026 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 # Copyright © 2020, 2021 Brice Waegeneire <brice@waegenei.re>
 # Copyright © 2020, 2023, 2025, 2026 Tanguy Le Carrour <tanguy@bioneland.org>
 # Copyright © 2020 Martin Becze <mjbecze@riseup.net>
@@ -743,6 +743,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/services/dav.scm				\
   %D%/services/dbus.scm				\
   %D%/services/desktop.scm			\
+  %D%/services/antivirus.scm			\
   %D%/services/dict.scm				\
   %D%/services/dns.scm				\
   %D%/services/docker.scm			\
