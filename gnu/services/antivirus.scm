@@ -49,7 +49,6 @@
 LocalSocket /run/clamav/clamd.ctl
 PidFile /run/clamav/clamd.pid
 DatabaseDirectory /var/lib/clamav
-LogFile /var/log/clamav/clamd.log
 LogTime yes
 MaxConnectionQueueLength 30
 MaxThreads 12
@@ -157,7 +156,10 @@ DatabaseMirror database.clamav.net
                       #$(string-append "--pid=" freshclam-pid-file))
                 #:user "clamav"
                 #:group "clamav"
-                #:pid-file #$freshclam-pid-file))
+                #:pid-file #$freshclam-pid-file
+                #:environment-variables
+                (list "SSL_CERT_DIR=/etc/ssl/certs"
+                      "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt")))
       (stop #~(make-kill-destructor))))))
 
 (define clamav-service-type
