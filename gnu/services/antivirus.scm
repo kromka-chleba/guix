@@ -20,8 +20,10 @@
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system shadow)
+  #:use-module (gnu packages admin)
   #:use-module (gnu packages antivirus)
   #:use-module (guix gexp)
+  #:use-module (guix modules)
   #:use-module (guix packages)
   #:use-module (guix records)
   #:export (clamav-configuration
