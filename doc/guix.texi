@@ -45376,6 +45376,20 @@ download to complete, after which @command{clamd} can be started with
 @command{herd start clamd}.
 @end quotation
 
+@quotation Note
+When running ClamAV commands manually from the command line (outside
+of the Shepherd service), @command{freshclam} must be run as @code{root}
+or the @code{clamav} user, because the virus database directory
+@file{/var/lib/clamav} must be writable.  For example:
+
+@example
+sudo freshclam
+@end example
+
+After the initial database download, @command{clamscan} can be used by
+any user to scan files.
+@end quotation
+
 Here is an example system configuration that enables the service with
 default settings:
 
