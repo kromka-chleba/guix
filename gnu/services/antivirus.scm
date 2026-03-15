@@ -83,6 +83,13 @@ Checks 12
 DatabaseMirror database.clamav.net
 "))
 
+(define (clamav-etc-service config)
+  "Return the ClamAV configuration files for /etc/clamav/."
+  `(("clamav/clamd.conf"
+     ,(clamav-configuration-clamd-config-file config))
+    ("clamav/freshclam.conf"
+     ,(clamav-configuration-freshclam-config-file config))))
+
 (define %clamav-accounts
   ;; User and group for the ClamAV daemons.
   (list (user-group (name "clamav") (system? #t))
@@ -164,5 +171,7 @@ virus database updater.")
           (service-extension account-service-type
                              (const %clamav-accounts))
           (service-extension activation-service-type
-                             clamav-activation)))
+                             clamav-activation)
+          (service-extension etc-service-type
+                             clamav-etc-service)))
    (default-value (clamav-configuration))))
