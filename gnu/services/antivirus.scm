@@ -83,12 +83,15 @@ Checks 12
 DatabaseMirror database.clamav.net
 "))
 
-(define (clamav-etc-service config)
-  "Return the ClamAV configuration files for /etc/clamav/."
-  `(("clamav/clamd.conf"
-     ,(clamav-configuration-clamd-config-file config))
-    ("clamav/freshclam.conf"
-     ,(clamav-configuration-freshclam-config-file config))))
+(define-record-type* <clamav-configuration>
+  clamav-configuration make-clamav-configuration
+  clamav-configuration?
+  (clamav                  clamav-configuration-clamav
+                           (default clamav))
+  (clamd-config-file       clamav-configuration-clamd-config-file
+                           (default %default-clamd-config))
+  (freshclam-config-file   clamav-configuration-freshclam-config-file
+                           (default %default-freshclam-config)))
 
 (define %clamav-accounts
   ;; User and group for the ClamAV daemons.
@@ -101,15 +104,12 @@ DatabaseMirror database.clamav.net
          (home-directory "/var/lib/clamav")
          (shell (file-append shadow "/sbin/nologin")))))
 
-(define-record-type* <clamav-configuration>
-  clamav-configuration make-clamav-configuration
-  clamav-configuration?
-  (clamav                  clamav-configuration-clamav
-                           (default clamav))
-  (clamd-config-file       clamav-configuration-clamd-config-file
-                           (default %default-clamd-config))
-  (freshclam-config-file   clamav-configuration-freshclam-config-file
-                           (default %default-freshclam-config)))
+(define (clamav-etc-service config)
+  "Return the ClamAV configuration files for /etc/clamav/."
+  `(("clamav/clamd.conf"
+     ,(clamav-configuration-clamd-config-file config))
+    ("clamav/freshclam.conf"
+     ,(clamav-configuration-freshclam-config-file config))))
 
 (define (clamav-activation config)
   "Return a gexp to set up the ClamAV directory structure."
