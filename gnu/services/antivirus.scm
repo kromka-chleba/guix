@@ -47,12 +47,20 @@
    (string "/etc/clamav/clamd.conf")
    "The clamd configuration file to use.  Defaults to
 @file{/etc/clamav/clamd.conf}, where the service installs the ClamAV
-package's default configuration.")
+package's default configuration.
+
+When specifying a custom configuration file, make sure it contains a
+@code{User clamav} directive so that clamd drops privileges from root
+to the @code{clamav} user after reading the configuration.")
   (freshclam-config-file
    (string "/etc/clamav/freshclam.conf")
    "The freshclam configuration file to use.  Defaults to
 @file{/etc/clamav/freshclam.conf}, where the service installs the ClamAV
-package's default configuration."))
+package's default configuration.
+
+When specifying a custom configuration file, make sure it contains a
+@code{DatabaseOwner clamav} directive so that freshclam drops privileges
+from root to the @code{clamav} user after reading the configuration."))
 
 (define %clamav-accounts
   ;; User and group for the ClamAV daemons.
@@ -103,8 +111,6 @@ package's default configuration."))
                 (list (string-append #$clamav "/sbin/clamd")
                       "--config-file" #$clamd-config
                       "--foreground")
-                #:user "clamav"
-                #:group "clamav"
                 #:log-file "/var/log/clamav/clamd.log"))
       (stop #~(make-kill-destructor)))
 
@@ -117,8 +123,6 @@ package's default configuration."))
                       "--config-file" #$freshclam-config
                       "--daemon"
                       #$(string-append "--pid=" freshclam-pid-file))
-                #:user "clamav"
-                #:group "clamav"
                 #:pid-file #$freshclam-pid-file
                 #:environment-variables
                 (list "SSL_CERT_DIR=/etc/ssl/certs"

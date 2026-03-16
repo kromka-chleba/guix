@@ -131,13 +131,15 @@
                     (display "# Default freshclam configuration.\n" port)
                     (display "# See freshclam.conf(5) for options.\n" port)
                     (display "DatabaseDirectory /var/lib/clamav\n" port)
-                    (display "DatabaseMirror database.clamav.net\n" port)))
+                    (display "DatabaseMirror database.clamav.net\n" port)
+                    (display "DatabaseOwner clamav\n" port)))
                 (call-with-output-file (string-append etc "/clamd.conf")
                   (lambda (port)
                     (display "# Default clamd configuration.\n" port)
                     (display "# See clamd.conf(5) for options.\n" port)
                     (display "LocalSocket /run/clamav/clamd.ctl\n" port)
-                    (display "DatabaseDirectory /var/lib/clamav\n" port)))))))))
+                    (display "DatabaseDirectory /var/lib/clamav\n" port)
+                    (display "User clamav\n" port)))))))))
     (native-inputs
      (append
       (list pkg-config
