@@ -18,6 +18,7 @@
 
 (define-module (gnu services antivirus)
   #:use-module (gnu services)
+  #:use-module (gnu services configuration)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system shadow)
   #:use-module (gnu packages admin)
@@ -25,7 +26,6 @@
   #:use-module (guix gexp)
   #:use-module (guix modules)
   #:use-module (guix packages)
-  #:use-module (guix records)
   #:export (clamav-configuration
             clamav-configuration?
             clamav-configuration-clamav
@@ -38,59 +38,16 @@
 ;;; ClamAV antivirus daemon
 ;;;
 
-(define %default-clamd-config
-  (plain-file "clamd.conf"
-              "# ClamAV daemon configuration.
-# See clamd.conf(5) for a description of each option.
-
-# Required: comment out the \"Example\" line for clamd to run.
-# Example
-
-LocalSocket /run/clamav/clamd.ctl
-PidFile /run/clamav/clamd.pid
-DatabaseDirectory /var/lib/clamav
-LogTime yes
-MaxConnectionQueueLength 30
-MaxThreads 12
-ReadTimeout 300
-MaxDirectoryRecursion 20
-FollowDirectorySymlinks yes
-FollowFileSymlinks yes
-DetectPUA yes
-ScanPE yes
-ScanELF yes
-ScanOLE2 yes
-ScanHTML yes
-ScanXMLDOCS yes
-ScanHWP3 yes
-ScanArchive yes
-"))
-
-(define %default-freshclam-config
-  (plain-file "freshclam.conf"
-              "# Freshclam configuration.
-# See freshclam.conf(5) for a description of each option.
-
-# Required: comment out the \"Example\" line for freshclam to run.
-# Example
-
-DatabaseDirectory /var/lib/clamav
-UpdateLogFile /var/log/clamav/freshclam.log
-LogTime yes
-# Check for updates this many times per 24 hours.
-Checks 12
-DatabaseMirror database.clamav.net
-"))
-
-(define-record-type* <clamav-configuration>
-  clamav-configuration make-clamav-configuration
-  clamav-configuration?
-  (clamav                  clamav-configuration-clamav
-                           (default clamav))
-  (clamd-config-file       clamav-configuration-clamd-config-file
-                           (default %default-clamd-config))
-  (freshclam-config-file   clamav-configuration-freshclam-config-file
-                           (default %default-freshclam-config)))
+(define-configuration/no-serialization clamav-configuration
+  (clamav
+   (package clamav)
+   "The ClamAV package to use.")
+  (clamd-config-file
+   (file-like (file-append clamav "/etc/clamav/clamd.conf"))
+   "The clamd configuration file to use.")
+  (freshclam-config-file
+   (file-like (file-append clamav "/etc/clamav/freshclam.conf"))
+   "The freshclam configuration file to use."))
 
 (define %clamav-accounts
   ;; User and group for the ClamAV daemons.
