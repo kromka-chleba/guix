@@ -45830,6 +45830,16 @@ default settings:
 (service clamav-service-type)
 @end lisp
 
+To use custom configuration files located outside of the Guix store,
+specify their paths as strings:
+
+@lisp
+(service clamav-service-type
+         (clamav-configuration
+          (clamd-config-file "/etc/clamav/my-clamd.conf")
+          (freshclam-config-file "/etc/clamav/my-freshclam.conf")))
+@end lisp
+
 @defvar clamav-service-type
 Service type for ClamAV.  Its value must be a @code{clamav-configuration}
 object.  This service automatically creates the @samp{clamav} user and
@@ -45844,20 +45854,32 @@ Data type representing the configuration of the ClamAV service.
 @item @code{clamav} (default: @code{clamav})
 The ClamAV package to use.
 
-@item @code{clamd-config-file} (default: built-in configuration)
-A file-like object for the @file{clamd.conf} configuration file.
+@item @code{clamd-config-file} (default: @code{"/etc/clamav/clamd.conf"})
+Path to the @file{clamd.conf} configuration file, as a string.  By
+default, the service installs the ClamAV package's default configuration
+at @file{/etc/clamav/clamd.conf} and uses it.  To use your own
+configuration file instead, set this to its path---it can reside anywhere
+on the file system, including outside the Guix store.  The service will
+not manage or install a file at the custom path; you must ensure the file
+exists there yourself.
 @xref{clamd.conf(5),,,clamd.conf, ClamAV Manual} for available options.
-If you override this, make sure to include at least:
+If you provide a custom file, make sure to include at least:
 
 @example
 LocalSocket /run/clamav/clamd.ctl
 DatabaseDirectory /var/lib/clamav
 @end example
 
-@item @code{freshclam-config-file} (default: built-in configuration)
-A file-like object for the @file{freshclam.conf} configuration file.
+@item @code{freshclam-config-file} (default: @code{"/etc/clamav/freshclam.conf"})
+Path to the @file{freshclam.conf} configuration file, as a string.  By
+default, the service installs the ClamAV package's default configuration
+at @file{/etc/clamav/freshclam.conf} and uses it.  To use your own
+configuration file instead, set this to its path---it can reside anywhere
+on the file system, including outside the Guix store.  The service will
+not manage or install a file at the custom path; you must ensure the file
+exists there yourself.
 @xref{freshclam.conf(5),,,freshclam.conf, ClamAV Manual} for available
-options.  If you override this, make sure to include at least:
+options.  If you provide a custom file, make sure to include at least:
 
 @example
 DatabaseDirectory /var/lib/clamav
