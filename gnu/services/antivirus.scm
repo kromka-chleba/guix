@@ -32,7 +32,8 @@
             clamav-configuration-clamd-config-file
             clamav-configuration-freshclam-config-file
             %clamav-accounts
-            clamav-service-type))
+            clamav-service-type
+            generate-documentation))
 
 ;;;
 ;;; ClamAV antivirus daemon
@@ -43,11 +44,15 @@
    (package clamav)
    "The ClamAV package to use.")
   (clamd-config-file
-   (file-like (file-append clamav "/etc/clamav/clamd.conf"))
-   "The clamd configuration file to use.")
+   (string "/etc/clamav/clamd.conf")
+   "The clamd configuration file to use.  Defaults to
+@file{/etc/clamav/clamd.conf}, where the service installs the ClamAV
+package's default configuration.")
   (freshclam-config-file
-   (file-like (file-append clamav "/etc/clamav/freshclam.conf"))
-   "The freshclam configuration file to use."))
+   (string "/etc/clamav/freshclam.conf")
+   "The freshclam configuration file to use.  Defaults to
+@file{/etc/clamav/freshclam.conf}, where the service installs the ClamAV
+package's default configuration."))
 
 (define %clamav-accounts
   ;; User and group for the ClamAV daemons.
@@ -62,10 +67,11 @@
 
 (define (clamav-etc-service config)
   "Return the ClamAV configuration files for /etc/clamav/."
-  `(("clamav/clamd.conf"
-     ,(clamav-configuration-clamd-config-file config))
-    ("clamav/freshclam.conf"
-     ,(clamav-configuration-freshclam-config-file config))))
+  (let ((clamav (clamav-configuration-clamav config)))
+    `(("clamav/clamd.conf"
+       ,(file-append clamav "/etc/clamav/clamd.conf"))
+      ("clamav/freshclam.conf"
+       ,(file-append clamav "/etc/clamav/freshclam.conf")))))
 
 (define (clamav-activation config)
   "Return a gexp to set up the ClamAV directory structure."
@@ -134,3 +140,7 @@ virus database updater.")
           (service-extension etc-service-type
                              clamav-etc-service)))
    (default-value (clamav-configuration))))
+
+(define (generate-documentation)
+  "Generate Texinfo documentation for the @code{clamav-configuration} record."
+  (configuration->documentation 'clamav-configuration))
