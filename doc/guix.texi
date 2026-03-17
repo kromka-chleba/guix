@@ -45868,7 +45868,14 @@ If you provide a custom file, make sure to include at least:
 @example
 LocalSocket /run/clamav/clamd.ctl
 DatabaseDirectory /var/lib/clamav
+User clamav
 @end example
+
+The @code{User clamav} directive causes @command{clamd} (which must be
+started as @code{root}) to drop privileges and switch to the
+@code{clamav} user after startup.  Omitting it means @command{clamd}
+will continue running as @code{root}, which is a security risk for a
+process that parses potentially malicious files.
 
 @item @code{freshclam-config-file} (default: @code{"/etc/clamav/freshclam.conf"})
 Path to the @file{freshclam.conf} configuration file, as a string.  By
@@ -45883,7 +45890,14 @@ options.  If you provide a custom file, make sure to include at least:
 
 @example
 DatabaseDirectory /var/lib/clamav
+DatabaseOwner clamav
 @end example
+
+The @code{DatabaseOwner clamav} directive causes @command{freshclam}
+(which must be started as @code{root}) to drop privileges and switch to
+the @code{clamav} user after startup.  Omitting it means
+@command{freshclam} will continue running as @code{root}, which is a
+security risk.
 
 @end table
 @end deftp
