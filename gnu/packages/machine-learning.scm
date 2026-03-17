@@ -7180,6 +7180,134 @@ add_subdirectory[(][.][.]/[.][.]/dlib/external/pybind11 pybind11_build[)]")
            python-pytest
            python-setuptools))))
 
+(define-public python-bettermap
+  (package
+    (name "python-bettermap")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "bettermap" version))
+       (sha256
+        (base32 "1qjwvbw5q4chxf2fgcflcby7p8hchl91sskf94bqqqs934lzdqaj"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;tests require external test runner
+    (propagated-inputs (list python-dill))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/allenai/bettermap")
+    (synopsis "Parallelized drop-in replacements for Python's map function")
+    (description
+     "@code{bettermap} is a drop-in replacement for Python's @code{map}
+function.  It parallelizes the map function across all available processors.")
+    (license license:asl2.0)))
+
+(define-public python-dataclass-extensions
+  (package
+    (name "python-dataclass-extensions")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dataclass_extensions" version))
+       (sha256
+        (base32 "0hq8na50sgpfl5ngszjbsjf0df03s0qdypndfhs9angr2h167v3s"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;tests not included in PyPI sdist
+    (propagated-inputs
+     (list python-pyyaml
+           python-typing-extensions))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/epwalsh/dataclass-extensions")
+    (synopsis "Additional functionality for Python dataclasses")
+    (description
+     "This package provides additional functionality for Python dataclasses,
+including encode/decode to/from JSON-safe dictionaries, merging dictionaries
+into dataclasses, CLI override support via dot notation, and polymorphism
+through registrable subclasses.")
+    (license license:asl2.0)))
+
+(define-public python-cached-path
+  (package
+    (name "python-cached-path")
+    (version "1.8.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cached_path" version))
+       (sha256
+        (base32 "1s2mi1ail5pp4fvigwb544d8bjfxq3mq68l01h30a124n5cijayv"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;tests require network access
+    (propagated-inputs
+     (list python-boto3
+           python-filelock
+           python-google-cloud-storage
+           python-huggingface-hub
+           python-packaging
+           python-requests
+           python-rich))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/allenai/cached_path")
+    (synopsis "Unified interface for accessing local and remote files")
+    (description
+     "This package provides a unified, simple interface for accessing both
+local and remote files.  Given something that might be a URL or local path,
+@code{cached_path()} determines which, downloads the file if necessary,
+caches it to a local directory, and returns the path to the cached file.
+It supports @code{http://}, @code{https://}, @code{s3://} (AWS S3),
+@code{gs://} (Google Cloud Storage), and @code{hf://} (HuggingFace Hub)
+URLs out-of-the-box.")
+    (license license:asl2.0)))
+
+(define-public python-olmo-core
+  (package
+    (name "python-olmo-core")
+    (version "1.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ai2_olmo_core" version))
+       (sha256
+        (base32 "1mm2di72p1qmnaling8y87r7dfzazphlad9hxxfsgf9qxf29pd8y"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;tests require GPU and network access
+    (propagated-inputs
+     (list python-bettermap
+           python-cached-path
+           python-dataclass-extensions
+           python-filelock
+           python-importlib-resources
+           python-numpy
+           python-packaging
+           python-pandas
+           python-pytorch
+           python-pyyaml
+           python-requests
+           python-rich
+           python-safetensors))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/allenai/OLMo-core")
+    (synopsis "Core training module for the Open Language Model (OLMo)")
+    (description
+     "OLMo-core provides building blocks for OLMo modeling and training.
+It includes implementations of transformer architectures, training
+infrastructure, and utilities for working with large language models.
+
+OLMo (Open Language Model) is a series of open-source language models
+developed by the Allen Institute for Artificial Intelligence (AI2).  The
+OLMo-core library provides the core components used to train and evaluate
+these models, including:
+@itemize
+@item Transformer model architectures (OLMo-2, OLMo-3, Llama)
+@item Distributed training infrastructure
+@item Checkpointing and data loading utilities
+@item Integration with HuggingFace Transformers for inference
+@end itemize
+
+For inference, OLMo models can be used via the HuggingFace Transformers
+library or via vLLM for high-throughput serving.")
+    (license license:asl2.0)))
+
 ;; Version 0.16 breaks miopen
 (define-public frugally-deep
   (package
