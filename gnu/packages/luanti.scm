@@ -165,8 +165,6 @@ sources.")
     (home-page "https://www.luanti.org/")
     (license license:lgpl2.1+)))
 
-(define-deprecated-package luanti-devtest luanti)
-
 (define-public luanti-server
   (package
     (inherit luanti)
