@@ -126,7 +126,7 @@
               (let ((source (string-append #$output "/share/luanti/games/devtest"))
                     (target (string-append #$output:devtest "/share/luanti/games/devtest")))
                 (mkdir-p (dirname target))
-                (rename-file source target))))))))
+                (rename-file source target)))))))
     (native-search-paths
      (list (search-path-specification
             (variable "LUANTI_GAME_PATH")
