@@ -7195,7 +7195,7 @@ add_subdirectory[(][.][.]/[.][.]/dlib/external/pybind11 pybind11_build[)]")
     (propagated-inputs (list python-dill))
     (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/allenai/bettermap")
-    (synopsis "Parallelized drop-in replacements for Python's map function")
+    (synopsis "Parallelized drop-in replacement for Python's map function")
     (description
      "@code{bettermap} is a drop-in replacement for Python's @code{map}
 function.  It parallelizes the map function across all available processors.")
