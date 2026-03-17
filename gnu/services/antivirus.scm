@@ -53,16 +53,18 @@
 package's default configuration file is used.
 
 When specifying a custom configuration file, make sure it contains a
-@code{User clamav} directive so that clamd drops privileges from root
-to the @code{clamav} user after reading the configuration.")
+@code{User} directive matching the @var{user} field so that clamd drops
+privileges from root to the configured user after reading the
+configuration.")
   (freshclam-config-file
    maybe-string
    "The freshclam configuration file to use.  When unspecified, the ClamAV
 package's default configuration file is used.
 
 When specifying a custom configuration file, make sure it contains a
-@code{DatabaseOwner clamav} directive so that freshclam drops privileges
-from root to the @code{clamav} user after reading the configuration.")
+@code{DatabaseOwner} directive matching the @var{user} field so that
+freshclam drops privileges from root to the configured user after reading
+the configuration.")
   (user
    (string "clamav")
    "The user account under which to run the ClamAV daemons.")
@@ -91,29 +93,27 @@ from root to the @code{clamav} user after reading the configuration.")
   "Return a gexp to set up the ClamAV directory structure."
   (let ((user (clamav-configuration-user config))
         (group (clamav-configuration-group config)))
-    (with-imported-modules (source-module-closure '((gnu build activation)
-                                                    (guix build utils)))
+    (with-imported-modules (source-module-closure '((guix build utils)))
       #~(begin
-          (use-modules (gnu build activation)
-                       (guix build utils))
-          (let* ((pw (getpwnam #$user))
-                 (uid (passwd:uid pw))
+          (use-modules (guix build utils))
+          (let* ((uid (passwd:uid (getpwnam #$user)))
                  (gid (group:gid (getgrnam #$group))))
             (for-each (lambda (directory)
-                        (mkdir-p/perms directory pw #o755)
-                        (chown directory uid gid))
+                        (mkdir-p directory)
+                        (chown directory uid gid)
+                        (chmod directory #o755))
                       '("/run/clamav" "/var/lib/clamav" "/var/log/clamav")))))))
 
 (define (clamav-shepherd-services config)
   "Return a list of <shepherd-service> for the ClamAV daemons."
   (let* ((clamav               (clamav-configuration-clamav config))
-         (clamd-config-raw     (clamav-configuration-clamd-config-file config))
-         (freshclam-config-raw (clamav-configuration-freshclam-config-file config))
-         (clamd-config         (if (maybe-value-set? clamd-config-raw)
-                                   clamd-config-raw
+         (clamd-config-maybe   (clamav-configuration-clamd-config-file config))
+         (freshclam-config-maybe (clamav-configuration-freshclam-config-file config))
+         (clamd-config         (if (maybe-value-set? clamd-config-maybe)
+                                   clamd-config-maybe
                                    (file-append clamav "/etc/clamav/clamd.conf")))
-         (freshclam-config     (if (maybe-value-set? freshclam-config-raw)
-                                   freshclam-config-raw
+         (freshclam-config     (if (maybe-value-set? freshclam-config-maybe)
+                                   freshclam-config-maybe
                                    (file-append clamav "/etc/clamav/freshclam.conf")))
          (user                 (clamav-configuration-user config))
          (group                (clamav-configuration-group config))
