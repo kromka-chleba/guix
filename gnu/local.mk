@@ -848,6 +848,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/build/secret-service.scm			\
 						\
   %D%/tests.scm					\
+  %D%/tests/antivirus.scm			\
   %D%/tests/audio.scm				\
   %D%/tests/avahi.scm				\
   %D%/tests/base.scm				\
