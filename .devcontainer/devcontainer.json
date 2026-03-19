@@ -1,0 +1,10 @@
+{
+  "image": "ghcr.io/kromka-chleba/guix-dev:latest",
+  "remoteUser": "root",
+  // Run with elevated privileges so the Guix daemon can use Linux namespaces
+  // for isolated builds (required by guix-daemon).
+  "runArgs": ["--privileged"],
+  // After the container starts, verify that the Shepherd init system and the
+  // Guix daemon service are up and running.
+  "postStartCommand": "herd status"
+}
