@@ -1860,11 +1860,7 @@ the @code{lunitx} module for running tests automatically at program exit.")
                (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
                        "-o" "lsqlite3.so"
                        "lsqlite3.c"
-                       "-llua" "-lsqlite3")
-               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                       "-o" "extras/libsqlitefunctions.so"
-                       "extras/extension-functions.c"
-                       "-lsqlite3")))
+                       "-llua" "-lsqlite3")))
            (replace 'install
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
