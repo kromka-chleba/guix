@@ -61,8 +61,8 @@
   #:use-module (gnu packages admin)
   #:use-module ((gnu packages linux)
                 #:select (alsa-utils btrfs-progs crda eudev
-                          e2fsprogs f2fs-tools fuse gpm kbd lvm2 rng-tools
-                          util-linux xfsprogs))
+                          e2fsprogs f2fs-tools fuse gpm haveged kbd lvm2
+                          rng-tools util-linux xfsprogs))
   #:use-module (gnu packages bash)
   #:use-module ((gnu packages base)
                 #:select (coreutils glibc glibc/hurd
@@ -268,6 +268,8 @@
             rngd-configuration?
             rngd-service-type
             rngd-service  ; deprecated
+
+            haveged-service-type
 
             kmscon-configuration
             kmscon-configuration?
@@ -749,10 +751,29 @@ to add @var{device} to the kernel's entropy pool.  The service will fail if
             (rng-tools rng-tools)
             (device device))))
 
+;;;
+;;; Haveged entropy daemon.
+;;;
 
-;;;
-;;; /etc/hosts
-;;;
+(define haveged-service-type
+  (shepherd-service-type
+    'haveged
+    (lambda (_)
+      (shepherd-service
+        (documentation "Run the haveged entropy daemon.")
+        (provision '(haveged))
+        (requirement '(user-processes))
+        (start #~(make-forkexec-constructor
+                  (list #$(file-append haveged "/sbin/haveged")
+                        "--Foreground")))
+        (stop #~(make-kill-destructor))))
+    #f
+    (description "Run @command{haveged}, a daemon that harvests randomness
+from the indirect effects of hardware events on hidden processor state, and
+feeds it into the kernel entropy pool.  This is particularly useful in
+virtual machines and containers where hardware-based entropy sources are
+unavailable.")))
+
 
 (eval-when (expand load eval)
   (define (valid-name? name)

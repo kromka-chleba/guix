@@ -13,7 +13,6 @@
 (use-modules (gnu)
              (guix packages))
 (use-service-modules base networking ssh)
-(use-package-modules ssh)
 
 (operating-system
   (host-name "guix-dev")
@@ -97,6 +96,10 @@
   (services
    (append
     (list
+     ;; Haveged supplies entropy to the kernel pool so that SSH host-key
+     ;; generation and other crypto during container startup does not block.
+     (service haveged-service-type)
+
      ;; Provide the 'networking' shepherd provision so that openssh-service-type
      ;; (which requires it) starts correctly.  In Docker the network is
      ;; configured by the daemon externally, so dhcpcd acts as a lightweight
@@ -104,9 +107,6 @@
      (service dhcpcd-service-type)
 
      ;; OpenSSH for interactive access / debugging.
-     ;; Note: modern Linux kernels (5.4+) and the Docker runtime supply
-     ;; adequate entropy from the host, so SSH host-key generation during
-     ;; first boot completes quickly without an additional entropy daemon.
      (service openssh-service-type
               (openssh-configuration
                (openssh openssh-sans-x)
