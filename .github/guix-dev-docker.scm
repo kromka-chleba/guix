@@ -6,7 +6,7 @@
 ;; to test newly-created packages, services, and other changes to Guix.
 ;;
 ;; Build with:
-;;   guix system image --image-type=docker -L . .github/guix-dev-docker.scm
+;;   guix system image --image-type=docker .github/guix-dev-docker.scm
 ;; or using the build script:
 ;;   .github/bin/build-guix-docker.sh
 
@@ -103,11 +103,10 @@
      ;; placeholder that satisfies the dependency.
      (service dhcpcd-service-type)
 
-     ;; haveged for entropy generation in containers/VMs.
-     ;; This speeds up SSH host key generation significantly.
-     (service haveged-service-type)
-
      ;; OpenSSH for interactive access / debugging.
+     ;; Note: modern Linux kernels (5.4+) and the Docker runtime supply
+     ;; adequate entropy from the host, so SSH host-key generation during
+     ;; first boot completes quickly without an additional entropy daemon.
      (service openssh-service-type
               (openssh-configuration
                (openssh openssh-sans-x)

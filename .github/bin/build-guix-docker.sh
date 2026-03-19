@@ -66,12 +66,14 @@ echo "    Target tag: ${FULL_IMAGE_TAG}"
 echo ""
 
 # 'guix system image --image-type=docker' writes a store path (a .tar.gz) and prints it.
-# Pass --load-path so that service/package definitions from this repository
-# (e.g. haveged-service-type added in gnu/services/base.scm) are visible to
-# the evaluator even when the installed 'guix' binary pre-dates those additions.
+# Do NOT pass --load-path for the repository root: doing so puts all repo
+# directories (including build-aux/) on Guile's module search path, which
+# causes spurious "module name does not match file name" warnings for
+# build-aux/build-self.scm and ultimately a fatal load error for the system
+# configuration.  All service types used in the config file are available in
+# any reasonably recent Guix release.
 # shellcheck disable=SC2086
 TARBALL="$(guix system image --image-type=docker \
-              --load-path="${REPO_ROOT}" \
               ${EXTRA_GUIX_FLAGS} \
               "${GUIX_SYSTEM_CONFIG}")"
 
