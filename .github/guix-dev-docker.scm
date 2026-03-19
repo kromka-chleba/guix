@@ -109,7 +109,7 @@
      ;; OpenSSH for interactive access / debugging.
      (service openssh-service-type
               (openssh-configuration
-               (openssh openssh-sans-x)
+               (openssh (specification->package "openssh-sans-x"))
                ;; Permit root login for convenience inside the container.
                (permit-root-login #t)
                ;; No host-key checking required inside the container.
