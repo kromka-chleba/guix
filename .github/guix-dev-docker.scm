@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules base networking ssh)
+(use-service-modules base)
 
 (operating-system
   (host-name "guix-dev")
@@ -91,27 +91,7 @@
                         (mount-point "/")
                         (type "does-not-matter"))))
 
-  ;; Services: extend %base-services (which already includes the Guix daemon
-  ;; and syslogd) with an SSH server for interactive debugging if needed.
-  (services
-   (append
-    (list
-     ;; Haveged supplies entropy to the kernel pool so that SSH host-key
-     ;; generation and other crypto during container startup does not block.
-     (service haveged-service-type)
-
-     ;; Provide the 'networking' shepherd provision so that openssh-service-type
-     ;; (which requires it) starts correctly.  In Docker the network is
-     ;; configured by the daemon externally, so dhcpcd acts as a lightweight
-     ;; placeholder that satisfies the dependency.
-     (service dhcpcd-service-type)
-
-     ;; OpenSSH for interactive access / debugging.
-     (service openssh-service-type
-              (openssh-configuration
-               (openssh (specification->package "openssh-sans-x"))
-               ;; Permit root login for convenience inside the container.
-               (permit-root-login #t)
-               ;; No host-key checking required inside the container.
-               (password-authentication? #t))))
-    %base-services)))
+  ;; Services: %base-services already includes the Guix daemon and syslogd.
+  ;; No SSH server is needed—use 'docker exec' to get a shell inside the
+  ;; container, which avoids the SSH host-key entropy wait entirely.
+  (services %base-services))
