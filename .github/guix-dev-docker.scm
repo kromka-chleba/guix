@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules guix ssh)
+(use-service-modules ssh)
 (use-package-modules ssh)
 
 (operating-system
@@ -89,18 +89,17 @@
                         (mount-point "/")
                         (type "does-not-matter"))))
 
-  ;; Services: run a Guix daemon so agents can build packages inside the
-  ;; container, and an SSH server for interactive debugging if needed.
+  ;; Services: extend %base-services (which already includes the Guix daemon
+  ;; and syslogd) with an SSH server for interactive debugging if needed.
   (services
-   (list
-    ;; Guix daemon – required to run any 'guix build' / 'guix package' commands.
-    (service guix-service-type)
-
-    ;; OpenSSH for interactive access / debugging.
-    (service openssh-service-type
-             (openssh-configuration
-              (openssh openssh-sans-x)
-              ;; Permit root login for convenience inside the container.
-              (permit-root-login #t)
-              ;; No host-key checking required inside the container.
-              (password-authentication? #t))))))
+   (append
+    (list
+     ;; OpenSSH for interactive access / debugging.
+     (service openssh-service-type
+              (openssh-configuration
+               (openssh openssh-sans-x)
+               ;; Permit root login for convenience inside the container.
+               (permit-root-login #t)
+               ;; No host-key checking required inside the container.
+               (password-authentication? #t))))
+    %base-services)))
