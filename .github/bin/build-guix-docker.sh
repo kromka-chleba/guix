@@ -5,20 +5,18 @@
 #   .github/bin/build-guix-docker.sh [IMAGE_TAG]
 #
 # Environment variables:
-#   IMAGE_TAG      – Docker image tag (default: guix-dev:latest)
-#   REGISTRY       – Docker registry prefix, e.g. ghcr.io/your-org (default: empty)
+#   IMAGE_TAG          – Docker image tag (default: guix-dev:latest)
+#   REGISTRY           – Docker registry prefix, e.g. ghcr.io/your-org (default: empty)
 #   GUIX_SYSTEM_CONFIG – Path to the Guix system config (default: .github/guix-dev-docker.scm)
-#   EXTRA_GUIX_FLAGS   – Additional flags passed verbatim to 'guix system docker-image'
+#   EXTRA_GUIX_FLAGS   – Additional flags passed verbatim to 'guix system image'
 #
 # Prerequisites (on the host running this script):
 #   * GNU Guix installed and on PATH
 #   * Docker (or podman) installed and the daemon accessible
 #   * Sufficient disk space for the store and the resulting image (~several GB)
 #
-# NOTE: 'guix system docker-image' is the legacy subcommand kept for
-# compatibility.  It is equivalent to 'guix system image --image-type=docker'.
-# Both produce a gzip-compressed tarball that can be loaded with
-# 'docker load -i <tarball>'.
+# The image is built with 'guix system image --image-type=docker', which
+# produces a gzip-compressed tarball that can be loaded with 'docker load'.
 
 set -euo pipefail
 
@@ -67,14 +65,14 @@ echo "==> Building Guix system Docker image from: ${GUIX_SYSTEM_CONFIG}"
 echo "    Target tag: ${FULL_IMAGE_TAG}"
 echo ""
 
-# 'guix system docker-image' writes a store path (a .tar.gz) and prints it.
+# 'guix system image --image-type=docker' writes a store path (a .tar.gz) and prints it.
 # shellcheck disable=SC2086
-TARBALL="$(guix system docker-image \
+TARBALL="$(guix system image --image-type=docker \
               ${EXTRA_GUIX_FLAGS} \
               "${GUIX_SYSTEM_CONFIG}")"
 
 if [[ -z "${TARBALL}" || ! -f "${TARBALL}" ]]; then
-  echo "ERROR: 'guix system docker-image' did not produce a tarball." >&2
+  echo "ERROR: 'guix system image --image-type=docker' did not produce a tarball." >&2
   exit 1
 fi
 

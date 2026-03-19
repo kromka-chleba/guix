@@ -50,7 +50,7 @@ configuration that includes:
 ```
 
 The script will:
-1. Call `guix system docker-image .github/guix-dev-docker.scm` to produce a
+1. Call `guix system image --image-type=docker .github/guix-dev-docker.scm` to produce a
    compressed tarball in the Guix store.
 2. Load the tarball with `docker load`.
 3. Tag the resulting image as specified (default: `guix-dev:latest`).

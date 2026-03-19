@@ -6,7 +6,7 @@
 ;; to test newly-created packages, services, and other changes to Guix.
 ;;
 ;; Build with:
-;;   guix system docker-image .github/guix-dev-docker.scm
+;;   guix system image --image-type=docker .github/guix-dev-docker.scm
 ;; or using the build script:
 ;;   .github/bin/build-guix-docker.sh
 

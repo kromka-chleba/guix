@@ -45,12 +45,12 @@ jobs:
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # Build the tarball with 'guix system docker-image'
+      # Build the tarball with 'guix system image --image-type=docker'
       # -----------------------------------------------------------------------
       - name: Build Docker image tarball
         id: build
         run: |
-          TARBALL=$(guix system docker-image .github/guix-dev-docker.scm)
+          TARBALL=$(guix system image --image-type=docker .github/guix-dev-docker.scm)
           echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
 
       # -----------------------------------------------------------------------
