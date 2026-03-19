@@ -40,6 +40,9 @@ guix build -L . my-new-package
 # Open an interactive development shell with all native inputs of a package
 guix shell -L . -D my-new-package
 
+# Format a new package definition to the canonical Guix coding style
+guix style -L . my-new-package
+
 # Run the Guix test suite for a specific module (e.g. after editing gnu/packages/foo.scm)
 guix build -L . --check my-new-package
 
@@ -50,25 +53,33 @@ guix system build -L . /path/to/system.scm
 ## Workflow for implementing a new package or service
 
 1. **Edit** the relevant `.scm` file under `gnu/packages/` or `gnu/services/`.
-2. **Test** inside the container:
+2. **Format** the package definition with `guix style`:
+   ```bash
+   guix style -L . <package-name>
+   ```
+   This automatically rewrites the definition to match the canonical Guix
+   coding style (indentation, argument order, etc.).
+3. **Test** inside the container:
    ```bash
    guix build -L . <package-name>
    ```
-3. **Lint** the package definition:
+4. **Lint** the package definition:
    ```bash
    guix lint -L . <package-name>
    ```
-4. **Check** that existing packages still build (no regressions):
+5. **Check** that existing packages still build (no regressions):
    ```bash
    guix build -L . --keep-going <package-name>
    ```
-5. Commit your changes and open a pull request.
+6. Commit your changes and open a pull request.
 
 ## Important conventions
 
 - All package definitions live in `gnu/packages/<category>.scm`.
 - All service definitions live in `gnu/services/<category>.scm`.
 - Guix uses **Guile Scheme** – follow the coding style of nearby definitions.
+- After writing or editing a package, run `guix style -L . <package-name>` to
+  automatically reformat it to the canonical Guix coding style.
 - Use `specification->package` when resolving packages by name in system configs.
 - Services that need HTTPS must set `SSL_CERT_DIR` and `SSL_CERT_FILE` via
   shepherd's `#:environment-variables` (see existing services as examples).
