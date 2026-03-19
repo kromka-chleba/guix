@@ -13,6 +13,7 @@
 (use-modules (gnu)
              (guix packages))
 (use-service-modules guix ssh)
+(use-package-modules ssh)
 
 (operating-system
   (host-name "guix-dev")
