@@ -1800,6 +1800,8 @@ way, following established lisp conventions.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
+                    ;; The repository is named "lunit", but the project
+                    ;; is called "lunitx".
                     (url "https://github.com/dcurrie/lunit")
                     (commit version)))
               (file-name (git-file-name "lua-lunitx" version))
