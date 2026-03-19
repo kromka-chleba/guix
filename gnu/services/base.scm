@@ -61,7 +61,7 @@
   #:use-module (gnu packages admin)
   #:use-module ((gnu packages linux)
                 #:select (alsa-utils btrfs-progs crda eudev
-                          e2fsprogs f2fs-tools fuse gpm kbd lvm2 rng-tools
+                          e2fsprogs f2fs-tools fuse gpm haveged kbd lvm2 rng-tools
                           util-linux xfsprogs))
   #:use-module (gnu packages bash)
   #:use-module ((gnu packages base)
@@ -268,6 +268,10 @@
             rngd-configuration?
             rngd-service-type
             rngd-service  ; deprecated
+
+            haveged-configuration
+            haveged-configuration?
+            haveged-service-type
 
             kmscon-configuration
             kmscon-configuration?
@@ -748,6 +752,53 @@ to add @var{device} to the kernel's entropy pool.  The service will fail if
            (rngd-configuration
             (rng-tools rng-tools)
             (device device))))
+
+
+;;;
+;;; haveged entropy daemon for virtual machines and containers.
+;;;
+
+(define-record-type* <haveged-configuration>
+  haveged-configuration make-haveged-configuration
+  haveged-configuration?
+  (haveged haveged-configuration-haveged         ;file-like
+           (default haveged))
+  (watermark haveged-configuration-watermark     ;integer
+             (default 1024)))
+
+(define (haveged-shepherd-service config)
+  "Return a shepherd service for haveged."
+  (define haveged-package (haveged-configuration-haveged config))
+  (define watermark (haveged-configuration-watermark config))
+
+  (define haveged-command
+    (list (file-append haveged-package "/sbin/haveged")
+          "-F" "-w" (number->string watermark)))
+
+  (list (shepherd-service
+         (documentation "Entropy daemon for virtual machines and containers.")
+         (requirement '(file-systems))
+         (provision '(haveged))
+         (start #~(make-forkexec-constructor '#$haveged-command))
+         (stop #~(make-kill-destructor)))))
+
+(define haveged-service-type
+  (service-type (name 'haveged)
+                (extensions
+                 (list (service-extension shepherd-root-service-type
+                                          haveged-shepherd-service)
+
+                       ;; Have 'user-processes' depend on 'haveged'.
+                       ;; This ensures entropy is available before SSH key
+                       ;; generation during system activation.
+                       (service-extension user-processes-service-type
+                                          (const '(haveged)))))
+                (default-value (haveged-configuration))
+                (description "Run the @command{haveged} entropy daemon, which
+generates unpredictable random numbers using the @acronym{HAVEGE, HArdware
+Volatile Entropy Gathering and Expansion} algorithm.  This is particularly
+useful in virtual machines and containers where hardware random number
+generators are not available.")))
 
 ;;;
 ;;; /etc/hosts

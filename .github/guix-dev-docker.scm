@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules networking ssh)
+(use-service-modules base networking ssh)
 (use-package-modules ssh)
 
 (operating-system
@@ -102,6 +102,10 @@
      ;; configured by the daemon externally, so dhcpcd acts as a lightweight
      ;; placeholder that satisfies the dependency.
      (service dhcpcd-service-type)
+
+     ;; haveged for entropy generation in containers/VMs.
+     ;; This speeds up SSH host key generation significantly.
+     (service haveged-service-type)
 
      ;; OpenSSH for interactive access / debugging.
      (service openssh-service-type
