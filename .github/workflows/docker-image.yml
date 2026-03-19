@@ -60,7 +60,19 @@ jobs:
         id: load
         run: |
           TARBALL="${{ steps.build.outputs.tarball }}"
-          LOADED=$(docker load -i "${TARBALL}" | grep -oP '(?<=Loaded image: ).*')
+          # 'docker load' outputs either:
+          #   "Loaded image: <name>:<tag>"  – when the tarball contains repo tags
+          #   "Loaded image ID: sha256:..."  – when no repo tags are present
+          # Guix system image tarballs typically carry no tags, so we must handle
+          # both formats.
+          # The regex uses ( ID)? to optionally match " ID" so it handles both
+          # "Loaded image: <tag>" and "Loaded image ID: sha256:..." formats.
+          LOADED=$(docker load -i "${TARBALL}" \
+            | grep -oP '(?<=Loaded image( ID)?: ).*' || true)
+          if [ -z "${LOADED}" ]; then
+            # Fallback: use the ID of the most recently loaded image.
+            LOADED=$(docker images -q | head -1)
+          fi
           if [ -z "${LOADED}" ]; then
             echo "ERROR: could not determine the loaded image tag/ID." >&2
             exit 1
