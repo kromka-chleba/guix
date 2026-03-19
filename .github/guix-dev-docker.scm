@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules guix ssh)
+(use-service-modules base guix ssh)
 (use-package-modules ssh)
 
 (operating-system
@@ -95,6 +95,9 @@
    (list
     ;; Guix daemon – required to run any 'guix build' / 'guix package' commands.
     (service guix-service-type)
+
+    ;; syslogd – required by openssh-service-type.
+    (service syslog-service-type)
 
     ;; OpenSSH for interactive access / debugging.
     (service openssh-service-type
