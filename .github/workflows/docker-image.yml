@@ -1,0 +1,107 @@
+name: Build & Publish Guix Dev Docker Image
+
+# ---------------------------------------------------------------------------
+# Triggers
+# ---------------------------------------------------------------------------
+on:
+  # Build whenever the system config or the build script changes.
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/guix-dev-docker.scm'
+      - '.github/bin/build-guix-docker.sh'
+      - '.github/workflows/docker-image.yml'
+
+  # Allow manual/on-demand builds from the Actions UI.
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push the image to ghcr.io after building'
+        required: false
+        default: 'true'
+        type: boolean
+
+# ---------------------------------------------------------------------------
+# Permissions needed to push to GitHub Container Registry
+# ---------------------------------------------------------------------------
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/guix-dev
+
+jobs:
+  build-docker-image:
+    name: Build Guix dev Docker image
+    # A self-hosted runner with GNU Guix installed is required.
+    # See .github/DOCKER.md for setup instructions.
+    runs-on: [self-hosted, guix]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Build the tarball with 'guix system image --image-type=docker'
+      # -----------------------------------------------------------------------
+      - name: Build Docker image tarball
+        id: build
+        run: |
+          TARBALL=$(guix system image --image-type=docker .github/guix-dev-docker.scm)
+          echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # Load the tarball and tag it
+      # -----------------------------------------------------------------------
+      - name: Load image into Docker
+        id: load
+        run: |
+          TARBALL="${{ steps.build.outputs.tarball }}"
+          # 'docker load' outputs either:
+          #   "Loaded image: <name>:<tag>"  – when the tarball contains repo tags
+          #   "Loaded image ID: sha256:..."  – when no repo tags are present
+          # Guix system image tarballs typically carry no tags, so we must handle
+          # both formats.
+          # The regex uses ( ID)? to optionally match " ID" so it handles both
+          # "Loaded image: <tag>" and "Loaded image ID: sha256:..." formats.
+          LOADED=$(docker load -i "${TARBALL}" \
+            | grep -oP '(?<=Loaded image( ID)?: ).*' || true)
+          if [ -z "${LOADED}" ]; then
+            # Fallback: use the ID of the most recently loaded image.
+            LOADED=$(docker images -q | head -1)
+          fi
+          if [ -z "${LOADED}" ]; then
+            echo "ERROR: could not determine the loaded image tag/ID." >&2
+            exit 1
+          fi
+          echo "loaded_tag=${LOADED}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag image
+        run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+          IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          docker tag "${{ steps.load.outputs.loaded_tag }}" "${IMAGE_TAG}:latest"
+          docker tag "${{ steps.load.outputs.loaded_tag }}" "${IMAGE_TAG}:${SHORT_SHA}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+          echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      # -----------------------------------------------------------------------
+      # Push to GitHub Container Registry
+      # -----------------------------------------------------------------------
+      - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.push_image == true }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image to registry
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.push_image == true }}
+        run: |
+          docker push "${IMAGE_TAG}:latest"
+          docker push "${IMAGE_TAG}:${SHORT_SHA}"
+          echo "Pushed ${IMAGE_TAG}:latest and ${IMAGE_TAG}:${SHORT_SHA}"

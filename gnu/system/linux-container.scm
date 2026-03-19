@@ -61,6 +61,10 @@ from OS that are needed on the bare metal and not in a container."
                     (cons* (service-kind %linux-bare-metal-service)
                            firmware-service-type
                            system-service-type
+                           ;; Containers (including Docker) cannot call
+                           ;; sethostname(2) without CAP_SYS_ADMIN; the
+                           ;; hostname is managed by the container runtime.
+                           host-name-service-type
                            (if shared-network?
                                (list hosts-service-type)
                                '()))))
