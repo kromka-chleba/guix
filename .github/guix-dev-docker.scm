@@ -53,7 +53,10 @@
           "gzip"
           "bzip2"
           "xz"
-          "zstd"
+          ;; Note: zstd is already included via %base-packages (%base-packages-utils)
+          ;; and must not be listed here again: doing so would trigger a profile
+          ;; conflict because specification->package resolves "zstd" to zstd-1.5.7
+          ;; while %base-packages-utils binds the zstd variable to zstd-1.5.6.
 
           ;; Cryptography (signing, verification)
           "gnupg"
