@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules ssh)
+(use-service-modules networking ssh)
 (use-package-modules ssh)
 
 (operating-system
@@ -94,6 +94,12 @@
   (services
    (append
     (list
+     ;; Provide the 'networking' shepherd provision so that openssh-service-type
+     ;; (which requires it) starts correctly.  In Docker the network is
+     ;; configured by the daemon externally, so dhcpcd acts as a lightweight
+     ;; placeholder that satisfies the dependency.
+     (service dhcpcd-service-type)
+
      ;; OpenSSH for interactive access / debugging.
      (service openssh-service-type
               (openssh-configuration
