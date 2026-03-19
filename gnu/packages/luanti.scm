@@ -112,11 +112,8 @@
               ;; when invoked on the target outside of `guix build'.
               (when tests?
                 (setenv "HOME" "/tmp")
-                ;; Set both variables so tests work with and without
-                ;; luanti-paths.patch (e.g. when using --with-git-url).
-                (let ((game-path (string-append #$output "/share/luanti/games")))
-                  (setenv "LUANTI_GAME_PATH" game-path)
-                  (setenv "MINETEST_GAME_PATH" game-path))
+                (setenv "LUANTI_GAME_PATH"
+                        (string-append #$output "/share/luanti/games"))
                 (invoke "../source/bin/luanti" "--run-unittests")
                 (invoke "../source/util/test_multiplayer.sh"))))
           (add-after 'check 'move-devtest
