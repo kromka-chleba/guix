@@ -33,7 +33,7 @@
 
           ;; Core build toolchain
           "gcc-toolchain"
-          "gnu-make"
+          "make"
           "autoconf"
           "automake"
           "libtool"
