@@ -29,7 +29,10 @@ configuration that includes:
 **Services:**
 - `guix-service-type` – a Guix build daemon so that agents can run
   `guix build` / `guix package` inside the container.
-- `openssh-service-type` – SSH server for interactive debugging.
+
+No SSH server is included.  Use `docker exec` (or the devcontainer mechanism)
+to get an interactive shell; this avoids the SSH host-key entropy wait that
+slows down container startup.
 
 ---
 
