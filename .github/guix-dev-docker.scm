@@ -48,7 +48,6 @@
 
           ;; Version control and patch submission
           "git"
-          "nss-certs"
 
           ;; Compression / archive tools
           "gzip"
@@ -102,6 +101,6 @@
              (openssh-configuration
               (openssh openssh-sans-x)
               ;; Permit root login for convenience inside the container.
-              (permit-root-login 'yes)
+              (permit-root-login #t)
               ;; No host-key checking required inside the container.
               (password-authentication? #t))))))
