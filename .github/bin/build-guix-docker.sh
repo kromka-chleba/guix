@@ -66,8 +66,12 @@ echo "    Target tag: ${FULL_IMAGE_TAG}"
 echo ""
 
 # 'guix system image --image-type=docker' writes a store path (a .tar.gz) and prints it.
+# Pass --load-path so that service/package definitions from this repository
+# (e.g. haveged-service-type added in gnu/services/base.scm) are visible to
+# the evaluator even when the installed 'guix' binary pre-dates those additions.
 # shellcheck disable=SC2086
 TARBALL="$(guix system image --image-type=docker \
+              --load-path="${REPO_ROOT}" \
               ${EXTRA_GUIX_FLAGS} \
               "${GUIX_SYSTEM_CONFIG}")"
 
