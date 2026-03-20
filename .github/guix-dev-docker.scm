@@ -104,11 +104,14 @@
   ;; entropy which is scarce in containers and causes a long hang at startup.
   ;; This Docker image is only used for building/testing, not for serving
   ;; substitutes, so the key is not needed.
-  ;; docker-service-type adds the Docker daemon (dockerd + containerd) managed
-  ;; by Shepherd.  Running the container with --privileged is required for both
-  ;; the Guix daemon and Docker daemon to use Linux namespaces.
+  ;; containerd-service-type and docker-service-type together start the Docker
+  ;; daemon (containerd + dockerd) managed by Shepherd.  containerd must be
+  ;; listed explicitly because docker-service-type no longer bundles it.
+  ;; Running the container with --privileged is required for both the Guix
+  ;; daemon and Docker daemon to use Linux namespaces.
   (services
-   (cons* (service docker-service-type)
+   (cons* (service containerd-service-type)
+          (service docker-service-type)
           (modify-services %base-services
             (guix-service-type
              config => (guix-configuration
