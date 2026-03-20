@@ -36,29 +36,29 @@ No SSH server is included.  Use `docker exec` to get an interactive shell.
 
 ## Automated CI build (GitHub Actions)
 
-The workflow (`.github/workflows/docker-image.yml`) is triggered on **any
-branch** whenever one of these files changes:
+The workflow (`.github/workflows/docker-image.yml`) fires automatically only
+on **`master`** pushes that touch one of these files:
 
 - `.github/guix-dev-docker.scm`
 - `.github/bin/build-guix-docker.scm`
 - `.github/workflows/docker-image.yml`
 
-A manual run can be triggered any time via
-**Actions → Build & Publish Guix Dev Docker Image → Run workflow**.
+Restricting the trigger to `master` avoids generating large amounts of cached
+data for every feature branch.
+
+**For feature-branch work:** use
+**Actions → Build & Publish Guix Dev Docker Image → Run workflow**
+to build and test the image manually on your branch before merging.
 
 ### Branch behaviour
 
-| Branch | What happens |
-|--------|-------------|
-| `master` | Build + push `:latest` and `:{SHORT_SHA}` to the registry |
-| Any other branch | Build and validate only — **nothing is pushed** |
+| Trigger | Branch | Pushes to registry? |
+|---------|--------|---------------------|
+| `push` (automatic) | `master` only | Always yes |
+| `workflow_dispatch` (manual) | Any branch | Controlled by `push_image` input (default: `true`) |
 
-This lets you verify that changes to the image config actually compile
-correctly on a feature branch before merging, without accidentally publishing
-a work-in-progress image.
-
-To push from a non-master branch (e.g. for testing), use
-**Run workflow → push_image = true**.
+Set `push_image = false` in the manual trigger for a dry-run that builds the
+image and validates it without publishing anything.
 
 ### Build caching — skip rebuilds when nothing has changed
 

@@ -3,20 +3,24 @@ name: Build & Publish Guix Dev Docker Image
 # ---------------------------------------------------------------------------
 # Triggers
 # ---------------------------------------------------------------------------
-# The workflow runs whenever any of the relevant source files change,
-# on *any* branch.  Pushing to the registry (ghcr.io) only happens on
-# the master branch (or when explicitly requested via workflow_dispatch).
-# This lets you verify that your changes to the image config actually build
-# correctly on a feature branch before merging, without accidentally
-# publishing a work-in-progress image.
+# Automatic builds run only on pushes to master that touch the relevant
+# source files.  This avoids generating large amounts of cached data for
+# every feature branch.
+#
+# For feature-branch work: use workflow_dispatch (below) to build and test
+# the image manually before merging to master.
 on:
   push:
+    branches:
+      - master
     paths:
       - '.github/guix-dev-docker.scm'
       - '.github/bin/build-guix-docker.scm'
       - '.github/workflows/docker-image.yml'
 
-  # Allow manual/on-demand builds from the Actions UI.
+  # Allow manual/on-demand builds from the Actions UI on any branch.
+  # Useful for building and testing the image on a feature branch before
+  # merging it to master.
   workflow_dispatch:
     inputs:
       push_image:
@@ -202,13 +206,14 @@ jobs:
           echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
 
       # -----------------------------------------------------------------------
-      # Push to the registry only on master (or on explicit workflow_dispatch
-      # with push_image=true).  On feature branches the job still builds and
-      # validates the image, but nothing is published.
+      # Push to the registry.
+      # - On a push event the branch is always master (see trigger above).
+      # - On workflow_dispatch the push is gated by the push_image input,
+      #   which defaults to true but can be set to false for a dry-run.
       # -----------------------------------------------------------------------
       - name: Log in to GitHub Container Registry
         if: >-
-          github.ref == 'refs/heads/master' ||
+          github.event_name == 'push' ||
           (github.event_name == 'workflow_dispatch' && inputs.push_image == true)
         uses: docker/login-action@v3
         with:
@@ -218,17 +223,15 @@ jobs:
 
       - name: Push image to registry
         if: >-
-          github.ref == 'refs/heads/master' ||
+          github.event_name == 'push' ||
           (github.event_name == 'workflow_dispatch' && inputs.push_image == true)
         run: |
           docker push "${IMAGE_TAG}:latest"
           docker push "${IMAGE_TAG}:${SHORT_SHA}"
           echo "Pushed ${IMAGE_TAG}:latest and ${IMAGE_TAG}:${SHORT_SHA}"
 
-      - name: Skip push (not on master)
+      - name: Skip push (dry-run)
         if: >-
-          github.ref != 'refs/heads/master' &&
-          !(github.event_name == 'workflow_dispatch' && inputs.push_image == true)
+          github.event_name == 'workflow_dispatch' && inputs.push_image != true
         run: |
-          echo "ℹ️  Running on branch '${{ github.ref_name }}' — image built but not pushed."
-          echo "   Merge to master (or run workflow_dispatch with push_image=true) to publish."
+          echo "ℹ️  push_image=false — image built but not pushed to the registry."
