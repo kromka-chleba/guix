@@ -3,11 +3,14 @@ name: Build & Publish Guix Dev Docker Image
 # ---------------------------------------------------------------------------
 # Triggers
 # ---------------------------------------------------------------------------
+# The workflow runs whenever any of the relevant source files change,
+# on *any* branch.  Pushing to the registry (ghcr.io) only happens on
+# the master branch (or when explicitly requested via workflow_dispatch).
+# This lets you verify that your changes to the image config actually build
+# correctly on a feature branch before merging, without accidentally
+# publishing a work-in-progress image.
 on:
-  # Build whenever the system config or the build script changes.
   push:
-    branches:
-      - master
     paths:
       - '.github/guix-dev-docker.scm'
       - '.github/bin/build-guix-docker.scm'
@@ -21,6 +24,11 @@ on:
         required: false
         default: 'true'
         type: boolean
+      force_rebuild:
+        description: 'Force a full rebuild, ignoring the build cache'
+        required: false
+        default: 'false'
+        type: boolean
 
 # ---------------------------------------------------------------------------
 # Permissions needed to push to GitHub Container Registry
@@ -33,16 +41,14 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/guix-dev
   # Bootstrap image: the previously published guix-dev image from this repo.
-  # It contains Guix + guix-daemon managed by Shepherd, so it can run
+  # It contains Guix + guix-daemon managed by Shepherd so it can run
   # 'guix system image' to build the next version of itself.
-  # For the very first build (bootstrap), see DOCKER.md.
+  # For the very first build (bootstrap from a bare Guix install), see DOCKER.md.
   BOOTSTRAP_IMAGE: ghcr.io/kromka-chleba/guix-dev:latest
 
 jobs:
   build-docker-image:
     name: Build Guix dev Docker image
-    # A standard GitHub-hosted runner is sufficient: Docker is available out
-    # of the box.  The actual Guix build runs inside the bootstrap container.
     runs-on: ubuntu-latest
 
     steps:
@@ -50,17 +56,45 @@ jobs:
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # Start the bootstrap container.
-      # The image runs Shepherd as PID 1; we start it detached and interact
-      # via 'docker exec'.  --privileged is required for Linux user namespaces
-      # (needed by both the Guix daemon and the Docker daemon inside).
-      # The workspace is mounted read-only so the build script can read the
-      # system config without polluting the Guix store on the runner.
+      # Pull the bootstrap image and compute a cache key.
+      #
+      # Cache key = sha256 of guix-dev-docker.scm  +  bootstrap image digest
+      #
+      # Rationale: 'guix system image' is deterministic — same config and same
+      # Guix version always produce the same store output.  By keying the cache
+      # on both the .scm file hash and the bootstrap image digest we guarantee
+      # a cache hit only when both inputs are identical, meaning we'd get the
+      # exact same tarball anyway.  Skip the (slow) build in that case.
       # -----------------------------------------------------------------------
       - name: Pull bootstrap image
         run: docker pull "${{ env.BOOTSTRAP_IMAGE }}"
 
+      - name: Compute build cache key
+        id: cache-key
+        run: |
+          SCM_HASH=$(sha256sum .github/guix-dev-docker.scm | cut -c1-16)
+          # Image digest looks like sha256:abcdef…; take the first 16 hex chars.
+          IMG_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            "${{ env.BOOTSTRAP_IMAGE }}" \
+            | grep -oP '(?<=sha256:)[0-9a-f]+' | cut -c1-16 || echo "nodigest")
+          KEY="guix-dev-image-${SCM_HASH}-${IMG_DIGEST}"
+          echo "key=${KEY}" >> "$GITHUB_OUTPUT"
+          echo "Cache key: ${KEY}"
+
+      - name: Restore build cache
+        id: image-cache
+        uses: actions/cache@v4
+        with:
+          path: ./guix-dev-image.tar.gz
+          key: ${{ steps.cache-key.outputs.key }}
+
+      # -----------------------------------------------------------------------
+      # Only run the (slow) Guix build when the cache is cold or when a full
+      # rebuild has been explicitly requested.
+      # -----------------------------------------------------------------------
       - name: Start bootstrap container
+        if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
           CID=$(docker run -d --privileged \
             --volume "${{ github.workspace }}:/workspace:ro" \
@@ -69,10 +103,11 @@ jobs:
 
       # -----------------------------------------------------------------------
       # Wait for Shepherd (PID 1) to finish booting, then start the Guix
-      # daemon.  The daemon is intentionally stopped at image startup to avoid
-      # the slow substitute-key generation at boot time.
+      # daemon.  The daemon is stopped at image startup to avoid the slow
+      # substitute-key generation; we start it explicitly here.
       # -----------------------------------------------------------------------
       - name: Wait for Shepherd to be ready
+        if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
           HERD=/run/current-system/profile/bin/herd
           for i in $(seq 1 30); do
@@ -86,6 +121,7 @@ jobs:
           docker exec "${BOOTSTRAP_CID}" "${HERD}" status
 
       - name: Start Guix daemon
+        if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
           docker exec "${BOOTSTRAP_CID}" \
             /run/current-system/profile/bin/herd start guix-daemon
@@ -96,6 +132,7 @@ jobs:
       # appears in the Actions log automatically.
       # -----------------------------------------------------------------------
       - name: Build Docker image tarball
+        if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
           GUIX=/run/current-system/profile/bin/guix
           TARBALL=$(docker exec "${BOOTSTRAP_CID}" \
@@ -109,23 +146,33 @@ jobs:
           echo "Tarball produced at: ${TARBALL}"
           echo "TARBALL=${TARBALL}" >> "$GITHUB_ENV"
 
-      # -----------------------------------------------------------------------
-      # Copy the tarball from the container's Guix store to the runner's
-      # workspace, then tear down the container.
-      # -----------------------------------------------------------------------
       - name: Extract tarball from container
+        if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
           docker cp "${BOOTSTRAP_CID}:${TARBALL}" ./guix-dev-image.tar.gz
           echo "Tarball size: $(du -sh ./guix-dev-image.tar.gz | cut -f1)"
 
       - name: Stop bootstrap container
-        if: always()
+        if: >-
+          always() &&
+          (steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true')
         run: |
           docker stop "${BOOTSTRAP_CID}" >/dev/null || true
           docker rm   "${BOOTSTRAP_CID}" >/dev/null || true
 
+      - name: Show cache status
+        run: |
+          if [ "${{ steps.image-cache.outputs.cache-hit }}" = "true" ] && \
+             [ "${{ inputs.force_rebuild }}" != "true" ]; then
+            echo "✓ Cache hit — reusing previously built tarball."
+          else
+            echo "✓ Fresh build complete."
+          fi
+          echo "Tarball size: $(du -sh ./guix-dev-image.tar.gz | cut -f1)"
+
       # -----------------------------------------------------------------------
       # Load the tarball into Docker and tag it.
+      # This runs whether the tarball came from cache or from a fresh build.
       # -----------------------------------------------------------------------
       - name: Load image into Docker
         id: load
@@ -155,10 +202,14 @@ jobs:
           echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
 
       # -----------------------------------------------------------------------
-      # Push to GitHub Container Registry
+      # Push to the registry only on master (or on explicit workflow_dispatch
+      # with push_image=true).  On feature branches the job still builds and
+      # validates the image, but nothing is published.
       # -----------------------------------------------------------------------
       - name: Log in to GitHub Container Registry
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.push_image == true }}
+        if: >-
+          github.ref == 'refs/heads/master' ||
+          (github.event_name == 'workflow_dispatch' && inputs.push_image == true)
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -166,8 +217,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push image to registry
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.push_image == true }}
+        if: >-
+          github.ref == 'refs/heads/master' ||
+          (github.event_name == 'workflow_dispatch' && inputs.push_image == true)
         run: |
           docker push "${IMAGE_TAG}:latest"
           docker push "${IMAGE_TAG}:${SHORT_SHA}"
           echo "Pushed ${IMAGE_TAG}:latest and ${IMAGE_TAG}:${SHORT_SHA}"
+
+      - name: Skip push (not on master)
+        if: >-
+          github.ref != 'refs/heads/master' &&
+          !(github.event_name == 'workflow_dispatch' && inputs.push_image == true)
+        run: |
+          echo "ℹ️  Running on branch '${{ github.ref_name }}' — image built but not pushed."
+          echo "   Merge to master (or run workflow_dispatch with push_image=true) to publish."

@@ -36,46 +36,86 @@ No SSH server is included.  Use `docker exec` to get an interactive shell.
 
 ## Automated CI build (GitHub Actions)
 
-The image is built and pushed automatically by
-`.github/workflows/docker-image.yml` on every push to `master` that touches:
+The workflow (`.github/workflows/docker-image.yml`) is triggered on **any
+branch** whenever one of these files changes:
 
 - `.github/guix-dev-docker.scm`
 - `.github/bin/build-guix-docker.scm`
 - `.github/workflows/docker-image.yml`
 
-A manual build can be triggered at any time via
+A manual run can be triggered any time via
 **Actions → Build & Publish Guix Dev Docker Image → Run workflow**.
+
+### Branch behaviour
+
+| Branch | What happens |
+|--------|-------------|
+| `master` | Build + push `:latest` and `:{SHORT_SHA}` to the registry |
+| Any other branch | Build and validate only — **nothing is pushed** |
+
+This lets you verify that changes to the image config actually compile
+correctly on a feature branch before merging, without accidentally publishing
+a work-in-progress image.
+
+To push from a non-master branch (e.g. for testing), use
+**Run workflow → push_image = true**.
+
+### Build caching — skip rebuilds when nothing has changed
+
+`guix system image` is deterministic: the same `.scm` file and the same
+bootstrap image always produce the identical tarball.  The workflow exploits
+this by caching the tarball in the GitHub Actions cache, keyed on:
+
+```
+sha256(.github/guix-dev-docker.scm)[0:16] + bootstrap-image-digest[0:16]
+```
+
+On a cache **hit** the `guix system image` build is skipped entirely and the
+cached tarball is loaded directly into Docker.  This turns a multi-hour cold
+build into a sub-minute warm run.
+
+The cache is automatically invalidated whenever:
+- `guix-dev-docker.scm` changes (new packages, services, …), or
+- `ghcr.io/kromka-chleba/guix-dev:latest` is updated (new Guix version)
+
+To bypass the cache and force a full rebuild, use
+**Run workflow → force_rebuild = true**.
 
 ### How the automated build works
 
 ```
-ubuntu-latest runner  (Docker available out of the box)
+ubuntu-latest runner
 │
-└─► docker run -d --privileged \
-      --volume workspace:/workspace:ro \
-      ghcr.io/kromka-chleba/guix-dev:latest   ← bootstrap: previous image
-        │
-        ├─► Shepherd boots (PID 1)
-        ├─► herd start guix-daemon
-        │
-        └─► guix system image \
-              --image-type=docker \
-              /workspace/.github/guix-dev-docker.scm
-                │
-                └─► /gnu/store/…-docker-image.tar.gz
-                      │
-                      └─ docker cp → guix-dev-image.tar.gz  (on runner)
-                                          │
-                                          ├─ docker load
-                                          ├─ docker tag  :latest  :SHORT_SHA
-                                          └─ docker push ghcr.io/…/guix-dev
+├─► docker pull ghcr.io/kromka-chleba/guix-dev:latest
+├─► compute cache key  (sha256(guix-dev-docker.scm) + image digest)
+│
+├─ Cache HIT ──► restore tarball from Actions cache  (skip build)
+│
+└─ Cache MISS ──► docker run -d --privileged  (bootstrap container)
+                    │
+                    ├─► Shepherd boots (PID 1)
+                    ├─► herd start guix-daemon
+                    │
+                    └─► guix system image \
+                          --image-type=docker \
+                          /workspace/.github/guix-dev-docker.scm
+                            │
+                            └─► /gnu/store/…-docker-image.tar.gz
+                                  │
+                                  └─► docker cp → guix-dev-image.tar.gz
+                                      └─► save to Actions cache
+
+(both paths continue here)
+docker load  →  docker tag :latest :SHORT_SHA
+  │
+  └─► (master only) docker push ghcr.io/kromka-chleba/guix-dev
 ```
 
 The workflow uses the **previously published** `guix-dev:latest` as the
 bootstrap environment.  This is intentional: once the image exists in the
 registry, every subsequent CI run uses it to build the next version.
-The resulting image always has Docker included (see `docker-service-type`
-below), so the bootstrap container can also run Docker builds itself.
+The resulting image always has Docker included (via `docker-service-type`),
+so the bootstrap container can also run Docker builds itself.
 
 ### First-time bootstrap (when no image exists in the registry yet)
 
