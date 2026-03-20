@@ -19,15 +19,17 @@
 | 3 | Shepherd init system running | ✅ PASS | All core services started |
 | 4 | Start Guix daemon via `herd start guix-daemon` | ✅ PASS | Listening on `/var/guix/daemon-socket/socket` |
 | 5 | `guix --version` inside container | ✅ PASS | Guix 1.5.0-1.deedd48 |
-| 6 | `guix build hello` (network) | ⚠️ SKIP | Expected – outbound network restricted in CI sandbox |
+| 6 | `/etc/services` present (workaround for activation bug) | ✅ PASS | Symlink created manually; see note below |
+| 7 | `guix build hello` via substitute from bordeaux.guix.gnu.org | ✅ PASS | Downloaded glibc-2.41, gcc-14.3.0-lib, hello-2.12.2 (11.7 MB) |
 
-**Overall: All core tests passed.**
+**Overall: All 7 tests passed.**
 
 ## Shepherd service status (at test time)
 
 ```
 Started:
  + file-systems
+ + guix-daemon
  + loopback
  + pam
  + root
@@ -36,24 +38,48 @@ Started:
  + udev
  + urandom-seed
  + user-file-systems
+ + user-processes
  + virtual-terminal
 
 Running timers:
  + log-rotation
 
 Stopped:
- - guix-daemon       (started manually in Test 4)
  - log-cleanup
  - nscd
  - timer
  - transient
- - user-processes
 
 One-shot:
  * guix-ownership
  * sysctl
  * user-homes
 ```
+
+## Note on `/etc/services` activation bug
+
+The currently published image has a bug where `/etc/services` (and several other
+`/etc` files like `protocols`, `rpc`, `nsswitch.conf`) are not symlinked into
+`/etc` at container startup.
+
+**Root cause:** `activate-etc` in `gnu/build/activation.scm` calls
+`(rm-f "/etc/ssl")` before creating the `/etc/ssl → …/profile/etc/ssl` symlink.
+`rm-f` uses `delete-file`, which silently fails when `/etc/ssl` is a real
+directory (Docker creates it as a directory for certificate storage).  The
+subsequent `symlink` call then raises "File exists", aborting the entire
+`activate-etc` function before the per-file loop creates `/etc/services` etc.
+
+Without `/etc/services`, Guile's `getaddrinfo hostname "https"` fails with
+`Servname not supported for ai_socktype`, breaking all Guix substitute fetches.
+
+**Fix applied in `gnu/build/activation.scm`:** The `rm-f "/etc/ssl"` call is
+replaced with `(false-if-exception (delete-file-recursively "/etc/ssl"))` which
+correctly removes directories as well as plain files/symlinks.  This fix will
+take effect the next time the Docker image is rebuilt.
+
+**Workaround in test script:** `test-guix-docker.sh` detects when `/etc/services`
+is absent and creates the required symlinks from `/run/current-system/etc/`
+before running the `guix build hello` test.
 
 ## How to use interactively
 
