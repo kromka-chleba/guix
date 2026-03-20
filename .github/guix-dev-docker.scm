@@ -94,4 +94,13 @@
   ;; Services: %base-services already includes the Guix daemon and syslogd.
   ;; No SSH server is needed—use 'docker exec' to get a shell inside the
   ;; container, which avoids the SSH host-key entropy wait entirely.
-  (services %base-services))
+  ;; Disable substitute key generation: generating an RSA key pair requires
+  ;; entropy which is scarce in containers and causes a long hang at startup.
+  ;; This Docker image is only used for building/testing, not for serving
+  ;; substitutes, so the key is not needed.
+  (services
+   (modify-services %base-services
+     (guix-service-type
+      config => (guix-configuration
+                 (inherit config)
+                 (generate-substitute-key? #f))))))
