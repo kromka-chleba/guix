@@ -114,21 +114,35 @@ publicly available (so agents can pull it without credentials):
 
 ### Interactive shell
 
+Guix system Docker images run Shepherd as PID 1.  Using
+`docker run --rm -it … bash` does not work because Shepherd blocks the
+container before the shell can start.  Use `docker exec` instead:
+
 ```bash
-docker run --rm -it ghcr.io/YOUR_ORG/guix-dev:latest \
-  /run/current-system/profile/bin/bash
+# 1. Start the container (Shepherd boots the system in the background)
+CONTAINER=$(docker run -d --privileged ghcr.io/YOUR_ORG/guix-dev:latest)
+
+# 2. Attach an interactive login shell
+docker exec -ti $CONTAINER /run/current-system/profile/bin/bash --login
+
+# 3. Stop the container when done
+docker stop $CONTAINER
 ```
 
 ### Running Guix commands inside the container
 
 ```bash
-# Build a package
-docker run --rm ghcr.io/YOUR_ORG/guix-dev:latest \
-  /run/current-system/profile/bin/guix build hello
+# Start the container once
+CONTAINER=$(docker run -d --privileged ghcr.io/YOUR_ORG/guix-dev:latest)
 
-# Open a development shell for a package
-docker run --rm -it ghcr.io/YOUR_ORG/guix-dev:latest \
-  /run/current-system/profile/bin/guix shell hello
+# Run individual commands via docker exec
+docker exec $CONTAINER /run/current-system/profile/bin/guix build hello
+
+# Open an interactive development shell for a package
+docker exec -ti $CONTAINER /run/current-system/profile/bin/guix shell hello
+
+# Stop when done
+docker stop $CONTAINER
 ```
 
 ### In GitHub Copilot Coding Agent

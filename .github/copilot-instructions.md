@@ -24,9 +24,17 @@ Add or update `.devcontainer/devcontainer.json` in the repository root:
 {
   "image": "ghcr.io/kromka-chleba/guix-dev:latest",
   "remoteUser": "root",
+  "runArgs": ["--privileged"],
   "postStartCommand": "herd status"
 }
 ```
+
+> **Note:** The `--privileged` flag is required so that the Guix daemon can
+> use Linux namespaces for isolated builds.  The devcontainer tooling starts
+> the container with Shepherd as PID 1 and then attaches your shell via
+> `docker exec`, which is the correct way to interact with a Guix system image
+> (using `docker run --rm -it … bash` does **not** work because Shepherd
+> blocks the container before a login shell can start).
 
 ### Running commands in the container
 
