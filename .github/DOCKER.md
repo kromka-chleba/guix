@@ -36,6 +36,76 @@ slows down container startup.
 
 ---
 
+## Automated CI build (GitHub Actions)
+
+The image is built and pushed automatically by
+`.github/workflows/docker-image.yml` on every push to `master` that touches:
+
+- `.github/guix-dev-docker.scm`
+- `.github/bin/build-guix-docker.scm`
+- `.github/workflows/docker-image.yml`
+
+A manual build can be triggered at any time via the **Actions → Build &
+Publish Guix Dev Docker Image → Run workflow** button.
+
+### How the automated build works
+
+The workflow runs on a standard **GitHub-hosted `ubuntu-latest` runner** – no
+self-hosted runner is needed.  The build is performed *inside* the existing
+`ghcr.io/kromka-chleba/guix-dev:latest` container, which already has Guix
+installed:
+
+```
+ubuntu-latest runner  (has Docker)
+│
+└─► docker run --privileged ghcr.io/kromka-chleba/guix-dev:latest
+      │
+      ├─► herd start guix-daemon
+      │
+      └─► guix system image --image-type=docker .github/guix-dev-docker.scm
+            │
+            └─► /gnu/store/…-system-docker-image.tar.gz
+                 │
+                 └─ docker cp  →  guix-dev-image.tar.gz (on runner)
+                                      │
+                                      ├─ docker load
+                                      ├─ docker tag  :latest  :SHORT_SHA
+                                      └─ docker push  ghcr.io/…/guix-dev
+```
+
+Key points:
+
+* **Privileged container**: Guix uses Linux user namespaces for isolated
+  builds, which requires `--privileged`.  GitHub-hosted runners allow this.
+* **Pre-built substitutes**: Guix downloads pre-built binaries from
+  `bordeaux.guix.gnu.org`, so only packages that are not already in the
+  container's store need to be fetched.
+* **Self-contained**: The entire build pipeline lives in this repository; no
+  external Guix server or self-hosted runner is required.
+
+### Bootstrap procedure (first-time / recovery)
+
+The automated workflow uses the *existing* `ghcr.io/kromka-chleba/guix-dev:latest`
+to build the *next* image.  If the image does not exist yet (e.g. initial
+setup or after accidental deletion), you must bootstrap it manually:
+
+```bash
+# Prerequisites: GNU Guix and Docker installed on your machine.
+
+# 1. Log in to GHCR
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# 2. Build and push
+.github/bin/build-guix-docker.scm \
+  --registry=ghcr.io/YOUR_ORG \
+  --image-tag=guix-dev:latest
+docker push ghcr.io/YOUR_ORG/guix-dev:latest
+```
+
+After that first push the CI workflow takes over automatically.
+
+---
+
 ## Building the image locally
 
 ### Prerequisites
@@ -80,36 +150,7 @@ The `--guix-flag` option can be repeated to pass multiple flags to
 
 ---
 
-## Pushing to GitHub Container Registry (GHCR) – manual steps
-
-The automated GitHub Actions workflow (`.github/workflows/docker-image.yml`)
-requires a **self-hosted runner** with Guix installed because the GitHub-hosted
-runners do not have Guix available.  Until such a runner is configured you can
-push images manually:
-
-```bash
-# 1. Log in to GHCR
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
-
-# 2. Build and tag
-.github/bin/build-guix-docker.scm --image-tag=ghcr.io/YOUR_ORG/guix-dev:latest
-
-# 3. Push
-docker push ghcr.io/YOUR_ORG/guix-dev:latest
-```
-
-### Setting up the self-hosted runner
-
-1. In your GitHub repository go to **Settings → Actions → Runners** and add a
-   new self-hosted runner.
-2. Follow the on-screen instructions to install and register the runner agent
-   on a machine that has GNU Guix and Docker installed.
-3. Give the runner the **`guix`** label (used in
-   `.github/workflows/docker-image.yml` as `runs-on: [self-hosted, guix]`).
-4. Make sure the runner user has permission to talk to the Docker daemon
-   (i.e. is in the `docker` group or uses `sudo docker`).
-
-### Making the image public (optional)
+## Making the image public (optional)
 
 By default GHCR packages inherit the repository visibility.  To make the image
 publicly available (so agents can pull it without credentials):
@@ -173,7 +214,6 @@ definitions before submitting a patch.
 
 ## Updating the image
 
-Edit `.github/guix-dev-docker.scm` to add or remove packages, then either:
-- Push to `master` – the Actions workflow will rebuild and push automatically
-  (once a self-hosted runner is configured), or
-- Run `.github/bin/build-guix-docker.scm` locally and push manually.
+Edit `.github/guix-dev-docker.scm` to add or remove packages or services, then
+push to `master`.  The Actions workflow will automatically rebuild and push the
+updated image to `ghcr.io/kromka-chleba/guix-dev:latest`.
