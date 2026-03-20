@@ -1,6 +1,6 @@
 #!/bin/sh
 # -*- mode: scheme; -*-
-exec ./pre-inst-env guix repl -- "$0" "$@"
+exec guix repl -- "$0" "$@"
 !#
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2026 Guix Contributors
@@ -32,8 +32,9 @@ exec ./pre-inst-env guix repl -- "$0" "$@"
 ;;;   .github/list-sources.scm PACKAGE...
 ;;;   .github/list-sources.scm --all
 ;;;
-;;; (The script must be run from the top of the Guix source tree after
-;;; building it with 'make', so that './pre-inst-env' is available.)
+;;; When working in a Guix source tree dev build, prefix with ./pre-inst-env:
+;;;
+;;;   ./pre-inst-env .github/list-sources.scm PACKAGE...
 ;;;
 ;;; With PACKAGE arguments, only the transitive dependencies of those packages
 ;;; are included.  With --all, every package in the distribution is scanned.
@@ -135,8 +136,8 @@ their transitive dependencies."
      (format #t "transitive dependencies.  With --all, process every package in the~%")
      (format #t "distribution.  mirror:// URLs are expanded to their actual mirrors.~%")
      (format #t "~%")
-     (format #t "The script must be run from the Guix source tree top directory~%")
-     (format #t "after building with 'make', so that './pre-inst-env' is available.~%"))
+     (format #t "For dev builds, prefix with ./pre-inst-env:~%")
+     (format #t "  ./pre-inst-env .github/list-sources.scm PACKAGE...~%"))
     ((_ "--all")
      (let ((all (fold-packages cons '())))
        (for-each (lambda (url) (format #t "~a~%" url))
