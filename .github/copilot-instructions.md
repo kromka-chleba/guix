@@ -58,28 +58,43 @@ guix build -L . --check my-new-package
 guix system build -L . /path/to/system.scm
 ```
 
+## Validating Guile/Scheme syntax
+
+**Always check syntax before committing any `.scm` file** to catch parenthesis
+errors and other syntax mistakes early:
+
+```bash
+# Check syntax of any Scheme file (replace the path with the file you edited)
+guile --no-auto-compile -c '(load "/path/to/your/file.scm")'
+```
+
+This loads the file with Guile and reports any syntax errors (missing/extra
+parentheses, unknown tokens, etc.) before they reach CI.  Run this on every
+`.scm` file you create or modify.
+
 ## Workflow for implementing a new package or service
 
 1. **Edit** the relevant `.scm` file under `gnu/packages/` or `gnu/services/`.
-2. **Format** the package definition with `guix style`:
+2. **Check syntax** with Guile (see above) to catch parenthesis errors early.
+3. **Format** the package definition with `guix style`:
    ```bash
    guix style -L . <package-name>
    ```
    This automatically rewrites the definition to match the canonical Guix
    coding style (indentation, argument order, etc.).
-3. **Test** inside the container:
+4. **Test** inside the container:
    ```bash
    guix build -L . <package-name>
    ```
-4. **Lint** the package definition:
+5. **Lint** the package definition:
    ```bash
    guix lint -L . <package-name>
    ```
-5. **Check** that existing packages still build (no regressions):
+6. **Check** that existing packages still build (no regressions):
    ```bash
    guix build -L . --keep-going <package-name>
    ```
-6. Commit your changes and open a pull request.
+7. Commit your changes and open a pull request.
 
 ## Important conventions
 

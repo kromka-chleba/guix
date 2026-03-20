@@ -113,4 +113,4 @@
             (guix-service-type
              config => (guix-configuration
                         (inherit config)
-                        (generate-substitute-key? #f))))))
+                        (generate-substitute-key? #f)))))))
