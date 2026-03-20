@@ -49,7 +49,7 @@ slows down container startup.
 
 ```bash
 # From the repository root:
-.github/bin/build-guix-docker.sh guix-dev:latest
+.github/bin/build-guix-docker.scm --image-tag=guix-dev:latest
 ```
 
 The script will:
@@ -58,14 +58,24 @@ The script will:
 2. Load the tarball with `docker load`.
 3. Tag the resulting image as specified (default: `guix-dev:latest`).
 
-You can also customize behaviour with environment variables:
+You can pass additional options as flags:
 
 ```bash
-REGISTRY=ghcr.io/my-org \
-IMAGE_TAG=guix-dev:custom \
-GUIX_SYSTEM_CONFIG=/path/to/my-config.scm \
-EXTRA_GUIX_FLAGS="--no-offload" \
-  .github/bin/build-guix-docker.sh
+.github/bin/build-guix-docker.scm \
+  --registry=ghcr.io/my-org \
+  --image-tag=guix-dev:custom \
+  --config=/path/to/my-config.scm \
+  --guix-flag=--no-offload
+```
+
+The `--guix-flag` option can be repeated to pass multiple flags to
+`guix system image`:
+
+```bash
+.github/bin/build-guix-docker.scm \
+  --guix-flag=--no-offload \
+  --guix-flag=--keep-failed \
+  --guix-flag=--cores=4
 ```
 
 ---
@@ -82,7 +92,7 @@ push images manually:
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
 
 # 2. Build and tag
-.github/bin/build-guix-docker.sh ghcr.io/YOUR_ORG/guix-dev:latest
+.github/bin/build-guix-docker.scm --image-tag=ghcr.io/YOUR_ORG/guix-dev:latest
 
 # 3. Push
 docker push ghcr.io/YOUR_ORG/guix-dev:latest
@@ -166,4 +176,4 @@ definitions before submitting a patch.
 Edit `.github/guix-dev-docker.scm` to add or remove packages, then either:
 - Push to `master` – the Actions workflow will rebuild and push automatically
   (once a self-hosted runner is configured), or
-- Run `.github/bin/build-guix-docker.sh` locally and push manually.
+- Run `.github/bin/build-guix-docker.scm` locally and push manually.

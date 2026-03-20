@@ -10,7 +10,7 @@ on:
       - master
     paths:
       - '.github/guix-dev-docker.scm'
-      - '.github/bin/build-guix-docker.sh'
+      - '.github/bin/build-guix-docker.scm'
       - '.github/workflows/docker-image.yml'
 
   # Allow manual/on-demand builds from the Actions UI.

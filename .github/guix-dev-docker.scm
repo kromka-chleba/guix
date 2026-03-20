@@ -8,7 +8,7 @@
 ;; Build with:
 ;;   guix system image --image-type=docker .github/guix-dev-docker.scm
 ;; or using the build script:
-;;   .github/bin/build-guix-docker.sh
+;;   .github/bin/build-guix-docker.scm
 
 (use-modules (gnu)
              (guix packages))

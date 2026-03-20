@@ -99,7 +99,7 @@ guix system build -L . /path/to/system.scm
 If you need to update the dev image (e.g. to add a new tool):
 
 1. Edit `.github/guix-dev-docker.scm`.
-2. Run `.github/bin/build-guix-docker.sh` on a machine with Guix installed.
+2. Run `.github/bin/build-guix-docker.scm` on a machine with Guix installed.
 3. Push the new image to the registry (`docker push ghcr.io/kromka-chleba/guix-dev:latest`).
 
 See `.github/DOCKER.md` for full details.
