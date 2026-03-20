@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules base)
+(use-service-modules base docker)
 
 (operating-system
   (host-name "guix-dev")
@@ -75,6 +75,12 @@
           "python"
           "bash"
 
+          ;; Container tooling – Docker daemon + CLI so the image can build
+          ;; and push Docker images without an external Docker installation.
+          ;; docker-service-type (below) starts the daemon via Shepherd.
+          "docker"
+          "containerd"
+
           ;; For installer tests
           "guile-newt"
           "guile-parted"
@@ -98,9 +104,13 @@
   ;; entropy which is scarce in containers and causes a long hang at startup.
   ;; This Docker image is only used for building/testing, not for serving
   ;; substitutes, so the key is not needed.
+  ;; docker-service-type adds the Docker daemon (dockerd + containerd) managed
+  ;; by Shepherd.  Running the container with --privileged is required for both
+  ;; the Guix daemon and Docker daemon to use Linux namespaces.
   (services
-   (modify-services %base-services
-     (guix-service-type
-      config => (guix-configuration
-                 (inherit config)
-                 (generate-substitute-key? #f))))))
+   (cons* (service docker-service-type)
+          (modify-services %base-services
+            (guix-service-type
+             config => (guix-configuration
+                        (inherit config)
+                        (generate-substitute-key? #f))))))

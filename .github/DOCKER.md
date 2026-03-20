@@ -14,8 +14,8 @@ The image is produced from `.github/guix-dev-docker.scm`, a
 [Guix System](https://guix.gnu.org/manual/en/html_node/System-Configuration.html)
 configuration that includes:
 
-| Category | Packages |
-|----------|----------|
+| Category | Packages / services |
+|----------|---------------------|
 | Core toolchain | `gcc-toolchain`, `gnu-make`, `autoconf`, `automake`, `libtool`, `pkg-config` |
 | Guile / Guix | `guix`, `guile`, `guile-json`, `guile-gcrypt`, `guile-git` |
 | Version control | `git`, `nss-certs` |
@@ -23,12 +23,13 @@ configuration that includes:
 | Cryptography | `gnupg` |
 | Documentation | `texinfo`, `imagemagick` |
 | Scripting | `perl`, `python`, `bash` |
-| Networking | `curl`, `wget` |
+| **Container tooling** | **`docker`, `containerd`** (daemon started via Shepherd) |
 | Installer tests | `guile-newt`, `guile-parted`, `guile-webutils` |
 
-**Services:**
-- `guix-service-type` – a Guix build daemon so that agents can run
-  `guix build` / `guix package` inside the container.
+**Services (started by Shepherd on container boot):**
+- `guix-service-type` – Guix build daemon (so agents can run `guix build` etc.)
+- `docker-service-type` – Docker daemon (dockerd + containerd), so the
+  container can itself build and push Docker images without an external daemon.
 
 No SSH server is included.  Use `docker exec` (or the devcontainer mechanism)
 to get an interactive shell; this avoids the SSH host-key entropy wait that
@@ -45,64 +46,65 @@ The image is built and pushed automatically by
 - `.github/bin/build-guix-docker.scm`
 - `.github/workflows/docker-image.yml`
 
-A manual build can be triggered at any time via the **Actions → Build &
-Publish Guix Dev Docker Image → Run workflow** button.
+A manual build can be triggered at any time via the
+**Actions → Build & Publish Guix Dev Docker Image → Run workflow** button.
 
 ### How the automated build works
 
 The workflow runs on a standard **GitHub-hosted `ubuntu-latest` runner** – no
-self-hosted runner is needed.  The build is performed *inside* the existing
-`ghcr.io/kromka-chleba/guix-dev:latest` container, which already has Guix
-installed:
+self-hosted runner or pre-existing Guix installation is needed.  The build
+uses the **official `guix/guix` image from Docker Hub** as a reproducible
+bootstrap environment:
 
 ```
 ubuntu-latest runner  (has Docker)
 │
-└─► docker run --privileged ghcr.io/kromka-chleba/guix-dev:latest
-      │
-      ├─► herd start guix-daemon
-      │
-      └─► guix system image --image-type=docker .github/guix-dev-docker.scm
-            │
-            └─► /gnu/store/…-system-docker-image.tar.gz
-                 │
-                 └─ docker cp  →  guix-dev-image.tar.gz (on runner)
-                                      │
-                                      ├─ docker load
-                                      ├─ docker tag  :latest  :SHORT_SHA
-                                      └─ docker push  ghcr.io/…/guix-dev
+└─► docker run --privileged --rm \
+      --volume workspace:/workspace:ro \
+      --volume output:/guix-output \
+      guix/guix                           ← official Guix bootstrap image
+        │
+        ├─► start guix-daemon (build users already configured)
+        │
+        └─► guix system image \
+              --image-type=docker \
+              .github/guix-dev-docker.scm
+                │
+                └─► /gnu/store/…-docker-image.tar.gz
+                      │
+                      └─ cp → /guix-output/guix-dev-image.tar.gz
+                                    │   (host-visible via volume mount)
+                                    │
+                                    ├─ docker load
+                                    ├─ docker tag  :latest  :SHORT_SHA
+                                    └─ docker push ghcr.io/…/guix-dev
 ```
 
-Key points:
+Key properties:
 
-* **Privileged container**: Guix uses Linux user namespaces for isolated
+* **No circular dependency.** The `guix/guix` bootstrap image is entirely
+  independent of the image being built here.  Even if `ghcr.io/…/guix-dev`
+  does not yet exist, the workflow succeeds.
+* **Reproducible.** `guix system image` produces bit-for-bit reproducible
+  output (given the same channel state).  Package versions are pinned by the
+  Guix channel in `guix-dev-docker.scm`.
+* **Substitutes.** Guix downloads pre-built binaries from
+  `bordeaux.guix.gnu.org`, so only packages absent from the substitutes cache
+  need to be compiled – builds typically finish in under 30 minutes.
+* **Privileged container.** Guix uses Linux user namespaces for isolated
   builds, which requires `--privileged`.  GitHub-hosted runners allow this.
-* **Pre-built substitutes**: Guix downloads pre-built binaries from
-  `bordeaux.guix.gnu.org`, so only packages that are not already in the
-  container's store need to be fetched.
-* **Self-contained**: The entire build pipeline lives in this repository; no
-  external Guix server or self-hosted runner is required.
 
-### Bootstrap procedure (first-time / recovery)
+### Self-sufficient image (Docker-in-Docker capable)
 
-The automated workflow uses the *existing* `ghcr.io/kromka-chleba/guix-dev:latest`
-to build the *next* image.  If the image does not exist yet (e.g. initial
-setup or after accidental deletion), you must bootstrap it manually:
+The resulting `guix-dev` image includes both the Guix daemon **and** the
+Docker daemon (`docker-service-type`).  Running it with `--privileged` starts
+both daemons via Shepherd, which means:
 
-```bash
-# Prerequisites: GNU Guix and Docker installed on your machine.
-
-# 1. Log in to GHCR
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
-
-# 2. Build and push
-.github/bin/build-guix-docker.scm \
-  --registry=ghcr.io/YOUR_ORG \
-  --image-tag=guix-dev:latest
-docker push ghcr.io/YOUR_ORG/guix-dev:latest
-```
-
-After that first push the CI workflow takes over automatically.
+* CI workflows that use `guix-dev` as their build environment can run
+  `docker build`, `docker load`, and `docker push` without mounting an
+  external socket.
+* The coding agent can build and test packages *and* produce new Docker images
+  entirely inside a single `guix-dev` container.
 
 ---
 
@@ -113,39 +115,76 @@ After that first push the CI workflow takes over automatically.
 1. **GNU Guix** must be installed on the build host.  Follow the
    [official installation guide](https://guix.gnu.org/en/download/).
 2. **Docker** (or Podman) must be installed and the daemon must be running.
-3. The build host needs several gigabytes of free disk space.
 
 ### Steps
 
 ```bash
 # From the repository root:
+guix system image --image-type=docker .github/guix-dev-docker.scm \
+  | xargs -I{} docker load -i {}
+docker tag $(docker images -q | head -1) guix-dev:latest
+```
+
+Or use the helper build script (handles the tag/push steps):
+
+```bash
 .github/bin/build-guix-docker.scm --image-tag=guix-dev:latest
 ```
 
-The script will:
-1. Call `guix system image --image-type=docker .github/guix-dev-docker.scm` to produce a
-   compressed tarball in the Guix store.
-2. Load the tarball with `docker load`.
-3. Tag the resulting image as specified (default: `guix-dev:latest`).
+---
 
-You can pass additional options as flags:
+## Using the image
+
+### Interactive shell
+
+Guix System Docker images run Shepherd as PID 1.  Using
+`docker run --rm -it … bash` does NOT work because Shepherd blocks the
+container before a shell can start.  Use `docker exec` instead:
 
 ```bash
-.github/bin/build-guix-docker.scm \
-  --registry=ghcr.io/my-org \
-  --image-tag=guix-dev:custom \
-  --config=/path/to/my-config.scm \
-  --guix-flag=--no-offload
+# 1. Start the container
+CONTAINER=$(docker run -d --privileged ghcr.io/YOUR_ORG/guix-dev:latest)
+
+# 2. Attach an interactive login shell
+docker exec -ti $CONTAINER /run/current-system/profile/bin/bash --login
+
+# 3. Stop when done
+docker stop $CONTAINER
 ```
 
-The `--guix-flag` option can be repeated to pass multiple flags to
-`guix system image`:
+### Running Guix and Docker commands inside the container
 
 ```bash
-.github/bin/build-guix-docker.scm \
-  --guix-flag=--no-offload \
-  --guix-flag=--keep-failed \
-  --guix-flag=--cores=4
+CONTAINER=$(docker run -d --privileged ghcr.io/YOUR_ORG/guix-dev:latest)
+
+# Wait for Shepherd to finish booting
+docker exec $CONTAINER \
+  /run/current-system/profile/bin/herd status
+
+# Build a Guix package
+docker exec $CONTAINER \
+  /run/current-system/profile/bin/guix build hello
+
+# Check Docker daemon is running
+docker exec $CONTAINER docker info
+
+# Build a Docker image (no socket mount needed – daemon is inside)
+docker exec $CONTAINER \
+  docker build -t my-image /path/to/context
+
+docker stop $CONTAINER
+```
+
+### In GitHub Copilot Coding Agent
+
+Reference the image in your Copilot agent configuration or devcontainer setup:
+
+```json
+{
+  "image": "ghcr.io/YOUR_ORG/guix-dev:latest",
+  "runArgs": ["--privileged"],
+  "postStartCommand": "herd status"
+}
 ```
 
 ---
@@ -161,59 +200,8 @@ publicly available (so agents can pull it without credentials):
 
 ---
 
-## Using the image
-
-### Interactive shell
-
-Guix system Docker images run Shepherd as PID 1.  Using
-`docker run --rm -it … bash` does not work because Shepherd blocks the
-container before the shell can start.  Use `docker exec` instead:
-
-```bash
-# 1. Start the container (Shepherd boots the system in the background)
-CONTAINER=$(docker run -d --privileged ghcr.io/YOUR_ORG/guix-dev:latest)
-
-# 2. Attach an interactive login shell
-docker exec -ti $CONTAINER /run/current-system/profile/bin/bash --login
-
-# 3. Stop the container when done
-docker stop $CONTAINER
-```
-
-### Running Guix commands inside the container
-
-```bash
-# Start the container once
-CONTAINER=$(docker run -d --privileged ghcr.io/YOUR_ORG/guix-dev:latest)
-
-# Run individual commands via docker exec
-docker exec $CONTAINER /run/current-system/profile/bin/guix build hello
-
-# Open an interactive development shell for a package
-docker exec -ti $CONTAINER /run/current-system/profile/bin/guix shell hello
-
-# Stop when done
-docker stop $CONTAINER
-```
-
-### In GitHub Copilot Coding Agent
-
-Reference the image in your Copilot agent configuration or devcontainer setup:
-
-```json
-{
-  "image": "ghcr.io/YOUR_ORG/guix-dev:latest"
-}
-```
-
-The coding agent can then run `guix build`, `guix package`, and any other Guix
-commands directly inside the container to test newly written package/service
-definitions before submitting a patch.
-
----
-
 ## Updating the image
 
 Edit `.github/guix-dev-docker.scm` to add or remove packages or services, then
-push to `master`.  The Actions workflow will automatically rebuild and push the
+push to `master`.  The Actions workflow automatically rebuilds and pushes the
 updated image to `ghcr.io/kromka-chleba/guix-dev:latest`.

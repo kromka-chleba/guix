@@ -32,17 +32,14 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/guix-dev
-  # The existing guix-dev image is used as the build environment.
-  # 'guix system image --image-type=docker' is executed inside this
-  # container so that no Guix installation is needed on the runner itself.
-  BUILDER_IMAGE: ghcr.io/kromka-chleba/guix-dev:latest
 
 jobs:
   build-docker-image:
     name: Build Guix dev Docker image
     # A standard GitHub-hosted runner is sufficient: Docker is available out
-    # of the box and the Guix build is performed inside the existing guix-dev
-    # container (see the "Start build container" step below).
+    # of the box.  The build runs inside the official guix/guix container from
+    # Docker Hub, so no Guix installation on the runner itself is required and
+    # there is no circular dependency on the image being published here.
     runs-on: ubuntu-latest
 
     steps:
@@ -50,88 +47,104 @@ jobs:
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # Pull the existing guix-dev image and use it as the build environment.
-      # The container is started with --privileged so that the Guix daemon can
-      # use Linux namespaces for isolated builds.
+      # Pull the official GNU Guix package-manager image from Docker Hub.
+      # This image provides a ready-to-use Guix installation (guix-daemon,
+      # build users, substitute servers pre-configured) and is maintained by
+      # the Guix project.
       # -----------------------------------------------------------------------
-      - name: Pull Guix build environment
-        run: docker pull "${{ env.BUILDER_IMAGE }}"
+      - name: Pull Guix bootstrap image
+        run: docker pull guix/guix
 
-      - name: Start Guix build container
+      # -----------------------------------------------------------------------
+      # Run the entire build inside a single docker run invocation.
+      #
+      # How it works:
+      #   1. The guix/guix image's entrypoint starts the guix-daemon before
+      #      running our command, so we override the entrypoint to a plain
+      #      bash shell and start the daemon ourselves – this gives us full
+      #      control and works regardless of entrypoint variations between
+      #      guix/guix image versions.
+      #   2. guix system image --image-type=docker produces a compressed tar
+      #      archive in the Guix store and prints its path to stdout.
+      #   3. We copy that tarball to the /guix-output volume so it survives
+      #      the container exit (--rm cleans up the container automatically).
+      #
+      # --privileged is required so that the Guix daemon can use Linux user
+      # namespaces for isolated builds.
+      # -----------------------------------------------------------------------
+      - name: Create output directory
+        run: mkdir -p "${{ github.workspace }}/guix-output"
+
+      - name: Build Docker image tarball inside Guix bootstrap container
         run: |
-          CONTAINER_ID=$(docker run -d --privileged \
-            --volume "$(pwd):/workspace:ro" \
-            "${{ env.BUILDER_IMAGE }}")
-          echo "BUILDER_CONTAINER=${CONTAINER_ID}" >> "$GITHUB_ENV"
+          docker run --rm --privileged \
+            --volume "${{ github.workspace }}:/workspace:ro" \
+            --volume "${{ github.workspace }}/guix-output:/guix-output" \
+            --entrypoint "/var/guix/profiles/per-user/root/current-guix/bin/bash" \
+            guix/guix \
+            -c '
+              set -euo pipefail
 
-      - name: Wait for Shepherd and start Guix daemon
+              GUIX_PROFILE=/var/guix/profiles/per-user/root/current-guix
+              export PATH="${GUIX_PROFILE}/bin:${PATH}"
+              export GUIX_LOCPATH="${GUIX_PROFILE}/lib/locale"
+              export SSL_CERT_DIR="${GUIX_PROFILE}/etc/ssl/certs"
+              export SSL_CERT_FILE="${SSL_CERT_DIR}/ca-certificates.crt"
+
+              # Start the Guix daemon in the background.
+              guix-daemon --build-users-group=guixbuild \
+                          --no-substitutes-for='' \
+                          2>/dev/null &
+              DAEMON_PID=$!
+
+              # Wait until the daemon socket appears (up to 30 s).
+              for i in $(seq 1 30); do
+                test -S /var/guix/daemon-socket/socket && break
+                sleep 1
+              done
+              if ! test -S /var/guix/daemon-socket/socket; then
+                echo "ERROR: Guix daemon socket did not appear." >&2
+                exit 1
+              fi
+              echo "Guix daemon is ready (pid ${DAEMON_PID})."
+
+              # Build the Docker image tarball.
+              TARBALL=$(guix system image \
+                          --image-type=docker \
+                          /workspace/.github/guix-dev-docker.scm)
+
+              if [ -z "${TARBALL}" ]; then
+                echo "ERROR: guix system image produced no output." >&2
+                exit 1
+              fi
+              echo "Tarball: ${TARBALL}"
+
+              # Copy to the shared output volume so the host can access it.
+              cp "${TARBALL}" /guix-output/guix-dev-image.tar.gz
+              echo "Copied tarball to /guix-output/guix-dev-image.tar.gz"
+            '
+
+      - name: Verify tarball
         run: |
-          # Poll until Shepherd (PID 1) has finished booting (up to 60 s).
-          for i in $(seq 1 30); do
-            if docker exec "${BUILDER_CONTAINER}" \
-                 /run/current-system/profile/bin/herd status \
-                 >/dev/null 2>&1; then
-              echo "Shepherd is ready."
-              break
-            fi
-            sleep 2
-          done
-          # The guix-daemon is stopped by default in the image; start it now.
-          docker exec "${BUILDER_CONTAINER}" \
-            /run/current-system/profile/bin/herd start guix-daemon
+          echo "Tarball size: $(du -sh "${{ github.workspace }}/guix-output/guix-dev-image.tar.gz" | cut -f1)"
 
       # -----------------------------------------------------------------------
-      # Build the tarball with 'guix system image --image-type=docker'.
-      # Build progress goes to stderr (visible in the Actions log) and the
-      # resulting store path is printed to stdout (captured in $TARBALL).
-      # -----------------------------------------------------------------------
-      - name: Build Docker image tarball
-        run: |
-          TARBALL=$(docker exec "${BUILDER_CONTAINER}" \
-            /run/current-system/profile/bin/guix system image \
-            --image-type=docker \
-            /workspace/.github/guix-dev-docker.scm)
-          if [ -z "${TARBALL}" ]; then
-            echo "ERROR: 'guix system image' produced no output." >&2
-            exit 1
-          fi
-          echo "TARBALL=${TARBALL}" >> "$GITHUB_ENV"
-          echo "Tarball produced at: ${TARBALL}"
-
-      # -----------------------------------------------------------------------
-      # Extract the tarball from the container's Guix store onto the runner's
-      # filesystem, then stop the container.
-      # -----------------------------------------------------------------------
-      - name: Extract tarball from container
-        run: |
-          docker cp "${BUILDER_CONTAINER}:${TARBALL}" ./guix-dev-image.tar.gz
-          echo "Tarball size: $(du -sh ./guix-dev-image.tar.gz | cut -f1)"
-
-      - name: Stop build container
-        if: always()
-        run: |
-          docker stop "${BUILDER_CONTAINER}" >/dev/null || true
-          docker rm   "${BUILDER_CONTAINER}" >/dev/null || true
-
-      # -----------------------------------------------------------------------
-      # Load the tarball and tag it
+      # Load the tarball into Docker and tag it.
       # -----------------------------------------------------------------------
       - name: Load image into Docker
         id: load
         run: |
           # 'docker load' outputs either:
-          #   "Loaded image: <name>:<tag>"  – when the tarball contains repo tags
-          #   "Loaded image ID: sha256:..."  – when no repo tags are present
-          # Guix system image tarballs typically carry no tags, so we must
-          # handle both formats.
-          LOADED=$(docker load -i ./guix-dev-image.tar.gz \
+          #   "Loaded image: <name>:<tag>"  – tarball has repo tags
+          #   "Loaded image ID: sha256:..."  – no repo tags (typical for Guix)
+          # Handle both formats; fall back to the most-recently-loaded image ID.
+          LOADED=$(docker load -i "${{ github.workspace }}/guix-output/guix-dev-image.tar.gz" \
             | grep -oP '(?<=Loaded image( ID)?: ).*' || true)
           if [ -z "${LOADED}" ]; then
-            # Fallback: use the ID of the most recently loaded image.
             LOADED=$(docker images -q | head -1)
           fi
           if [ -z "${LOADED}" ]; then
-            echo "ERROR: could not determine the loaded image tag/ID." >&2
+            echo "ERROR: could not determine loaded image tag/ID." >&2
             exit 1
           fi
           echo "loaded_tag=${LOADED}" >> "$GITHUB_OUTPUT"
