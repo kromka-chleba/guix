@@ -309,7 +309,11 @@ EINVAL, ELOOP, etc."
   ;; beware that if /run/current-system/profile/etc/ssl doesn't exist at the
   ;; time of activation (e.g. when installing a fresh system), the call to
   ;; 'file-is-directory?' below will fail because it uses 'stat', not 'lstat'.
-  (rm-f "/etc/ssl")
+  ;;
+  ;; Use 'delete-file-recursively' rather than 'delete-file' so that the
+  ;; removal succeeds even when /etc/ssl is a real directory (e.g. one
+  ;; pre-created by Docker) instead of just a plain file or symlink.
+  (false-if-exception (delete-file-recursively "/etc/ssl"))
   (symlink "/run/current-system/profile/etc/ssl" "/etc/ssl")
 
   (for-each (lambda (file)
