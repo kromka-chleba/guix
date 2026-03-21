@@ -24,13 +24,17 @@ Add or update `.devcontainer/devcontainer.json` in the repository root:
 {
   "image": "ghcr.io/kromka-chleba/guix-dev:latest",
   "remoteUser": "root",
-  "runArgs": ["--privileged"],
+  "runArgs": ["--cap-add=SYS_ADMIN", "--security-opt=seccomp=unconfined"],
   "postStartCommand": "herd status"
 }
 ```
 
-> **Note:** The `--privileged` flag is required so that the Guix daemon can
-> use Linux namespaces for isolated builds.  The devcontainer tooling starts
+> **Note:** `--cap-add=SYS_ADMIN` is required so that the Guix daemon can
+> use Linux namespaces for isolated builds.  `--security-opt=seccomp=unconfined`
+> avoids seccomp blocking namespace syscalls.  Without `--privileged`, Docker
+> gives the container a private cgroup namespace, which means Shepherd can
+> mount cgroup2 at boot without conflicts, and guix-daemon starts automatically
+> via the normal Shepherd dependency chain.  The devcontainer tooling starts
 > the container with Shepherd as PID 1 and then attaches your shell via
 > `docker exec`, which is the correct way to interact with a Guix system image
 > (using `docker run --rm -it … bash` does **not** work because Shepherd

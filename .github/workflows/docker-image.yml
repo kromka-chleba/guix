@@ -100,17 +100,19 @@ jobs:
       - name: Start bootstrap container
         if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
-          CID=$(docker run -d --privileged \
+          CID=$(docker run -d \
+            --cap-add=SYS_ADMIN \
+            --security-opt=seccomp=unconfined \
             --volume "${{ github.workspace }}:/workspace:ro" \
             "${{ env.BOOTSTRAP_IMAGE }}")
           echo "BOOTSTRAP_CID=${CID}" >> "$GITHUB_ENV"
 
       # -----------------------------------------------------------------------
       # Wait for Shepherd (PID 1) to finish booting, then wait for the Guix
-      # daemon.  With elogind-service-type/container in the image config, the
-      # cgroup2 mount failure is tolerated and Shepherd's full dependency chain
-      # (file-systems → user-processes → guix-daemon) completes successfully,
-      # so guix-daemon starts automatically – no explicit 'herd start' needed.
+      # daemon.  Without --privileged, Docker gives the container a private
+      # cgroup namespace so Shepherd can mount cgroup2 at /sys/fs/cgroup
+      # cleanly.  The full dependency chain (file-systems → user-processes →
+      # guix-daemon) then completes, and guix-daemon starts automatically.
       # -----------------------------------------------------------------------
       - name: Wait for Shepherd and Guix daemon
         if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
@@ -144,8 +146,8 @@ jobs:
           if ! docker exec "${BOOTSTRAP_CID}" \
                  test -S "${SOCKET}" 2>/dev/null; then
             echo "ERROR: Guix daemon socket not available after ${MAX_WAIT}s." >&2
-            echo "The bootstrap image may predate the elogind-service-type/container"
-            echo "fix.  Re-run the workflow with force_rebuild=true using a"
+            echo "The bootstrap image may predate the --cap-add=SYS_ADMIN fix."
+            echo "Re-run the workflow with force_rebuild=true using a"
             echo "fixed bootstrap image."
             docker exec "${BOOTSTRAP_CID}" "${HERD}" status || true
             exit 1

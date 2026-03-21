@@ -91,10 +91,11 @@ ubuntu-latest runner
 │
 ├─ Cache HIT ──► restore tarball from Actions cache  (skip build)
 │
-└─ Cache MISS ──► docker run -d --privileged  (bootstrap container)
+└─ Cache MISS ──► docker run -d --cap-add=SYS_ADMIN --security-opt=seccomp=unconfined  (bootstrap container)
                     │
                     ├─► Shepherd boots (PID 1)
-                    ├─► herd start guix-daemon
+                    ├─► cgroup2 mounted cleanly (private cgroup namespace)
+                    ├─► file-systems → user-processes → guix-daemon (auto-started)
                     │
                     └─► guix system image \
                           --image-type=docker \
@@ -233,7 +234,14 @@ Use `docker exec` instead:
 
 ```bash
 # 1. Start the container
-CONTAINER=$(docker run -d --privileged ghcr.io/kromka-chleba/guix-dev:latest)
+#    --cap-add=SYS_ADMIN lets guix-daemon create mount/network namespaces.
+#    --security-opt=seccomp=unconfined avoids blocking namespace syscalls.
+#    Shepherd starts automatically and guix-daemon is brought up via the
+#    normal dependency chain (no manual 'herd start' needed).
+CONTAINER=$(docker run -d \
+  --cap-add=SYS_ADMIN \
+  --security-opt=seccomp=unconfined \
+  ghcr.io/kromka-chleba/guix-dev:latest)
 
 # 2. Wait for Shepherd to finish booting, then attach a shell
 docker exec -ti $CONTAINER /run/current-system/profile/bin/bash --login
@@ -245,20 +253,21 @@ docker stop $CONTAINER
 ### Running Guix commands inside the container
 
 ```bash
-CONTAINER=$(docker run -d --privileged ghcr.io/kromka-chleba/guix-dev:latest)
+CONTAINER=$(docker run -d \
+  --cap-add=SYS_ADMIN \
+  --security-opt=seccomp=unconfined \
+  ghcr.io/kromka-chleba/guix-dev:latest)
 
-# Start the Guix daemon (stopped by default at boot)
-docker exec $CONTAINER /run/current-system/profile/bin/herd start guix-daemon
-
-# Build a package
+# guix-daemon is started automatically by Shepherd; just run guix commands
 docker exec $CONTAINER /run/current-system/profile/bin/guix build hello
 ```
 
 ### Running Docker commands inside the container
 
-The image includes the Docker daemon (`docker-service-type`).  Running with
-`--privileged` starts it via Shepherd, so `docker` commands work without
-mounting an external socket:
+The image includes the Docker daemon (`docker-service-type`) for cases where
+you need to build or run Docker images from within the container.  The Docker
+daemon requires additional Linux capabilities beyond `SYS_ADMIN`, so you must
+use `--privileged` for Docker-in-Docker:
 
 ```bash
 CONTAINER=$(docker run -d --privileged ghcr.io/kromka-chleba/guix-dev:latest)
@@ -275,7 +284,7 @@ docker exec $CONTAINER docker build -t my-image /path/to/context
 ```json
 {
   "image": "ghcr.io/kromka-chleba/guix-dev:latest",
-  "runArgs": ["--privileged"],
+  "runArgs": ["--cap-add=SYS_ADMIN", "--security-opt=seccomp=unconfined"],
   "postStartCommand": "herd status"
 }
 ```

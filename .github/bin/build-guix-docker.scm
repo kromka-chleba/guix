@@ -198,7 +198,7 @@ Output is either 'Loaded image: NAME:TAG' or 'Loaded image ID: sha256:...'."
         (format #t "    To run an interactive shell~%")
         (format #t "    (Guix images use Shepherd as PID 1 – use docker exec,~%")
         (format #t "    not docker run --rm -it):~%")
-        (format #t "      CONTAINER=$(~a run -d --privileged ~a)~%"
+        (format #t "      CONTAINER=$(~a run -d --cap-add=SYS_ADMIN --security-opt=seccomp=unconfined ~a)~%"
                 docker full-tag)
         (format #t "      ~a exec -ti $CONTAINER /run/current-system/profile/bin/bash --login~%"
                 docker)

@@ -11,40 +11,8 @@
 ;;   .github/bin/build-guix-docker.scm
 
 (use-modules (gnu)
-             (gnu services)
-             ((gnu system file-systems)
-              #:select (%elogind-file-systems file-system))
              (guix packages))
 (use-service-modules base dbus desktop docker networking)
-
-;; In a privileged Docker container, /sys/fs/cgroup (cgroup2) is already
-;; mounted by the Docker host.  Shepherd's attempt to remount it fails with
-;; EBUSY, which cascades through the service dependency chain and prevents
-;; guix-daemon from starting.
-;;
-;; The fix is local to this Docker image: we define a variant of
-;; elogind-service-type whose cgroup file-system entries use
-;; 'mount-may-fail? #t'.  When the mount fails because the host already owns
-;; it, the Shepherd service still reports success and the full dependency chain
-;; (file-systems → user-processes → guix-daemon) proceeds normally.
-(define %container-elogind-file-systems
-  (map (lambda (fs)
-         (file-system (inherit fs) (mount-may-fail? #t)))
-       %elogind-file-systems))
-
-(define elogind-service-type/container
-  ;; A variant of elogind-service-type that contributes
-  ;; %container-elogind-file-systems instead of %elogind-file-systems, so
-  ;; cgroup mount failures are tolerated in Docker containers.
-  (service-type
-   (inherit elogind-service-type)
-   (extensions
-    (map (lambda (ext)
-           (if (eq? (service-extension-target ext) file-system-service-type)
-               (service-extension file-system-service-type
-                                  (const %container-elogind-file-systems))
-               ext))
-         (service-type-extensions elogind-service-type)))))
 
 (operating-system
   (host-name "guix-dev")
@@ -136,21 +104,22 @@
   ;; entropy which is scarce in containers and causes a long hang at startup.
   ;; This Docker image is only used for building/testing, not for serving
   ;; substitutes, so the key is not needed.
-  ;; elogind-service-type/container (above) replaces elogind-service-type so
-  ;; cgroup mounts tolerate EBUSY from the Docker host's pre-mounted cgroup2.
+  ;; The container is run with --cap-add=SYS_ADMIN (not --privileged), which
+  ;; gives Docker a private cgroup namespace.  Shepherd therefore mounts
+  ;; cgroup2 at /sys/fs/cgroup without an EBUSY conflict, and the full
+  ;; dependency chain (file-systems → user-processes → guix-daemon) completes
+  ;; normally with plain elogind-service-type.
   ;; dbus-root-service-type is required by docker-service-type.
   ;; containerd-service-type and docker-service-type together start the Docker
   ;; daemon (containerd + dockerd) managed by Shepherd.  containerd must be
   ;; listed explicitly because docker-service-type no longer bundles it.
-  ;; Running the container with --privileged is required for both the Guix
-  ;; daemon and Docker daemon to use Linux namespaces.
   ;; docker-service-type requires a 'networking' shepherd service.
   ;; dhcpcd-service-type provides 'networking' and configures the container's
   ;; Ethernet interface via DHCP, which is exactly what Docker's virtual
   ;; network expects.
   (services
    (cons* (service dbus-root-service-type)
-          (service elogind-service-type/container)
+          (service elogind-service-type)
           (service containerd-service-type)
           (service docker-service-type)
           (service dhcpcd-service-type)

@@ -1,9 +1,11 @@
 {
   "image": "ghcr.io/kromka-chleba/guix-dev:latest",
   "remoteUser": "root",
-  // Run with elevated privileges so the Guix daemon can use Linux namespaces
-  // for isolated builds (required by guix-daemon).
-  "runArgs": ["--privileged"],
+  // SYS_ADMIN lets the Guix daemon create mount and network namespaces for
+  // isolated builds.  seccomp=unconfined avoids blocking namespace syscalls.
+  // No --privileged needed: Docker's private cgroup namespace means Shepherd
+  // can mount cgroup2 without conflicts, so guix-daemon starts automatically.
+  "runArgs": ["--cap-add=SYS_ADMIN", "--security-opt=seccomp=unconfined"],
   // After the container starts, verify that the Shepherd init system and the
   // Guix daemon service are up and running.
   "postStartCommand": "herd status"

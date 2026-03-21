@@ -158,7 +158,10 @@ Using throw (not exit) ensures dynamic-wind cleanup runs before exit."
           (test-step 2 7 "Starting container with Shepherd init..."
             (lambda ()
               (set! container-id
-                (run/capture "docker" "run" "-d" "--privileged" image-tag))
+                (run/capture "docker" "run" "-d"
+                             "--cap-add=SYS_ADMIN"
+                             "--security-opt=seccomp=unconfined"
+                             image-tag))
               (if (not (string-null? container-id))
                   (pass (string-append "Container started (ID: "
                                        container-id ")"))
@@ -188,9 +191,10 @@ Using throw (not exit) ensures dynamic-wind cleanup runs before exit."
               ;; Test 4: Guix daemon is running.
               (test-step 4 7 "Checking Guix daemon is running..."
                 (lambda ()
-                  ;; With elogind-service-type/container in the image config,
-                  ;; the cgroup mount failure is tolerated and guix-daemon
-                  ;; auto-starts via Shepherd's normal dependency chain.
+                  ;; Without --privileged, Docker gives the container a private
+                  ;; cgroup namespace so Shepherd mounts cgroup2 cleanly.
+                  ;; The dependency chain (file-systems → user-processes →
+                  ;; guix-daemon) completes and guix-daemon auto-starts.
                   ;; 'herd start' is idempotent when the daemon is already up.
                   (if (zero? (docker-exec/quiet container-id
                                                 (string-append %guix-bin "/herd")
@@ -287,7 +291,7 @@ Using throw (not exit) ensures dynamic-wind cleanup runs before exit."
     (format #t "The Docker image is functional and ready to use.~%")
     (format #t "To use it interactively~%")
     (format #t "(Shepherd is PID 1 – use docker exec, not docker run -it):~%")
-    (format #t "  CONTAINER=$(docker run -d --privileged ~a)~%" %default-image)
+    (format #t "  CONTAINER=$(docker run -d --cap-add=SYS_ADMIN --security-opt=seccomp=unconfined ~a)~%" %default-image)
     (format #t "  docker exec -ti $CONTAINER ~a/bash --login~%" %guix-bin)
     (format #t "  docker stop $CONTAINER~%~%")))
 
