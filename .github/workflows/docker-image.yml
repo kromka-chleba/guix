@@ -1,0 +1,146 @@
+name: Guix Dev Docker Image
+
+# NOT official Guix project CI.
+# Personal workflow for the kromka-chleba/guix development branch.
+#
+# This workflow builds a Guix Docker image from the system configuration in
+# .github/docker/guix-dev-system.scm using `guix system image --image-type=docker`,
+# then publishes the result to GHCR (ghcr.io/kromka-chleba/guix-dev).
+#
+# Bootstrap model:
+#   - Steady state: the previously published GHCR image is used as the
+#     build environment for the next image.
+#   - First-time / recovery: build and push manually, then re-run this workflow.
+#     See .github/README-docker.md for instructions.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/docker/**'
+  pull_request:
+    paths:
+      - '.github/docker/**'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild even if cache is fresh'
+        required: false
+        default: 'false'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/guix-dev
+  SYSTEM_CONFIG: .github/docker/guix-dev-system.scm
+
+jobs:
+  build-and-publish:
+    name: Build Guix Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # Pull the bootstrap image that will be used to run guix system image.
+      # In steady state this is the previously published image.
+      # On first bootstrap, this step will fail; see README-docker.md.
+      # ------------------------------------------------------------------
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull bootstrap image (if available)
+        id: pull_bootstrap
+        run: |
+          if docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest 2>/dev/null; then
+            echo "bootstrap_available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "bootstrap_available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No bootstrap image found in GHCR. See .github/README-docker.md for first-time bootstrap instructions."
+          fi
+
+      # ------------------------------------------------------------------
+      # Cache key: hash of the system config file.  If unchanged and not
+      # force-rebuilding, we skip the expensive build step.
+      # ------------------------------------------------------------------
+      - name: Compute config hash
+        id: config_hash
+        run: |
+          echo "hash=$(sha256sum ${{ env.SYSTEM_CONFIG }} | awk '{print $1}')" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: Restore build cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: guix-system-docker-image.tar.gz
+          key: guix-docker-image-${{ steps.config_hash.outputs.hash }}
+
+      # ------------------------------------------------------------------
+      # Build the image inside the bootstrap container.
+      # guix system image --image-type=docker produces a from-scratch image;
+      # it does NOT use a pre-existing Docker base image.
+      # ------------------------------------------------------------------
+      - name: Build image (inside bootstrap container)
+        if: >
+          steps.cache.outputs.cache-hit != 'true' ||
+          github.event.inputs.force_rebuild == 'true'
+        run: |
+          if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
+            # Run guix system image inside the bootstrap container, then copy
+            # the resulting tarball out to the host.
+            docker run --rm \
+              --privileged \
+              -v "$PWD:/workspace" \
+              -w /workspace \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+              sh -c './pre-inst-env guix system image \
+                       --image-type=docker \
+                       --system=x86_64-linux \
+                       ${{ env.SYSTEM_CONFIG }} \
+                     > guix-system-docker-image.tar.gz'
+          else
+            echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
+            exit 1
+          fi
+
+      # ------------------------------------------------------------------
+      # Load the tarball into Docker and tag it.
+      # ------------------------------------------------------------------
+      - name: Load and tag image
+        run: |
+          IMAGE_ID="$(docker load < guix-system-docker-image.tar.gz \
+                        | awk '/Loaded image/{print $NF}')"
+          echo "Loaded image: $IMAGE_ID"
+          docker tag "$IMAGE_ID" \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker tag "$IMAGE_ID" \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # ------------------------------------------------------------------
+      # Smoke-test the freshly built image.
+      # ------------------------------------------------------------------
+      - name: Test image
+        run: |
+          guile .github/docker/test-image.scm \
+            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      # ------------------------------------------------------------------
+      # Publish only on pushes to master (not PRs).
+      # ------------------------------------------------------------------
+      - name: Push image to GHCR
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          echo "Published ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "Published ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"

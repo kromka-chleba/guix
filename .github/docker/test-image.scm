@@ -1,0 +1,123 @@
+#!/usr/bin/env -S guile --no-auto-compile
+!#
+;;; test-image.scm — Smoke-test the Guix dev Docker container.
+;;;
+;;; NOT official Guix infrastructure.  Personal dev tooling for
+;;; kromka-chleba/guix.
+;;;
+;;; Usage:
+;;;
+;;;   guile .github/docker/test-image.scm [OPTIONS]
+;;;
+;;; Options:
+;;;   --image IMAGE   Docker image name/tag to test (default: guix-dev:latest)
+;;;   --privileged    Run the test container with --privileged (required for
+;;;                   building software with Guix inside the container)
+;;;   --help          Show this help message
+;;;
+;;; The script:
+;;;   1. Creates and starts a container from IMAGE.
+;;;   2. Verifies that /run/current-system exists (Guix system booted).
+;;;   3. Runs `guix --version` inside the container.
+;;;   4. Attempts a basic package description lookup.
+;;;   5. Stops and removes the test container.
+
+(use-modules (ice-9 format)
+             (ice-9 getopt-long)
+             (ice-9 popen)
+             (ice-9 rdelim))
+
+;;; ---------------------------------------------------------------------------
+;;; Helpers
+;;; ---------------------------------------------------------------------------
+
+(define (run-command/check desc . args)
+  "Run a shell command, print DESC, and return #t on success, #f on failure."
+  (let* ((cmd (string-join args " "))
+         (ret (system cmd)))
+    (if (zero? ret)
+        (begin (format #t "  [PASS] ~a~%" desc) #t)
+        (begin (format #t "  [FAIL] ~a (exit ~a)~%" desc ret) #f))))
+
+(define (container-exec container . cmd-args)
+  "Build a 'docker exec' command string for CONTAINER running CMD-ARGS."
+  (string-append
+   "docker exec " container " "
+   (string-join cmd-args " ")))
+
+;;; ---------------------------------------------------------------------------
+;;; Main
+;;; ---------------------------------------------------------------------------
+
+(define option-spec
+  '((image      (single-char #\i) (value #t))
+    (privileged (value #f))
+    (help       (single-char #\h) (value #f))))
+
+(define (main args)
+  (let* ((options    (getopt-long args option-spec))
+         (help?      (option-ref options 'help #f))
+         (privileged (option-ref options 'privileged #f))
+         (image      (option-ref options 'image "guix-dev:latest"))
+         (cname      "guix-dev-test"))
+
+    (when help?
+      (display "Usage: guile .github/docker/test-image.scm [OPTIONS]\n")
+      (display "  -i, --image IMAGE   Docker image to test\n")
+      (display "      --privileged    Use --privileged flag\n")
+      (display "  -h, --help          Show this help\n")
+      (exit 0))
+
+    (format #t "==> Testing image: ~a~%" image)
+
+    ;; Clean up any pre-existing test container with the same name.
+    (system (string-append "docker rm -f " cname " 2>/dev/null || true"))
+
+    ;; Create container.
+    (let* ((priv-flag (if privileged "--privileged" ""))
+           (create-cmd (string-append
+                        "docker create --name " cname " "
+                        priv-flag " "
+                        image)))
+      (format #t "==> Creating container ~a~%" cname)
+      (unless (zero? (system create-cmd))
+        (error "Failed to create container")))
+
+    ;; Start container.
+    (format #t "==> Starting container~%")
+    (unless (zero? (system (string-append "docker start " cname)))
+      (error "Failed to start container"))
+
+    ;; Allow a moment for Shepherd/init to settle.
+    (sleep 3)
+
+    ;; Run tests.
+    (let ((results
+           (list
+            (run-command/check
+             "Guix system root exists"
+             (container-exec cname "test" "-d" "/run/current-system"))
+
+            (run-command/check
+             "guix --version"
+             (container-exec cname
+              "/run/current-system/profile/bin/guix" "--version"))
+
+            (run-command/check
+             "guix package description lookup (hello)"
+             (container-exec cname
+              "/run/current-system/profile/bin/guix" "show" "hello")))))
+
+      ;; Cleanup.
+      (format #t "==> Stopping and removing container~%")
+      (system (string-append "docker stop " cname))
+      (system (string-append "docker rm " cname))
+
+      ;; Summary.
+      (let ((pass (length (filter identity results)))
+            (total (length results)))
+        (format #t "~%==> Results: ~a/~a tests passed~%" pass total)
+        (unless (= pass total)
+          (exit 1))))))
+
+(main (command-line))

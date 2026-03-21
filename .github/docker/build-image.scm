@@ -1,0 +1,100 @@
+#!/usr/bin/env -S guile --no-auto-compile
+!#
+;;; build-image.scm — Build and tag the Guix dev Docker image.
+;;;
+;;; NOT official Guix infrastructure.  Personal dev tooling for
+;;; kromka-chleba/guix.
+;;;
+;;; Usage (from the repository root, using pre-inst-env):
+;;;
+;;;   ./pre-inst-env guile .github/docker/build-image.scm [OPTIONS]
+;;;
+;;; Options:
+;;;   --system-config PATH   Path to the Guix OS config (default:
+;;;                          .github/docker/guix-dev-system.scm)
+;;;   --output PATH          Where to write the image tarball
+;;;                          (default: guix-system-docker-image.tar.gz)
+;;;   --tag TAG              Docker tag to apply after loading
+;;;                          (default: guix-dev:latest)
+;;;   --no-load              Only build; do not load into Docker
+;;;
+;;; See "22.4 Running Guix Before It Is Installed" in the Guix manual for
+;;; the ./pre-inst-env requirement.
+
+(use-modules (ice-9 format)
+             (ice-9 getopt-long)
+             (ice-9 popen)
+             (ice-9 rdelim))
+
+;;; ---------------------------------------------------------------------------
+;;; Helpers
+;;; ---------------------------------------------------------------------------
+
+(define (run-command . args)
+  "Run a shell command given as a list of strings.  Signal an error on
+non-zero exit status."
+  (let* ((cmd (string-join args " "))
+         (ret (system cmd)))
+    (unless (zero? ret)
+      (error (format #f "Command failed (exit ~a): ~a" ret cmd)))))
+
+(define (read-command-output . args)
+  "Return the trimmed stdout of running ARGS as a shell command."
+  (let* ((cmd (string-join args " "))
+         (port (open-input-pipe cmd))
+         (output (read-line port)))
+    (close-pipe port)
+    (if (eof-object? output) "" (string-trim-right output))))
+
+;;; ---------------------------------------------------------------------------
+;;; Main
+;;; ---------------------------------------------------------------------------
+
+(define option-spec
+  '((system-config (single-char #\c) (value #t))
+    (output        (single-char #\o) (value #t))
+    (tag           (single-char #\t) (value #t))
+    (no-load       (value #f))
+    (help          (single-char #\h) (value #f))))
+
+(define (main args)
+  (let* ((options       (getopt-long args option-spec))
+         (help?         (option-ref options 'help #f))
+         (no-load?      (option-ref options 'no-load #f))
+         (system-config (option-ref options 'system-config
+                                    ".github/docker/guix-dev-system.scm"))
+         (output        (option-ref options 'output
+                                    "guix-system-docker-image.tar.gz"))
+         (tag           (option-ref options 'tag "guix-dev:latest")))
+
+    (when help?
+      (display "Usage: ./pre-inst-env guile .github/docker/build-image.scm [OPTIONS]\n")
+      (display "  -c, --system-config PATH  Guix OS config file\n")
+      (display "  -o, --output PATH         Output tarball path\n")
+      (display "  -t, --tag TAG             Docker tag (default: guix-dev:latest)\n")
+      (display "      --no-load             Skip loading into Docker\n")
+      (display "  -h, --help                Show this help\n")
+      (exit 0))
+
+    (format #t "==> Building Guix Docker image from ~a~%" system-config)
+    (run-command
+     "./pre-inst-env" "guix" "system" "image"
+     "--image-type=docker"
+     "--system=x86_64-linux"
+     system-config
+     ">" output)
+
+    (format #t "==> Image tarball written to ~a~%" output)
+
+    (unless no-load?
+      (format #t "==> Loading image into Docker and tagging as ~a~%" tag)
+      (let ((image-id (read-command-output
+                       "docker" "load" "<" output
+                       "| awk '{print $NF}'")))
+        (format #t "    Loaded image: ~a~%" image-id)
+        (run-command "docker" "tag" image-id tag)
+        (format #t "==> Tagged as ~a~%" tag)))
+
+    (format #t "==> Done.~%")))
+
+(main (command-line))
