@@ -80,6 +80,7 @@
   #:use-module (gnu packages re2c)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages rsync)
+  #:use-module (gnu packages sqlite)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
@@ -775,6 +776,77 @@ secure session between the peers.")
 
 (define-public lua5.2-sec
   (make-lua-sec "lua5.2-sec" lua-5.2))
+
+(define (make-lua-sqlite name lua)
+  (package
+    (name name)
+    (version "0.9.6")
+    (source (origin
+              (method url-fetch)
+              (uri "http://lua.sqlite.org/home/zip/lsqlite3_v096.zip?uuid=v0.9.6")
+              (file-name (string-append name "-" version ".zip"))
+              (sha256
+               (base32
+                ;; Note: Hash needs to be calculated from the actual download.
+                ;; When building, Guix will report the correct hash if this is wrong.
+                "0000000000000000000000000000000000000000000000000000"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(let ((lua-version #$(version-major+minor (package-version lua))))
+          (list (string-append "CC=" #$(cc-for-target))
+                (string-append "CFLAGS=-fPIC -DLSQLITE_VERSION=\""
+                               #$(package-version this-package) "\" -I"
+                               #$(this-package-input "lua") "/include -I"
+                               #$(this-package-input "sqlite") "/include")
+                (string-append "LUACMOD=" #$output "/lib/lua/" lua-version)
+                (string-append "LUAINC=" #$(this-package-input "lua") "/include")
+                (string-append "SQLITE3INC=" #$(this-package-input "sqlite") "/include")
+                (string-append "SQLITE3LIB=-L" #$(this-package-input "sqlite") "/lib -lsqlite3")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'install 'create-install-dir
+            (lambda _
+              (let ((lua-version #$(version-major+minor (package-version lua))))
+                (mkdir-p (string-append #$output "/lib/lua/" lua-version)))))
+          (delete 'check)
+          (add-after 'install 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (let ((lua-version #$(version-major+minor (package-version lua)))
+                      (lua-bin (string-append #$lua "/bin/lua")))
+                  (setenv "LUA_CPATH"
+                          (string-append #$output "/lib/lua/" lua-version "/?.so;;"))
+                  ;; Only run tests if they exist in the source
+                  (when (file-exists? "test.lua")
+                    (invoke lua-bin "test.lua"))
+                  (when (file-exists? "tests-sqlite3.lua")
+                    (invoke lua-bin "tests-sqlite3.lua")))))))))
+    (native-inputs
+     (list unzip))
+    (inputs
+     (list lua sqlite))
+    (home-page "http://lua.sqlite.org/")
+    (synopsis "A binding for Lua to the SQLite3 database library")
+    (description "lsqlite3 is a thin wrapper around the public domain SQLite3
+database engine.  The lsqlite3 module supports the creation and manipulation of
+SQLite3 databases.  Most sqlite3 functions are called via an object-oriented
+interface to either database or SQL statement objects.")
+    (license license:expat)))
+
+(define-public lua-sqlite
+  (make-lua-sqlite "lua-sqlite" lua))
+
+(define-public lua5.1-sqlite
+  (make-lua-sqlite "lua5.1-sqlite" lua-5.1))
+
+(define-public lua5.2-sqlite
+  (make-lua-sqlite "lua5.2-sqlite" lua-5.2))
+
+(define-public luajit-sqlite
+  (make-lua-sqlite "luajit-sqlite" luajit))
 
 (define (make-lua-cqueues name lua lua-ossl)
   (package
