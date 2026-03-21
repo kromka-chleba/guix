@@ -449,12 +449,16 @@ TARGET in the other system."
     (flags '(read-only bind-mount no-atime))))
 
 (define %control-groups
-  ;; The cgroup2 file system.
+  ;; The cgroup2 file system.  'mount-may-fail? #t' allows the mount to fail
+  ;; silently when running inside a container (e.g. Docker) where the host has
+  ;; already mounted /sys/fs/cgroup.  The file system is still accessible via
+  ;; the host's mount, so dependent services can proceed normally.
   (list (file-system
           (device "none")
 	  (mount-point "/sys/fs/cgroup")
 	  (type "cgroup2")
 	  (check? #f)
+	  (mount-may-fail? #t)
 	  (create-mount-point? #f))))
 
 (define %elogind-file-systems
@@ -479,13 +483,16 @@ TARGET in the other system."
            (create-mount-point? #t))
          ;; Elogind uses cgroups to organize processes, allowing it to map PIDs
          ;; to sessions.  Elogind's cgroup hierarchy isn't associated with any
-         ;; resource controller ("subsystem").
+         ;; resource controller ("subsystem").  'mount-may-fail? #t' allows the
+         ;; mount to fail silently in containers where the host has already set
+         ;; up the cgroup hierarchy.
          (file-system
            (device "cgroup")
            (mount-point "/sys/fs/cgroup/elogind")
            (type "cgroup")
            (check? #f)
            (options "none,name=elogind")
+           (mount-may-fail? #t)
            (create-mount-point? #t)
            (dependencies (list (car %control-groups)))))
    %control-groups))
