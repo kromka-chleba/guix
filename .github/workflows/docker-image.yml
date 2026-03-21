@@ -106,14 +106,20 @@ jobs:
           echo "BOOTSTRAP_CID=${CID}" >> "$GITHUB_ENV"
 
       # -----------------------------------------------------------------------
-      # Wait for Shepherd (PID 1) to finish booting, then start the Guix
-      # daemon.  The daemon is stopped at image startup to avoid the slow
-      # substitute-key generation; we start it explicitly here.
+      # Wait for Shepherd (PID 1) to finish booting, then wait for the Guix
+      # daemon.  With elogind-service-type/container in the image config, the
+      # cgroup2 mount failure is tolerated and Shepherd's full dependency chain
+      # (file-systems → user-processes → guix-daemon) completes successfully,
+      # so guix-daemon starts automatically – no explicit 'herd start' needed.
       # -----------------------------------------------------------------------
-      - name: Wait for Shepherd to be ready
+      - name: Wait for Shepherd and Guix daemon
         if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
         run: |
           HERD=/run/current-system/profile/bin/herd
+          SOCKET=/var/guix/daemon-socket/socket
+          MAX_WAIT=60
+
+          # Wait for Shepherd to be ready.
           for i in $(seq 1 30); do
             if docker exec "${BOOTSTRAP_CID}" "${HERD}" status >/dev/null 2>&1; then
               echo "Shepherd is ready."
@@ -124,46 +130,25 @@ jobs:
           done
           docker exec "${BOOTSTRAP_CID}" "${HERD}" status
 
-      - name: Start Guix daemon
-        if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
-        run: |
-          HERD=/run/current-system/profile/bin/herd
-          GUIXD=/run/current-system/profile/bin/guix-daemon
-          MAX_WAIT=30
-
-          # Try the normal path: Shepherd starts guix-daemon through its full
-          # dependency chain (file-systems → user-processes → guix-daemon).
-          # This works when the image was built with mount-may-fail? #t on the
-          # cgroup file systems (so the Docker host's pre-mounted cgroup2 is
-          # tolerated).
-          if docker exec "${BOOTSTRAP_CID}" "${HERD}" start guix-daemon; then
-            echo "Guix daemon started via Shepherd."
-          else
-            # Fallback for older bootstrap images where the cgroup2 mount
-            # failure blocks the entire Shepherd dependency chain.  In that
-            # case the cgroup filesystem is already mounted by the Docker host
-            # (which is why the mount fails with EBUSY), so guix-daemon can
-            # still run safely if we start it directly.
-            echo "Shepherd failed to start guix-daemon (likely cgroup mount issue)."
-            echo "Falling back to direct guix-daemon start..."
-            docker exec "${BOOTSTRAP_CID}" mkdir -p /var/guix/daemon-socket
-            docker exec -d "${BOOTSTRAP_CID}" \
-              "${GUIXD}" --build-users-group=guixbuild
-            # Wait for the Unix domain socket to appear (up to MAX_WAIT seconds).
-            for i in $(seq 1 "${MAX_WAIT}"); do
-              if docker exec "${BOOTSTRAP_CID}" \
-                   test -S /var/guix/daemon-socket/socket 2>/dev/null; then
-                echo "guix-daemon socket is ready (${i}s)."
-                break
-              fi
-              echo "Waiting for guix-daemon socket… (${i}/${MAX_WAIT})"
-              sleep 1
-            done
-            if ! docker exec "${BOOTSTRAP_CID}" \
-                   test -S /var/guix/daemon-socket/socket 2>/dev/null; then
-              echo "ERROR: guix-daemon socket not available after ${MAX_WAIT}s." >&2
-              exit 1
+          # Guix daemon auto-starts via Shepherd once the dependency chain
+          # completes.  Poll for its socket to confirm it is ready.
+          for i in $(seq 1 ${MAX_WAIT}); do
+            if docker exec "${BOOTSTRAP_CID}" \
+                 test -S "${SOCKET}" 2>/dev/null; then
+              echo "Guix daemon is ready (socket appeared at ${i}s)."
+              break
             fi
+            echo "Waiting for Guix daemon… (${i}/${MAX_WAIT})"
+            sleep 1
+          done
+          if ! docker exec "${BOOTSTRAP_CID}" \
+                 test -S "${SOCKET}" 2>/dev/null; then
+            echo "ERROR: Guix daemon socket not available after ${MAX_WAIT}s." >&2
+            echo "The bootstrap image may predate the elogind-service-type/container"
+            echo "fix.  Re-run the workflow with force_rebuild=true using a"
+            echo "fixed bootstrap image."
+            docker exec "${BOOTSTRAP_CID}" "${HERD}" status || true
+            exit 1
           fi
 
       # -----------------------------------------------------------------------
