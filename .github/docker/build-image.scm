@@ -40,16 +40,25 @@ non-zero exit status."
                      (status:exit-val ret) cmd)))))
 
 (define (read-command-output . args)
-  "Return the trimmed stdout of running ARGS as a shell command.
-Signals an error if the command exits non-zero."
-  (let* ((cmd (string-join args " "))
-         (port (open-input-pipe cmd))
-         (output (read-line port))
-         (ret (close-pipe port)))
+  "Return the last non-empty trimmed line of stdout produced by running ARGS
+as a shell command.  All lines are drained before closing the pipe to avoid
+sending SIGPIPE to the child process.  Signals an error if the command exits
+non-zero."
+  (let* ((cmd    (string-join args " "))
+         (port   (open-input-pipe cmd))
+         ;; Collect every line; keep the last non-empty one.
+         (last   (let loop ((last ""))
+                   (let ((line (read-line port)))
+                     (if (eof-object? line)
+                         last
+                         (loop (if (string-null? (string-trim-right line))
+                                   last
+                                   (string-trim-right line)))))))
+         (ret    (close-pipe port)))
     (unless (zero? (status:exit-val ret))
       (error (format #f "Command failed (exit ~a): ~a"
                      (status:exit-val ret) cmd)))
-    (if (eof-object? output) "" (string-trim-right output))))
+    last))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Main
