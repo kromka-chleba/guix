@@ -96,7 +96,8 @@
            (list
             (run-command/check
              "Guix system root exists"
-             (container-exec cname "test" "-d" "/run/current-system"))
+             (container-exec cname
+              "/run/current-system/profile/bin/test" "-d" "/run/current-system"))
 
             (run-command/check
              "guix --version"
