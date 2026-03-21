@@ -108,11 +108,25 @@ jobs:
           echo "BOOTSTRAP_CID=${CID}" >> "$GITHUB_ENV"
 
       # -----------------------------------------------------------------------
-      # Wait for Shepherd (PID 1) to finish booting, then wait for the Guix
-      # daemon.  Without --privileged, Docker gives the container a private
-      # cgroup namespace so Shepherd can mount cgroup2 at /sys/fs/cgroup
-      # cleanly.  The full dependency chain (file-systems → user-processes →
-      # guix-daemon) then completes, and guix-daemon starts automatically.
+      # Wait for Shepherd (PID 1) to finish booting, then wait for
+      # guix-daemon.  Without --privileged, Docker gives the container a
+      # private cgroup namespace so Shepherd can mount cgroup2 at
+      # /sys/fs/cgroup cleanly.
+      #
+      # Root cause of prior unreliability: the dummy root file system added by
+      # containerized-operating-system (type "dummy", device "nothing") used to
+      # default to mount? #t.  Shepherd would create a service file-system-/
+      # that tried to mount "nothing" as type "dummy" — an unknown kernel fs
+      # type — which failed.  This blocked the entire chain:
+      #   file-system-/ (failed) → file-systems → user-processes → guix-daemon
+      # Fix: gnu/system/linux-container.scm now sets (mount? #f) on the dummy
+      # root so no Shepherd service is generated for it.  file-systems then
+      # starts as soon as root-file-system (trivial const #t) is up, and
+      # guix-daemon auto-starts via the normal dependency chain.
+      #
+      # The explicit 'herd start guix-daemon' below is retained as a
+      # belt-and-suspenders fallback for cached bootstrap images built before
+      # the mount? fix.  It is a no-op when guix-daemon already started.
       # -----------------------------------------------------------------------
       - name: Wait for Shepherd and Guix daemon
         if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
@@ -132,11 +146,21 @@ jobs:
           done
           docker exec "${BOOTSTRAP_CID}" "${HERD}" status
 
-          # Guix daemon auto-starts via Shepherd once the dependency chain
-          # completes.  Poll for its socket to confirm it is ready.
+          # Trigger guix-daemon explicitly as a fallback for bootstrap images
+          # built before the mount? fix.  On a fixed image, guix-daemon is
+          # already auto-starting via the Shepherd chain; this call is either
+          # a no-op (service already starting) or a deterministic trigger.
+          # Suppress the exit code: 'herd start' may return non-zero when the
+          # service is already being started; the socket poll below is the
+          # authoritative readiness check.
+          docker exec "${BOOTSTRAP_CID}" "${HERD}" start guix-daemon || true
+
+          # Poll for the daemon socket to confirm it is ready.
+          # Use '/bin/sh -c' because 'test' is not a standalone executable
+          # in the container's default PATH (it is a shell builtin).
           for i in $(seq 1 ${MAX_WAIT}); do
             if docker exec "${BOOTSTRAP_CID}" \
-                 test -S "${SOCKET}" 2>/dev/null; then
+                 /bin/sh -c "test -S '${SOCKET}'" 2>/dev/null; then
               echo "Guix daemon is ready (socket appeared at ${i}s)."
               break
             fi
@@ -144,11 +168,9 @@ jobs:
             sleep 1
           done
           if ! docker exec "${BOOTSTRAP_CID}" \
-                 test -S "${SOCKET}" 2>/dev/null; then
+                 /bin/sh -c "test -S '${SOCKET}'" 2>/dev/null; then
             echo "ERROR: Guix daemon socket not available after ${MAX_WAIT}s." >&2
-            echo "The bootstrap image may predate the --cap-add=SYS_ADMIN fix."
-            echo "Re-run the workflow with force_rebuild=true using a"
-            echo "fixed bootstrap image."
+            echo "Check the Shepherd status below for stopped or failed services." >&2
             docker exec "${BOOTSTRAP_CID}" "${HERD}" status || true
             exit 1
           fi
