@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules base docker)
+(use-service-modules base dbus desktop docker)
 
 (operating-system
   (host-name "guix-dev")
@@ -104,13 +104,17 @@
   ;; entropy which is scarce in containers and causes a long hang at startup.
   ;; This Docker image is only used for building/testing, not for serving
   ;; substitutes, so the key is not needed.
+  ;; dbus-root-service-type and elogind-service-type are required by
+  ;; docker-service-type (dockerd requires 'dbus-system' and 'elogind').
   ;; containerd-service-type and docker-service-type together start the Docker
   ;; daemon (containerd + dockerd) managed by Shepherd.  containerd must be
   ;; listed explicitly because docker-service-type no longer bundles it.
   ;; Running the container with --privileged is required for both the Guix
   ;; daemon and Docker daemon to use Linux namespaces.
   (services
-   (cons* (service containerd-service-type)
+   (cons* (service dbus-root-service-type)
+          (service elogind-service-type)
+          (service containerd-service-type)
           (service docker-service-type)
           (modify-services %base-services
             (guix-service-type
