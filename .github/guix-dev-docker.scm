@@ -111,11 +111,20 @@
   ;; listed explicitly because docker-service-type no longer bundles it.
   ;; Running the container with --privileged is required for both the Guix
   ;; daemon and Docker daemon to use Linux namespaces.
+  ;; docker-service-type requires a 'networking' shepherd service.  In a
+  ;; Docker container the host already configures the network, so we add a
+  ;; no-op static-networking entry that only provides the 'networking'
+  ;; provision without touching any interfaces.
   (services
    (cons* (service dbus-root-service-type)
           (service elogind-service-type)
           (service containerd-service-type)
           (service docker-service-type)
+          (service static-networking-service-type
+                   (list (static-networking
+                          (addresses '())
+                          (requirement '())
+                          (provision '(networking)))))
           (modify-services %base-services
             (guix-service-type
              config => (guix-configuration
