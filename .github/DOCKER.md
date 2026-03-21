@@ -23,12 +23,10 @@ configuration that includes:
 | Cryptography | `gnupg` |
 | Documentation | `texinfo`, `imagemagick` |
 | Scripting | `perl`, `python`, `bash` |
-| **Container tooling** | **`docker`, `containerd`** (daemon started via Shepherd) |
 | Installer tests | `guile-newt`, `guile-parted`, `guile-webutils` |
 
 **Services (started by Shepherd on container boot):**
 - `guix-service-type` – Guix build daemon
-- `docker-service-type` – Docker daemon (dockerd + containerd)
 
 No SSH server is included.  Use `docker exec` to get an interactive shell.
 
@@ -243,10 +241,16 @@ CONTAINER=$(docker run -d \
   --security-opt=seccomp=unconfined \
   ghcr.io/kromka-chleba/guix-dev:latest)
 
-# 2. Wait for Shepherd to finish booting, then attach a shell
+# 2. Wait for the Guix daemon socket to appear before running commands.
+until docker exec "$CONTAINER" \
+    test -S /var/guix/daemon-socket/socket 2>/dev/null; do
+  sleep 1
+done
+
+# 3. Attach a shell
 docker exec -ti $CONTAINER /run/current-system/profile/bin/bash --login
 
-# 3. Stop when done
+# 4. Stop when done
 docker stop $CONTAINER
 ```
 
@@ -258,25 +262,32 @@ CONTAINER=$(docker run -d \
   --security-opt=seccomp=unconfined \
   ghcr.io/kromka-chleba/guix-dev:latest)
 
-# guix-daemon is started automatically by Shepherd; just run guix commands
+# Wait for guix-daemon to be ready (auto-started by Shepherd)
+until docker exec "$CONTAINER" \
+    test -S /var/guix/daemon-socket/socket 2>/dev/null; do
+  sleep 1
+done
+
+# Now run guix commands
 docker exec $CONTAINER /run/current-system/profile/bin/guix build hello
 ```
 
-### Running Docker commands inside the container
+### Building Guix Docker images (no Docker daemon needed)
 
-The image includes the Docker daemon (`docker-service-type`) for cases where
-you need to build or run Docker images from within the container.  The Docker
-daemon requires additional Linux capabilities beyond `SYS_ADMIN`, so you must
-use `--privileged` for Docker-in-Docker:
+`guix system image --image-type=docker` produces a plain `.tar.gz` tarball via
+`guix-daemon`.  It never invokes or requires a Docker daemon.  The resulting
+tarball is then loaded with `docker load` on the CI runner (or your local
+machine) — outside the container:
 
 ```bash
-CONTAINER=$(docker run -d --privileged ghcr.io/kromka-chleba/guix-dev:latest)
+# Inside the container: build the tarball
+docker exec $CONTAINER \
+  /run/current-system/profile/bin/guix system image \
+    --image-type=docker /path/to/config.scm
 
-# Confirm the Docker daemon is running
-docker exec $CONTAINER docker info
-
-# Build a Docker image from inside the container
-docker exec $CONTAINER docker build -t my-image /path/to/context
+# Outside the container: load the tarball into Docker
+docker cp $CONTAINER:/gnu/store/…-docker-image.tar.gz ./image.tar.gz
+docker load -i ./image.tar.gz
 ```
 
 ### In GitHub Copilot Coding Agent

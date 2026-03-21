@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules base dbus desktop docker networking)
+(use-service-modules base)
 
 (operating-system
   (host-name "guix-dev")
@@ -75,12 +75,6 @@
           "python"
           "bash"
 
-          ;; Container tooling – Docker daemon + CLI so the image can build
-          ;; and push Docker images without an external Docker installation.
-          ;; docker-service-type (below) starts the daemon via Shepherd.
-          "docker"
-          "containerd"
-
           ;; For installer tests
           "guile-newt"
           "guile-parted"
@@ -104,27 +98,14 @@
   ;; entropy which is scarce in containers and causes a long hang at startup.
   ;; This Docker image is only used for building/testing, not for serving
   ;; substitutes, so the key is not needed.
-  ;; The container is run with --cap-add=SYS_ADMIN (not --privileged), which
-  ;; gives Docker a private cgroup namespace.  Shepherd therefore mounts
-  ;; cgroup2 at /sys/fs/cgroup without an EBUSY conflict, and the full
-  ;; dependency chain (file-systems → user-processes → guix-daemon) completes
-  ;; normally with plain elogind-service-type.
-  ;; dbus-root-service-type is required by docker-service-type.
-  ;; containerd-service-type and docker-service-type together start the Docker
-  ;; daemon (containerd + dockerd) managed by Shepherd.  containerd must be
-  ;; listed explicitly because docker-service-type no longer bundles it.
-  ;; docker-service-type requires a 'networking' shepherd service.
-  ;; dhcpcd-service-type provides 'networking' and configures the container's
-  ;; Ethernet interface via DHCP, which is exactly what Docker's virtual
-  ;; network expects.
+  ;; No Docker daemon is needed: 'guix system image --image-type=docker'
+  ;; produces a plain tarball via guix-daemon without invoking Docker at all.
+  ;; Docker networking is provided by the host Docker engine; the container's
+  ;; network interface is configured before Shepherd starts, so dhcpcd is
+  ;; not required.
   (services
-   (cons* (service dbus-root-service-type)
-          (service elogind-service-type)
-          (service containerd-service-type)
-          (service docker-service-type)
-          (service dhcpcd-service-type)
-          (modify-services %base-services
-            (guix-service-type
-             config => (guix-configuration
-                        (inherit config)
-                        (generate-substitute-key? #f)))))))
+   (modify-services %base-services
+     (guix-service-type
+      config => (guix-configuration
+                 (inherit config)
+                 (generate-substitute-key? #f))))))
