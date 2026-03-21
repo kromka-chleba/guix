@@ -12,7 +12,7 @@
 
 (use-modules (gnu)
              (guix packages))
-(use-service-modules base dbus desktop docker)
+(use-service-modules base dbus desktop docker networking)
 
 (operating-system
   (host-name "guix-dev")
@@ -111,20 +111,16 @@
   ;; listed explicitly because docker-service-type no longer bundles it.
   ;; Running the container with --privileged is required for both the Guix
   ;; daemon and Docker daemon to use Linux namespaces.
-  ;; docker-service-type requires a 'networking' shepherd service.  In a
-  ;; Docker container the host already configures the network, so we add a
-  ;; no-op static-networking entry that only provides the 'networking'
-  ;; provision without touching any interfaces.
+  ;; docker-service-type requires a 'networking' shepherd service.
+  ;; dhcpcd-service-type provides 'networking' and configures the container's
+  ;; Ethernet interface via DHCP, which is exactly what Docker's virtual
+  ;; network expects.
   (services
    (cons* (service dbus-root-service-type)
           (service elogind-service-type)
           (service containerd-service-type)
           (service docker-service-type)
-          (service static-networking-service-type
-                   (list (static-networking
-                          (addresses '())
-                          (requirement '())
-                          (provision '(networking)))))
+          (service dhcpcd-service-type)
           (modify-services %base-services
             (guix-service-type
              config => (guix-configuration

@@ -141,6 +141,50 @@ docker push ghcr.io/kromka-chleba/guix-dev:latest
 After that first push, the CI workflow takes over automatically for all
 future updates.
 
+### Re-bootstrapping when the CI bootstrap image is broken
+
+If the CI is failing because the current `ghcr.io/kromka-chleba/guix-dev:latest`
+image is too old to build the new configuration (e.g. the bootstrap image's
+Guix version doesn't satisfy a new service requirement), break the cycle by
+pushing a fresh image manually from any machine with a working Guix
+installation and network access:
+
+```bash
+# From the repository root:
+
+# 1. Build the new image using your local Guix
+TARBALL=$(guix system image --image-type=docker .github/guix-dev-docker.scm)
+echo "Tarball: ${TARBALL}"
+
+# 2. Load the tarball into Docker
+docker load -i "${TARBALL}"
+
+# 3. Tag it
+docker tag $(docker images -q | head -1) ghcr.io/kromka-chleba/guix-dev:latest
+
+# 4. Log in to GHCR (needs a token with write:packages scope)
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# 5. Push – this replaces the broken bootstrap image
+docker push ghcr.io/kromka-chleba/guix-dev:latest
+```
+
+Or use the helper script:
+
+```bash
+# Build + load + tag (does not push automatically)
+.github/bin/build-guix-docker.scm \
+  --registry=ghcr.io/kromka-chleba \
+  --image-tag=guix-dev:latest
+
+# Then push manually:
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker push ghcr.io/kromka-chleba/guix-dev:latest
+```
+
+Once the new image is in the registry the CI workflow will succeed on the
+next push to `master` (or on a manual `workflow_dispatch` run).
+
 ---
 
 ## Building the image locally (with Guix installed)
