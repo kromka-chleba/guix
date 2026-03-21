@@ -16,6 +16,7 @@
              (gnu packages base)
              (gnu packages bash)
              (gnu packages certs)
+             (gnu packages nss)
              (gnu packages package-management)
              (gnu packages version-control)
              (gnu packages wget)
