@@ -108,11 +108,25 @@ jobs:
           echo "BOOTSTRAP_CID=${CID}" >> "$GITHUB_ENV"
 
       # -----------------------------------------------------------------------
-      # Wait for Shepherd (PID 1) to finish booting, then start and wait for
-      # the Guix daemon.  Without --privileged, Docker gives the container a
+      # Wait for Shepherd (PID 1) to finish booting, then wait for
+      # guix-daemon.  Without --privileged, Docker gives the container a
       # private cgroup namespace so Shepherd can mount cgroup2 at
-      # /sys/fs/cgroup cleanly.  We trigger guix-daemon explicitly so the
-      # start is deterministic regardless of auto-start timing.
+      # /sys/fs/cgroup cleanly.
+      #
+      # Root cause of prior unreliability: the dummy root file system added by
+      # containerized-operating-system (type "dummy", device "nothing") used to
+      # default to mount? #t.  Shepherd would create a service file-system-/
+      # that tried to mount "nothing" as type "dummy" — an unknown kernel fs
+      # type — which failed.  This blocked the entire chain:
+      #   file-system-/ (failed) → file-systems → user-processes → guix-daemon
+      # Fix: gnu/system/linux-container.scm now sets (mount? #f) on the dummy
+      # root so no Shepherd service is generated for it.  file-systems then
+      # starts as soon as root-file-system (trivial const #t) is up, and
+      # guix-daemon auto-starts via the normal dependency chain.
+      #
+      # The explicit 'herd start guix-daemon' below is retained as a
+      # belt-and-suspenders fallback for cached bootstrap images built before
+      # the mount? fix.  It is a no-op when guix-daemon already started.
       # -----------------------------------------------------------------------
       - name: Wait for Shepherd and Guix daemon
         if: steps.image-cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
@@ -132,21 +146,10 @@ jobs:
           done
           docker exec "${BOOTSTRAP_CID}" "${HERD}" status
 
-          # Explicitly start guix-daemon via Shepherd.  Shepherd dependency
-          # resolution is upward-only: 'herd start X' starts X and all of
-          # X's transitive requirements; it does NOT trigger services that
-          # list X as a requirement.  Therefore 'herd start user-processes'
-          # would only flip that sync-point to running and would NOT cause
-          # guix-daemon to start.  Targeting guix-daemon directly is the
-          # minimal sufficient call — Shepherd starts the full chain:
-          #
-          #   file-systems ──┐
-          #   user-file-systems ─┤→ user-processes ──┐
-          #   urandom-seed ──┘                        │→ guix-ownership ─→ guix-daemon
-          #   user-homes ─────────────────────────────┘
-          #
-          # guix-daemon does not always auto-start in the bootstrap container
-          # (timing varies by image); this call makes the start deterministic.
+          # Trigger guix-daemon explicitly as a fallback for bootstrap images
+          # built before the mount? fix.  On a fixed image, guix-daemon is
+          # already auto-starting via the Shepherd chain; this call is either
+          # a no-op (service already starting) or a deterministic trigger.
           # Suppress the exit code: 'herd start' may return non-zero when the
           # service is already being started; the socket poll below is the
           # authoritative readiness check.

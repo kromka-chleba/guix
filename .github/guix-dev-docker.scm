@@ -103,6 +103,13 @@
   ;; Docker networking is provided by the host Docker engine; the container's
   ;; network interface is configured before Shepherd starts, so dhcpcd is
   ;; not required.
+  ;;
+  ;; guix-daemon auto-starts: gnu/system/linux-container.scm sets (mount? #f)
+  ;; on the dummy root file system so that no Shepherd service is generated
+  ;; for it.  Without that fix, Shepherd would try to mount type "dummy" at
+  ;; runtime (blocking file-systems → user-processes → guix-daemon).  With
+  ;; the fix, guix-daemon starts automatically via the normal dependency chain
+  ;; as soon as Shepherd is ready, without any manual 'herd start' call.
   (services
    (modify-services %base-services
      (guix-service-type

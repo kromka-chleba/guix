@@ -197,11 +197,17 @@ containerized OS.  EXTRA-FILE-SYSTEMS is a list of file systems to add to OS."
                             user-file-systems
 
                             ;; Provide a dummy root file system so we can create
-                            ;; a 'boot-parameters' file.
+                            ;; a 'boot-parameters' file.  Set mount? to #f so
+                            ;; that no Shepherd service is generated for this
+                            ;; placeholder: attempting to mount type "dummy" at
+                            ;; runtime would fail (no such kernel filesystem
+                            ;; type), which would block file-systems →
+                            ;; user-processes → guix-daemon from ever starting.
                             (list (file-system
                                     (mount-point "/")
                                     (device "nothing")
-                                    (type "dummy")))))))
+                                    (type "dummy")
+                                    (mount? #f)))))))
 
   ;; `essential-services' is thunked, we need to evaluate it separately.
   (operating-system
