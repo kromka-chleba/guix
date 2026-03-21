@@ -35,15 +35,20 @@
 non-zero exit status."
   (let* ((cmd (string-join args " "))
          (ret (system cmd)))
-    (unless (zero? ret)
-      (error (format #f "Command failed (exit ~a): ~a" ret cmd)))))
+    (unless (zero? (status:exit-val ret))
+      (error (format #f "Command failed (exit ~a): ~a"
+                     (status:exit-val ret) cmd)))))
 
 (define (read-command-output . args)
-  "Return the trimmed stdout of running ARGS as a shell command."
+  "Return the trimmed stdout of running ARGS as a shell command.
+Signals an error if the command exits non-zero."
   (let* ((cmd (string-join args " "))
          (port (open-input-pipe cmd))
-         (output (read-line port)))
-    (close-pipe port)
+         (output (read-line port))
+         (ret (close-pipe port)))
+    (unless (zero? (status:exit-val ret))
+      (error (format #f "Command failed (exit ~a): ~a"
+                     (status:exit-val ret) cmd)))
     (if (eof-object? output) "" (string-trim-right output))))
 
 ;;; ---------------------------------------------------------------------------
@@ -88,9 +93,12 @@ non-zero exit status."
 
     (unless no-load?
       (format #t "==> Loading image into Docker and tagging as ~a~%" tag)
-      (let ((image-id (read-command-output
-                       "docker" "load" "<" output
-                       "| awk '{print $NF}'")))
+      (let* ((load-out (read-command-output "docker" "load" "<" output))
+             ;; docker load prints e.g. "Loaded image ID: sha256:..." or
+             ;; "Loaded image: name:tag" — extract the last whitespace-delimited word.
+             (words    (string-split load-out #\space))
+             (image-id (string-trim-right
+                        (list-ref words (1- (length words))))))
         (format #t "    Loaded image: ~a~%" image-id)
         (run-command "docker" "tag" image-id tag)
         (format #t "==> Tagged as ~a~%" tag)))

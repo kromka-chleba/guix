@@ -35,9 +35,9 @@
   "Run a shell command, print DESC, and return #t on success, #f on failure."
   (let* ((cmd (string-join args " "))
          (ret (system cmd)))
-    (if (zero? ret)
+    (if (zero? (status:exit-val ret))
         (begin (format #t "  [PASS] ~a~%" desc) #t)
-        (begin (format #t "  [FAIL] ~a (exit ~a)~%" desc ret) #f))))
+        (begin (format #t "  [FAIL] ~a (exit ~a)~%" desc (status:exit-val ret)) #f))))
 
 (define (container-exec container . cmd-args)
   "Build a 'docker exec' command string for CONTAINER running CMD-ARGS."
