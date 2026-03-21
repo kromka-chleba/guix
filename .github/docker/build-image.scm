@@ -82,12 +82,14 @@ Signals an error if the command exits non-zero."
       (exit 0))
 
     (format #t "==> Building Guix Docker image from ~a~%" system-config)
-    (run-command
-     "./pre-inst-env" "guix" "system" "image"
-     "--image-type=docker"
-     "--system=x86_64-linux"
-     system-config
-     ">" output)
+    ;; 'guix system image' prints the store path of the result to stdout.
+    ;; Capture it, then copy the actual image file to the requested output path.
+    (let ((store-path (read-command-output
+                       "./pre-inst-env" "guix" "system" "image"
+                       "--image-type=docker"
+                       "--system=x86_64-linux"
+                       system-config)))
+      (run-command "cp" store-path output))
 
     (format #t "==> Image tarball written to ~a~%" output)
 

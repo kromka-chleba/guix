@@ -96,18 +96,18 @@ jobs:
           github.event.inputs.force_rebuild == 'true'
         run: |
           if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
-            # Run guix system image inside the bootstrap container, then copy
-            # the resulting tarball out to the host.
+            # 'guix system image' prints the store path of the result to stdout.
+            # Capture it, then copy the actual image file to the workspace.
             docker run --rm \
               --privileged \
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              sh -c './pre-inst-env guix system image \
+              sh -c 'store_path=$(./pre-inst-env guix system image \
                        --image-type=docker \
                        --system=x86_64-linux \
-                       ${{ env.SYSTEM_CONFIG }} \
-                     > guix-system-docker-image.tar.gz'
+                       ${{ env.SYSTEM_CONFIG }}) \
+                     && cp "$store_path" guix-system-docker-image.tar.gz'
           else
             echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
             exit 1

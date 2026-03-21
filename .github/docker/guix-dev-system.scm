@@ -15,8 +15,6 @@
              (gnu services guix)
              (gnu packages base)
              (gnu packages bash)
-             (gnu packages certs)
-             (gnu packages nss)
              (gnu packages package-management)
              (gnu packages version-control)
              (gnu packages wget)
@@ -39,9 +37,9 @@
                 %base-user-accounts))
 
   ;; Packages available system-wide inside the container.
+  ;; nss-certs is already included in %base-packages; no need to list it here.
   (packages (append
-             (list nss-certs
-                   bash
+             (list bash
                    git
                    wget
                    gzip
