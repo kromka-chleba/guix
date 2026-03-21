@@ -132,11 +132,21 @@ jobs:
           done
           docker exec "${BOOTSTRAP_CID}" "${HERD}" status
 
-          # Explicitly start guix-daemon via Shepherd.  Shepherd resolves the
-          # full dependency chain automatically:
-          #   user-processes → guix-ownership → guix-daemon
+          # Explicitly start guix-daemon via Shepherd.  Shepherd dependency
+          # resolution is upward-only: 'herd start X' starts X and all of
+          # X's transitive requirements; it does NOT trigger services that
+          # list X as a requirement.  Therefore 'herd start user-processes'
+          # would only flip that sync-point to running and would NOT cause
+          # guix-daemon to start.  Targeting guix-daemon directly is the
+          # minimal sufficient call — Shepherd starts the full chain:
+          #
+          #   file-systems ──┐
+          #   user-file-systems ─┤→ user-processes ──┐
+          #   urandom-seed ──┘                        │→ guix-ownership ─→ guix-daemon
+          #   user-homes ─────────────────────────────┘
+          #
           # guix-daemon does not always auto-start in the bootstrap container
-          # (timing varies by image).  This call makes the start deterministic.
+          # (timing varies by image); this call makes the start deterministic.
           # Suppress the exit code: 'herd start' may return non-zero when the
           # service is already being started; the socket poll below is the
           # authoritative readiness check.
@@ -157,6 +167,7 @@ jobs:
           if ! docker exec "${BOOTSTRAP_CID}" \
                  /bin/sh -c "test -S '${SOCKET}'" 2>/dev/null; then
             echo "ERROR: Guix daemon socket not available after ${MAX_WAIT}s." >&2
+            echo "Check the Shepherd status below for stopped or failed services." >&2
             docker exec "${BOOTSTRAP_CID}" "${HERD}" status || true
             exit 1
           fi
