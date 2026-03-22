@@ -14,6 +14,7 @@
 ;;;   --no-privileged   Do NOT run the container with --privileged.
 ;;;                     By default the container runs privileged so that
 ;;;                     guix-daemon can set up build sandboxes.
+;;;   --verbose         Show the stdout/stderr of each test command.
 ;;;   --help            Show this help message
 ;;;
 ;;; The script:
@@ -36,12 +37,14 @@
 (define option-spec
   '((image         (single-char #\i) (value #t))
     (no-privileged (value #f))
+    (verbose       (single-char #\v) (value #f))
     (help          (single-char #\h) (value #f))))
 
 (define (main args)
   (let* ((options    (getopt-long args option-spec))
          (help?      (option-ref options 'help #f))
          (privileged (not (option-ref options 'no-privileged #f)))
+         (verbose?   (option-ref options 'verbose #f))
          (image      (option-ref options 'image %default-image))
          (cname      "guix-dev-test"))
 
@@ -49,6 +52,7 @@
       (display "Usage: guile .github/docker/test-image.scm [OPTIONS]\n")
       (display "  -i, --image IMAGE    Docker image to test\n")
       (display "      --no-privileged  Skip --privileged flag\n")
+      (display "  -v, --verbose        Show output of each test command\n")
       (display "  -h, --help           Show this help\n")
       (exit 0))
 
@@ -71,22 +75,26 @@
             (run-command/check
              "Guix system root exists"
              (container-exec cname
-              (string-append %system-profile "/test") "-d" "/run/current-system"))
+              (string-append %system-profile "/test") "-d" "/run/current-system")
+             #:verbose? verbose?)
 
             (run-command/check
              "guix --version"
              (container-exec cname
-              (string-append %system-profile "/guix") "--version"))
+              (string-append %system-profile "/guix") "--version")
+             #:verbose? verbose?)
 
             (run-command/check
              "guix package description lookup (hello)"
              (container-exec cname
-              (string-append %system-profile "/guix") "show" "hello"))
+              (string-append %system-profile "/guix") "show" "hello")
+             #:verbose? verbose?)
 
             (run-command/check
              "guix build hello"
              (container-exec cname
-              (string-append %system-profile "/guix") "build" "hello")))))
+              (string-append %system-profile "/guix") "build" "hello")
+             #:verbose? verbose?))))
 
       ;; Cleanup.
       (format #t "==> Stopping and removing container~%")

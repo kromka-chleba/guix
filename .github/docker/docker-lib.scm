@@ -54,10 +54,12 @@ non-zero exit status."
       (error (format #f "Command failed (exit ~a): ~a"
                      (status:exit-val ret) cmd)))))
 
-(define (run-command/check desc . args)
-  "Run a shell command silently, print DESC with [PASS]/[FAIL], return #t/#f."
-  (let* ((cmd (string-append (string-join args " ") " >/dev/null 2>&1"))
-         (ret (system cmd)))
+(define* (run-command/check desc cmd #:key (verbose? #f))
+  "Run shell command CMD, print DESC with [PASS]/[FAIL], return #t/#f.
+When VERBOSE? is #t the command's stdout and stderr are shown; otherwise
+they are suppressed."
+  (let* ((full-cmd (if verbose? cmd (string-append cmd " >/dev/null 2>&1")))
+         (ret      (system full-cmd)))
     (if (zero? (status:exit-val ret))
         (begin (format #t "  [PASS] ~a~%" desc) #t)
         (begin (format #t "  [FAIL] ~a (exit ~a)~%" desc (status:exit-val ret)) #f))))
@@ -130,7 +132,7 @@ seconds.  Prints progress lines.  Returns #t if started, #f if timed out."
      ((zero? (system
               (string-append "docker exec " container
                              " " %system-profile "/herd"
-                             " status guix-daemon 2>&1 | grep -q started")))
+                             " status guix-daemon 2>&1 | grep -q running")))
       (format #t "  [OK] guix-daemon is running~%")
       #t)
      (else
