@@ -22,9 +22,10 @@
 5. [How the Docker image is built (image-from-scratch)](#how-the-docker-image-is-built-image-from-scratch)
 6. [Container runtime behaviour](#container-runtime-behaviour)
 7. [Helper scripts](#helper-scripts)
-8. [CI pipeline](#ci-pipeline)
-9. [Bootstrap and recovery](#bootstrap-and-recovery)
-10. [Caveats](#caveats)
+8. [Token setup](#token-setup)
+9. [CI pipeline](#ci-pipeline)
+10. [Bootstrap and recovery](#bootstrap-and-recovery)
+11. [Caveats](#caveats)
 
 ---
 
@@ -49,10 +50,12 @@ the core Guix source tree:
 .github/
 ├── docker/
 │   ├── guix-dev-system.scm     # Guix OS configuration for the dev image
+│   ├── docker-lib.scm          # Shared helpers loaded by all scripts below
 │   ├── build-image.scm         # Guile script: build & tag the image
 │   ├── test-image.scm          # Guile script: smoke-test a container
-│   ├── start-container.sh      # Shell script: start a dev container
-│   ├── stop-container.sh       # Shell script: stop and remove a container
+│   ├── start-container.scm     # Guile script: start a dev container
+│   ├── stop-container.scm      # Guile script: stop and remove a container
+│   ├── push-image.scm          # Guile script: push image to GHCR
 │   └── list-source-urls.scm    # Guile script: list package source URLs
 ├── workflows/
 │   └── docker-image.yml        # GitHub Actions CI workflow
@@ -81,10 +84,9 @@ docker pull ghcr.io/kromka-chleba/guix-dev:latest
 
 ### 2 — Create and start a container
 
-Use the helper script (recommended):
-
 ```bash
-.github/docker/start-container.sh ghcr.io/kromka-chleba/guix-dev:latest
+guile .github/docker/start-container.scm \
+    --image ghcr.io/kromka-chleba/guix-dev:latest
 ```
 
 Or manually:
@@ -115,9 +117,10 @@ Inside the container, navigate to the mounted repository checkout and use
 cd /workspace
 ./pre-inst-env guix build hello
 ./pre-inst-env guix lint my-package
-./pre-inst-env guix system image --image-type=docker \
-    .github/docker/guix-dev-system.scm \
-    > guix-system-docker-image.tar.gz
+# Build a new Docker image (use build-image.scm; guix system image only
+# prints the store path, it does not write a tarball directly):
+./pre-inst-env guile .github/docker/build-image.scm \
+    --output guix-system-docker-image.tar.gz
 ```
 
 ---
@@ -206,32 +209,54 @@ intentionally absent.
 
 ## Helper scripts
 
-All Guile/Scheme helper scripts require `./pre-inst-env` when run from a
-source checkout (see [pre-inst-env requirement](#pre-inst-env-requirement)).
-The shell scripts (`start-container.sh`, `stop-container.sh`) only need Docker.
+All scripts are written in **Guile/Scheme** and share common helpers from
+`docker-lib.scm`.  Scripts that call `guix` sub-commands require
+`./pre-inst-env` (see [pre-inst-env requirement](#pre-inst-env-requirement));
+the container lifecycle scripts (`start`, `stop`, `push`) only need Docker
+and a working Guile installation.
 
-### `start-container.sh` — Start a dev container
+### `start-container.scm` — Start a dev container
 
 ```bash
-# Start container from local image (default name: guix-dev)
-.github/docker/start-container.sh
+# Start container from default local image (name: guix-dev)
+guile .github/docker/start-container.scm
 
 # Start container from GHCR image with a custom name
-.github/docker/start-container.sh ghcr.io/kromka-chleba/guix-dev:latest my-dev
+guile .github/docker/start-container.scm \
+    --image ghcr.io/kromka-chleba/guix-dev:latest \
+    --name my-dev
 ```
 
-The script creates and starts a container with `--privileged` and mounts the
-repository at `/workspace`.  It prints the `docker exec` command to connect.
+Creates and starts a container with `--privileged` and the repository
+mounted at `/workspace`.  Prints the `docker exec` command to connect.
 
-### `stop-container.sh` — Stop and remove a dev container
+### `stop-container.scm` — Stop and remove a dev container
 
 ```bash
 # Stop the default container (guix-dev)
-.github/docker/stop-container.sh
+guile .github/docker/stop-container.scm
 
 # Stop a named container
-.github/docker/stop-container.sh my-dev
+guile .github/docker/stop-container.scm --name my-dev
 ```
+
+### `push-image.scm` — Push the image to GHCR
+
+```bash
+# Push the default local image (guix-dev:latest) to GHCR
+guile .github/docker/push-image.scm
+
+# Also tag and push as a specific git SHA
+guile .github/docker/push-image.scm --sha "$(git rev-parse HEAD)"
+
+# Push a custom local image / remote tag
+guile .github/docker/push-image.scm \
+    --image my-local-image:tag \
+    --tag ghcr.io/kromka-chleba/guix-dev:latest
+```
+
+Reads the GHCR personal access token from `~/.github-token` (see
+[Token setup](#token-setup)).
 
 ### `build-image.scm` — Build and tag the image
 
@@ -263,6 +288,21 @@ Useful for building network allowlists in restricted build environments:
 ```bash
 ./pre-inst-env guile .github/docker/list-source-urls.scm hello gcc glibc
 ```
+
+---
+
+## Token setup
+
+`push-image.scm` reads a GitHub personal access token from `~/.github-token`
+by default.  Create a token with the **`write:packages`** scope at
+<https://github.com/settings/tokens> and save it once:
+
+```bash
+echo "ghp_YourTokenHere" > ~/.github-token
+chmod 600 ~/.github-token
+```
+
+Pass `--token-file PATH` to use a different file.
 
 ---
 
@@ -322,8 +362,10 @@ image and will fail with an informative error.  To bootstrap:
 3. Log in to GHCR and push:
 
    ```bash
-   echo "$GITHUB_TOKEN" | docker login ghcr.io -u USERNAME --password-stdin
-   docker push ghcr.io/kromka-chleba/guix-dev:latest
+   # One-time token setup (if not already done):
+   echo "ghp_YourTokenHere" > ~/.github-token && chmod 600 ~/.github-token
+
+   guile .github/docker/push-image.scm
    ```
 
 4. Re-trigger the CI workflow; it will now succeed.

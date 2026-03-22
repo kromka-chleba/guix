@@ -21,44 +21,10 @@
 ;;; See "22.4 Running Guix Before It Is Installed" in the Guix manual for
 ;;; the ./pre-inst-env requirement.
 
-(use-modules (ice-9 format)
-             (ice-9 getopt-long)
-             (ice-9 popen)
-             (ice-9 rdelim))
+(use-modules (ice-9 getopt-long))
 
-;;; ---------------------------------------------------------------------------
-;;; Helpers
-;;; ---------------------------------------------------------------------------
-
-(define (run-command . args)
-  "Run a shell command given as a list of strings.  Signal an error on
-non-zero exit status."
-  (let* ((cmd (string-join args " "))
-         (ret (system cmd)))
-    (unless (zero? (status:exit-val ret))
-      (error (format #f "Command failed (exit ~a): ~a"
-                     (status:exit-val ret) cmd)))))
-
-(define (read-command-output . args)
-  "Return the last non-empty trimmed line of stdout produced by running ARGS
-as a shell command.  All lines are drained before closing the pipe to avoid
-sending SIGPIPE to the child process.  Signals an error if the command exits
-non-zero."
-  (let* ((cmd    (string-join args " "))
-         (port   (open-input-pipe cmd))
-         ;; Collect every line; keep the last non-empty one.
-         (last   (let loop ((last ""))
-                   (let ((line (read-line port)))
-                     (if (eof-object? line)
-                         last
-                         (loop (if (string-null? (string-trim-right line))
-                                   last
-                                   (string-trim-right line)))))))
-         (ret    (close-pipe port)))
-    (unless (zero? (status:exit-val ret))
-      (error (format #f "Command failed (exit ~a): ~a"
-                     (status:exit-val ret) cmd)))
-    last))
+(define %here (dirname (canonicalize-path (car (command-line)))))
+(load (string-append %here "/docker-lib.scm"))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Main
@@ -79,7 +45,7 @@ non-zero."
                                     ".github/docker/guix-dev-system.scm"))
          (output        (option-ref options 'output
                                     "guix-system-docker-image.tar.gz"))
-         (tag           (option-ref options 'tag "guix-dev:latest")))
+         (tag           (option-ref options 'tag %default-image)))
 
     (when help?
       (display "Usage: ./pre-inst-env guile .github/docker/build-image.scm [OPTIONS]\n")
@@ -104,16 +70,11 @@ non-zero."
 
     (unless no-load?
       (format #t "==> Loading image into Docker and tagging as ~a~%" tag)
-      (let* ((load-out (read-command-output "docker" "load" "<" output))
-             ;; docker load prints e.g. "Loaded image ID: sha256:..." or
-             ;; "Loaded image: name:tag" — extract the last whitespace-delimited word.
-             (words    (string-split load-out #\space))
-             (image-id (string-trim-right
-                        (list-ref words (1- (length words))))))
-        ;; The Guix docker image builder hardcodes the repository name as
-        ;; "guix" in the tarball, so image-id may be "guix:latest".  We
-        ;; immediately retag it to the user-specified tag and then remove
-        ;; the embedded name so that only the desired tag remains.
+      (let* ((load-out  (read-command-output "docker" "load" "<" output))
+             ;; docker load prints "Loaded image ID: sha256:..." or
+             ;; "Loaded image: name:tag" — extract the last word.
+             (words     (string-split load-out #\space))
+             (image-id  (string-trim-right (list-ref words (1- (length words))))))
         (format #t "    Loaded image: ~a (retagging as ~a)~%" image-id tag)
         (run-command "docker" "tag" image-id tag)
         (format #t "==> Tagged as ~a~%" tag)

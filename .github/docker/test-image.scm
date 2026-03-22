@@ -25,28 +25,10 @@
 ;;;   6. Builds the GNU hello package.
 ;;;   7. Stops and removes the test container.
 
-(use-modules (ice-9 format)
-             (ice-9 getopt-long)
-             (ice-9 popen)
-             (ice-9 rdelim))
+(use-modules (ice-9 getopt-long))
 
-;;; ---------------------------------------------------------------------------
-;;; Helpers
-;;; ---------------------------------------------------------------------------
-
-(define (run-command/check desc . args)
-  "Run a shell command silently, print DESC with PASS/FAIL, return #t on success."
-  (let* ((cmd (string-append (string-join args " ") " >/dev/null 2>&1"))
-         (ret (system cmd)))
-    (if (zero? (status:exit-val ret))
-        (begin (format #t "  [PASS] ~a~%" desc) #t)
-        (begin (format #t "  [FAIL] ~a (exit ~a)~%" desc (status:exit-val ret)) #f))))
-
-(define (container-exec container . cmd-args)
-  "Build a 'docker exec' command string for CONTAINER running CMD-ARGS."
-  (string-append
-   "docker exec " container " "
-   (string-join cmd-args " ")))
+(define %here (dirname (canonicalize-path (car (command-line)))))
+(load (string-append %here "/docker-lib.scm"))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Main
@@ -61,7 +43,7 @@
   (let* ((options    (getopt-long args option-spec))
          (help?      (option-ref options 'help #f))
          (privileged (not (option-ref options 'no-privileged #f)))
-         (image      (option-ref options 'image "guix-dev:latest"))
+         (image      (option-ref options 'image %default-image))
          (cname      "guix-dev-test"))
 
     (when help?
@@ -74,40 +56,15 @@
     (format #t "==> Testing image: ~a~%" image)
 
     ;; Clean up any pre-existing test container with the same name.
-    (system (string-append "docker rm -f " cname " 2>/dev/null || true"))
+    (docker-stop+rm cname)
 
-    ;; Create container.
-    (let* ((priv-flag (if privileged "--privileged" ""))
-           (create-cmd (string-append
-                        "docker create --name " cname " "
-                        priv-flag " "
-                        image)))
-      (format #t "==> Creating container ~a~%" cname)
-      (unless (zero? (system (string-append create-cmd " >/dev/null")))
-        (error "Failed to create container")))
-
-    ;; Start container.
+    ;; Create and start the container.
+    (format #t "==> Creating container ~a~%" cname)
+    (docker-create image cname #:privileged? privileged)
     (format #t "==> Starting container~%")
-    (unless (zero? (system (string-append "docker start " cname " >/dev/null")))
-      (error "Failed to start container"))
+    (docker-start cname)
 
-    ;; Poll until guix-daemon is started (up to 30 s), then run tests.
-    ;; Without --privileged, guix-daemon cannot create build sandboxes and
-    ;; will stay stopped; in that case the build test will fail as expected.
-    (format #t "==> Waiting for guix-daemon...~%")
-    (let wait-loop ((remaining 30))
-      (cond
-       ((zero? remaining)
-        (format #t "  [WARN] guix-daemon did not start within 30 s; build test may fail~%"))
-       ((zero? (system
-                (string-append
-                 "docker exec " cname
-                 " /run/current-system/profile/bin/herd"
-                 " status guix-daemon 2>&1 | grep -q started")))
-        (format #t "  [OK] guix-daemon is running~%"))
-       (else
-        (sleep 1)
-        (wait-loop (- remaining 1)))))
+    (wait-for-daemon cname)
 
     ;; Run tests.
     (let ((results
@@ -115,30 +72,29 @@
             (run-command/check
              "Guix system root exists"
              (container-exec cname
-              "/run/current-system/profile/bin/test" "-d" "/run/current-system"))
+              (string-append %system-profile "/test") "-d" "/run/current-system"))
 
             (run-command/check
              "guix --version"
              (container-exec cname
-              "/run/current-system/profile/bin/guix" "--version"))
+              (string-append %system-profile "/guix") "--version"))
 
             (run-command/check
              "guix package description lookup (hello)"
              (container-exec cname
-              "/run/current-system/profile/bin/guix" "show" "hello"))
+              (string-append %system-profile "/guix") "show" "hello"))
 
             (run-command/check
              "guix build hello"
              (container-exec cname
-              "/run/current-system/profile/bin/guix" "build" "hello")))))
+              (string-append %system-profile "/guix") "build" "hello")))))
 
       ;; Cleanup.
       (format #t "==> Stopping and removing container~%")
-      (system (string-append "docker stop " cname " >/dev/null"))
-      (system (string-append "docker rm " cname " >/dev/null"))
+      (docker-stop+rm cname)
 
       ;; Summary.
-      (let ((pass (length (filter identity results)))
+      (let ((pass  (length (filter identity results)))
             (total (length results)))
         (format #t "~%==> Results: ~a/~a tests passed~%" pass total)
         (unless (= pass total)
