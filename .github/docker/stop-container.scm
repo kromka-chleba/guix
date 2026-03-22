@@ -33,10 +33,8 @@
       (display "  -h, --help       Show this help\n")
       (exit 0))
 
-    (format #t "==> Stopping container '~a'~%" name)
-    (run-command "docker" "stop" name)
-    (format #t "==> Removing container '~a'~%" name)
-    (run-command "docker" "rm" name)
+    (format #t "==> Stopping and removing container '~a'~%" name)
+    (docker-stop+rm name)
     (format #t "==> Done.~%")))
 
 (main (command-line))
