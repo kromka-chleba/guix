@@ -110,7 +110,10 @@ non-zero."
              (words    (string-split load-out #\space))
              (image-id (string-trim-right
                         (list-ref words (1- (length words))))))
-        (format #t "    Loaded image: ~a~%" image-id)
+        ;; The Guix docker image builder hardcodes the repository name as
+        ;; "guix" in the tarball, so image-id may be "guix:latest".  We
+        ;; immediately retag it to the user-specified tag below.
+        (format #t "    Loaded image: ~a (retagging as ~a)~%" image-id tag)
         (run-command "docker" "tag" image-id tag)
         (format #t "==> Tagged as ~a~%" tag)))
 
