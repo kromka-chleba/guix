@@ -32,8 +32,8 @@
 ;;; ---------------------------------------------------------------------------
 
 (define (run-command/check desc . args)
-  "Run a shell command, print DESC, and return #t on success, #f on failure."
-  (let* ((cmd (string-join args " "))
+  "Run a shell command silently, print DESC with PASS/FAIL, return #t on success."
+  (let* ((cmd (string-append (string-join args " ") " >/dev/null 2>&1"))
          (ret (system cmd)))
     (if (zero? (status:exit-val ret))
         (begin (format #t "  [PASS] ~a~%" desc) #t)
@@ -80,12 +80,12 @@
                         priv-flag " "
                         image)))
       (format #t "==> Creating container ~a~%" cname)
-      (unless (zero? (system create-cmd))
+      (unless (zero? (system (string-append create-cmd " >/dev/null")))
         (error "Failed to create container")))
 
     ;; Start container.
     (format #t "==> Starting container~%")
-    (unless (zero? (system (string-append "docker start " cname)))
+    (unless (zero? (system (string-append "docker start " cname " >/dev/null")))
       (error "Failed to start container"))
 
     ;; Allow a moment for Shepherd/init to settle.
@@ -111,8 +111,8 @@
 
       ;; Cleanup.
       (format #t "==> Stopping and removing container~%")
-      (system (string-append "docker stop " cname))
-      (system (string-append "docker rm " cname))
+      (system (string-append "docker stop " cname " >/dev/null"))
+      (system (string-append "docker rm " cname " >/dev/null"))
 
       ;; Summary.
       (let ((pass (length (filter identity results)))
