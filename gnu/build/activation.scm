@@ -313,8 +313,14 @@ EINVAL, ELOOP, etc."
   ;; Use 'delete-file-recursively' rather than 'delete-file' so that the
   ;; removal succeeds even when /etc/ssl is a real directory (e.g. one
   ;; pre-created by Docker) instead of just a plain file or symlink.
+  ;; Skip the symlink when /etc/ssl still exists after deletion (e.g.
+  ;; Docker bind-mounts cert.pem/ca-bundle.pem inside it as busy files,
+  ;; preventing full removal).  In that case the host certificates are
+  ;; usable as-is and the unconditional symlink would abort activate-etc
+  ;; with EEXIST before populating the rest of /etc.
   (false-if-exception (delete-file-recursively "/etc/ssl"))
-  (symlink "/run/current-system/profile/etc/ssl" "/etc/ssl")
+  (unless (false-if-exception (lstat "/etc/ssl"))
+    (symlink "/run/current-system/profile/etc/ssl" "/etc/ssl"))
 
   (for-each (lambda (file)
               (let ((target (string-append "/etc/" file))
