@@ -10,18 +10,20 @@
 ;;;   guile .github/docker/test-image.scm [OPTIONS]
 ;;;
 ;;; Options:
-;;;   --image IMAGE   Docker image name/tag to test (default: guix-dev:latest)
-;;;   --privileged    Run the test container with --privileged (required for
-;;;                   building software with Guix inside the container)
-;;;   --help          Show this help message
+;;;   --image IMAGE     Docker image name/tag to test (default: guix-dev:latest)
+;;;   --no-privileged   Do NOT run the container with --privileged.
+;;;                     By default the container runs privileged so that
+;;;                     guix-daemon can set up build sandboxes.
+;;;   --help            Show this help message
 ;;;
 ;;; The script:
-;;;   1. Creates and starts a container from IMAGE.
+;;;   1. Creates and starts a container from IMAGE (privileged by default).
 ;;;   2. Verifies that /run/current-system exists (Guix system booted).
 ;;;   3. Runs `guix --version` inside the container.
 ;;;   4. Attempts a basic package description lookup.
-;;;   5. Builds the GNU hello package (requires --privileged).
-;;;   6. Stops and removes the test container.
+;;;   5. Waits for guix-daemon to start (up to 30 s).
+;;;   6. Builds the GNU hello package.
+;;;   7. Stops and removes the test container.
 
 (use-modules (ice-9 format)
              (ice-9 getopt-long)
@@ -51,22 +53,22 @@
 ;;; ---------------------------------------------------------------------------
 
 (define option-spec
-  '((image      (single-char #\i) (value #t))
-    (privileged (value #f))
-    (help       (single-char #\h) (value #f))))
+  '((image         (single-char #\i) (value #t))
+    (no-privileged (value #f))
+    (help          (single-char #\h) (value #f))))
 
 (define (main args)
   (let* ((options    (getopt-long args option-spec))
          (help?      (option-ref options 'help #f))
-         (privileged (option-ref options 'privileged #f))
+         (privileged (not (option-ref options 'no-privileged #f)))
          (image      (option-ref options 'image "guix-dev:latest"))
          (cname      "guix-dev-test"))
 
     (when help?
       (display "Usage: guile .github/docker/test-image.scm [OPTIONS]\n")
-      (display "  -i, --image IMAGE   Docker image to test\n")
-      (display "      --privileged    Use --privileged flag\n")
-      (display "  -h, --help          Show this help\n")
+      (display "  -i, --image IMAGE    Docker image to test\n")
+      (display "      --no-privileged  Skip --privileged flag\n")
+      (display "  -h, --help           Show this help\n")
       (exit 0))
 
     (format #t "==> Testing image: ~a~%" image)
@@ -89,8 +91,23 @@
     (unless (zero? (system (string-append "docker start " cname " >/dev/null")))
       (error "Failed to start container"))
 
-    ;; Allow a moment for Shepherd/init to settle.
-    (sleep 3)
+    ;; Poll until guix-daemon is started (up to 30 s), then run tests.
+    ;; Without --privileged, guix-daemon cannot create build sandboxes and
+    ;; will stay stopped; in that case the build test will fail as expected.
+    (format #t "==> Waiting for guix-daemon...~%")
+    (let wait-loop ((remaining 30))
+      (cond
+       ((zero? remaining)
+        (format #t "  [WARN] guix-daemon did not start within 30 s; build test may fail~%"))
+       ((zero? (system
+                (string-append
+                 "docker exec " cname
+                 " /run/current-system/profile/bin/herd"
+                 " status guix-daemon 2>&1 | grep -q started")))
+        (format #t "  [OK] guix-daemon is running~%"))
+       (else
+        (sleep 1)
+        (wait-loop (- remaining 1)))))
 
     ;; Run tests.
     (let ((results

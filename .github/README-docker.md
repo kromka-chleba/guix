@@ -51,6 +51,8 @@ the core Guix source tree:
 │   ├── guix-dev-system.scm     # Guix OS configuration for the dev image
 │   ├── build-image.scm         # Guile script: build & tag the image
 │   ├── test-image.scm          # Guile script: smoke-test a container
+│   ├── start-container.sh      # Shell script: start a dev container
+│   ├── stop-container.sh       # Shell script: stop and remove a container
 │   └── list-source-urls.scm    # Guile script: list package source URLs
 ├── workflows/
 │   └── docker-image.yml        # GitHub Actions CI workflow
@@ -79,18 +81,24 @@ docker pull ghcr.io/kromka-chleba/guix-dev:latest
 
 ### 2 — Create and start a container
 
+Use the helper script (recommended):
+
 ```bash
-image_id="$(docker load < guix-system-docker-image.tar.gz | awk '{print $NF}')"
-container_id="$(docker create "$image_id")"
+.github/docker/start-container.sh ghcr.io/kromka-chleba/guix-dev:latest
+```
+
+Or manually:
+
+```bash
+container_id="$(docker create --privileged \
+    -v "$PWD:/workspace" -w /workspace \
+    ghcr.io/kromka-chleba/guix-dev:latest)"
 docker start "$container_id"
 ```
 
-Or, using the tagged image directly:
-
-```bash
-container_id="$(docker create ghcr.io/kromka-chleba/guix-dev:latest)"
-docker start "$container_id"
-```
+> **Note:** `--privileged` is required so that `guix-daemon` can set up build
+> sandboxes inside the container.  Without it, the daemon will not start and
+> `guix build` will fail.
 
 ### 3 — Open an interactive shell
 
@@ -167,7 +175,8 @@ The image is generated with:
 
 ```bash
 image_id="$(docker load < guix-system-docker-image.tar.gz | awk '{print $NF}')"
-container_id="$(docker create "$image_id")"
+container_id="$(docker create --privileged \
+    -v "$PWD:/workspace" -w /workspace "$image_id")"
 docker start "$container_id"
 ```
 
@@ -197,7 +206,32 @@ intentionally absent.
 
 ## Helper scripts
 
-All helper scripts are written in **Guile/Scheme** (Guix-compatible style).
+All Guile/Scheme helper scripts require `./pre-inst-env` when run from a
+source checkout (see [pre-inst-env requirement](#pre-inst-env-requirement)).
+The shell scripts (`start-container.sh`, `stop-container.sh`) only need Docker.
+
+### `start-container.sh` — Start a dev container
+
+```bash
+# Start container from local image (default name: guix-dev)
+.github/docker/start-container.sh
+
+# Start container from GHCR image with a custom name
+.github/docker/start-container.sh ghcr.io/kromka-chleba/guix-dev:latest my-dev
+```
+
+The script creates and starts a container with `--privileged` and mounts the
+repository at `/workspace`.  It prints the `docker exec` command to connect.
+
+### `stop-container.sh` — Stop and remove a dev container
+
+```bash
+# Stop the default container (guix-dev)
+.github/docker/stop-container.sh
+
+# Stop a named container
+.github/docker/stop-container.sh my-dev
+```
 
 ### `build-image.scm` — Build and tag the image
 
@@ -217,8 +251,9 @@ guile .github/docker/test-image.scm \
     --image ghcr.io/kromka-chleba/guix-dev:latest
 ```
 
-Add `--privileged` if the test involves building software with Guix inside
-the container (see [Caveats](#caveats)).
+The container runs with `--privileged` by default so that `guix-daemon` starts
+and the `guix build hello` test can succeed.  Pass `--no-privileged` to skip
+that flag (the build test will then fail as expected).
 
 ### `list-source-urls.scm` — List package source URLs
 
@@ -314,16 +349,19 @@ new image (e.g., Guix API breakage):
 
 ### Privileged mode for builds
 
-If you need to build software _with Guix_ inside the container (i.e.,
-`guix build` or `guix system image` from within the container), the
-container must be started with `--privileged`:
+`guix-daemon` requires certain Linux capabilities (chroot, device nodes, …) to
+set up build sandboxes.  In Docker, this means the container must be started
+with `--privileged`.
+
+The helper scripts and `test-image.scm` **use `--privileged` by default**.
+If you manage containers manually, always include the flag:
 
 ```bash
 docker create --privileged "$image_id"
 ```
 
-Without `--privileged`, the Guix daemon may fail to set up build
-sandboxes.
+Without `--privileged`, Shepherd starts but `guix-daemon` stays stopped, and
+`guix build` will fail with a connection error.
 
 ### Networking
 
