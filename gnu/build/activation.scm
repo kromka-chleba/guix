@@ -331,18 +331,26 @@ EINVAL, ELOOP, etc."
                     ;; convention to be followed.
                     (source (canonicalize-path* (string-append etc "/" file))))
                 (rm-f target)
-                (cond ((string=? (basename target) "sudoers")
-                       (begin
-                         ;; /etc/sudoers must be a regular file.
-                         (copy-file source target)
-                         ;; XXX: dirty hack to meet sudo's expectations
-                         (chmod target #o440)))
-                      ((string=? (basename target) "hosts")
-                       ;; /etc/hosts must be a regular file, as some software
-                       ;; like vpn-slice expect to be able to write to it.
-                       (copy-file source target))
-                      (else             ;usual case
-                       (symlink source target)))))
+                ;; If the target could not be removed (e.g. a Docker
+                ;; bind-mounted /etc/hostname or /etc/resolv.conf returns
+                ;; EBUSY), skip it rather than letting the subsequent
+                ;; 'symlink' call throw EEXIST and abort the whole loop,
+                ;; which would leave /etc/skel, nsswitch.conf, pam.d, etc.
+                ;; unpopulated.
+                (unless (file-exists? target)
+                  (cond ((string=? (basename target) "sudoers")
+                         (begin
+                           ;; /etc/sudoers must be a regular file.
+                           (copy-file source target)
+                           ;; XXX: dirty hack to meet sudo's expectations
+                           (chmod target #o440)))
+                        ((string=? (basename target) "hosts")
+                         ;; /etc/hosts must be a regular file, as some
+                         ;; software like vpn-slice expect to be able to
+                         ;; write to it.
+                         (copy-file source target))
+                        (else             ;usual case
+                         (symlink source target))))))
             (scandir etc (negate dot-or-dot-dot?)
                      ;; The default is 'string-locale<?', but we don't have
                      ;; it when run from the initrd's statically-linked
