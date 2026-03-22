@@ -20,7 +20,8 @@
 ;;;   2. Verifies that /run/current-system exists (Guix system booted).
 ;;;   3. Runs `guix --version` inside the container.
 ;;;   4. Attempts a basic package description lookup.
-;;;   5. Stops and removes the test container.
+;;;   5. Builds the GNU hello package (requires --privileged).
+;;;   6. Stops and removes the test container.
 
 (use-modules (ice-9 format)
              (ice-9 getopt-long)
@@ -107,7 +108,12 @@
             (run-command/check
              "guix package description lookup (hello)"
              (container-exec cname
-              "/run/current-system/profile/bin/guix" "show" "hello")))))
+              "/run/current-system/profile/bin/guix" "show" "hello"))
+
+            (run-command/check
+             "guix build hello"
+             (container-exec cname
+              "/run/current-system/profile/bin/guix" "build" "hello")))))
 
       ;; Cleanup.
       (format #t "==> Stopping and removing container~%")
