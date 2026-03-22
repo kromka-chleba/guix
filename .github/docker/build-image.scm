@@ -112,10 +112,16 @@ non-zero."
                         (list-ref words (1- (length words))))))
         ;; The Guix docker image builder hardcodes the repository name as
         ;; "guix" in the tarball, so image-id may be "guix:latest".  We
-        ;; immediately retag it to the user-specified tag below.
+        ;; immediately retag it to the user-specified tag and then remove
+        ;; the embedded name so that only the desired tag remains.
         (format #t "    Loaded image: ~a (retagging as ~a)~%" image-id tag)
         (run-command "docker" "tag" image-id tag)
-        (format #t "==> Tagged as ~a~%" tag)))
+        (format #t "==> Tagged as ~a~%" tag)
+        ;; Remove the original embedded tag when it differs from the
+        ;; requested one, so "docker images" shows only the desired name.
+        (unless (equal? image-id tag)
+          (run-command "docker" "rmi" image-id)
+          (format #t "==> Removed embedded tag ~a~%" image-id))))
 
     (format #t "==> Done.~%")))
 
