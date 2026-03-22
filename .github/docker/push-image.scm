@@ -49,9 +49,8 @@
                             "docker image inspect " image
                             " >/dev/null 2>&1")))
       (format (current-error-port)
-              "error: local image not found: ~a~%~
-Hint: build and load it first with:~%~
-  ./pre-inst-env guile .github/docker/build-image.scm~%")
+              "error: local image not found: ~a~%Hint: build and load it first with:~%  ./pre-inst-env guile .github/docker/build-image.scm~%"
+              image)
       (exit 1))
 
     ;; Retag the local image as the remote tag when they differ.
