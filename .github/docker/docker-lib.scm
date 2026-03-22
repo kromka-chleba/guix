@@ -5,8 +5,7 @@
 ;;;
 ;;; Load from a sibling script with:
 ;;;
-;;;   (define %here (dirname (canonicalize-path (car (command-line)))))
-;;;   (load (string-append %here "/docker-lib.scm"))
+;;;   (include "docker-lib.scm")
 
 (use-modules (ice-9 format)
              (ice-9 popen)
@@ -21,13 +20,6 @@
 (define %ghcr-registry          "ghcr.io")
 (define %ghcr-image             "ghcr.io/kromka-chleba/guix-dev")
 (define %system-profile         "/run/current-system/profile/bin")
-
-;;; Default file from which the GHCR personal-access token is read.
-;;; Falls back to the passwd database if HOME is not set in the environment.
-(define %default-token-file
-  (let ((home (or (getenv "HOME")
-                  (passwd:dir (getpwuid (getuid))))))
-    (string-append home "/.github-token")))
 
 ;;; Absolute path to the directory that contains the scripts (and this file).
 ;;; Uses (car (command-line)) so it always refers to the top-level invoked
@@ -87,24 +79,6 @@ shell command.  Signal an error if the command exits non-zero."
       (error (format #f "Command failed (exit ~a): ~a"
                      (status:exit-val ret) cmd)))
     last))
-
-(define (pipe-to-command input . args)
-  "Write INPUT (a string) to the standard input of the shell command formed
-by joining ARGS with spaces.  Signal an error on non-zero exit status."
-  (let* ((cmd  (string-join args " "))
-         (port (open-output-pipe cmd)))
-    (display input port)
-    (let ((ret (close-pipe port)))
-      (unless (zero? (status:exit-val ret))
-        (error (format #f "Command failed (exit ~a): ~a"
-                       (status:exit-val ret) cmd))))))
-
-(define (read-file-trimmed path)
-  "Read the entire contents of PATH and return it with trailing whitespace
-stripped."
-  (call-with-input-file path
-    (lambda (port)
-      (string-trim-right (read-string port)))))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Docker container helpers

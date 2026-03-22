@@ -22,10 +22,9 @@
 5. [How the Docker image is built (image-from-scratch)](#how-the-docker-image-is-built-image-from-scratch)
 6. [Container runtime behaviour](#container-runtime-behaviour)
 7. [Helper scripts](#helper-scripts)
-8. [Token setup](#token-setup)
-9. [CI pipeline](#ci-pipeline)
-10. [Bootstrap and recovery](#bootstrap-and-recovery)
-11. [Caveats](#caveats)
+8. [CI pipeline](#ci-pipeline)
+9. [Bootstrap and recovery](#bootstrap-and-recovery)
+10. [Caveats](#caveats)
 
 ---
 
@@ -255,8 +254,9 @@ guile .github/docker/push-image.scm \
     --tag ghcr.io/kromka-chleba/guix-dev:latest
 ```
 
-Reads the GHCR personal access token from `~/.github-token` (see
-[Token setup](#token-setup)).
+Docker credentials are read from `~/.docker/config.json` as managed by
+`docker login`.  Run `docker login ghcr.io` once if you have not
+authenticated already.
 
 ### `build-image.scm` — Build and tag the image
 
@@ -288,21 +288,6 @@ Useful for building network allowlists in restricted build environments:
 ```bash
 ./pre-inst-env guile .github/docker/list-source-urls.scm hello gcc glibc
 ```
-
----
-
-## Token setup
-
-`push-image.scm` reads a GitHub personal access token from `~/.github-token`
-by default.  Create a token with the **`write:packages`** scope at
-<https://github.com/settings/tokens> and save it once:
-
-```bash
-echo "ghp_YourTokenHere" > ~/.github-token
-chmod 600 ~/.github-token
-```
-
-Pass `--token-file PATH` to use a different file.
 
 ---
 
@@ -359,12 +344,10 @@ image and will fail with an informative error.  To bootstrap:
    docker tag "$image_id" ghcr.io/kromka-chleba/guix-dev:latest
    ```
 
-3. Log in to GHCR and push:
+3. Log in to GHCR (if not already) and push:
 
    ```bash
-   # One-time token setup (if not already done):
-   echo "ghp_YourTokenHere" > ~/.github-token && chmod 600 ~/.github-token
-
+   docker login ghcr.io   # one-time; credentials saved to ~/.docker/config.json
    guile .github/docker/push-image.scm
    ```
 

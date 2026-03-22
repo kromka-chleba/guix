@@ -23,8 +23,7 @@
 
 (use-modules (ice-9 getopt-long))
 
-(define %here (dirname (canonicalize-path (car (command-line)))))
-(load (string-append %here "/docker-lib.scm"))
+(include "docker-lib.scm")
 
 ;;; ---------------------------------------------------------------------------
 ;;; Main
