@@ -84,7 +84,7 @@ jobs:
       # ------------------------------------------------------------------
       # Prepare the dev environment inside the bootstrap container so that
       # ./pre-inst-env is available for the build step.
-      # Runs: guix shell -D guix -- sh -c './bootstrap && ./configure --localstatedir=/var && make'
+      # Runs: guix shell -D guix -- sh -c './bootstrap; ./configure --localstatedir=/var; make V=1'
       # ------------------------------------------------------------------
       - name: Prepare dev environment (bootstrap, configure, make)
         if: >
@@ -97,7 +97,15 @@ jobs:
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              sh -c 'guix shell -D guix -- sh -c "./bootstrap && ./configure --localstatedir=/var && make"'
+              sh -c 'guix shell -D guix -- sh -c "
+                set -e
+                echo \"==> Running ./bootstrap ...\"
+                ./bootstrap
+                echo \"==> Running ./configure ...\"
+                ./configure --localstatedir=/var
+                echo \"==> Running make (V=1) ...\"
+                make V=1
+              "'
           else
             echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
             exit 1
@@ -114,18 +122,15 @@ jobs:
           github.event.inputs.force_rebuild == 'true'
         run: |
           if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
-            # 'guix system image' prints the store path of the result to stdout.
-            # Capture it, then copy the actual image file to the workspace.
             docker run --rm \
               --privileged \
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              sh -c 'store_path=$(./pre-inst-env guix system image \
-                       --image-type=docker \
-                       --system=x86_64-linux \
-                       ${{ env.SYSTEM_CONFIG }}) \
-                     && cp "$store_path" guix-system-docker-image.tar.gz'
+              sh -c './pre-inst-env guile .github/docker/build-image.scm \
+                       --system-config ${{ env.SYSTEM_CONFIG }} \
+                       --output guix-system-docker-image.tar.gz \
+                       --no-load'
           else
             echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
             exit 1
