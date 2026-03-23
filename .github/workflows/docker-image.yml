@@ -92,7 +92,7 @@ jobs:
                      set -ex
                      guix shell --verbosity=2 --no-grafts -D guix -- sh -c "
                        set -ex
-                       ./bootstrap
+                       sh ./bootstrap
                        ./configure --localstatedir=/var
                        make V=1
                      "'
