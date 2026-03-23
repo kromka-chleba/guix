@@ -71,6 +71,14 @@ jobs:
       # Correct pattern: create + start the container (letting Guix activate
       # and Shepherd come up), then use `docker exec` to run commands inside
       # the already-booted container.
+      #
+      # We intentionally do NOT use `guix shell -D guix` here: that would
+      # create a fresh profile, trigger profile hooks (glib-schemas,
+      # xdg-desktop-database, …), and potentially download or graft packages
+      # that are not yet in the store.  Instead we rely on the system profile,
+      # which already contains all guix build inputs thanks to
+      # %guix-dev-packages in guix-dev-system.scm.  This makes bootstrap,
+      # configure, and make fully offline and avoids the glib graft failure.
       # ------------------------------------------------------------------
       - name: Prepare dev environment (bootstrap, configure, make)
         run: |
@@ -87,15 +95,14 @@ jobs:
             .github/docker/wait-for-daemon.sh "$CNAME"
             # Run bootstrap, configure and make via docker exec so that the
             # command actually executes inside the running container.
+            # All guix build inputs are pre-installed in the system profile
+            # by %guix-dev-packages, so no network access is required.
             docker exec -w /workspace "$CNAME" \
               /bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
                      set -ex
-                     guix shell --verbosity=2 -D guix -- sh -c "
-                       set -ex
-                       ./bootstrap
-                       ./configure --localstatedir=/var
-                       make V=1
-                     "'
+                     ./bootstrap
+                     ./configure --localstatedir=/var
+                     make -j$(nproc) V=1'
             docker stop "$CNAME"
             docker rm   "$CNAME"
           else
@@ -127,7 +134,7 @@ jobs:
             docker exec -w /workspace "$CNAME" \
               /bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
                      set -ex
-                     guile .github/docker/build-image.scm \
+                     ./pre-inst-env guile .github/docker/build-image.scm \
                        --system-config ${{ env.SYSTEM_CONFIG }} \
                        --output guix-system-docker-image.tar.gz \
                        --no-load'
