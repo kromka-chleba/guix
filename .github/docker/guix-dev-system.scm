@@ -16,6 +16,7 @@
              (gnu packages base)
              (gnu packages bash)
              (gnu packages package-management)
+             (gnu packages guile)
              (gnu packages version-control)
              (gnu packages wget)
              (gnu packages compression))
@@ -41,6 +42,7 @@
   (packages (append
              (list bash
                    git
+                   guile-3.0
                    wget
                    gzip
                    tar)
