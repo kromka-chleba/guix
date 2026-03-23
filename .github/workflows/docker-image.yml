@@ -97,15 +97,14 @@ jobs:
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              sh -c 'guix shell -D guix -- sh -c "
-                set -e
-                echo \"==> Running ./bootstrap ...\"
-                ./bootstrap
-                echo \"==> Running ./configure ...\"
-                ./configure --localstatedir=/var
-                echo \"==> Running make (V=1) ...\"
-                make V=1
-              "'
+              stdbuf -o0 -e0 sh -c \
+                'set -ex
+                 guix shell --verbosity=2 -D guix -- sh -c "
+                   set -ex
+                   ./bootstrap
+                   ./configure --localstatedir=/var
+                   make V=1
+                 "'
           else
             echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
             exit 1
@@ -127,10 +126,12 @@ jobs:
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              sh -c './pre-inst-env guile .github/docker/build-image.scm \
-                       --system-config ${{ env.SYSTEM_CONFIG }} \
-                       --output guix-system-docker-image.tar.gz \
-                       --no-load'
+              stdbuf -o0 -e0 sh -c \
+                'set -ex
+                 ./pre-inst-env guile .github/docker/build-image.scm \
+                   --system-config ${{ env.SYSTEM_CONFIG }} \
+                   --output guix-system-docker-image.tar.gz \
+                   --no-load'
           else
             echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
             exit 1
