@@ -94,6 +94,16 @@
              "guix build hello"
              (container-exec cname
               (string-append %system-profile "/guix") "build" "hello")
+             #:verbose? verbose?)
+
+            (run-command/check
+             "/bin/sh exists"
+             (container-exec cname "test" "-x" "/bin/sh")
+             #:verbose? verbose?)
+
+            (run-command/check
+             "/usr/bin/env exists"
+             (container-exec cname "test" "-x" "/usr/bin/env")
              #:verbose? verbose?))))
 
       ;; Cleanup.

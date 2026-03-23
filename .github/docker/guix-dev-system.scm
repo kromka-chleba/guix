@@ -99,4 +99,13 @@
                    (substitute-urls '("https://bordeaux.guix.gnu.org"
                                       "https://ci.guix.gnu.org"))))
          ;; Minimal logging.
-         (service syslog-service-type))))
+         (service syslog-service-type)
+
+         ;; Provide /bin/sh and /usr/bin/env symlinks that many build scripts
+         ;; and shebangs rely on.  We add these individually rather than pulling
+         ;; in %base-services because the rest of %base-services (getty,
+         ;; mingetty, udev, nscd, static-networking, …) is wrong for Docker.
+         (extra-special-file "/bin/sh"
+                             (file-append bash "/bin/sh"))
+         (extra-special-file "/usr/bin/env"
+                             (file-append coreutils "/bin/env")))))
