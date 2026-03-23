@@ -127,7 +127,7 @@ jobs:
             docker exec -w /workspace "$CNAME" \
               /bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
                      set -ex
-                     ./pre-inst-env guile .github/docker/build-image.scm \
+                     guile .github/docker/build-image.scm \
                        --system-config ${{ env.SYSTEM_CONFIG }} \
                        --output guix-system-docker-image.tar.gz \
                        --no-load'
