@@ -90,7 +90,7 @@ jobs:
             docker exec -w /workspace "$CNAME" \
               /run/current-system/profile/bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
                      set -ex
-                     guix shell --verbosity=2 -D guix -- sh -c "
+                     guix shell --verbosity=2 --no-grafts -D guix -- sh -c "
                        set -ex
                        ./bootstrap
                        ./configure --localstatedir=/var
