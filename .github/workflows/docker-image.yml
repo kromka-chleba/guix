@@ -17,11 +17,7 @@ on:
   push:
     branches:
       - docker-github-ci
-    paths:
-      - '.github/docker/**'
   pull_request:
-    paths:
-      - '.github/docker/**'
   workflow_dispatch:
     inputs:
       force_rebuild:
