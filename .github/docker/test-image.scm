@@ -74,38 +74,32 @@
            (list
             (run-command/check
              "Guix system root exists"
-             (container-exec cname
-              (string-append %system-profile "/test") "-d" "/run/current-system")
+             (container-exec cname "test" "-d" "/run/current-system")
              #:verbose? verbose?)
 
             (run-command/check
              "guix --version"
-             (container-exec cname
-              (string-append %system-profile "/guix") "--version")
+             (container-exec cname "guix" "--version")
              #:verbose? verbose?)
 
             (run-command/check
              "guix package description lookup (hello)"
-             (container-exec cname
-              (string-append %system-profile "/guix") "show" "hello")
+             (container-exec cname "guix" "show" "hello")
              #:verbose? verbose?)
 
             (run-command/check
              "guix build hello"
-             (container-exec cname
-              (string-append %system-profile "/guix") "build" "hello")
+             (container-exec cname "guix" "build" "hello")
              #:verbose? verbose?)
 
             (run-command/check
              "/bin/sh exists"
-             (container-exec cname
-              (string-append %system-profile "/test") "-x" "/bin/sh")
+             (container-exec cname "test" "-x" "/bin/sh")
              #:verbose? verbose?)
 
             (run-command/check
              "/usr/bin/env exists"
-             (container-exec cname
-              (string-append %system-profile "/test") "-x" "/usr/bin/env")
+             (container-exec cname "test" "-x" "/usr/bin/env")
              #:verbose? verbose?))))
 
       ;; Cleanup.

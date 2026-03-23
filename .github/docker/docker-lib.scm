@@ -115,8 +115,13 @@ stopped or not present)."
   (system (string-append "docker rm   " name " >/dev/null 2>&1")))
 
 (define (container-exec container . cmd-args)
-  "Return a 'docker exec CONTAINER ...' shell command string."
-  (string-append "docker exec " container " " (string-join cmd-args " ")))
+  "Return a 'docker exec CONTAINER ...' shell command string.
+The system-profile bin directory is added to PATH so commands can be
+referenced by name without an absolute prefix."
+  (string-append "docker exec"
+                 " -e PATH=" %system-profile
+                 " " container
+                 " " (string-join cmd-args " ")))
 
 (define* (wait-for-daemon container #:optional (timeout 30))
   "Poll until guix-daemon has started inside CONTAINER, waiting up to TIMEOUT
