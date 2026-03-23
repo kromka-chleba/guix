@@ -1,9 +1,15 @@
 #!/usr/bin/env -S guile --no-auto-compile
 !#
-;;; build-image.scm — Build and tag the Guix dev Docker image.
+;;; build-image.scm — Bootstrap the Guix dev Docker image from a native Guix
+;;;                   installation.
 ;;;
 ;;; NOT official Guix infrastructure.  Personal dev tooling for
 ;;; kromka-chleba/guix.
+;;;
+;;; This script is intended for BOOTSTRAPPING ONLY: use it when no Docker
+;;; bootstrap image is available yet (first-time setup or recovery).  For the
+;;; normal steady-state build, which runs `guix system image` inside an
+;;; existing Docker container, use `build-image-in-docker.scm` instead.
 ;;;
 ;;; Usage (from the repository root, using pre-inst-env):
 ;;;
@@ -48,6 +54,7 @@
 
     (when help?
       (display "Usage: ./pre-inst-env guile .github/docker/build-image.scm [OPTIONS]\n")
+      (display "\nBootstrap only.  For steady-state CI builds use build-image-in-docker.scm.\n\n")
       (display "  -c, --system-config PATH  Guix OS config file\n")
       (display "  -o, --output PATH         Output tarball path\n")
       (display "  -t, --tag TAG             Docker tag (default: guix-dev:latest)\n")
