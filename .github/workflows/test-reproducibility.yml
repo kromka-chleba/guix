@@ -1,0 +1,83 @@
+name: Reproducibility test — Guix Docker image
+
+# NOT official Guix project CI.
+# Personal workflow for the kromka-chleba/guix development branch.
+#
+# Builds the Guix dev Docker image TWICE using the same bootstrap container
+# and system configuration, then compares the SHA-256 digests of both
+# tarballs.  Identical digests confirm that `guix system image` is
+# deterministic for our setup — a prerequisite for Guix's reproducibility
+# guarantee.
+#
+# The test is intentionally NOT part of the main docker-image.yml workflow
+# because it doubles the build time.  Run it:
+#   • manually via workflow_dispatch (Actions → "Run workflow"), or
+#   • on a schedule (weekly by default, comment out to disable).
+#
+# See .github/docker/test-reproducibility.scm for the script that
+# orchestrates the two builds and the comparison.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every Monday at 06:00 UTC.
+    - cron: "0 6 * * 1"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/guix-dev
+  SYSTEM_CONFIG: .github/docker/guix-dev-system.scm
+
+jobs:
+  reproducibility-test:
+    name: Reproducibility test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # The bootstrap image is the build environment for both runs.
+      # Both runs use exactly the same image, the same source tree, and the
+      # same system configuration — the only thing that may vary is the
+      # order in which substitute downloads complete, which must not affect
+      # the final store paths (they are content-addressed).
+      # ------------------------------------------------------------------
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull bootstrap image
+        run: |
+          if ! docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest; then
+            echo "::error::No bootstrap image found in GHCR. See .github/README-docker.md for first-time bootstrap instructions."
+            exit 1
+          fi
+
+      # ------------------------------------------------------------------
+      # Guile is required by test-reproducibility.scm on the runner.
+      # ------------------------------------------------------------------
+      - name: Install Guile on runner
+        run: sudo apt-get install -y --no-install-recommends guile-3.0
+
+      # ------------------------------------------------------------------
+      # Run test-reproducibility.scm.
+      #
+      # The script:
+      #   1. Starts a bootstrap container, builds the image → build1.tar.gz.
+      #   2. Starts a fresh bootstrap container, builds again → build2.tar.gz.
+      #   3. Computes SHA-256 of each tarball and compares them.
+      #   4. Exits non-zero (failing the step) if the digests differ.
+      # ------------------------------------------------------------------
+      - name: Run reproducibility test
+        run: |
+          guile .github/docker/test-reproducibility.scm \
+            --bootstrap-image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            --system-config ${{ env.SYSTEM_CONFIG }}
