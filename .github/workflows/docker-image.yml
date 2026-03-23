@@ -72,13 +72,11 @@ jobs:
       # and Shepherd come up), then use `docker exec` to run commands inside
       # the already-booted container.
       #
-      # We intentionally do NOT use `guix shell -D guix` here: that would
-      # create a fresh profile, trigger profile hooks (glib-schemas,
-      # xdg-desktop-database, …), and potentially download or graft packages
-      # that are not yet in the store.  Instead we rely on the system profile,
-      # which already contains all guix build inputs thanks to
-      # %guix-dev-packages in guix-dev-system.scm.  This makes bootstrap,
-      # configure, and make fully offline and avoids the glib graft failure.
+      # We use `guix shell -D guix` to obtain the full development environment
+      # for the guix package (all build inputs, correct environment variables
+      # such as ACLOCAL_PATH, PKG_CONFIG_PATH, etc.).  Without this wrapper
+      # ./configure and make will fail because the required macros and
+      # libraries are not on the standard search paths.
       # ------------------------------------------------------------------
       - name: Prepare dev environment (bootstrap, configure, make)
         run: |
@@ -93,17 +91,17 @@ jobs:
             docker start "$CNAME"
             # Wait for guix-daemon to be available (up to 120 seconds).
             .github/docker/wait-for-daemon.sh "$CNAME"
-            # Run bootstrap, configure and make via docker exec so that the
-            # command actually executes inside the running container.
-            # All guix build inputs are pre-installed in the system profile
-            # by %guix-dev-packages, so no network access is required.
+            # Run bootstrap, configure and make inside the guix development
+            # environment so that all build inputs and search paths are set up
+            # correctly (ACLOCAL_PATH, PKG_CONFIG_PATH, …).
             docker exec -w /workspace "$CNAME" \
               /bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
-                     export ACLOCAL_PATH=/run/current-system/profile/share/aclocal
                      set -ex
-                     ./bootstrap
-                     ./configure --localstatedir=/var
-                     make -j$(nproc) V=1'
+                     guix shell -D guix -- sh -c "
+                       ./bootstrap
+                       ./configure --localstatedir=/var
+                       make -j$(nproc) V=1
+                     "'
             docker stop "$CNAME"
             docker rm   "$CNAME"
           else
