@@ -19,11 +19,6 @@ on:
       - docker-github-ci
   pull_request:
   workflow_dispatch:
-    inputs:
-      force_rebuild:
-        description: 'Force rebuild even if cache is fresh'
-        required: false
-        default: 'false'
 
 env:
   REGISTRY: ghcr.io
@@ -65,39 +60,20 @@ jobs:
           fi
 
       # ------------------------------------------------------------------
-      # Cache key: hash of the system config file.  If unchanged and not
-      # force-rebuilding, we skip the expensive build step.
-      # ------------------------------------------------------------------
-      - name: Compute config hash
-        id: config_hash
-        run: |
-          echo "hash=$(sha256sum ${{ env.SYSTEM_CONFIG }} | awk '{print $1}')" \
-            >> "$GITHUB_OUTPUT"
-
-      - name: Restore build cache
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: guix-system-docker-image.tar.gz
-          key: guix-docker-image-${{ steps.config_hash.outputs.hash }}
-
-      # ------------------------------------------------------------------
       # Prepare the dev environment inside the bootstrap container so that
       # ./pre-inst-env is available for the build step.
       # Runs: guix shell -D guix -- sh -c './bootstrap; ./configure --localstatedir=/var; make V=1'
       # ------------------------------------------------------------------
       - name: Prepare dev environment (bootstrap, configure, make)
-        if: >
-          steps.cache.outputs.cache-hit != 'true' ||
-          github.event.inputs.force_rebuild == 'true'
         run: |
           if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
             docker run --rm \
+              -t \
               --privileged \
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              stdbuf -o0 -e0 sh -c \
+              sh -c \
                 'set -ex
                  guix shell --verbosity=2 -D guix -- sh -c "
                    set -ex
@@ -116,17 +92,15 @@ jobs:
       # it does NOT use a pre-existing Docker base image.
       # ------------------------------------------------------------------
       - name: Build image (inside bootstrap container)
-        if: >
-          steps.cache.outputs.cache-hit != 'true' ||
-          github.event.inputs.force_rebuild == 'true'
         run: |
           if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
             docker run --rm \
+              -t \
               --privileged \
               -v "$PWD:/workspace" \
               -w /workspace \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-              stdbuf -o0 -e0 sh -c \
+              sh -c \
                 'set -ex
                  ./pre-inst-env guile .github/docker/build-image.scm \
                    --system-config ${{ env.SYSTEM_CONFIG }} \
