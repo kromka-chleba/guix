@@ -21,7 +21,7 @@
              (gnu packages wget)
              (gnu packages compression))
 
-(use-service-modules base networking)
+(use-service-modules base)
 
 (operating-system
   (host-name "guix-dev")
@@ -65,15 +65,18 @@
    (list (service guix-service-type
                   (guix-configuration
                    (guix guix)
+                   ;; This container does not serve substitutes, so there is no
+                   ;; need to generate a signing key pair.  Skipping it avoids
+                   ;; blocking on entropy during system activation — the
+                   ;; 'guix archive --generate-key' call in the activation
+                   ;; script reads from /dev/random via gcrypt and can block
+                   ;; indefinitely in an entropy-starved Docker environment.
+                   ;; rngd-service-type cannot help here because rngd is a
+                   ;; Shepherd-managed service that starts *after* activation.
+                   (generate-substitute-key? #f)
                    ;; Allow builds without network by default; override at
                    ;; runtime with --substitute-urls.
                    (substitute-urls '("https://bordeaux.guix.gnu.org"
                                       "https://ci.guix.gnu.org"))))
          ;; Minimal logging.
-         (service syslog-service-type)
-         ;; Feed /dev/urandom into the kernel entropy pool so that
-         ;; guix-daemon's signing-key generation does not block on
-         ;; /dev/random in entropy-starved Docker containers.
-         (service rngd-service-type
-                  (rngd-configuration
-                   (device "/dev/urandom"))))))
+         (service syslog-service-type))))
