@@ -28,16 +28,17 @@
 
 ;; Collect all direct development inputs of the 'guix' package (native-inputs
 ;; and regular inputs).  Pre-installing these in the system image means that
-;; 'guix shell -D guix' inside the container finds them already in the store
-;; and does not need to fetch or build them during dev-env setup.
+;; ./bootstrap, ./configure, and make can run directly inside the container
+;; using only the system profile — no 'guix shell -D guix' (and the associated
+;; profile-hook builds and potential substitute downloads) is needed.
 ;;
 ;; IMPORTANT: The 'guix' package object used here must define the same input
 ;; versions as the guix binary that will run inside the container.  We
 ;; therefore configure the guix service with %guix-from-checkout below, which
 ;; builds the binary from this very checkout via channel-build-system.  That
 ;; binary's module files define 'guile-3.0-latest' and friends identically to
-;; the definitions below, so 'guix shell -D guix' will find every input in
-;; the pre-populated store without downloading anything.
+;; the definitions below, so every input is available in the store without
+;; downloading anything.
 (define %guix-dev-packages
   (filter-map
    (match-lambda
@@ -79,8 +80,9 @@
   ;; nss-certs is already included in %base-packages; no need to list it here.
   ;; guile is also pre-installed.
   ;; %guix-dev-packages pre-populates the store with all direct inputs of
-  ;; the 'guix' package so that 'guix shell -D guix' needs no network access
-  ;; and no graft builds on first use.
+  ;; the 'guix' package so that ./bootstrap, ./configure, and make can run
+  ;; directly from the system profile without any network access or graft
+  ;; builds.
   (packages (append
              %guix-dev-packages
              (list bash
@@ -108,8 +110,8 @@
   ;; checkout, with channel authentication disabled (personal branches are
   ;; not signed with the Guix committer key infrastructure).
   ;; Its module files then define the same package versions as %guix-dev-packages,
-  ;; ensuring 'guix shell -D guix' finds all inputs in the store without
-  ;; downloading anything.
+  ;; ensuring ./bootstrap, ./configure, and make find all inputs in the store
+  ;; without downloading anything.
   (services
    (list (service guix-service-type
                   (guix-configuration
