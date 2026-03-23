@@ -18,13 +18,14 @@
 1. [Purpose](#purpose)
 2. [Repository layout](#repository-layout)
 3. [Quick start — local development](#quick-start--local-development)
-4. [pre-inst-env requirement](#pre-inst-env-requirement)
-5. [How the Docker image is built (image-from-scratch)](#how-the-docker-image-is-built-image-from-scratch)
-6. [Container runtime behaviour](#container-runtime-behaviour)
-7. [Helper scripts](#helper-scripts)
-8. [CI pipeline](#ci-pipeline)
-9. [Bootstrap and recovery](#bootstrap-and-recovery)
-10. [Caveats](#caveats)
+4. [Preparing the dev environment](#preparing-the-dev-environment)
+5. [pre-inst-env requirement](#pre-inst-env-requirement)
+6. [How the Docker image is built (image-from-scratch)](#how-the-docker-image-is-built-image-from-scratch)
+7. [Container runtime behaviour](#container-runtime-behaviour)
+8. [Helper scripts](#helper-scripts)
+9. [CI pipeline](#ci-pipeline)
+10. [Bootstrap and recovery](#bootstrap-and-recovery)
+11. [Caveats](#caveats)
 
 ---
 
@@ -107,10 +108,26 @@ docker start "$container_id"
 docker exec -ti "$container_id" /run/current-system/profile/bin/bash --login
 ```
 
-### 4 — Run Guix development commands
+### 4 — Prepare the dev environment (inside the container)
+
+Before `./pre-inst-env` can be used, the build system must be generated and
+compiled.  This **must be done inside the Docker container** so that the
+correct Guix store and build dependencies are used:
+
+```bash
+docker exec "$container_id" \
+    sh -c 'cd /workspace && guix shell -D guix -- sh -c "./bootstrap && ./configure --localstatedir=/var && make"'
+```
+
+`guix shell -D guix` makes all of Guix's build dependencies (GNU Autoconf,
+Automake, Gettext, Guile, …) available, then runs the three commands that
+generate `configure`, configure the build tree, and compile the Guile modules.
+
+### 5 — Run Guix development commands
 
 Inside the container, navigate to the mounted repository checkout and use
-`./pre-inst-env` (see [pre-inst-env requirement](#pre-inst-env-requirement)):
+`./pre-inst-env` (see [pre-inst-env requirement](#pre-inst-env-requirement)).
+The dev environment preparation step above must have been run first.
 
 ```bash
 cd /workspace
@@ -121,6 +138,34 @@ cd /workspace
 ./pre-inst-env guile .github/docker/build-image.scm \
     --output guix-system-docker-image.tar.gz
 ```
+
+---
+
+## Preparing the dev environment
+
+Before `./pre-inst-env` can be used, the build system must be generated and
+compiled from the source checkout.  This **must be done inside the Docker
+container** — running it on the host or in a different environment will
+produce artefacts that reference wrong store paths and will not work:
+
+```bash
+guix shell -D guix -- sh -c './bootstrap && ./configure --localstatedir=/var && make'
+```
+
+`guix shell -D guix` installs all of Guix's build dependencies (GNU Autoconf,
+Automake, Gettext, Guile, …) into the current environment without modifying the
+system, then runs the given command inside that environment.
+
+The three sub-commands do the following:
+
+| Command | Purpose |
+|---------|---------|
+| `./bootstrap` | Runs Autoconf/Automake to generate `configure` and `Makefile.in` files. |
+| `./configure --localstatedir=/var` | Configures the build tree; `--localstatedir=/var` matches the value used by an installed Guix. |
+| `make` | Compiles the Guile modules, making `./pre-inst-env` operational. |
+
+In CI this is handled automatically by the **"Prepare dev environment"**
+workflow step (see [CI pipeline](#ci-pipeline)).
 
 ---
 

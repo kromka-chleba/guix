@@ -86,6 +86,28 @@ jobs:
           key: guix-docker-image-${{ steps.config_hash.outputs.hash }}
 
       # ------------------------------------------------------------------
+      # Prepare the dev environment inside the bootstrap container so that
+      # ./pre-inst-env is available for the build step.
+      # Runs: guix shell -D guix -- sh -c './bootstrap && ./configure --localstatedir=/var && make'
+      # ------------------------------------------------------------------
+      - name: Prepare dev environment (bootstrap, configure, make)
+        if: >
+          steps.cache.outputs.cache-hit != 'true' ||
+          github.event.inputs.force_rebuild == 'true'
+        run: |
+          if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
+            docker run --rm \
+              --privileged \
+              -v "$PWD:/workspace" \
+              -w /workspace \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+              sh -c 'guix shell -D guix -- sh -c "./bootstrap && ./configure --localstatedir=/var && make"'
+          else
+            echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
+            exit 1
+          fi
+
+      # ------------------------------------------------------------------
       # Build the image inside the bootstrap container.
       # guix system image --image-type=docker produces a from-scratch image;
       # it does NOT use a pre-existing Docker base image.
