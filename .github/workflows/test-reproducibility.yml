@@ -77,6 +77,27 @@ jobs:
         run: sudo apt-get install -y --no-install-recommends guile-3.0
 
       # ------------------------------------------------------------------
+      # Prepare the build system on the runner.
+      #
+      # bootstrap/configure/make must be run BEFORE the test script because
+      # the Scheme scripts no longer run them inside the container.  Running
+      # them inside the container as root would leave root-owned files in the
+      # bind-mounted workspace.  Here we use `--user` so that all generated
+      # files (pre-inst-env, Makefile, compiled .go files, etc.) are owned by
+      # the runner user, not root.
+      # ------------------------------------------------------------------
+      - name: Prepare build system
+        run: |
+          docker run --rm --privileged \
+            -v "$PWD:$PWD" -w "$PWD" \
+            --user "$(id -u):$(id -g)" \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            /bin/sh -c \
+              'export PATH=/run/current-system/profile/bin:$PATH && \
+               guix shell -D guix -- sh -c \
+                 "./bootstrap && ./configure --localstatedir=/var && make"'
+
+      # ------------------------------------------------------------------
       # Run test-reproducibility.scm.
       #
       # The script:

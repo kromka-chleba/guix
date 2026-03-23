@@ -16,7 +16,7 @@
 ;;;   -h, --help          Show this help
 ;;;
 ;;; The container is started with --privileged (required for guix-daemon) and
-;;; the repository checkout mounted at /workspace.
+;;; the repository checkout mounted at its host path inside the container.
 
 (use-modules (ice-9 format)
              (ice-9 getopt-long))
