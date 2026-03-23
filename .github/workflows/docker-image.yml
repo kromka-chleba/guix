@@ -93,7 +93,7 @@ jobs:
                      guix shell --verbosity=2 --no-grafts -D guix -- sh -c "
                        set -ex
                        sh ./bootstrap
-                       sh ./configure --localstatedir=/var
+                       CONFIG_SHELL=$(which sh) sh ./configure --localstatedir=/var
                        make V=1
                      "'
             docker stop "$CNAME"
