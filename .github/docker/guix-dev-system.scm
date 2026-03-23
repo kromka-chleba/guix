@@ -102,10 +102,10 @@
          (service syslog-service-type)
 
          ;; Provide /bin/sh and /usr/bin/env symlinks that many build scripts
-         ;; and shebangs rely on.  We add these individually rather than pulling
-         ;; in %base-services because the rest of %base-services (getty,
-         ;; mingetty, udev, nscd, static-networking, …) is wrong for Docker.
-         (extra-special-file "/bin/sh"
-                             (file-append bash "/bin/sh"))
-         (extra-special-file "/usr/bin/env"
-                             (file-append coreutils "/bin/env")))))
+         ;; and shebangs rely on.  We add this service directly rather than
+         ;; using extra-special-file, because extra-special-file extends
+         ;; special-files-service-type which is not present when %base-services
+         ;; is not used.
+         (service special-files-service-type
+                  `(("/bin/sh" ,(file-append bash "/bin/sh"))
+                    ("/usr/bin/env" ,(file-append coreutils "/bin/env")))))))
