@@ -33,11 +33,11 @@
 ;;
 ;; IMPORTANT: The 'guix' package object used here must define the same input
 ;; versions as the guix binary that will run inside the container.  We
-;; therefore configure the guix service with (current-guix), which builds the
-;; binary from this very checkout.  That binary's module files define
-;; 'guile-3.0-latest' and friends identically to the definitions below, so
-;; 'guix shell -D guix' will find every input in the pre-populated store
-;; without downloading anything.
+;; therefore configure the guix service with %guix-from-checkout below, which
+;; builds the binary from this very checkout via channel-build-system.  That
+;; binary's module files define 'guile-3.0-latest' and friends identically to
+;; the definitions below, so 'guix shell -D guix' will find every input in
+;; the pre-populated store without downloading anything.
 (define %guix-dev-packages
   (filter-map
    (match-lambda
@@ -45,6 +45,21 @@
      (_ #f))
    (append (package-native-inputs guix)
            (package-inputs guix))))
+
+;; Build a guix package from the local checkout.  Authentication must be
+;; disabled because personal development branches are not signed with the
+;; Guix committer key infrastructure; without #:authenticate? #f the
+;; channel-build-system would fail with an "cannot be authenticated" error.
+(define %guix-from-checkout
+  (let ((pkg (current-guix)))
+    (if pkg
+        (package
+          (inherit pkg)
+          (arguments (append '(#:authenticate? #f)
+                             (package-arguments pkg))))
+        ;; Fallback: not running from a git checkout; use the fixed upstream
+        ;; guix package.  This loses the version-alignment guarantee.
+        guix)))
 
 (operating-system
   (host-name "guix-dev")
@@ -89,14 +104,16 @@
   ;; nscd is omitted intentionally (Docker provides name resolution via the
   ;; --network option).
   ;;
-  ;; Use (current-guix) so the installed binary is built from this checkout.
+  ;; Use %guix-from-checkout so the installed binary is built from this
+  ;; checkout, with channel authentication disabled (personal branches are
+  ;; not signed with the Guix committer key infrastructure).
   ;; Its module files then define the same package versions as %guix-dev-packages,
   ;; ensuring 'guix shell -D guix' finds all inputs in the store without
   ;; downloading anything.
   (services
    (list (service guix-service-type
                   (guix-configuration
-                   (guix (current-guix))
+                   (guix %guix-from-checkout)
                    ;; This container does not serve substitutes, so there is no
                    ;; need to generate a signing key pair.  Skipping it avoids
                    ;; blocking on entropy during system activation — the
