@@ -29,8 +29,15 @@
 ;; Collect all direct development inputs of the 'guix' package (native-inputs
 ;; and regular inputs).  Pre-installing these in the system image means that
 ;; 'guix shell -D guix' inside the container finds them already in the store
-;; (with any grafts applied at image-build time) and does not need to fetch or
-;; build them during dev-env setup.
+;; and does not need to fetch or build them during dev-env setup.
+;;
+;; IMPORTANT: The 'guix' package object used here must define the same input
+;; versions as the guix binary that will run inside the container.  We
+;; therefore configure the guix service with (current-guix), which builds the
+;; binary from this very checkout.  That binary's module files define
+;; 'guile-3.0-latest' and friends identically to the definitions below, so
+;; 'guix shell -D guix' will find every input in the pre-populated store
+;; without downloading anything.
 (define %guix-dev-packages
   (filter-map
    (match-lambda
@@ -81,10 +88,15 @@
   ;; Services: keep it minimal — Guix daemon is the key service.
   ;; nscd is omitted intentionally (Docker provides name resolution via the
   ;; --network option).
+  ;;
+  ;; Use (current-guix) so the installed binary is built from this checkout.
+  ;; Its module files then define the same package versions as %guix-dev-packages,
+  ;; ensuring 'guix shell -D guix' finds all inputs in the store without
+  ;; downloading anything.
   (services
    (list (service guix-service-type
                   (guix-configuration
-                   (guix guix)
+                   (guix (current-guix))
                    ;; This container does not serve substitutes, so there is no
                    ;; need to generate a signing key pair.  Skipping it avoids
                    ;; blocking on entropy during system activation — the
