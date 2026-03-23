@@ -88,7 +88,7 @@ jobs:
             # Run bootstrap, configure and make via docker exec so that the
             # command actually executes inside the running container.
             docker exec -w /workspace "$CNAME" \
-              sh -c 'export PATH=/run/current-system/profile/bin:$PATH
+              /run/current-system/profile/bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
                      set -ex
                      guix shell --verbosity=2 -D guix -- sh -c "
                        set -ex
@@ -125,7 +125,7 @@ jobs:
             # Wait for guix-daemon to be available (up to 120 seconds).
             .github/docker/wait-for-daemon.sh "$CNAME"
             docker exec -w /workspace "$CNAME" \
-              sh -c 'export PATH=/run/current-system/profile/bin:$PATH
+              /run/current-system/profile/bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
                      set -ex
                      ./pre-inst-env guile .github/docker/build-image.scm \
                        --system-config ${{ env.SYSTEM_CONFIG }} \
