@@ -49,19 +49,20 @@ the core Guix source tree:
 ```
 .github/
 ├── docker/
-│   ├── guix-dev-system.scm     # Guix OS configuration for the dev image
-│   ├── docker-lib.scm          # Shared helpers loaded by all scripts below
-│   ├── build-image.scm         # Guile script: build & tag the image
-│   ├── test-image.scm          # Guile script: smoke-test a container
-│   ├── start-container.scm     # Guile script: start a dev container
-│   ├── stop-container.scm      # Guile script: stop and remove a container
-│   ├── push-image.scm          # Guile script: push image to GHCR
-│   └── list-source-urls.scm    # Guile script: list package source URLs
+│   ├── guix-dev-system.scm          # Guix OS configuration for the dev image
+│   ├── docker-lib.scm               # Shared helpers loaded by all scripts below
+│   ├── build-image.scm              # Guile script: bootstrap image from native Guix
+│   ├── build-image-in-docker.scm   # Guile script: build image inside a Docker container
+│   ├── test-image.scm               # Guile script: smoke-test a container
+│   ├── start-container.scm          # Guile script: start a dev container
+│   ├── stop-container.scm           # Guile script: stop and remove a container
+│   ├── push-image.scm               # Guile script: push image to GHCR
+│   └── list-source-urls.scm         # Guile script: list package source URLs
 ├── workflows/
-│   └── docker-image.yml        # GitHub Actions CI workflow
-└── README-docker.md            # ← you are here
+│   └── docker-image.yml             # GitHub Actions CI workflow
+└── README-docker.md                 # ← you are here
 .devcontainer/
-└── devcontainer.json           # VS Code / GitHub Codespaces config
+└── devcontainer.json                # VS Code / GitHub Codespaces config
 ```
 
 `gnu/` and `guix/` are **not** touched by any of this tooling.
@@ -145,9 +146,11 @@ The dev environment preparation step above must have been run first.
 cd /workspace
 ./pre-inst-env guix build hello
 ./pre-inst-env guix lint my-package
-# Build a new Docker image (use build-image.scm; guix system image only
-# prints the store path, it does not write a tarball directly):
-./pre-inst-env guile .github/docker/build-image.scm \
+# Build a new Docker image from inside this container (use
+# build-image-in-docker.scm when building from Docker; use build-image.scm
+# only when bootstrapping from a native Guix system):
+guile .github/docker/build-image-in-docker.scm \
+    --bootstrap-image ghcr.io/kromka-chleba/guix-dev:latest \
     --output guix-system-docker-image.tar.gz
 ```
 
@@ -315,7 +318,7 @@ Docker credentials are read from `~/.docker/config.json` as managed by
 `docker login`.  Run `docker login ghcr.io` once if you have not
 authenticated already.
 
-### `build-image.scm` — Build and tag the image
+### `build-image.scm` — Bootstrap the image from a native Guix system
 
 ```bash
 ./pre-inst-env guile .github/docker/build-image.scm \
@@ -324,7 +327,30 @@ authenticated already.
     --tag ghcr.io/kromka-chleba/guix-dev:latest
 ```
 
+Use this script **only for bootstrapping** (first-time setup or recovery) when
+no Docker bootstrap image is available yet.  It calls `guix system image`
+directly on the host, so `./pre-inst-env` and a working Guix installation are
+required.
+
 Pass `--no-load` to only produce the tarball without loading it into Docker.
+
+### `build-image-in-docker.scm` — Build the image inside a bootstrap container
+
+```bash
+guile .github/docker/build-image-in-docker.scm \
+    --bootstrap-image ghcr.io/kromka-chleba/guix-dev:latest \
+    --system-config .github/docker/guix-dev-system.scm \
+    --output guix-system-docker-image.tar.gz \
+    --tag guix-dev:latest
+```
+
+This is the **normal steady-state build path**.  It launches a temporary
+container from an existing Guix Docker image, runs `build-image.scm` inside it
+via `docker exec`, and optionally loads and tags the resulting tarball.  No
+native Guix installation is required on the host.
+
+Pass `--no-load` to only produce the tarball (useful in CI where tagging with
+multiple names is handled by a subsequent step).
 
 ### `test-image.scm` — Smoke-test a container
 
@@ -372,8 +398,9 @@ is reused, skipping the expensive `guix system image` step.
 ### Build environment
 
 CI uses the previously published `latest` image as the **bootstrap
-container** in which `guix system image` is executed.  See the next
-section for what to do when no bootstrap image exists yet.
+container** in which `guix system image` is executed via
+`build-image-in-docker.scm`.  See the next section for what to do when
+no bootstrap image exists yet.
 
 ---
 
@@ -384,14 +411,11 @@ section for what to do when no bootstrap image exists yet.
 If no image has been published to GHCR yet, CI cannot pull a bootstrap
 image and will fail with an informative error.  To bootstrap:
 
-1. On a machine with Guix installed, build the image manually:
+1. On a machine with Guix installed, build the image using `build-image.scm`:
 
    ```bash
-   ./pre-inst-env guix system image \
-       --image-type=docker \
-       --system=x86_64-linux \
-       .github/docker/guix-dev-system.scm \
-       > guix-system-docker-image.tar.gz
+   ./pre-inst-env guile .github/docker/build-image.scm \
+       --output guix-system-docker-image.tar.gz
    ```
 
 2. Load and tag it:

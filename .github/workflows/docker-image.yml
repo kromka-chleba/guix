@@ -104,35 +104,27 @@ jobs:
           fi
 
       # ------------------------------------------------------------------
+      # Guile is needed by build-image-in-docker.scm (and later by
+      # test-image.scm) so install it once before those steps.
+      # ------------------------------------------------------------------
+      - name: Install Guile on runner
+        run: sudo apt-get install -y --no-install-recommends guile-3.0
+
+      # ------------------------------------------------------------------
       # Build the image inside the bootstrap container.
-      # guix system image --image-type=docker produces a from-scratch image;
-      # it does NOT use a pre-existing Docker base image.
-      #
-      # Same create+start+exec+stop pattern as the prep step above; see the
-      # comment there for why `docker run IMAGE cmd` does not work here.
+      # build-image-in-docker.scm handles the full container lifecycle:
+      # create → start → wait-for-daemon → docker exec → stop → rm.
+      # The tarball is written to the repository root (mounted as /workspace
+      # inside the container) so it is accessible to subsequent steps.
       # ------------------------------------------------------------------
       - name: Build image (inside bootstrap container)
         run: |
           if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
-            CNAME="guix-dev-build"
-            docker rm -f "$CNAME" 2>/dev/null || true
-            docker create \
-              --name "$CNAME" \
-              --privileged \
-              -v "$PWD:/workspace" \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            docker start "$CNAME"
-            # Wait for guix-daemon to be available (up to 120 seconds).
-            .github/docker/wait-for-daemon.sh "$CNAME"
-            docker exec -w /workspace "$CNAME" \
-              /bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
-                     set -ex
-                     ./pre-inst-env guile .github/docker/build-image.scm \
-                       --system-config ${{ env.SYSTEM_CONFIG }} \
-                       --output guix-system-docker-image.tar.gz \
-                       --no-load'
-            docker stop "$CNAME"
-            docker rm   "$CNAME"
+            guile .github/docker/build-image-in-docker.scm \
+              --bootstrap-image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+              --system-config ${{ env.SYSTEM_CONFIG }} \
+              --output guix-system-docker-image.tar.gz \
+              --no-load
           else
             echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
             exit 1
@@ -150,12 +142,6 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           docker tag "$IMAGE_ID" \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      # ------------------------------------------------------------------
-      # The test script is a Guile program run on the host runner.
-      # ------------------------------------------------------------------
-      - name: Install Guile on runner
-        run: sudo apt-get install -y --no-install-recommends guile-3.0
 
       # ------------------------------------------------------------------
       # Smoke-test the freshly built image.
