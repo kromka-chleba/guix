@@ -146,9 +146,8 @@ The dev environment preparation step above must have been run first.
 cd /workspace
 ./pre-inst-env guix build hello
 ./pre-inst-env guix lint my-package
-# Build a new Docker image from inside this container (use
-# build-image-in-docker.scm when building from Docker; use build-image.scm
-# only when bootstrapping from a native Guix system):
+# Build a new Docker image (from the host, no manual prepare step needed;
+# build-image-in-docker.scm handles preparation automatically):
 guile .github/docker/build-image-in-docker.scm \
     --bootstrap-image ghcr.io/kromka-chleba/guix-dev:latest \
     --output guix-system-docker-image.tar.gz
@@ -398,9 +397,10 @@ is reused, skipping the expensive `guix system image` step.
 ### Build environment
 
 CI uses the previously published `latest` image as the **bootstrap
-container** in which `guix system image` is executed via
-`build-image-in-docker.scm`.  See the next section for what to do when
-no bootstrap image exists yet.
+container**.  `build-image-in-docker.scm` handles the full pipeline inside
+that container: preparing the dev environment (bootstrap/configure/make),
+then running `guix system image` to produce the new tarball.  See the next
+section for what to do when no bootstrap image exists yet.
 
 ---
 
