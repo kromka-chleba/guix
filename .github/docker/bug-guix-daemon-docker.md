@@ -61,3 +61,67 @@ Two guarded changes in `gnu/build/activation.scm`:
 Together these changes ensure that `/etc` is fully populated even when
 Docker holds some entries busy, which in turn lets `guix-daemon` start
 normally.
+
+---
+
+# Bug: Docker image build runner gets stuck on entropy
+
+## Symptom
+
+The CI step that runs `guix system image` inside the bootstrap container
+hangs with:
+
+```
+Please wait while gathering entropy to generate the key pair;
+this may take time...
+```
+
+## Root cause
+
+Two interlocking issues:
+
+### 1 — System activation blocks on entropy
+
+`guix system image --image-type=docker` builds an image whose Docker
+`Entrypoint` is set to `[boot-program-path, os-store-path]`
+(`gnu/system/image.scm`, `system-docker-image`).  When `docker run IMAGE
+sh -c '...'` is used, Docker appends `sh -c '...'` to the Entrypoint
+rather than replacing it.  The Guix system therefore boots normally
+(activation + Shepherd), regardless of the extra arguments.
+
+During system activation, `guix-activation` (`gnu/services/base.scm`)
+calls `guix archive --generate-key` unless `generate-substitute-key? #f`
+is set.  That call uses `gcrypt` to generate an RSA key pair, which reads
+from `/dev/random` and **blocks indefinitely** in an entropy-starved
+Docker container.
+
+The `rngd-service-type` configured in `guix-dev-system.scm` was intended
+to mitigate this, but `rngd` is a Shepherd-managed service that starts
+**after** activation completes — too late to help.
+
+### 2 — The shell command passed to `docker run` is silently ignored
+
+Because the Entrypoint is `[boot-program, os-path]` and the `docker run`
+command `sh -c '...'` merely appends to it, boot-program receives
+`[boot-program, os-path, sh, -c, "..."]` as its argv.  It reads only
+`(cadr (command-line))` (the OS store path) and calls `execl` with
+exactly that — the extra `sh -c '...'` arguments are discarded.  As a
+result, `./pre-inst-env guix system image` is **never executed** by the
+workflow step.
+
+## Fix (entropy)
+
+Set `(generate-substitute-key? #f)` in the `guix-configuration` inside
+`guix-dev-system.scm`.  A Docker dev/build container has no need to sign
+substitutes, so generating a key pair on first boot is unnecessary.  This
+eliminates the activation-time entropy blockage entirely.
+
+The now-redundant `rngd-service-type` entry is also removed.
+
+## Outstanding issue (command not running)
+
+The `docker run IMAGE sh -c '...'` pattern in the CI workflow does not
+execute the shell command.  The workflow needs to be redesigned: start
+the container so Shepherd and `guix-daemon` come up, then use
+`docker exec` (or a similar mechanism) to run `guix system image` inside
+the live container.
