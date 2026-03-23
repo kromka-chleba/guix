@@ -16,6 +16,7 @@
              (gnu packages base)
              (gnu packages bash)
              (gnu packages package-management)
+             (gnu packages guile)
              (gnu packages version-control)
              (gnu packages wget)
              (gnu packages compression))
@@ -38,6 +39,7 @@
 
   ;; Packages available system-wide inside the container.
   ;; nss-certs is already included in %base-packages; no need to list it here.
+  ;; guile is also pre-installed.
   (packages (append
              (list bash
                    git

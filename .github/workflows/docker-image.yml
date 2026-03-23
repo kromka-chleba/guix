@@ -16,7 +16,7 @@ name: Guix Dev Docker Image
 on:
   push:
     branches:
-      - master
+      - docker-github-ci
     paths:
       - '.github/docker/**'
   pull_request:
@@ -125,6 +125,12 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           docker tag "$IMAGE_ID" \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # ------------------------------------------------------------------
+      # The test script is a Guile program run on the host runner.
+      # ------------------------------------------------------------------
+      - name: Install Guile on runner
+        run: sudo apt-get install -y --no-install-recommends guile-3.0
 
       # ------------------------------------------------------------------
       # Smoke-test the freshly built image.
