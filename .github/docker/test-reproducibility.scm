@@ -1,42 +1,53 @@
 #!/usr/bin/env -S guile --no-auto-compile
 !#
-;;; test-reproducibility.scm — Verify that Guix Docker image builds are
-;;;                            reproducible.
+;;; test-reproducibility.scm — Verify that the two Guix Docker image build
+;;;                            paths produce bit-for-bit identical output.
 ;;;
 ;;; NOT official Guix infrastructure.  Personal dev tooling for
 ;;; kromka-chleba/guix.
 ;;;
-;;; Builds the same Guix Docker image TWICE using the same bootstrap container
-;;; and system configuration, then compares the SHA-256 digests of the two
-;;; resulting tarballs.  Reproducibility is one of Guix's core guarantees;
-;;; this test verifies that our Docker build setup honours it.
+;;; Two code paths exist for building the Guix dev Docker image:
 ;;;
-;;; Why this matters
-;;; ----------------
-;;; `guix system image --image-type=docker` is a pure, content-addressed
-;;; build.  Given the same system configuration and the same Guix channel
-;;; revision, it should always produce bit-for-bit identical output:
+;;;   1. Bootstrap path  (build-image.scm)
+;;;      Intended for first-time / recovery use when no Docker bootstrap image
+;;;      is available yet.  A developer with a native Guix installation runs:
 ;;;
-;;;   * All timestamps in the generated archive are normalised to
-;;;     SOURCE_DATE_EPOCH (1970-01-01).
+;;;        ./pre-inst-env guile .github/docker/build-image.scm
+;;;
+;;;      In CI (where the runner does not have Guix installed natively) this
+;;;      is simulated by exec-ing directly into the bootstrap container and
+;;;      calling build-image.scm from there, without the extra
+;;;      `guix shell -D guix` wrapper.
+;;;
+;;;   2. Container-rebuild path  (build-image-in-docker.scm)
+;;;      The steady-state CI path.  build-image-in-docker.scm orchestrates
+;;;      the full container lifecycle (create → start → wait-for-daemon →
+;;;      `guix shell -D guix` → build-image.scm → stop/rm).
+;;;
+;;; Both paths ultimately call `./pre-inst-env guile build-image.scm`, which
+;;; calls `guix system image --image-type=docker`.  Guix warrants that this
+;;; command produces bit-for-bit identical output for the same inputs:
+;;;
+;;;   * All archive timestamps are normalised to SOURCE_DATE_EPOCH (1970-01-01).
 ;;;   * Archive entries are sorted deterministically.
 ;;;   * The Docker image manifest contains no host-specific metadata.
 ;;;
+;;; This test builds the image once via each path and compares SHA-256 hashes.
+;;; A mismatch signals a setup problem that breaks Guix's reproducibility
+;;; guarantee.
+;;;
 ;;; Potential non-reproducibility sources to watch for:
 ;;;
-;;;   1. The `%guix-dev-packages` list in guix-dev-system.scm is computed
-;;;      at load time from `package-native-inputs`/`package-inputs`.  If the
-;;;      Guix checkout changes between runs these lists diverge; but within a
-;;;      single workflow run they are identical.
+;;;   1. The `%guix-dev-packages` list in guix-dev-system.scm is computed at
+;;;      load time from `package-native-inputs`/`package-inputs`.  Both paths
+;;;      use the same Guix checkout mounted at /workspace, so the list is
+;;;      identical within a single test run.
 ;;;
-;;;   2. `guix shell --no-grafts` prevents graft application divergence
-;;;      between the two builds; both builds use the same flag.
+;;;   2. Substitute availability: store paths are content-addressed, so it
+;;;      does not matter whether a derivation is served from cache or built
+;;;      locally — the resulting store path is identical.
 ;;;
-;;;   3. Substitute availability: as long as the content-addressed store path
-;;;      for a derivation is the same, it does not matter whether a build is
-;;;      served from cache or built locally.
-;;;
-;;;   4. gzip metadata: Guix sets SOURCE_DATE_EPOCH when producing archives,
+;;;   3. gzip metadata: Guix sets SOURCE_DATE_EPOCH when producing archives,
 ;;;      so gzip headers are deterministic.
 ;;;
 ;;; Usage:
@@ -61,9 +72,6 @@
 ;;; Seconds to wait for guix-daemon to start inside each build container.
 (define %daemon-startup-timeout 120)
 
-;;; Verbosity level passed to `guix shell` during dev-environment preparation.
-(define %guix-shell-verbosity 2)
-
 ;;; ---------------------------------------------------------------------------
 ;;; Helpers
 ;;; ---------------------------------------------------------------------------
@@ -79,45 +87,66 @@
         ;; sha256sum output: "<digest>  <filename>"
         (car (string-split (string-trim-right line) #\space)))))
 
-(define (build-once bootstrap-image system-config container-name output-rel)
-  "Run one build of SYSTEM-CONFIG inside BOOTSTRAP-IMAGE.
-The tarball is written to OUTPUT-REL (a path relative to the repo root).
-Signals an error if the build fails."
-  (format #t "  Starting container ~a from ~a~%" container-name bootstrap-image)
-  ;; Remove any leftover container with the same name.
-  (system (string-append "docker rm -f " container-name " >/dev/null 2>&1"))
-  (docker-create bootstrap-image container-name #:workspace %repo-root)
-  (docker-start container-name)
-  (wait-for-daemon container-name %daemon-startup-timeout)
+(define (build-bootstrap-path bootstrap-image system-config output-rel)
+  "Bootstrap path: simulate running build-image.scm from a native Guix system.
 
-  (let* ((inner-cmd
-          ;; Commands run inside `guix shell -D guix`:
-          ;;   1. Regenerate pre-inst-env with /workspace paths.
-          ;;   2. Run build-image.scm → `guix system image`.
-          (string-append
-           "set -ex && "
-           "./bootstrap && "
-           "./configure --localstatedir=/var && "
-           "make V=1 && "
-           "./pre-inst-env guile .github/docker/build-image.scm"
-           " --system-config '" system-config "'"
-           " --output '" output-rel "'"
-           " --no-load"))
-         (shell-cmd
-          (string-append
-           "export PATH=" %system-profile ":$PATH && "
-           "set -ex && "
-           "guix shell --verbosity=" (number->string %guix-shell-verbosity)
-           " --no-grafts -D guix -- sh -c \"" inner-cmd "\""))
-         (exec-cmd
-          (string-append
-           "docker exec -w /workspace " container-name
-           " /bin/sh -c '" shell-cmd "'")))
-    (unless (zero? (system exec-cmd))
-      (docker-stop+rm container-name)
-      (error (format #f "Build failed inside container ~a" container-name))))
+In CI the bootstrap container plays the role of the native Guix host: we
+exec directly into it and call build-image.scm without the extra
+`guix shell -D guix` wrapper that build-image-in-docker.scm adds.  This
+mirrors what a developer would do on a workstation where Guix is already
+installed:
 
-  (docker-stop+rm container-name))
+  ./pre-inst-env guile .github/docker/build-image.scm ..."
+  (let ((cname "repro-bootstrap-ctr"))
+    (format #t "  [bootstrap path] container: ~a~%" cname)
+    (system (string-append "docker rm -f " cname " >/dev/null 2>&1"))
+    (docker-create bootstrap-image cname #:workspace %repo-root)
+    (docker-start cname)
+    (wait-for-daemon cname %daemon-startup-timeout)
+
+    ;; Run build-image.scm directly — no `guix shell -D guix` wrapper.
+    ;; The bootstrap container already has all Guix build-time deps in its
+    ;; system profile, so pre-inst-env works without an extra shell wrapper.
+    (let* ((inner-cmd
+            (string-append
+             "set -ex && "
+             "./bootstrap && "
+             "./configure --localstatedir=/var && "
+             "make V=1 && "
+             "./pre-inst-env guile .github/docker/build-image.scm"
+             " --system-config '" system-config "'"
+             " --output '" output-rel "'"
+             " --no-load"))
+           (exec-cmd
+            (string-append
+             "docker exec -w /workspace"
+             " -e PATH=" %system-profile
+             " " cname
+             " /bin/sh -c '" inner-cmd "'")))
+      (unless (zero? (system exec-cmd))
+        (docker-stop+rm cname)
+        (error "Bootstrap-path build failed")))
+
+    (docker-stop+rm cname)))
+
+(define (build-container-path bootstrap-image system-config output-rel)
+  "Container-rebuild path: invoke build-image-in-docker.scm.
+
+This is the steady-state CI path.  build-image-in-docker.scm creates its
+own temporary container, wraps the build in `guix shell -D guix`, calls
+build-image.scm inside that shell, then cleans up."
+  (let* ((script (string-append %repo-root
+                                "/.github/docker/build-image-in-docker.scm"))
+         (cmd    (string-append
+                  "guile " script
+                  " --bootstrap-image '" bootstrap-image "'"
+                  " --container-name repro-container-ctr"
+                  " --system-config '" system-config "'"
+                  " --output '" output-rel "'"
+                  " --no-load")))
+    (format #t "  [container-rebuild path] invoking build-image-in-docker.scm~%")
+    (unless (zero? (system cmd))
+      (error "Container-rebuild-path build failed"))))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Main
@@ -138,7 +167,9 @@ Signals an error if the build fails."
 
     (when help?
       (display "Usage: guile .github/docker/test-reproducibility.scm [OPTIONS]\n")
-      (display "\nBuilds the same Docker image twice and compares SHA-256 hashes.\n\n")
+      (display "\nBuilds the Docker image via both code paths and compares SHA-256 hashes.\n\n")
+      (display "  Build 1: bootstrap path  (build-image.scm, simulating native Guix)\n")
+      (display "  Build 2: container-rebuild path  (build-image-in-docker.scm)\n\n")
       (display "  -b, --bootstrap-image IMAGE  Bootstrap Docker image\n")
       (display "  -c, --system-config   PATH   Guix OS config (relative to repo root)\n")
       (display "  -h, --help                   Show this help\n")
@@ -147,22 +178,24 @@ Signals an error if the build fails."
     (format #t "==> Reproducibility test~%")
     (format #t "    Config:          ~a~%" system-config)
     (format #t "    Bootstrap image: ~a~%" bootstrap-image)
+    (format #t "    Build 1: bootstrap path  (build-image.scm)~%")
+    (format #t "    Build 2: container-rebuild path  (build-image-in-docker.scm)~%")
 
-    (let ((out1 "repro-build-1.tar.gz")
-          (out2 "repro-build-2.tar.gz"))
+    (let ((out1 "repro-bootstrap.tar.gz")
+          (out2 "repro-container.tar.gz"))
 
       ;; ------------------------------------------------------------------
-      ;; Build #1
+      ;; Build 1 — bootstrap path (build-image.scm, native Guix simulation).
       ;; ------------------------------------------------------------------
-      (format #t "~%==> Build 1/2~%")
-      (build-once bootstrap-image system-config "repro-build-ctr-1" out1)
+      (format #t "~%==> Build 1/2  [bootstrap path]~%")
+      (build-bootstrap-path bootstrap-image system-config out1)
       (format #t "    Written: ~a~%" out1)
 
       ;; ------------------------------------------------------------------
-      ;; Build #2 — same bootstrap image and config; result must be identical.
+      ;; Build 2 — container-rebuild path (build-image-in-docker.scm).
       ;; ------------------------------------------------------------------
-      (format #t "~%==> Build 2/2~%")
-      (build-once bootstrap-image system-config "repro-build-ctr-2" out2)
+      (format #t "~%==> Build 2/2  [container-rebuild path]~%")
+      (build-container-path bootstrap-image system-config out2)
       (format #t "    Written: ~a~%" out2)
 
       ;; ------------------------------------------------------------------
@@ -171,8 +204,8 @@ Signals an error if the build fails."
       (let ((hash1 (sha256sum (string-append %repo-root "/" out1)))
             (hash2 (sha256sum (string-append %repo-root "/" out2))))
         (format #t "~%==> Results~%")
-        (format #t "    Build 1 SHA-256: ~a~%" hash1)
-        (format #t "    Build 2 SHA-256: ~a~%" hash2)
+        (format #t "    Bootstrap path SHA-256:         ~a~%" hash1)
+        (format #t "    Container-rebuild path SHA-256: ~a~%" hash2)
 
         ;; Always remove the temporary tarballs.
         (system (string-append "rm -f "
@@ -181,23 +214,28 @@ Signals an error if the build fails."
 
         (if (string=? hash1 hash2)
             (begin
-              (format #t "  [PASS] Builds are reproducible (identical SHA-256).~%")
+              (format #t "  [PASS] Both paths produce identical output.~%")
               (format #t "         Guix's reproducibility guarantee holds for this setup.~%"))
             (begin
-              (format #t "  [FAIL] Builds are NOT reproducible (SHA-256 mismatch).~%")
+              (format #t "  [FAIL] The two build paths produce DIFFERENT output (SHA-256 mismatch).~%")
               (format #t "~%")
               (format #t "  Possible causes:~%")
               (format #t "    - Non-determinism in `guix system image' output~%")
-              (format #t "      (e.g. embedded timestamps not normalised to SOURCE_DATE_EPOCH).~%")
+              (format #t "      (e.g. timestamps not normalised to SOURCE_DATE_EPOCH).~%")
+              (format #t "    - `guix shell --no-grafts' vs grafts: the container-rebuild path~%")
+              (format #t "      passes --no-grafts but the bootstrap path does not; a pending~%")
+              (format #t "      graft could change store paths.~%")
+              (format #t "    - Different Guix channels or revisions used by each path.~%")
               (format #t "    - The system config references time- or host-dependent values.~%")
-              (format #t "    - Different substitutes were used (store paths should still match~%")
-              (format #t "      if the derivation is identical — investigate with~%")
-              (format #t "      `guix gc --list-dead' and `guix challenge').~%")
               (format #t "~%")
               (format #t "  Next steps:~%")
-              (format #t "    1. Re-run with --verbose to inspect build output.~%")
-              (format #t "    2. Unpack both tarballs and diff their contents.~%")
-              (format #t "    3. Run `guix challenge PACKAGE' on suspect packages.~%")
+              (format #t "    1. Unpack both tarballs and diff their contents:~%")
+              (format #t "       tar xf repro-bootstrap.tar.gz -C /tmp/b1~%")
+              (format #t "       tar xf repro-container.tar.gz -C /tmp/b2~%")
+              (format #t "       diff -r /tmp/b1 /tmp/b2~%")
+              (format #t "    2. Run `guix challenge PACKAGE' on suspect packages.~%")
+              (format #t "    3. Check `guix describe' inside each container to confirm~%")
+              (format #t "       both use the same channel revision.~%")
               (exit 1)))))))
 
 (main (command-line))
