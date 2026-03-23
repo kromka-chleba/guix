@@ -118,10 +118,20 @@ eliminates the activation-time entropy blockage entirely.
 
 The now-redundant `rngd-service-type` entry is also removed.
 
-## Outstanding issue (command not running)
+## Fix (command not running)
 
-The `docker run IMAGE sh -c '...'` pattern in the CI workflow does not
-execute the shell command.  The workflow needs to be redesigned: start
-the container so Shepherd and `guix-daemon` come up, then use
-`docker exec` (or a similar mechanism) to run `guix system image` inside
-the live container.
+The `docker run IMAGE sh -c '...'` pattern in the CI workflow did not
+execute the shell command.  Both the "Prepare dev environment" and "Build
+image" steps have been redesigned to use the correct pattern:
+
+1. `docker create --privileged -v $PWD:/workspace IMAGE` — create the
+   container without starting it.
+2. `docker start CNAME` — start it; Guix activation runs and Shepherd
+   brings up `guix-daemon`.
+3. Poll `herd status guix-daemon` until it reports `running` (up to 120 s).
+4. `docker exec -w /workspace CNAME sh -c '...'` — run the actual command
+   inside the already-booted container.  `docker exec` bypasses the
+   Entrypoint entirely.
+5. `docker stop CNAME && docker rm CNAME` — clean up.
+
+This matches the pattern already used correctly by `test-image.scm`.
