@@ -132,9 +132,19 @@
             ;; bootstrap/configure/make are NOT run here — they must be run
             ;; on the host beforehand to avoid leaving root-owned files in the
             ;; bind-mounted workspace.
+            ;;
+            ;; IMPORTANT: pass the guile binary as an absolute path rather
+            ;; than just "guile".  pre-inst-env prepends $abs_top_builddir to
+            ;; PATH, so a bare "guile" would resolve to the host-compiled
+            ;; guile binary in the builddir; that binary links against host
+            ;; libraries (libgcc_s.so.1, etc.) that do not exist at those
+            ;; paths inside the container.  Passing the absolute path bypasses
+            ;; the PATH lookup entirely and uses the container's own
+            ;; Guix-built guile.
             (string-append
              "set -ex && "
-             "./pre-inst-env guile .github/docker/build-image.scm"
+             "./pre-inst-env " %system-profile "/guile"
+             " .github/docker/build-image.scm"
              " --system-config '" system-config "'"
              " --output '" output "'"
              " --no-load"))

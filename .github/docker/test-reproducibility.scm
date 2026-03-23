@@ -108,7 +108,7 @@ exec directly into it and call build-image.scm without the extra
 mirrors what a developer would do on a workstation where Guix is already
 installed:
 
-  ./pre-inst-env guile .github/docker/build-image.scm ...
+  ./pre-inst-env /run/current-system/profile/bin/guile .github/docker/build-image.scm ...
 
 bootstrap/configure/make are NOT run inside the container.  They must have
 been run on the host beforehand; running them inside the container (as root)
@@ -123,10 +123,19 @@ would leave root-owned files in the bind-mounted workspace."
     ;; Run build-image.scm directly — no `guix shell -D guix` wrapper.
     ;; The bootstrap container already has all Guix build-time deps in its
     ;; system profile, so pre-inst-env works without an extra shell wrapper.
-    (let* ((inner-cmd
+    ;;
+    ;; IMPORTANT: pass the guile binary as an absolute path rather than just
+    ;; "guile".  pre-inst-env prepends $abs_top_builddir to PATH, so a bare
+    ;; "guile" would resolve to the host-compiled guile binary in the builddir;
+    ;; that binary links against host libraries (libgcc_s.so.1, etc.) that do
+    ;; not exist at those paths inside the container.  Passing the absolute
+    ;; path bypasses the PATH lookup entirely and uses the container's own
+    ;; Guix-built guile.
+    (let* ((container-guile (string-append %system-profile "/guile"))
+           (inner-cmd
             (string-append
              "set -ex && "
-             "./pre-inst-env guile .github/docker/build-image.scm"
+             "./pre-inst-env " container-guile " .github/docker/build-image.scm"
              " --system-config '" system-config "'"
              " --output '" output-rel "'"
              " --no-load"))
