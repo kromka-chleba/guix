@@ -98,12 +98,14 @@
 
             (run-command/check
              "/bin/sh exists"
-             (container-exec cname "test" "-x" "/bin/sh")
+             (container-exec cname
+              (string-append %system-profile "/test") "-x" "/bin/sh")
              #:verbose? verbose?)
 
             (run-command/check
              "/usr/bin/env exists"
-             (container-exec cname "test" "-x" "/usr/bin/env")
+             (container-exec cname
+              (string-append %system-profile "/test") "-x" "/usr/bin/env")
              #:verbose? verbose?))))
 
       ;; Cleanup.
