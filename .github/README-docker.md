@@ -123,6 +123,18 @@ docker exec "$container_id" \
 Automake, Gettext, Guile, …) available, then runs the three commands that
 generate `configure`, configure the build tree, and compile the Guile modules.
 
+> **Note for Guix System users:** If you are already running Guix System (or
+> have Guix installed natively), you can run the same command directly in your
+> checkout without Docker:
+>
+> ```bash
+> cd /path/to/guix-checkout
+> guix shell -D guix -- sh -c './bootstrap && ./configure --localstatedir=/var && make'
+> ```
+>
+> The Docker container is only required when you need a fully isolated,
+> reproducible build environment (e.g. for CI or cross-machine consistency).
+
 ### 5 — Run Guix development commands
 
 Inside the container, navigate to the mounted repository checkout and use
