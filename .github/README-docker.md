@@ -398,8 +398,10 @@ is reused, skipping the expensive `guix system image` step.
 
 CI uses the previously published `latest` image as the **bootstrap
 container**.  `build-image-in-docker.scm` handles the full pipeline inside
-that container: preparing the dev environment (bootstrap/configure/make),
-then running `guix system image` to produce the new tarball.  See the next
+that container within a single `guix shell -D guix` environment: preparing
+the dev environment (bootstrap/configure/make) and running `guix system image`
+to produce the new tarball.  Running everything inside `guix shell -D guix`
+ensures `./pre-inst-env` is never invoked outside of it.  See the next
 section for what to do when no bootstrap image exists yet.
 
 ---

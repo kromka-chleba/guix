@@ -11,10 +11,14 @@
 ;;;   guile .github/docker/build-image-in-docker.scm [OPTIONS]
 ;;;
 ;;; This script launches a temporary bootstrap container from an existing Guix
-;;; Docker image, prepares the repository build system inside it
-;;; (./bootstrap && ./configure && make), then runs `build-image.scm` to
-;;; produce a new image tarball, and optionally loads and tags the result.
-;;; This is the normal steady-state build path used by CI and for local use.
+;;; Docker image, then inside a single `guix shell -D guix` environment:
+;;; prepares the repository build system (./bootstrap && ./configure && make)
+;;; and runs `build-image.scm` to produce a new image tarball.  It optionally
+;;; loads and tags the result.  This is the normal steady-state build path
+;;; used by CI and for local use.
+;;;
+;;; Running everything inside `guix shell -D guix` ensures ./pre-inst-env is
+;;; never invoked outside of it, which would cause library/module path errors.
 ;;;
 ;;; Use `build-image.scm` instead when bootstrapping from a native Guix
 ;;; installation (i.e., no Docker bootstrap image is available yet).
@@ -98,35 +102,34 @@
     ;; Use a generous timeout to allow the Guix system to fully boot.
     (wait-for-daemon container-name %daemon-startup-timeout)
 
-    (format #t "==> Preparing dev environment inside container ~a~%" container-name)
-    (let ((prep-cmd
-           (string-append
-            "export PATH=" %system-profile ":$PATH && "
-            "set -ex && "
-            "guix shell --verbosity=" (number->string %guix-shell-verbosity) " --no-grafts -D guix -- sh -c \""
-            "set -ex && "
-            "./bootstrap && "
-            "./configure --localstatedir=/var && "
-            "make V=1\"")))
-      (unless (zero? (system (string-append
-                              "docker exec -w /workspace " container-name
-                              " /bin/sh -c '" prep-cmd "'")))
-        (docker-stop+rm container-name)
-        (error "Dev-environment preparation failed inside bootstrap container")))
-
+    ;; Both the dev-environment setup and the actual image build must run
+    ;; inside `guix shell -D guix` so that ./pre-inst-env (and everything it
+    ;; invokes) always has the correct Guix build-time dependencies on PATH.
     (format #t "==> Building Guix Docker image inside container ~a~%" container-name)
-    (let* ((build-cmd
+    (let* ((inner-cmd
+            ;; Commands run inside the guix shell:
+            ;;   1. bootstrap + configure + make  → regenerates pre-inst-env
+            ;;      with /workspace paths so it works inside the container.
+            ;;   2. .github/docker/build-image.scm → runs `guix system image`.
+            (string-append
+             "set -ex && "
+             "./bootstrap && "
+             "./configure --localstatedir=/var && "
+             "make V=1 && "
+             "./pre-inst-env guile .github/docker/build-image.scm"
+             " --system-config '" system-config "'"
+             " --output '" output "'"
+             " --no-load"))
+           (shell-cmd
             (string-append
              "export PATH=" %system-profile ":$PATH && "
              "set -ex && "
-             "./pre-inst-env guile .github/docker/build-image.scm"
-             " --system-config " system-config
-             " --output " output
-             " --no-load"))
+             "guix shell --verbosity=" (number->string %guix-shell-verbosity)
+             " --no-grafts -D guix -- sh -c \"" inner-cmd "\""))
            (exec-cmd
             (string-append
              "docker exec -w /workspace " container-name
-             " /bin/sh -c '" build-cmd "'")))
+             " /bin/sh -c '" shell-cmd "'")))
       (unless (zero? (system exec-cmd))
         (docker-stop+rm container-name)
         (error "Build failed inside bootstrap container")))
