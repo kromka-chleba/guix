@@ -19,9 +19,25 @@
              (gnu packages guile)
              (gnu packages version-control)
              (gnu packages wget)
-             (gnu packages compression))
+             (gnu packages compression)
+             (srfi srfi-1)
+             (guix packages)    ; package-native-inputs, package-inputs
+             (ice-9 match))     ; match-lambda
 
 (use-service-modules base)
+
+;; Collect all direct development inputs of the 'guix' package (native-inputs
+;; and regular inputs).  Pre-installing these in the system image means that
+;; 'guix shell -D guix' inside the container finds them already in the store
+;; (with any grafts applied at image-build time) and does not need to fetch or
+;; build them during dev-env setup.
+(define %guix-dev-packages
+  (filter-map
+   (match-lambda
+     ((_ (? package? p) . _) p)
+     (_ #f))
+   (append (package-native-inputs guix)
+           (package-inputs guix))))
 
 (operating-system
   (host-name "guix-dev")
@@ -40,7 +56,11 @@
   ;; Packages available system-wide inside the container.
   ;; nss-certs is already included in %base-packages; no need to list it here.
   ;; guile is also pre-installed.
+  ;; %guix-dev-packages pre-populates the store with all direct inputs of
+  ;; the 'guix' package so that 'guix shell -D guix' needs no network access
+  ;; and no graft builds on first use.
   (packages (append
+             %guix-dev-packages
              (list bash
                    git
                    wget
