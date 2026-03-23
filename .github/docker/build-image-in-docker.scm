@@ -11,17 +11,13 @@
 ;;;   guile .github/docker/build-image-in-docker.scm [OPTIONS]
 ;;;
 ;;; This script launches a temporary bootstrap container from an existing Guix
-;;; Docker image, runs `build-image.scm` inside it to produce a new image
-;;; tarball, then optionally loads and tags the result.  This is the normal
-;;; steady-state build path used by CI.
+;;; Docker image, prepares the repository build system inside it
+;;; (./bootstrap && ./configure && make), then runs `build-image.scm` to
+;;; produce a new image tarball, and optionally loads and tags the result.
+;;; This is the normal steady-state build path used by CI and for local use.
 ;;;
 ;;; Use `build-image.scm` instead when bootstrapping from a native Guix
 ;;; installation (i.e., no Docker bootstrap image is available yet).
-;;;
-;;; Before running this script the repository's build system must have been
-;;; prepared (./bootstrap && ./configure --localstatedir=/var && make) inside
-;;; the same bootstrap container so that ./pre-inst-env exists in the
-;;; repository root.
 ;;;
 ;;; Options:
 ;;;   -b, --bootstrap-image IMAGE  Docker image to use as the build environment
@@ -40,6 +36,16 @@
 (use-modules (ice-9 getopt-long))
 
 (include "docker-lib.scm")
+
+;;; ---------------------------------------------------------------------------
+;;; Constants
+;;; ---------------------------------------------------------------------------
+
+;;; Seconds to wait for guix-daemon to start inside the bootstrap container.
+(define %daemon-startup-timeout 120)
+
+;;; Verbosity level passed to `guix shell` during dev-environment preparation.
+(define %guix-shell-verbosity 2)
 
 ;;; ---------------------------------------------------------------------------
 ;;; Main
@@ -90,7 +96,23 @@
     (docker-create bootstrap-image container-name #:workspace %repo-root)
     (docker-start container-name)
     ;; Use a generous timeout to allow the Guix system to fully boot.
-    (wait-for-daemon container-name 120)
+    (wait-for-daemon container-name %daemon-startup-timeout)
+
+    (format #t "==> Preparing dev environment inside container ~a~%" container-name)
+    (let ((prep-cmd
+           (string-append
+            "export PATH=" %system-profile ":$PATH && "
+            "set -ex && "
+            "guix shell --verbosity=" (number->string %guix-shell-verbosity) " --no-grafts -D guix -- sh -c \""
+            "set -ex && "
+            "./bootstrap && "
+            "./configure --localstatedir=/var && "
+            "make V=1\"")))
+      (unless (zero? (system (string-append
+                              "docker exec -w /workspace " container-name
+                              " /bin/sh -c '" prep-cmd "'")))
+        (docker-stop+rm container-name)
+        (error "Dev-environment preparation failed inside bootstrap container")))
 
     (format #t "==> Building Guix Docker image inside container ~a~%" container-name)
     (let* ((build-cmd

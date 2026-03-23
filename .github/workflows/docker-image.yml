@@ -60,50 +60,6 @@ jobs:
           fi
 
       # ------------------------------------------------------------------
-      # Prepare the dev environment inside the bootstrap container so that
-      # ./pre-inst-env is available for the build step.
-      #
-      # The Guix Docker image uses an Entrypoint of [boot-program, os-path].
-      # `docker run IMAGE cmd` appends cmd to the Entrypoint rather than
-      # replacing it, so boot-program boots the Guix system and ignores the
-      # extra arguments — the command never runs.
-      #
-      # Correct pattern: create + start the container (letting Guix activate
-      # and Shepherd come up), then use `docker exec` to run commands inside
-      # the already-booted container.
-      # ------------------------------------------------------------------
-      - name: Prepare dev environment (bootstrap, configure, make)
-        run: |
-          if [ "${{ steps.pull_bootstrap.outputs.bootstrap_available }}" = "true" ]; then
-            CNAME="guix-dev-prep"
-            docker rm -f "$CNAME" 2>/dev/null || true
-            docker create \
-              --name "$CNAME" \
-              --privileged \
-              -v "$PWD:/workspace" \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            docker start "$CNAME"
-            # Wait for guix-daemon to be available (up to 120 seconds).
-            .github/docker/wait-for-daemon.sh "$CNAME"
-            # Run bootstrap, configure and make via docker exec so that the
-            # command actually executes inside the running container.
-            docker exec -w /workspace "$CNAME" \
-              /bin/sh -c 'export PATH=/run/current-system/profile/bin:$PATH
-                     set -ex
-                     guix shell --verbosity=2 --no-grafts -D guix -- sh -c "
-                       set -ex
-                       ./bootstrap
-                       ./configure --localstatedir=/var
-                       make V=1
-                     "'
-            docker stop "$CNAME"
-            docker rm   "$CNAME"
-          else
-            echo "::error::No bootstrap image available. Build the image manually and push it. See .github/README-docker.md."
-            exit 1
-          fi
-
-      # ------------------------------------------------------------------
       # Guile is needed by build-image-in-docker.scm (and later by
       # test-image.scm) so install it once before those steps.
       # ------------------------------------------------------------------
@@ -113,7 +69,8 @@ jobs:
       # ------------------------------------------------------------------
       # Build the image inside the bootstrap container.
       # build-image-in-docker.scm handles the full container lifecycle:
-      # create → start → wait-for-daemon → docker exec → stop → rm.
+      # create → start → wait-for-daemon → prepare dev environment
+      # (bootstrap/configure/make) → docker exec build-image.scm → stop → rm.
       # The tarball is written to the repository root (mounted as /workspace
       # inside the container) so it is accessible to subsequent steps.
       # ------------------------------------------------------------------
