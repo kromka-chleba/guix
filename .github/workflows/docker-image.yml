@@ -69,8 +69,8 @@ jobs:
       # ------------------------------------------------------------------
       # Build the image inside the bootstrap container.
       # build-image-in-docker.scm handles the full container lifecycle:
-      # create → start → wait-for-daemon → prepare dev environment
-      # (bootstrap/configure/make) → docker exec build-image.scm → stop → rm.
+      # create → start → wait-for-daemon → guix shell -D guix (bootstrap/
+      # configure/make + build-image.scm) → stop → rm.
       # The tarball is written to the repository root (mounted as /workspace
       # inside the container) so it is accessible to subsequent steps.
       # ------------------------------------------------------------------
