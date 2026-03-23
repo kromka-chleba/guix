@@ -68,10 +68,4 @@
                    (substitute-urls '("https://bordeaux.guix.gnu.org"
                                       "https://ci.guix.gnu.org"))))
          ;; Minimal logging.
-         (service syslog-service-type)
-         ;; Feed /dev/urandom into the kernel entropy pool so that
-         ;; guix-daemon's signing-key generation does not block on
-         ;; /dev/random in entropy-starved Docker containers.
-         (service rngd-service-type
-                  (rngd-configuration
-                   (device "/dev/urandom"))))))
+         (service syslog-service-type))))
