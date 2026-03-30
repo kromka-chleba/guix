@@ -1837,10 +1837,8 @@ the @code{lunitx} module for running tests automatically at program exit.")
 (define-public lua5.2-lunitx
   (make-lua-lunitx "lua5.2-lunitx" lua-5.2))
 
-(define (make-lua-lsqlite3 name lua)
-  (let* ((lunitx-name (string-append name "-lunitx"))
-         (lunitx (make-lua-lunitx lunitx-name lua)))
-    (package
+(define (make-lua-lsqlite3 name lua lua-lunitx)
+  (package
       (name name)
       (version "0.9.6")
       (source (origin
@@ -1887,20 +1885,20 @@ the @code{lunitx} module for running tests automatically at program exit.")
                   (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
                  (invoke "lua" "test/test.lua")
                  (invoke "lua" "test/test-dyld.lua")))))))
-      (native-inputs (list unzip lunitx))
+      (native-inputs (list unzip lua-lunitx))
       (inputs (list lua sqlite))
       (home-page "https://lua.sqlite.org/")
       (synopsis "SQLite3 binding for Lua")
       (description "LuaSQLite3 is a thin wrapper around the public domain
 SQLite3 database engine.  It provides a complete binding to the SQLite3 C API
 from within Lua programs.")
-      (license license:expat))))
+      (license license:expat)))
 
 (define-public lua-lsqlite3
-  (make-lua-lsqlite3 "lua-lsqlite3" lua))
+  (make-lua-lsqlite3 "lua-lsqlite3" lua lua-lunitx))
 
 (define-public lua5.1-lsqlite3
-  (make-lua-lsqlite3 "lua5.1-lsqlite3" lua-5.1))
+  (make-lua-lsqlite3 "lua5.1-lsqlite3" lua-5.1 lua5.1-lunitx))
 
 (define-public lua5.2-lsqlite3
-  (make-lua-lsqlite3 "lua5.2-lsqlite3" lua-5.2))
+  (make-lua-lsqlite3 "lua5.2-lsqlite3" lua-5.2 lua5.2-lunitx))
