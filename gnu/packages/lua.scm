@@ -1867,23 +1867,20 @@ the @code{lunitx} module for running tests automatically at program exit.")
                  (install-file "lsqlite3.so" cmod-dir))))
             (delete 'check)
             (add-after 'install 'check
-              (lambda* (#:key tests? outputs inputs native-inputs #:allow-other-keys)
+              (lambda* (#:key tests? outputs #:allow-other-keys)
                  (let* ((out (assoc-ref outputs "out"))
-                        (lunitx-dir (assoc-ref (or native-inputs inputs) ,(string-append name "-lunitx")))
                         (lua-version ,(version-major+minor (package-version lua))))
-                   (when tests?
-                     ;; Built only for the upstream test suite (test-dyld.lua).
-                     (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                             "-o" "extras/libsqlitefunctions.so"
-                             "extras/extension-functions.c"
-                             "-lsqlite3")
-                     (setenv "GUIX_LUA_CPATH"
-                             (string-append out "/lib/lua/" lua-version))
-                     (setenv "GUIX_LUA_PATH"
-                             (string-append lunitx-dir "/share/lua/" lua-version))
-                     ;; Only test the dynamic lsqlite3 module; lsqlite3complete
-                     ;; (SQLite amalgamation) is not built by this package.
-                     (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
+                    (when tests?
+                    ;; Built only for the upstream test suite (test-dyld.lua).
+                    (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                            "-o" "extras/libsqlitefunctions.so"
+                            "extras/extension-functions.c"
+                            "-lsqlite3")
+                    (setenv "GUIX_LUA_CPATH"
+                            (string-append out "/lib/lua/" lua-version))
+                    ;; Only test the dynamic lsqlite3 module; lsqlite3complete
+                    ;; (SQLite amalgamation) is not built by this package.
+                    (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
                      (invoke "lua" "test/test.lua")
                      (invoke "lua" "test/test-dyld.lua"))))))))
       (native-inputs (list unzip lua-lunitx))
