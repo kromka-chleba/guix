@@ -1800,6 +1800,8 @@ way, following established lisp conventions.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
+                    ;; Upstream repository name is "lunit", but it provides
+                    ;; both lunit and lunitx modules.
                     (url "https://github.com/dcurrie/lunit")
                     (commit version)))
               (file-name (git-file-name "lua-lunitx" version))
@@ -1853,16 +1855,17 @@ the @code{lunitx} module for running tests automatically at program exit.")
        `(#:phases
          (modify-phases %standard-phases
            (delete 'configure)
-           (replace 'build
-             (lambda _
-               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                       "-o" "lsqlite3.so"
-                       "lsqlite3.c"
-                       "-llua" "-lsqlite3")
-               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                       "-o" "extras/libsqlitefunctions.so"
-                       "extras/extension-functions.c"
-                       "-lsqlite3")))
+            (replace 'build
+              (lambda _
+                (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                        "-o" "lsqlite3.so"
+                        "lsqlite3.c"
+                        "-llua" "-lsqlite3")
+                ;; Built for the upstream test suite (test-dyld.lua).
+                (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                        "-o" "extras/libsqlitefunctions.so"
+                        "extras/extension-functions.c"
+                        "-lsqlite3")))
            (replace 'install
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
@@ -1872,17 +1875,16 @@ the @code{lunitx} module for running tests automatically at program exit.")
            (delete 'check)
            (add-after 'install 'check
              (lambda* (#:key outputs inputs native-inputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (lunitx-dir (assoc-ref (or native-inputs inputs) ,(string-append name "-lunitx")))
-                      (lua-version ,(version-major+minor (package-version lua))))
-                 (setenv "LUA_CPATH"
-                         (string-append out "/lib/lua/" lua-version "/?.so;;"))
-                 (setenv "LUA_PATH"
-                         (string-append lunitx-dir "/share/lua/" lua-version
-                                        "/?.lua;;"))
-                 ;; Only test the dynamic lsqlite3 module; lsqlite3complete
-                 ;; (SQLite amalgamation) is not built by this package.
-                 (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
+                (let* ((out (assoc-ref outputs "out"))
+                       (lunitx-dir (assoc-ref (or native-inputs inputs) ,(string-append name "-lunitx")))
+                       (lua-version ,(version-major+minor (package-version lua))))
+                  (setenv "GUIX_LUA_CPATH"
+                          (string-append out "/lib/lua/" lua-version))
+                  (setenv "GUIX_LUA_PATH"
+                          (string-append lunitx-dir "/share/lua/" lua-version))
+                  ;; Only test the dynamic lsqlite3 module; lsqlite3complete
+                  ;; (SQLite amalgamation) is not built by this package.
+                  (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
                  (invoke "lua" "test/test.lua")
                  (invoke "lua" "test/test-dyld.lua")))))))
       (native-inputs (list unzip lunitx))
