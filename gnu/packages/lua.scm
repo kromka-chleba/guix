@@ -1858,12 +1858,7 @@ the @code{lunitx} module for running tests automatically at program exit.")
                 (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
                         "-o" "lsqlite3.so"
                         "lsqlite3.c"
-                        "-llua" "-lsqlite3")
-                ;; Built for the upstream test suite (test-dyld.lua).
-                (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                        "-o" "extras/libsqlitefunctions.so"
-                        "extras/extension-functions.c"
-                        "-lsqlite3")))
+                        "-llua" "-lsqlite3")))
            (replace 'install
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
@@ -1871,15 +1866,20 @@ the @code{lunitx} module for running tests automatically at program exit.")
                       (cmod-dir (string-append out "/lib/lua/" lua-version)))
                  (install-file "lsqlite3.so" cmod-dir))))
            (delete 'check)
-           (add-after 'install 'check
-             (lambda* (#:key outputs inputs native-inputs #:allow-other-keys)
-                (let* ((out (assoc-ref outputs "out"))
-                       (lunitx-dir (assoc-ref (or native-inputs inputs) ,(string-append name "-lunitx")))
-                       (lua-version ,(version-major+minor (package-version lua))))
-                  (setenv "GUIX_LUA_CPATH"
-                          (string-append out "/lib/lua/" lua-version))
-                  (setenv "GUIX_LUA_PATH"
-                          (string-append lunitx-dir "/share/lua/" lua-version))
+            (add-after 'install 'check
+              (lambda* (#:key outputs inputs native-inputs #:allow-other-keys)
+                 (let* ((out (assoc-ref outputs "out"))
+                        (lunitx-dir (assoc-ref (or native-inputs inputs) ,(string-append name "-lunitx")))
+                        (lua-version ,(version-major+minor (package-version lua))))
+                   ;; Built only for the upstream test suite (test-dyld.lua).
+                   (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
+                           "-o" "extras/libsqlitefunctions.so"
+                           "extras/extension-functions.c"
+                           "-lsqlite3")
+                   (setenv "GUIX_LUA_CPATH"
+                           (string-append out "/lib/lua/" lua-version))
+                   (setenv "GUIX_LUA_PATH"
+                           (string-append lunitx-dir "/share/lua/" lua-version))
                   ;; Only test the dynamic lsqlite3 module; lsqlite3complete
                   ;; (SQLite amalgamation) is not built by this package.
                   (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
