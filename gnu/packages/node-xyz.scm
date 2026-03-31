@@ -30,6 +30,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages web) ; node-esbuild
   #:use-module (guix build-system node)
+  #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
@@ -2888,6 +2889,34 @@ environment variables.")
     (description "This package allows you to pipe streams together and
 destroy all of them if one of them closes.")
     (license license:expat)))
+
+(define-public node-qwen-code
+  (package
+    (name "node-qwen-code")
+    (version "0.13.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://registry.npmjs.org/@qwen-code/qwen-code/-/"
+                           "qwen-code-" version ".tgz"))
+       (sha256
+        (base32 "15shsi3h68lcqvx1vczvn9xvq3kcqlxaz66gc7341i08dfn92lfl"))))
+    (build-system node-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'enter-package-directory
+            (lambda _
+              (chdir "package"))))))
+    (home-page "https://github.com/QwenLM/qwen-code")
+    (synopsis "Open-source AI coding assistant for the terminal")
+    (description
+     "Qwen Code is an open-source AI coding assistant for terminal workflows.
+It provides the @code{qwen} command-line interface to help developers inspect,
+understand, and modify codebases.")
+    (license license:asl2.0)))
 
 (define-public node-readable-stream
   (package
