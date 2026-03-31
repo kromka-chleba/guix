@@ -2904,7 +2904,7 @@ destroy all of them if one of them closes.")
     (build-system node-build-system)
     (arguments
      (list
-      #:tests? #f
+      #:tests? #f ; No test script is included in the published npm tarball.
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'enter-package-directory
