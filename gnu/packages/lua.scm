@@ -1808,19 +1808,22 @@ way, following established lisp conventions.")
               (sha256
                (base32
                 "0vcd8qawfshqsc5pqyy3hrxp8f9gf2fxq6aw5yxs6m189w49dpgg"))))
-    (build-system trivial-build-system)
+    (build-system gnu-build-system)
     (arguments
      (list
-       #:modules '((guix build utils))
-       #:builder
-       #~(begin
-           (use-modules (guix build utils))
-           (let* ((lua-version #$(version-major+minor (package-version lua)))
-                  (lua-dir (string-append #$output "/share/lua/" lua-version)))
-             (with-directory-excursion #$source
-               (invoke #$(file-append lua "/bin/lua") "test/selftest.lua"))
-             (mkdir-p lua-dir)
-             (copy-recursively (string-append #$source "/lua") lua-dir)))))
+       #:phases
+       #~(modify-phases %standard-phases
+           (delete 'configure)
+           (replace 'check
+             (lambda _
+               (invoke #$(file-append lua "/bin/lua") "test/selftest.lua")
+               #t))
+           (replace 'install
+             (lambda _
+               (let* ((lua-version #$(version-major+minor (package-version lua)))
+                      (lua-dir (string-append #$output "/share/lua/" lua-version)))
+                 (mkdir-p lua-dir)
+                 (copy-recursively "lua" lua-dir)))))))
     (home-page "https://github.com/dcurrie/lunit")
     (synopsis "Unit testing framework for Lua")
     (description "Lunit is a unit testing framework for Lua.  It includes
