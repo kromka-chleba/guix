@@ -1810,17 +1810,16 @@ way, following established lisp conventions.")
                 "0vcd8qawfshqsc5pqyy3hrxp8f9gf2fxq6aw5yxs6m189w49dpgg"))))
     (build-system trivial-build-system)
     (arguments
-     `(#:modules ((guix build utils))
-       #:builder
-       (begin
-         (use-modules (guix build utils))
-         (let* ((source (assoc-ref %build-inputs "source"))
-                (out (assoc-ref %outputs "out"))
-                (lua-version ,(version-major+minor (package-version lua)))
-                (lua-dir (string-append out "/share/lua/" lua-version)))
-           (mkdir-p lua-dir)
-           (copy-recursively (string-append source "/lua") lua-dir)
-           #t))))
+     (list
+      #:modules '((guix build utils))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((lua-version #$(version-major+minor (package-version lua)))
+                 (lua-dir (string-append #$output "/share/lua/" lua-version)))
+            (mkdir-p lua-dir)
+            (copy-recursively (string-append #$source "/lua") lua-dir)
+            #t))))
     (home-page "https://github.com/dcurrie/lunit")
     (synopsis "Unit testing framework for Lua")
     (description "Lunit is a unit testing framework for Lua.  It includes
