@@ -1849,35 +1849,37 @@ the @code{lunitx} module for running tests automatically at program exit.")
                 "10md6bfvbzflrhz4n75jr1ppmz86mwsip85llny23w2ld9iygipc"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace 'build
-           (lambda _
-             (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                     "-o" "lsqlite3.so"
-                     "lsqlite3.c"
-                     "-llua" "-lsqlite3")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (lua-version ,(version-major+minor (package-version lua)))
-                    (cmod-dir (string-append out "/lib/lua/" lua-version)))
-               (install-file "lsqlite3.so" cmod-dir))))
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key tests? outputs #:allow-other-keys)
-             (when tests?
-               ;; Built only for the upstream test suite (test-dyld.lua).
-               (invoke ,(cc-for-target) "-fPIC" "-shared" "-O2"
-                       "-o" "extras/libsqlitefunctions.so"
-                       "extras/extension-functions.c"
-                       "-lsqlite3")
-               ;; Only test the dynamic lsqlite3 module; lsqlite3complete
-               ;; (SQLite amalgamation) is not built by this package.
-               (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
-               (invoke "lua" "test/test.lua")
-               (invoke "lua" "test/test-dyld.lua")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'build
+            (lambda _
+              (invoke #$(cc-for-target) "-fPIC" "-shared" "-O2"
+                      "-o" "lsqlite3.so"
+                      "lsqlite3.c"
+                      "-llua" "-lsqlite3")))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (lua-version
+                      #$(version-major+minor (package-version lua)))
+                     (cmod-dir (string-append out "/lib/lua/" lua-version)))
+                (install-file "lsqlite3.so" cmod-dir))))
+          (delete 'check)
+          (add-after 'install 'check
+            (lambda* (#:key tests? outputs #:allow-other-keys)
+              (when tests?
+                ;; Built only for the upstream test suite (test-dyld.lua).
+                (invoke #$(cc-for-target) "-fPIC" "-shared" "-O2"
+                        "-o" "extras/libsqlitefunctions.so"
+                        "extras/extension-functions.c"
+                        "-lsqlite3")
+                ;; Only test the dynamic lsqlite3 module; lsqlite3complete
+                ;; (SQLite amalgamation) is not built by this package.
+                (invoke "lua" "test/tests-sqlite3.lua" "lsqlite3")
+                (invoke "lua" "test/test.lua")
+                (invoke "lua" "test/test-dyld.lua")))))))
     (native-inputs (list unzip lua-lunitx))
     (inputs (list lua sqlite))
     (home-page "https://lua.sqlite.org/")
