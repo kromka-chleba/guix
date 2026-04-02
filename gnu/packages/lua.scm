@@ -1818,7 +1818,6 @@ way, following established lisp conventions.")
            (let* ((lua-version #$(version-major+minor (package-version lua)))
                   (lua-dir (string-append #$output "/share/lua/" lua-version)))
              (with-directory-excursion #$source
-               (setenv "LUA_PATH" "lua/?.lua;lua/?/init.lua;;")
                (invoke #$(file-append lua "/bin/lua") "test/selftest.lua"))
              (mkdir-p lua-dir)
              (copy-recursively (string-append #$source "/lua") lua-dir)))))
