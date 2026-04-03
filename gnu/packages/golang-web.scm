@@ -6011,6 +6011,33 @@ receives automatic updates from a server via HTTP connection.  The SSE
 of HTML5[1] by the W3C}.")
     (license license:expat)))
 
+(define-public go-github-com-gin-contrib-cors
+  (package
+    (name "go-github-com-gin-contrib-cors")
+    (version "1.7.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gin-contrib/cors")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j3abmhlhv7hnldd74zymvhbkcpkmkpb2llb8i4hnflz7jd6yg1a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gin-contrib/cors"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-gin-gonic-gin))
+    (home-page "https://github.com/gin-contrib/cors")
+    (synopsis "CORS middleware for Gin framework")
+    (description
+     "This package provides CORS middleware for the Gin web framework.")
+    (license license:expat)))
+
 (define-public go-github-com-gin-gonic-gin
   (package
     (name "go-github-com-gin-gonic-gin")
