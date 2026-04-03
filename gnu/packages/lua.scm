@@ -1818,9 +1818,10 @@ way, following established lisp conventions.")
            (let* ((lua (string-append #$lua "/bin/lua"))
                   (lua-version #$(version-major+minor (package-version lua)))
                   (lua-dir (string-append #$output "/share/lua/" lua-version)))
-             (setenv "LUA_PATH" "./lua/?.lua;./lua/?/init.lua;;")
-             (with-directory-excursion #$source
-               (invoke lua "test/selftest.lua"))
+             (setenv "LUA_PATH"
+                     (string-append #$source "/lua/?.lua;"
+                                    #$source "/lua/?/init.lua;;"))
+             (invoke lua (string-append #$source "/test/selftest.lua"))
              (mkdir-p lua-dir)
              (copy-recursively (string-append #$source "/lua") lua-dir)))))
     (inputs (list lua))
