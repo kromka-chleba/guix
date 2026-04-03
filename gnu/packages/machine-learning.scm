@@ -1040,7 +1040,7 @@ without dependencies, with
             (lambda* (#:key outputs #:allow-other-keys)
               (let ((libdir (string-append #$output "/lib/ollama")))
                 (mkdir-p libdir)
-                (copy-recursively "build/lib/ollama" libdir))))))
+                (copy-recursively "build/lib/ollama" libdir)))))))
     (native-inputs
      (list cmake pkg-config))
     (inputs
@@ -1147,7 +1147,7 @@ without dependencies, with
       (description
        "Ollama is a local inference runtime and command-line tool for running and
 serving open language models.")
-      (license license:expat)))))
+      (license license:expat))))
 
 (define-public mcl
   (package
