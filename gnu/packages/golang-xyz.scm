@@ -2285,6 +2285,44 @@ cluster segmentation algorithm.")
          (package-arguments go-github-com-apparentlymart-go-textseg-v15)
        ((#:import-path _) "github.com/apparentlymart/go-textseg/v16")))))
 
+(define-public go-github-com-apache-arrow-go-arrow
+  (let ((commit "bc219186db40")
+        (revision "0"))
+    (package
+      (name "go-github-com-apache-arrow-go-arrow")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/apache/arrow")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1bmscs5fjh39hq8p6jfrig1vmq2ff13c917cb4vmb11q52s6j2j3"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/apache/arrow/go/arrow"
+        #:unpack-path "github.com/apache/arrow"))
+      (native-inputs
+       (list go-github-com-google-go-cmp
+             go-github-com-stretchr-testify))
+      (propagated-inputs
+       (list go-github-com-golang-protobuf
+             go-github-com-google-flatbuffers
+             go-github-com-klauspost-compress
+             go-github-com-pierrec-lz4-v4
+             go-golang-org-x-exp
+             go-golang-org-x-xerrors
+             go-gonum-org-v1-gonum
+             go-google-golang-org-protobuf))
+      (home-page "https://github.com/apache/arrow")
+      (synopsis "Apache Arrow module for Go")
+      (description
+       "This package provides Apache Arrow data structures and algorithms for Go.")
+      (license license:asl2.0))))
+
 (define-public go-github-com-araddon-dateparse
   (package
     (name "go-github-com-araddon-dateparse")
@@ -7283,6 +7321,54 @@ more tangible.")
 1.6.0.")
        (license license:bsd-3)))))
 
+(define-public go-github-com-chewxy-hm
+  (package
+    (name "go-github-com-chewxy-hm")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chewxy/hm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18h4z3aq5qrp842a6bqh9dh05yy6x80v484gxdm9claklxjidy0g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f                          ; no go.mod
+      #:import-path "github.com/chewxy/hm"))
+    (home-page "https://github.com/chewxy/hm")
+    (synopsis "Hindley-Milner type inference for Go")
+    (description
+     "This package provides a Hindley-Milner type inference implementation for Go.")
+    (license license:expat)))
+
+(define-public go-github-com-chewxy-math32
+  (package
+    (name "go-github-com-chewxy-math32")
+    (version "1.11.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chewxy/math32")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07np1ww3zwxhis7939l3sba1nslqf6is2wr78vdinig8sk95ngr7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/chewxy/math32"))
+    (home-page "https://github.com/chewxy/math32")
+    (synopsis "Math package for float32 values in Go")
+    (description
+     "This package provides math operations specialized for float32 in Go.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-d4l3k-messagediff
   (package
     (name "go-github-com-d4l3k-messagediff")
@@ -7308,6 +7394,31 @@ more tangible.")
      "Messagediff is a library for calculating diffs of arbitrary
 structs in the Go programming language.")
     (license license:expat)))
+
+(define-public go-github-com-d4l3k-go-bfloat16
+  (let ((commit "690c3bdd05f13e639d272b6b05061ea57e639d2d")
+        (revision "0"))
+    (package
+      (name "go-github-com-d4l3k-go-bfloat16")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/d4l3k/go-bfloat16")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1xghn4xibsdgrr9nvyiaz9xjr4za4cb0rhiqh9fx2ns0dvi9j8s6"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/d4l3k/go-bfloat16"))
+      (home-page "https://github.com/d4l3k/go-bfloat16")
+      (synopsis "bfloat16 type for Go")
+      (description
+       "This package provides bfloat16 type support for Go.")
+      (license license:expat))))
 
 (define-public go-github-com-d5-tengo-v2
   (package
@@ -12994,6 +13105,29 @@ subsystem in Linux.")
 used in other languages but absent in Go package strings.")
     (license license:expat)))
 
+(define-public go-github-com-inconshreveable-mousetrap
+  (package
+    (name "go-github-com-inconshreveable-mousetrap")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/inconshreveable/mousetrap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ar3wz2wpx15ckmh347f0ldp45y09z95k79g4vlypqh5vdsrcca1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/inconshreveable/mousetrap"))
+    (home-page "https://github.com/inconshreveable/mousetrap")
+    (synopsis "Detect if process started from Windows Explorer")
+    (description
+     "This package provides utilities for detecting Explorer-launched processes.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-iancoleman-orderedmap
   (package
     (name "go-github-com-iancoleman-orderedmap")
@@ -16033,6 +16167,31 @@ representation suitable for computing diffs.")
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-ledongthuc-pdf
+  (let ((commit "5959a40277285327ee480a3bfd8ec9289fc1ab50")
+        (revision "0"))
+    (package
+      (name "go-github-com-ledongthuc-pdf")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ledongthuc/pdf")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1gwxnyy6jgv6vrfryhkv191bfa7zic7qfwc09pmz3kc7q9g4mh6d"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/ledongthuc/pdf"))
+      (home-page "https://github.com/ledongthuc/pdf")
+      (synopsis "PDF processing library for Go")
+      (description
+       "This package provides functionality to process PDF files in Go.")
+      (license license:bsd-3))))
+
 (define-public go-github-com-landlock-lsm-go-landlock
   (package
     (name "go-github-com-landlock-lsm-go-landlock")
@@ -17466,6 +17625,31 @@ whether a file descriptor points to a terminal and the type of the terminal.")
     (synopsis "Utility for cgo")
     (description
      "This package allows for a cgo argument to be passed a Go pointer.")
+    (license license:expat)))
+
+(define-public go-github-com-mattn-go-localereader
+  (package
+    (name "go-github-com-mattn-go-localereader")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattn/go-localereader")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00xxb98jnn9wg4ycrlx1yl3y79dsdy96h6qzlkw1599yvny3flfw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f                          ; no go.mod
+      #:import-path "github.com/mattn/go-localereader"))
+    (home-page "https://github.com/mattn/go-localereader")
+    (synopsis "Read locale information in Go")
+    (description
+     "This package provides locale-reader helpers for Go programs.")
     (license license:expat)))
 
 (define-public go-github-com-mattn-go-runewidth
@@ -19827,6 +20011,31 @@ process.")
 pretty printed rendering in Golang.")
     (license license:expat)))
 
+(define-public go-github-com-nlpodyssey-gopickle
+  (package
+    (name "go-github-com-nlpodyssey-gopickle")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nlpodyssey/gopickle")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "167l4pk0y2hixpcdqgwia6vrp4hdj8sn0bbggx242gg6k3vcs8i5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nlpodyssey/gopickle"))
+    (propagated-inputs
+     (list go-golang-org-x-text))
+    (home-page "https://github.com/nlpodyssey/gopickle")
+    (synopsis "Read and write Python pickle files in Go")
+    (description
+     "This package provides a Go implementation for Python pickle serialization.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-nlpodyssey-spago
   (package
     (name "go-github-com-nlpodyssey-spago")
@@ -21247,6 +21456,45 @@ package (which is based off an earlier version of this package).")
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs '())))
+
+(define-public go-github-com-pdevine-tensor
+  (let ((commit "f88f4562727c")
+        (revision "0"))
+    (package
+      (name "go-github-com-pdevine-tensor")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pdevine/tensor")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "187ykrksfa3ncf33y91h174kdl8awlby12z76lnk17g0n0d2d7ir"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:tests? #f ; tests require many unbundled extras
+        #:import-path "github.com/pdevine/tensor"))
+      (propagated-inputs
+       (list go-github-com-apache-arrow-go-arrow
+             go-github-com-chewxy-hm
+             go-github-com-chewxy-math32
+             go-github-com-gogo-protobuf
+             go-github-com-golang-protobuf
+             go-github-com-google-flatbuffers
+             go-github-com-pkg-errors
+             go-go4-org-unsafe-assume-no-moving-gc
+             go-gonum-org-v1-gonum
+             go-golang-org-x-xerrors
+             go-gorgonia-org-vecf32
+             go-gorgonia-org-vecf64))
+      (home-page "https://github.com/pdevine/tensor")
+      (synopsis "Tensor package for Go")
+      (description
+       "This package provides tensor types and operations for Go.")
+      (license license:asl2.0))))
 
 (define-public go-github-com-pengsrc-go-shared
   (package
@@ -25010,6 +25258,32 @@ managing TUF repositories and clients for securely downloading updates.")
            go-github-com-secure-systems-lab-go-securesystemslib
            go-github-com-sigstore-sigstore))))
 
+(define-public go-github-com-thetitanrain-w32
+  (let ((commit "4f5cfb03fabf")
+        (revision "0"))
+    (package
+      (name "go-github-com-thetitanrain-w32")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/TheTitanrain/w32")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0xqjzdp502pgssa41g9cr372z9x8cvxyggd8wsphz8rycj2455as"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:skip-build? #t
+        #:import-path "github.com/TheTitanrain/w32"))
+      (home-page "https://github.com/TheTitanrain/w32")
+      (synopsis "Win32 API wrapper for Go")
+      (description
+       "This package provides Win32 API bindings for Go.")
+      (license license:bsd-3))))
+
 (define-public go-github-com-tidwall-cities
   (package
     (name "go-github-com-tidwall-cities")
@@ -25369,6 +25643,54 @@ batching log events.")
 query information regarding the number of CPUs available to the system.")
     (license license:asl2.0)))
 
+(define-public go-github-com-tkrajina-go-reflector
+  (package
+    (name "go-github-com-tkrajina-go-reflector")
+    (version "0.5.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tkrajina/go-reflector")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yjf0jrxncrm8izw3s6skz2fly23mdw0xsdxhah1fsy9r4490ppf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tkrajina/go-reflector"))
+    (home-page "https://github.com/tkrajina/go-reflector")
+    (synopsis "Reflection helpers for Go")
+    (description
+     "This package provides reflection helper functions for Go.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-tkrajina-typescriptify-golang-structs
+  (package
+    (name "go-github-com-tkrajina-typescriptify-golang-structs")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tkrajina/typescriptify-golang-structs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02y47fqf9rqgn4205gj4idcfmrxsplczd7lxrgsgyxzqyqn1p2mw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tkrajina/typescriptify-golang-structs"))
+    (propagated-inputs
+     (list go-github-com-tkrajina-go-reflector))
+    (home-page "https://github.com/tkrajina/typescriptify-golang-structs")
+    (synopsis "Convert Go structs to TypeScript definitions")
+    (description
+     "This package provides automatic conversion from Go structs to TypeScript.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-tkuchiki-go-timezone
   (package
     (name "go-github-com-tkuchiki-go-timezone")
@@ -25662,6 +25984,60 @@ emulator.")
      "Thi package provides a @url{https://en.wikipedia.org/wiki/Merkle_tree,
 Merkle tree} implementation in Golang.")
     (license license:asl2.0)))
+
+(define-public go-github-com-tree-sitter-go-tree-sitter
+  (let ((commit "adc13ffd8b2c0b01b878fda9f7c422ce0df5fad3")
+        (revision "0"))
+    (package
+      (name "go-github-com-tree-sitter-go-tree-sitter")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tree-sitter/go-tree-sitter")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "067f584x4q1172rngbim272lp4da8imz8ppy0lryqb5fc2wrzaxw"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/tree-sitter/go-tree-sitter"))
+      (propagated-inputs
+       (list go-github-com-mattn-go-pointer))
+      (home-page "https://github.com/tree-sitter/go-tree-sitter")
+      (synopsis "Go bindings for tree-sitter")
+      (description
+       "This package provides Go bindings for tree-sitter parsers.")
+      (license license:expat))))
+
+(define-public go-github-com-tree-sitter-tree-sitter-cpp
+  (package
+    (name "go-github-com-tree-sitter-tree-sitter-cpp")
+    (version "0.23.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tree-sitter/tree-sitter-cpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yicanpy60lg842z4mv2x9ccq5jkglgml7fdkk590h8b7kax8q2i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/tree-sitter/tree-sitter-cpp"
+      #:unpack-path "github.com/tree-sitter/tree-sitter-cpp"))
+    (propagated-inputs
+     (list go-github-com-tree-sitter-go-tree-sitter))
+    (home-page "https://github.com/tree-sitter/tree-sitter-cpp")
+    (synopsis "C++ grammar bindings for tree-sitter in Go")
+    (description
+     "This package provides Go bindings for the tree-sitter C++ grammar.")
+    (license license:expat)))
 
 (define-public go-github-com-twpayne-go-shell
   (package
@@ -26741,6 +27117,31 @@ on the platform.")
      "Package orderedmap implements an ordered map, i.e. a map that also keeps
 track of the order in which keys were inserted.")
     (license license:asl2.0)))
+
+(define-public go-github-com-xtgo-set
+  (package
+    (name "go-github-com-xtgo-set")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xtgo/set")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vkm75aihrg0qxgphpzfnln4h21irlpgsjszaac9plssvp187f80"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f                          ; no go.mod
+      #:import-path "github.com/xtgo/set"))
+    (home-page "https://github.com/xtgo/set")
+    (synopsis "Set operations on sorted slices for Go")
+    (description
+     "This package provides set operations over sorted slices in Go.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-workiva-go-datastructures
   (package
@@ -29128,6 +29529,32 @@ for locating directories
 @end itemize")
       (license (list license:asl2.0 license:bsd-3)))))
 
+(define-public go-go4-org-unsafe-assume-no-moving-gc
+  (let ((commit "b99613f794b6b2f6d80da53bb131c5c98ea2fdd2")
+        (revision "0"))
+    (package
+      (name "go-go4-org-unsafe-assume-no-moving-gc")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/go4org/unsafe-assume-no-moving-gc")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14n42rshafxxiys7p9ly4s4cir8r224ilpdvjssgr6lcqdbnzfl0"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "go4.org/unsafe/assume-no-moving-gc"
+        #:tests? #f))
+      (home-page "https://github.com/go4org/unsafe-assume-no-moving-gc")
+      (synopsis "Helper for the Go non-moving GC assumption")
+      (description
+       "This package provides runtime checks for Go's non-moving GC assumption.")
+      (license license:bsd-3))))
+
 (define-public go-golang-org-rainycape-unidecode
   (let ((commit "cb7f23ec59bec0d61b19c56cd88cee3d0cc1870c")
         (revision "1"))
@@ -29681,6 +30108,54 @@ values.")
 The yaml package supports most of YAML 1.2, but preserves some behavior from
 1.1 for backwards compatibility.")
     (license license:asl2.0)))
+
+(define-public go-gorgonia-org-vecf32
+  (package
+    (name "go-gorgonia-org-vecf32")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/vecf32")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ska3f0x6279cckzdc9vg0byn9ixckrv83j88whhi20mi2xsq7j9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gorgonia.org/vecf32"))
+    (propagated-inputs
+     (list go-github-com-chewxy-math32))
+    (home-page "https://github.com/gorgonia/vecf32")
+    (synopsis "Float32 vector utilities for Go")
+    (description
+     "This package provides float32 vector utility routines for Go.")
+    (license license:expat)))
+
+(define-public go-gorgonia-org-vecf64
+  (package
+    (name "go-gorgonia-org-vecf64")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gorgonia/vecf64")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bcjbr2pmfjc7i633678fmwfq89g3ghp26wia6kyhsnikanvx70a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gorgonia.org/vecf64"))
+    (home-page "https://github.com/gorgonia/vecf64")
+    (synopsis "Float64 vector utilities for Go")
+    (description
+     "This package provides float64 vector utility routines for Go.")
+    (license license:expat)))
 
 (define-public go-gorm-io-gorm
   (package
