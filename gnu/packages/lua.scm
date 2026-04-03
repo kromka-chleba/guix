@@ -1814,17 +1814,14 @@ way, following established lisp conventions.")
        #:modules '((guix build utils))
        #:builder
        #~(begin
-           (use-modules (guix build utils))
-           (let* ((lua (string-append #$lua "/bin/lua"))
-                  (lua-version #$(version-major+minor (package-version lua)))
-                  (lua-dir (string-append #$output "/share/lua/" lua-version)))
-             (setenv "LUA_PATH"
-                     (string-append #$source "/lua/?.lua;"
-                                    #$source "/lua/?/init.lua;;"))
-             (invoke lua (string-append #$source "/test/selftest.lua"))
-             (mkdir-p lua-dir)
-             (copy-recursively (string-append #$source "/lua") lua-dir)))))
-    (inputs (list lua))
+            (use-modules (guix build utils))
+            (let* ((lua (string-append #$lua "/bin/lua"))
+                   (lua-version #$(version-major+minor (package-version lua)))
+                   (lua-dir (string-append #$output "/share/lua/" lua-version)))
+              (invoke lua (string-append #$source "/test/selftest.lua"))
+              (mkdir-p lua-dir)
+              (copy-recursively (string-append #$source "/lua") lua-dir)))))
+    (native-inputs (list lua))
     (home-page "https://github.com/dcurrie/lunit")
     (synopsis "Unit testing framework for Lua")
     (description "Lunit is a unit testing framework for Lua.  It includes
