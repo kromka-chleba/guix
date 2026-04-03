@@ -2898,18 +2898,13 @@ destroy all of them if one of them closes.")
      (origin
        (method url-fetch)
        (uri (string-append "https://registry.npmjs.org/@qwen-code/qwen-code/-/"
-                           "qwen-code-" version ".tgz"))
+                            "qwen-code-" version ".tgz"))
        (sha256
-        (base32 "15shsi3h68lcqvx1vczvn9xvq3kcqlxaz66gc7341i08dfn92lfl"))))
+        (base32 "1m2ij6n6n26483363kwqmwxcav0fpixv5yxk3pxcd3120d3x8l4p"))))
     (build-system node-build-system)
     (arguments
      (list
-      #:tests? #f ; No test script is included in the published npm tarball.
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'enter-package-directory
-            (lambda _
-              (chdir "package"))))))
+      #:tests? #f)) ; No test script is included in the published npm tarball.
     (home-page "https://github.com/QwenLM/qwen-code")
     (synopsis "Open-source AI coding assistant for the terminal")
     (description
