@@ -991,6 +991,7 @@ without dependencies, with
     (license license:expat)))
 
 (define-public ollama
+  ;; Commit corresponds to upstream release v0.20.0.
   (let ((commit "de9673ac3fb1c57fbf6e5e194f1f3dc5a8b48668")
         (revision "0"))
     (package
@@ -1023,11 +1024,7 @@ without dependencies, with
                        "-I" #$(this-package-input "nlohmann-json")
                        "/include -I"
                        #$(this-package-input "miniaudio")
-                       "/include"))
-              (setenv "CGO_CFLAGS"
-                      (or (getenv "CGO_CFLAGS") ""))
-              (setenv "CGO_CXXFLAGS"
-                      (or (getenv "CGO_CXXFLAGS") ""))))
+                       "/include"))))
           (add-before 'build 'patch-miniaudio-include
             (lambda _
               ;; Upstream includes <miniaudio/miniaudio.h>, while Guix
@@ -1037,8 +1034,7 @@ without dependencies, with
                  "miniaudio.h"))))
           (add-before 'build 'build-native-runners
             (lambda _
-              (invoke "cmake" "-B" "build" "-S" "."
-                      "-DCMAKE_BUILD_TYPE=Release")
+              (invoke "cmake" "-B" "build" "-S" ".")
               (invoke "cmake" "--build" "build" "--parallel")))
           (add-after 'install 'install-native-runners
             (lambda* (#:key outputs #:allow-other-keys)
