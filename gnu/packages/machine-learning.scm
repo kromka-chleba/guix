@@ -61,6 +61,7 @@
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
+  #:use-module (guix build-system go)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system ocaml)
   #:use-module (guix build-system pyproject)
@@ -95,6 +96,13 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-maths)
+  #:use-module (gnu packages golang-web)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages guile)
@@ -982,6 +990,165 @@ without dependencies, with
     (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
     (home-page "https://github.com/ggml-org/whisper.cpp/")
     (license license:expat)))
+
+(define-public ollama
+  ;; Commit corresponds to upstream release v0.20.0.
+  (let ((commit "de9673ac3fb1c57fbf6e5e194f1f3dc5a8b48668")
+        (revision "0"))
+    (package
+      (name "ollama")
+      (version (git-version "0.20.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ollama/ollama")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "06k0rgcjq4pbjm8n0vi5b57jj3gn2gznz2q8dxkmc2njgbyvi9mc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; requires GPU stack/tooling and extra runtime setup
+      #:import-path "github.com/ollama/ollama"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-build-environment
+            (lambda* (#:key outputs #:allow-other-keys)
+              ;; Build native backends from source and place them where Ollama
+              ;; looks for them on Linux: ../lib/ollama from the executable.
+              ;; Empty runner dir avoids an extra path suffix under lib/ollama.
+              (setenv "OLLAMA_RUNNER_DIR" "")
+              (setenv "CGO_CPPFLAGS"
+                      (string-append
+                       "-I" #$(this-package-input "nlohmann-json")
+                       "/include -I"
+                       #$(this-package-input "miniaudio")
+                       "/include"))))
+          (add-before 'build 'patch-miniaudio-include
+            (lambda _
+              ;; Upstream includes <miniaudio/miniaudio.h>, while Guix
+              ;; installs miniaudio.h directly under include/.
+              (substitute* "llama/llama.cpp/tools/mtmd/mtmd-helper.cpp"
+                (("miniaudio/miniaudio\\.h")
+                 "miniaudio.h"))))
+          (add-before 'build 'build-native-runners
+            (lambda _
+              (invoke "cmake" "-B" "build" "-S" ".")
+              (invoke "cmake" "--build" "build" "--parallel")))
+          (add-after 'install 'install-native-runners
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((libdir (string-append #$output "/lib/ollama")))
+                (mkdir-p libdir)
+                (copy-recursively "build/lib/ollama" libdir)))))))
+    (native-inputs
+     (list cmake pkg-config))
+    (inputs
+     (list miniaudio nlohmann-json))
+    (propagated-inputs
+     (list go-github-com-agnivade-levenshtein
+           go-github-com-apache-arrow-go-arrow
+           go-github-com-aymanbagabas-go-osc52-v2
+           go-github-com-bahlo-generic-list-go
+           go-github-com-buger-jsonparser
+           go-github-com-bytedance-sonic
+           go-github-com-bytedance-sonic-loader
+           go-github-com-charmbracelet-bubbletea
+           go-github-com-charmbracelet-colorprofile
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-cellbuf
+           go-github-com-charmbracelet-x-term
+           go-github-com-chewxy-hm
+           go-github-com-chewxy-math32
+           go-github-com-cloudwego-base64x
+           go-github-com-cloudwego-iasm
+           go-github-com-containerd-console
+           go-github-com-d4l3k-go-bfloat16
+           go-github-com-davecgh-go-spew
+           go-github-com-dlclark-regexp2
+           go-github-com-emirpasic-gods-v2
+           go-github-com-erikgeiser-coninput
+           go-github-com-gabriel-vasile-mimetype
+           go-github-com-gin-contrib-cors
+           go-github-com-gin-contrib-sse
+           go-github-com-gin-gonic-gin
+           go-github-com-go-playground-locales
+           go-github-com-go-playground-universal-translator
+           go-github-com-go-playground-validator-v10
+           go-github-com-goccy-go-json
+           go-github-com-gogo-protobuf
+           go-github-com-golang-protobuf
+           go-github-com-google-flatbuffers
+           go-github-com-google-go-cmp
+           go-github-com-google-uuid
+           go-github-com-inconshreveable-mousetrap
+           go-github-com-json-iterator-go
+           go-github-com-klauspost-compress
+           go-github-com-klauspost-cpuid-v2
+           go-github-com-kr-text
+           go-github-com-ledongthuc-pdf
+           go-github-com-leodido-go-urn
+           go-github-com-lucasb-eyer-go-colorful
+           go-github-com-mailru-easyjson
+           go-github-com-mattn-go-isatty
+           go-github-com-mattn-go-localereader
+           go-github-com-mattn-go-pointer
+           go-github-com-mattn-go-runewidth
+           go-github-com-mattn-go-sqlite3
+           go-github-com-modern-go-concurrent
+           go-github-com-modern-go-reflect2
+           go-github-com-muesli-ansi
+           go-github-com-muesli-cancelreader
+           go-github-com-muesli-termenv
+           go-github-com-nlpodyssey-gopickle
+           go-github-com-olekukonko-tablewriter
+           go-github-com-pdevine-tensor
+           go-github-com-pelletier-go-toml-v2
+           go-github-com-pierrec-lz4-v4
+           go-github-com-pkg-browser
+           go-github-com-pkg-errors
+           go-github-com-pmezard-go-difflib
+           go-github-com-rivo-uniseg
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-stretchr-testify
+           go-github-com-thetitanrain-w32
+           go-github-com-tkrajina-go-reflector
+           go-github-com-tkrajina-typescriptify-golang-structs
+           go-github-com-tree-sitter-go-tree-sitter
+           go-github-com-tree-sitter-tree-sitter-cpp
+           go-github-com-twitchyliquid64-golang-asm
+           go-github-com-ugorji-go-codec
+           go-github-com-wk8-go-ordered-map-v2
+           go-github-com-x448-float16
+           go-github-com-xo-terminfo
+           go-github-com-xtgo-set
+           go-go4-org-unsafe-assume-no-moving-gc
+           go-golang-org-x-arch
+           go-golang-org-x-crypto
+           go-golang-org-x-exp
+           go-golang-org-x-image
+           go-golang-org-x-mod
+           go-golang-org-x-net
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-golang-org-x-text
+           go-golang-org-x-tools
+           go-golang-org-x-xerrors
+           go-gonum-org-v1-gonum
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v3
+           go-gorgonia-org-vecf32
+           go-gorgonia-org-vecf64))
+      (home-page "https://github.com/ollama/ollama")
+      (synopsis "Run and serve local language models")
+      (description
+       "Ollama is a local inference runtime and command-line tool for running and
+serving open language models.")
+      (license license:expat))))
 
 (define-public mcl
   (package
