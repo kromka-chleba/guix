@@ -991,18 +991,20 @@ without dependencies, with
     (license license:expat)))
 
 (define-public ollama
-  (package
-    (name "ollama")
-    (version "0.20.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ollama/ollama")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "06k0rgcjq4pbjm8n0vi5b57jj3gn2gznz2q8dxkmc2njgbyvi9mc"))))
+  (let ((commit "de9673ac3fb1c57fbf6e5e194f1f3dc5a8b48668")
+        (revision "0"))
+    (package
+      (name "ollama")
+      (version (git-version "0.20.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ollama/ollama")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "06k0rgcjq4pbjm8n0vi5b57jj3gn2gznz2q8dxkmc2njgbyvi9mc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1014,6 +1016,7 @@ without dependencies, with
             (lambda* (#:key outputs #:allow-other-keys)
               ;; Build native backends from source and place them where Ollama
               ;; looks for them on Linux: ../lib/ollama from the executable.
+              ;; Empty runner dir avoids an extra path suffix under lib/ollama.
               (setenv "OLLAMA_RUNNER_DIR" "")
               (setenv "CGO_CPPFLAGS"
                       (string-append
@@ -1035,8 +1038,7 @@ without dependencies, with
           (add-before 'build 'build-native-runners
             (lambda _
               (invoke "cmake" "-B" "build" "-S" "."
-                      "-DCMAKE_BUILD_TYPE=Release"
-                      "-DCMAKE_INSTALL_PREFIX=/")
+                      "-DCMAKE_BUILD_TYPE=Release")
               (invoke "cmake" "--build" "build" "--parallel")))
           (add-after 'install 'install-native-runners
             (lambda* (#:key outputs #:allow-other-keys)
@@ -1144,12 +1146,12 @@ without dependencies, with
            go-gopkg-in-yaml-v3
            go-gorgonia-org-vecf32
            go-gorgonia-org-vecf64))
-    (home-page "https://github.com/ollama/ollama")
-    (synopsis "Run and serve local language models")
-    (description
-     "Ollama is a local inference runtime and command-line tool for running and
+      (home-page "https://github.com/ollama/ollama")
+      (synopsis "Run and serve local language models")
+      (description
+       "Ollama is a local inference runtime and command-line tool for running and
 serving open language models.")
-    (license license:expat)))
+      (license license:expat)))))
 
 (define-public mcl
   (package
