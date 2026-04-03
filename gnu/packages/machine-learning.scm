@@ -1022,9 +1022,9 @@ without dependencies, with
                        #$(this-package-input "miniaudio")
                        "/include"))
               (setenv "CGO_CFLAGS"
-                      (or (getenv "CGO_CPPFLAGS") ""))
+                      (or (getenv "CGO_CFLAGS") ""))
               (setenv "CGO_CXXFLAGS"
-                      (or (getenv "CGO_CPPFLAGS") ""))))
+                      (or (getenv "CGO_CXXFLAGS") ""))))
           (add-before 'build 'patch-miniaudio-include
             (lambda _
               ;; Upstream includes <miniaudio/miniaudio.h>, while Guix
