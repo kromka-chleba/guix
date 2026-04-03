@@ -1084,7 +1084,7 @@ Notable examples are GTK+, GStreamer and Webkit.")
                              (string-append out "/share/lua/" lua-version))
                #t))))
        #:test-target "test"))
-    (inputs (list lua))
+    (native-inputs (list lua))
     (synopsis "Pattern-matching library for Lua")
     (description
      "LPeg is a pattern-matching library for Lua, based on Parsing Expression
