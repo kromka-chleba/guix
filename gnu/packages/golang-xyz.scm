@@ -7410,7 +7410,7 @@ structs in the Go programming language.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1bshygdr5lcagznrh349r53whqhlg870j484zpsi3f7ilqv08rvy"))))
+          (base32 "080khaq944cbga9mplz916kg6gijfcmb07k5wpx5zdfkhc4gkjmf"))))
       (build-system go-build-system)
       (arguments
        (list
