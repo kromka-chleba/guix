@@ -1076,7 +1076,7 @@ without dependencies, with
                     "\t\t}\n"
                     "\n"
                     "\t\tbreak\n"
-                    "\t}")))))
+                    "\t}"))))))
           (add-before 'build 'build-native-runners
             (lambda _
               (let ((srcdir "src/github.com/ollama/ollama"))
@@ -1091,10 +1091,10 @@ without dependencies, with
           (add-after 'install-native-runners 'patch-native-runners-runpath
             (lambda* (#:key outputs #:allow-other-keys)
               (let ((libdir (string-append #$output "/lib/ollama")))
-                 (for-each
-                  (lambda (file)
-                    (invoke "patchelf" "--add-rpath" "$ORIGIN" file))
-                  (find-files libdir "libggml-cpu-.*\\.so$")))))))))
+                (for-each
+                 (lambda (file)
+                   (invoke "patchelf" "--add-rpath" "$ORIGIN" file))
+                 (find-files libdir "libggml-cpu-.*\\.so$")))))))
     (native-inputs
      (list cmake patchelf pkg-config))
     (inputs
@@ -1201,7 +1201,7 @@ without dependencies, with
       (description
        "Ollama is a local inference runtime and command-line tool for running and
 serving open language models.")
-      (license license:expat))))
+      (license license:expat)))))
 
 (define-public mcl
   (package
