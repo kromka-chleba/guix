@@ -1116,7 +1116,7 @@ without dependencies, with
            go-github-com-muesli-cancelreader
            go-github-com-muesli-termenv
            go-github-com-nlpodyssey-gopickle
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-pdevine-tensor
            go-github-com-pelletier-go-toml-v2
            go-github-com-pierrec-lz4-v4
