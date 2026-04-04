@@ -1030,9 +1030,12 @@ without dependencies, with
             (lambda _
               ;; Upstream includes <miniaudio/miniaudio.h>, while Guix
               ;; installs miniaudio.h directly under include/.
-              (substitute* "llama/llama.cpp/tools/mtmd/mtmd-helper.cpp"
-                (("miniaudio/miniaudio\\.h")
-                 "miniaudio.h"))))
+              (for-each
+               (lambda (file)
+                 (substitute* file
+                   (("miniaudio/miniaudio\\.h")
+                    "miniaudio.h")))
+               (find-files "." "\\.(c|cc|cpp|h|hpp)$"))))
           (add-before 'build 'build-native-runners
             (lambda _
               (invoke "cmake" "-B" "build" "-S" ".")
