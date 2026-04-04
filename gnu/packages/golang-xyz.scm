@@ -30172,6 +30172,8 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
     (arguments
      (list
       #:import-path "gorgonia.org/vecf64"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (home-page "https://github.com/gorgonia/vecf64")
     (synopsis "Float64 vector utilities for Go")
     (description
