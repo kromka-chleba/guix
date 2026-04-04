@@ -25660,7 +25660,7 @@ query information regarding the number of CPUs available to the system.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yjf0jrxncrm8izw3s6skz2fly23mdw0xsdxhah1fsy9r4490ppf"))))
+        (base32 "082hrydnsw1m7vbxbnnjn2s7yrfvm6k9g5idcma7713gnz56xsgx"))))
     (build-system go-build-system)
     (arguments
      (list
