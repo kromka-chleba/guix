@@ -1033,9 +1033,15 @@ without dependencies, with
               (for-each
                (lambda (file)
                  (substitute* file
-                   (("miniaudio/miniaudio\\.h")
-                    "miniaudio.h")))
-               (find-files "." "\\.(c|cc|cpp|h|hpp)$"))))
+                    (("miniaudio/miniaudio\\.h")
+                     "miniaudio.h")))
+                (find-files "." "\\.(c|cc|cpp|h|hpp)$"))))
+          (add-before 'build 'patch-stale-tensor-imports
+            (lambda _
+              ;; Guix packages pdevine/tensor under import path gorgonia.org/tensor.
+              (substitute* (find-files "src/github.com/ollama/ollama" "\\.go$")
+                (("\"github\\.com/pdevine/tensor")
+                 "\"gorgonia.org/tensor"))))
           (add-before 'build 'build-native-runners
             (lambda _
               (invoke "cmake" "-B" "build" "-S"
