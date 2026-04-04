@@ -127,7 +127,7 @@
   #:use-module (gnu packages oneapi)
   #:use-module (gnu packages opencl)
   #:use-module (gnu packages parallel)
-  #:use-module (gnu packages patchelf)
+  #:use-module (gnu packages elf)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
