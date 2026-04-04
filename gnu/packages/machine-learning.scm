@@ -1082,7 +1082,7 @@ without dependencies, with
                      "\t\t\tenv = append(env, \"GODEBUG=\"+strings.Join(kept, \",\"))\n"
                      "\t\t}\n"
                      "\t}\n"
-                     "\tcmd.Env = env"))))))
+                     "\tcmd.Env = env")))))))
           (add-before 'build 'build-native-runners
             (lambda _
               (let ((srcdir "src/github.com/ollama/ollama"))
@@ -1100,7 +1100,7 @@ without dependencies, with
                 (for-each
                  (lambda (file)
                    (invoke "patchelf" "--add-rpath" "$ORIGIN" file))
-                 (find-files libdir "libggml-cpu-.*\\.so$")))))))))
+                 (find-files libdir "libggml-cpu-.*\\.so$"))))))))
     (native-inputs
      (list cmake patchelf pkg-config))
     (inputs
