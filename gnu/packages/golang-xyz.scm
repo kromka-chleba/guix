@@ -21484,7 +21484,15 @@ package (which is based off an earlier version of this package).")
       (arguments
        (list
         #:tests? #f ; tests require many unbundled extras
-        #:import-path "gorgonia.org/tensor"))
+        #:import-path "gorgonia.org/tensor"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'rewrite-stale-import-paths
+              (lambda* (#:key import-path #:allow-other-keys)
+                (substitute* (find-files (string-append "src/" import-path)
+                                         "\\.go$")
+                  (("\"github\\.com/pdevine/tensor")
+                   "\"gorgonia.org/tensor")))))))
       (propagated-inputs
        (list go-github-com-apache-arrow-go-arrow
              go-github-com-chewxy-hm
