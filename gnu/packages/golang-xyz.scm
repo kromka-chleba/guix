@@ -30147,6 +30147,8 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
       #:import-path "gorgonia.org/vecf32"))
     (propagated-inputs
      (list go-github-com-chewxy-math32))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (home-page "https://github.com/gorgonia/vecf32")
     (synopsis "Float32 vector utilities for Go")
     (description
