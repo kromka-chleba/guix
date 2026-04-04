@@ -30166,14 +30166,6 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
              (url "https://github.com/gorgonia/vecf64")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (modules '((guix build utils)))
-       (snippet
-        #~(begin
-            (substitute* "asm_vecExp_avx.s"
-              (("// \\+build avx, sse")
-               "//go:build avx && sse && amd64 && !fastmath\n// +build avx,sse")
-              (("// \\+build amd64\n") "")
-              (("// \\+build !fastmath\n") ""))))
        (sha256
         (base32 "0a8v65cy6gyh7ww2g8q4p6dmjhcd6k7lm7z8ly4vmi4k0vq1w187"))))
     (build-system go-build-system)
