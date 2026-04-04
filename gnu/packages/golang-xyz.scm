@@ -113,6 +113,8 @@
   #:use-module (gnu packages graph)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages node)
+  #:use-module (gnu packages node-xyz)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages specifications)
@@ -25694,7 +25696,9 @@ query information regarding the number of CPUs available to the system.")
       #:unpack-path "github.com/tkrajina/typescriptify-golang-structs"
       #:import-path "github.com/tkrajina/typescriptify-golang-structs/typescriptify"))
     (native-inputs
-     (list go-github-com-stretchr-testify))
+     (list go-github-com-stretchr-testify
+           node-lts
+           node-typescript))
     (propagated-inputs
      (list go-github-com-tkrajina-go-reflector))
     (home-page "https://github.com/tkrajina/typescriptify-golang-structs")
