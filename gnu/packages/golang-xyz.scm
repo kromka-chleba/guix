@@ -30171,7 +30171,7 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
         #~(begin
             (substitute* "asm_vecExp_avx.s"
               (("// \\+build avx, sse")
-               "//go:build avx && sse && amd64 && !fastmath\n\n// +build avx,sse")
+               "//go:build avx && sse && amd64 && !fastmath\n// +build avx,sse")
               (("// \\+build amd64\n") "")
               (("// \\+build !fastmath\n") ""))))
        (sha256
