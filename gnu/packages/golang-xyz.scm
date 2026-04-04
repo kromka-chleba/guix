@@ -26043,7 +26043,7 @@ Merkle tree} implementation in Golang.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yicanpy60lg842z4mv2x9ccq5jkglgml7fdkk590h8b7kax8q2i"))))
+        (base32 "0sbvvfa718qrjmfr53p8x3q2c19i4vhw0n20106c8mrvpsxm7zml"))))
     (build-system go-build-system)
     (arguments
      (list
