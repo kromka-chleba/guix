@@ -26019,6 +26019,7 @@ Merkle tree} implementation in Golang.")
       (build-system go-build-system)
       (arguments
        (list
+        #:tests? #f                 ;requires many tree-sitter grammar bindings
         #:import-path "github.com/tree-sitter/go-tree-sitter"))
       (native-inputs
        (list go-github-com-stretchr-testify))
