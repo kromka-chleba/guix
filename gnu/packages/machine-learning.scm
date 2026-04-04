@@ -96,6 +96,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
@@ -1012,6 +1013,7 @@ without dependencies, with
     (arguments
      (list
       #:tests? #f ; requires GPU stack/tooling and extra runtime setup
+      #:go go-1.25
       #:import-path "github.com/ollama/ollama"
       #:phases
       #~(modify-phases %standard-phases
