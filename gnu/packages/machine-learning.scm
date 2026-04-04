@@ -1201,7 +1201,7 @@ without dependencies, with
       (description
        "Ollama is a local inference runtime and command-line tool for running and
 serving open language models.")
-      (license license:expat))))
+      (license license:expat)))))
 
 (define-public mcl
   (package
