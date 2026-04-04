@@ -127,6 +127,7 @@
   #:use-module (gnu packages oneapi)
   #:use-module (gnu packages opencl)
   #:use-module (gnu packages parallel)
+  #:use-module (gnu packages patchelf)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -1054,9 +1055,16 @@ without dependencies, with
             (lambda* (#:key outputs #:allow-other-keys)
               (let ((libdir (string-append #$output "/lib/ollama")))
                 (mkdir-p libdir)
-                (copy-recursively "build/lib/ollama" libdir)))))))
+                (copy-recursively "build/lib/ollama" libdir))))
+          (add-after 'install-native-runners 'patch-native-runners-runpath
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((libdir (string-append #$output "/lib/ollama")))
+                (for-each
+                 (lambda (file)
+                   (invoke "patchelf" "--add-rpath" "$ORIGIN" file))
+                 (find-files libdir "libggml-cpu-.*\\.so$"))))))))
     (native-inputs
-     (list cmake pkg-config))
+     (list cmake patchelf pkg-config))
     (inputs
      (list miniaudio nlohmann-json))
     (propagated-inputs
