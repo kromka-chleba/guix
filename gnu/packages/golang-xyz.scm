@@ -30165,7 +30165,7 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bcjbr2pmfjc7i633678fmwfq89g3ghp26wia6kyhsnikanvx70a"))))
+        (base32 "0a8v65cy6gyh7ww2g8q4p6dmjhcd6k7lm7z8ly4vmi4k0vq1w187"))))
     (build-system go-build-system)
     (arguments
      (list
