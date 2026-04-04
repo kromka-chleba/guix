@@ -7333,7 +7333,7 @@ more tangible.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18h4z3aq5qrp842a6bqh9dh05yy6x80v484gxdm9claklxjidy0g"))))
+        (base32 "0f4qwg1q2lc9y64wrl9qxyimqnnandlqg78gn3yv4vsmyci025r7"))))
     (build-system go-build-system)
     (arguments
      (list
