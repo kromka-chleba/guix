@@ -20026,7 +20026,7 @@ pretty printed rendering in Golang.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "167l4pk0y2hixpcdqgwia6vrp4hdj8sn0bbggx242gg6k3vcs8i5"))))
+        (base32 "1fadbyq63i55g3k91knm7m1pl3j0krxdgpajrl78h27sl3mhnhal"))))
     (build-system go-build-system)
     (arguments
      (list
