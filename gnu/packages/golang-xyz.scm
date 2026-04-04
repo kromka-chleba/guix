@@ -25691,7 +25691,8 @@ query information regarding the number of CPUs available to the system.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/tkrajina/typescriptify-golang-structs"))
+      #:unpack-path "github.com/tkrajina/typescriptify-golang-structs"
+      #:import-path "github.com/tkrajina/typescriptify-golang-structs/typescriptify"))
     (propagated-inputs
      (list go-github-com-tkrajina-go-reflector))
     (home-page "https://github.com/tkrajina/typescriptify-golang-structs")
