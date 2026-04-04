@@ -1100,7 +1100,7 @@ without dependencies, with
                 (for-each
                  (lambda (file)
                    (invoke "patchelf" "--add-rpath" "$ORIGIN" file))
-                 (find-files libdir "libggml-cpu-.*\\.so$"))))))))
+                 (find-files libdir "libggml-cpu-.*\\.so$")))))))))
     (native-inputs
      (list cmake patchelf pkg-config))
     (inputs
