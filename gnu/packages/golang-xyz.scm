@@ -21474,7 +21474,7 @@ package (which is based off an earlier version of this package).")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "187ykrksfa3ncf33y91h174kdl8awlby12z76lnk17g0n0d2d7ir"))))
+          (base32 "1ibc3x2c3dybhqdfnq2rrw6zxqng3b2zkl7nldsmllljfvp39c7s"))))
       (build-system go-build-system)
       (arguments
        (list
