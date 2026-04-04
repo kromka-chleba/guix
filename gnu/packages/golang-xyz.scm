@@ -25664,8 +25664,10 @@ query information regarding the number of CPUs available to the system.")
     (build-system go-build-system)
     (arguments
      (list
-      #:unpack-path "github.com/tkrajina/go-reflector"
-      #:import-path "github.com/tkrajina/go-reflector/reflector"))
+       #:unpack-path "github.com/tkrajina/go-reflector"
+       #:import-path "github.com/tkrajina/go-reflector/reflector"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (home-page "https://github.com/tkrajina/go-reflector")
     (synopsis "Reflection helpers for Go")
     (description
