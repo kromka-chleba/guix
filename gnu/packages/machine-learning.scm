@@ -1038,7 +1038,8 @@ without dependencies, with
                (find-files "." "\\.(c|cc|cpp|h|hpp)$"))))
           (add-before 'build 'build-native-runners
             (lambda _
-              (invoke "cmake" "-B" "build" "-S" ".")
+              (invoke "cmake" "-B" "build" "-S"
+                      "src/github.com/ollama/ollama")
               (invoke "cmake" "--build" "build" "--parallel")))
           (add-after 'install 'install-native-runners
             (lambda* (#:key outputs #:allow-other-keys)
