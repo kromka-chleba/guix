@@ -13118,7 +13118,7 @@ used in other languages but absent in Go package strings.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ar3wz2wpx15ckmh347f0ldp45y09z95k79g4vlypqh5vdsrcca1"))))
+        (base32 "14gjpvwgx3hmbd92jlwafgibiak2jqp25rq4q50cq89w8wgmhsax"))))
     (build-system go-build-system)
     (arguments
      (list
