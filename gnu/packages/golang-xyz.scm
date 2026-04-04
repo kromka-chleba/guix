@@ -25693,6 +25693,8 @@ query information regarding the number of CPUs available to the system.")
      (list
       #:unpack-path "github.com/tkrajina/typescriptify-golang-structs"
       #:import-path "github.com/tkrajina/typescriptify-golang-structs/typescriptify"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (propagated-inputs
      (list go-github-com-tkrajina-go-reflector))
     (home-page "https://github.com/tkrajina/typescriptify-golang-structs")
