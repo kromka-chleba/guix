@@ -1047,6 +1047,36 @@ without dependencies, with
                 (substitute* (find-files srcdir "\\.go$")
                   (("\"github\\.com/pdevine/tensor")
                    "\"gorgonia.org/tensor")))))
+          (add-before 'build 'patch-runner-godebug-httpmux-compat
+            (lambda _
+              (let ((server-go "src/github.com/ollama/ollama/llm/server.go"))
+                ;; Ensure runner subprocesses are not forced into old Go 1.21
+                ;; mux behavior via inherited GODEBUG=httpmuxgo121=1.
+                (substitute* server-go
+                  (("cmd\\.Env = os\\.Environ\\(\\)")
+                   (string-append
+                    "cmd.Env = os.Environ()\n\n"
+                    "\tfor i, kv := range cmd.Env {\n"
+                    "\t\tif !strings.HasPrefix(kv, \"GODEBUG=\") {\n"
+                    "\t\t\tcontinue\n"
+                    "\t\t}\n"
+                    "\n"
+                    "\t\tvar kept []string\n"
+                    "\t\tfor _, setting := range strings.Split(strings.TrimPrefix(kv, \"GODEBUG=\"), \",\") {\n"
+                    "\t\t\tif setting == \"\" || strings.HasPrefix(setting, \"httpmuxgo121=\") {\n"
+                    "\t\t\t\tcontinue\n"
+                    "\t\t\t}\n"
+                    "\t\t\tkept = append(kept, setting)\n"
+                    "\t\t}\n"
+                    "\n"
+                    "\t\tif len(kept) == 0 {\n"
+                    "\t\t\tcmd.Env = append(cmd.Env[:i], cmd.Env[i+1:]...)\n"
+                    "\t\t} else {\n"
+                    "\t\t\tcmd.Env[i] = \"GODEBUG=\" + strings.Join(kept, \",\")\n"
+                    "\t\t}\n"
+                    "\n"
+                    "\t\tbreak\n"
+                    "\t}")))))
           (add-before 'build 'build-native-runners
             (lambda _
               (let ((srcdir "src/github.com/ollama/ollama"))
