@@ -25276,7 +25276,7 @@ managing TUF repositories and clients for securely downloading updates.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0xqjzdp502pgssa41g9cr372z9x8cvxyggd8wsphz8rycj2455as"))))
+          (base32 "03igwgcmlsqfgad2vs0yhlsddz0a42yxai9mb4ch3pd9j2cvsg2g"))))
       (build-system go-build-system)
       (arguments
        (list
