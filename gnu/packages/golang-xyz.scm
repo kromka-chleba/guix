@@ -30169,12 +30169,8 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
        (modules '((guix build utils)))
        (snippet
         #~(substitute* "asm_vecExp_avx.s"
-            (("^// \\+build[[:space:]]+avx,[[:space:]]*sse$")
-             "//go:build (avx || sse) && amd64 && !fastmath\n// +build avx sse")
-            (("^// \\+build[[:space:]]+amd64$")
-             "// +build amd64")
-            (("^// \\+build[[:space:]]+!fastmath$")
-             "// +build !fastmath\n\n")))
+            (("^// \\+build avx, sse\n// \\+build amd64\n// \\+build !fastmath\n")
+             "//go:build (avx || sse) && amd64 && !fastmath\n\n")))
         (sha256
          (base32 "0a8v65cy6gyh7ww2g8q4p6dmjhcd6k7lm7z8ly4vmi4k0vq1w187"))))
     (build-system go-build-system)
