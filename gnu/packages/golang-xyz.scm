@@ -16186,7 +16186,9 @@ representation suitable for computing diffs.")
       (build-system go-build-system)
       (arguments
        (list
-        #:import-path "github.com/ledongthuc/pdf"))
+        #:import-path "github.com/ledongthuc/pdf"
+        ;; Exclude "pdfpasswd", which uses a mismatched legacy import path.
+        #:test-subdirs #~(list ".")))
       (home-page "https://github.com/ledongthuc/pdf")
       (synopsis "PDF processing library for Go")
       (description
