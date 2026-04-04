@@ -26020,6 +26020,8 @@ Merkle tree} implementation in Golang.")
       (arguments
        (list
         #:import-path "github.com/tree-sitter/go-tree-sitter"))
+      (native-inputs
+       (list go-github-com-stretchr-testify))
       (propagated-inputs
        (list go-github-com-mattn-go-pointer))
       (home-page "https://github.com/tree-sitter/go-tree-sitter")
