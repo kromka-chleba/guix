@@ -27149,7 +27149,7 @@ track of the order in which keys were inserted.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vkm75aihrg0qxgphpzfnln4h21irlpgsjszaac9plssvp187f80"))))
+        (base32 "148jb5f87lf7090jg8340f24r29818krydajkm75vpzylaw6yd8w"))))
     (build-system go-build-system)
     (arguments
      (list
