@@ -29562,7 +29562,7 @@ for locating directories
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "14n42rshafxxiys7p9ly4s4cir8r224ilpdvjssgr6lcqdbnzfl0"))))
+          (base32 "00ny3qha8k9nnx37ryvls2n5r7lw3bnldz6kwdmjxk8s19mxqim7"))))
       (build-system go-build-system)
       (arguments
        (list
