@@ -25280,6 +25280,7 @@ managing TUF repositories and clients for securely downloading updates.")
       (build-system go-build-system)
       (arguments
        (list
+        #:tests? #f ;Windows-only package; tests fail on non-Windows hosts.
         #:skip-build? #t
         #:import-path "github.com/TheTitanrain/w32"))
       (home-page "https://github.com/TheTitanrain/w32")
