@@ -26008,7 +26008,7 @@ Merkle tree} implementation in Golang.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "067f584x4q1172rngbim272lp4da8imz8ppy0lryqb5fc2wrzaxw"))))
+          (base32 "0298dvqw37rlfm7n89c7cssjsn2dcncg0d9819r4a05l1hfn2m8d"))))
       (build-system go-build-system)
       (arguments
        (list
