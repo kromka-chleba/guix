@@ -7343,6 +7343,8 @@ more tangible.")
       #:skip-build? #t
       #:tests? #f                          ; no go.mod
       #:import-path "github.com/chewxy/hm"))
+    (propagated-inputs
+     (list go-github-com-xtgo-set))
     (home-page "https://github.com/chewxy/hm")
     (synopsis "Hindley-Milner type inference for Go")
     (description
@@ -21482,7 +21484,7 @@ package (which is based off an earlier version of this package).")
       (arguments
        (list
         #:tests? #f ; tests require many unbundled extras
-        #:import-path "github.com/pdevine/tensor"))
+        #:import-path "gorgonia.org/tensor"))
       (propagated-inputs
        (list go-github-com-apache-arrow-go-arrow
              go-github-com-chewxy-hm
