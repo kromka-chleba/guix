@@ -20030,7 +20030,8 @@ pretty printed rendering in Golang.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/nlpodyssey/gopickle"))
+      #:import-path "github.com/nlpodyssey/gopickle"
+      #:unpack-path "github.com/nlpodyssey"))
     (propagated-inputs
      (list go-golang-org-x-text))
     (home-page "https://github.com/nlpodyssey/gopickle")
