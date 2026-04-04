@@ -6023,7 +6023,7 @@ of HTML5[1] by the W3C}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j3abmhlhv7hnldd74zymvhbkcpkmkpb2llb8i4hnflz7jd6yg1a"))))
+        (base32 "080khaq944cbga9mplz916kg6gijfcmb07k5wpx5zdfkhc4gkjmf"))))
     (build-system go-build-system)
     (arguments
      (list
