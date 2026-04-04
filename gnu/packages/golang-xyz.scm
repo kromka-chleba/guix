@@ -30167,6 +30167,10 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
+       ;; Fix malformed build tags in asm_vecExp_avx.s. The upstream file
+       ;; has three separate old-style "// +build" lines which cause
+       ;; "misplaced +build comment" errors in Go 1.17+. Replace them with
+       ;; a single modern "//go:build" directive.
        (snippet
         #~(substitute* "asm_vecExp_avx.s"
             (("^// \\+build avx, sse")
