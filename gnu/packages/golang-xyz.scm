@@ -2299,7 +2299,7 @@ cluster segmentation algorithm.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1bmscs5fjh39hq8p6jfrig1vmq2ff13c917cb4vmb11q52s6j2j3"))))
+          (base32 "03nh7c0i3y9rkkzw428knalkrlpb8syr459i00mwp072ijn8v4hx"))))
       (build-system go-build-system)
       (arguments
        (list
