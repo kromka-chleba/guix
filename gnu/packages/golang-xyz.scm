@@ -30174,7 +30174,7 @@ The yaml package supports most of YAML 1.2, but preserves some behavior from
             (("^// \\+build[[:space:]]+amd64$")
              "// +build amd64")
             (("^// \\+build[[:space:]]+!fastmath$")
-             "// +build !fastmath\n")))
+             "// +build !fastmath\n\n")))
         (sha256
          (base32 "0a8v65cy6gyh7ww2g8q4p6dmjhcd6k7lm7z8ly4vmi4k0vq1w187"))))
     (build-system go-build-system)
