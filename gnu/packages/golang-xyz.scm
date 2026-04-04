@@ -17642,7 +17642,7 @@ whether a file descriptor points to a terminal and the type of the terminal.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00xxb98jnn9wg4ycrlx1yl3y79dsdy96h6qzlkw1599yvny3flfw"))))
+        (base32 "0wcgqnpjk0drm7swc0q27j4r5ab63mhz29dgbjdnyn4sw68rqm96"))))
     (build-system go-build-system)
     (arguments
      (list
