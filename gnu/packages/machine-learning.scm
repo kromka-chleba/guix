@@ -1030,27 +1030,27 @@ without dependencies, with
           (add-before 'build 'patch-miniaudio-include
             (lambda _
               (let ((srcdir "src/github.com/ollama/ollama"))
-              ;; Upstream includes <miniaudio/miniaudio.h>, while Guix
-              ;; installs miniaudio.h directly under include/.
-              (for-each
-               (lambda (file)
-                 (substitute* file
-                    (("miniaudio/miniaudio\\.h")
-                     "miniaudio.h")))
-                (find-files srcdir "\\.(c|cc|cpp|h|hpp)$")))))
+                ;; Upstream includes <miniaudio/miniaudio.h>, while Guix
+                ;; installs miniaudio.h directly under include/.
+                (for-each
+                 (lambda (file)
+                   (substitute* file
+                     (("miniaudio/miniaudio\\.h")
+                      "miniaudio.h")))
+                 (find-files srcdir "\\.(c|cc|cpp|h|hpp)$")))))
           (add-before 'build 'patch-stale-tensor-imports
             (lambda _
               (let ((srcdir "src/github.com/ollama/ollama"))
-              ;; Guix packages pdevine/tensor under import path gorgonia.org/tensor.
-              (substitute* (find-files srcdir "\\.go$")
-                (("\"github\\.com/pdevine/tensor")
-                 "\"gorgonia.org/tensor")))))
+                ;; Guix packages pdevine/tensor under import path gorgonia.org/tensor.
+                (substitute* (find-files srcdir "\\.go$")
+                  (("\"github\\.com/pdevine/tensor")
+                   "\"gorgonia.org/tensor")))))
           (add-before 'build 'build-native-runners
             (lambda _
               (let ((srcdir "src/github.com/ollama/ollama"))
-              (invoke "cmake" "-B" "build" "-S"
-                      srcdir)
-              (invoke "cmake" "--build" "build" "--parallel"))))
+                (invoke "cmake" "-B" "build" "-S"
+                        srcdir)
+                (invoke "cmake" "--build" "build" "--parallel"))))
           (add-after 'install 'install-native-runners
             (lambda* (#:key outputs #:allow-other-keys)
               (let ((libdir (string-append #$output "/lib/ollama")))
