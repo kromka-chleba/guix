@@ -1006,7 +1006,7 @@ without dependencies, with
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "06k0rgcjq4pbjm8n0vi5b57jj3gn2gznz2q8dxkmc2njgbyvi9mc"))))
+          (base32 "1ri83pc0v82r1pq7lm5v6qwkmab62nlwm23162p3zcg5smfqy0j1"))))
     (build-system go-build-system)
     (arguments
      (list
