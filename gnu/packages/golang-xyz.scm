@@ -16182,7 +16182,7 @@ representation suitable for computing diffs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1gwxnyy6jgv6vrfryhkv191bfa7zic7qfwc09pmz3kc7q9g4mh6d"))))
+          (base32 "181j85j1ax1s1vbisw1xjhlrmjffzwl367fid3najw98pk0m1wqa"))))
       (build-system go-build-system)
       (arguments
        (list
