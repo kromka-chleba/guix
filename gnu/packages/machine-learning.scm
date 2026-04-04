@@ -1094,7 +1094,7 @@ without dependencies, with
                 (for-each
                  (lambda (file)
                    (invoke "patchelf" "--add-rpath" "$ORIGIN" file))
-                 (find-files libdir "libggml-cpu-.*\\.so$")))))))
+                 (find-files libdir "libggml-cpu-.*\\.so$"))))))))
     (native-inputs
      (list cmake patchelf pkg-config))
     (inputs
@@ -1201,7 +1201,7 @@ without dependencies, with
       (description
        "Ollama is a local inference runtime and command-line tool for running and
 serving open language models.")
-      (license license:expat)))))
+      (license license:expat))))
 
 (define-public mcl
   (package
