@@ -4842,10 +4842,10 @@ compatibility for older versions/legacy GGML models.")
                      (python (search-input-file inputs "/bin/python3"))
                      (shell (search-input-file inputs "/bin/sh")))
                 (mkdir-p bin-dir)
-                 (call-with-output-file launcher
-                   (lambda (port)
-                     (format port
-                             "#!~a
+                (call-with-output-file launcher
+                  (lambda (port)
+                    (format port
+                            "#!~a
 set -eu
 
 data_home=\"${XDG_DATA_HOME:-$HOME/.local/share}\"
@@ -4867,7 +4867,7 @@ exec ~a ~a/share/comfyui/main.py \\
   --temp-directory \"$temp_dir\" \\
   \"$@\"
 "
-                             shell python #$output)))
+                            shell python #$output)))
                 (chmod launcher #o555))))
           (add-after 'install-launcher 'wrap-comfyui
             (lambda* (#:key inputs outputs #:allow-other-keys)
