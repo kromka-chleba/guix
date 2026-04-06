@@ -4820,7 +4820,7 @@ compatibility for older versions/legacy GGML models.")
        (file-name (git-file-name name version))
         (sha256
          (base32
-          "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))))
+          "0nxd0v4cl6vxnzs5bmlqsmf2ps8mqf93kyvfx9b0299fkj0r5lk9"))))
     (build-system copy-build-system)
     (arguments
      (list
@@ -4866,12 +4866,11 @@ compatibility for older versions/legacy GGML models.")
            python-safetensors
            python-scipy
            python-sentencepiece
-           python-tokenizers
-           python-torchaudio
-           python-torchsde
-           python-torchvision
-           python-tqdm
-           python-transformers))
+            python-tokenizers
+            python-torchaudio
+            python-torchvision
+            python-tqdm
+            python-transformers))
     (home-page "https://github.com/Comfy-Org/ComfyUI")
     (synopsis "Visual node-based user interface for diffusion model workflows")
     (description
