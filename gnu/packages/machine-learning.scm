@@ -4840,7 +4840,7 @@ compatibility for older versions/legacy GGML models.")
                  "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
                 (("^([[:blank:]]*)def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
                  (string-append
-                  "def __init__(self, x, t0, t1, seed=None, **kwargs):\n"
+                  "\\1def __init__(self, x, t0, t1, seed=None, **kwargs):\n"
                   "\\1if torchsde is None:\n"
                   "\\1    raise RuntimeError("
                   "\"torchsde is required for this sampler; "
