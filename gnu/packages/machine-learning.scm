@@ -4770,11 +4770,13 @@ compatibility for older versions/legacy GGML models.")
              (url "https://github.com/Comfy-Org/ComfyUI")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))
-       (patches
-        (search-patches "python-comfyui-optional-torchsde.patch"))))
+        (sha256
+         (base32
+          "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))
+        ;; 'python-torchsde' is not packaged in Guix yet.  Keep ComfyUI
+        ;; importable and only fail when BrownianTree samplers are used.
+        (patches
+         (search-patches "python-comfyui-optional-torchsde.patch"))))
     (build-system copy-build-system)
     (arguments
      (list
