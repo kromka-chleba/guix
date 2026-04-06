@@ -4759,6 +4759,83 @@ All up-to-date GGUF models are supported, and KoboldCpp also includes backward
 compatibility for older versions/legacy GGML models.")
     (license (list license:agpl3 license:expat))))
 
+(define-public comfyui
+  (package
+    (name "comfyui")
+    (version "0.2.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Comfy-Org/ComfyUI")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))
+       (modules '((guix build utils)))
+       (snippet
+        '(substitute* "comfy/k_diffusion/sampling.py"
+           (("import torchsde")
+            "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
+           (("def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
+            "def __init__(self, x, t0, t1, seed=None, **kwargs):\n        if torchsde is None:\n            raise RuntimeError(\"torchsde is required for BrownianTree samplers\")")))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:imported-modules `(,@%copy-build-system-modules
+                           (guix build python-build-system))
+      #:modules '((guix build copy-build-system)
+                  ((guix build python-build-system) #:prefix python:)
+                  (guix build utils))
+      #:install-plan #~'(("." "share/comfyui"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-launcher
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((bin-dir (string-append #$output "/bin"))
+                     (launcher (string-append bin-dir "/comfyui"))
+                     (python (search-input-file inputs "/bin/python3"))
+                     (shell (search-input-file inputs "/bin/sh")))
+                (mkdir-p bin-dir)
+                (call-with-output-file launcher
+                  (lambda (port)
+                    (format port
+                            "#!~a~%exec ~a ~a/share/comfyui/main.py \"$@\"~%"
+                            shell python #$output)))
+                (chmod launcher #o555))))
+          (add-after 'install-launcher 'wrap-comfyui
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (wrap-program (search-input-file outputs "bin/comfyui")
+                `("GUIX_PYTHONPATH" =
+                  (,(getenv "GUIX_PYTHONPATH")
+                   ,(python:site-packages inputs outputs)))))))))
+    (inputs
+     (list bash-minimal
+           python
+           python-aiohttp
+           python-einops
+           python-numpy
+           python-pillow
+           python-psutil
+           python-pyyaml
+           python-pytorch
+           python-safetensors
+           python-scipy
+           python-sentencepiece
+           python-tokenizers
+           python-torchaudio
+           python-torchvision
+           python-tqdm
+           python-transformers))
+    (home-page "https://github.com/Comfy-Org/ComfyUI")
+    (synopsis "Visual node-based user interface for diffusion model workflows")
+    (description
+     "ComfyUI is a visual user interface and backend for building and running
+diffusion model workflows with a graph of connected nodes.")
+    (license license:gpl3)))
+
 
 (define-public foxi
   (let
