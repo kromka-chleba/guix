@@ -4848,7 +4848,7 @@ compatibility for older versions/legacy GGML models.")
                   "\\1if torchsde is None:\n"
                   "\\1    raise RuntimeError("
                   "\"torchsde is required for this sampler; "
-                  "install torchsde to use BrownianTree-based samplers.\")"))))
+                  "install torchsde to use BrownianTree-based samplers.\")")))
           (add-before 'install 'fallback-to-cpu-when-cuda-missing
             (lambda _
               (substitute* "comfy/model_management.py"
