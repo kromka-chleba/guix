@@ -4844,7 +4844,12 @@ compatibility for older versions/legacy GGML models.")
                   "        if torchsde is None:\n"
                   "            raise RuntimeError("
                   "\"torchsde is required for this sampler; "
-                  "install torchsde to use BrownianTree-based samplers.\")")))))
+                  "install torchsde to use BrownianTree-based samplers.\")"))))
+          (add-before 'install 'fallback-to-cpu-when-cuda-missing
+            (lambda _
+              (substitute* "comfy/model_management.py"
+                (("return torch.device\\(torch.cuda.current_device\\(\\)\\)")
+                 "if torch.cuda.is_available():\n                return torch.device(torch.cuda.current_device())\n            cpu_state = CPUState.CPU\n            return torch.device(\"cpu\")")))))
           (add-after 'install 'install-launcher
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((bin-dir (string-append #$output "/bin"))
