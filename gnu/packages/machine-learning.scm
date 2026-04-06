@@ -2984,6 +2984,54 @@ in PyTorch.  Backpropagation through ODE solutions is supported using the
 adjoint method for constant memory cost.")
       (license license:expat))))
 
+(define-public python-trampoline
+  (package
+    (name "python-trampoline")
+    (version "0.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "trampoline" version))
+       (sha256
+        (base32
+         "6v69lkzrh4c47lbpzh70fh7gpmys77mdzrp51jg2jdybq1nqk7ch"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://gitlab.com/ferreum/trampoline")
+    (synopsis "Simple and tiny yield-based trampoline implementation")
+    (description
+     "This package provides a simple and tiny yield-based trampoline
+implementation for Python.")
+    (license license:expat)))
+
+(define-public python-torchsde
+  (package
+    (name "python-torchsde")
+    (version "0.2.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google-research/torchsde")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0am86pryc1k1lpli986yvhr31bqa5q9ldpxmbqp4mgnmpys7cjhg"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-numpy
+           python-scipy
+           python-pytorch
+           python-trampoline))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/google-research/torchsde")
+    (synopsis "SDE solvers and stochastic adjoint sensitivity analysis in PyTorch")
+    (description
+     "This package provides stochastic differential equation solvers and
+stochastic adjoint sensitivity analysis in @code{PyTorch}.")
+    (license license:asl2.0)))
+
 (define-public lightgbm
   (package
     (name "lightgbm")
@@ -4773,8 +4821,8 @@ compatibility for older versions/legacy GGML models.")
         (sha256
          (base32
           "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))
-        ;; 'python-torchsde' is not packaged in Guix yet.  Keep ComfyUI
-        ;; importable and only fail when BrownianTree samplers are used.
+        ;; Keep ComfyUI importable when 'python-torchsde' is unavailable,
+        ;; and fail only when BrownianTree samplers are used.
         (patches
          (search-patches "python-comfyui-optional-torchsde.patch"))))
     (build-system copy-build-system)
@@ -4824,6 +4872,7 @@ compatibility for older versions/legacy GGML models.")
            python-sentencepiece
            python-tokenizers
            python-torchaudio
+           python-torchsde
            python-torchvision
            python-tqdm
            python-transformers))
