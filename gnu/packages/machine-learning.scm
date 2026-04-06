@@ -4839,7 +4839,12 @@ compatibility for older versions/legacy GGML models.")
                 (("^import torchsde$")
                  "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
                 (("def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
-                 "def __init__(self, x, t0, t1, seed=None, **kwargs):\n        if torchsde is None:\n            raise RuntimeError(\"torchsde is required for this sampler; install torchsde to use BrownianTree-based samplers.\")")))))
+                 (string-append
+                  "def __init__(self, x, t0, t1, seed=None, **kwargs):\n"
+                  "        if torchsde is None:\n"
+                  "            raise RuntimeError("
+                  "\"torchsde is required for this sampler; "
+                  "install torchsde to use BrownianTree-based samplers.\")")))))
           (add-after 'install 'install-launcher
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((bin-dir (string-append #$output "/bin"))
@@ -4873,11 +4878,11 @@ compatibility for older versions/legacy GGML models.")
            python-safetensors
            python-scipy
            python-sentencepiece
-            python-tokenizers
-            python-torchaudio
-            python-torchvision
-            python-tqdm
-            python-transformers))
+           python-tokenizers
+           python-torchaudio
+           python-torchvision
+           python-tqdm
+           python-transformers))
     (home-page "https://github.com/Comfy-Org/ComfyUI")
     (synopsis "Visual node-based user interface for diffusion model workflows")
     (description
