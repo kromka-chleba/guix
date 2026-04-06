@@ -4864,12 +4864,14 @@ compatibility for older versions/legacy GGML models.")
            python-pillow
            python-psutil
            python-pyyaml
+           python-requests
            python-pytorch
            python-safetensors
            python-scipy
            python-sentencepiece
            python-tokenizers
            python-torchaudio
+           python-typing-extensions
            python-torchvision
            python-tqdm
            python-transformers))
