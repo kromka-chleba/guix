@@ -4819,7 +4819,8 @@ compatibility for older versions/legacy GGML models.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (patches (search-patches
-                 "comfyui-optional-torchsde-and-cpu-fallback.patch"))
+                 "comfyui-optional-torchsde-and-cpu-fallback.patch"
+                 "comfyui-apply-user-directory-before-server-init.patch"))
        (sha256
         (base32
          "0nxd0v4cl6vxnzs5bmlqsmf2ps8mqf93kyvfx9b0299fkj0r5lk9"))))
