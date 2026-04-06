@@ -2236,6 +2236,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-property-cached-asyncio-3_11.patch	\
   %D%/packages/patches/python-pyan3-fix-absolute-path-bug.patch \
   %D%/packages/patches/python-pyan3-fix-positional-arguments.patch \
+  %D%/packages/patches/python-comfyui-optional-torchsde.patch	\
   %D%/packages/patches/python-pytorch-fix-codegen.patch		\
   %D%/packages/patches/python-pytorch-for-r-torch-fix-codegen.patch \
   %D%/packages/patches/python-pytorch-for-r-torch-system-libraries.patch \

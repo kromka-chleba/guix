@@ -4773,13 +4773,8 @@ compatibility for older versions/legacy GGML models.")
        (sha256
         (base32
          "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))
-       (modules '((guix build utils)))
-       (snippet
-        '(substitute* "comfy/k_diffusion/sampling.py"
-           (("import torchsde")
-            "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
-           (("def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
-            "def __init__(self, x, t0, t1, seed=None, **kwargs):\n        if torchsde is None:\n            raise RuntimeError(\"torchsde is required for BrownianTree samplers\")")))))
+       (patches
+        (search-patches "python-comfyui-optional-torchsde.patch"))))
     (build-system copy-build-system)
     (arguments
      (list
@@ -4807,10 +4802,11 @@ compatibility for older versions/legacy GGML models.")
                 (chmod launcher #o555))))
           (add-after 'install-launcher 'wrap-comfyui
             (lambda* (#:key inputs outputs #:allow-other-keys)
-              (wrap-program (search-input-file outputs "bin/comfyui")
-                `("GUIX_PYTHONPATH" =
-                  (,(getenv "GUIX_PYTHONPATH")
-                   ,(python:site-packages inputs outputs)))))))))
+              (let ((launcher (string-append #$output "/bin/comfyui")))
+                (wrap-program launcher
+                  `("GUIX_PYTHONPATH" ":" prefix
+                    (,(getenv "GUIX_PYTHONPATH")
+                     ,(python:site-packages inputs outputs))))))))))
     (inputs
      (list bash-minimal
            python

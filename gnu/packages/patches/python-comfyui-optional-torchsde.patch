@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Guix <guix@example.org>
+Date: Mon, 6 Apr 2026 00:00:00 +0000
+Subject: [PATCH] Make torchsde optional at import time.
+
+---
+ comfy/k_diffusion/sampling.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/comfy/k_diffusion/sampling.py b/comfy/k_diffusion/sampling.py
+index ca7fd5f..a32d5b8 100644
+--- a/comfy/k_diffusion/sampling.py
++++ b/comfy/k_diffusion/sampling.py
+@@ -3,7 +3,10 @@ import math
+ from scipy import integrate
+ import torch
+ from torch import nn
+-import torchsde
++try:
++    import torchsde
++except ImportError:
++    torchsde = None
+ from tqdm.auto import trange, tqdm
+ 
+ from . import utils
+@@ -81,6 +84,9 @@ class BatchedBrownianTree:
+     """A wrapper around torchsde.BrownianTree that enables batches of entropy."""
+ 
+     def __init__(self, x, t0, t1, seed=None, **kwargs):
++        if torchsde is None:
++            raise RuntimeError("torchsde is required for BrownianTree samplers")
++
+         self.cpu_tree = True
+         if "cpu" in kwargs:
+             self.cpu_tree = kwargs.pop("cpu")
+-- 
+2.49.0
+
