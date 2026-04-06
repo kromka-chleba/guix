@@ -4838,18 +4838,22 @@ compatibility for older versions/legacy GGML models.")
               (substitute* "comfy/k_diffusion/sampling.py"
                 (("^import torchsde$")
                  "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
-                (("def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
+                (("^([[:blank:]]*)def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
                  (string-append
                   "def __init__(self, x, t0, t1, seed=None, **kwargs):\n"
-                  "        if torchsde is None:\n"
-                  "            raise RuntimeError("
+                  "\\1if torchsde is None:\n"
+                  "\\1    raise RuntimeError("
                   "\"torchsde is required for this sampler; "
                   "install torchsde to use BrownianTree-based samplers.\")"))))
           (add-before 'install 'fallback-to-cpu-when-cuda-missing
             (lambda _
               (substitute* "comfy/model_management.py"
-                (("return torch.device\\(torch.cuda.current_device\\(\\)\\)")
-                 "if torch.cuda.is_available():\n                return torch.device(torch.cuda.current_device())\n            cpu_state = CPUState.CPU\n            return torch.device(\"cpu\")")))))
+                (("^([[:blank:]]*)return torch.device\\(torch.cuda.current_device\\(\\)\\)$")
+                 (string-append
+                  "\\1if torch.cuda.is_available():\n"
+                  "\\1    return torch.device(torch.cuda.current_device())\n"
+                  "\\1cpu_state = CPUState.CPU\n"
+                  "\\1return torch.device(\"cpu\")"))))))
           (add-after 'install 'install-launcher
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((bin-dir (string-append #$output "/bin"))
