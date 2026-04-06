@@ -4818,9 +4818,11 @@ compatibility for older versions/legacy GGML models.")
              (url "https://github.com/Comfy-Org/ComfyUI")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "0nxd0v4cl6vxnzs5bmlqsmf2ps8mqf93kyvfx9b0299fkj0r5lk9"))))
+       (patches (search-patches
+                 "comfyui-optional-torchsde-and-cpu-fallback.patch"))
+       (sha256
+        (base32
+         "0nxd0v4cl6vxnzs5bmlqsmf2ps8mqf93kyvfx9b0299fkj0r5lk9"))))
     (build-system copy-build-system)
     (arguments
      (list
@@ -4833,31 +4835,6 @@ compatibility for older versions/legacy GGML models.")
       #:install-plan #~'(("." "share/comfyui"))
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'install 'make-torchsde-optional
-            (lambda _
-              (substitute* "comfy/k_diffusion/sampling.py"
-                (("^([[:blank:]]*)import torchsde$")
-                 (string-append
-                  "\\1try:\n"
-                  "\\1    import torchsde\n"
-                  "\\1except ImportError:\n"
-                  "\\1    torchsde = None"))
-                (("^([[:blank:]]*)def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
-                 (string-append
-                  "\\1def __init__(self, x, t0, t1, seed=None, **kwargs):\n"
-                  "\\1if torchsde is None:\n"
-                  "\\1    raise RuntimeError("
-                  "\"torchsde is required for this sampler; "
-                  "install torchsde to use BrownianTree-based samplers.\")")))
-          (add-before 'install 'fallback-to-cpu-when-cuda-missing
-            (lambda _
-              (substitute* "comfy/model_management.py"
-                (("^([[:blank:]]*)return torch.device\\(torch.cuda.current_device\\(\\)\\)$")
-                 (string-append
-                  "\\1if torch.cuda.is_available():\n"
-                  "\\1    return torch.device(torch.cuda.current_device())\n"
-                  "\\1cpu_state = CPUState.CPU\n"
-                  "\\1return torch.device(\"cpu\")"))))))
           (add-after 'install 'install-launcher
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((bin-dir (string-append #$output "/bin"))
