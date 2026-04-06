@@ -4842,11 +4842,32 @@ compatibility for older versions/legacy GGML models.")
                      (python (search-input-file inputs "/bin/python3"))
                      (shell (search-input-file inputs "/bin/sh")))
                 (mkdir-p bin-dir)
-                (call-with-output-file launcher
-                  (lambda (port)
-                    (format port
-                            "#!~a~%exec ~a ~a/share/comfyui/main.py \"$@\"~%"
-                            shell python #$output)))
+                 (call-with-output-file launcher
+                   (lambda (port)
+                     (format port
+                             "#!~a
+set -eu
+
+data_home=\"${XDG_DATA_HOME:-$HOME/.local/share}\"
+state_home=\"${XDG_STATE_HOME:-$HOME/.local/state}\"
+cache_home=\"${XDG_CACHE_HOME:-$HOME/.cache}\"
+runtime_base=\"${XDG_RUNTIME_DIR:-$cache_home}\"
+
+user_dir=\"$state_home/comfyui/user\"
+output_dir=\"$data_home/comfyui/output\"
+input_dir=\"$data_home/comfyui/input\"
+temp_dir=\"$runtime_base/comfyui/temp\"
+
+mkdir -p \"$user_dir\" \"$output_dir\" \"$input_dir\" \"$temp_dir\"
+
+exec ~a ~a/share/comfyui/main.py \\
+  --user-directory \"$user_dir\" \\
+  --output-directory \"$output_dir\" \\
+  --input-directory \"$input_dir\" \\
+  --temp-directory \"$temp_dir\" \\
+  \"$@\"
+"
+                             shell python #$output)))
                 (chmod launcher #o555))))
           (add-after 'install-launcher 'wrap-comfyui
             (lambda* (#:key inputs outputs #:allow-other-keys)
