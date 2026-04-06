@@ -4833,6 +4833,13 @@ compatibility for older versions/legacy GGML models.")
       #:install-plan #~'(("." "share/comfyui"))
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'install 'make-torchsde-optional
+            (lambda _
+              (substitute* "comfy/k_diffusion/sampling.py"
+                (("^import torchsde$")
+                 "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
+                (("def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
+                 "def __init__(self, x, t0, t1, seed=None, **kwargs):\n        if torchsde is None:\n            raise RuntimeError(\"torchsde is required for this sampler; install torchsde to use BrownianTree-based samplers.\")")))))
           (add-after 'install 'install-launcher
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((bin-dir (string-append #$output "/bin"))
