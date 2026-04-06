@@ -4820,11 +4820,7 @@ compatibility for older versions/legacy GGML models.")
        (file-name (git-file-name name version))
         (sha256
          (base32
-          "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))
-        ;; Keep ComfyUI importable when 'python-torchsde' is unavailable,
-        ;; and fail only when BrownianTree samplers are used.
-        (patches
-         (search-patches "python-comfyui-optional-torchsde.patch"))))
+          "1syrnhpps8b24zk5v8ngd9s3k726slrlbk2wjfchym9fp45mhwsg"))))
     (build-system copy-build-system)
     (arguments
      (list
