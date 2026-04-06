@@ -4836,8 +4836,12 @@ compatibility for older versions/legacy GGML models.")
           (add-before 'install 'make-torchsde-optional
             (lambda _
               (substitute* "comfy/k_diffusion/sampling.py"
-                (("^import torchsde$")
-                 "try:\n    import torchsde\nexcept ImportError:\n    torchsde = None")
+                (("^([[:blank:]]*)import torchsde$")
+                 (string-append
+                  "\\1try:\n"
+                  "\\1    import torchsde\n"
+                  "\\1except ImportError:\n"
+                  "\\1    torchsde = None"))
                 (("^([[:blank:]]*)def __init__\\(self, x, t0, t1, seed=None, \\*\\*kwargs\\):")
                  (string-append
                   "\\1def __init__(self, x, t0, t1, seed=None, **kwargs):\n"
