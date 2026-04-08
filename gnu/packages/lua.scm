@@ -1857,7 +1857,7 @@ the @code{lunitx} module for running tests automatically at program exit.")
     (build-system gnu-build-system)
     (arguments
      (list
-      #:tests? (not (%current-target-system))
+      #:tests? #$(not (%current-target-system))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
