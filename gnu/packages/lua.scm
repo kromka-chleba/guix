@@ -1818,8 +1818,9 @@ way, following established lisp conventions.")
             (let* ((lua (string-append #$lua "/bin/lua"))
                    (lua-version #$(version-major+minor (package-version lua)))
                    (lua-dir (string-append #$output "/share/lua/" lua-version)))
-              (with-directory-excursion (string-append #$source "/lua")
-                (invoke lua "../test/selftest.lua"))
+              (when #$(not (%current-target-system))
+                (with-directory-excursion (string-append #$source "/lua")
+                  (invoke lua "../test/selftest.lua")))
               (mkdir-p lua-dir)
               (copy-recursively (string-append #$source "/lua") lua-dir)))))
     (native-inputs (list lua))
@@ -1839,6 +1840,9 @@ the @code{lunitx} module for running tests automatically at program exit.")
 (define-public lua5.2-lunitx
   (make-lua-lunitx "lua5.2-lunitx" lua-5.2))
 
+(define-public lua5.4-lunitx
+  (make-lua-lunitx "lua5.4-lunitx" lua-5.4))
+
 (define (make-lua-lsqlite3 name lua lua-lunitx)
   (package
     (name name)
@@ -1853,6 +1857,7 @@ the @code{lunitx} module for running tests automatically at program exit.")
     (build-system gnu-build-system)
     (arguments
      (list
+      #:tests? #$(not (%current-target-system))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
@@ -1900,3 +1905,6 @@ from within Lua programs.")
 
 (define-public lua5.2-lsqlite3
   (make-lua-lsqlite3 "lua5.2-lsqlite3" lua-5.2 lua5.2-lunitx))
+
+(define-public lua5.4-lsqlite3
+  (make-lua-lsqlite3 "lua5.4-lsqlite3" lua-5.4 lua5.4-lunitx))
