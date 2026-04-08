@@ -516,6 +516,7 @@ such as:
     (build-system gnu-build-system)
     (arguments
      (list
+      #:tests? (not (%current-target-system))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'copy-lua-bee-sources
@@ -1904,3 +1905,6 @@ from within Lua programs.")
 
 (define-public lua5.2-lsqlite3
   (make-lua-lsqlite3 "lua5.2-lsqlite3" lua-5.2 lua5.2-lunitx))
+
+(define-public lua5.4-lsqlite3
+  (make-lua-lsqlite3 "lua5.4-lsqlite3" lua-5.4 lua5.4-lunitx))
