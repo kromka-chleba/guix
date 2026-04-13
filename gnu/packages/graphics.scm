@@ -716,14 +716,14 @@ typically encountered in feature film production.")
 (define-public blender
   (package
     (name "blender")
-    (version "4.3.2") ;4.2.x+ requires Python >= 3.12
+    (version "5.1.0") ;4.2.x+ requires Python >= 3.12
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://download.blender.org/source/" "blender-"
-                           version ".tar.xz"))
+       (uri (string-append "https://projects.blender.org/blender/blender/archive/v"
+                           version ".tar.gz"))
        (sha256
-        (base32 "1n4nsqmzfd51kxd6w30bmfbj4qkh9ccg7x7szbh3253m697avmn8"))))
+        (base32 "179abq7pxbc54cbm1psb2v7cmg3s2bk08ihg4vx4fsy564rwnaa1"))))
     (build-system cmake-build-system)
     (arguments
      (list
