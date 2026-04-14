@@ -705,10 +705,10 @@ typically encountered in feature film production.")
         (snippet '(begin
                     (delete-file-recursively "working")))
         (sha256
-         (base32 "0000000000000000000000000000000000000000000000000000"))))
+         (base32 "1ciz1bic8q6aqx2vyvawjfwr6daa1lg7qv6b59p35vakwlmg2p3f"))))
     (build-system copy-build-system)
     (home-page "https://www.blender.org/")
-    (synopsis "Buldled assets for Blender")
+    (synopsis "Bundled assets for Blender")
     (description
      "Assets bundled with Blender releases in the Essentials assets library.")
     (license license:cc0)))
