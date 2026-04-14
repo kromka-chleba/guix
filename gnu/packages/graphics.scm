@@ -705,7 +705,7 @@ typically encountered in feature film production.")
         (snippet '(begin
                     (delete-file-recursively "working")))
         (sha256
-         (base32 "1ciz1bic8q6aqx2vyvawjfwr6daa1lg7qv6b59p35vakwlmg2p3f"))))
+         (base32 "1011zn4g1f5hs4dqar4sa7mh02kl4jnrwkpl6gfsi6sc0qhrxxdz"))))
     (build-system copy-build-system)
     (home-page "https://www.blender.org/")
     (synopsis "Bundled assets for Blender")
@@ -723,7 +723,7 @@ typically encountered in feature film production.")
        (uri (string-append "https://projects.blender.org/blender/blender/archive/v"
                            version ".tar.gz"))
        (sha256
-        (base32 "179abq7pxbc54cbm1psb2v7cmg3s2bk08ihg4vx4fsy564rwnaa1"))))
+        (base32 "1aanwr465ysf4xv4ghi80kb2s3gmc7v2bsp1mbc45cbxp7qba971"))))
     (build-system cmake-build-system)
     (arguments
      (list
