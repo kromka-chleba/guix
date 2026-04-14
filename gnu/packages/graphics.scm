@@ -719,11 +719,13 @@ typically encountered in feature film production.")
     (version "5.1.0") ;4.2.x+ requires Python >= 3.12
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://projects.blender.org/blender/blender/archive/v"
-                           version ".tar.gz"))
-       (sha256
-        (base32 "1aanwr465ysf4xv4ghi80kb2s3gmc7v2bsp1mbc45cbxp7qba971"))))
+        (method git-fetch/lfs)
+        (uri (git-reference
+              (url "https://projects.blender.org/blender/blender.git")
+              (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1aanwr465ysf4xv4ghi80kb2s3gmc7v2bsp1mbc45cbxp7qba971"))))
     (build-system cmake-build-system)
     (arguments
      (list
