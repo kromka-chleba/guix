@@ -54,6 +54,7 @@
   #:use-module (guix build-system trivial)
   #:use-module (guix build-system go)
   #:use-module (gnu packages)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages autogen)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
@@ -96,11 +97,104 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-1))
 
 ;;; Tools to deal with source code: metrics, cross-references, etc.
+
+(define-public python-backoff
+  (package
+    (name "python-backoff")
+    (version "2.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "backoff" version))
+       (sha256
+        (base32
+         "0000000000000000000000000000000000000000000000000000"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/litl/backoff")
+    (synopsis "Function decoration for backoff and retry")
+    (description
+     "This package provides decorators for implementing retry and backoff logic
+in Python applications.")
+    (license license:expat)))
+
+(define-public python-openai-0.27
+  (package
+    (name "python-openai")
+    (version "0.27.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "openai" version))
+       (sha256
+        (base32
+         "0000000000000000000000000000000000000000000000000000"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))
+    (propagated-inputs
+     (list python-aiohttp
+           python-requests
+           python-tqdm))
+    (native-inputs
+     (list python-setuptools))
+    (home-page "https://github.com/openai/openai-python")
+    (synopsis "Python client library for the OpenAI API")
+    (description
+     "This package provides a Python client library for the OpenAI API.")
+    (license license:expat)))
+
+(define-public aider
+  (package
+    (name "aider")
+    (version "0.15.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aider-chat" version))
+       (sha256
+        (base32
+         "0000000000000000000000000000000000000000000000000000"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      ;; Tests require API keys and network access.
+      #:tests? #f))
+    (propagated-inputs
+     (list python-aiohttp
+           python-aiosignal
+           python-backoff
+           python-configargparse
+           python-diskcache
+           python-gitpython
+           python-jsonschema
+           python-markdown-it-py
+           python-networkx
+           python-numpy
+           python-openai-0.27
+           python-prompt-toolkit
+           python-pygments
+           python-pyyaml
+           python-requests
+           python-rich
+           python-scipy
+           python-sounddevice
+           python-soundfile
+           python-tiktoken
+           python-tqdm))
+    (home-page "https://github.com/Aider-AI/aider")
+    (synopsis "AI pair programming in your terminal")
+    (description
+     "Aider is an AI pair programming tool for use in the terminal.  It helps
+you edit source code in an existing repository and supports multiple LLM
+providers.")
+    (license license:asl2.0)))
 
 (define-public amalgamate
   (let* ((commit "c91f07eea1133aa184f652b8f1398eaf03586208")
