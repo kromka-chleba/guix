@@ -116,7 +116,10 @@
         (base32
          "0000000000000000000000000000000000000000000000000000"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #f))
+    (arguments
+     (list
+      ;; Tests require optional tooling not packaged here.
+      #:tests? #f))
     (native-inputs (list python-setuptools))
     (home-page "https://github.com/litl/backoff")
     (synopsis "Function decoration for backoff and retry")
@@ -137,7 +140,10 @@ in Python applications.")
         (base32
          "0000000000000000000000000000000000000000000000000000"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #f))
+    (arguments
+     (list
+      ;; Upstream tests require network/API interactions and extra test deps.
+      #:tests? #f))
     (propagated-inputs
      (list python-aiohttp
            python-requests
