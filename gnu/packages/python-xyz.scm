@@ -14986,7 +14986,8 @@ callback signature using a prototype function.")
      (list
       ;; Tests require optional tooling not packaged here.
       #:tests? #f))
-    (native-inputs (list python-setuptools))
+    (native-inputs (list python-poetry-core
+                         python-setuptools))
     (home-page "https://github.com/litl/backoff")
     (synopsis "Function decoration for backoff and retry")
     (description
