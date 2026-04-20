@@ -14970,6 +14970,30 @@ you're careful.  The @code{backcall} package provides a way of specifying the
 callback signature using a prototype function.")
     (license license:bsd-3)))
 
+(define-public python-backoff
+  (package
+    (name "python-backoff")
+    (version "2.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "backoff" version))
+       (sha256
+        (base32
+         "0000000000000000000000000000000000000000000000000000"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Tests require optional tooling not packaged here.
+      #:tests? #f))
+    (native-inputs (list python-setuptools))
+    (home-page "https://github.com/litl/backoff")
+    (synopsis "Function decoration for backoff and retry")
+    (description
+     "This package provides decorators for implementing retry and backoff logic
+in Python applications.")
+    (license license:expat)))
+
 (define-public python-pubmed-parser
   (package
     (name "python-pubmed-parser")

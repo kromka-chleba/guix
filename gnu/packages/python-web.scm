@@ -5162,6 +5162,34 @@ service.")
 OpenAI API.")
     (license license:expat)))
 
+(define-public python-openai-0.27
+  (package
+    (name "python-openai")
+    (version "0.27.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "openai" version))
+       (sha256
+        (base32
+         "0000000000000000000000000000000000000000000000000000"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Upstream tests require network/API interactions and extra test deps.
+      #:tests? #f))
+    (propagated-inputs
+     (list python-aiohttp
+           python-requests
+           python-tqdm))
+    (native-inputs
+     (list python-setuptools))
+    (home-page "https://github.com/openai/openai-python")
+    (synopsis "Python client library for the OpenAI API")
+    (description
+     "This package provides a Python client library for the OpenAI API.")
+    (license license:expat)))
+
 (define-public python-openapi-schema-validator
   (package
     (name "python-openapi-schema-validator")
