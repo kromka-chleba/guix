@@ -130,12 +130,13 @@
            python-diskcache
            python-gitpython
            python-jsonschema
-           python-markdown-it-py
-           python-networkx
-           python-numpy
-           python-openai-0.27
-           python-prompt-toolkit
-           python-pygments
+            python-markdown-it-py
+            python-networkx
+            python-numpy
+            python-openai-0.27
+            python-pathspec
+            python-prompt-toolkit
+            python-pygments
            python-pyyaml
            python-requests
            python-rich
