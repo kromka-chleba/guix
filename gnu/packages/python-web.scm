@@ -5172,7 +5172,7 @@ OpenAI API.")
        (uri (pypi-uri "openai" version))
        (sha256
         (base32
-         "0000000000000000000000000000000000000000000000000000"))))
+         "0x9349vx011j4pzk3kpxkdxci8bazs3xkiny3n6fznhrqrm9zjk3"))))
     (build-system pyproject-build-system)
     (arguments
      (list

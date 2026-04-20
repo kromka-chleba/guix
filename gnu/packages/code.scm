@@ -89,6 +89,7 @@
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
@@ -115,7 +116,7 @@
        (uri (pypi-uri "aider-chat" version))
        (sha256
         (base32
-         "0000000000000000000000000000000000000000000000000000"))))
+         "00arjfchfgxfp8nggc74190c0vjm1c65g0360xm9vhbd6h90lyqg"))))
     (build-system python-build-system)
     (arguments
      (list
