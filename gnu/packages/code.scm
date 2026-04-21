@@ -109,98 +109,89 @@
 (define-public aider
   (package
     (name "aider")
-    (version "0.15.0")
+    (version "0.86.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "aider-chat" version))
-       (sha256
-        (base32
-         "00arjfchfgxfp8nggc74190c0vjm1c65g0360xm9vhbd6h90lyqg"))))
+        (method url-fetch)
+        (uri (string-append "https://github.com/Aider-AI/aider/archive/refs/tags/v"
+                            version ".tar.gz"))
+        (sha256
+         (base32
+          "072wran6fy285d7l9fwg218h7r3w5f32wdzybh4jsd1k6i6692i4"))))
     (build-system python-build-system)
     (arguments
      (list
-       ;; Tests require API keys and network access.
-       #:tests? #f
-       #:phases
-       #~(modify-phases %standard-phases
-            (add-after 'unpack 'relax-dependency-requirements
+        ;; Tests require API keys and network access.
+        #:tests? #f
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'adjust-runtime-dependencies
                (lambda _
                   (let ((files (find-files "."
-                                           "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
+                                           "(pyproject\\.toml|requirements\\.txt)$")))
                     (unless (pair? files)
                       (error "No metadata files found for dependency requirement patch"))
-                   ;; Relax strict dependency pins (name==version) so Guix can use
-                   ;; newer compatible packaged versions.
-                  (when (not (zero? (apply system* "grep" "-Eq"
-                                            "[A-Za-z0-9_.-]+==[0-9][A-Za-z0-9_.-]*"
-                                            files)))
-                    (error "No strict dependency pins found in metadata files"))
-                   (substitute* files
-                     ;; Upstream includes pytest in runtime requirements, but tests
-                     ;; are disabled and it is not needed at runtime.
-                     (("pytest(==|>=)[0-9][A-Za-z0-9_.-]*\n?")
-                      "")
-                     (("([A-Za-z0-9_.-]+)==([0-9][A-Za-z0-9_.-]*)"
-                       all dependency version)
-                      (string-append dependency ">=" version)))
-                   ;; Avoid network access during module import: creating OpenAIModel
-                   ;; currently initializes tiktoken eagerly, which fetches tokenizer
-                   ;; data.  Make tokenizer initialization lazy so sanity-check can
-                   ;; load the console entrypoint without networking.
-                   (substitute* "aider/models/openai.py"
-                     (("import tiktoken")
-                      "import threading\nimport tiktoken")
-                     (("class OpenAIModel\\(Model\\):")
-                      (string-append
-                       "class LazyTokenizer:\n"
-                       "    def __init__(self, model_name):\n"
-                       "        self.model_name = model_name\n"
-                       "        self._encoding = None\n"
-                       "        self._lock = threading.Lock()\n"
-                       "\n"
-                       "    def _get_encoding(self):\n"
-                       "        if self._encoding is None:\n"
-                       "            with self._lock:\n"
-                       "                if self._encoding is None:\n"
-                       "                    self._encoding = tiktoken.encoding_for_model(self.model_name)\n"
-                       "        return self._encoding\n"
-                       "\n"
-                       "    def encode(self, *args, **kwargs):\n"
-                       "        return self._get_encoding().encode(*args, **kwargs)\n"
-                       "\n"
-                       "    def __getattr__(self, name):\n"
-                       "        return getattr(self._get_encoding(), name)\n"
-                       "\n"
-                       "\n"
-                       "class OpenAIModel(Model):"))
-                     (("self\\.tokenizer = tiktoken\\.encoding_for_model\\(name\\)")
-                      "self.tokenizer = LazyTokenizer(name)"))))))))
+                   ;; Keep runtime requirements aligned with Guix-available packages.
+                   (call-with-output-file "requirements-guix.txt"
+                     (lambda (port)
+                       (display
+                        "aiohttp\naiosignal\nbackoff\nconfigargparse\ndiff-match-patch\ndiskcache\nfastapi\ngitpython\nhttpx\nimportlib-metadata\nimportlib-resources\njson5\njsonschema\nmarkdown-it-py\nnetworkx\nnumpy\norjson\npackaging\npathspec\npillow\nprompt-toolkit\npsutil\npydantic\npypandoc\npyperclip\npython-dotenv\npyyaml\nrequests\nrich\nscipy\nshtab\nsocksio\nsounddevice\nsoundfile\ntiktoken\ntqdm\nwatchfiles\n"
+                        port)))
+                   (substitute* "pyproject.toml"
+                     (("dependencies = \\{ file = \"requirements\\.txt\" \\}")
+                      "dependencies = { file = \"requirements-guix.txt\" }"))
+                   ;; Use compatibility fallbacks for modules not yet packaged in Guix.
+                   (substitute* "aider/utils.py"
+                     (("import oslex")
+                      "try:\n    import oslex\nexcept ImportError:\n    import shlex as oslex"))
+                   (substitute* "aider/linter.py"
+                     (("import oslex")
+                      "try:\n    import oslex\nexcept ImportError:\n    import shlex as oslex")
+                     (("from grep_ast import TreeContext, filename_to_lang\nfrom grep_ast.tsl import get_parser  # noqa: E402")
+                      "try:\n    from grep_ast import TreeContext, filename_to_lang\n    from grep_ast.tsl import get_parser  # noqa: E402\nexcept ImportError:\n    TreeContext = None\n\n    def filename_to_lang(_fname):\n        return None\n\n    def get_parser(_lang):\n        return None"))
+                   (substitute* "aider/analytics.py"
+                     (("from mixpanel import MixpanelException\nfrom posthog import Posthog")
+                      "try:\n    from mixpanel import MixpanelException\nexcept ImportError:\n    class MixpanelException(Exception):\n        pass\n\ntry:\n    from posthog import Posthog\nexcept ImportError:\n    class Posthog:\n        def __init__(self, *args, **kwargs):\n            pass\n\n        def __getattr__(self, _name):\n            return lambda *args, **kwargs: None"))))))))
     (propagated-inputs
      (list python-aiohttp
-           python-aiosignal
-           python-async-timeout
-           python-backoff
-           python-configargparse
-           python-diskcache
-           python-gitpython
-           python-jsonschema
-           python-markdown-it-py
-           python-networkx
-           python-numpy
-           python-openai-0.27
-           python-packaging
-           python-pathspec
-           python-prompt-toolkit
-           python-pygments
-           python-pyyaml
-           python-requests
-           python-rich
-           python-scipy
-           python-sounddevice
-           python-soundfile
-           python-tiktoken
-           python-tqdm))
+            python-aiosignal
+            python-backoff
+            python-configargparse
+            python-diff-match-patch
+            python-diskcache
+            python-fastapi
+            python-gitpython
+            python-httpx
+            python-importlib-metadata
+            python-importlib-resources
+            python-json5
+            python-jsonschema
+            python-markdown-it-py
+            python-networkx
+            python-numpy
+            python-openai
+            python-orjson
+            python-packaging
+            python-pathspec
+            python-pillow
+            python-prompt-toolkit
+            python-psutil
+            python-pydantic
+            python-pypandoc
+            python-pyperclip
+            python-pygments
+            python-dotenv
+            python-pyyaml
+            python-requests
+            python-rich
+            python-scipy
+            python-shtab
+            python-socksio
+            python-sounddevice
+            python-soundfile
+            python-tiktoken
+            python-tqdm
+            python-watchfiles))
     (home-page "https://github.com/Aider-AI/aider")
     (synopsis "AI pair programming in your terminal")
     (description
