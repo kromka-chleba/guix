@@ -147,6 +147,7 @@
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
+           python-async-timeout
            python-backoff
            python-configargparse
            python-diskcache
