@@ -126,6 +126,7 @@
        #~(modify-phases %standard-phases
            (add-after 'unpack 'relax-pathspec-requirement
              (lambda _
+               (invoke "grep" "-R" "-q" "pathspec==0.11.2" ".")
                (substitute* (find-files "."
                                         "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")
                  (("pathspec==0\\.11\\.2")
