@@ -127,11 +127,12 @@
            (add-after 'unpack 'relax-pathspec-requirement
               (lambda _
                 (let ((files (find-files "."
-                                         "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")))
+                                         "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
                   (unless (pair? files)
                     (error "No metadata files found for pathspec requirement patch"))
                   ;; Fail if upstream changed this pin and substitution is a no-op.
-                  (apply invoke "grep" "-q" "pathspec==0.11.2" files)
+                  (unless (zero? (apply system* "grep" "-q" "pathspec==0.11.2" files))
+                    (error "Expected upstream pin 'pathspec==0.11.2' was not found"))
                   (substitute* files
                     (("pathspec==0\\.11\\.2")
                      "pathspec>=0.11.2")))))))
