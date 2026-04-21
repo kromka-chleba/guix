@@ -125,12 +125,14 @@
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'unpack 'relax-pathspec-requirement
-             (lambda _
-               (let ((files (find-files "."
-                                        "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")))
-                 ;; Fail if upstream changed this pin and substitution is a no-op.
-                 (apply invoke "grep" "-q" "pathspec==0.11.2" files)
-                 (substitute* files
+              (lambda _
+                (let ((files (find-files "."
+                                         "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")))
+                  (unless (pair? files)
+                    (error "No metadata files found for pathspec requirement patch"))
+                  ;; Fail if upstream changed this pin and substitution is a no-op.
+                  (apply invoke "grep" "-q" "pathspec==0.11.2" files)
+                  (substitute* files
                  (("pathspec==0\\.11\\.2")
                   "pathspec>=0.11.2")))))))
     (propagated-inputs
