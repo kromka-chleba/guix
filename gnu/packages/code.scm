@@ -133,8 +133,8 @@
                   ;; Fail if upstream changed this pin and substitution is a no-op.
                   (apply invoke "grep" "-q" "pathspec==0.11.2" files)
                   (substitute* files
-                 (("pathspec==0\\.11\\.2")
-                  "pathspec>=0.11.2")))))))
+                    (("pathspec==0\\.11\\.2")
+                     "pathspec>=0.11.2")))))))
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
