@@ -126,20 +126,20 @@
        #~(modify-phases %standard-phases
             (add-after 'unpack 'relax-dependency-requirements
                (lambda _
-                 (let ((files (find-files "."
-                                          "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
-                   (unless (pair? files)
-                    (error "No metadata files found for dependency requirement patch"))
-                  ;; Relax strict dependency pins (name==version) so Guix can use
-                  ;; newer compatible packaged versions.
-                  (unless (zero? (apply system* "grep" "-Eq"
-                                       "[A-Za-z0-9_.-]+==[0-9][A-Za-z0-9_.-]*"
-                                       files))
+                  (let ((files (find-files "."
+                                           "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
+                    (unless (pair? files)
+                      (error "No metadata files found for dependency requirement patch"))
+                   ;; Relax strict dependency pins (name==version) so Guix can use
+                   ;; newer compatible packaged versions.
+                  (when (not (zero? (apply system* "grep" "-Eq"
+                                            "[A-Za-z0-9_.-]+==[0-9][A-Za-z0-9_.-]*"
+                                            files)))
                     (error "No strict dependency pins found in metadata files"))
                   (substitute* files
                     ;; Upstream includes pytest in runtime requirements, but tests
                     ;; are disabled and it is not needed at runtime.
-                    (("pytest(==|>=)[0-9][A-Za-z0-9_.-]*\n")
+                    (("pytest(==|>=)[0-9][A-Za-z0-9_.-]*\n?")
                      "")
                     (("([A-Za-z0-9_.-]+)==([0-9][A-Za-z0-9_.-]*)"
                       all dependency version)
