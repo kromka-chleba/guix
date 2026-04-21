@@ -126,10 +126,11 @@
        #~(modify-phases %standard-phases
            (add-after 'unpack 'relax-pathspec-requirement
              (lambda _
-               ;; Fail if upstream changed this pin and the substitution is a no-op.
-               (invoke "grep" "-R" "-q" "pathspec==0.11.2" ".")
-               (substitute* (find-files "."
-                                        "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")
+               (let ((files (find-files "."
+                                        "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")))
+                 ;; Fail if upstream changed this pin and substitution is a no-op.
+                 (apply invoke "grep" "-q" "pathspec==0.11.2" files)
+                 (substitute* files
                  (("pathspec==0\\.11\\.2")
                   "pathspec>=0.11.2")))))))
     (propagated-inputs
