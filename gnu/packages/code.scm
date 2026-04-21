@@ -157,6 +157,7 @@
            python-networkx
            python-numpy
            python-openai-0.27
+           python-packaging
            python-pathspec
            python-prompt-toolkit
            python-pygments
