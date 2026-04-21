@@ -124,18 +124,22 @@
        #:tests? #f
        #:phases
        #~(modify-phases %standard-phases
-           (add-after 'unpack 'relax-pathspec-requirement
-              (lambda _
-                (let ((files (find-files "."
-                                         "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
-                  (unless (pair? files)
-                    (error "No metadata files found for pathspec requirement patch"))
-                  ;; Fail if upstream changed this pin and substitution is a no-op.
+            (add-after 'unpack 'relax-dependency-requirements
+               (lambda _
+                 (let ((files (find-files "."
+                                          "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
+                   (unless (pair? files)
+                    (error "No metadata files found for dependency requirement patch"))
+                  ;; Fail if upstream changed pins and substitution is a no-op.
                   (unless (zero? (apply system* "grep" "-q" "pathspec==0.11.2" files))
                     (error "Expected upstream pin 'pathspec==0.11.2' was not found"))
+                  (unless (zero? (apply system* "grep" "-q" "soundfile==0.12.1" files))
+                    (error "Expected upstream pin 'soundfile==0.12.1' was not found"))
                   (substitute* files
                     (("pathspec==0\\.11\\.2")
-                     "pathspec>=0.11.2"))))))))
+                     "pathspec>=0.11.2")
+                    (("soundfile==0\\.12\\.1")
+                     "soundfile>=0.12.1"))))))))
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
