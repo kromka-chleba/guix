@@ -120,8 +120,16 @@
     (build-system python-build-system)
     (arguments
      (list
-      ;; Tests require API keys and network access.
-      #:tests? #f))
+       ;; Tests require API keys and network access.
+       #:tests? #f
+       #:phases
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'relax-pathspec-requirement
+             (lambda _
+               (substitute* (find-files "."
+                                        "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements.*\\.txt)$")
+                 (("pathspec==0\\.11\\.2")
+                  "pathspec>=0.11.2")))))))
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
