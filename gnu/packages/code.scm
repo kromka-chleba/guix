@@ -149,13 +149,15 @@
                    ;; data.  Make tokenizer initialization lazy so sanity-check can
                    ;; load the console entrypoint without networking.
                    (substitute* "aider/models/openai.py"
+                     (("import tiktoken")
+                      "import threading\nimport tiktoken")
                      (("class OpenAIModel\\(Model\\):")
                       (string-append
                        "class LazyTokenizer:\n"
                        "    def __init__(self, model_name):\n"
                        "        self.model_name = model_name\n"
                        "        self._encoding = None\n"
-                       "        self._lock = __import__(\"threading\").Lock()\n"
+                       "        self._lock = threading.Lock()\n"
                        "\n"
                        "    def _get_encoding(self):\n"
                        "        if self._encoding is None:\n"
