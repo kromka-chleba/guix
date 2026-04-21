@@ -136,14 +136,35 @@
                                             "[A-Za-z0-9_.-]+==[0-9][A-Za-z0-9_.-]*"
                                             files)))
                     (error "No strict dependency pins found in metadata files"))
-                  (substitute* files
-                    ;; Upstream includes pytest in runtime requirements, but tests
-                    ;; are disabled and it is not needed at runtime.
-                    (("pytest(==|>=)[0-9][A-Za-z0-9_.-]*\n?")
-                     "")
-                    (("([A-Za-z0-9_.-]+)==([0-9][A-Za-z0-9_.-]*)"
-                      all dependency version)
-                     (string-append dependency ">=" version)))))))))
+                   (substitute* files
+                     ;; Upstream includes pytest in runtime requirements, but tests
+                     ;; are disabled and it is not needed at runtime.
+                     (("pytest(==|>=)[0-9][A-Za-z0-9_.-]*\n?")
+                      "")
+                     (("([A-Za-z0-9_.-]+)==([0-9][A-Za-z0-9_.-]*)"
+                       all dependency version)
+                      (string-append dependency ">=" version)))
+                   ;; Avoid network access during module import: creating OpenAIModel
+                   ;; currently initializes tiktoken eagerly, which fetches tokenizer
+                   ;; data.  Make tokenizer initialization lazy so sanity-check can
+                   ;; load the console entrypoint without networking.
+                   (substitute* "aider/models/openai.py"
+                     (("class OpenAIModel\\(Model\\):")
+                      (string-append
+                       "class LazyTokenizer:\n"
+                       "    def __init__(self, model_name):\n"
+                       "        self.model_name = model_name\n"
+                       "        self._encoding = None\n"
+                       "\n"
+                       "    def encode(self, *args, **kwargs):\n"
+                       "        if self._encoding is None:\n"
+                       "            self._encoding = tiktoken.encoding_for_model(self.model_name)\n"
+                       "        return self._encoding.encode(*args, **kwargs)\n"
+                       "\n"
+                       "\n"
+                       "class OpenAIModel(Model):"))
+                     (("self\\.tokenizer = tiktoken\\.encoding_for_model\\(name\\)")
+                      "self.tokenizer = LazyTokenizer(name)"))))))))
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
