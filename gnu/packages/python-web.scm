@@ -9039,14 +9039,14 @@ asynchronously.")
 (define-public python-yarl
   (package
     (name "python-yarl")
-    (version "1.18.3")
+    (version "1.23.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "yarl" version))
        (sha256
         (base32
-         "1qfj6kvdxr8bzka4lp0bh0xfgr5mzx7zzvj2jb4vcxxzbk20265c"))))
+         "1mgmr66hgqjx5scz16nzs26l0n72azm0lcww6wh49gcfm1nfmcak"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -9060,17 +9060,9 @@ asynchronously.")
              (substitute* "packaging/pep517_backend/_backend.py"
                (("build_inplace=False") "build_inplace=True")))))))
     (native-inputs
-     (list python-covdefaults
-           python-cython
-           python-expandvars
-           python-pytest
-           python-pytest-cov
-           python-pytest-xdist
-           python-setuptools
-           python-tomli
-           python-wheel))
+     (list python-expandvars python-setuptools python-tomli))
     (propagated-inputs
-     (list python-packaging python-idna python-multidict python-propcache))
+     (list python-idna python-multidict python-propcache))
     (home-page "https://github.com/aio-libs/yarl/")
     (synopsis "Yet another URL library")
     (description "@code{yarl} module provides handy @code{URL} class
