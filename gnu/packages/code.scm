@@ -143,10 +143,10 @@
                    ;; Use compatibility fallbacks for modules not yet packaged in Guix.
                    (substitute* "aider/utils.py"
                      (("import oslex")
-                      "try:\n    import oslex\nexcept ImportError:\n    import shlex as oslex"))
+                      "try:\n    import oslex\nexcept ImportError:\n    # aider uses oslex.quote-compatible behavior here.\n    import shlex as oslex"))
                    (substitute* "aider/linter.py"
                      (("import oslex")
-                      "try:\n    import oslex\nexcept ImportError:\n    import shlex as oslex")
+                      "try:\n    import oslex\nexcept ImportError:\n    # aider uses oslex.quote-compatible behavior here.\n    import shlex as oslex")
                      (("from grep_ast import TreeContext, filename_to_lang\nfrom grep_ast.tsl import get_parser  # noqa: E402")
                       "try:\n    from grep_ast import TreeContext, filename_to_lang\n    from grep_ast.tsl import get_parser  # noqa: E402\nexcept ImportError:\n    TreeContext = None\n\n    def filename_to_lang(_fname):\n        return None\n\n    def get_parser(_lang):\n        return None"))
                    (substitute* "aider/analytics.py"
