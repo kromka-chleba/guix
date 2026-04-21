@@ -131,7 +131,7 @@
           (add-after 'unpack 'relax-requirements
             (lambda _
               (substitute* "requirements.txt"
-                (("yarl==1.22.0") "yarl>=1.22.0")))))))
+                (("==") ">=")))))))
     (native-inputs
      (list python-setuptools python-setuptools-scm))
     (propagated-inputs
