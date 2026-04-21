@@ -99,8 +99,10 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-1))
 
@@ -112,46 +114,26 @@
     (version "0.86.2")
     (source
      (origin
-        (method url-fetch)
-        (uri (string-append "https://github.com/Aider-AI/aider/archive/refs/tags/v"
-                            version ".tar.gz"))
-        (sha256
-         (base32
-          "072wran6fy285d7l9fwg218h7r3w5f32wdzybh4jsd1k6i6692i4"))))
-    (build-system python-build-system)
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Aider-AI/aider")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qm0m9k1l26h2pnzn98bss2na672787w1bp29mfpviflqc2dg9cd"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
         ;; Tests require API keys and network access.
         #:tests? #f
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'adjust-runtime-dependencies
-               (lambda _
-                  (let ((files (find-files "."
-                                           "(pyproject\\.toml|requirements\\.txt)$")))
-                    (unless (pair? files)
-                      (error "No metadata files found for dependency requirement patch"))
-                   ;; Keep runtime requirements aligned with Guix-available packages.
-                   (call-with-output-file "requirements-guix.txt"
-                     (lambda (port)
-                       (display
-                        "aiohttp\naiosignal\nbackoff\nconfigargparse\ndiff-match-patch\ndiskcache\nfastapi\ngitpython\nhttpx\nimportlib-metadata\nimportlib-resources\njson5\njsonschema\nmarkdown-it-py\nnetworkx\nnumpy\norjson\npackaging\npathspec\npillow\nprompt-toolkit\npsutil\npydantic\npypandoc\npyperclip\npython-dotenv\npyyaml\nrequests\nrich\nscipy\nshtab\nsocksio\nsounddevice\nsoundfile\ntiktoken\ntqdm\nwatchfiles\n"
-                        port)))
-                   (substitute* "pyproject.toml"
-                     (("dependencies = \\{ file = \"requirements\\.txt\" \\}")
-                      "dependencies = { file = \"requirements-guix.txt\" }"))
-                   ;; Use compatibility fallbacks for modules not yet packaged in Guix.
-                   (substitute* "aider/utils.py"
-                     (("import oslex")
-                      "try:\n    import oslex\nexcept ImportError:\n    # Fallback for Guix: aider uses quote() from this module in these paths.\n    import shlex as oslex"))
-                   (substitute* "aider/linter.py"
-                     (("import oslex")
-                      "try:\n    import oslex\nexcept ImportError:\n    # Fallback for Guix: aider uses quote() from this module in these paths.\n    import shlex as oslex")
-                     (("from grep_ast import TreeContext, filename_to_lang\nfrom grep_ast.tsl import get_parser  # noqa: E402")
-                      "try:\n    from grep_ast import TreeContext, filename_to_lang\n    from grep_ast.tsl import get_parser  # noqa: E402\nexcept ImportError:\n    # Without grep_ast, language-specific tree-sitter lint context is unavailable.\n    TreeContext = None\n\n    def filename_to_lang(_fname):\n        return None\n\n    def get_parser(_lang):\n        return None"))
-                   (substitute* "aider/analytics.py"
-                     (("from mixpanel import MixpanelException\nfrom posthog import Posthog")
-                      "try:\n    from mixpanel import MixpanelException\nexcept ImportError:\n    class MixpanelException(Exception):\n        pass\n\ntry:\n    from posthog import Posthog\nexcept ImportError:\n    # No-op analytics fallback for offline/minimal Guix builds.\n    class Posthog:\n        def __init__(self, *args, **kwargs):\n            pass\n\n        def __getattr__(self, _name):\n            return lambda *args, **kwargs: None"))))))))
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "requirements.txt"
+                (("yarl==1.22.0") "yarl>=1.22.0")))))))
+    (native-inputs
+     (list python-setuptools python-setuptools-scm))
     (propagated-inputs
      (list python-aiohttp
             python-aiosignal
@@ -182,6 +164,7 @@
             python-pygments
             python-dotenv
             python-pyyaml
+            python-yarl
             python-requests
             python-rich
             python-scipy
@@ -190,6 +173,7 @@
             python-sounddevice
             python-soundfile
             python-tiktoken
+            python-tree-sitter
             python-tqdm
             python-watchfiles))
     (home-page "https://github.com/Aider-AI/aider")
