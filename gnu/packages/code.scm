@@ -143,15 +143,15 @@
                    ;; Use compatibility fallbacks for modules not yet packaged in Guix.
                    (substitute* "aider/utils.py"
                      (("import oslex")
-                      "try:\n    import oslex\nexcept ImportError:\n    # aider uses oslex.quote-compatible behavior here.\n    import shlex as oslex"))
+                      "try:\n    import oslex\nexcept ImportError:\n    # Fallback for Guix: aider uses quote() from this module in these paths.\n    import shlex as oslex"))
                    (substitute* "aider/linter.py"
                      (("import oslex")
-                      "try:\n    import oslex\nexcept ImportError:\n    # aider uses oslex.quote-compatible behavior here.\n    import shlex as oslex")
+                      "try:\n    import oslex\nexcept ImportError:\n    # Fallback for Guix: aider uses quote() from this module in these paths.\n    import shlex as oslex")
                      (("from grep_ast import TreeContext, filename_to_lang\nfrom grep_ast.tsl import get_parser  # noqa: E402")
-                      "try:\n    from grep_ast import TreeContext, filename_to_lang\n    from grep_ast.tsl import get_parser  # noqa: E402\nexcept ImportError:\n    TreeContext = None\n\n    def filename_to_lang(_fname):\n        return None\n\n    def get_parser(_lang):\n        return None"))
+                      "try:\n    from grep_ast import TreeContext, filename_to_lang\n    from grep_ast.tsl import get_parser  # noqa: E402\nexcept ImportError:\n    # Without grep_ast, language-specific tree-sitter lint context is unavailable.\n    TreeContext = None\n\n    def filename_to_lang(_fname):\n        return None\n\n    def get_parser(_lang):\n        return None"))
                    (substitute* "aider/analytics.py"
                      (("from mixpanel import MixpanelException\nfrom posthog import Posthog")
-                      "try:\n    from mixpanel import MixpanelException\nexcept ImportError:\n    class MixpanelException(Exception):\n        pass\n\ntry:\n    from posthog import Posthog\nexcept ImportError:\n    class Posthog:\n        def __init__(self, *args, **kwargs):\n            pass\n\n        def __getattr__(self, _name):\n            return lambda *args, **kwargs: None"))))))))
+                      "try:\n    from mixpanel import MixpanelException\nexcept ImportError:\n    class MixpanelException(Exception):\n        pass\n\ntry:\n    from posthog import Posthog\nexcept ImportError:\n    # No-op analytics fallback for offline/minimal Guix builds.\n    class Posthog:\n        def __init__(self, *args, **kwargs):\n            pass\n\n        def __getattr__(self, _name):\n            return lambda *args, **kwargs: None"))))))))
     (propagated-inputs
      (list python-aiohttp
             python-aiosignal
