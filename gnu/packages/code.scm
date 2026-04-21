@@ -131,7 +131,7 @@
            (add-after 'unpack 'relax-requirements
              (lambda _
                 (substitute* "requirements.txt"
-                 (("^([^[:space:]#][^=[:space:]]*)[[:space:]]*==")
+                 (("^([^[:space:]#=]+)[[:space:]]*==")
                   "\\1>=")))))))
     (native-inputs
      (list python-setuptools python-setuptools-scm))
