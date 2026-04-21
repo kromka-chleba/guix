@@ -128,10 +128,11 @@
         #:tests? #f
         #:phases
         #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "requirements.txt"
-                (("==") ">=")))))))
+           (add-after 'unpack 'relax-requirements
+             (lambda _
+               (substitute* "requirements.txt"
+                 (("^([^[:space:]#][^=[:space:]]*)==")
+                  "\\1>=")))))))
     (native-inputs
      (list python-setuptools python-setuptools-scm))
     (propagated-inputs
