@@ -130,24 +130,16 @@
                                           "(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements\\.txt)$")))
                    (unless (pair? files)
                     (error "No metadata files found for dependency requirement patch"))
-                  ;; Fail if upstream changed pins and substitution is a no-op.
-                  (unless (zero? (apply system* "grep" "-q" "pathspec==0.11.2" files))
-                    (error "Expected upstream pin 'pathspec==0.11.2' was not found in metadata files"))
-                  (unless (zero? (apply system* "grep" "-q" "soundfile==0.12.1" files))
-                    (error "Expected upstream pin 'soundfile==0.12.1' was not found in metadata files"))
-                  (unless (zero? (apply system* "grep" "-q" "sounddevice==0.4.6" files))
-                    (error "Expected upstream pin 'sounddevice==0.4.6' was not found in metadata files"))
-                  (unless (zero? (apply system* "grep" "-q" "jsonschema==4.17.3" files))
-                    (error "Expected upstream pin 'jsonschema==4.17.3' was not found in metadata files"))
+                  ;; Relax strict dependency pins (name==version) so Guix can use
+                  ;; newer compatible packaged versions.
+                  (unless (zero? (apply system* "grep" "-Eq"
+                                       "[A-Za-z0-9_.-]+==[0-9][A-Za-z0-9_.-]*"
+                                       files))
+                    (error "No strict dependency pins found in metadata files"))
                   (substitute* files
-                    (("pathspec==0\\.11\\.2")
-                     "pathspec>=0.11.2")
-                    (("soundfile==0\\.12\\.1")
-                     "soundfile>=0.12.1")
-                    (("sounddevice==0\\.4\\.6")
-                     "sounddevice>=0.4.6")
-                    (("jsonschema==4\\.17\\.3")
-                     "jsonschema>=4.17.3"))))))))
+                    (("([A-Za-z0-9_.-]+)==([0-9][A-Za-z0-9_.-]*)"
+                      all dependency version)
+                     (string-append dependency ">=" version)))))))))
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
