@@ -137,6 +137,10 @@
                                        files))
                     (error "No strict dependency pins found in metadata files"))
                   (substitute* files
+                    ;; Upstream includes pytest in runtime requirements, but tests
+                    ;; are disabled and it is not needed at runtime.
+                    (("pytest(==|>=)[0-9][A-Za-z0-9_.-]*\n")
+                     "")
                     (("([A-Za-z0-9_.-]+)==([0-9][A-Za-z0-9_.-]*)"
                       all dependency version)
                      (string-append dependency ">=" version)))))))))
