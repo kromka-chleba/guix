@@ -137,13 +137,17 @@
                     (error "Expected upstream pin 'soundfile==0.12.1' was not found in metadata files"))
                   (unless (zero? (apply system* "grep" "-q" "sounddevice==0.4.6" files))
                     (error "Expected upstream pin 'sounddevice==0.4.6' was not found in metadata files"))
+                  (unless (zero? (apply system* "grep" "-q" "jsonschema==4.17.3" files))
+                    (error "Expected upstream pin 'jsonschema==4.17.3' was not found in metadata files"))
                   (substitute* files
                     (("pathspec==0\\.11\\.2")
                      "pathspec>=0.11.2")
                     (("soundfile==0\\.12\\.1")
                      "soundfile>=0.12.1")
                     (("sounddevice==0\\.4\\.6")
-                     "sounddevice>=0.4.6"))))))))
+                     "sounddevice>=0.4.6")
+                    (("jsonschema==4\\.17\\.3")
+                     "jsonschema>=4.17.3"))))))))
     (propagated-inputs
      (list python-aiohttp
            python-aiosignal
