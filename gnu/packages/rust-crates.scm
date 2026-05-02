@@ -47305,30 +47305,25 @@
                                    rust-zmij-1.0.21))
                      (breezy =>
                              (list rust-aho-corasick-1.1.4
-                                   rust-autocfg-1.5.0
                                    rust-heck-0.5.0
-                                   rust-indoc-2.0.7
                                    rust-lazy-static-1.5.0
-                                   rust-libc-0.2.182
+                                   rust-libc-0.2.186
                                    rust-memchr-2.8.0
-                                   rust-memoffset-0.9.1
-                                   rust-once-cell-1.21.3
+                                   rust-once-cell-1.21.4
                                    rust-portable-atomic-1.13.1
                                    rust-proc-macro2-1.0.106
-                                   rust-pyo3-0.26.0
-                                   rust-pyo3-build-config-0.26.0
-                                   rust-pyo3-ffi-0.26.0
-                                   rust-pyo3-macros-0.26.0
-                                   rust-pyo3-macros-backend-0.26.0
-                                   rust-quote-1.0.44
+                                   rust-pyo3-0.28.3
+                                   rust-pyo3-build-config-0.28.3
+                                   rust-pyo3-ffi-0.28.3
+                                   rust-pyo3-macros-0.28.3
+                                   rust-pyo3-macros-backend-0.28.3
+                                   rust-quote-1.0.45
                                    rust-regex-1.12.3
                                    rust-regex-automata-0.4.14
-                                   rust-regex-syntax-0.8.9
-                                   rust-rustversion-1.0.22
-                                   rust-syn-2.0.116
+                                   rust-regex-syntax-0.8.10
+                                   rust-syn-2.0.117
                                    rust-target-lexicon-0.13.5
-                                   rust-unicode-ident-1.0.24
-                                   rust-unindent-0.2.4))
+                                   rust-unicode-ident-1.0.24))
                      (bwt =>
                           (list rust-aho-corasick-1.1.4
                                 rust-android-log-sys-0.2.0
