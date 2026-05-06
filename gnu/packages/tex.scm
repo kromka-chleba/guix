@@ -77692,6 +77692,21 @@ dynamic bibliography sets and many other features.")
               (sha256
                (base32 "1yls8pc6idr8cr5cqf74mk5hzyxdcq85dasw68xv91gqsxag1p70"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests"
+                  (let ((tmp (string-append (canonicalize-path "../..")
+                                            "/tmp")))
+                    (substitute* "run.sh"
+                      (("/var/tmp")
+                       tmp))
+                    (mkdir-p tmp))
+                  (invoke "bash" "run.sh"))))))))
     (native-inputs
      (list python-hatchling
            texinfo
