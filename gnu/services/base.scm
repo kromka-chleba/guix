@@ -730,7 +730,10 @@ down.")))
 
       (shepherd-service
         (documentation "Add TRNG to entropy pool.")
-        (requirement '(user-processes udev))
+        ;; Only require udev when using a real hardware RNG device; synthetic
+        ;; devices like /dev/urandom are always available without udev.
+        (requirement `(user-processes
+                       ,@(if (string-prefix? "/dev/hw" device) '(udev) '())))
         (provision '(trng))
         (start #~(make-forkexec-constructor '#$rngd-command))
         (stop #~(make-kill-destructor))))

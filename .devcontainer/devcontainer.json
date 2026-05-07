@@ -1,0 +1,36 @@
+{
+  "name": "Guix Dev Container",
+  "image": "ghcr.io/kromka-chleba/guix-dev:latest",
+
+  // Start a minimal init so that Guix Shepherd services come up normally.
+  "runArgs": [
+    "--privileged",
+    "--init"
+  ],
+
+  // Mount the repository into the container so development work is reflected
+  // immediately without a rebuild.
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+  ],
+
+  "workspaceFolder": "/workspace",
+
+  // Use the Guix-provided bash as the default shell.
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.profiles.linux": {
+      "bash": {
+        "path": "/run/current-system/profile/bin/bash",
+        "args": ["--login"]
+      }
+    }
+  },
+
+  "postStartCommand": "echo 'Guix dev container ready.  Use ./pre-inst-env guix … for development builds.'",
+
+  "remoteEnv": {
+    // Ensure the Guix system profile binaries are on PATH.
+    "PATH": "/run/current-system/profile/bin:${containerEnv:PATH}"
+  }
+}

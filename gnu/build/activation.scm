@@ -309,8 +309,18 @@ EINVAL, ELOOP, etc."
   ;; beware that if /run/current-system/profile/etc/ssl doesn't exist at the
   ;; time of activation (e.g. when installing a fresh system), the call to
   ;; 'file-is-directory?' below will fail because it uses 'stat', not 'lstat'.
-  (rm-f "/etc/ssl")
-  (symlink "/run/current-system/profile/etc/ssl" "/etc/ssl")
+  ;;
+  ;; Use 'delete-file-recursively' rather than 'delete-file' so that the
+  ;; removal succeeds even when /etc/ssl is a real directory (e.g. one
+  ;; pre-created by Docker) instead of just a plain file or symlink.
+  ;; Skip the symlink when /etc/ssl still exists after deletion (e.g.
+  ;; Docker bind-mounts cert.pem/ca-bundle.pem inside it as busy files,
+  ;; preventing full removal).  In that case the host certificates are
+  ;; usable as-is and the unconditional symlink would abort activate-etc
+  ;; with EEXIST before populating the rest of /etc.
+  (false-if-exception (delete-file-recursively "/etc/ssl"))
+  (unless (false-if-exception (lstat "/etc/ssl"))
+    (symlink "/run/current-system/profile/etc/ssl" "/etc/ssl"))
 
   (for-each (lambda (file)
               (let ((target (string-append "/etc/" file))
@@ -321,18 +331,26 @@ EINVAL, ELOOP, etc."
                     ;; convention to be followed.
                     (source (canonicalize-path* (string-append etc "/" file))))
                 (rm-f target)
-                (cond ((string=? (basename target) "sudoers")
-                       (begin
-                         ;; /etc/sudoers must be a regular file.
-                         (copy-file source target)
-                         ;; XXX: dirty hack to meet sudo's expectations
-                         (chmod target #o440)))
-                      ((string=? (basename target) "hosts")
-                       ;; /etc/hosts must be a regular file, as some software
-                       ;; like vpn-slice expect to be able to write to it.
-                       (copy-file source target))
-                      (else             ;usual case
-                       (symlink source target)))))
+                ;; If the target could not be removed (e.g. a Docker
+                ;; bind-mounted /etc/hostname or /etc/resolv.conf returns
+                ;; EBUSY), skip it rather than letting the subsequent
+                ;; 'symlink' call throw EEXIST and abort the whole loop,
+                ;; which would leave /etc/skel, nsswitch.conf, pam.d, etc.
+                ;; unpopulated.
+                (unless (file-exists? target)
+                  (cond ((string=? (basename target) "sudoers")
+                         (begin
+                           ;; /etc/sudoers must be a regular file.
+                           (copy-file source target)
+                           ;; XXX: dirty hack to meet sudo's expectations
+                           (chmod target #o440)))
+                        ((string=? (basename target) "hosts")
+                         ;; /etc/hosts must be a regular file, as some
+                         ;; software like vpn-slice expect to be able to
+                         ;; write to it.
+                         (copy-file source target))
+                        (else             ;usual case
+                         (symlink source target))))))
             (scandir etc (negate dot-or-dot-dot?)
                      ;; The default is 'string-locale<?', but we don't have
                      ;; it when run from the initrd's statically-linked
