@@ -61,6 +61,10 @@ from OS that are needed on the bare metal and not in a container."
                     (cons* (service-kind %linux-bare-metal-service)
                            firmware-service-type
                            system-service-type
+                           ;; Containers (including Docker) cannot call
+                           ;; sethostname(2) without CAP_SYS_ADMIN; the
+                           ;; hostname is managed by the container runtime.
+                           host-name-service-type
                            (if shared-network?
                                (list hosts-service-type)
                                '()))))
@@ -193,11 +197,17 @@ containerized OS.  EXTRA-FILE-SYSTEMS is a list of file systems to add to OS."
                             user-file-systems
 
                             ;; Provide a dummy root file system so we can create
-                            ;; a 'boot-parameters' file.
+                            ;; a 'boot-parameters' file.  Set mount? to #f so
+                            ;; that no Shepherd service is generated for this
+                            ;; placeholder: attempting to mount type "dummy" at
+                            ;; runtime would fail (no such kernel filesystem
+                            ;; type), which would block file-systems →
+                            ;; user-processes → guix-daemon from ever starting.
                             (list (file-system
                                     (mount-point "/")
                                     (device "nothing")
-                                    (type "dummy")))))))
+                                    (type "dummy")
+                                    (mount? #f)))))))
 
   ;; `essential-services' is thunked, we need to evaluate it separately.
   (operating-system

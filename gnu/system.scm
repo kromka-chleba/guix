@@ -1484,20 +1484,34 @@ entry."
 
 (define (store-file-system file-systems)
   "Return the file system object among FILE-SYSTEMS that contains the store."
+  (define (store-prefix? fs)
+    (and (not (memq 'bind-mount (file-system-flags fs)))
+         (string-prefix? (file-system-mount-point fs)
+                         (%store-prefix))))
+
+  (define (best-match candidates)
+    (match candidates
+      ((and candidates (head . tail))
+       (reduce (lambda (fs1 fs2)
+                 (if (> (string-length (file-system-mount-point fs1))
+                        (string-length (file-system-mount-point fs2)))
+                     fs1
+                     fs2))
+               head
+               candidates))))
+
+  ;; Prefer file systems that will actually be mounted (mount? #t).  Fall
+  ;; back to any file system covering the store prefix, e.g. the dummy root
+  ;; used for Docker image builds where mount? is #f to avoid generating a
+  ;; Shepherd mount service for a placeholder file system.
   (match (filter (lambda (fs)
                    (and (file-system-mount? fs)
-                        (not (memq 'bind-mount (file-system-flags fs)))
-                        (string-prefix? (file-system-mount-point fs)
-                                        (%store-prefix))))
+                        (store-prefix? fs)))
                  file-systems)
     ((and candidates (head . tail))
-     (reduce (lambda (fs1 fs2)
-               (if (> (string-length (file-system-mount-point fs1))
-                      (string-length (file-system-mount-point fs2)))
-                   fs1
-                   fs2))
-             head
-             candidates))))
+     (best-match candidates))
+    (()
+     (best-match (filter store-prefix? file-systems)))))
 
 (define (operating-system-store-file-system os)
   "Return the file system that contains the store of OS."
