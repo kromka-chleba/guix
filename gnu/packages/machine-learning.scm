@@ -1135,7 +1135,12 @@ algorithm.")
     (propagated-inputs
      (list python-numpy))
     (native-inputs
-     (list doxygen gfortran opencl-headers python-cython swig))
+     (list doxygen
+           gfortran
+           opencl-headers
+           python-cython
+           python-setuptools
+           swig))
     (home-page "https://github.com/openmm/openmm/")
     (synopsis "Toolkit for molecular simulation")
     (description
