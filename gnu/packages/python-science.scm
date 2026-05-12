@@ -5437,7 +5437,8 @@ and more
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pnsj23bxj7c39hzdz49v72flwbc8knc7dy831lvc0hrbssm4j60"))))
+        (base32 "0pnsj23bxj7c39hzdz49v72flwbc8knc7dy831lvc0hrbssm4j60"))
+       (snippet #~(delete-file "packages/python/plotly/versioneer.py"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5519,6 +5520,7 @@ and more
            python-statsmodels
            python-tenacity
            python-vaex-core
+           python-versioneer
            python-xarray))
     (propagated-inputs
      (list python-packaging
