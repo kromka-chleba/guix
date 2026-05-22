@@ -765,25 +765,22 @@ typically encountered in feature film production.")
                                   (string-append "-DPYTHON_LIBRARY=python"
                                                  #$python-version)
                                   (string-append "-DPYTHON_LIBPATH="
-                                                 (assoc-ref %build-inputs
-                                                            "python-next")
+                                                 #$(this-package-input "python-next")
                                                  "/lib")
                                   (string-append "-DPYTHON_INCLUDE_DIR="
-                                                 (assoc-ref %build-inputs
-                                                            "python-next")
+                                                 #$(this-package-input "python-next")
                                                  "/include/python"
                                                  #$python-version)
                                   (string-append "-DPYTHON_VERSION="
                                                  #$python-version)
                                   (string-append
                                    "-DPYTHON_NUMPY_INCLUDE_DIRS="
-                                   (assoc-ref %build-inputs "python-numpy")
+                                   #$(this-package-input "python-numpy")
                                    "/lib/python"
                                    "3.11" ;no 3.12 for numpy yet
                                    "/site-packages/numpy/core/include/")
                                   (string-append "-DPYTHON_NUMPY_PATH="
-                                                 (assoc-ref %build-inputs
-                                                            "python-numpy")
+                                                 #$(this-package-input "python-numpy")
                                                  "/lib/python"
                                                  "3.11" ;no 3.12 for numpy yet
                                                  "/site-packages/")))
