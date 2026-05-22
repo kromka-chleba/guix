@@ -699,6 +699,29 @@ It was developed by DreamWorks Animation for use in volumetric applications
 typically encountered in feature film production.")
     (license license:mpl2.0)))
 
+(define-public blender-assets
+  (package
+    (name "blender-assets")
+    (version "4.3.2")
+    (source
+     (origin
+       (method git-fetch/lfs) ;Needs LFS because .blender files are dummies
+       (uri (git-reference
+              (url "https://projects.blender.org/blender/blender-assets.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (delete-file-recursively "working")))
+       (sha256
+        (base32 "14h43mgsbymcnf6qrxd89mv2dws7n270jjss7c04a16d8in25x87"))))
+    (build-system copy-build-system)
+    (home-page "https://www.blender.org/")
+    (synopsis "Buldled assets for Blender")
+    (description
+     "Assets bundled with Blender releases in the Essentials assets library.")
+    (license license:cc0)))
+
 (define-public blender
   (package
     (name "blender")
