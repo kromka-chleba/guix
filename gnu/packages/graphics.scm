@@ -799,7 +799,7 @@ typically encountered in feature film production.")
            fftw
            freetype-with-brotli
            glew
-           glog
+           glog-next
            gmp                        ;needed for boolean operations on meshes
            imath
            jack-1
