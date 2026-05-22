@@ -779,8 +779,16 @@ typically encountered in feature film production.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'install-assets
             (lambda* (#:key outputs #:allow-other-keys)
-              (let ((datafiles-input #$(this-package-input "blender-assets")))
-                (copy-recursively datafiles-input "./release/datafiles/assets"))))
+              (let ((datafiles-input #$(this-package-input "blender-assets"))
+                    (startup-blend #$(this-package-input "blender-startup-blend"))
+                    (preview-blend #$(this-package-input "blender-preview-blend"))
+                    (preview-grease-pencil-blend
+                     #$(this-package-input "blender-preview-grease-pencil-blend")))
+                (copy-recursively datafiles-input "./release/datafiles/assets")
+                (copy-file startup-blend "./release/datafiles/startup.blend")
+                (copy-file preview-blend "./release/datafiles/preview.blend")
+                (copy-file preview-grease-pencil-blend
+                           "./release/datafiles/preview_grease_pencil.blend"))))
           (add-after 'install 'wrap-bin
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
@@ -790,46 +798,75 @@ typically encountered in feature film production.")
                       `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
     (native-inputs (list pkg-config))
     (inputs
-     (list bash-minimal
-           blender-assets
-           boost
-           bullet
-           eigen
-           embree
-           ffmpeg-6
-           fftw
-           freetype-with-brotli
-           glew
-           glog
-           gmp                        ;needed for boolean operations on meshes
-           imath
-           jack-1
-           jemalloc
-           libepoxy
-           libjpeg-turbo
-           libpng
-           libsndfile
-           libtiff
-           libx11
-           libxi
-           libxrender
-           lzo
-           onetbb
-           openal
-           opencolorio
-           openexr
-           openimageio
-           openjpeg
-           opensubdiv
-           openvdb
-           pugixml
-           python
-           python-numpy-1
-           shaderc
-           vulkan-headers
-           vulkan-loader
-           zlib
-           `(,zstd "lib")))
+     (append
+      (list bash-minimal
+            blender-assets
+            boost
+            bullet
+            eigen
+            embree
+            ffmpeg-6
+            fftw
+            freetype-with-brotli
+            glew
+            glog
+            gmp                        ;needed for boolean operations on meshes
+            imath
+            jack-1
+            jemalloc
+            libepoxy
+            libjpeg-turbo
+            libpng
+            libsndfile
+            libtiff
+            libx11
+            libxi
+            libxrender
+            lzo
+            onetbb
+            openal
+            opencolorio
+            openexr
+            openimageio
+            openjpeg
+            opensubdiv
+            openvdb
+            pugixml
+            python
+            python-numpy-1
+            shaderc
+            vulkan-headers
+            vulkan-loader
+            zlib
+            `(,zstd "lib"))
+      (list
+       `("blender-startup-blend"
+         ,(origin
+            (method url-fetch)
+            (uri (string-append
+                  "https://projects.blender.org/blender/blender.git/info/lfs/objects/"
+                  "5cecc6388292bc565d366a0a88d9139425d9cce2ac85e645fad41541febd4659"))
+            (file-name "startup.blend")
+            (sha256
+             (base32 "0p7cqqw854mwarfkcshai3ci7515v76f5b45wr2zmm0m87zbsijr"))))
+       `("blender-preview-blend"
+         ,(origin
+            (method url-fetch)
+            (uri (string-append
+                  "https://projects.blender.org/blender/blender.git/info/lfs/objects/"
+                  "703261170a8bc0d73f7c4a5563c9b3243db2befce8bf1e4a480936baec50b92f"))
+            (file-name "preview.blend")
+            (sha256
+             (base32 "0w1jc4bhm2y0swzpqjjmcg4v691xnazgrs5z3r54h29npbn51f9g"))))
+       `("blender-preview-grease-pencil-blend"
+         ,(origin
+            (method url-fetch)
+            (uri (string-append
+                  "https://projects.blender.org/blender/blender.git/info/lfs/objects/"
+                  "de7feab80a8906b22f3d94cb8e6730e1339f0bd725a04d7838f406d3cd348bc3"))
+            (file-name "preview_grease_pencil.blend")
+            (sha256
+             (base32 "1pkzxaw0m286n8pkv56birkk1q9kkw5xf9d09mw3ix06sg6k92y3"))))))))
     (home-page "https://www.blender.org/")
     (synopsis "3D graphics creation suite")
     (description
