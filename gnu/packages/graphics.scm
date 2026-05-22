@@ -784,9 +784,10 @@ typically encountered in feature film production.")
           (add-after 'install 'wrap-bin
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
-                     (python-path (or (getenv "GUIX_PYTHONPATH") "")))
-                (wrap-program (string-append out "/bin/blender")
-                  `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
+                     (python-path (getenv "GUIX_PYTHONPATH")))
+                (if python-path
+                    (wrap-program (string-append out "/bin/blender")
+                      `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
     (native-inputs (list pkg-config))
     (inputs
      (list bash-minimal
