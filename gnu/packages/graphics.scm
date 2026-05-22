@@ -725,14 +725,15 @@ typically encountered in feature film production.")
 (define-public blender
   (package
     (name "blender")
-    (version "3.6.23")                   ;4.2.x+ requires Python >= 3.12
+    (version "4.5.10")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://download.blender.org/source/"
-                                  "blender-" version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://projects.blender.org/blender/blender.git")
+                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "16ah70kqznxz60n39d4hnlnwh1vi7xn9kx37di708n03l5bn6mmw"))))
+                "1sgr9za0lxvvfl84w65sb1il48hzdqyhy0m90ji1jwnjryc44s59"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -776,14 +777,20 @@ typically encountered in feature film production.")
                                "/site-packages/")))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'install-assets
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((datafiles-input #$(this-package-input "blender-assets")))
+                (copy-recursively datafiles-input "./release/datafiles/assets"))))
           (add-after 'install 'wrap-bin
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
                      (python-path (getenv "GUIX_PYTHONPATH")))
                 (wrap-program (string-append out "/bin/blender")
                   `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
+    (native-inputs (list pkg-config))
     (inputs
      (list bash-minimal
+           blender-assets
            boost
            bullet
            eigen
@@ -817,6 +824,9 @@ typically encountered in feature film production.")
            pugixml
            python
            python-numpy-1
+           shaderc
+           vulkan-headers
+           vulkan-loader
            zlib
            `(,zstd "lib")))
     (home-page "https://www.blender.org/")
