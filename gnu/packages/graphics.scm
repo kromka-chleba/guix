@@ -723,122 +723,162 @@ typically encountered in feature film production.")
     (license license:cc0)))
 
 (define-public blender
-  (package
-    (name "blender")
-    (version "4.5.10")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://projects.blender.org/blender/blender.git")
-                     (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "1sgr9za0lxvvfl84w65sb1il48hzdqyhy0m90ji1jwnjryc44s59"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      ;; Test files are very large and not included in the release tarball.
-      #:tests? #f
-      #:configure-flags
-      (let ((python-version (version-major+minor (package-version python))))
-        #~(list "-DWITH_CODEC_FFMPEG=ON"
-                "-DWITH_CODEC_SNDFILE=ON"
-                "-DWITH_CYCLES=ON"
-                "-DWITH_DOC_MANPAGE=ON"
-                "-DWITH_FFTW3=ON"
-                "-DWITH_IMAGE_OPENJPEG=ON"
-                "-DWITH_INPUT_NDOF=ON"
-                "-DWITH_INSTALL_PORTABLE=OFF"
-                "-DWITH_JACK=ON"
-                "-DWITH_MOD_OCEANSIM=ON"
-                "-DWITH_OPENVDB=ON"
-                "-DWITH_OPENSUBDIV=ON"
-                "-DWITH_PYTHON_INSTALL=OFF"
-                "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=ON"
-                "-DWITH_SYSTEM_FREETYPE=ON"
-                "-DWITH_SYSTEM_GLOG=ON"
-                "-DWITH_SYSTEM_LZO=ON"
-                (string-append "-DPYTHON_LIBRARY=python" #$python-version)
-                (string-append "-DPYTHON_LIBPATH="
-                               (assoc-ref %build-inputs "python")
-                               "/lib")
-                (string-append "-DPYTHON_INCLUDE_DIR="
-                               (assoc-ref %build-inputs "python")
-                               "/include/python" #$python-version)
-                (string-append "-DPYTHON_VERSION=" #$python-version)
-                (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
-                               (assoc-ref %build-inputs "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/numpy/core/include/")
-                (string-append "-DPYTHON_NUMPY_PATH="
-                               (assoc-ref %build-inputs "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/")))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'install-assets
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((datafiles-input #$(this-package-input "blender-assets")))
-                (copy-recursively datafiles-input "./release/datafiles/assets"))))
-          (add-after 'install 'wrap-bin
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (python-path (getenv "GUIX_PYTHONPATH")))
-                (if python-path
-                    (wrap-program (string-append out "/bin/blender")
-                      `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
-    (native-inputs (list pkg-config))
-    (inputs
-     (list bash-minimal
-           blender-assets
-           boost
-           bullet
-           eigen
-           embree
-           ffmpeg-6
-           fftw
-           fftwf
-           freetype-with-brotli
-           glew
-           glog
-           gmp                        ;needed for boolean operations on meshes
-           imath
-           jack-1
-           jemalloc
-           libepoxy
-           libjpeg-turbo
-           libpng
-           libsndfile
-           libtiff
-           libx11
-           libxi
-           libxrender
-           lzo
-           onetbb
-           openal
-           opencolorio
-           openexr
-           openimageio
-           openjpeg
-           opensubdiv
-           openvdb
-           pugixml
-           python
-           python-numpy-1
-           shaderc
-           vulkan-headers
-           vulkan-loader
-           zlib
-           `(,zstd "lib")))
-    (home-page "https://www.blender.org/")
-    (synopsis "3D graphics creation suite")
-    (description
-     "Blender is a 3D graphics creation suite.  It supports the entirety of
-the 3D pipeline—modeling, rigging, animation, simulation, rendering,
-compositing and motion tracking, even video editing and game creation.  The
-application can be customized via its API for Python scripting.")
-    (license license:gpl2+)))
+  (let ((startup-blend
+         (origin
+           (method url-fetch)
+           (uri
+            "https://projects.blender.org/blender/blender.git/info/lfs/objects/5cecc6388292bc565d366a0a88d9139425d9cce2ac85e645fad41541febd4659")
+           (file-name "blender-startup.blend")
+           (sha256
+            (base32 "bknccf42jay5cp9nd858in8kjhjxkk72mj2ycigsshal3zmx8rch"))))
+        (preview-blend
+         (origin
+           (method url-fetch)
+           (uri
+            "https://projects.blender.org/blender/blender.git/info/lfs/objects/703261170a8bc0d73f7c4a5563c9b3243db2befce8bf1e4a480936baec50b92f")
+           (file-name "blender-preview.blend")
+           (sha256
+            (base32 "f0r625qaig0dfgvw99an7jdk4hyv5gpwx2ziwjj814vbmv2hp4ph"))))
+        (preview-grease-pencil-blend
+         (origin
+           (method url-fetch)
+           (uri
+            "https://projects.blender.org/blender/blender.git/info/lfs/objects/de7feab80a8906b22f3d94cb8e6730e1339f0bd725a04d7838f406d3cd348bc3")
+           (file-name "blender-preview-grease-pencil.blend")
+           (sha256
+            (base32 "vrzymf0ai43b4brxjk5qwrrhw4rry2yp4nh4sy1qyh3d7k9lig1h")))))
+    (package
+      (name "blender")
+      (version "4.5.10")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://projects.blender.org/blender/blender.git")
+                       (commit (string-append "v" version))))
+                (sha256
+                 (base32
+                  "1sgr9za0lxvvfl84w65sb1il48hzdqyhy0m90ji1jwnjryc44s59"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; Test files are very large and not included in the release tarball.
+        #:tests? #f
+        #:configure-flags
+        (let ((python-version (version-major+minor (package-version python))))
+          #~(list "-DWITH_CODEC_FFMPEG=ON"
+                  "-DWITH_CODEC_SNDFILE=ON"
+                  "-DWITH_CYCLES=ON"
+                  "-DWITH_DOC_MANPAGE=ON"
+                  "-DWITH_FFTW3=ON"
+                  "-DWITH_IMAGE_OPENJPEG=ON"
+                  "-DWITH_INPUT_NDOF=ON"
+                  "-DWITH_INSTALL_PORTABLE=OFF"
+                  "-DWITH_JACK=ON"
+                  "-DWITH_MOD_OCEANSIM=ON"
+                  "-DWITH_OPENVDB=ON"
+                  "-DWITH_OPENSUBDIV=ON"
+                  "-DWITH_PYTHON_INSTALL=OFF"
+                  "-DWITH_SYSTEM_BULLET=ON"
+                  "-DWITH_SYSTEM_EIGEN3=ON"
+                  "-DWITH_SYSTEM_FREETYPE=ON"
+                  "-DWITH_SYSTEM_GLOG=ON"
+                  "-DWITH_SYSTEM_LZO=ON"
+                  (string-append "-DPYTHON_LIBRARY=python" #$python-version)
+                  (string-append "-DPYTHON_LIBPATH="
+                                 (assoc-ref %build-inputs "python")
+                                 "/lib")
+                  (string-append "-DPYTHON_INCLUDE_DIR="
+                                 (assoc-ref %build-inputs "python")
+                                 "/include/python" #$python-version)
+                  (string-append "-DPYTHON_VERSION=" #$python-version)
+                  (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
+                                 (assoc-ref %build-inputs "python-numpy")
+                                 "/lib/python" #$python-version
+                                 "/site-packages/numpy/core/include/")
+                  (string-append "-DPYTHON_NUMPY_PATH="
+                                 (assoc-ref %build-inputs "python-numpy")
+                                 "/lib/python" #$python-version
+                                 "/site-packages/")))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'replace-lfs-datafiles
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let ((datafiles "release/datafiles"))
+                  (mkdir-p datafiles)
+                  (copy-file (assoc-ref inputs "blender-startup-blend")
+                             (string-append datafiles "/startup.blend"))
+                  (copy-file (assoc-ref inputs "blender-preview-blend")
+                             (string-append datafiles "/preview.blend"))
+                  (copy-file (assoc-ref inputs "blender-preview-grease-pencil-blend")
+                             (string-append datafiles
+                                            "/preview_grease_pencil.blend")))))
+            (add-after 'unpack 'install-assets
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let ((datafiles-input #$(this-package-input "blender-assets")))
+                  (copy-recursively datafiles-input "./release/datafiles/assets"))))
+            (add-after 'install 'wrap-bin
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (python-path (getenv "GUIX_PYTHONPATH")))
+                  (if python-path
+                      (wrap-program (string-append out "/bin/blender")
+                        `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
+      (native-inputs
+       (list pkg-config
+             `("blender-startup-blend" ,startup-blend)
+             `("blender-preview-blend" ,preview-blend)
+             `("blender-preview-grease-pencil-blend"
+               ,preview-grease-pencil-blend)))
+      (inputs
+       (list bash-minimal
+             blender-assets
+             boost
+             bullet
+             eigen
+             embree
+             ffmpeg-6
+             fftw
+             fftwf
+             freetype-with-brotli
+             glew
+             glog
+             gmp                        ;needed for boolean operations on meshes
+             imath
+             jack-1
+             jemalloc
+             libepoxy
+             libjpeg-turbo
+             libpng
+             libsndfile
+             libtiff
+             libx11
+             libxi
+             libxrender
+             lzo
+             onetbb
+             openal
+             opencolorio
+             openexr
+             openimageio
+             openjpeg
+             opensubdiv
+             openvdb
+             pugixml
+             python
+             python-numpy-1
+             shaderc
+             vulkan-headers
+             vulkan-loader
+             zlib
+             `(,zstd "lib")))
+      (home-page "https://www.blender.org/")
+      (synopsis "3D graphics creation suite")
+      (description
+       "Blender is a 3D graphics creation suite.  It supports the entirety of
+ the 3D pipeline—modeling, rigging, animation, simulation, rendering,
+ compositing and motion tracking, even video editing and game creation.  The
+ application can be customized via its API for Python scripting.")
+      (license license:gpl2+))))
 
 (define-public goxel
   ;; The latest commit is used as it builds with GCC 14.
