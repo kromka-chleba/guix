@@ -787,7 +787,7 @@ typically encountered in feature film production.")
                      (python-path (getenv "GUIX_PYTHONPATH")))
                 (if python-path
                     (wrap-program (string-append out "/bin/blender")
-                      `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
+                      `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
     (native-inputs (list pkg-config))
     (inputs
      (list bash-minimal
@@ -798,6 +798,7 @@ typically encountered in feature film production.")
            embree
            ffmpeg-6
            fftw
+           fftwf
            freetype-with-brotli
            glew
            glog
