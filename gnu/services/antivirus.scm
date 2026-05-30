@@ -29,9 +29,10 @@
   #:export (clamav-configuration
             clamav-configuration?
             clamav-configuration-clamav
+            clamav-configuration-user
+            clamav-configuration-group
             clamav-configuration-clamd-config-file
             clamav-configuration-freshclam-config-file
-            %clamav-accounts
             clamav-service-type
             generate-documentation))
 
@@ -43,64 +44,67 @@
   (clamav
    (package clamav)
    "The ClamAV package to use.")
+  (user
+   (string "clamav")
+   "User account under which ClamAV daemons run.")
+  (group
+   (string "clamav")
+   "Group under which ClamAV daemons run.")
   (clamd-config-file
-   (string "/etc/clamav/clamd.conf")
-   "The clamd configuration file to use.  Defaults to
-@file{/etc/clamav/clamd.conf}, where the service installs the ClamAV
-package's default configuration.
-
-When specifying a custom configuration file, make sure it contains a
-@code{User clamav} directive so that clamd drops privileges from root
-to the @code{clamav} user after reading the configuration.")
+   (maybe-string #f)
+   "The @command{clamd} configuration file to use.  If unset, use
+the default @file{clamd.conf} provided by @code{clamav}.")
   (freshclam-config-file
-   (string "/etc/clamav/freshclam.conf")
-   "The freshclam configuration file to use.  Defaults to
-@file{/etc/clamav/freshclam.conf}, where the service installs the ClamAV
-package's default configuration.
+   (maybe-string #f)
+   "The @command{freshclam} configuration file to use.  If unset, use
+the default @file{freshclam.conf} provided by @code{clamav}."))
 
-When specifying a custom configuration file, make sure it contains a
-@code{DatabaseOwner clamav} directive so that freshclam drops privileges
-from root to the @code{clamav} user after reading the configuration."))
+(define (clamav-accounts config)
+  "Return user and group accounts for ClamAV daemons."
+  (let ((user (clamav-configuration-user config))
+        (group (clamav-configuration-group config)))
+    (list (user-group (name group) (system? #t))
+          (user-account
+           (name user)
+           (group group)
+           (system? #t)
+           (comment "ClamAV daemon user")
+           (home-directory "/var/lib/clamav")
+           (shell (file-append shadow "/sbin/nologin"))))))
 
-(define %clamav-accounts
-  ;; User and group for the ClamAV daemons.
-  (list (user-group (name "clamav") (system? #t))
-        (user-account
-         (name "clamav")
-         (group "clamav")
-         (system? #t)
-         (comment "ClamAV daemon user")
-         (home-directory "/var/lib/clamav")
-         (shell (file-append shadow "/sbin/nologin")))))
+(define (clamd-config-file config)
+  (or (clamav-configuration-clamd-config-file config)
+      (file-append (clamav-configuration-clamav config)
+                   "/etc/clamav/clamd.conf")))
 
-(define (clamav-etc-service config)
-  "Return the ClamAV configuration files for /etc/clamav/."
-  (let ((clamav (clamav-configuration-clamav config)))
-    `(("clamav/clamd.conf"
-       ,(file-append clamav "/etc/clamav/clamd.conf"))
-      ("clamav/freshclam.conf"
-       ,(file-append clamav "/etc/clamav/freshclam.conf")))))
+(define (freshclam-config-file config)
+  (or (clamav-configuration-freshclam-config-file config)
+      (file-append (clamav-configuration-clamav config)
+                   "/etc/clamav/freshclam.conf")))
 
 (define (clamav-activation config)
   "Return a gexp to set up the ClamAV directory structure."
+  (let ((user (clamav-configuration-user config)))
   (with-imported-modules (source-module-closure '((gnu build activation)
                                                   (guix build utils)))
     #~(begin
         (use-modules (gnu build activation)
                      (guix build utils))
-        (let ((user (getpwnam "clamav")))
+        (let ((user (getpwnam #$user)))
           ;; Runtime directory for socket and PID files.
           (mkdir-p/perms "/run/clamav" user #o755)
           ;; Virus database directory.
           (mkdir-p/perms "/var/lib/clamav" user #o755)
           ;; Log directory.
-          (mkdir-p/perms "/var/log/clamav" user #o755)))))
+          (mkdir-p/perms "/var/log/clamav" user #o755))))))
 
 (define (clamav-shepherd-services config)
   "Return a list of <shepherd-service> for the ClamAV daemons."
   (let ((clamav             (clamav-configuration-clamav config))
-        (clamd-config       (clamav-configuration-clamd-config-file config))
-        (freshclam-config   (clamav-configuration-freshclam-config-file config))
+        (user               (clamav-configuration-user config))
+        (group              (clamav-configuration-group config))
+        (clamd-config       (clamd-config-file config))
+        (freshclam-config   (freshclam-config-file config))
         (freshclam-pid-file "/run/clamav/freshclam.pid"))
     (list
      (shepherd-service
@@ -111,6 +115,8 @@ from root to the @code{clamav} user after reading the configuration."))
                 (list (string-append #$clamav "/sbin/clamd")
                       "--config-file" #$clamd-config
                       "--foreground")
+                #:user #$user
+                #:group #$group
                 #:log-file "/var/log/clamav/clamd.log"))
       (stop #~(make-kill-destructor)))
 
@@ -124,6 +130,8 @@ from root to the @code{clamav} user after reading the configuration."))
                       "--daemon"
                       #$(string-append "--pid=" freshclam-pid-file))
                 #:pid-file #$freshclam-pid-file
+                #:user #$user
+                #:group #$group
                 #:environment-variables
                 (list "SSL_CERT_DIR=/etc/ssl/certs"
                       "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt")))
@@ -136,13 +144,11 @@ from root to the @code{clamav} user after reading the configuration."))
 virus database updater.")
    (extensions
     (list (service-extension shepherd-root-service-type
-                             clamav-shepherd-services)
+                            clamav-shepherd-services)
           (service-extension account-service-type
-                             (const %clamav-accounts))
+                             clamav-accounts)
           (service-extension activation-service-type
-                             clamav-activation)
-          (service-extension etc-service-type
-                             clamav-etc-service)))
+                             clamav-activation)))
    (default-value (clamav-configuration))))
 
 (define (generate-documentation)

@@ -45830,8 +45830,7 @@ default settings:
 (service clamav-service-type)
 @end lisp
 
-To use custom configuration files located outside of the Guix store,
-specify their paths as strings:
+To use custom configuration files, specify their paths as strings:
 
 @lisp
 (service clamav-service-type
@@ -45854,50 +45853,34 @@ Data type representing the configuration of the ClamAV service.
 @item @code{clamav} (default: @code{clamav})
 The ClamAV package to use.
 
-@item @code{clamd-config-file} (default: @code{"/etc/clamav/clamd.conf"})
-Path to the @file{clamd.conf} configuration file, as a string.  By
-default, the service installs the ClamAV package's default configuration
-at @file{/etc/clamav/clamd.conf} and uses it.  To use your own
-configuration file instead, set this to its path---it can reside anywhere
-on the file system, including outside the Guix store.  The service will
-not manage or install a file at the custom path; you must ensure the file
-exists there yourself.
+@item @code{user} (default: @code{"clamav"})
+User account under which @command{clamd} and @command{freshclam} run.
+
+@item @code{group} (default: @code{"clamav"})
+Group under which @command{clamd} and @command{freshclam} run.
+
+@item @code{clamd-config-file} (default: @code{#f})
+Path to the @file{clamd.conf} configuration file, as a string, or
+@code{#f}.  When left as @code{#f}, the service uses the
+@file{clamd.conf} provided by the selected @code{clamav} package at
+@file{.../etc/clamav/clamd.conf}.  To use your own configuration file
+instead, set this to its path---it can reside anywhere on the file
+system, including outside the Guix store.  The service does not manage
+or install a file at the custom path; you must ensure the file exists
+there yourself.
 @xref{clamd.conf(5),,,clamd.conf, ClamAV Manual} for available options.
-If you provide a custom file, make sure to include at least:
 
-@example
-LocalSocket /run/clamav/clamd.ctl
-DatabaseDirectory /var/lib/clamav
-User clamav
-@end example
-
-The @code{User clamav} directive causes @command{clamd} (which must be
-started as @code{root}) to drop privileges and switch to the
-@code{clamav} user after startup.  Omitting it means @command{clamd}
-will continue running as @code{root}, which is a security risk for a
-process that parses potentially malicious files.
-
-@item @code{freshclam-config-file} (default: @code{"/etc/clamav/freshclam.conf"})
-Path to the @file{freshclam.conf} configuration file, as a string.  By
-default, the service installs the ClamAV package's default configuration
-at @file{/etc/clamav/freshclam.conf} and uses it.  To use your own
-configuration file instead, set this to its path---it can reside anywhere
-on the file system, including outside the Guix store.  The service will
-not manage or install a file at the custom path; you must ensure the file
-exists there yourself.
+@item @code{freshclam-config-file} (default: @code{#f})
+Path to the @file{freshclam.conf} configuration file, as a string, or
+@code{#f}.  When left as @code{#f}, the service uses the
+@file{freshclam.conf} provided by the selected @code{clamav} package at
+@file{.../etc/clamav/freshclam.conf}.  To use your own configuration
+file instead, set this to its path---it can reside anywhere on the file
+system, including outside the Guix store.  The service does not manage
+or install a file at the custom path; you must ensure the file exists
+there yourself.
 @xref{freshclam.conf(5),,,freshclam.conf, ClamAV Manual} for available
-options.  If you provide a custom file, make sure to include at least:
-
-@example
-DatabaseDirectory /var/lib/clamav
-DatabaseOwner clamav
-@end example
-
-The @code{DatabaseOwner clamav} directive causes @command{freshclam}
-(which must be started as @code{root}) to drop privileges and switch to
-the @code{clamav} user after startup.  Omitting it means
-@command{freshclam} will continue running as @code{root}, which is a
-security risk.
+options.
 
 @end table
 @end deftp
