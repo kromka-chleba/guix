@@ -46856,13 +46856,10 @@ The @command{clamd} daemon makes its Unix socket available at
 @file{/run/clamav/clamd.ctl}, and virus databases are stored in
 @file{/var/lib/clamav}.  Both daemons log to @file{/var/log/clamav/}.
 
-@quotation Important
-Before starting @command{clamd} for the first time, you must download
-the virus database by running @command{freshclam}.  You can do so by
-running @command{herd start freshclam} and waiting for the initial
-download to complete, after which @command{clamd} can be started with
-@command{herd start clamd}.
-@end quotation
+At boot, the service runs a one-shot initial @command{freshclam}
+bootstrap before starting @command{clamd}.  The bootstrap retries every
+30 seconds for up to 30 minutes, and @command{clamd} starts only after
+the database files are available.
 
 @quotation Note
 When running ClamAV commands manually from the command line (outside
@@ -46898,7 +46895,10 @@ To use custom configuration files, specify their paths as strings:
 Service type for ClamAV.  Its value must be a @code{clamav-configuration}
 object.  This service automatically creates the @samp{clamav} user and
 group, sets up runtime and data directories, and provides two Shepherd
-services: @code{clamd} and @code{freshclam}.
+services: @code{clamd} and @code{freshclam}.  It also provides a one-shot
+bootstrap service (@code{clamav-database-ready}) that retries initial
+database downloads every 30 seconds for up to 30 minutes before allowing
+@code{clamd} to start.
 @end defvar
 
 @deftp {Data Type} clamav-configuration

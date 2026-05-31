@@ -108,8 +108,8 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
         (clamd-config       (clamd-config-file config))
        (freshclam-config    (freshclam-config-file config))
        (freshclam-pid-file  "/run/clamav/freshclam.pid")
-       (bootstrap-attempts  12)
-       (bootstrap-delay     10))
+       (bootstrap-attempts  60)
+       (bootstrap-delay     30))
     (list
      (shepherd-service
       (documentation
@@ -198,7 +198,9 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
   (service-type
    (name 'clamav)
    (description "Run the ClamAV antivirus daemon and the @command{freshclam}
-virus database updater.")
+virus database updater.  On boot, an initial @command{freshclam} run is
+attempted before @command{clamd} starts, retrying every 30 seconds for up to
+30 minutes.")
    (extensions
     (list (service-extension shepherd-root-service-type
                             clamav-shepherd-services)
