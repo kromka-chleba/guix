@@ -108,7 +108,6 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
         (clamd-config       (clamd-config-file config))
        (freshclam-config    (freshclam-config-file config))
        (freshclam-pid-file  "/run/clamav/freshclam.pid")
-       (bootstrap-attempts  60)
        (bootstrap-delay     30))
     (list
      (shepherd-service
@@ -149,19 +148,14 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
                                     (lambda (name)
                                       (not (member name '("." ".."))))))))
                (let ((directory (database-directory)))
-                 (let loop ((attempt 1))
-                   (let ((code (status:exit-val
-                                (system* (string-append #$clamav "/bin/freshclam")
-                                         "--config-file" #$freshclam-config))))
-                     (cond
-                      ((and (zero? code)
-                            (database-ready? directory))
-                       #t)
-                      ((< attempt #$bootstrap-attempts)
-                       (sleep #$bootstrap-delay)
-                       (loop (1+ attempt)))
-                      (else
-                       #f)))))))
+                 (let loop ()
+                   (system* (string-append #$clamav "/bin/freshclam")
+                            "--config-file" #$freshclam-config)
+                   (if (database-ready? directory)
+                       #t
+                       (begin
+                         (sleep #$bootstrap-delay)
+                         (loop)))))))
       (auto-start? #t))
 
      (shepherd-service
@@ -199,8 +193,8 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
    (name 'clamav)
    (description "Run the ClamAV antivirus daemon and the @command{freshclam}
 virus database updater.  On boot, an initial @command{freshclam} run is
-attempted before @command{clamd} starts, retrying every 30 seconds for up to
-30 minutes.")
+attempted before @command{clamd} starts, retrying every 30 seconds until the
+database files are available.")
    (extensions
     (list (service-extension shepherd-root-service-type
                             clamav-shepherd-services)

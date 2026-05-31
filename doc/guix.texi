@@ -46858,8 +46858,8 @@ The @command{clamd} daemon makes its Unix socket available at
 
 At boot, the service runs a one-shot initial @command{freshclam}
 bootstrap before starting @command{clamd}.  The bootstrap retries every
-30 seconds for up to 30 minutes, and @command{clamd} starts only after
-the database files are available.
+30 seconds until the database files are available, and @command{clamd}
+starts only after that.
 
 @quotation Note
 When running ClamAV commands manually from the command line (outside
@@ -46897,8 +46897,8 @@ object.  This service automatically creates the @samp{clamav} user and
 group, sets up runtime and data directories, and provides two Shepherd
 services: @code{clamd} and @code{freshclam}.  It also provides a one-shot
 bootstrap service (@code{clamav-database-ready}) that retries initial
-database downloads every 30 seconds for up to 30 minutes before allowing
-@code{clamd} to start.
+database downloads every 30 seconds until signatures are available before
+allowing @code{clamd} to start.
 @end defvar
 
 @deftp {Data Type} clamav-configuration
