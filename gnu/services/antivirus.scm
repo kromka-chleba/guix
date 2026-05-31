@@ -53,11 +53,11 @@
    (string "clamav")
    "Group under which ClamAV daemons run.")
   (clamd-config-file
-   (maybe-string #f)
+   (maybe-string)
    "The @command{clamd} configuration file to use.  If unset, use
 the default @file{clamd.conf} provided by @code{clamav}.")
   (freshclam-config-file
-   (maybe-string #f)
+   (maybe-string)
    "The @command{freshclam} configuration file to use.  If unset, use
 the default @file{freshclam.conf} provided by @code{clamav}."))
 
@@ -75,14 +75,14 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
            (shell (file-append shadow "/sbin/nologin"))))))
 
 (define (clamd-config-file config)
-  (or (clamav-configuration-clamd-config-file config)
-      (file-append (clamav-configuration-clamav config)
-                   "/etc/clamav/clamd.conf")))
+  (maybe-value (clamav-configuration-clamd-config-file config)
+               (file-append (clamav-configuration-clamav config)
+                            "/etc/clamav/clamd.conf")))
 
 (define (freshclam-config-file config)
-  (or (clamav-configuration-freshclam-config-file config)
-      (file-append (clamav-configuration-clamav config)
-                   "/etc/clamav/freshclam.conf")))
+  (maybe-value (clamav-configuration-freshclam-config-file config)
+               (file-append (clamav-configuration-clamav config)
+                            "/etc/clamav/freshclam.conf")))
 
 (define (clamav-activation config)
   "Return a gexp to set up the ClamAV directory structure."
