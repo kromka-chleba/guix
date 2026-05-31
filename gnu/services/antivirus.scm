@@ -106,13 +106,68 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
         (user               (clamav-configuration-user config))
         (group              (clamav-configuration-group config))
         (clamd-config       (clamd-config-file config))
-        (freshclam-config   (freshclam-config-file config))
-        (freshclam-pid-file "/run/clamav/freshclam.pid"))
+       (freshclam-config    (freshclam-config-file config))
+       (freshclam-pid-file  "/run/clamav/freshclam.pid")
+       (bootstrap-attempts  12)
+       (bootstrap-delay     10))
     (list
+     (shepherd-service
+      (documentation
+       "Fetch the initial ClamAV virus database before starting clamd.")
+      (provision '(clamav-database-ready))
+      (requirement '(user-processes networking))
+      (one-shot? #t)
+      (start #~(lambda _
+               (use-modules (ice-9 ftw)
+                            (ice-9 regex)
+                            (ice-9 rdelim)
+                            (srfi srfi-1))
+               (define (database-directory)
+                 (define default "/var/lib/clamav")
+                 (catch #t
+                   (lambda ()
+                     (call-with-input-file #$freshclam-config
+                       (lambda (port)
+                         (let loop ((line (read-line port)))
+                           (if (eof-object? line)
+                               default
+                               (let ((match
+                                      (string-match
+                                       "^[[:space:]]*DatabaseDirectory[[:space:]]+([^[:space:]#]+)"
+                                       line)))
+                                 (if match
+                                     (match:substring match 1)
+                                     (loop (read-line port)))))))))
+                   (lambda _
+                     default)))
+               (define (database-ready? directory)
+                 (and (file-exists? directory)
+                      (any (lambda (file)
+                             (or (string-match "\\.cvd$" file)
+                                 (string-match "\\.cld$" file)))
+                           (scandir directory
+                                    (lambda (name)
+                                      (not (member name '("." ".."))))))))
+               (let ((directory (database-directory)))
+                 (let loop ((attempt 1))
+                   (let ((code (status:exit-val
+                                (system* (string-append #$clamav "/bin/freshclam")
+                                         "--config-file" #$freshclam-config))))
+                     (cond
+                      ((and (zero? code)
+                            (database-ready? directory))
+                       #t)
+                      ((< attempt #$bootstrap-attempts)
+                       (sleep #$bootstrap-delay)
+                       (loop (1+ attempt)))
+                      (else
+                       #f)))))))
+      (auto-start? #t))
+
      (shepherd-service
       (documentation "ClamAV virus scanning daemon (clamd).")
       (provision '(clamd))
-      (requirement '(user-processes))
+      (requirement '(user-processes clamav-database-ready))
       (start #~(make-forkexec-constructor
                 (list (string-append #$clamav "/sbin/clamd")
                       "--config-file" #$clamd-config
