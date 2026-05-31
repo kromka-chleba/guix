@@ -40,6 +40,8 @@
 ;;; ClamAV antivirus daemon
 ;;;
 
+(define-maybe/no-serialization string)
+
 (define-configuration/no-serialization clamav-configuration
   (clamav
    (package clamav)
