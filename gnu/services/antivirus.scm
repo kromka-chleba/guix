@@ -117,12 +117,9 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
       (requirement '(user-processes networking))
       (one-shot? #t)
       (start #~(lambda _
-                 (use-modules (ice-9 ftw)
-                              (ice-9 regex)
-                              (srfi srfi-1))
-                 (define database-directory "/var/lib/clamav")
-                 (define (database-ready?)
-                   (or (file-exists? (string-append database-directory
+                (define database-directory "/var/lib/clamav")
+                (define (database-ready?)
+                  (or (file-exists? (string-append database-directory
                                                     "/main.cvd"))
                        (file-exists? (string-append database-directory
                                                     "/main.cld"))))
