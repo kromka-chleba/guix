@@ -122,12 +122,10 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
                               (srfi srfi-1))
                  (define database-directory "/var/lib/clamav")
                  (define (database-ready?)
-                   (and (file-exists? database-directory)
-                        (any (lambda (file)
-                               (string-match "\\.(cvd|cld)$" file))
-                             (scandir database-directory
-                                      (lambda (name)
-                                        (not (member name '("." ".."))))))))
+                   (or (file-exists? (string-append database-directory
+                                                    "/main.cvd"))
+                       (file-exists? (string-append database-directory
+                                                    "/main.cld"))))
                  (let loop ()
                    (let ((status (system* (string-append #$clamav "/bin/freshclam")
                                           "--config-file" #$freshclam-config)))
@@ -141,7 +139,7 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
      (shepherd-service
       (documentation "ClamAV virus scanning daemon (clamd).")
       (provision '(clamd))
-      (requirement '(user-processes))
+      (requirement '(clamav-database-ready user-processes))
       (start #~(let ((start-clamd
                       (make-forkexec-constructor
                        (list (string-append #$clamav "/sbin/clamd")
