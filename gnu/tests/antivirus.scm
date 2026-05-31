@@ -62,7 +62,7 @@
 
           (define (directory-has-owner? directory)
             (marionette-eval
-             '(let ((st (stat #$directory))
+             `(let ((st (stat ,directory))
                     (user (getpwnam "clamav")))
                 (and (eq? (stat:type st) 'directory)
                      (eqv? (stat:uid st) (passwd:uid user))
