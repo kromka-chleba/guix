@@ -26,10 +26,16 @@
   #:export (%test-clamav))
 
 (define (run-clamav-test)
+  (define test-user "avtest")
+  (define test-group "avtest")
+
   (define os
     (marionette-operating-system
      (simple-operating-system
-      (service clamav-service-type))))
+      (service clamav-service-type
+               (clamav-configuration
+                (user test-user)
+                (group test-group))))))
 
   (define test
     (with-imported-modules '((gnu build marionette))
@@ -46,27 +52,28 @@
           (test-runner-current (system-test-runner #$output))
           (test-begin "clamav")
 
-          (test-assert "ClamAV user exists"
+          (test-assert "Configured ClamAV user exists"
             (marionette-eval
-             '(begin
-                (getpwnam "clamav")
+             `(begin
+                (getpwnam ,test-user)
                 #t)
              marionette))
 
-          (test-assert "ClamAV group exists"
+          (test-assert "Configured ClamAV group exists"
             (marionette-eval
-             '(begin
-                (getgrnam "clamav")
+             `(begin
+                (getgrnam ,test-group)
                 #t)
              marionette))
 
           (define (directory-has-owner? directory)
             (marionette-eval
              `(let ((st (stat ,directory))
-                    (user (getpwnam "clamav")))
+                    (user (getpwnam ,test-user))
+                    (group (getgrnam ,test-group)))
                 (and (eq? (stat:type st) 'directory)
                      (eqv? (stat:uid st) (passwd:uid user))
-                     (eqv? (stat:gid st) (passwd:gid user))
+                     (eqv? (stat:gid st) (group:gid group))
                      (eqv? (stat:perms st) #o755)))
              marionette))
 

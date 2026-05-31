@@ -46865,7 +46865,8 @@ the bootstrap service state.
 @quotation Note
 When running ClamAV commands manually from the command line (outside
 of the Shepherd service), @command{freshclam} must be run as @code{root}
-or the @code{clamav} user, because the virus database directory
+or the service user configured via the @code{user} field (by default,
+@code{clamav}), because the virus database directory
 @file{/var/lib/clamav} must be writable.  For example:
 
 @example
@@ -46873,7 +46874,12 @@ sudo freshclam
 @end example
 
 After the initial database download, @command{clamscan} can be used by
-any user to scan files.
+any user to scan files.  With the @command{clamd} daemon active, users
+can also scan through the daemon:
+
+@example
+clamdscan --fdpass /path/to/file-or-dir
+@end example
 @end quotation
 
 Here is an example system configuration that enables the service with
@@ -46894,8 +46900,9 @@ To use custom configuration files, specify their paths as strings:
 
 @defvar clamav-service-type
 Service type for ClamAV.  Its value must be a @code{clamav-configuration}
-object.  This service automatically creates the @samp{clamav} user and
-group, sets up runtime and data directories, and provides two Shepherd
+object.  This service automatically creates the configured service user
+and group (defaults: @samp{clamav}/@samp{clamav}), sets up runtime and
+data directories, and provides two Shepherd
 services: @code{clamd} and @code{freshclam}.  It also provides a one-shot
 bootstrap service (@code{clamav-database-ready}) that retries initial
 database downloads every 30 seconds until signatures are available.
