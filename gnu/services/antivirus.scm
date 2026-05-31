@@ -117,58 +117,43 @@ the default @file{freshclam.conf} provided by @code{clamav}."))
       (requirement '(user-processes networking))
       (one-shot? #t)
       (start #~(lambda _
-               (use-modules (ice-9 ftw)
-                            (ice-9 regex)
-                            (ice-9 rdelim)
-                            (srfi srfi-1))
-               (define (database-directory)
-                 (define default "/var/lib/clamav")
-                 (catch #t
-                   (lambda ()
-                     (call-with-input-file #$freshclam-config
-                       (lambda (port)
-                         (let loop ((line (read-line port)))
-                           (if (eof-object? line)
-                               default
-                               (let ((match
-                                      (string-match
-                                       "^[[:space:]]*DatabaseDirectory[[:space:]]+([^[:space:]#]+)"
-                                       line)))
-                                 (if match
-                                     (match:substring match 1)
-                                     (loop (read-line port)))))))))
-                   (lambda _
-                     default)))
-               (define (database-ready? directory)
-                 (and (file-exists? directory)
-                      (any (lambda (file)
-                             (or (string-match "\\.cvd$" file)
-                                 (string-match "\\.cld$" file)))
-                           (scandir directory
-                                    (lambda (name)
-                                      (not (member name '("." ".."))))))))
-               (let ((directory (database-directory)))
+                 (use-modules (ice-9 ftw)
+                              (ice-9 regex)
+                              (srfi srfi-1))
+                 (define database-directory "/var/lib/clamav")
+                 (define (database-ready?)
+                   (and (file-exists? database-directory)
+                        (any (lambda (file)
+                               (string-match "\\.(cvd|cld)$" file))
+                             (scandir database-directory
+                                      (lambda (name)
+                                        (not (member name '("." ".."))))))))
                  (let loop ()
-                   (system* (string-append #$clamav "/bin/freshclam")
-                            "--config-file" #$freshclam-config)
-                   (if (database-ready? directory)
-                       #t
-                       (begin
-                         (sleep #$bootstrap-delay)
-                         (loop)))))))
+                   (let ((status (system* (string-append #$clamav "/bin/freshclam")
+                                          "--config-file" #$freshclam-config)))
+                     (if (or (zero? status) (database-ready?))
+                         #t
+                         (begin
+                           (sleep #$bootstrap-delay)
+                           (loop)))))))
       (auto-start? #t))
 
      (shepherd-service
       (documentation "ClamAV virus scanning daemon (clamd).")
       (provision '(clamd))
-      (requirement '(user-processes clamav-database-ready))
-      (start #~(make-forkexec-constructor
-                (list (string-append #$clamav "/sbin/clamd")
-                      "--config-file" #$clamd-config
-                      "--foreground")
-                #:user #$user
-                #:group #$group
-                #:log-file "/var/log/clamav/clamd.log"))
+      (requirement '(user-processes))
+      (start #~(let ((start-clamd
+                      (make-forkexec-constructor
+                       (list (string-append #$clamav "/sbin/clamd")
+                             "--config-file" #$clamd-config
+                             "--foreground")
+                       #:user #$user
+                       #:group #$group
+                       #:log-file "/var/log/clamav/clamd.log")))
+                (lambda args
+                  (system* (string-append #$clamav "/bin/freshclam")
+                           "--config-file" #$freshclam-config)
+                  (apply start-clamd args))))
       (stop #~(make-kill-destructor)))
 
      (shepherd-service
