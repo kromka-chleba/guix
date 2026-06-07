@@ -127,6 +127,8 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
+  #:use-module (gnu packages rocm)
+  #:use-module (gnu packages rocm-libs)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages stb)
@@ -142,6 +144,7 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xdisorg)
+  #:use-module (guix amd-gpu)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
@@ -758,6 +761,12 @@ typically encountered in feature film production.")
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
+                "-DWITH_HIP=ON"
+                "-DWITH_CYCLES_DEVICE_HIP=ON"
+                "-DWITH_CYCLES_HIP_BINARIES=ON"
+                "-DWITH_HIP_DYNLOAD=OFF"
+                (string-append "-DHIP_ROOT_DIR=" #$rocm-hip-runtime)
+                (string-append "-DHIP_HIPCC_EXECUTABLE=" #$rocm-hipcc "/bin/hipcc")
                 (string-append "-DPYTHON_LIBRARY=python" #$python-version)
                 (string-append "-DPYTHON_LIBPATH=" #$python "/lib")
                 (string-append "-DPYTHON_INCLUDE_DIR=" #$python
@@ -807,6 +816,7 @@ typically encountered in feature film production.")
            glew
            glog
            gmp                        ;needed for boolean operations on meshes
+           hipblas
            imath
            jack-1
            jemalloc
@@ -818,6 +828,8 @@ typically encountered in feature film production.")
            libx11
            libxi
            libxrender
+           lld-rocm
+           llvm-rocm
            lzo
            onetbb
            openal
@@ -830,6 +842,14 @@ typically encountered in feature film production.")
            pugixml
            python
            python-numpy-1
+           rocblas
+           rocfft
+           rocm-device-libs
+           rocm-hip-runtime
+           rocm-hipcc
+           rocrand
+           rocsolver
+           rocsparse
            shaderc
            vulkan-headers
            vulkan-loader
