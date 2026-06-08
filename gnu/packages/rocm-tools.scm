@@ -21,6 +21,7 @@
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
+  #:use-module (guix amd-gpu)
   #:use-module (gnu packages check)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages libffi)

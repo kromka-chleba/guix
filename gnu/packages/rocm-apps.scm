@@ -21,6 +21,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix git-download)
   #:use-module (guix packages)
+  #:use-module (guix amd-gpu)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages llvm)
