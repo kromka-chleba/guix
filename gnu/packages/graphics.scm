@@ -144,7 +144,6 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xdisorg)
-  #:use-module (guix amd-gpu)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
@@ -764,8 +763,9 @@ typically encountered in feature film production.")
                 "-DWITH_HIP=ON"
                 "-DWITH_CYCLES_DEVICE_HIP=ON"
                 "-DWITH_CYCLES_HIP_BINARIES=ON"
-                (string-append "-DCYCLES_HIP_BINARIES_ARCH="
-                               #$(current-amd-gpu-targets-string))
+                ;; Cycles HIP kernels depend on HIP texture APIs unavailable on
+                ;; CDNA accelerator targets (e.g., gfx90a/gfx942).
+                "-DCYCLES_HIP_BINARIES_ARCH=gfx1030;gfx1100;gfx1101;gfx1200;gfx1201"
                 "-DWITH_HIP_DYNLOAD=OFF"
                 (string-append "-DHIP_ROOT_DIR=" #$rocm-hip-runtime)
                 (string-append "-DHIP_HIPCC_EXECUTABLE=" #$rocm-hipcc "/bin/hipcc")
