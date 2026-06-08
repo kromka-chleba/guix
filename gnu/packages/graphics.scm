@@ -850,7 +850,6 @@ typically encountered in feature film production.")
            rocm-hip-runtime
            rocm-hipcc
            rocrand
-           rocr-runtime
            rocsolver
            rocsparse
            shaderc
