@@ -798,10 +798,21 @@ typically encountered in feature film production.")
                          blender-python-dir))))
           (add-after 'install 'wrap-bin
             (lambda _
-              (let ((python-path (getenv "GUIX_PYTHONPATH")))
-                (when python-path
-                  (wrap-program (string-append #$output "/bin/blender")
-                    `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
+              (let* ((python-path (getenv "GUIX_PYTHONPATH"))
+                     (blender (string-append #$output "/bin/blender"))
+                     (rocm-library-paths
+                      (list (string-append
+                             #$(this-package-input "rocm-hip-runtime") "/lib")
+                            (string-append
+                             #$(this-package-input "rocr-runtime") "/lib"))))
+                (apply wrap-program blender
+                       (append
+                        (list `("LD_LIBRARY_PATH" ":" suffix
+                                ,rocm-library-paths))
+                        (if python-path
+                            (list `("GUIX_PYTHONPATH" ":" prefix
+                                    (,python-path)))
+                            '())))))))))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -850,6 +861,7 @@ typically encountered in feature film production.")
            rocm-hip-runtime
            rocm-hipcc
            rocrand
+           rocr-runtime
            rocsolver
            rocsparse
            shaderc
