@@ -764,6 +764,8 @@ typically encountered in feature film production.")
                 "-DWITH_HIP=ON"
                 "-DWITH_CYCLES_DEVICE_HIP=ON"
                 "-DWITH_CYCLES_HIP_BINARIES=ON"
+                (string-append "-DCYCLES_HIP_BINARIES_ARCH="
+                               #$(current-amd-gpu-targets-string))
                 "-DWITH_HIP_DYNLOAD=OFF"
                 (string-append "-DHIP_ROOT_DIR=" #$rocm-hip-runtime)
                 (string-append "-DHIP_HIPCC_EXECUTABLE=" #$rocm-hipcc "/bin/hipcc")
