@@ -917,6 +917,7 @@ provides the long-term stable release of Blender.")
                     `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
     (inputs
      (modify-inputs (package-inputs blender-lts)
+       (prepend fmt)
        (replace "python" python-3.13)))
     (license license:gpl2+)))
 
