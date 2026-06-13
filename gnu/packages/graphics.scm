@@ -722,10 +722,10 @@ typically encountered in feature film production.")
      "Assets bundled with Blender releases in the Essentials assets library.")
     (license license:cc0)))
 
-(define-public blender
+(define-public blender-lts
   (package
-    (name "blender")
-    (version "4.5.10")                   ;5.1.x+ requires Python >= 3.13
+    (name "blender-lts")
+    (version "4.5.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.blender.org/source/"
@@ -841,7 +841,83 @@ typically encountered in feature film production.")
      "Blender is a 3D graphics creation suite.  It supports the entirety of
 the 3D pipeline—modeling, rigging, animation, simulation, rendering,
 compositing and motion tracking, even video editing and game creation.  The
-application can be customized via its API for Python scripting.")
+application can be customized via its API for Python scripting.  This package
+provides the long-term stable release of Blender.")
+    (license license:gpl2+)))
+
+(define-public blender
+  (package
+    (inherit blender-lts)
+    (name "blender")
+    (version "5.1.2")
+    (source
+     (origin
+      (method url-fetch)
+      (uri (string-append "https://download.blender.org/source/"
+                          "blender-" version ".tar.xz"))
+      (sha256
+       (base32
+        "0nnhpqw49s2lvvmkkkx05jar89zxj8xxjjc0n4lvcy8r4cqd1pxf"))))
+    (arguments
+     (list
+      ;; Test files are very large and not included in the release tarball.
+      #:tests? #f
+      #:configure-flags
+      (let ((python-version (version-major+minor (package-version python-3.13))))
+        #~(list "-DWITH_CODEC_FFMPEG=ON"
+                "-DWITH_CODEC_SNDFILE=ON"
+                "-DWITH_CYCLES=ON"
+                "-DWITH_DOC_MANPAGE=ON"
+                "-DWITH_FFTW3=ON"
+                "-DWITH_IMAGE_OPENJPEG=ON"
+                "-DWITH_INPUT_NDOF=ON"
+                "-DWITH_INSTALL_PORTABLE=OFF"
+                "-DWITH_JACK=ON"
+                "-DWITH_MOD_OCEANSIM=ON"
+                "-DWITH_OPENVDB=ON"
+                "-DWITH_OPENSUBDIV=ON"
+                "-DWITH_PYTHON_INSTALL=OFF"
+                "-DWITH_SYSTEM_BULLET=ON"
+                "-DWITH_SYSTEM_EIGEN3=ON"
+                "-DWITH_SYSTEM_FREETYPE=ON"
+                "-DWITH_SYSTEM_GLOG=ON"
+                "-DWITH_SYSTEM_LZO=ON"
+                (string-append "-DPYTHON_LIBRARY=python" #$python-version)
+                (string-append "-DPYTHON_LIBPATH=" #$python-3.13 "/lib")
+                (string-append "-DPYTHON_INCLUDE_DIR=" #$python-3.13
+                               "/include/python" #$python-version)
+                (string-append "-DPYTHON_VERSION=" #$python-version)
+                (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
+                               #$(this-package-input "python-numpy")
+                               "/lib/python" #$python-version
+                               "/site-packages/numpy/core/include/")
+                (string-append "-DPYTHON_NUMPY_PATH="
+                               #$(this-package-input "python-numpy")
+                               "/lib/python" #$python-version
+                               "/site-packages/")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'install-assets
+            (lambda _
+              (copy-recursively #$(this-package-input "blender-assets")
+                                "./release/datafiles/assets")))
+          (add-after 'install 'link-python-binary
+            (lambda _
+              (let* ((blender-dir (string-append #$output "/share/blender/"
+                                                 #$(version-major+minor version)))
+                     (blender-python-dir (string-append blender-dir "/python")))
+                (mkdir-p blender-dir)
+                (symlink #$(this-package-input "python")
+                         blender-python-dir))))
+          (add-after 'install 'wrap-bin
+            (lambda _
+              (let ((python-path (getenv "GUIX_PYTHONPATH")))
+                (when python-path
+                  (wrap-program (string-append #$output "/bin/blender")
+                    `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
+    (inputs
+     (modify-inputs (package-inputs blender-lts)
+       (replace "python" python-3.13)))
     (license license:gpl2+)))
 
 (define-public goxel
