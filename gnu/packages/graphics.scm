@@ -877,9 +877,6 @@ provides the long-term stable release of Blender.")
                 "-DWITH_OPENVDB=ON"
                 "-DWITH_OPENSUBDIV=ON"
                 "-DWITH_PYTHON_INSTALL=OFF"
-                ;; Blender 5.1 expects newer Ceres APIs than currently
-                ;; available in Guix.
-                "-DWITH_CERES=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
                 ;; Work around incompatibilities in libmv with Eigen 3.4.
                 "-DWITH_SYSTEM_EIGEN3=OFF"
@@ -921,7 +918,7 @@ provides the long-term stable release of Blender.")
                     `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
     (inputs
      (modify-inputs (package-inputs blender-lts)
-       (prepend fmt)
+       (prepend ceres fmt)
        (replace "python" python-3.13)))
     (license license:gpl2+)))
 

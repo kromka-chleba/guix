@@ -3438,7 +3438,7 @@ solving large-scale convex cone problems.")
 (define-public ceres
   (package
     (name "ceres-solver")
-    (version "2.0.0")
+    (version "2.2.0")
     (home-page "http://ceres-solver.org/")
     (source (origin
               (method url-fetch)
@@ -3446,7 +3446,7 @@ solving large-scale convex cone problems.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "00vng9vnmdb1qga01m0why90m0041w7bn6kxa2h4m26aflfqla8h"))))
+                "0bg8xm6av6ln96y2fcwvy5fgpf6yssyc6xw4i5rf3v46g4m31cj8"))))
     (build-system cmake-build-system)
     (arguments
      ;; TODO: Build HTML user documentation and install separately.
@@ -3462,7 +3462,7 @@ solving large-scale convex cone problems.")
                          "set(LIB_SUFFIX \"\")")))))))
     (native-inputs (list pkg-config))
     ;; These inputs need to be propagated to satisfy dependent packages.
-    (propagated-inputs (list eigen gflags glog))
+    (propagated-inputs (list abseil-cpp eigen gflags glog))
     (inputs (list openblas suitesparse))
     (synopsis "C++ library for solving large optimization problems")
     (description
