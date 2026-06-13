@@ -845,6 +845,38 @@ application can be customized via its API for Python scripting.  This package
 provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
+(define eigen-for-blender
+  (hidden-package
+   (package
+     (inherit eigen)
+     (name "eigen-for-blender")
+     ;; Blender 5.1.2 still uses libmv code paths expecting pre-3.3 Eigen SVD
+     ;; template syntax, such as jacobiSvd<Eigen::ComputeFullU>().
+     (version "3.2.10")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://gitlab.com/libeigen/eigen.git")
+              (commit version)))
+        (file-name (git-file-name name version))
+        ;; FIXME: Fill this hash.
+        (sha256
+         (base32 "0000000000000000000000000000000000000000000000000000"))))
+     (arguments
+      (substitute-keyword-arguments (package-arguments eigen)
+        ((#:tests? _ #t)
+         #f))))))
+
+(define ceres-for-blender
+  (hidden-package
+   (package
+     (inherit ceres)
+     (name "ceres-for-blender")
+     (propagated-inputs
+      (modify-inputs (package-propagated-inputs ceres)
+        (replace "eigen" eigen-for-blender))))))
+
 (define-public blender
   (package
     (inherit blender-lts)
@@ -918,7 +950,8 @@ provides the long-term stable release of Blender.")
                     `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
     (inputs
      (modify-inputs (package-inputs blender-lts)
-       (prepend ceres fmt openblas suitesparse)
+       (prepend ceres-for-blender fmt openblas suitesparse)
+       (replace "eigen" eigen-for-blender)
        (replace "python" python-3.13)))
     (license license:gpl2+)))
 
