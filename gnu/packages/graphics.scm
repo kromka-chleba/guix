@@ -928,6 +928,13 @@ provides the long-term stable release of Blender.")
                                "/site-packages/")))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-libmv-eigen-jacobisvd
+            (lambda _
+              (substitute* "intern/libmv/libmv/multiview/euclidean_resection.cc"
+                (("\\.jacobiSvd<Eigen::ComputeFullU>\\(\\)")
+                 ".jacobiSvd(Eigen::ComputeFullU)")
+                (("\\.jacobiSvd<Eigen::ComputeFullV>\\(\\)")
+                 ".jacobiSvd(Eigen::ComputeFullV)"))))
           (add-after 'unpack 'install-assets
             (lambda _
               (copy-recursively #$(this-package-input "blender-assets")
