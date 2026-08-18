@@ -781,7 +781,7 @@ typically encountered in feature film production.")
                 "-DWITH_OPENSUBDIV=ON"
                 "-DWITH_PYTHON_INSTALL=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=ON"
+                "-DWITH_SYSTEM_EIGEN3=OFF"
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
@@ -825,7 +825,6 @@ typically encountered in feature film production.")
            blender-assets
            boost
            bullet
-           eigen
            embree
            ffmpeg-6
            fftw
@@ -872,38 +871,6 @@ application can be customized via its API for Python scripting.  This package
 provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
-(define eigen-for-blender
-  (hidden-package
-   (package
-     (inherit eigen)
-     (name "eigen-for-blender")
-     ;; Blender 5.1.2 still uses libmv code paths expecting pre-3.3 Eigen SVD
-     ;; template syntax, such as jacobiSvd<Eigen::ComputeFullU>().
-     (version "3.2.10")
-     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-              (url "https://gitlab.com/libeigen/eigen.git")
-              (commit version)))
-        (file-name (git-file-name name version))
-        ;; FIXME: Fill this hash.
-        (sha256
-         (base32 "0000000000000000000000000000000000000000000000000000"))))
-     (arguments
-      (substitute-keyword-arguments (package-arguments eigen)
-        ((#:tests? _ #t)
-         #f))))))
-
-(define ceres-for-blender
-  (hidden-package
-   (package
-     (inherit ceres)
-     (name "ceres-for-blender")
-     (propagated-inputs
-      (modify-inputs (package-propagated-inputs ceres)
-        (replace "eigen" eigen-for-blender))))))
-
 (define-public blender
   (package
     (inherit blender-lts)
@@ -937,7 +904,7 @@ provides the long-term stable release of Blender.")
                 "-DWITH_OPENSUBDIV=ON"
                 "-DWITH_PYTHON_INSTALL=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=ON"
+                "-DWITH_SYSTEM_EIGEN3=OFF"
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
@@ -976,8 +943,7 @@ provides the long-term stable release of Blender.")
                     `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
     (inputs
      (modify-inputs (package-inputs blender-lts)
-       (prepend ceres-for-blender fmt openblas suitesparse)
-       (replace "eigen" eigen-for-blender)
+       (prepend fmt openblas suitesparse)
        (replace "python" python-3.13)))
     (license license:gpl2+)))
 
