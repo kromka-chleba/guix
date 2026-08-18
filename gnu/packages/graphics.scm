@@ -937,8 +937,7 @@ provides the long-term stable release of Blender.")
                 "-DWITH_OPENSUBDIV=ON"
                 "-DWITH_PYTHON_INSTALL=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
-                ;; Work around incompatibilities in libmv with Eigen 3.4.
-                "-DWITH_SYSTEM_EIGEN3=OFF"
+                "-DWITH_SYSTEM_EIGEN3=ON"
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
