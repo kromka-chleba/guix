@@ -884,6 +884,8 @@ provides the long-term stable release of Blender.")
       (method url-fetch)
       (uri (string-append "https://download.blender.org/source/"
                           "blender-" version ".tar.xz"))
+      (patches
+       (search-patches "blender-5.2-libmv-eigen-jacobisvd.patch"))
       (sha256
        (base32
         "1gypk1sfvfrky5jlib146g9hi3xfhw4xfmfac7k64l5zzb2rzyd5"))))
