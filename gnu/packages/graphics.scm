@@ -781,7 +781,9 @@ typically encountered in feature film production.")
                 "-DWITH_OPENSUBDIV=ON"
                 "-DWITH_PYTHON_INSTALL=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=OFF"
+                "-DWITH_SYSTEM_EIGEN3=ON"
+                (string-append "-DEIGEN_DIR="
+                               #$(this-package-input "eigen"))
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
@@ -825,6 +827,7 @@ typically encountered in feature film production.")
            blender-assets
            boost
            bullet
+           eigen
            embree
            ffmpeg-6
            fftw
@@ -875,7 +878,7 @@ provides the long-term stable release of Blender.")
   (package
     (inherit blender-lts)
     (name "blender")
-    (version "5.1.2")
+    (version "5.2.0")
     (source
      (origin
       (method url-fetch)
@@ -883,7 +886,7 @@ provides the long-term stable release of Blender.")
                           "blender-" version ".tar.xz"))
       (sha256
        (base32
-        "0nnhpqw49s2lvvmkkkx05jar89zxj8xxjjc0n4lvcy8r4cqd1pxf"))))
+        "1gypk1sfvfrky5jlib146g9hi3xfhw4xfmfac7k64l5zzb2rzyd5"))))
     (arguments
      (list
       ;; Test files are very large and not included in the release tarball.
@@ -904,7 +907,9 @@ provides the long-term stable release of Blender.")
                 "-DWITH_OPENSUBDIV=ON"
                 "-DWITH_PYTHON_INSTALL=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=OFF"
+                "-DWITH_SYSTEM_EIGEN3=ON"
+                (string-append "-DEIGEN_DIR="
+                               #$(this-package-input "eigen"))
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
