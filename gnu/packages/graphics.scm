@@ -934,7 +934,10 @@ provides the long-term stable release of Blender.")
                 (("\\.jacobiSvd<Eigen::ComputeFullU>\\(\\)")
                  ".jacobiSvd(Eigen::ComputeFullU)")
                 (("\\.jacobiSvd<Eigen::ComputeFullV>\\(\\)")
-                 ".jacobiSvd(Eigen::ComputeFullV)"))))
+                 ".jacobiSvd(Eigen::ComputeFullV)"))
+              (substitute* "intern/libmv/libmv/tracking/track_region.cc"
+                (("\\.jacobiSvd<Eigen::ComputeThinU \\| Eigen::ComputeThinV>\\(\\)")
+                 ".jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV)"))))
           (add-after 'unpack 'install-assets
             (lambda _
               (copy-recursively #$(this-package-input "blender-assets")
@@ -956,7 +959,6 @@ provides the long-term stable release of Blender.")
     (inputs
      (modify-inputs (package-inputs blender-lts)
        (prepend ceres fmt openblas suitesparse)
-       (replace "eigen" eigen-for-blender)
        (replace "python" python-3.13)))
     (license license:gpl2+)))
 
