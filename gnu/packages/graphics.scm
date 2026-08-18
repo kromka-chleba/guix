@@ -956,6 +956,7 @@ provides the long-term stable release of Blender.")
     (inputs
      (modify-inputs (package-inputs blender-lts)
        (prepend ceres fmt openblas suitesparse)
+       (replace "eigen" eigen-for-blender)
        (replace "python" python-3.13)))
     (license license:gpl2+)))
 
