@@ -722,6 +722,9 @@ typically encountered in feature film production.")
                 "-DWITH_PYTHON_INSTALL=OFF"
                 "-DWITH_SYSTEM_BULLET=ON"
                 "-DWITH_SYSTEM_EIGEN3=ON"
+                (string-append "-DEigen3_DIR="
+                               (assoc-ref %build-inputs "eigen")
+                               "/share/eigen3/cmake")
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
