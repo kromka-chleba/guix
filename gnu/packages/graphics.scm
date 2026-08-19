@@ -1931,7 +1931,7 @@ with strong support for multi-part, multi-channel use cases.")
                ; https://gitlab.kitware.com/cmake/cmake/-/issues/25200
                (add-after 'configure 'fix-zlib-version
                  (lambda _
-                   (substitute* "include/imageio_pvt.h"
+                   (substitute* (car (find-files "." "imageio_pvt\\.h$"))
                      (("#define ZLIB_VERSION \"1\\.3\"")
                       ""))))
                (add-after 'install 'fix-OpenImageIOConfig
@@ -1948,8 +1948,10 @@ with strong support for multi-part, multi-channel use cases.")
            dcmtk
            fmt
            freetype
+           ffmpeg
            giflib
            imath
+           libjxl
            libglvnd
            libheif
            libjpeg-turbo
@@ -1965,6 +1967,7 @@ with strong support for multi-part, multi-channel use cases.")
            pybind11-2
            python-wrapper
            robin-map
+           tbb
            zlib))
     (synopsis "C++ library for reading and writing images")
     (description
