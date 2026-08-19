@@ -832,7 +832,7 @@ typically encountered in feature film production.")
            bullet
            eigen-for-blender
            embree
-           ffmpeg-6
+           ffmpeg
            fftw
            fftwf
            freetype-with-brotli
