@@ -859,7 +859,7 @@ typically encountered in feature film production.")
            openvdb
            pugixml
            python
-           python-numpy-1
+           python-numpy
            shaderc
            vulkan-headers
            vulkan-loader
@@ -893,7 +893,8 @@ provides the long-term stable release of Blender.")
       ;; Test files are very large and not included in the release tarball.
       #:tests? #f
       #:configure-flags
-      (let ((python-version (version-major+minor (package-version python-3.13))))
+      (let ((python-version (version-major+minor (package-version python-3.13)))
+            (numpy-python-version (version-major+minor (package-version python-3.12))))
         #~(list "-DCMAKE_CXX_FLAGS=-fpermissive" ; Downgrades strict template error in octree.cpp
                 "-DWITH_CODEC_FFMPEG=ON"
                 "-DWITH_CODEC_SNDFILE=ON"
@@ -922,8 +923,8 @@ provides the long-term stable release of Blender.")
                 (string-append "-DPYTHON_VERSION=" #$python-version)
                 (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
                                #$(this-package-input "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/numpy/core/include/")
+                               "/lib/python" #$numpy-python-version
+                               "/site-packages/numpy/_core/include/")
                 (string-append "-DPYTHON_NUMPY_PATH="
                                #$(this-package-input "python-numpy")
                                "/lib/python" #$python-version
