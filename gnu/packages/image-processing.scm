@@ -273,7 +273,7 @@ licences similar to the Modified BSD licence."))))
 (define-public opencolorio
   (package
     (name "opencolorio")
-    (version "2.4.2")
+    (version "2.5.2")
     (source
      (origin
        (method git-fetch)
@@ -281,7 +281,7 @@ licences similar to the Modified BSD licence."))))
              (url "https://github.com/AcademySoftwareFoundation/OpenColorIO")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1h5n1adm7hlblq4z9qdbnh5jy3f6aimlk96cn1k4ah3f8vqx7zpq"))
+        (base32 "0lrknk66cgpq0vzqibkhlnjk1b20p0dvnm1y03hwxx27sm1mv2vg"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -303,7 +303,7 @@ licences similar to the Modified BSD licence."))))
                  (lambda _
                    ;; Replace the invalid multi-line list. It is unclear why
                    ;; this is now failing after only build system updates.
-                   ;; (see https://github.com/AcademySoftwareFoundation/OpenColorIO/blob/v2.4.2/tests/cpu/Config_tests.cpp#L6227)
+                   ;; (see https://github.com/AcademySoftwareFoundation/OpenColorIO/blob/v2.5.2/tests/cpu/Config_tests.cpp#L6227)
                    (substitute* "tests/cpu/Config_tests.cpp"
                      (("cs1\\\\t\\\\n   \\\\n,   \\\\ncs2")
                       "cs1, cs2"))))
@@ -331,7 +331,7 @@ licences similar to the Modified BSD licence."))))
            imath
            lcms
            libglvnd
-           ;; opencolorio@2.4.2 fails to build with minizip-ng@4.0.10
+           ;; opencolorio@2.5.2 fails to build with minizip-ng@4.0.10
            minizip-ng-4.0.9
            openexr
            pystring
