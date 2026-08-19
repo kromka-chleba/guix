@@ -84,6 +84,7 @@
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages game-development)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
@@ -827,7 +828,7 @@ typically encountered in feature film production.")
            blender-assets
            boost
            bullet
-           eigen
+           eigen-for-blender
            embree
            ffmpeg-6
            fftw
@@ -893,7 +894,8 @@ provides the long-term stable release of Blender.")
       #:tests? #f
       #:configure-flags
       (let ((python-version (version-major+minor (package-version python-3.13))))
-        #~(list "-DWITH_CODEC_FFMPEG=ON"
+        #~(list "-DCMAKE_CXX_FLAGS=-fpermissive" ; Downgrades strict template error in octree.cpp
+                "-DWITH_CODEC_FFMPEG=ON"
                 "-DWITH_CODEC_SNDFILE=ON"
                 "-DWITH_CYCLES=ON"
                 "-DWITH_DOC_MANPAGE=ON"
@@ -909,7 +911,7 @@ provides the long-term stable release of Blender.")
                 "-DWITH_SYSTEM_BULLET=ON"
                 "-DWITH_SYSTEM_EIGEN3=ON"
                 (string-append "-DEIGEN_DIR="
-                               #$(this-package-input "eigen"))
+                               #$(this-package-input "eigen-for-blender"))
                 "-DWITH_SYSTEM_FREETYPE=ON"
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
@@ -928,16 +930,6 @@ provides the long-term stable release of Blender.")
                                "/site-packages/")))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-libmv-eigen-jacobisvd
-            (lambda _
-              (substitute* "intern/libmv/libmv/multiview/euclidean_resection.cc"
-                (("\\.jacobiSvd<Eigen::ComputeFullU>\\(\\)")
-                 ".jacobiSvd(Eigen::ComputeFullU)")
-                (("\\.jacobiSvd<Eigen::ComputeFullV>\\(\\)")
-                 ".jacobiSvd(Eigen::ComputeFullV)"))
-              (substitute* "intern/libmv/libmv/tracking/track_region.cc"
-                (("\\.jacobiSvd<Eigen::ComputeThinU \\| Eigen::ComputeThinV>\\(\\)")
-                 ".jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV)"))))
           (add-after 'unpack 'install-assets
             (lambda _
               (copy-recursively #$(this-package-input "blender-assets")
@@ -956,6 +948,8 @@ provides the long-term stable release of Blender.")
                 (when python-path
                   (wrap-program (string-append #$output "/bin/blender")
                     `("GUIX_PYTHONPATH" ":" prefix (,python-path))))))))))
+    (native-inputs
+     (modify-inputs (package-native-inputs blender-lts))) ; Forces CMake to use GCC 12 binaries
     (inputs
      (modify-inputs (package-inputs blender-lts)
        (prepend ceres fmt openblas suitesparse)
