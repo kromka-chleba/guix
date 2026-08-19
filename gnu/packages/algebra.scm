@@ -1362,37 +1362,6 @@ features, and more.")
     ;; See 'COPYING.README' for details.
     (license license:mpl2.0)))
 
-(define-public eigen-for-blender
-  (package
-    (name "eigen-for-blender")
-    (version "5.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.com/libeigen/eigen.git")
-             (commit version)))
-       (sha256
-        (base32
-         "0000000000000000000000000000000000000000000000000000"))
-       (file-name (git-file-name name version))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      ;; Blender only needs headers and CMake metadata.
-      #:tests? #f
-      ;; Turn off debugging symbols to save space.
-      #:build-type "Release"))
-    (home-page "https://gitlab.com/libeigen/eigen")
-    (synopsis "C++ template library for linear algebra (for Blender)")
-    (description
-     "Eigen is a C++ template library for linear algebra: matrices, vectors,
-numerical solvers, and related algorithms.  This package provides Eigen 5 for
-Blender.")
-    ;; Most of the code is MPLv2, with a few files under LGPLv2.1+ or BSD-3.
-    ;; See 'COPYING.README' for details.
-    (license license:mpl2.0)))
-
 (define-public eigen-benchmarks
   (package
     (inherit eigen)
@@ -1483,6 +1452,28 @@ Blender.")
         (substitute-keyword-arguments arguments
           ((#:tests? flag #f) #false)))))))
 
+(define-public eigen-for-blender
+  (let ((commit "8a1083e9bf41b91fdea6546681f806154efdc25a")
+        (revision "0"))
+    (hidden-package
+     (package
+       (inherit eigen)
+       (name "eigen-for-blender")
+       (version (git-version "3.4.0" revision commit))
+       (source
+        (origin
+          (method git-fetch)
+          (uri (git-reference
+                 (url "https://gitlab.com/libeigen/eigen")
+                 (commit commit)))
+          (file-name (git-file-name name version))
+          (sha256
+           (base32 "11r5hi5mvlrgrmmb7z9wi3c8afkrcrkfadcpqghnxbqzdmfh5w53"))))
+       (arguments
+        (substitute-keyword-arguments arguments
+          ((#:tests? tests? #t)
+           #f)))))))
+
 (define-public xtensor
   (package
     (name "xtensor")
@@ -1491,8 +1482,8 @@ Blender.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/xtensor-stack/xtensor")
-             (commit version)))
+              (url "https://github.com/xtensor-stack/xtensor")
+              (commit version)))
        (sha256
         (base32 "0ziqybfm0fh6kr8qwxqacr04m9gm0njbn520izm6rsh9hysxsmw5"))
        (file-name (git-file-name name version))))
