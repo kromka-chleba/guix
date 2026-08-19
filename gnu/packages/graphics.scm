@@ -1926,21 +1926,14 @@ with strong support for multi-part, multi-channel use cases.")
                                      "-DOIIO_BUILD_TESTS=false")
            #:phases
            #~(modify-phases %standard-phases
-               ; Work around a CMake Zlib-detection bug:
-               ; https://issues.guix.gnu.org/72046
-               ; https://gitlab.kitware.com/cmake/cmake/-/issues/25200
-               (add-after 'configure 'fix-zlib-version
-                 (lambda _
-                   (substitute* (car (find-files "." "imageio_pvt\\.h$"))
-                     (("#define ZLIB_VERSION \"1\\.3\"")
-                      ""))))
                (add-after 'install 'fix-OpenImageIOConfig
                  (lambda _
-                   (substitute* (string-append
-                                 #$output
-                                 "/lib/cmake/OpenImageIO/OpenImageIOConfig.cmake")
-                     (("#define ZLIB_VERSION \"1\\.3\"")
-                      "")))))))
+                   (let ((config-file (string-append #$output
+                                                     "/lib/cmake/OpenImageIO/OpenImageIOConfig.cmake")))
+                     (when (file-exists? config-file)
+                       (substitute* config-file
+                         (("#define ZLIB_VERSION \"1\\.3\"")
+                          "")))))))))
     (native-inputs
      (list pkg-config))
     (inputs
