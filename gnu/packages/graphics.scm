@@ -878,16 +878,7 @@ provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
 (define-public blender
-  (let ((base-python-cattrs
-         (@ (gnu packages python-xyz) python-cattrs))
-        (python-cattrs/python-3.13
-         (package
-           (inherit base-python-cattrs)
-           (arguments
-            (substitute-keyword-arguments
-                (package-arguments base-python-cattrs)
-              ((#:python _ #f) python-3.13)))))
-        (python-numpy/python-3.13
+  (let ((python-numpy/python-3.13
          (package
            (inherit python-numpy)
            (arguments
@@ -965,23 +956,19 @@ provides the long-term stable release of Blender.")
                     (numpy-path (string-append
                                  #$(this-package-input "python-numpy")
                                  "/lib/python" #$python-version
-                                 "/site-packages"))
-                    (cattrs-path (string-append
-                                  #$(this-package-input "python-cattrs")
-                                  "/lib/python" #$python-version
-                                  "/site-packages")))
+                                 "/site-packages")))
                 (if python-path
                     (wrap-program (string-append #$output "/bin/blender")
                       `("GUIX_PYTHONPATH" ":" prefix
-                        (,numpy-path ,cattrs-path ,python-path)))
+                        (,numpy-path ,python-path)))
                     (wrap-program (string-append #$output "/bin/blender")
                       `("GUIX_PYTHONPATH" ":" prefix
-                        (,numpy-path ,cattrs-path))))))))))
+                        (,numpy-path))))))))))
     (native-inputs
      (modify-inputs (package-native-inputs blender-lts))) ; Forces CMake to use GCC 12 binaries
     (inputs
      (modify-inputs (package-inputs blender-lts)
-       (prepend ceres fmt openblas python-cattrs/python-3.13 suitesparse)
+       (prepend ceres fmt openblas suitesparse)
        (replace "python" python-3.13)
        (replace "python-numpy" python-numpy/python-3.13)))
     (license license:gpl2+))))
