@@ -878,13 +878,7 @@ provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
 (define-public blender
-  (let ((python-numpy/python-3.13
-         (package
-           (inherit python-numpy)
-           (arguments
-            (substitute-keyword-arguments (package-arguments python-numpy)
-              ((#:python _ #f) python-3.13))))))
-    (package
+  (package
     (inherit blender-lts)
     (name "blender")
     (version "5.2.0")
@@ -969,9 +963,8 @@ provides the long-term stable release of Blender.")
     (inputs
      (modify-inputs (package-inputs blender-lts)
        (prepend ceres fmt openblas suitesparse)
-       (replace "python" python-3.13)
-       (replace "python-numpy" python-numpy/python-3.13)))
-    (license license:gpl2+))))
+       (replace "python" python-3.13)))
+    (license license:gpl2+)))
 
 (define-public goxel
   ;; The latest commit is used as it builds with GCC 14.
