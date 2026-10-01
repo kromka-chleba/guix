@@ -878,7 +878,14 @@ provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
 (define-public blender
-  (package
+  (let ((python-numpy/python-3.13
+         (package
+           (inherit (@ (gnu packages python-xyz) python-numpy))
+           (arguments
+            (substitute-keyword-arguments
+                (package-arguments (@ (gnu packages python-xyz) python-numpy))
+              ((#:python _ #f) python-3.13))))))
+    (package
     (inherit blender-lts)
     (name "blender")
     (version "5.2.0")
@@ -895,7 +902,7 @@ provides the long-term stable release of Blender.")
       ;; Test files are very large and not included in the release tarball.
       #:tests? #f
       #:configure-flags
-      (let ((python-version (version-major+minor (package-version python))))
+      (let ((python-version (version-major+minor (package-version python-3.13))))
         #~(list "-DCMAKE_CXX_FLAGS=-fpermissive" ; Downgrades strict template error in octree.cpp
                 "-DWITH_CODEC_FFMPEG=ON"
                 "-DWITH_CODEC_SNDFILE=ON"
@@ -918,8 +925,8 @@ provides the long-term stable release of Blender.")
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
                 (string-append "-DPYTHON_LIBRARY=python" #$python-version)
-                (string-append "-DPYTHON_LIBPATH=" #$python "/lib")
-                (string-append "-DPYTHON_INCLUDE_DIR=" #$python
+                (string-append "-DPYTHON_LIBPATH=" #$python-3.13 "/lib")
+                (string-append "-DPYTHON_INCLUDE_DIR=" #$python-3.13
                                "/include/python" #$python-version)
                 (string-append "-DPYTHON_VERSION=" #$python-version)
                 (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
@@ -962,8 +969,10 @@ provides the long-term stable release of Blender.")
      (modify-inputs (package-native-inputs blender-lts))) ; Forces CMake to use GCC 12 binaries
     (inputs
      (modify-inputs (package-inputs blender-lts)
-       (prepend ceres fmt openblas suitesparse)))
-    (license license:gpl2+)))
+       (prepend ceres fmt openblas suitesparse)
+       (replace "python" python-3.13)
+       (replace "python-numpy" python-numpy/python-3.13)))
+    (license license:gpl2+))))
 
 (define-public goxel
   ;; The latest commit is used as it builds with GCC 14.
