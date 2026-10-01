@@ -878,11 +878,14 @@ provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
 (define-public blender
-  (let ((python-cattrs/python-3.13
+  (let ((base-python-cattrs
+         (@ (gnu packages python-xyz) python-cattrs))
+        (python-cattrs/python-3.13
          (package
-           (inherit python-cattrs)
+           (inherit base-python-cattrs)
            (arguments
-            (substitute-keyword-arguments (package-arguments python-cattrs)
+            (substitute-keyword-arguments
+                (package-arguments base-python-cattrs)
               ((#:python _ #f) python-3.13)))))
         (python-numpy/python-3.13
          (package
