@@ -880,9 +880,9 @@ provides the long-term stable release of Blender.")
 (define-public blender
   (let ((python-cattrs/python-3.13
          (package
-           (inherit python-cattrs-minimal)
+           (inherit python-cattrs)
            (arguments
-            (substitute-keyword-arguments (package-arguments python-cattrs-minimal)
+            (substitute-keyword-arguments (package-arguments python-cattrs)
               ((#:python _ #f) python-3.13)))))
         (python-numpy/python-3.13
          (package
