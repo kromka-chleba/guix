@@ -4,7 +4,7 @@
 ;;; python-accelerate, python-datasets, python-optuna, and python-questionary
 ;;; come from guix-science.
 
-(define-module (heretic-extra-packages)
+(define-module (gnu packages heretic)
   #:use-module (gnu packages)
   #:use-module (guix packages)
   #:use-module (guix download)

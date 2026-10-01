@@ -379,6 +379,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/haxe.scm				\
   %D%/packages/hdl.scm				\
   %D%/packages/heads.scm			\
+  %D%/packages/heretic.scm			\
   %D%/packages/hexedit.scm			\
   %D%/packages/high-availability.scm			\
   %D%/packages/hugs.scm				\
