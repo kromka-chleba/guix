@@ -925,7 +925,7 @@ provides the long-term stable release of Blender.")
                 (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
                                #$(this-package-input "python-numpy")
                                "/lib/python" #$python-version
-                               "/site-packages/numpy/_core/include/")
+                               "/site-packages/numpy/core/include/")
                 (string-append "-DPYTHON_NUMPY_PATH="
                                #$(this-package-input "python-numpy")
                                "/lib/python" #$python-version
