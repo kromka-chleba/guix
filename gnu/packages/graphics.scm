@@ -878,15 +878,14 @@ provides the long-term stable release of Blender.")
     (license license:gpl2+)))
 
 (define-public blender
-  (let* ((python-numpy/base
-          (match (assoc "python-numpy" (package-inputs blender-lts))
-            ((_ package . _) package)))
-         (python-numpy/python-3.13
+  (let ((base-python-numpy
+         (@ (gnu packages python-xyz) python-numpy))
+        (python-numpy/python-3.13
           (package
-            (inherit python-numpy/base)
+            (inherit base-python-numpy)
             (arguments
              (substitute-keyword-arguments
-                 (package-arguments python-numpy/base)
+                 (package-arguments base-python-numpy)
                ((#:python _ #f) python-3.13))))))
     (package
     (inherit blender-lts)
