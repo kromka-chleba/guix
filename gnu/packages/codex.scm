@@ -76,12 +76,12 @@
     (arguments
      (list
       #:install-plan
-      #~'(("package/" "share/pi-coding-agent/"))
+      #~'(("." "share/pi-coding-agent/"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-bundled-binaries
             (lambda _
-              (for-each delete-file (find-files "package" "\\.wasm$"))))
+             (for-each delete-file (find-files "." "\\.wasm$"))))
           (add-after 'install 'install-entrypoint
             (lambda _
               (let ((out (assoc-ref %outputs "out")))
