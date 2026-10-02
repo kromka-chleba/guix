@@ -32,6 +32,7 @@
   #:use-module (guix git-download)
   #:use-module (guix search-paths)
   #:use-module (guix utils)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system cargo)
   #:use-module (srfi srfi-1)
   #:use-module (gnu packages)
@@ -52,11 +53,50 @@
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-sources)
+  #:use-module (gnu packages node)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages virtualization))
+
+(define-public pi-coding-agent
+  (package
+    (name "pi-coding-agent")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/"
+             "pi-coding-agent-" version ".tgz"))
+       (sha256
+        (base32 "1bxg1ypw9p7w9ij09b3afl9icy8yafyf8fk7z35p1vslpsmx73k3"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("package/" "share/pi-coding-agent/"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-bundled-binaries
+            (lambda _
+              (for-each delete-file (find-files "package" "\\.wasm$"))))
+          (add-after 'install 'install-entrypoint
+            (lambda _
+              (let ((out (assoc-ref %outputs "out")))
+                (mkdir-p (string-append out "/bin"))
+                (let ((target (string-append out "/share/pi-coding-agent/dist/bundle/cli.js"))
+                      (link (string-append out "/bin/pi")))
+                  (chmod target #o555)
+                  (symlink target link))))))))
+    (inputs (list node-lts))
+    (home-page "https://github.com/earendil-works/pi")
+    (synopsis "Terminal AI coding agent")
+    (description
+     "Pi is an AI coding agent for terminal workflows.  This package installs
+the upstream npm distribution and removes bundled WebAssembly binaries.")
+    (license license:expat)))
 
 (define-public codex-acp
   (package
