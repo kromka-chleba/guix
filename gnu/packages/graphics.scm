@@ -752,25 +752,26 @@ typically encountered in feature film production.")
      "Assets bundled with Blender releases in the Essentials assets library.")
     (license license:cc0)))
 
-(define-public blender-lts
+(define-public blender
   (package
-    (name "blender-lts")
-    (version "4.5.10")
+    (name "blender")
+    (version "5.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.blender.org/source/"
                                   "blender-" version ".tar.xz"))
               (sha256
                (base32
-                "1z4sq4rmg5lx0502i2kgalmdyw3a4kc3lw70kwnwkih5wkjnrbyx"))))
+                "1gypk1sfvfrky5jlib146g9hi3xfhw4xfmfac7k64l5zzb2rzyd5"))))
     (build-system cmake-build-system)
     (arguments
      (list
       ;; Test files are very large and not included in the release tarball.
       #:tests? #f
       #:configure-flags
-      (let ((python-version (version-major+minor (package-version python))))
-        #~(list "-DWITH_CODEC_FFMPEG=ON"
+      (let ((python-version (version-major+minor (package-version python-3.13))))
+        #~(list "-DCMAKE_CXX_FLAGS=-fpermissive" ; Downgrades strict template error in octree.cpp
+                "-DWITH_CODEC_FFMPEG=ON"
                 "-DWITH_CODEC_SNDFILE=ON"
                 "-DWITH_CYCLES=ON"
                 "-DWITH_DOC_MANPAGE=ON"
@@ -791,8 +792,8 @@ typically encountered in feature film production.")
                 "-DWITH_SYSTEM_GLOG=ON"
                 "-DWITH_SYSTEM_LZO=ON"
                 (string-append "-DPYTHON_LIBRARY=python" #$python-version)
-                (string-append "-DPYTHON_LIBPATH=" #$python "/lib")
-                (string-append "-DPYTHON_INCLUDE_DIR=" #$python
+                (string-append "-DPYTHON_LIBPATH=" #$python-3.13 "/lib")
+                (string-append "-DPYTHON_INCLUDE_DIR=" #$python-3.13
                                "/include/python" #$python-version)
                 (string-append "-DPYTHON_VERSION=" #$python-version)
                 (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
@@ -830,11 +831,13 @@ typically encountered in feature film production.")
            blender-assets
            boost
            bullet
+           ceres
            eigen-for-blender
            embree
            ffmpeg
            fftw
            fftwf
+           fmt
            freetype-with-brotli
            glew
            glog
@@ -853,6 +856,7 @@ typically encountered in feature film production.")
            lzo
            onetbb
            openal
+           openblas
            opencolorio
            openexr
            openimageio
@@ -860,9 +864,15 @@ typically encountered in feature film production.")
            opensubdiv
            openvdb
            pugixml
-           python
-           python-numpy
+           python-3.13
+           (package
+             (inherit (@ (gnu packages python-xyz) python-numpy))
+             (arguments
+              (substitute-keyword-arguments
+                  (package-arguments (@ (gnu packages python-xyz) python-numpy))
+                ((#:python _ #f) python-3.13))))
            shaderc
+           suitesparse
            vulkan-headers
            vulkan-loader
            zlib
@@ -873,108 +883,8 @@ typically encountered in feature film production.")
      "Blender is a 3D graphics creation suite.  It supports the entirety of
 the 3D pipeline—modeling, rigging, animation, simulation, rendering,
 compositing and motion tracking, even video editing and game creation.  The
-application can be customized via its API for Python scripting.  This package
-provides the long-term stable release of Blender.")
+application can be customized via its API for Python scripting.")
     (license license:gpl2+)))
-
-(define-public blender
-  (let ((base-python-numpy
-         (@ (gnu packages python-xyz) python-numpy))
-        (python-numpy/python-3.13
-          (package
-            (inherit base-python-numpy)
-            (arguments
-             (substitute-keyword-arguments
-                 (package-arguments base-python-numpy)
-               ((#:python _ #f) python-3.13))))))
-    (package
-    (inherit blender-lts)
-    (name "blender")
-    (version "5.2.0")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (string-append "https://download.blender.org/source/"
-                          "blender-" version ".tar.xz"))
-      (sha256
-       (base32
-        "1gypk1sfvfrky5jlib146g9hi3xfhw4xfmfac7k64l5zzb2rzyd5"))))
-    (arguments
-     (list
-      ;; Test files are very large and not included in the release tarball.
-      #:tests? #f
-      #:configure-flags
-      (let ((python-version (version-major+minor (package-version python-3.13))))
-        #~(list "-DCMAKE_CXX_FLAGS=-fpermissive" ; Downgrades strict template error in octree.cpp
-                "-DWITH_CODEC_FFMPEG=ON"
-                "-DWITH_CODEC_SNDFILE=ON"
-                "-DWITH_CYCLES=ON"
-                "-DWITH_DOC_MANPAGE=ON"
-                "-DWITH_FFTW3=ON"
-                "-DWITH_IMAGE_OPENJPEG=ON"
-                "-DWITH_INPUT_NDOF=ON"
-                "-DWITH_INSTALL_PORTABLE=OFF"
-                "-DWITH_JACK=ON"
-                "-DWITH_MOD_OCEANSIM=ON"
-                "-DWITH_OPENVDB=ON"
-                "-DWITH_OPENSUBDIV=ON"
-                "-DWITH_PYTHON_INSTALL=OFF"
-                "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=ON"
-                (string-append "-DEIGEN_DIR="
-                               #$(this-package-input "eigen-for-blender"))
-                "-DWITH_SYSTEM_FREETYPE=ON"
-                "-DWITH_SYSTEM_GLOG=ON"
-                "-DWITH_SYSTEM_LZO=ON"
-                (string-append "-DPYTHON_LIBRARY=python" #$python-version)
-                (string-append "-DPYTHON_LIBPATH=" #$python-3.13 "/lib")
-                (string-append "-DPYTHON_INCLUDE_DIR=" #$python-3.13
-                               "/include/python" #$python-version)
-                (string-append "-DPYTHON_VERSION=" #$python-version)
-                (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
-                               #$(this-package-input "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/numpy/core/include/")
-                (string-append "-DPYTHON_NUMPY_PATH="
-                               #$(this-package-input "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/")))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'install-assets
-            (lambda _
-              (copy-recursively #$(this-package-input "blender-assets")
-                                "./release/datafiles/assets")))
-          (add-after 'install 'link-python-binary
-            (lambda _
-              (let* ((blender-dir (string-append #$output "/share/blender/"
-                                                 #$(version-major+minor version)))
-                     (blender-python-dir (string-append blender-dir "/python")))
-                (mkdir-p blender-dir)
-                (symlink #$(this-package-input "python")
-                         blender-python-dir))))
-          (add-after 'install 'wrap-bin
-            (lambda _
-              (let ((python-path (getenv "GUIX_PYTHONPATH"))
-                    (numpy-path (string-append
-                                 #$(this-package-input "python-numpy")
-                                 "/lib/python" #$python-version
-                                 "/site-packages")))
-                (if python-path
-                    (wrap-program (string-append #$output "/bin/blender")
-                      `("GUIX_PYTHONPATH" ":" prefix
-                        (,numpy-path ,python-path)))
-                    (wrap-program (string-append #$output "/bin/blender")
-                      `("GUIX_PYTHONPATH" ":" prefix
-                        (,numpy-path))))))))))
-    (native-inputs
-     (modify-inputs (package-native-inputs blender-lts))) ; Forces CMake to use GCC 12 binaries
-    (inputs
-     (modify-inputs (package-inputs blender-lts)
-       (prepend ceres fmt openblas suitesparse)
-       (replace "python" python-3.13)
-       (replace "python-numpy" python-numpy/python-3.13)))
-    (license license:gpl2+))))
 
 (define-public goxel
   ;; The latest commit is used as it builds with GCC 14.
