@@ -870,7 +870,8 @@ typically encountered in feature film production.")
              (arguments
               (substitute-keyword-arguments
                   (package-arguments (@ (gnu packages python-xyz) python-numpy))
-                ((#:python _ #f) python-3.13))))
+                ((#:python _ #f)
+                 (wrap-python3 python-3.13 "python-next-wrapper")))))
            shaderc
            suitesparse
            vulkan-headers
